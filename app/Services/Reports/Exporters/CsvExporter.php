@@ -35,6 +35,21 @@ class CsvExporter implements ReportExporter
         foreach ($data->sections as $section) {
             fputcsv($handle, []);
             fputcsv($handle, [$section->title]);
+
+            if ($section->dayGroups !== null) {
+                fputcsv($handle, $section->columns);
+
+                foreach ($section->dayGroups as $group) {
+                    fputcsv($handle, [$group['date']]);
+
+                    foreach ($group['rows'] as $row) {
+                        fputcsv($handle, $row);
+                    }
+                }
+
+                continue;
+            }
+
             fputcsv($handle, $section->columns);
 
             foreach ($section->rows as $row) {

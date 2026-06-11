@@ -36,7 +36,34 @@
 
     @foreach ($data->sections as $section)
         <h2>{{ $section->title }}</h2>
-        @if (empty($section->rows))
+        @if ($section->dayGroups !== null)
+            @if (empty($section->dayGroups))
+                <p class="empty">Sin datos.</p>
+            @else
+                @foreach ($section->dayGroups as $group)
+                    <h3 style="font-size: 12px; margin: 12px 0 4px;">{{ $group['date'] }}</h3>
+                    <table class="section">
+                        <thead>
+                            <tr>
+                                @foreach ($section->columns as $i => $column)
+                                    <th class="{{ in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true) ? 'num' : '' }}">{{ $column }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($group['rows'] as $row)
+                                <tr>
+                                    @foreach (array_values($row) as $i => $cell)
+                                        @php $column = $section->columns[$i] ?? ''; @endphp
+                                        <td class="{{ in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true) ? 'num' : '' }}">{{ $cell }}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endforeach
+            @endif
+        @elseif (empty($section->rows))
             <p class="empty">Sin datos.</p>
         @else
             <table class="section">

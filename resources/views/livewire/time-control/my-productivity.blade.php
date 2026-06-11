@@ -58,30 +58,7 @@
     </div>
 
     <div class="bg-white rounded shadow p-4">
-        <h2 class="font-semibold text-gray-800 mb-3">Detalle cronológico</h2>
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="text-left text-gray-500 border-b">
-                    <th class="py-2">Fecha</th>
-                    <th class="py-2">Cliente</th>
-                    <th class="py-2">Actividad</th>
-                    <th class="py-2">Estado</th>
-                    <th class="py-2 text-right">Tiempo</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($entries as $entry)
-                    <tr class="border-b">
-                        <td class="py-2">{{ $entry->entry_date->format('d/m/Y') }}</td>
-                        <td class="py-2">{{ $entry->customer->name ?? '—' }}</td>
-                        <td class="py-2">{{ $entry->subService->sub_service ?? '—' }}</td>
-                        <td class="py-2">{{ $entry->status_label }}</td>
-                        <td class="py-2 text-right font-mono">{{ $fmt($entry->total_duration_seconds) }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="py-3 text-gray-500">Sin registros en el periodo.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+        <h2 class="font-semibold text-gray-800 mb-3">Detalle de actividades por día</h2>
+        <x-time-activity-detail :columns="$activityDetail['columns']" :groups="$activityDetail['groups']" />
     </div>
 </div>

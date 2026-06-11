@@ -63,4 +63,9 @@
             </div>
         @endforeach
     </div>
+
+    <div class="bg-white rounded shadow p-4">
+        <h2 class="font-semibold text-gray-800 mb-3">Detalle de actividades por día</h2>
+        <x-time-activity-detail :columns="$activityDetail['columns']" :groups="$activityDetail['groups']" />
+    </div>
 </div>

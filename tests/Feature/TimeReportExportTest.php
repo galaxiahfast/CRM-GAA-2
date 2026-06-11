@@ -121,6 +121,61 @@ class TimeReportExportTest extends TestCase
             ->assertFileDownloaded("supervision-horas_usuario-{$aux->id}_{$today}_{$today}.csv");
     }
 
+    public function test_user_report_includes_activity_detail_by_day(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+
+        $report = app(TimeReportService::class)->userReport($aux, $today, $today);
+        $detailSection = collect($report->sections)->last();
+
+        $this->assertSame('Detalle de actividades por día', $detailSection->title);
+        $this->assertNotNull($detailSection->dayGroups);
+        $this->assertCount(1, $detailSection->dayGroups);
+        $this->assertSame(now()->format('d/m/Y'), $detailSection->dayGroups[0]['date']);
+        $this->assertCount(1, $detailSection->dayGroups[0]['rows']);
+        $this->assertSame('01:00:00', $detailSection->dayGroups[0]['rows'][0][4]);
+    }
+
+    public function test_admin_report_includes_activity_detail_respecting_user_filter(): void
+    {
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+
+        $report = app(TimeReportService::class)->adminReport($aux, $today, $today);
+        $detailSection = collect($report->sections)->last();
+
+        $this->assertSame('Detalle de actividades por día', $detailSection->title);
+        $this->assertNotContains('Colaborador', $detailSection->columns);
+
+        $allReport = app(TimeReportService::class)->adminReport(null, $today, $today);
+        $allDetail = collect($allReport->sections)->last();
+        $this->assertContains('Colaborador', $allDetail->columns);
+    }
+
+    public function test_txt_export_includes_activity_lines(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+        $report = app(TimeReportService::class)->userReport($aux, $today, $today);
+
+        $content = app(\App\Services\Reports\Exporters\TxtExporter::class)->render($report);
+
+        $this->assertStringContainsString('Detalle de actividades por día', $content);
+        $this->assertStringContainsString('| Cliente: Cliente A | Tiempo: 01:00:00', $content);
+    }
+
+    public function test_pdf_export_generates_binary_content(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+        $report = app(TimeReportService::class)->userReport($aux, $today, $today);
+
+        $pdf = app(\App\Services\Reports\Exporters\PdfExporter::class)->render($report);
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+    }
+
     public function test_unsupported_format_is_rejected(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();

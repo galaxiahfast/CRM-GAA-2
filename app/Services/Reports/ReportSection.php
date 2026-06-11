@@ -13,10 +13,12 @@ class ReportSection
     /**
      * @param  list<string>  $columns
      * @param  list<list<string|int>>  $rows
+     * @param  list<array{date: string, rows: list<list<string|int>>}>|null  $dayGroups
      */
     public function __construct(
         public readonly string $title,
         public readonly array $columns,
         public readonly array $rows,
+        public readonly ?array $dayGroups = null,
     ) {}
 }

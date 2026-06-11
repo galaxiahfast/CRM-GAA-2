@@ -34,12 +34,14 @@ class MyProductivity extends Component
     public function render(TimeReportService $reports, ReportExportManager $exporter)
     {
         $data = $reports->userProductivity(auth()->id(), $this->from, $this->to);
+        $activityDetail = $reports->activityDetailByDay($data['entries']);
 
         return view('livewire.time-control.my-productivity', [
             'entries' => $data['entries'],
             'totalSeconds' => $data['totalSeconds'],
             'byCustomer' => $data['byCustomer'],
             'byActivity' => $data['byActivity'],
+            'activityDetail' => $activityDetail,
             'exportFormats' => $exporter->formats(),
         ])->layout('layouts.app');
     }

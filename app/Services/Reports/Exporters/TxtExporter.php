@@ -4,9 +4,12 @@ namespace App\Services\Reports\Exporters;
 
 use App\Services\Reports\ReportData;
 use App\Services\Reports\ReportSection;
+use App\Services\TimeControl\TimeReportService;
 
 class TxtExporter implements ReportExporter
 {
+    public function __construct(private TimeReportService $timeReports) {}
+
     public function format(): string
     {
         return 'txt';
@@ -37,10 +40,38 @@ class TxtExporter implements ReportExporter
             $lines[] = '';
             $lines[] = $section->title;
             $lines[] = str_repeat('-', mb_strlen($section->title));
+
+            if ($section->dayGroups !== null) {
+                $lines = array_merge($lines, $this->renderDayGroups($section));
+                continue;
+            }
+
             $lines = array_merge($lines, $this->renderTable($section));
         }
 
         return implode("\n", $lines)."\n";
+    }
+
+    /** @return list<string> */
+    private function renderDayGroups(ReportSection $section): array
+    {
+        if ($section->dayGroups === []) {
+            return ['(Sin datos)'];
+        }
+
+        $out = [];
+
+        foreach ($section->dayGroups as $group) {
+            $out[] = '';
+            $out[] = $group['date'];
+            $out[] = str_repeat('-', mb_strlen($group['date']));
+
+            foreach ($group['rows'] as $row) {
+                $out[] = $this->timeReports->formatActivityLine($section->columns, $row);
+            }
+        }
+
+        return $out;
     }
 
     /** @return list<string> */

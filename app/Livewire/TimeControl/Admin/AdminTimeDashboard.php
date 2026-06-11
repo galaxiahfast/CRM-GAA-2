@@ -38,6 +38,7 @@ class AdminTimeDashboard extends Component
     public function render(TimeReportService $reports, ReportExportManager $exporter)
     {
         $data = $reports->adminSupervision($this->userId, $this->from, $this->to);
+        $activityDetail = $reports->activityDetailByDay($data['entries'], $this->userId === null);
 
         return view('livewire.time-control.admin.dashboard', [
             'total' => $data['total'],
@@ -46,6 +47,7 @@ class AdminTimeDashboard extends Component
             'byPosition' => $data['byPosition'],
             'byArea' => $data['byArea'],
             'autoClosedCount' => $data['autoClosedCount'],
+            'activityDetail' => $activityDetail,
             'users' => User::whereDoesntHave('role', fn ($q) => $q->where('role', 'Administrador'))
                 ->orderBy('name')
                 ->get(['id', 'name', 'last_name']),
