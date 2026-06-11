@@ -1,0 +1,16 @@
+@import "flowbite/src/themes/default";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Your custom styles */
+[x-cloak] {
+    display: none;
+}
+
+div.dataTables_filter {
+    display: none;
+}
+
+
