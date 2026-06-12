@@ -356,8 +356,8 @@
     {{-- HISTORIAL DEL DÍA --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         
-        {{-- Título ajustado para que la tabla empiece justo debajo --}}
-        <div class="flex items-center justify-between -mb-2">
+        {{-- El contenedor se ajusta al texto al eliminar justify-between y pb-2 --}}
+        <div class="inline-block">
             <h2 class="text-base font-semibold uppercase tracking-wide text-gray-800">
                 Actividades de hoy
             </h2>
@@ -371,6 +371,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
                     <thead>
+                        {{-- El padding superior (pt-6) se mantiene aquí --}}
                         <tr class="text-xs font-semibold uppercase tracking-wider text-gray-400">
                             <th class="pl-0 pr-4 pt-6 pb-0 font-medium w-full align-bottom">Cliente</th>
                             <th class="px-4 pt-6 pb-0 font-medium whitespace-nowrap align-bottom">Actividad</th>
@@ -378,7 +379,6 @@
                             <th class="pl-4 pr-0 pt-6 pb-0 font-medium text-left whitespace-nowrap align-bottom">Estado</th>
                         </tr>
                     </thead>
-                    {{-- Se agrega border-b border-gray-100 aquí --}}
                     <tbody class="divide-y divide-gray-100 border-b border-gray-100">
                         @foreach ($todayEntries as $entry)
                             <tr class="hover:bg-gray-50/70 transition-colors">
@@ -408,12 +408,10 @@
                 </table>
             </div>
 
-            {{-- TOTAL EFECTIVO: Solo pt-6, sin padding inferior ni lateral --}}
+            {{-- TOTAL EFECTIVO --}}
             <div class="pt-6 flex justify-end">
                 <div class="text-sm text-gray-600 font-medium align-bottom">
-                    Total efectivo del día: 
-                    {{-- Aplicamos font-mono aquí para que coincida con el historial --}}
-                    <span class="font-mono text-gray-900 ml-2">{{ $fmt($todayTotalSeconds) }}</span>
+                    Total efectivo del día: <span class="font-mono text-gray-900 ml-2">{{ $fmt($todayTotalSeconds) }}</span>
                 </div>
             </div>
         @endif
