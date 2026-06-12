@@ -134,14 +134,14 @@
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             
             {{-- CABECERA: TÍTULO EN MAYÚSCULAS CON CONTROL ARBITRARIO DE 9PX --}}
-            <div class="mb-[9px]">
+            <div class="mb-[10px]">
                 <h3 class="text-base font-semibold uppercase tracking-wide text-gray-800 leading-none">
                     Configuración de Bloque de Tiempo
                 </h3>
             </div>
             
-            {{-- TEXTO DESCRIPTIVO: mb-[8px] reduce exactamente 2px la distancia hacia los inputs inferiores --}}
-            <p class="text-gray-500 mb-[8px] text-sm w-full text-justify" style="line-height: 2.2;">
+            {{-- TEXTO DESCRIPTIVO: mb-[10px] reduce exactamente 2px la distancia hacia los inputs inferiores --}}
+            <p class="text-gray-500 mb-[10px] text-sm w-full text-justify" style="line-height: 2.2;">
                 No tienes ninguna actividad en curso. Configura los parámetros iniciales para abrir un nuevo bloque de tiempo efectivo.
             </p>
 
@@ -356,8 +356,8 @@
     {{-- HISTORIAL DEL DÍA --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         
-        {{-- El contenedor se ajusta al texto al eliminar justify-between y pb-2 --}}
-        <div class="inline-block">
+        {{-- Cambio de inline-block a flex + w-fit --}}
+        <div class="flex w-fit">
             <h2 class="text-base font-semibold uppercase tracking-wide text-gray-800">
                 Actividades de hoy
             </h2>
