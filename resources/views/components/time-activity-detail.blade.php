@@ -30,3 +30,4 @@
         <p class="text-gray-500 text-sm">Sin registros en el periodo.</p>
     @endforelse
 </div>
+ 

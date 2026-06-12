@@ -62,3 +62,4 @@
         <x-time-activity-detail :columns="$activityDetail['columns']" :groups="$activityDetail['groups']" />
     </div>
 </div>
+ 

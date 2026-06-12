@@ -123,3 +123,4 @@ class IndexTimeControl extends Component
         ])->layout('layouts.app');
     }
 }
+ 
