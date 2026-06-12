@@ -14,12 +14,11 @@ use Livewire\Component;
 class IndexTimeControl extends Component
 {
     public ?int $customerId = null;
-
     public ?int $subServiceId = null;
+    public string $description = ''; // <-- Nueva propiedad para la observación inicial
 
     public function mount(): void
     {
-        // El Administrador no puede operar el cronómetro (reglas 4.1 / 8.8).
         abort_unless(Gate::allows('operate-time-tracking'), 403);
     }
 
@@ -30,14 +29,18 @@ class IndexTimeControl extends Component
         $this->validate([
             'customerId' => ['required', 'exists:customers,id'],
             'subServiceId' => ['required', 'exists:sub_services,id'],
+            'description' => ['nullable', 'string', 'max:500'], // <-- Validación opcional
         ], [], [
             'customerId' => 'cliente',
             'subServiceId' => 'actividad',
         ]);
 
         try {
-            $timer->start(auth()->user(), $this->customerId, $this->subServiceId);
-            $this->reset(['customerId', 'subServiceId']);
+            // Pasamos la descripción al servicio (asegúrate de que tu TimerService reciba este 4to parámetro opcional)
+            $timer->start(auth()->user(), $this->customerId, $this->subServiceId, $this->description);
+            
+            // Reseteamos el formulario completo
+            $this->reset(['customerId', 'subServiceId', 'description']);
         } catch (ActiveEntryException|NoOrganizationalProfileException $e) {
             $this->addError('timer', $e->getMessage());
         }
@@ -64,7 +67,6 @@ class IndexTimeControl extends Component
         }
     }
 
-    /** Recupera la entrada activa garantizando que pertenece al usuario. */
     private function ownedActiveEntry(): ?TimeEntry
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
@@ -103,14 +105,25 @@ class IndexTimeControl extends Component
             ->latest('id')
             ->get();
 
-        // Los catálogos solo alimentan el formulario de inicio; evitamos
-        // consultarlos cuando ya hay un cronómetro activo (form oculto).
+        // Mapeamos los clientes para que Alpine los maneje fácilmente en formato JSON estructurado
         $customers = $active
             ? collect()
-            : Customer::orderBy('name')->get(['id', 'name', 'last_name']);
+            : Customer::orderBy('name')
+                ->get(['id', 'name', 'last_name'])
+                ->map(fn($c) => [
+                    'id' => $c->id,
+                    'search_name' => mb_strtolower(trim($c->name . ' ' . $c->last_name))
+                ]);
+
+        // Modifica esta consulta dentro del método render()
         $subServices = $active
             ? collect()
-            : SubService::orderBy('sub_service')->get(['id', 'sub_service']);
+            : SubService::orderBy('sub_service')
+                ->get(['id', 'sub_service'])
+                ->map(fn($s) => [
+                    'id' => $s->id,
+                    'search_name' => mb_strtolower(trim($s->sub_service))
+                ]);
 
         return view('livewire.time-control.index-time-control', [
             'active' => $active,
@@ -123,4 +136,3 @@ class IndexTimeControl extends Component
         ])->layout('layouts.app');
     }
 }
- 
