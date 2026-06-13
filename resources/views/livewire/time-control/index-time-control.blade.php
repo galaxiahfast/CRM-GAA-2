@@ -133,17 +133,16 @@
         {{-- PANEL DE CONFIGURACIÓN E INICIO --}}
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             
-            {{-- CABECERA: TÍTULO EN MAYÚSCULAS CON CONTROL ARBITRARIO DE 9PX --}}
-            <div class="mb-[10px]">
-                <h3 class="text-base font-semibold uppercase tracking-wide text-gray-800 leading-none">
-                    Configuración de Bloque de Tiempo
-                </h3>
-            </div>
+            <h3 class="text-base font-semibold uppercase tracking-wide text-gray-800 w-fit leading-[0.] overflow-hidden mb-6">
+                Configuración de Bloque de Tiempo
+            </h3>
             
-            {{-- TEXTO DESCRIPTIVO: mb-[10px] reduce exactamente 2px la distancia hacia los inputs inferiores --}}
-            <p class="text-gray-500 mb-[10px] text-sm w-full text-justify" style="line-height: 2.2;">
-                No tienes ninguna actividad en curso. Configura los parámetros iniciales para abrir un nuevo bloque de tiempo efectivo.
-            </p>
+            {{-- CONTENEDOR AJUSTADO --}}
+            <div class="w-full mb-6 overflow-hidden">
+                <p class="text-gray-500 text-sm text-justify leading-[30px] -mt-[8px] -mb-[7px]">
+                    No tienes ninguna actividad en curso. Configura los parámetros iniciales para abrir un nuevo bloque de tiempo efectivo.
+                </p>
+            </div>
 
             <form wire:submit="start" class="space-y-6">
                 
@@ -181,7 +180,9 @@
                         @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                         @click.away="open = false; search = ''">
                         
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">Cliente</label>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4 w-fit leading-[0.8] overflow-hidden">
+                            Cliente
+                        </label>
                         
                         <div class="relative">
                             <input type="text" 
@@ -201,6 +202,7 @@
                             </button>
                         </div>
 
+                        {{-- Dropdown oculto --}}
                         <div x-show="open" 
                             x-transition:enter="transition ease-out duration-100"
                             x-transition:enter-start="opacity-0 transform scale-95"
@@ -256,8 +258,9 @@
                         @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                         @click.away="open = false; search = ''">
                         
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">Actividad</label>
-                        
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4 w-fit leading-[0.8] overflow-hidden">
+                            Actividad
+                        </label>
                         <div class="relative">
                             <input type="text" 
                                 x-model="search"
