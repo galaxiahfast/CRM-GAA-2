@@ -13,4 +13,7 @@ div.dataTables_filter {
     display: none;
 }
 
-
+@layer utilities {
+    .scroll-snap-y-mandatory { scroll-snap-type: y mandatory; }
+    .scroll-snap-align-start { scroll-snap-align: start; }
+}

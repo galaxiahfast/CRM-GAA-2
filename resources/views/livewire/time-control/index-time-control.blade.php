@@ -8,7 +8,7 @@
     };
 @endphp
 
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="max-w-5xl mx-auto space-y-6 p-6">
     {{-- ENCABEZADO --}}
     <div class="flex items-center justify-between border-b border-gray-200 pb-4">
         <div>
@@ -133,7 +133,7 @@
         {{-- PANEL DE CONFIGURACIÓN E INICIO --}}
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             
-            <h3 class="text-base font-semibold uppercase tracking-wide text-gray-800 w-fit leading-[0.] overflow-hidden mb-6">
+            <h3 class="text-base font-semibold uppercase tracking-wide text-gray-800 w-fit leading-[0.] overflow-hidden mb-4">
                 Configuración de Bloque de Tiempo
             </h3>
             
@@ -190,12 +190,14 @@
                                 @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                                 @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                                 :placeholder="selectedName || '— Escribe o selecciona un cliente —'"
-                                class="w-full bg-white border border-gray-300 rounded-lg p-[0.7rem] pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow truncate"
+                                {{-- p-4 = 1rem | pr-10 = suficiente espacio para el icono --}}
+                                class="w-full bg-white border border-gray-300 rounded-lg p-4 pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow truncate"
                                 @keydown.escape="open = false">
                             
                             <button type="button" 
                                     @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" 
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
+                                    {{-- pr-4 asegura que el icono tenga 1rem de espacio desde el borde derecho --}}
+                                    class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
                                 <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
@@ -210,20 +212,21 @@
                             x-transition:leave="transition ease-in duration-75"
                             x-transition:leave-start="opacity-100 transform scale-100"
                             x-transition:leave-end="opacity-0 transform scale-95"
-                            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-100">
+                            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto py-5 px-6">
                             
-                            <div class="p-1">
-                                <template x-for="c in filteredCustomers" :key="c.id">
-                                    <button type="button" 
-                                            @click="select(c.id, c.search_name.toUpperCase())"
-                                            :class="{'bg-blue-50 text-blue-900 font-semibold': selectedId == c.id}"
-                                            class="w-full text-left text-sm px-3 py-2 hover:bg-gray-50 rounded-md text-gray-700 transition-colors truncate block">
-                                        <span x-text="c.search_name.toUpperCase()"></span>
-                                    </button>
-                                </template>
-                            </div>
+                            <template x-for="c in filteredCustomers" :key="c.id">
+                                <button type="button" 
+                                        @click="select(c.id, c.search_name.toUpperCase())"
+                                        :class="{'bg-blue-50 text-blue-900 font-semibold': selectedId == c.id}"
+                                        {{-- mb-4 para todos, last:mb-0 para quitar el margen al ultimo --}}
+                                        class="w-full text-left text-sm hover:bg-gray-50 rounded-md text-gray-700 transition-colors truncate block mb-4 last:mb-0">
+                                    <span x-text="c.search_name.toUpperCase()"></span>
+                                </button>
+                            </template>
                         </div>
-                        @error('customerId') <span class="text-xs text-red-600 block mt-1">{{ $message }}</span> @enderror
+                        @error('customerId') 
+                            <span class="text-xs text-red-600 block mt-1">{{ $message }}</span> 
+                        @enderror
                     </div>
 
                     {{-- BUSCADOR AUTOCOMPLETABLE DE ACTIVIDADES --}}
@@ -267,18 +270,21 @@
                                 @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                                 @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                                 :placeholder="selectedName || '— Escribe o selecciona una actividad —'"
-                                class="w-full bg-white border border-gray-300 rounded-lg p-[0.7rem] pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow truncate"
+                                {{-- p-4 (1rem) de relleno interno en todos los lados --}}
+                                class="w-full bg-white border border-gray-300 rounded-lg p-4 pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow truncate"
                                 @keydown.escape="open = false">
                             
                             <button type="button" 
                                     @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" 
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
+                                    {{-- pr-4 (1rem) asegura que la flecha mantenga la distancia correcta del borde derecho --}}
+                                    class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
                                 <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
                         </div>
 
+                        {{-- Dropdown con el estilo solicitado --}}
                         <div x-show="open" 
                             x-transition:enter="transition ease-out duration-100"
                             x-transition:enter-start="opacity-0 transform scale-95"
@@ -286,18 +292,18 @@
                             x-transition:leave="transition ease-in duration-75"
                             x-transition:leave-start="opacity-100 transform scale-100"
                             x-transition:leave-end="opacity-0 transform scale-95"
-                            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-100">
+                            {{-- Clases aplicadas del primer ejemplo: py-5 px-6 --}}
+                            class="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto py-5 px-6">
                             
-                            <div class="p-1">
-                                <template x-for="s in filteredServices" :key="s.id">
-                                    <button type="button" 
-                                            @click="select(s.id, s.search_name.toUpperCase())"
-                                            :class="{'bg-blue-50 text-blue-900 font-semibold': selectedId == s.id}"
-                                            class="w-full text-left text-sm px-3 py-2 hover:bg-gray-50 rounded-md text-gray-700 transition-colors truncate block">
-                                        <span x-text="s.search_name.toUpperCase()"></span>
-                                    </button>
-                                </template>
-                            </div>
+                            <template x-for="s in filteredServices" :key="s.id">
+                                <button type="button" 
+                                        @click="select(s.id, s.search_name.toUpperCase())"
+                                        :class="{'bg-blue-50 text-blue-900 font-semibold': selectedId == s.id}"
+                                        {{-- Clases aplicadas del primer ejemplo: mb-4, last:mb-0 --}}
+                                        class="w-full text-left text-sm hover:bg-gray-50 rounded-md text-gray-700 transition-colors truncate block mb-4 last:mb-0">
+                                    <span x-text="s.search_name.toUpperCase()"></span>
+                                </button>
+                            </template>
                         </div>
                         @error('subServiceId') <span class="text-xs text-red-600 block mt-1">{{ $message }}</span> @enderror
                     </div>
@@ -310,9 +316,9 @@
                     <div class="w-full">
                         <textarea 
                             wire:model="description" 
-                            placeholder="Detalla brevemente las actividades que vas a realizar para este cliente..."
-                            {{-- Mantenemos 0.7rem arriba y lados, pero bajamos a 0.3rem el inferior --}}
-                            class="w-full bg-white border border-gray-300 rounded-lg text-sm px-[0.7rem] pt-[0.7rem] pb-[0.3rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow placeholder-gray-400 block no-scrollbar leading-[2.2]"
+                            placeholder="Detalla brevemente la actividad..."
+                            {{-- 'p-4' aplica 1rem en los 4 lados --}}
+                            class="w-full bg-white border border-gray-300 rounded-lg text-sm p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow placeholder-gray-400 block no-scrollbar leading-normal"
                             style="height: 84px; overflow: hidden;"
                         ></textarea>
                     </div>
@@ -327,7 +333,8 @@
                 {{-- BOTÓN ACCIÓN CENTRADO CON AJUSTE DE MARGEN SUPERIOR --}}
                 <div class="flex justify-center w-full -mt-2">
                     <button type="submit" wire:loading.attr="disabled" wire:target="start"
-                        class="inline-flex items-center justify-center p-[0.7rem] min-w-[200px] bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                        {{-- CAMBIO: p-[0.7rem] reemplazado por p-4 --}}
+                        class="inline-flex items-center justify-center p-4 min-w-[200px] bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         
                         {{-- CONTENEDOR ÚNICO FLEX-ROW CONTROLADO POR LIVEWIRE --}}
                         <span class="flex flex-row items-center justify-center gap-1.5 w-full">
@@ -345,11 +352,9 @@
                             </svg>
 
                             {{-- TEXTO DINÁMICO --}}
-                            <span wire:loading.remove wire:target="start">Iniciar actividad</span>
+                            <span wire:loading.remove wire:target="start">Ingresar actividad</span>
                             <span wire:loading wire:target="start" style="display: none;">Sincronizando...</span>
-
                         </span>
-
                     </button>
                 </div>
             </form>
