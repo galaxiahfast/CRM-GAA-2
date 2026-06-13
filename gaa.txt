@@ -1,0 +1,971 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 10-06-2026 a las 16:54:15
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de datos: `gaa`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cache`
+--
+
+CREATE TABLE `cache` (
+  `key` varchar(255) NOT NULL,
+  `value` mediumtext NOT NULL,
+  `expiration` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('02986186cea9d768b2e5ecf1b2c7d4ae', 'i:1;', 1770911210),
+('02986186cea9d768b2e5ecf1b2c7d4ae:timer', 'i:1770911210;', 1770911210),
+('077d7bd173d43acd1a96ef373f3e45a2', 'i:1;', 1772649156),
+('077d7bd173d43acd1a96ef373f3e45a2:timer', 'i:1772649156;', 1772649156),
+('08c75c85d10467243c6353e2aa86574d', 'i:1;', 1765482553),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cache_locks`
+--
+
+CREATE TABLE `cache_locks` (
+  `key` varchar(255) NOT NULL,
+  `owner` varchar(255) NOT NULL,
+  `expiration` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customers`
+--
+
+CREATE TABLE `customers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `maternal_last_name` varchar(255) DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `rfc` varchar(255) NOT NULL,
+  `phone` varchar(255) DEFAULT NULL,
+  `url_photo` varchar(255) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `codePhone` int(11) DEFAULT NULL,
+  `observation` varchar(255) DEFAULT NULL,
+  `percentage_period` int(11) DEFAULT 0,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customers`
+--
+
+INSERT INTO `customers` (`id`, `name`, `last_name`, `maternal_last_name`, `created_by`, `email`, `rfc`, `phone`, `url_photo`, `address`, `codePhone`, `observation`, `percentage_period`, `deleted_at`, `created_at`, `updated_at`) VALUES
+(6, 'GONZALEZ, ALONZO Y ASOCIADOS S.C.P.', NULL, NULL, 35, 'aglezsureste@hotmail.com', 'GAA931109CJ0', '999-982-3783', NULL, 'CALLE 63 N.667-A ENTRE 12 Y 14', 52, NULL, 0, NULL, NULL, '2026-02-12 15:46:55'),
+(7, 'GIL CUEVAS LILIA MARIA', NULL, NULL, 25, 'gaa_mary@hotmail.com', 'GICL410501534', '9993502907', NULL, 'calle 77 n.486-j colonia centro c.p. 97000', 52, NULL, 100, NULL, NULL, '2026-05-26 20:15:44'),
+(8, 'CENTRO DE ACOPIO DE METALES DEL MAYAB S.A DE C.V', NULL, NULL, 35, 'lizet_pool@gonzalezalonzo.net', 'CAM151005ME8', NULL, NULL, 'CALLE 59 A, NUM. EXT. 312 C, ENTRE CALLE 132 Y 134, DEP 1, YUCALPETEN, MERIDA YUCATAN, CP. 97238', 52, NULL, 82, NULL, NULL, '2026-02-26 17:15:08'),
+(9, 'MARIA GUADALUPE ', 'MOLINA ', NULL, 35, 'marina_manrrique@datamid.com.mx', 'MOZG541220U44', NULL, NULL, 'CALLE 30 , NÚM EXT. 275 A.NÚM. INT. 39 , ENTRE 29 Y 29A, COL. XAMAN KAB MERIDA YUCATAN, CP. 97117', 52, NULL, 50, NULL, NULL, '2026-05-26 19:10:12'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_accountants`
+--
+
+CREATE TABLE `customer_accountants` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `accountant_id` bigint(20) UNSIGNED NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customer_accountants`
+--
+
+INSERT INTO `customer_accountants` (`id`, `customer_id`, `accountant_id`, `status`, `created_at`, `updated_at`) VALUES
+(26, 6, 26, 1, '2025-11-01 19:01:55', '2025-11-12 15:22:29'),
+(27, 7, 28, 1, '2025-11-01 19:02:29', '2025-11-01 19:02:29'),
+(31, 13, 28, 1, '2025-11-03 16:14:51', '2025-11-21 19:24:30'),
+(32, 14, 28, 1, '2025-11-03 16:15:14', '2026-04-29 18:55:18'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_files`
+--
+
+CREATE TABLE `customer_files` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `sub_service_id` bigint(20) UNSIGNED NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `file_type` tinyint(1) NOT NULL,
+  `declaration_type` tinyint(1) NOT NULL,
+  `statement_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `state_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `upload_period` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customer_files`
+--
+
+INSERT INTO `customer_files` (`id`, `customer_id`, `user_id`, `sub_service_id`, `file_path`, `original_name`, `file_type`, `declaration_type`, `statement_id`, `state_id`, `upload_period`, `created_at`, `updated_at`) VALUES
+(238, 6, 25, 1, 'pdfs/2024/GAA931109CJ0/ImpuestosEstatales/GTMHTs0yMTMCaHxTUReB2SAORyQ5oAE2F3Jv53mL.pdf', 'Acuse_Normal.pdf', 1, 1, NULL, 22, '2024-01-10', '2025-11-10 19:26:40', '2025-11-10 19:26:40'),
+(239, 6, 25, 1, 'pdfs/2024/GAA931109CJ0/ImpuestosEstatales/DRXjLcPziiDDwPiG9eGmCtefYXpBhdOKlii2dOiU.pdf', 'Acuse_Normal YUC.pdf', 1, 1, NULL, 31, '2024-01-10', '2025-11-10 19:27:02', '2025-11-10 19:27:02'),
+(240, 6, 25, 2, 'pdfs/2024/GAA931109CJ0/ImpuestosEstatales/wCrWCGaFEGaTYDdjXpdadYg4VM5THo9KMrg61NXR.pdf', 'Acuse_Normal imss.pdf', 1, 1, NULL, NULL, '2024-01-10', '2025-11-10 19:27:30', '2025-11-10 19:27:30'),
+(241, 6, 25, 2, 'pdfs/2024/GAA931109CJ0/ImpuestosEstatales/ZsDdVICVG7M8KDsn7RAqsTadXpfjjzwN8PlJz67r.pdf', 'Comprobante_Normal.pdf', 0, 1, NULL, NULL, '2024-01-10', '2025-11-10 19:27:57', '2025-11-10 19:27:57'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_interns`
+--
+
+CREATE TABLE `customer_interns` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `intern_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_services`
+--
+
+CREATE TABLE `customer_services` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `sub_service_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customer_services`
+--
+
+INSERT INTO `customer_services` (`id`, `customer_id`, `sub_service_id`, `created_at`, `updated_at`) VALUES
+(25, 6, 1, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(26, 6, 2, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(27, 6, 6, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(28, 6, 7, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_statements`
+--
+
+CREATE TABLE `customer_statements` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `statement_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customer_statements`
+--
+
+INSERT INTO `customer_statements` (`id`, `customer_id`, `statement_id`, `created_at`, `updated_at`) VALUES
+(14, 6, 1, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(15, 6, 2, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(16, 7, 1, '2025-11-01 17:25:05', '2025-11-01 17:25:05'),
+(17, 7, 6, '2025-11-01 17:25:05', '2025-11-01 17:25:05'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_states`
+--
+
+CREATE TABLE `customer_states` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `state_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `customer_states`
+--
+
+INSERT INTO `customer_states` (`id`, `state_id`, `customer_id`, `created_at`, `updated_at`) VALUES
+(36, 22, 6, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(37, 31, 6, '2025-11-01 17:24:16', '2025-11-01 17:24:16'),
+(38, 31, 8, '2025-11-01 17:29:24', '2025-11-01 17:29:24'),
+(39, 31, 37, '2025-11-03 17:09:56', '2025-11-03 17:09:56'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `customer_subcategories`
+--
+
+CREATE TABLE `customer_subcategories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `failed_jobs`
+--
+
+CREATE TABLE `failed_jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `connection` text NOT NULL,
+  `queue` text NOT NULL,
+  `payload` longtext NOT NULL,
+  `exception` longtext NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `jobs`
+--
+
+CREATE TABLE `jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `queue` varchar(255) NOT NULL,
+  `payload` longtext NOT NULL,
+  `attempts` tinyint(3) UNSIGNED NOT NULL,
+  `reserved_at` int(10) UNSIGNED DEFAULT NULL,
+  `available_at` int(10) UNSIGNED NOT NULL,
+  `created_at` int(10) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `job_batches`
+--
+
+CREATE TABLE `job_batches` (
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `total_jobs` int(11) NOT NULL,
+  `pending_jobs` int(11) NOT NULL,
+  `failed_jobs` int(11) NOT NULL,
+  `failed_job_ids` longtext NOT NULL,
+  `options` mediumtext DEFAULT NULL,
+  `cancelled_at` int(11) DEFAULT NULL,
+  `created_at` int(11) NOT NULL,
+  `finished_at` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `migrations`
+--
+
+CREATE TABLE `migrations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `migration` varchar(255) NOT NULL,
+  `batch` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `migrations`
+--
+
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
+(76, '0001_01_01_000000_create_roles_table', 1),
+(77, '0001_01_01_000000_create_users_table', 1),
+(78, '0001_01_01_000001_create_cache_table', 1),
+(79, '0001_01_01_000002_create_jobs_table', 1),
+...
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `personal_access_tokens`
+--
+
+CREATE TABLE `personal_access_tokens` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `tokenable_type` varchar(255) NOT NULL,
+  `tokenable_id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `abilities` text DEFAULT NULL,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `role` varchar(255) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `roles`
+--
+
+INSERT INTO `roles` (`id`, `role`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Administrador', 'Rol para administrar todas las funciones del sistema', NULL, NULL),
+(2, 'Coordinador', 'Rol para los coordinadores con casi todas las funciones del sistema', NULL, NULL),
+(3, 'Contador', 'Rol para los contadores con menos funcionalidades en el sistema', NULL, NULL),
+(4, 'Auxiliar', 'Rol para los auxiliares con funciones especificas', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `services`
+--
+
+CREATE TABLE `services` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `service` varchar(255) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `services`
+--
+
+INSERT INTO `services` (`id`, `service`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Impuestos Estatales', 'Impuestos estatales que la empresa tiene disponibles', '2025-10-16 22:42:55', NULL),
+(2, 'Impuestos Federales', 'Impuestos federales que la empresa tiene disponibles', '2025-10-16 22:42:55', NULL),
+(3, 'Impuestos Especiales', 'Impuestos especiales que la empresa tiene disponibles', '2025-10-16 22:42:55', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `id` varchar(255) NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `payload` longtext NOT NULL,
+  `last_activity` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `sessions`
+--
+
+INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
+('488mI0fbEDyMpezrPGdTnua8YrW0P4cWMXSj1HFs', NULL, '192.168.2.158', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0', 'YToyOntzOjY6Il90b2tlbiI7czo0MDoiaW1mVlZ5N1N5V2RnWjF2azZzcTBObmF5NzRLRVNZS2NCUXBwYXloMiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1780421546),
+('CdJEzAcVj6AS3aBUiuc5CjlciwUAlTgjbnQsJkOS', NULL, '192.168.2.122', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiT2JDUHBYZVlDTFllakg4V3FqaWtlZ281OEpDMGFOWkV1RU9Rc1BHQSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjU6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1781103172),
+('Fb1qcPCda5204ZYjDihKGtc2L8iJPT1Jt24Xwu25', NULL, '192.168.2.158', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiNTlxUVB0YjZGQXpxajJLdVJMaUVZZzQ5QjJiRGJXV2dkclJBQ2Q5OSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjU6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1780412718),
+('IUEWlcXiNWNy7wG70B6Lillk2fr9PHSr2DFmmfcF', 18, '192.168.2.122', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiUVJ2SHRyd0FhR1RmUU1qRmlXRDVUSkJiN1NyTmdMckJhc0oxYmp2RiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzU6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEvZGFzaGJvYXJkIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTg7czoyMToicGFzc3dvcmRfaGFzaF9zYW5jdHVtIjtzOjYwOiIkMnkkMTIkaEhKMTA2L0U1bTVZTi5kUkw2SjEwLnpTL1AyMDg3eXdIT1BNL2tRY0QvdkU1dlBHdkxiRE8iO30=', 1780959580),
+('JDkyy3hpMrhXnG1USawduMaDtpsFvlgeyuhYH4db', NULL, '192.168.2.122', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiYjBBTHRqM1FMVGllVDNFeUFNaHVuWUFyOU5jaTJQUVdzRFhHMWRPbiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjU6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1780959555),
+('JuHBqLp09nvwxr78zlxNkC6IUdC0Fs5p3XmTby9d', 32, '192.168.2.158', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiS25PS1RRMncwRzBZTkF0dnI4a1lrTzJScUFlWEROZFlRNGZCYUxOWiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDQ6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEvY3VzdG9tZXJzLzExNi92aWV3Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MzI7czoyMToicGFzc3dvcmRfaGFzaF9zYW5jdHVtIjtzOjYwOiIkMnkkMTIkcmZlVEwuVmMwL1dvNXlLa0FQR1h2T2NQeU5OWnUweklQb1JzSmpzY2dNYWdKb2xnYnUzSlciO30=', 1780413901),
+('lbrwRsNNaKlJz7WhKXeex0dzf1yGDh7BxifkAjzi', 18, '192.168.2.122', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoia0hPRVM1d09jdlRZc3BzSHhUMzB5YmZZbU1vaUhMVE9zaWxhTHMwZyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzU6Imh0dHA6Ly8xOTIuMTY4LjIuMjQ5OjgwMDEvZGFzaGJvYXJkIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTg7czoyMToicGFzc3dvcmRfaGFzaF9zYW5jdHVtIjtzOjYwOiIkMnkkMTIkaEhKMTA2L0U1bTVZTi5kUkw2SjEwLnpTL1AyMDg3eXdIT1BNL2tRY0QvdkU1dlBHdkxiRE8iO30=', 1780592317);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `statements`
+--
+
+CREATE TABLE `statements` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `statement` varchar(255) NOT NULL,
+  `unique_key` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `statements`
+--
+
+INSERT INTO `statements` (`id`, `statement`, `unique_key`, `created_at`, `updated_at`) VALUES
+(1, 'ISR', 'statement_ISR_1', NULL, NULL),
+(2, 'ISR Retenido Honorarios', 'statement_ISRRH_2', NULL, NULL),
+(3, 'ISR Retenido por Salarios', 'statement_IRS_3', NULL, NULL),
+(4, 'ISR Retenido Arrendamiento', 'statement_IRA_4', NULL, NULL),
+(5, 'ISR Retenido RESICO', 'statement_IRR_5', NULL, NULL),
+(6, 'IVA', 'statement_IVA_6', NULL, NULL),
+(7, 'IVA Retenido', 'statement_IVAR_7', NULL, NULL),
+(8, 'IEPS', 'statement_IEPS_8', NULL, NULL),
+(9, 'Anual Cedular', 'statement_AC_9', NULL, NULL),
+(10, 'Anual ISR', 'statement_AISR_10', NULL, NULL),
+(11, 'Anual ISR Retenido por Salarios', 'statement_AIRS_11', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `states`
+--
+
+CREATE TABLE `states` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `key` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `unique_key` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `states`
+--
+
+INSERT INTO `states` (`id`, `key`, `name`, `unique_key`, `created_at`, `updated_at`) VALUES
+(1, 'AGS', 'AGUASCALIENTES', 'state_AGS_1', NULL, NULL),
+(2, 'BC', 'BAJA CALIFORNIA', 'state_BC_2', NULL, NULL),
+(3, 'BCS', 'BAJA CALIFORNIA SUR', 'state_BCS_3', NULL, NULL),
+(4, 'CHI', 'CHIHUAHUA', 'state_CHI_4', NULL, NULL),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `subcategories`
+--
+
+CREATE TABLE `subcategories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `sub_services`
+--
+
+CREATE TABLE `sub_services` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `sub_service` varchar(255) NOT NULL,
+  `service_id` bigint(20) UNSIGNED NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `unique_key` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `sub_services`
+--
+
+INSERT INTO `sub_services` (`id`, `sub_service`, `service_id`, `description`, `unique_key`, `created_at`, `updated_at`) VALUES
+(1, 'Impuesto sobre nómina', 1, 'Impuesto para detelimitar las nóminas de los clientes', 'subservice_IDNC_1', '2025-10-16 22:42:55', '2025-10-16 22:42:55'),
+(2, 'IMSS', 1, 'Control de IMSS de los clientes', 'subservice_IMSS_2', '2025-10-16 22:42:55', '2025-10-16 22:42:55'),
+(3, 'FONACOT', 1, 'Impuesto para detelimitar las nóminas de los clientes', 'subservice_FONACOT_3', '2025-10-16 22:42:55', '2025-10-16 22:42:55'),
+(4, 'SISUB', 1, 'Impuesto para detelimitar el SISUB de los clientes', 'subservice_SISUB_4', '2025-10-16 22:42:55', '2025-10-16 22:42:55'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `users`
+--
+
+CREATE TABLE `users` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `two_factor_secret` text DEFAULT NULL,
+  `two_factor_recovery_codes` text DEFAULT NULL,
+  `two_factor_confirmed_at` timestamp NULL DEFAULT NULL,
+  `role_id` bigint(20) UNSIGNED NOT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `current_team_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `profile_photo_path` varchar(2048) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `last_name`, `email`, `email_verified_at`, `password`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `role_id`, `remember_token`, `current_team_id`, `profile_photo_path`, `created_at`, `updated_at`) VALUES
+(18, 'ADMIN', NULL, 'admin@datamid.com.mx', NULL, '$2y$12$hHJ106/E5m5YN.dRL6J10.zS/P2087ywHOPM/kQcD/vE5vPGvLbDO', NULL, NULL, NULL, 1, 'j3bIVqSYBcp06Q8Wmj7wYkR8riX64jRmKhY7oK2cu3mge7lOw7zbFIVmDACF', NULL, NULL, '2025-10-30 22:28:06', '2025-10-30 23:06:54'),
+(25, 'MARIA DE LOS ANGELES', 'ALONZO PEREZA', 'maria_alonzo@gonzalezalonzo.net', NULL, '$2y$12$09661y.lOmGWiTcf8INk/.5t7xdMGdfs5tS11zM0GGH9wNWeIBJGW', NULL, NULL, NULL, 2, 'zQjyeUNLXwZPStlby0XVaWB6NpwJ0GouaaYzI0XDJqCwOkqz99Vl9RH83vTN', NULL, NULL, '2025-11-01 18:09:38', '2025-11-01 18:09:38'),
+(26, 'ALEJANDRA', 'MEDINA', 'alejandra_medina@gonzalezalonzo.net', NULL, '$2y$12$nlDbDNwG/OdJXyOGgux/9.dFchMLiIfkfOt6FWNyo24gBnMxJhvfi', NULL, NULL, NULL, 3, NULL, NULL, NULL, '2025-11-01 18:12:27', '2025-11-01 18:12:27'),
+(27, 'ANASTACIO', 'MAY', 'anastacio_may@gonzalezalonzo.net', NULL, '$2y$12$hLiYqytIO2IONBYqcmfRC.LC9L/016QM/UPrTU9pvnnf87W3TsUgi', NULL, NULL, NULL, 3, NULL, NULL, NULL, '2025-11-01 18:16:21', '2025-12-09 17:58:35'),
+…
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `user_interns`
+--
+
+CREATE TABLE `user_interns` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `intern_id` bigint(20) UNSIGNED NOT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `cache`
+--
+ALTER TABLE `cache`
+  ADD PRIMARY KEY (`key`);
+
+--
+-- Indices de la tabla `cache_locks`
+--
+ALTER TABLE `cache_locks`
+  ADD PRIMARY KEY (`key`);
+
+--
+-- Indices de la tabla `customers`
+--
+ALTER TABLE `customers`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `customers_rfc_unique` (`rfc`),
+  ADD KEY `customers_created_by_foreign` (`created_by`);
+
+--
+-- Indices de la tabla `customer_accountants`
+--
+ALTER TABLE `customer_accountants`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_accountants_customer_id_foreign` (`customer_id`),
+  ADD KEY `customer_accountants_accountant_id_foreign` (`accountant_id`);
+
+--
+-- Indices de la tabla `customer_files`
+--
+ALTER TABLE `customer_files`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_files_customer_id_foreign` (`customer_id`),
+  ADD KEY `customer_files_user_id_foreign` (`user_id`),
+  ADD KEY `customer_files_sub_service_id_foreign` (`sub_service_id`),
+  ADD KEY `customer_files_statement_id_foreign` (`statement_id`),
+  ADD KEY `customer_files_state_id_foreign` (`state_id`);
+
+--
+-- Indices de la tabla `customer_interns`
+--
+ALTER TABLE `customer_interns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_interns_intern_id_foreign` (`intern_id`),
+  ADD KEY `customer_interns_customer_id_foreign` (`customer_id`);
+
+--
+-- Indices de la tabla `customer_services`
+--
+ALTER TABLE `customer_services`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_services_customer_id_foreign` (`customer_id`),
+  ADD KEY `customer_services_sub_service_id_foreign` (`sub_service_id`);
+
+--
+-- Indices de la tabla `customer_statements`
+--
+ALTER TABLE `customer_statements`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_statements_customer_id_foreign` (`customer_id`),
+  ADD KEY `customer_statements_statement_id_foreign` (`statement_id`);
+
+--
+-- Indices de la tabla `customer_states`
+--
+ALTER TABLE `customer_states`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_states_state_id_foreign` (`state_id`),
+  ADD KEY `customer_states_customer_id_foreign` (`customer_id`);
+
+--
+-- Indices de la tabla `customer_subcategories`
+--
+ALTER TABLE `customer_subcategories`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
+
+--
+-- Indices de la tabla `jobs`
+--
+ALTER TABLE `jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `jobs_queue_index` (`queue`);
+
+--
+-- Indices de la tabla `job_batches`
+--
+ALTER TABLE `job_batches`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `migrations`
+--
+ALTER TABLE `migrations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD PRIMARY KEY (`email`);
+
+--
+-- Indices de la tabla `personal_access_tokens`
+--
+ALTER TABLE `personal_access_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
+
+--
+-- Indices de la tabla `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `roles_role_unique` (`role`);
+
+--
+-- Indices de la tabla `services`
+--
+ALTER TABLE `services`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sessions_user_id_index` (`user_id`),
+  ADD KEY `sessions_last_activity_index` (`last_activity`);
+
+--
+-- Indices de la tabla `statements`
+--
+ALTER TABLE `statements`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `statements_unique_key_unique` (`unique_key`);
+
+--
+-- Indices de la tabla `states`
+--
+ALTER TABLE `states`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `states_key_unique` (`key`),
+  ADD UNIQUE KEY `states_name_unique` (`name`),
+  ADD UNIQUE KEY `states_unique_key_unique` (`unique_key`);
+
+--
+-- Indices de la tabla `subcategories`
+--
+ALTER TABLE `subcategories`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `sub_services`
+--
+ALTER TABLE `sub_services`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sub_services_unique_key_unique` (`unique_key`),
+  ADD KEY `sub_services_service_id_foreign` (`service_id`);
+
+--
+-- Indices de la tabla `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `users_email_unique` (`email`),
+  ADD KEY `users_role_id_foreign` (`role_id`);
+
+--
+-- Indices de la tabla `user_interns`
+--
+ALTER TABLE `user_interns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_interns_intern_id_foreign` (`intern_id`),
+  ADD KEY `user_interns_created_by_foreign` (`created_by`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `customers`
+--
+ALTER TABLE `customers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=150;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_accountants`
+--
+ALTER TABLE `customer_accountants`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_files`
+--
+ALTER TABLE `customer_files`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11717;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_interns`
+--
+ALTER TABLE `customer_interns`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_services`
+--
+ALTER TABLE `customer_services`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=343;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_statements`
+--
+ALTER TABLE `customer_statements`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=323;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_states`
+--
+ALTER TABLE `customer_states`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+
+--
+-- AUTO_INCREMENT de la tabla `customer_subcategories`
+--
+ALTER TABLE `customer_subcategories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `jobs`
+--
+ALTER TABLE `jobs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `migrations`
+--
+ALTER TABLE `migrations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+
+--
+-- AUTO_INCREMENT de la tabla `personal_access_tokens`
+--
+ALTER TABLE `personal_access_tokens`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT de la tabla `services`
+--
+ALTER TABLE `services`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `statements`
+--
+ALTER TABLE `statements`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT de la tabla `states`
+--
+ALTER TABLE `states`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+
+--
+-- AUTO_INCREMENT de la tabla `subcategories`
+--
+ALTER TABLE `subcategories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `sub_services`
+--
+ALTER TABLE `sub_services`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT de la tabla `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+
+--
+-- AUTO_INCREMENT de la tabla `user_interns`
+--
+ALTER TABLE `user_interns`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `customers`
+--
+ALTER TABLE `customers`
+  ADD CONSTRAINT `customers_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `customer_accountants`
+--
+ALTER TABLE `customer_accountants`
+  ADD CONSTRAINT `customer_accountants_accountant_id_foreign` FOREIGN KEY (`accountant_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_accountants_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `customer_files`
+--
+ALTER TABLE `customer_files`
+  ADD CONSTRAINT `customer_files_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_files_state_id_foreign` FOREIGN KEY (`state_id`) REFERENCES `states` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_files_statement_id_foreign` FOREIGN KEY (`statement_id`) REFERENCES `statements` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_files_sub_service_id_foreign` FOREIGN KEY (`sub_service_id`) REFERENCES `sub_services` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_files_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `customer_interns`
+--
+ALTER TABLE `customer_interns`
+  ADD CONSTRAINT `customer_interns_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  ADD CONSTRAINT `customer_interns_intern_id_foreign` FOREIGN KEY (`intern_id`) REFERENCES `users` (`id`);
+
+--
+-- Filtros para la tabla `customer_services`
+--
+ALTER TABLE `customer_services`
+  ADD CONSTRAINT `customer_services_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_services_sub_service_id_foreign` FOREIGN KEY (`sub_service_id`) REFERENCES `sub_services` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `customer_statements`
+--
+ALTER TABLE `customer_statements`
+  ADD CONSTRAINT `customer_statements_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_statements_statement_id_foreign` FOREIGN KEY (`statement_id`) REFERENCES `statements` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `customer_states`
+--
+ALTER TABLE `customer_states`
+  ADD CONSTRAINT `customer_states_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_states_state_id_foreign` FOREIGN KEY (`state_id`) REFERENCES `states` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `sub_services`
+--
+ALTER TABLE `sub_services`
+  ADD CONSTRAINT `sub_services_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `user_interns`
+--
+ALTER TABLE `user_interns`
+  ADD CONSTRAINT `user_interns_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_interns_intern_id_foreign` FOREIGN KEY (`intern_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
