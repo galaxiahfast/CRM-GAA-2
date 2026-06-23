@@ -1,0 +1,13 @@
+[
+    {"statement": "ISR", "unique_key": "statement_ISR_1"},
+    {"statement": "ISR Retenido Honorarios", "unique_key": "statement_ISRRH_2"},
+    {"statement": "ISR Retenido por Salarios", "unique_key": "statement_IRS_3"},
+    {"statement": "ISR Retenido Arrendamiento", "unique_key": "statement_IRA_4"},
+    {"statement": "ISR Retenido RESICO", "unique_key": "statement_IRR_5"},
+    {"statement": "IVA", "unique_key": "statement_IVA_6"},
+    {"statement": "IVA Retenido", "unique_key": "statement_IVAR_7"},
+    {"statement": "IEPS", "unique_key": "statement_IEPS_8"},
+    {"statement": "Anual Cedular", "unique_key": "statement_AC_9"},
+    {"statement": "Anual ISR", "unique_key": "statement_AISR_10"},
+    {"statement": "Aual ISR Retenido por Salarios", "unique_key": "statement_AIRS_11"}
+]
