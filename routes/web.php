@@ -115,8 +115,14 @@ Route::middleware([
     // ==========================================
     
     // Operativo (Auxiliar / Coordinador / Contador / Administrador)
-    Route::get('/time', IndexTimeControl::class)->name('time.index');
-    Route::get('/time/reports', MyProductivity::class)->name('time.reports');
+    Route::get('/time', IndexTimeControl::class)
+        ->middleware('can:operate-time-tracking')
+        ->name('time.index');
+
+    // 💡 SOLUCIÓN DEL 403: Forzamos la ruta a validar con el Gate unificado de Productividad
+    Route::get('/time/reports', MyProductivity::class)
+        ->middleware('can:view-time-productivity')
+        ->name('time.reports');
 
     // Administración del módulo (Solo usuarios con permisos avanzados)
     Route::middleware('can:view-time-admin')->group(function () {

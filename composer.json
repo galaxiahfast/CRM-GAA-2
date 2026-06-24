@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "afatmustafa/blade-hugeicons": "^1.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "brunocfalcao/blade-feather-icons": "^5.0",
         "laravel-lang/common": "^6.7",
         "laravel/framework": "^11.31",

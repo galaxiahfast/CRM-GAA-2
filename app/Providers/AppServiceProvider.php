@@ -23,22 +23,29 @@ class AppServiceProvider extends ServiceProvider
     {
         /**
          * 💡 SUPERADMIN BYPASS (Gate::before)
-         * Si el usuario es Administrador (rol_id = 1), Laravel le otorgará 
-         * acceso automático a absolutamente cualquier Gate del sistema sin restricciones.
+         * Si el usuario es Administrador, saltarse todas las comprobaciones.
          */
         Gate::before(function (User $user, string $ability) {
-            if ($user->isAdmin()) {
+            // Evaluamos tanto por método como por ID de rol clásico (1 = Administrador)
+            if ((method_exists($user, 'isAdmin') && $user->isAdmin()) || (int) $user->role_id === 1) {
                 return true;
             }
         });
 
         /**
-         * Permiso permanente para operar el reloj de control de tiempos (Auxiliares/Operadores)
+         * Permiso para operar el reloj de control de tiempos (Cualquier usuario logueado)
          */
         Gate::define('operate-time-tracking', function (User $user) {
-            // El administrador ya entra por el Gate::before superior.
-            // Aquí definimos qué otros roles operativos (por ejemplo, el Rol ID 2) pueden usar el reloj.
-            return in_array((int) $user->role_id, [1, 2]);
+            // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
+            return in_array((int) $user->role_id, [1, 2, 3, 4, 5]);
+        });
+
+        /**
+         * Permiso para ver la sección de Productividad
+         */
+        Gate::define('view-time-productivity', function (User $user) {
+            // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
+            return in_array((int) $user->role_id, [1, 2, 3, 4, 5]);
         });
     }
 }

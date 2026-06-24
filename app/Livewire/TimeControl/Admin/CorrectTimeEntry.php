@@ -56,10 +56,11 @@ class CorrectTimeEntry extends Component
 
         $entry = TimeEntry::with('intervals')->findOrFail($this->editingId);
 
-        // Snapshot inmutable del estado ANTES del cambio (regla 9.4).
+        // Snapshot inmutable del estado ANTES del cambio.
         $oldValues = $this->snapshot($entry);
 
-        DB::transaction(function () use ($entry) {
+        // 💡 SOLUCIÓN: Agregamos '$oldValues' al operador 'use' para heredar la variable dentro de la clausura
+        DB::transaction(function () use ($entry, $oldValues) {
             foreach ($this->intervals as $row) {
                 $interval = $entry->intervals->firstWhere('id', $row['id']);
                 if (! $interval) {
