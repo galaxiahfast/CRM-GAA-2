@@ -77,10 +77,37 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role_id', 'id');
     }
+
     public function interns()
     {
         return $this->belongsToMany(User::class, 'user_interns', 'intern_id', 'created_by');
     }
-    
-}
 
+    /**
+     * El rol Administrador está excluido del registro operativo de tiempos
+     * (reglas 4.1, 8.8): solo supervisa, reporta y corrige.
+     */
+    public function isAdmin(): bool
+    {
+        // Evaluamos tanto por el ID 1 como por el nombre del rol en tu base de datos
+        return (int) $this->role_id === 1 || (optional($this->role)->name === 'Administrador');
+    }
+
+    // Obtener el perfil organizacional activo actualmente
+    public function activeOrganizationalProfile()
+    {
+        return $this->hasOne(UserOrganizationalProfile::class, 'user_id')->where('is_active', true);
+    }
+
+    // Historial completo de puestos y áreas del usuario (SCD Tipo 2)
+    public function organizationalProfiles()
+    {
+        return $this->hasMany(UserOrganizationalProfile::class, 'user_id');
+    }
+
+    // Todas las cabeceras de tiempo que ha registrado este colaborador
+    public function timeEntries()
+    {
+        return $this->hasMany(TimeEntry::class, 'user_id');
+    }
+}

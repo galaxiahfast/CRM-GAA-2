@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SubServicesSeeder::class,
             StatementsSeeder::class,
             StatesSeeder::class,
+            TimeControlSeeder::class,
         ]);
     }
 }

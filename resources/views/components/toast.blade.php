@@ -2,7 +2,7 @@
     'message' => null,
     'typeMessage' => null,
     'position' => 'bottom-right',
-    'icon' => 'feathericon-file',
+    'icon' => '',
 ])
 
 @php
@@ -30,7 +30,7 @@
 
     <div
         class="@if ($typeMessage === $type['SUCCESS']) bg-green-200 text-green-600 @endif @if ($typeMessage === $type['ERROR']) bg-red-200 text-red-600 @endif @if ($typeMessage === $type['ALERT']) bg-orange-200 text-orange-600 @endif inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-        @svg('feathericon-file')
+        @svg($icon)
     </div>
 
     <div class="ms-3 text-sm font-normal">{{ $message }}</div>

@@ -60,13 +60,11 @@
                         </x-slot>
                     </x-dropdown>
                 </div>
-                @if ($p->pivot)
-                    <div class="absolute bottom-0 right-2">
-                        <span class="text-xs text-gray-500">
-                            {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? ''}}
-                        </span>
-                    </div>
-                @endif
+                <div class="absolute bottom-0 right-2">
+                    <span class="text-xs text-gray-500">
+                        {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
+                    </span>
+                </div>
                 <span class="z-10 max-w-[90%] truncate text-center text-xs text-gray-500">
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
                 </span>
@@ -97,13 +95,11 @@
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
 
                 </span>
-                @if ($p->pivot)    
-                    <div class="absolute bottom-0 right-2">
-                        <span class="text-xs text-gray-500">
-                            {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
-                        </span>
-                    </div>
-                @endif
+                <div class="absolute bottom-0 right-2">
+                    <span class="text-xs text-gray-500">
+                        {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
+                    </span>
+                </div>
             @endforeach
         @endif
 

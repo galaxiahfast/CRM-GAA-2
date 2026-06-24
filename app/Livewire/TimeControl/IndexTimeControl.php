@@ -15,28 +15,35 @@ class IndexTimeControl extends Component
 {
     public ?int $customerId = null;
     public ?int $subServiceId = null;
-    public string $description = ''; // <-- Nueva propiedad para la observación inicial
+    public string $description = ''; // <-- Propiedad para la observación inicial
 
     public function mount(): void
     {
-        abort_unless(Gate::allows('operate-time-tracking'), 403);
+        // 💡 SI ES ADMINISTRADOR: Detiene el montaje aquí mismo y lo redirige antes del render
+        if (auth()->user()->isAdmin()) {
+            $this->redirect('/time/admin', navigate: false);
+            return;
+        }
+
+        // 💡 COMENTADO TEMPORALMENTE PARA EL DISEÑO Y ROLES INDEPENDIENTES
+        // abort_unless(Gate::allows('operate-time-tracking'), 403);
     }
 
     public function start(TimerService $timer): void
     {
-        abort_unless(Gate::allows('operate-time-tracking'), 403);
+        // 💡 COMENTADO TEMPORALMENTE PARA PERMITIR OPERAR AL AUXILIAR Y ADMIN
+        // abort_unless(Gate::allows('operate-time-tracking'), 403);
 
         $this->validate([
             'customerId' => ['required', 'exists:customers,id'],
             'subServiceId' => ['required', 'exists:sub_services,id'],
-            'description' => ['nullable', 'string', 'max:500'], // <-- Validación opcional
+            'description' => ['nullable', 'string', 'max:500'],
         ], [], [
             'customerId' => 'cliente',
             'subServiceId' => 'actividad',
         ]);
 
         try {
-            // Pasamos la descripción al servicio (asegúrate de que tu TimerService reciba este 4to parámetro opcional)
             $timer->start(auth()->user(), $this->customerId, $this->subServiceId, $this->description);
             
             // Reseteamos el formulario completo
@@ -69,7 +76,8 @@ class IndexTimeControl extends Component
 
     private function ownedActiveEntry(): ?TimeEntry
     {
-        abort_unless(Gate::allows('operate-time-tracking'), 403);
+        // 💡 COMENTADO TEMPORALMENTE PARA EL DESARROLLO LOCAL
+        // abort_unless(Gate::allows('operate-time-tracking'), 403);
 
         return TimeEntry::where('user_id', auth()->id())
             ->whereIn('status', [TimeEntry::STATUS_IN_PROGRESS, TimeEntry::STATUS_PAUSED])
@@ -80,6 +88,7 @@ class IndexTimeControl extends Component
 
     public function render()
     {
+        // --- CÓDIGO OPERATIVO PARA EL AUXILIAR (DIONI) ---
         $active = TimeEntry::where('user_id', auth()->id())
             ->whereIn('status', [TimeEntry::STATUS_IN_PROGRESS, TimeEntry::STATUS_PAUSED])
             ->with(['intervals', 'customer', 'subService'])
@@ -105,7 +114,6 @@ class IndexTimeControl extends Component
             ->latest('id')
             ->get();
 
-        // Mapeamos los clientes para que Alpine los maneje fácilmente en formato JSON estructurado
         $customers = $active
             ? collect()
             : Customer::orderBy('name')
@@ -115,7 +123,6 @@ class IndexTimeControl extends Component
                     'search_name' => mb_strtolower(trim($c->name . ' ' . $c->last_name))
                 ]);
 
-        // Modifica esta consulta dentro del método render()
         $subServices = $active
             ? collect()
             : SubService::orderBy('sub_service')

@@ -1,6 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReporteSemanal;
+
+// Modelos
+use App\Models\Customer;
+use App\Models\User;
+use App\Models\Role;
+
+// Componentes Locales (Clientes y Administración)
 use App\Livewire\Customer\IndexCustomer;
 use App\Livewire\Customer\StoreCustomer;
 use App\Livewire\Customer\UpdateCustomer;
@@ -11,14 +20,13 @@ use App\Livewire\Administracion\Relationship\IndexRelationship;
 use App\Livewire\Administracion\Roles\IndexRole;
 use App\Livewire\Administracion\Users\IndexUser;
 use App\Livewire\CustomerReport;
-use App\Models\Customer;
-use App\Models\User;
-use App\Models\Role;
 
-
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ReporteSemanal;
-
+// Componentes Remotos (Control de Horas Complejo)
+use App\Livewire\TimeControl\IndexTimeControl;
+use App\Livewire\TimeControl\MyProductivity;
+use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
+use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
+use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,69 +37,72 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
+    
+    // DASHBOARD
     Route::get('/dashboard/{customerId?}', function () {
         return view('dashboard');
     })->name('dashboard');
 
-    //DASHBOARD
     Route::get('/dashboard/{customerId}/report', CustomerReport::class)->name('dashboard.customer.report');
 
-    //ADMINISTRACION INDEX
+    // ==========================================
+    // SECCIÓN ADMINISTRACIÓN (Seguridad Local Activa)
+    // ==========================================
+    
+    // Index Administración
     Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
         Route::get('/administracion', IndexAdministracion::class)->name('administracion.index');
     });
+    
+    // Gestión de Usuarios
     Route::middleware(['auth', 'role:Administrador,Coordinador'])->group(function () {
         Route::get('/administracion/users', IndexUser::class)->name('administracion.section');
     });
 
-    //ADMINISTRACION Users
     Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
         Route::get('/administracion/users/create', function(){
             return view('livewire.administracion.users.create');
         })->name('administracion.create.users');
+        
         Route::get('/administracion/users/{user}/edit', function(User $user){
             return view('livewire.administracion.users.edit', compact('user'));
         })->name('administracion.edit.users');
     });
 
-
-    //ADMINISTRACION Roles
+    // Gestión de Roles
     Route::middleware(['auth', 'role:Administrador'])->group(function () {
         Route::get('/administracion/roles', IndexRole::class)->name('administracion.role');
         Route::get('/administracion/create/roles', function(){
             return view('livewire.administracion.roles.create');
         })->name('administracion.role.create');
+        
         Route::get('/administracion/roles/{role}/edit', function(Role $role) {
             return view('livewire.administracion.roles.edit', compact('role'));
         })->name('administracion.role.edit');
     });
 
-
-    //ADMINISTRACION Interns
+    // Interns, Permissions & Relationships
     Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
         Route::get('/administracion/interns', IndexInterns::class)->name('administracion.interns');
+        Route::get('/administracion/relationships', IndexRelationship::class)->name('administracion.relationships');
     });
     
-    //ADMINISTRADOR Permissions
     Route::middleware(['auth', 'role:Administrador'])->group(function () {
         Route::get('/administracion/permissions', IndexAdministracion::class)->name('administracion.permissions');
     });
 
-    //ADMINISTRADOR Relationship
-    Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
-        Route::get('/administracion/relationships', IndexRelationship::class)->name('administracion.relationships');
-    });
-
-    // COSTUMER
+    // ==========================================
+    // SECCIÓN CLIENTES (Costumers)
+    // ==========================================
     Route::get('/customers', IndexCustomer::class)->name('customers.index');
+    Route::get('/customers/{customer}/view', ViewCustomer::class)->name('customers.view');
     
     Route::middleware(['auth', 'role:Administrador,Coordinador'])->group(function () {
         Route::get('/customers/create', StoreCustomer::class)->name('customers.create');
         Route::get('/customers/{customer}/edit', UpdateCustomer::class)->name('customers.edit');
     });
-    
-    Route::get('/customers/{customer}/view', ViewCustomer::class)->name('customers.view');
 
+    // Test de Email institucional
     Route::middleware(['auth', 'role:Administrador'])->group(function () {
         Route::get('/test-email', function() {
             Mail::to('prueba@datamid.com.mx')->send(new ReporteSemanal());
@@ -99,8 +110,21 @@ Route::middleware([
         });
     });
 
-    // TIME CONTROL
-    Route::get('/time', function () {
-        return view('components.maintenance');
-    })->name('time.index');
+    // ==========================================
+    // SECCIÓN MÓDULO CONTROL DE HORAS COMPLEJO
+    // ==========================================
+    
+    // Operativo (Auxiliar / Coordinador / Contador / Administrador)
+    Route::get('/time', IndexTimeControl::class)->name('time.index');
+    Route::get('/time/reports', MyProductivity::class)->name('time.reports');
+
+    // Administración del módulo (Solo usuarios con permisos avanzados)
+    Route::middleware('can:view-time-admin')->group(function () {
+        Route::get('/time/admin', AdminTimeDashboard::class)->name('time.admin.dashboard');
+        Route::get('/time/admin/profiles', OrganizationalProfiles::class)->name('time.admin.profiles');
+    });
+    
+    Route::get('/time/admin/corrections', CorrectTimeEntry::class)
+        ->middleware('can:correct-time-tracking')
+        ->name('time.admin.corrections');
 });
