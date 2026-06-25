@@ -17,12 +17,25 @@ class AdminTimeDashboard extends Component
 
     public ?int $userId = null;
 
+    public string $searchCollaborator = '';
+
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
         // El rango predeterminado es el día actual completo.
         $this->from = now()->toDateString();
         $this->to = now()->toDateString();
+    }
+
+    public function selectCollaborator(int $id, string $fullName): void
+    {
+        $this->userId = $id;
+        $this->searchCollaborator = $fullName;
+    }
+
+    public function clearCollaborator(): void
+    {
+        $this->reset(['userId', 'searchCollaborator']);
     }
 
     public function export(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
@@ -37,6 +50,7 @@ class AdminTimeDashboard extends Component
 
     public function render(TimeReportService $reports, ReportExportManager $exporter)
     {
+        // Ejecución limpia y directa vinculada a tus filtros reactivos automáticos
         $data = $reports->adminSupervision($this->userId, $this->from, $this->to);
         $activityDetail = $reports->activityDetailByDay($data['entries'], $this->userId === null);
 

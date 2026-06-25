@@ -17,6 +17,8 @@
         table.section th { background: #f3f4f6; }
         table.section td.num, table.section th.num { text-align: right; font-family: DejaVu Sans Mono, monospace; }
         .empty { color: #9ca3af; font-style: italic; }
+        .day-total-box { text-align: right; font-size: 11px; font-weight: bold; padding: 6px; color: #111827; }
+        .day-total-value { font-family: DejaVu Sans Mono, monospace; background: #f3f4f6; padding: 2px 6px; border: 1px solid #e5e7eb; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -42,6 +44,9 @@
             @else
                 @foreach ($section->dayGroups as $group)
                     <h3 style="font-size: 12px; margin: 12px 0 4px;">{{ $group['date'] }}</h3>
+                    
+                    @php $totalSecondsThisDay = 0; @endphp
+                    
                     <table class="section">
                         <thead>
                             <tr>
@@ -54,13 +59,34 @@
                             @foreach ($group['rows'] as $row)
                                 <tr>
                                     @foreach (array_values($row) as $i => $cell)
-                                        @php $column = $section->columns[$i] ?? ''; @endphp
+                                        @php 
+                                            $column = $section->columns[$i] ?? ''; 
+                                            
+                                            // Si la columna actual es la de "Tiempo efectivo", calculamos sus segundos para sumarlos
+                                            if ($column === 'Tiempo efectivo' && !empty($cell)) {
+                                                $parts = explode(':', $cell);
+                                                if (count($parts) === 3) {
+                                                    $totalSecondsThisDay += ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+                                                }
+                                            }
+                                        @endphp
                                         <td class="{{ in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true) ? 'num' : '' }}">{{ $cell }}</td>
                                     @endforeach
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+
+                    @php
+                        $hours = intdiv($totalSecondsThisDay, 3600);
+                        $minutes = intdiv($totalSecondsThisDay % 3600, 60);
+                        $seconds = $totalSecondsThisDay % 60;
+                        $formattedDayTotal = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                    @endphp
+                    <div class="day-total-box">
+                        <span>Total del día:</span><span class="day-total-value">{{ $formattedDayTotal }}</span>
+                    </div>
+
                 @endforeach
             @endif
         @elseif (empty($section->rows))
