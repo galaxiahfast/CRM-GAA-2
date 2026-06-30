@@ -25,13 +25,9 @@ class TimeEntryController extends Controller
 
     /**
      * Inicia un cronómetro vía API.
-     *
-     * - Administrador -> 403 (regla 8.8 / escenario 12.4).
-     * - Cronómetro ya activo -> 422 (regla 8.2 / escenario 12.3).
      */
     public function start(Request $request, TimerService $timer): JsonResponse
     {
-        // Bloqueo de rol administrativo mediante Gate.
         if (Gate::denies('operate-time-tracking')) {
             abort(403, 'El rol Administrador no puede registrar tiempos.');
         }
@@ -57,8 +53,6 @@ class TimeEntryController extends Controller
 
     /**
      * Consulta y procesa el cálculo de horas de un colaborador (Modo Espejo Checador).
-     *
-     * Vinculado al flujo del script de sincronización e interfaz de supervisión de horas.
      */
     public function consultarAsistencia(Request $request): JsonResponse
     {
@@ -72,14 +66,14 @@ class TimeEntryController extends Controller
         ]);
 
         try {
-            // Se obtienen los logs crudos sincronizados desde el biométrico/ISAPI
+            // Se mantienen los logs crudos sincronizados desde la tabla que sí funciona
             $registros = DB::table('control_de_horas')
                 ->where('employeeID', $data['employee_id'])
                 ->whereBetween('authDate', [$data['inicio'], $data['fin']])
                 ->orderBy('authDateTime', 'asc')
                 ->get();
 
-            // Mapeo interno para normalizar los campos si la base de datos mantiene las llaves exactas de Python
+            // Mapeo interno manteniendo las llaves exactas que ya tienes funcionando
             $registrosNormalizados = $registros->map(function ($reg) {
                 return (object) [
                     'auth_datetime' => $reg->authDateTime,
@@ -90,7 +84,7 @@ class TimeEntryController extends Controller
                 ];
             });
 
-            // Procesamiento de nómina y emparejamiento de marcas IN/OUT mediante el servicio dedicado
+            // Procesamiento de nómina y emparejamiento de marcas IN/OUT mediante el servicio
             $resultado = $this->attendanceService->processPayroll(
                 $registrosNormalizados,
                 (float) $data['pago'],

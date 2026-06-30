@@ -99,6 +99,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider text-xs">Fecha Jornada</th>
+                            <th class="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider text-xs">Marcas / Chequeos</th>
                             <th class="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider text-xs">Tiempo Neto</th>
                             <th class="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider text-xs">Hrs Decimales</th>
                             <th class="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider text-xs">Pago Base</th>
@@ -108,10 +109,11 @@
                         </tr>
                     </thead>
                     <tbody id="tabla_checador_body" class="bg-white divide-y divide-gray-100">
-                        </tbody>
+                    </tbody>
                     <tfoot class="bg-gray-50 font-bold text-gray-900 border-t-2 border-gray-200">
                         <tr>
                             <td class="px-6 py-4">TOTAL ACUMULADO</td>
+                            <td class="px-6 py-4"></td>
                             <td id="total_tiempo" class="px-6 py-4 font-mono text-gray-700">00h 00m 00s</td>
                             <td id="total_decimal" class="px-6 py-4">0.00</td>
                             <td id="total_pago_h" class="px-6 py-4">$0.00</td>
@@ -167,7 +169,7 @@ function revisarHorasChecador() {
         if (!data.resumen || data.resumen.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-400 italic">
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-400 italic">
                         No hay marcas registradas en el dispositivo para este ID en las fechas seleccionadas.
                     </td>
                 </tr>`;
@@ -183,6 +185,7 @@ function revisarHorasChecador() {
 
             tr.innerHTML = `
                 <td class="px-6 py-3.5 font-medium text-gray-900">${item.fecha}</td>
+                <td class="px-6 py-3.5 text-xs font-mono text-gray-500 max-w-xs truncate" title="${item.detalles_marcas}">${item.detalles_marcas}</td>
                 <td class="px-6 py-3.5 font-mono text-gray-600">${item.neto}</td>
                 <td class="px-6 py-3.5 text-gray-600">${item.horas_decimal}</td>
                 <td class="px-6 py-3.5 text-gray-600">${item.pago_horas}</td>

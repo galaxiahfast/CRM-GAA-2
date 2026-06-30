@@ -31,10 +31,17 @@ class AttendanceService
             ];
 
             $dateStr = $reg->auth_date;
-            $diasDict[$dateStr][] = Carbon::parse($reg->auth_datetime);
+            
+            // Forzamos el parseo limpio del timestamp completo
+            $timestamp = Carbon::parse($reg->auth_datetime);
+
+            $diasDict[$dateStr][] = [
+                'objeto' => $timestamp,
+                'hora_txt' => $timestamp->format('H:i:s')
+            ];
         }
 
-        // Ordenar las fechas de forma descendente (último día primero) como en tu Python
+        // Ordenar las fechas de forma descendente (último día primero)
         krsort($diasDict);
 
         $resumenNomina = [];
@@ -45,46 +52,47 @@ class AttendanceService
         $totalAcumuladoConBono = 0.0;
 
         // 2. Procesar día por día
-        foreach ($diasDict as $fechaStr => $marcaciones) {
-            // Ordenar marcas cronológicamente
-            sort($marcaciones);
+        foreach ($diasDict as $fechaStr => $items) {
+            
+            // GARANTÍA DE ORDEN: Aseguramos el orden cronológico ascendente del día (de la mañana a la noche)
+            usort($items, function ($a, $b) {
+                return $a['objeto']->timestamp <=> $b['objeto']->timestamp;
+            });
+
+            // Extraer las marcas formateadas para la vista y los objetos para el cálculo
+            $marcasImprimir = array_column($items, 'hora_txt');
+            $marcaciones = array_column($items, 'objeto');
+
             $cantidadMarcaciones = count($marcaciones);
             $tiempoNeto = 0;
             $tieneImpares = false;
 
             if ($cantidadMarcaciones > 0) {
-                if ($cantidadMarcaciones % 2 === 0) {
-                    // Caso Par: Procesar parejas consecutivas completos
-                    for ($i = 0; $i < $cantidadMarcaciones; $i += 2) {
-                        $entrada = $marcaciones[$i];
-                        $salida = $marcaciones[$i + 1];
-                        if ($salida->greaterThan($entrada)) {
-                            $tiempoNeto += $salida->diffInSeconds($entrada);
-                        }
-                    }
-                } else {
-                    // Caso Impar: Ignorar la última marca huérfana
+                // Si es impar, ignoramos el último registro huérfano para el cálculo numérico
+                if ($cantidadMarcaciones % 2 !== 0) {
                     $tieneImpares = true;
-                    $cantidadPares = $cantidadMarcaciones - 1;
-                    for ($i = 0; $i < $cantidadPares; $i += 2) {
-                        $entrada = $marcaciones[$i];
-                        $salida = $marcaciones[$i + 1];
-                        if ($salida->greaterThan($entrada)) {
-                            $tiempoNeto += $salida->diffInSeconds($entrada);
-                        }
+                    $cantidadMarcaciones = $cantidadMarcaciones - 1;
+                }
+
+                // Procesar estrictamente por parejas consecutivas (0-1, 2-3, 4-5...)
+                for ($i = 0; $i < $cantidadMarcaciones; $i += 2) {
+                    $entrada = $marcaciones[$i];
+                    $salida = $marcaciones[$i + 1];
+                    
+                    if ($salida->greaterThan($entrada)) {
+                        // Forzamos la diferencia absoluta en segundos de forma explícita
+                        $tiempoNeto += abs($salida->diffInSeconds($entrada));
                     }
-                    // Opcional: registrar advertencia en los logs de Laravel si se desea
-                    // \Log::warning("Día {$fechaStr} tiene marcas impares para el empleado.");
                 }
             }
 
-            // Convertir a horas decimales
-            $horasDecimal = $tiempoNeto / 3600;
+            // Convertir a horas decimales de forma positiva garantizada
+            $horasDecimal = max(0.0, $tiempoNeto / 3600);
             
             // Calcular pago base del día
             $pagoHoras = $horasDecimal * $hourlyRate;
 
-            // Calcular bono (Lunes a Viernes [0-4 en python, 1-5 en Carbon] y >= 5 horas [18000 seg])
+            // Calcular bono (Lunes a Viernes y >= 5 horas [18000 seg])
             $carbonFecha = Carbon::parse($fechaStr);
             if ($carbonFecha->isWeekday() && $tiempoNeto >= 18000) {
                 $bonoDia = $bonusAmount;
@@ -102,7 +110,8 @@ class AttendanceService
                 'pago_horas' => '$' . number_format($pagoHoras, 2, '.', ','),
                 'bono' => '$' . number_format($bonoDia, 2, '.', ','),
                 'total' => '$' . number_format($totalDia, 2, '.', ','),
-                'requiere_revision' => $tieneImpares
+                'requiere_revision' => $tieneImpares,
+                'detalles_marcas' => implode(', ', $marcasImprimir)
             ];
 
             // Acumular totales globales del período
@@ -128,11 +137,13 @@ class AttendanceService
     }
 
     /**
-     * Formatea segundos a la cadena legible (HHh MMm SSs) armada en tu script.
+     * Formatea segundos a la cadena legible (HHh MMm SSs).
      */
     private function formatearSegundos(int $segundos): string
     {
-        if ($segundos <= 0) return "00h 00m 00s";
+        // Forzamos que nunca procese negativos en la renderización de texto
+        $segundos = max(0, $segundos);
+        
         $h = intdiv($segundos, 3600);
         $m = intdiv($segundos % 3600, 60);
         $s = $segundos % 60;
