@@ -28,6 +28,15 @@ use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
 use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
 use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
 
+use App\Http\Controllers\TimeEntryController;
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // ... tus otras rutas ...
+    
+    // Ruta para procesar la asistencia del checador
+    Route::post('/control-horas/consultar', [TimeEntryController::class, 'consultarAsistencia'])->name('control-horas.consultar');
+});
+
 Route::get('/', function () {
     return view('welcome');
 });
