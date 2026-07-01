@@ -31,7 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
-        'employee_id', // 👈 Agregado aquí para permitir guardar el ID del checador
+        'employee_id', // Permitir guardar el ID vinculado al checador Hikvision
     ];
 
     /**
@@ -94,19 +94,26 @@ class User extends Authenticatable
         return (int) $this->role_id === 1 || (optional($this->role)->name === 'Administrador');
     }
 
-    // Obtener el perfil organizacional activo actualmente
+    /**
+     * Obtener el perfil organizacional activo actualmente.
+     * Permite acceder a 'hourly_rate' y 'food_allowance'.
+     */
     public function activeOrganizationalProfile()
     {
         return $this->hasOne(UserOrganizationalProfile::class, 'user_id')->where('is_active', true);
     }
 
-    // Historial completo de puestos y áreas del usuario (SCD Tipo 2)
+    /**
+     * Historial completo de puestos y áreas del usuario (SCD Tipo 2)
+     */
     public function organizationalProfiles()
     {
         return $this->hasMany(UserOrganizationalProfile::class, 'user_id');
     }
 
-    // Todas las cabeceras de tiempo que ha registrado este colaborador
+    /**
+     * Todas las cabeceras de tiempo que ha registrado este colaborador
+     */
     public function timeEntries()
     {
         return $this->hasMany(TimeEntry::class, 'user_id');

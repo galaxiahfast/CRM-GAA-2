@@ -59,9 +59,20 @@
         <button @click="showErrorBanner = false" class="text-red-700 hover:text-red-900 font-bold text-sm">✕</button>
     </div>
 
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-gray-800">Supervisión de horas</h1>
-        <a href="{{ route('time.admin.corrections') }}" class="text-sm text-blue-700 underline">Correcciones</a>
+    {{-- Cabecera del Dashboard con enlaces de navegación --}}
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-800">Supervisión de horas</h1>
+            <p class="text-xs text-slate-500">Métricas, reportes ejecutivos y distribución de tiempos de actividades.</p>
+        </div>
+        <div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+            <a href="{{ route('time.admin.corrections') }}" class="px-3 py-1 text-xs font-semibold text-slate-700 bg-white rounded-md shadow-sm border border-slate-200 hover:text-blue-600 transition">
+                📝 Corrección de Actividades
+            </a>
+            <a href="{{ route('time.admin.attendance') }}" class="px-3 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm transition">
+                ⏰ Corrección Horas (Checador)
+            </a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch w-full">

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\UserInterns;
+use App\Models\UserOrganizationalProfile;
 use Illuminate\Support\Facades\DB;
 
 class Form extends Component
@@ -21,6 +22,11 @@ class Form extends Component
     public $role_id = '';
     public $isAuxiliar = false;
     public $mode = 'create';
+
+    // 🆕 Nuevas propiedades para enlazar el checador y la nómina
+    public $employee_id;
+    public $hourly_rate = 25.00;     // Por defecto $25 pesos por hora
+    public $food_allowance = 50.00;  // Por defecto $50 pesos de comida
 
     protected $messages = [
         'name.required' => 'El nombre es obligatorio.',
@@ -39,6 +45,12 @@ class Form extends Component
         'password.confirmed' => 'La confirmación de la contraseña no coincide.',
         'role_id.required' => 'El rol es obligatorio.',
         'role_id.exists' => 'El rol seleccionado no es válido.',
+        // Mensajes para los nuevos campos
+        'employee_id.unique' => 'Este ID de checador ya está asignado a otro usuario.',
+        'hourly_rate.numeric' => 'El precio por hora debe ser un número válido.',
+        'hourly_rate.min' => 'El precio por hora no puede ser menor a 0.',
+        'food_allowance.numeric' => 'El apoyo de comida debe ser un número válido.',
+        'food_allowance.min' => 'El apoyo de comida no puede ser menor a 0.',
     ];
 
     public function mount($user = null, $isAuxiliar = false)
@@ -52,7 +64,15 @@ class Form extends Component
             $this->last_name = $user->last_name;
             $this->email = $user->email;
             $this->role_id = $user->role_id;
+            $this->employee_id = $user->employee_id; // 👈 Carga el ID de Hikvision
             $this->mode = 'edit';
+
+            // 👈 Carga los valores monetarios actuales del perfil activo
+            $profile = $user->activeOrganizationalProfile;
+            if ($profile) {
+                $this->hourly_rate = $profile->hourly_rate;
+                $this->food_allowance = $profile->food_allowance;
+            }
         }
         
         $this->roles = Role::all();
@@ -79,36 +99,71 @@ class Form extends Component
             'password_confirmation' => 'bail|required_with:password|same:password',
             'email' => 'bail|required|email|max:255|unique:users,email' . ($this->user ? ',' . $this->user->id : ''),
             'role_id' => 'bail|required|exists:roles,id',
+            // 🆕 Reglas de validación añadidas
+            'employee_id' => 'nullable|string|max:50|unique:users,employee_id' . ($this->user ? ',' . $this->user->id : ''),
+            'hourly_rate' => 'required|numeric|min:0',
+            'food_allowance' => 'required|numeric|min:0',
         ];
+
         if ($this->mode === 'edit') {
             if (!$this->password) {
                 unset($rules['password']);
                 unset($rules['password_confirmation']);
             }
         }
-            $data = $this->validate($rules);
-        
-        try {
-            if ($this->mode === 'create') {
-                $data['password'] = bcrypt($this->password);
-                $user = User::create($data);
-                if ($data['role_id'] == 4) {
-                    UserInterns::create([
-                        'intern_id' => $user->id,
-                        'created_by' => auth()->id()
-                    ]);
-                }
-            } elseif ($this->mode === 'edit' && $this->user) {
-                if ($this->password) {
-                    $data['password'] = bcrypt($this->password);
-                } else {
-                    unset($data['password']);
-                }
-                $this->user->update($data);
-            }
-            session()->flash('success', 'Usuario guardado exitosamente.');
 
+        $data = $this->validate($rules);
+        
+        // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
+        $hourlyRate = $this->hourly_rate;
+        $foodAllowance = $this->food_allowance;
+        unset($data['hourly_rate'], $data['food_allowance']);
+
+        try {
+            DB::transaction(function () use ($data, $hourlyRate, $foodAllowance) {
+                if ($this->mode === 'create') {
+                    $data['password'] = bcrypt($this->password);
+                    $user = User::create($data);
+
+                    if ($data['role_id'] == 4) {
+                        UserInterns::create([
+                            'intern_id' => $user->id,
+                            'created_by' => auth()->id()
+                        ]);
+                    }
+
+                    // 🆕 Genera el perfil organizacional activo con sus montos por defecto
+                    UserOrganizationalProfile::create([
+                        'user_id' => $user->id,
+                        'job_position_id' => ($data['role_id'] == 4) ? 1 : 2, // 1 para Auxiliar/Intern, 2 para otros
+                        'hourly_rate' => $hourlyRate,
+                        'food_allowance' => $foodAllowance,
+                        'is_active' => true
+                    ]);
+
+                } elseif ($this->mode === 'edit' && $this->user) {
+                    if ($this->password) {
+                        $data['password'] = bcrypt($this->password);
+                    } else {
+                        unset($data['password']);
+                    }
+                    
+                    $this->user->update($data);
+
+                    // 🆕 Actualiza o crea el perfil organizacional si no existía uno previo
+                    $this->user->activeOrganizationalProfile()->updateOrCreate(
+                        ['user_id' => $this->user->id, 'is_active' => true],
+                        [
+                            'hourly_rate' => $hourlyRate,
+                            'food_allowance' => $foodAllowance
+                        ]
+                    );
+                }
+            });
+
+            session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
             return redirect()->to("/administracion/" . ($this->isAuxiliar ? 'interns' : 'users'));
+
         } catch (\Exception $e) {
             session()->flash('error', 'Ocurrió un error al guardar el usuario: ' . $e->getMessage());
             return;
@@ -119,6 +174,7 @@ class Form extends Component
     {
         return redirect()->to('/administracion/users');
     }
+
     public function render()
     {
         return view('livewire.administracion.users.form');

@@ -27,6 +27,7 @@ use App\Livewire\TimeControl\MyProductivity;
 use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
 use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
 use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
+use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente importado para el checador
 
 use App\Http\Controllers\TimeEntryController;
 
@@ -137,6 +138,9 @@ Route::middleware([
     Route::middleware('can:view-time-admin')->group(function () {
         Route::get('/time/admin', AdminTimeDashboard::class)->name('time.admin.dashboard');
         Route::get('/time/admin/profiles', OrganizationalProfiles::class)->name('time.admin.profiles');
+        
+        // 🆕 Nueva Vista Registrada: Control de Asistencia Biométrico (Checador)
+        Route::get('/time/admin/attendance', AttendanceManagement::class)->name('time.admin.attendance');
     });
     
     Route::get('/time/admin/corrections', CorrectTimeEntry::class)

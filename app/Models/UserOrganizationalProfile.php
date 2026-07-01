@@ -10,6 +10,8 @@ class UserOrganizationalProfile extends Model
         'user_id',
         'job_position_id',
         'physical_area_id',
+        'hourly_rate',       // 👈 Agregado: Tarifa por hora configurable
+        'food_allowance',    // 👈 Agregado: Apoyo de comida diario configurable
         'valid_from',
         'valid_to',
         'is_active'
@@ -19,6 +21,8 @@ class UserOrganizationalProfile extends Model
         'valid_from' => 'date',
         'valid_to' => 'date',
         'is_active' => 'boolean',
+        'hourly_rate' => 'decimal:2',    // 👈 Agregado para formatear siempre a dos decimales
+        'food_allowance' => 'decimal:2', // 👈 Agregado para formatear siempre a dos decimales
     ];
 
     public function user()
