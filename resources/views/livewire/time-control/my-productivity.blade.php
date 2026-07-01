@@ -64,34 +64,25 @@
 
     <div class="bg-white rounded shadow p-6 border border-gray-100">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Control de Asistencia Biométrico (Checador)</h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ID Colaborador / Huella</label>
-                @if(auth()->user()->role_id == 1)
-                    <input type="text" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}" placeholder="Ej: 101" 
-                        class="w-full border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                @else
-                    <input type="text" id="employee_id" value="{{ auth()->user()->employee_id }}" readonly
-                        class="w-full bg-gray-100 border-gray-300 rounded shadow-sm text-gray-500 text-sm cursor-not-allowed">
-                @endif
+                <input type="text" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}" readonly
+                    class="w-full bg-gray-100 border-gray-300 rounded shadow-sm text-gray-500 text-sm cursor-not-allowed">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Fecha Inicio</label>
-                <input type="date" id="fecha_inicio" value="{{ date('Y-m-d', strtotime('-7 days')) }}" 
+                <input type="date" id="fecha_inicio" value="{{ date('Y-m-d', strtotime('-7 days')) }}"
                     class="w-full border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Fecha Fin</label>
-                <input type="date" id="fecha_fin" value="{{ date('Y-m-d') }}" 
+                <input type="date" id="fecha_fin" value="{{ date('Y-m-d') }}"
                     class="w-full border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
             </div>
-            
-            <input type="hidden" id="pago_por_hora" value="100.00">
-            <input type="hidden" id="bono_diario" value="50.00">
-
             <div>
-                <button type="button" onclick="revisarHorasChecador()" 
+                <button type="button" onclick="revisarHorasChecador()"
                     class="w-full bg-gray-900 hover:bg-black text-white font-medium px-5 py-2 rounded shadow transition-colors text-sm">
                     Revisar Horas
                 </button>
@@ -99,6 +90,17 @@
         </div>
 
         <div id="panel_resultados_checador" class="hidden mt-6 border border-gray-100 rounded-lg">
+            <div id="checador_export_bar" class="hidden p-4 border-b border-gray-100 bg-gray-50">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm text-gray-500 mr-1">Exportar reporte del periodo:</span>
+                    @foreach (['csv', 'pdf', 'txt'] as $format)
+                        <button type="button" onclick="exportarChecador('{{ $format }}')"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm rounded {{ $format === 'csv' ? 'bg-emerald-600 hover:bg-emerald-700' : ($format === 'pdf' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700') }}">
+                            {{ strtoupper($format) }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
@@ -138,20 +140,16 @@ function revisarHorasChecador() {
     const employeeId = document.getElementById('employee_id').value;
     const fechaInicio = document.getElementById('fecha_inicio').value;
     const fechaFin = document.getElementById('fecha_fin').value;
-    const pago = document.getElementById('pago_por_hora').value;
-    const bono = document.getElementById('bono_diario').value;
 
     if (!employeeId || !fechaInicio || !fechaFin) {
-        alert('Por favor introduce el ID del colaborador y el rango de fechas.');
+        alert('Tu usuario no tiene ID de checador asignado o faltan fechas.');
         return;
     }
 
     const payload = {
         employee_id: employeeId,
-        pago: parseFloat(pago),
-        bono: parseFloat(bono),
         inicio: fechaInicio,
-        fin: fechaFin
+        fin: fechaFin,
     };
 
     fetch('{{ route("control-horas.consultar") }}', {
@@ -163,13 +161,16 @@ function revisarHorasChecador() {
         },
         body: JSON.stringify(payload)
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Error de servidor.');
-        return response.json();
+    .then(async response => {
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Error de servidor.');
+        }
+        return data;
     })
     .then(data => {
         const tbody = document.getElementById('tabla_checador_body');
-        tbody.innerHTML = ''; 
+        tbody.innerHTML = '';
 
         if (!data.resumen || data.resumen.length === 0) {
             tbody.innerHTML = `
@@ -178,14 +179,15 @@ function revisarHorasChecador() {
                         No hay marcas registradas en el dispositivo para este ID en las fechas seleccionadas.
                     </td>
                 </tr>`;
+            document.getElementById('checador_export_bar').classList.add('hidden');
             document.getElementById('panel_resultados_checador').classList.remove('hidden');
             return;
         }
 
         data.resumen.forEach(item => {
             const tr = document.createElement('tr');
-            tr.className = item.requiere_revision 
-                ? 'bg-red-50/70 hover:bg-red-100/80 transition-colors' 
+            tr.className = item.requiere_revision
+                ? 'bg-red-50/70 hover:bg-red-100/80 transition-colors'
                 : 'hover:bg-gray-50 transition-colors';
 
             tr.innerHTML = `
@@ -197,8 +199,8 @@ function revisarHorasChecador() {
                 <td class="px-6 py-3.5 text-gray-600">${item.bono}</td>
                 <td class="px-6 py-3.5 font-semibold text-gray-800">${item.total}</td>
                 <td class="px-6 py-3.5">
-                    ${item.requiere_revision 
-                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">⚠️ Impar / Revisar</span>' 
+                    ${item.requiere_revision
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">⚠️ Impar / Revisar</span>'
                         : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Correcto</span>'
                     }
                 </td>
@@ -206,18 +208,37 @@ function revisarHorasChecador() {
             tbody.appendChild(tr);
         });
 
-        // Totales calculados en el pipeline del servicio
         document.getElementById('total_tiempo').innerText = data.totales_pie.tiempo;
         document.getElementById('total_decimal').innerText = data.totales_pie.decimal;
         document.getElementById('total_pago_h').innerText = data.totales_pie.pago_h;
         document.getElementById('total_bonos').innerText = data.totales_pie.bonos;
         document.getElementById('total_general').innerText = data.totales_pie.general;
 
+        document.getElementById('checador_export_bar').classList.remove('hidden');
         document.getElementById('panel_resultados_checador').classList.remove('hidden');
     })
     .catch(err => {
         console.error(err);
-        alert('Hubo un error al intentar consultar las marcas del checador.');
+        alert(err.message || 'Hubo un error al intentar consultar las marcas del checador.');
     });
+}
+
+function exportarChecador(format) {
+    const employeeId = document.getElementById('employee_id').value;
+    const fechaInicio = document.getElementById('fecha_inicio').value;
+    const fechaFin = document.getElementById('fecha_fin').value;
+
+    if (!employeeId || !fechaInicio || !fechaFin) {
+        alert('No hay datos suficientes para exportar.');
+        return;
+    }
+
+    const params = new URLSearchParams({
+        employee_id: employeeId,
+        inicio: fechaInicio,
+        fin: fechaFin,
+    });
+
+    window.location.href = `{{ url('/control-horas/export') }}/${format}?${params.toString()}`;
 }
 </script>

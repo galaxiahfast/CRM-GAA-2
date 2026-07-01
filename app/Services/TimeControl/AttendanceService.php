@@ -7,146 +7,149 @@ use Illuminate\Support\Collection;
 
 class AttendanceService
 {
+    public function __construct(
+        private AttendanceSettingsService $settingsService,
+    ) {}
+
     /**
-     * Procesa una colección de registros crudos de asistencia agrupándolos por día
-     * y calculando las horas trabajadas mediante pares Entrada/Salida.
+     * Procesa registros crudos de asistencia agrupados por día.
      *
-     * @param Collection $records Registros de la BD filtrados por empleado y fechas
-     * @param float $hourlyRate Pago por hora configurado
-     * @param float $bonusAmount Bono diario aplicable
-     * @return array
+     * @param  array{hourly_rate: float, bonus_amount: float, day_overrides: array<string, array{hourly_rate: float, bonus_amount: float, modified_individual: bool}>}  $settings
      */
-    public function processPayroll(Collection $records, float $hourlyRate, float $bonusAmount): array
+    public function processPayroll(Collection $records, array $settings): array
     {
         $diasDict = [];
         $detalles = [];
 
-        // 1. Filtrar y agrupar marcas por fecha (Y-m-d)
         foreach ($records as $reg) {
             $detalles[] = [
                 'fh' => $reg->auth_datetime,
                 'id' => $reg->employee_id,
                 'nombre' => $reg->person_name,
-                'direction' => $reg->direction
+                'direction' => $reg->direction,
             ];
 
             $dateStr = $reg->auth_date;
-            
-            // Forzamos el parseo limpio del timestamp completo
             $timestamp = Carbon::parse($reg->auth_datetime);
 
             $diasDict[$dateStr][] = [
                 'objeto' => $timestamp,
-                'hora_txt' => $timestamp->format('H:i:s')
+                'hora_txt' => $timestamp->format('H:i:s'),
             ];
         }
 
-        // Ordenar las fechas de forma descendente (último día primero)
         krsort($diasDict);
 
         $resumenNomina = [];
         $totalSegundosPeriodo = 0;
         $totalDecimalPeriodo = 0.0;
+        $totalPagoBasePeriodo = 0.0;
         $totalBonosPeriodo = 0.0;
-        $totalAcumuladoSoloHoras = 0.0;
-        $totalAcumuladoConBono = 0.0;
+        $totalGeneralPeriodo = 0.0;
 
-        // 2. Procesar día por día
         foreach ($diasDict as $fechaStr => $items) {
-            
-            // GARANTÍA DE ORDEN: Aseguramos el orden cronológico ascendente del día (de la mañana a la noche)
-            usort($items, function ($a, $b) {
-                return $a['objeto']->timestamp <=> $b['objeto']->timestamp;
-            });
+            usort($items, fn ($a, $b) => $a['objeto']->timestamp <=> $b['objeto']->timestamp);
 
-            // Extraer las marcas formateadas para la vista y los objetos para el cálculo
             $marcasImprimir = array_column($items, 'hora_txt');
             $marcaciones = array_column($items, 'objeto');
-
             $cantidadMarcaciones = count($marcaciones);
+            $tieneImpares = $cantidadMarcaciones % 2 !== 0;
+            $esCorrecto = ! $tieneImpares && $cantidadMarcaciones > 0;
+
             $tiempoNeto = 0;
-            $tieneImpares = false;
 
-            if ($cantidadMarcaciones > 0) {
-                // Si es impar, ignoramos el último registro huérfano para el cálculo numérico
-                if ($cantidadMarcaciones % 2 !== 0) {
-                    $tieneImpares = true;
-                    $cantidadMarcaciones = $cantidadMarcaciones - 1;
-                }
-
-                // Procesar estrictamente por parejas consecutivas (0-1, 2-3, 4-5...)
+            if ($esCorrecto) {
                 for ($i = 0; $i < $cantidadMarcaciones; $i += 2) {
                     $entrada = $marcaciones[$i];
                     $salida = $marcaciones[$i + 1];
-                    
+
                     if ($salida->greaterThan($entrada)) {
-                        // Forzamos la diferencia absoluta en segundos de forma explícita
                         $tiempoNeto += abs($salida->diffInSeconds($entrada));
                     }
                 }
             }
 
-            // Convertir a horas decimales de forma positiva garantizada
-            $horasDecimal = max(0.0, $tiempoNeto / 3600);
-            
-            // Calcular pago base del día
-            $pagoHoras = $horasDecimal * $hourlyRate;
+            $horasDecimal = $esCorrecto ? round($tiempoNeto / 3600, 2) : 0.0;
 
-            // Calcular bono (Lunes a Viernes y >= 5 horas [18000 seg])
-            $carbonFecha = Carbon::parse($fechaStr);
-            if ($carbonFecha->isWeekday() && $tiempoNeto >= 18000) {
-                $bonoDia = $bonusAmount;
-            } else {
-                $bonoDia = 0.0;
-            }
+            $rates = $this->settingsService->resolveForDay($settings, $fechaStr, $esCorrecto);
+            $hourlyRate = $rates['hourly_rate'];
+            $bonoDia = $rates['bonus_amount'];
 
-            $totalDia = $pagoHoras + $bonoDia;
+            $pagoBase = $esCorrecto ? round($horasDecimal * $hourlyRate, 2) : 0.0;
+            $totalDia = $esCorrecto ? round($pagoBase + $bonoDia, 2) : 0.0;
 
-            // Guardar el resumen formateado de la jornada
             $resumenNomina[] = [
                 'fecha' => $fechaStr,
                 'neto' => $this->formatearSegundos($tiempoNeto),
                 'horas_decimal' => number_format($horasDecimal, 2, '.', ''),
-                'pago_horas' => '$' . number_format($pagoHoras, 2, '.', ','),
-                'bono' => '$' . number_format($bonoDia, 2, '.', ','),
-                'total' => '$' . number_format($totalDia, 2, '.', ','),
+                'pago_horas' => '$'.number_format($pagoBase, 2, '.', ','),
+                'bono' => '$'.number_format($bonoDia, 2, '.', ','),
+                'total' => '$'.number_format($totalDia, 2, '.', ','),
                 'requiere_revision' => $tieneImpares,
-                'detalles_marcas' => implode(', ', $marcasImprimir)
+                'estado' => $tieneImpares ? 'Impar / Revisar' : 'Correcto',
+                'modified_individual' => $rates['modified_individual'],
+                'hourly_rate' => $hourlyRate,
+                'detalles_marcas' => implode(', ', $marcasImprimir),
+                'tiempo_segundos' => $tiempoNeto,
+                'pago_base_raw' => $pagoBase,
+                'bono_raw' => $bonoDia,
+                'total_raw' => $totalDia,
             ];
 
-            // Acumular totales globales del período
-            $totalSegundosPeriodo += $tiempoNeto;
-            $totalDecimalPeriodo += $horasDecimal;
-            $totalBonosPeriodo += $bonoDia;
-            $totalAcumuladoSoloHoras += $pagoHoras;
-            $totalAcumuladoConBono += $totalDia;
+            if ($esCorrecto) {
+                $totalSegundosPeriodo += $tiempoNeto;
+                $totalDecimalPeriodo += $horasDecimal;
+                $totalPagoBasePeriodo += $pagoBase;
+                $totalBonosPeriodo += $bonoDia;
+                $totalGeneralPeriodo += $totalDia;
+            }
         }
 
         return [
             'detalles' => $detalles,
             'resumen' => $resumenNomina,
+            'settings' => [
+                'hourly_rate' => $settings['hourly_rate'],
+                'bonus_amount' => $settings['bonus_amount'],
+            ],
             'totales_pie' => [
                 'tiempo' => $this->formatearSegundos($totalSegundosPeriodo),
                 'decimal' => number_format($totalDecimalPeriodo, 2, '.', ''),
-                'pago_h' => '$' . number_format($totalAcumuladoSoloHoras, 2, '.', ','),
-                'bonos' => '$' . number_format($totalBonosPeriodo, 2, '.', ','),
-                'general' => '$' . number_format($totalAcumuladoConBono, 2, '.', ',')
+                'pago_h' => '$'.number_format($totalPagoBasePeriodo, 2, '.', ','),
+                'bonos' => '$'.number_format($totalBonosPeriodo, 2, '.', ','),
+                'general' => '$'.number_format($totalGeneralPeriodo, 2, '.', ','),
             ],
-            'total_general' => '$' . number_format($totalAcumuladoConBono, 2, '.', ',')
+            'total_general' => '$'.number_format($totalGeneralPeriodo, 2, '.', ','),
         ];
     }
 
     /**
-     * Formatea segundos a la cadena legible (HHh MMm SSs).
+     * Obtiene registros normalizados de control_de_horas para un empleado y rango.
      */
+    public function fetchRecords(string $employeeId, string $from, string $to): Collection
+    {
+        return \Illuminate\Support\Facades\DB::table('control_de_horas')
+            ->where('employeeID', $employeeId)
+            ->whereBetween('authDate', [$from, $to])
+            ->orderBy('authDateTime', 'asc')
+            ->get()
+            ->map(fn ($reg) => (object) [
+                'auth_datetime' => $reg->authDateTime,
+                'employee_id' => $reg->employeeID,
+                'person_name' => $reg->personName,
+                'direction' => $reg->direction ?? null,
+                'auth_date' => $reg->authDate,
+            ]);
+    }
+
     private function formatearSegundos(int $segundos): string
     {
-        // Forzamos que nunca procese negativos en la renderización de texto
         $segundos = max(0, $segundos);
-        
+
         $h = intdiv($segundos, 3600);
         $m = intdiv($segundos % 3600, 60);
         $s = $segundos % 60;
+
         return sprintf('%02dh %02dm %02ds', $h, $m, $s);
     }
 }

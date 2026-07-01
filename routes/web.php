@@ -34,8 +34,11 @@ use App\Http\Controllers\TimeEntryController;
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... tus otras rutas ...
     
-    // Ruta para procesar la asistencia del checador
+    // Rutas del módulo checador (asistencia biométrica)
     Route::post('/control-horas/consultar', [TimeEntryController::class, 'consultarAsistencia'])->name('control-horas.consultar');
+    Route::get('/control-horas/export/{format}', [TimeEntryController::class, 'exportarAsistencia'])->name('control-horas.export');
+    Route::post('/control-horas/tarifas-generales', [TimeEntryController::class, 'guardarTarifasGenerales'])->name('control-horas.tarifas-generales');
+    Route::post('/control-horas/ajuste-dia', [TimeEntryController::class, 'guardarAjusteDia'])->name('control-horas.ajuste-dia');
 });
 
 Route::get('/', function () {
