@@ -31,6 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'employee_id', // 👈 Agregado aquí para permitir guardar el ID del checador
     ];
 
     /**

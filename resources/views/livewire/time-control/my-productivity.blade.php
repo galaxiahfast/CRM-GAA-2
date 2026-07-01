@@ -68,8 +68,13 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">ID Colaborador / Huella</label>
-                <input type="text" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}" placeholder="Ej: 101" 
-                    class="w-full border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                @if(auth()->user()->role_id == 1)
+                    <input type="text" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}" placeholder="Ej: 101" 
+                        class="w-full border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                @else
+                    <input type="text" id="employee_id" value="{{ auth()->user()->employee_id }}" readonly
+                        class="w-full bg-gray-100 border-gray-300 rounded shadow-sm text-gray-500 text-sm cursor-not-allowed">
+                @endif
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Fecha Inicio</label>

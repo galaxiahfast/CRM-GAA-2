@@ -65,15 +65,29 @@ class TimeEntryController extends Controller
             'fin'         => ['required', 'date'],
         ]);
 
+        // 🔒 CAPA DE SEGURIDAD AUTOMÁTICA
+        $usuarioLogueado = $request->user();
+
+        // Si NO es Administrador (role_id != 1), sobreescribimos el ID con el Suyo propio obligatoriamente
+        if ($usuarioLogueado->role_id != 1) {
+            $data['employee_id'] = $usuarioLogueado->employee_id;
+            
+            // Si el usuario ni siquiera tiene configurado un employee_id en su cuenta, lanzamos error
+            if (empty($data['employee_id'])) {
+                return response()->json([
+                    'message' => 'Tu usuario no tiene un ID de checador asignado. Contacta al administrador.'
+                ], 403);
+            }
+        }
+
         try {
-            // Se mantienen los logs crudos sincronizados desde la tabla que sí funciona
+            // Se obtienen los logs crudos filtrados con el ID verificado de forma segura
             $registros = DB::table('control_de_horas')
                 ->where('employeeID', $data['employee_id'])
                 ->whereBetween('authDate', [$data['inicio'], $data['fin']])
                 ->orderBy('authDateTime', 'asc')
                 ->get();
 
-            // Mapeo interno manteniendo las llaves exactas que ya tienes funcionando
             $registrosNormalizados = $registros->map(function ($reg) {
                 return (object) [
                     'auth_datetime' => $reg->authDateTime,
@@ -84,7 +98,6 @@ class TimeEntryController extends Controller
                 ];
             });
 
-            // Procesamiento de nómina y emparejamiento de marcas IN/OUT mediante el servicio
             $resultado = $this->attendanceService->processPayroll(
                 $registrosNormalizados,
                 (float) $data['pago'],
