@@ -11,17 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('device_attendance_logs', function (Blueprint $table) {
-            $table->string('employee_id', 50);
-            $table->string('person_name', 255)->nullable();
-            $table->dateTime('auth_datetime');
-            $table->date('auth_date')->nullable();
-            $table->time('auth_time')->nullable();
+        Schema::create('control_de_horas', function (Blueprint $table) {
+            // Cambiados a CamelCase para hacer espejo exacto con tu MySQL física
+            $table->string('employeeID', 50); 
+            $table->string('personName', 255)->nullable();
+            $table->dateTime('authDateTime');
+            $table->date('authDate')->nullable();
+            $table->time('authTime')->nullable();
             $table->string('direction', 10)->nullable(); // IN o OUT
-            $table->string('device_name', 255)->nullable();
+            $table->string('deviceName', 255)->nullable();
 
-            // Llave primaria compuesta para evitar registros duplicados
-            $table->primary(['employee_id', 'auth_datetime']);
+            // Llave primaria compuesta usando los nombres de columna corregidos
+            $table->primary(['employeeID', 'authDateTime']);
         });
     }
 
@@ -30,6 +31,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('device_attendance_logs');
+        // Corregido para que borre la tabla correcta ('control_de_horas') en caso de un rollback
+        Schema::dropIfExists('control_de_horas');
     }
 };
