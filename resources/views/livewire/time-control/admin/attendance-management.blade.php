@@ -37,6 +37,7 @@
             }
             this.showErrorBanner = false;
             this.open = false;
+            // 💡 Forzamos al componente a renderizar con el ID de usuario actualizado
             $wire.$refresh();
         }
      }">
@@ -60,7 +61,7 @@
         </div>
         <div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
             <a href="{{ route('time.admin.dashboard') }}" class="px-3 py-1 text-xs font-semibold text-slate-700 bg-white rounded-md shadow-sm border border-slate-200 hover:text-blue-600 transition">
-                📊 Supervisión General
+                📊 Supervision General
             </a>
             <a href="{{ route('time.admin.corrections') }}" class="px-3 py-1 text-xs font-semibold text-slate-700 bg-white rounded-md shadow-sm border border-slate-200 hover:text-blue-600 transition">
                 📝 Actividades
@@ -77,7 +78,7 @@
                 
                 <div x-show="open" class="absolute z-50 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto divide-y divide-slate-50" x-cloak>
                     <template x-for="user in filteredUsers" :key="user.id">
-                        <button type="button" @click="localUserId = user.id; search = user.full_name; open = false; showErrorBanner = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 font-medium" x-text="user.full_name"></button>
+                        <button type="button" @click="localUserId = user.id; search = user.full_name; open = false; showErrorBanner = false; $wire.set('userId', user.id)" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 font-medium" x-text="user.full_name"></button>
                     </template>
                     <div x-show="filteredUsers.length === 0" class="px-4 py-3 text-sm text-red-600 font-medium bg-red-50">No se encuentra el colaborador</div>
                 </div>
@@ -101,7 +102,7 @@
         </div>
     </div>
 
-    {{-- Tabla Basada en tu Diseño de Imagen Histórica (image_2749e1.png) --}}
+    {{-- Tabla Basada en tu Diseño de Imagen Histórica --}}
     <div class="bg-white border border-slate-100 rounded-xl shadow-md overflow-hidden">
         <table class="w-full text-sm text-left border-collapse">
             <thead>
@@ -133,7 +134,7 @@
                         <td class="p-4 text-right text-green-600 font-semibold">${{ number_format($record->bonus, 2) }}</td>
                         <td class="p-4 text-right font-bold text-slate-900 pr-6">${{ number_format(($record->decimal_hours * $record->hourly_rate) + $record->food_allowance + $record->bonus, 2) }}</td>
                         <td class="p-4 text-center">
-                            <button wire:click="editRow({{ $record->id }})" class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs px-2.5 py-1 rounded-md transition font-semibold border border-slate-200">
+                            <button type="button" wire:click="editRow({{ $record->id }})" class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs px-2.5 py-1 rounded-md transition font-semibold border border-slate-200 shadow-sm">
                                 Ajustar
                             </button>
                         </td>
@@ -146,4 +147,46 @@
             </tbody>
         </table>
     </div>
+
+    {{-- 🆕 MODAL DE AJUSTES INTEGRADO --}}
+    @if($showAttendanceModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+                <div class="bg-slate-50 border-b border-slate-100 p-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Ajustar Jornada Laboral</h3>
+                        <p class="text-xs text-slate-500" x-text="'Colaborador: ' + '{{ $selectedEmployeeName }}'"></p>
+                    </div>
+                    <button type="button" wire:click="closeModal" class="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+                </div>
+                
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Horas Decimales</label>
+                        <input type="number" step="0.01" wire:model="modalDecimalHours" class="w-full text-sm border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Precio por Hora ($)</label>
+                        <input type="number" step="0.01" wire:model="modalHourlyRate" class="w-full text-sm border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Apoyo Comida ($)</label>
+                        <select wire:model="modalFoodAllowance" class="w-full text-sm border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="0">0.00</option>
+                            <option value="50">50.00</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Bono Extra ($)</label>
+                        <input type="number" step="0.01" wire:model="modalExtraBonus" class="w-full text-sm border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-4 py-3 border-t border-slate-100 flex justify-end gap-2">
+                    <button type="button" wire:click="closeModal" class="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg bg-white hover:bg-slate-50">Cancelar</button>
+                    <button type="button" wire:click="saveAdjustment" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
