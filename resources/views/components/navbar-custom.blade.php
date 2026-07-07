@@ -105,7 +105,9 @@
     <!-- ============================================================ -->
     <aside
         id="logo-sidebar"
-        class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)] flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-500 ease-in-out"
+        class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)]
+            flex flex-col bg-white border-r border-gray-200 shadow-sm
+            overflow-hidden"
     >
         
         <!-- Contenedor del menú -->

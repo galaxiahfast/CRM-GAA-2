@@ -48,7 +48,7 @@
         <!-- CONTENIDO -->
         <main
             id="main-content"
-            class="transition-all duration-500 ease-in-out pt-[90px] p-4"
+            class="pt-[90px] p-4"
         >
 
             <div class="p-4">
