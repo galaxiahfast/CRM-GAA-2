@@ -1,160 +1,147 @@
-<!-- BARRA SUPERIOR: z-[70] -->
-<nav class="fixed top-0 z-[70] w-full bg-matisse-700 border-b border-gray-200 h-[80px]">
-    <div class="px-3 py-3 lg:px-5 lg:pl-3 h-full flex items-center">
-        <div class="flex items-center justify-between w-full">
-            <div class="flex items-center justify-start rtl:justify-end">
-                <!-- Logo sin el botón de hamburguesa -->
-                <div class="flex items-center">
-                    <x-application-logo wire:ignore class="block h-12 w-12" />
-
-                    <span class="self-center text-xl font-semibold hidden sm:inline whitespace-nowrap text-white">
-                        Gonzalez</span>
-                </div>
+<!-- BARRA SUPERIOR: z-[90] para que esté ENCIMA del menú lateral -->
+<nav id="main-nav" class="fixed top-0 z-[90] w-full bg-[#1a3a6b] border-b border-gray-200 py-[15px] px-[15px] flex items-center">
+    <div class="flex items-center justify-between w-full">
+        <div class="flex items-center justify-start rtl:justify-end">
+            <!-- Texto ahora en la barra superior -->
+            <div class="flex flex-col leading-[2]">
+                <span class="text-[15px] font-medium text-white">González Alonzo y</span>
+                <span class="text-[15px] font-medium text-white pl-[72px]">Asociados S.C.P.</span>
             </div>
-            
-            <!-- AVATAR -->
-            <div class="flex items-center">
-                <div class="flex items-center ms-3">
-                    <div class="flex items-center pr-4">
-                        <!-- Account Management -->
-                        <x-dropdown align="right" width="48">
-                            <x-slot name="content">
-                                <div class="px-4 py-3 text-sm text-gray-900">
-                                    <div class="font-bold truncate">{{ Auth::user()->name }}</div>
-                                    <div class="font-normal truncate">{{ Auth::user()->email }}</div>
-                                </div>
+        </div>
+        
+        <div class="flex items-center gap-[15px]">
+            <!-- Icono de Notificaciones (Campana) dentro de cuadrado -->
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" type="button"
+                    class="flex items-center justify-center text-white transition-colors duration-200 focus:outline-none relative p-[10px] rounded-lg border border-white/60">
+                    <svg class="w-[20px] h-[20px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+                </button>
 
-                                <x-dropdown-link href="{{ route('profile.show') }}">
-                                    {{ __('Profile') }}
-                                </x-dropdown-link>
-
-                                @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                                    <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                                        {{ __('API Tokens') }}
-                                    </x-dropdown-link>
-                                @endif
-
-                                <div class="border-t border-gray-200"></div>
-
-                                <!-- Authentication -->
-                                <form method="POST" action="{{ route('logout') }}" x-data>
-                                    @csrf
-
-                                    <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                                        {{ __('Log Out') }}
-                                    </x-dropdown-link>
-                                </form>
-                            </x-slot>
-                            <x-slot name="trigger">
-                                <button>
-                                    <div class="space-y-6">
-                                        <div>
-                                            <img class="w-10 h-10 p-1 rounded-full ring-2 ring-green-500"
-                                                src="{{ Auth::user()->profile_photo_url }}" alt="Avatar">
-                                        </div>
-                                    </div>
-                                </button>
-                            </x-slot>
-                        </x-dropdown>
+                <div x-show="open" @click.away="open = false"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-[100]"
+                    style="display: none;">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-700">Notificaciones</span>
+                    </div>
+                    <div class="px-4 py-8 text-center">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <p class="text-sm text-gray-500">No hay notificaciones</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- AVATAR circular -->
+            <div class="flex items-center">
+                <x-dropdown align="right" width="48">
+                    <x-slot name="content">
+                        <div class="px-4 py-3 text-sm text-gray-900">
+                            <div class="font-bold truncate">{{ Auth::user()->name }}</div>
+                            <div class="font-normal truncate">{{ Auth::user()->email }}</div>
+                        </div>
+
+                        <x-dropdown-link href="{{ route('profile.show') }}">
+                            {{ __('Profile') }}
+                        </x-dropdown-link>
+
+                        @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
+                            <x-dropdown-link href="{{ route('api-tokens.index') }}">
+                                {{ __('API Tokens') }}
+                            </x-dropdown-link>
+                        @endif
+
+                        <div class="border-t border-gray-200"></div>
+
+                        <form method="POST" action="{{ route('logout') }}" x-data>
+                            @csrf
+                            <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                {{ __('Log Out') }}
+                            </x-dropdown-link>
+                        </form>
+                    </x-slot>
+                    <x-slot name="trigger">
+                        <button class="flex items-center justify-center overflow-hidden p-[10px] rounded-lg border border-white/60 transition-colors duration-200">
+                            <div class="w-[20px] h-[20px] rounded-full flex items-center justify-center overflow-hidden">
+                                @if(Auth::user()->profile_photo_url)
+                                    <img class="w-full h-full object-cover"
+                                        src="{{ Auth::user()->profile_photo_url }}" alt="Avatar">
+                                @else
+                                    <span class="text-[10px] font-semibold text-white">
+                                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                    </span>
+                                @endif
+                            </div>
+                        </button>
+                    </x-slot>
+                </x-dropdown>
             </div>
         </div>
     </div>
 </nav>
 
-<!-- MENÚ LATERAL: z-[80] para que esté AL FRENTE de la barra superior -->
+<!-- MENÚ LATERAL: z-[80] para que esté DETRÁS de la barra superior -->
 <aside id="logo-sidebar"
-    class="fixed top-0 left-0 z-[80] w-auto h-screen flex flex-col transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0"
+    x-data="{ collapsed: false }"
+    :class="collapsed ? 'w-[60px]' : 'w-auto'"
+    class="fixed top-0 left-0 z-[80] h-screen flex flex-col transition-all duration-300 bg-white sm:translate-x-0"
     aria-label="Sidebar">
     
-    <!-- HEADER DEL MENÚ LATERAL: Logo + González Alonzo + Hamburguesa -->
-<div class="px-[15px] py-[20px] bg-white shrink-0">
-    <div class="flex items-center justify-between w-full">
-        <!-- Logo encerrado en cuadrado + Texto -->
-        <div class="flex items-center">
-            <div class="w-9 h-9 overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                <img src="{{ asset('img/static/logo-principal.png') }}" class="w-full h-full object-contain" alt="Logo" />
-            </div>
-            <div class="ml-[15px] text-black text-[15px] font-medium leading-[1.5]">
-                <div class="flex">
-                    <span>González</span>
-                    <span class="ml-1">Alonzo</span>
-                    <span class="ml-1">y</span>
-                </div>
-                <div class="flex">
-                    <span>Asociados</span>
-                    <span class="ml-1">S.C.P</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Botón Hamburguesa con formato de botón -->
-        <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar"
-            type="button"
-            class="inline-flex items-center justify-center p-[15px] text-gray-400 rounded-xl transition-all duration-200 bg-gray-50 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-200">
-            <span class="sr-only">Toggle sidebar</span>
-            <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path clip-rule="evenodd" fill-rule="evenodd"
-                    d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z">
-                </path>
-            </svg>
-        </button>
-    </div>
-</div>
-
-    <!-- Línea divisoria independiente -->
-    <div class="px-[15px]">
-        <div class="w-full h-[1px] bg-gray-200"></div>
-    </div>
-
     <!-- Contenedor del menú con scroll -->
-    <div class="flex-1 px-0 pt-[15px] pb-4 overflow-y-auto h-full overscroll-contain">
+    <div id="sidebar-container" class="flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain" style="padding-top: 0px;">
         
         <ul class="font-medium inline-block min-w-full m-0 p-0">
 
             <!-- ===== SECCIÓN: GENERAL ===== -->
-            <li class="pt-[15px] px-[15px] pb-0 m-0">
+            <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                 <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">General</span>
             </li>
 
             <!-- BOTÓN: Inicio -->
             <li class="pt-[15px] px-[15px] pb-0 m-0">
                 <a href="{{ route('dashboard') }}"
-                    class="flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                    :class="collapsed ? 'justify-center p-[15px]' : 'justify-start p-[15px]'"
+                    class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                     <svg class="w-5 h-5 transition-colors {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
                     </svg>
-                    <span class="ms-[15px] h-[15px] leading-none flex items-center">Inicio</span>
+                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Inicio</span>
                 </a>
             </li>
 
             <!-- ===== SECCIÓN: INFORMACIÓN ===== -->
-            <li class="pt-[15px] px-[15px] pb-0 m-0">
+            <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                 <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
             </li>
 
             <!-- BOTÓN: Administración -->
             <li class="pt-[15px] px-[15px] pb-0 m-0">
                 <a href="{{ route('administracion.index') }}"
-                    class="flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                    :class="collapsed ? 'justify-center p-[15px]' : 'justify-start p-[15px]'"
+                    class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                     <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                    <span class="ms-[15px] h-[15px] leading-none flex items-center">Administración</span>
+                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
                 </a>
             </li>
 
             <!-- BOTÓN: Clientes -->
             <li class="pt-[15px] px-[15px] pb-0 m-0">
                 <a href="{{ route('customers.index') }}"
-                    class="flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('customers.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                    :class="collapsed ? 'justify-center p-[15px]' : 'justify-start p-[15px]'"
+                    class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('customers.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                     <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('customers.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                    <span class="ms-[15px] h-[15px] leading-none flex items-center">Clientes</span>
+                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Clientes</span>
                 </a>
             </li>
 
             <!-- ===== SECCIÓN: ACTIVIDADES ===== -->
-            <li class="pt-[15px] px-[15px] pb-0 m-0">
+            <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                 <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Actividades</span>
             </li>
 
@@ -162,17 +149,19 @@
                 <!-- BOTÓN: Supervisión de horas -->
                 <li class="pt-[15px] px-[15px] pb-0 m-0">
                     <a href="{{ route('time.admin.dashboard') }}"
-                        class="flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        :class="collapsed ? 'justify-center p-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                         <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center">Supervisión de horas</span>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de horas</span>
                     </a>
                 </li>
                 <!-- BOTÓN: Perfiles organizacionales -->
                 <li class="pt-[15px] px-[15px] pb-0 m-0">
                     <a href="{{ route('time.admin.profiles') }}"
-                        class="flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.profiles') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        :class="collapsed ? 'justify-center p-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.profiles') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                         <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.profiles') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center">Perfiles organizacionales</span>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Perfiles organizacionales</span>
                     </a>
                 </li>
             @else
@@ -181,23 +170,20 @@
                     
                     <!-- Botón Padre principal -->
                     <button @click="openTimeControl = !openTimeControl" 
-                        class="flex items-center justify-between p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                        :class="collapsed ? 'justify-center p-[15px]' : 'justify-between p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                         
                         <div class="flex items-center">
-                            
                             <x-hugeicons-clock-01
                                 class="w-5 h-5 transition-colors {{ request()->routeIs('time') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center">Control de horas</span>
-
-                            <div class="ml-[15px] shrink-0">
-                                <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
-                                    :class="{ 'rotate-180': openTimeControl, 'rotate-0': !openTimeControl }"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control de Horas</span>
+                        </div>
+                        <div class="ml-[15px] shrink-0" :class="collapsed ? 'hidden' : 'block'">
+                            <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                                :class="{ 'rotate-180': openTimeControl, 'rotate-0': !openTimeControl }"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
                         </div>
                     </button>
 
@@ -209,6 +195,7 @@
                          x-transition:leave="transition ease-in duration-100"
                          x-transition:leave-start="opacity-100 translate-y-0"
                          x-transition:leave-end="opacity-0 -translate-y-2"
+                         :class="collapsed ? 'hidden' : 'block'"
                          class="relative mt-0 dynamic-sub-menu" 
                          style="display: none;">
                         
@@ -250,14 +237,14 @@
                                 </a>
                             </li>
 
-                            <!-- Sub-elemento: Dashboard -->
+                            <!-- Sub-elemento: Panel de Control -->
                             <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full">
                                 <a href="#" 
                                    class="group flex items-center p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                     <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                                     </svg>
-                                    <span class="ms-[15px] h-[15px] leading-none flex items-center">Dashboard</span>
+                                    <span class="ms-[15px] h-[15px] leading-none flex items-center">Panel de Control</span>
                                 </a>
                             </li>
                         </ul>
@@ -266,7 +253,7 @@
             @endif
 
             <!-- ===== SECCIÓN: SOPORTE ===== -->
-            <li class="pt-[15px] px-[15px] pb-0 m-0">
+            <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                 <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Soporte</span>
             </li>
 
@@ -275,7 +262,8 @@
                 
                 <!-- Botón Padre principal -->
                 <button @click="openSoporte = !openSoporte" 
-                    class="flex items-center justify-between p-[15px] w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                    :class="collapsed ? 'justify-center p-[15px]' : 'justify-between p-[15px]'"
+                    class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                     
                     <div class="flex items-center">
                         
@@ -284,16 +272,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
 
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center">Soporte</span>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Soporte</span>
 
-                        <div class="ml-[15px] shrink-0">
+                        <div class="ml-[15px] shrink-0" :class="collapsed ? 'hidden' : 'block'">
                             <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
                                 :class="{ 'rotate-180': openSoporte, 'rotate-0': !openSoporte }"
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
-
                     </div>
                 </button>
 
@@ -305,6 +292,7 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-2"
+                     :class="collapsed ? 'hidden' : 'block'"
                      class="relative mt-0 dynamic-sub-menu" 
                      style="display: none;">
                     
@@ -340,3 +328,19 @@
         </ul>
     </div>
 </aside>
+
+<script>
+    // Calcula automáticamente la altura del nav
+    function updateSidebarPadding() {
+        const nav = document.getElementById('main-nav');
+        const sidebar = document.getElementById('sidebar-container');
+        if (nav && sidebar) {
+            const navHeight = nav.offsetHeight;
+            sidebar.style.paddingTop = navHeight + 'px';
+        }
+    }
+
+    // Ejecutar al cargar y al redimensionar
+    document.addEventListener('DOMContentLoaded', updateSidebarPadding);
+    window.addEventListener('resize', updateSidebarPadding);
+</script>
