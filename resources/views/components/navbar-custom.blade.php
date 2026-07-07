@@ -2,41 +2,8 @@
 <!-- CONTENEDOR PRINCIPAL CON x-data COMPARTIDO                    -->
 <!-- ============================================================ -->
 <div x-data="{ 
-    collapsed: localStorage.getItem('sidebarCollapsed') === 'true' || false,
-    isTransitioning: false 
-}" 
-x-init="
-    $watch('collapsed', (value) => {
-        localStorage.setItem('sidebarCollapsed', value);
-        isTransitioning = true;
-        
-        const sidebar = document.getElementById('logo-sidebar');
-        if (!sidebar) return;
-        
-        if (!value) {
-            // EXPANDIENDO: Paso 1 - Instantáneo a 50px
-            sidebar.style.transition = 'none';
-            sidebar.style.minWidth = '50px';
-            sidebar.style.width = 'auto';
-            
-            // Forzar reflow (necesario para que el cambio sea visible)
-            sidebar.offsetHeight;
-            
-            // Paso 2 - Animar a 250px
-            requestAnimationFrame(() => {
-                sidebar.style.transition = 'all 500ms ease-in-out';
-                sidebar.style.minWidth = '250px';
-            });
-        } else {
-            // CONTRAYENDO: Animación normal a 60px
-            sidebar.style.transition = 'all 500ms ease-in-out';
-            sidebar.style.minWidth = '60px';
-            sidebar.style.width = 'auto';
-        }
-        
-        setTimeout(() => { isTransitioning = false; }, 600);
-    });
-">
+    isTransitioning: false
+}">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
     <nav id="main-nav" class="fixed top-0 z-[90] w-full bg-[#1a3a6b] border-b border-gray-200 py-[15px] px-[15px] flex items-center h-[90px]">
@@ -136,11 +103,10 @@ x-init="
     <!-- ============================================================ -->
     <!-- MENÚ LATERAL - top: 90px (altura de la barra superior)      -->
     <!-- ============================================================ -->
-    <aside id="logo-sidebar"
-        class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)] flex flex-col bg-white sm:translate-x-0 overflow-hidden border-r border-gray-200 shadow-sm"
-        style="width: auto; min-width: 60px; transition: all 500ms ease-in-out;"
-        aria-label="Sidebar"
-        @transitionend="isTransitioning = false">
+    <aside
+        id="logo-sidebar"
+        class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)] flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-500 ease-in-out"
+    >
         
         <!-- Contenedor del menú -->
         <div class="flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain" 
@@ -382,7 +348,26 @@ x-init="
     <!-- ============================================================ -->
     <!-- FIN DEL MENÚ LATERAL                                          -->
     <!-- ============================================================ -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.effect(() => {
 
+                const sidebar = document.getElementById('logo-sidebar');
+                const main = document.getElementById('main-content');
+
+                if (!sidebar || !main) return;
+
+                new ResizeObserver(() => {
+
+                    main.style.marginLeft =
+                        sidebar.getBoundingClientRect().width + 'px';
+
+                }).observe(sidebar);
+
+            });
+
+        });
+    </script>
 </div>
 <!-- ============================================================ -->
 <!-- FIN DEL CONTENEDOR PRINCIPAL                                  -->
