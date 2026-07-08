@@ -48,10 +48,10 @@
         <!-- CONTENIDO -->
         <main
             id="main-content"
-            class="pt-[90px] p-4"
+            class="pt-[90px]"
         >
 
-            <div class="p-4">
+            <div>
                 {{ $slot }}
             </div>
 

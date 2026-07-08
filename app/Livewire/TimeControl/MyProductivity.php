@@ -22,6 +22,16 @@ class MyProductivity extends Component
         $this->to = now()->toDateString();
     }
 
+    /**
+     * Aplica los filtros de fecha y actualiza los datos
+     */
+    public function applyFilters(): void
+    {
+        // Este método solo dispara la actualización de los datos
+        // Los datos se actualizan automáticamente en render()
+        // porque usa $this->from y $this->to
+    }
+
     public function export(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);

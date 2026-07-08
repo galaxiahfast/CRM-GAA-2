@@ -106,7 +106,7 @@
     <aside
         id="logo-sidebar"
         class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)]
-            flex flex-col bg-white border-r border-gray-200 shadow-sm
+            flex flex-col bg-white shadow-sm
             overflow-hidden"
     >
         
@@ -224,10 +224,10 @@
                             class="relative mt-0 dynamic-sub-menu" 
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
-                            <div class="absolute left-[7.5px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Cronómetro -->
-                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -239,7 +239,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Reloj Checador -->
-                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.attendance') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -250,18 +250,18 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Mi Productividad -->
-                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.reports') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.reports') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                         </svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Mi Productividad</span>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Productividad</span>
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="#" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -316,10 +316,10 @@
                         class="relative mt-0 dynamic-sub-menu" 
                         style="display: none;">
                         <!-- Línea vertical siempre visible -->
-                        <div class="absolute left-[7.5px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="space-y-0 w-full">
                             <!-- Ticket -->
-                            <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                            <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="#" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -330,7 +330,7 @@
                                 </a>
                             </li>
                             <!-- Preguntas -->
-                            <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                            <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="#" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
