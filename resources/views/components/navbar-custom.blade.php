@@ -227,7 +227,7 @@
                             <div class="absolute left-[7.5px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Cronómetro -->
-                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -239,7 +239,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Reloj Checador -->
-                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                     <a href="{{ route('time.attendance') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -250,7 +250,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Mi Productividad -->
-                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.reports') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -261,7 +261,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                                <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                     <a href="#" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -319,7 +319,7 @@
                         <div class="absolute left-[7.5px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="space-y-0 w-full">
                             <!-- Ticket -->
-                            <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                            <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                 <a href="#" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -330,7 +330,7 @@
                                 </a>
                             </li>
                             <!-- Preguntas -->
-                            <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
+                            <li class="pt-[15px] pl-[15px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[30px]'">
                                 <a href="#" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
