@@ -21,6 +21,8 @@ use App\Livewire\Administracion\Roles\IndexRole;
 use App\Livewire\Administracion\Users\IndexUser;
 use App\Livewire\CustomerReport;
 
+use App\Livewire\TimeControl\AttendanceClock;
+
 // Componentes Remotos (Control de Horas Complejo)
 use App\Livewire\TimeControl\IndexTimeControl;
 use App\Livewire\TimeControl\MyProductivity;
@@ -30,6 +32,7 @@ use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
 use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente importado para el checador
 
 use App\Http\Controllers\TimeEntryController;
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... tus otras rutas ...
@@ -136,6 +139,10 @@ Route::middleware([
     Route::get('/time/reports', MyProductivity::class)
         ->middleware('can:view-time-productivity')
         ->name('time.reports');
+
+    Route::get('/time/attendance', AttendanceClock::class)
+        ->middleware('can:operate-time-tracking')
+        ->name('time.attendance');
 
     // Administración del módulo (Solo usuarios con permisos avanzados)
     Route::middleware('can:view-time-admin')->group(function () {
