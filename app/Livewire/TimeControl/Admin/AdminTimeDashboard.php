@@ -35,8 +35,8 @@ class AdminTimeDashboard extends Component
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
         // Rango predeterminado de fechas
-        $this->from = now()->toDateString();
-        $this->to = now()->toDateString();
+        $this->from = $this->localToday();
+        $this->to = $this->localToday();
     }
 
     public function selectCollaborator(int $id, string $fullName): void
@@ -59,7 +59,7 @@ class AdminTimeDashboard extends Component
         $this->selectedUserId = $user->id;
         $this->selectedUserName = $user->name . ' ' . $user->last_name;
         
-        $this->entryDate = now()->toDateString();
+        $this->entryDate = $this->localToday();
         $this->totalHours = 8.00; 
         $this->dailyBonus = 0.00;
         $this->bonusReason = '';
@@ -132,5 +132,17 @@ class AdminTimeDashboard extends Component
                 ->get(['id', 'name', 'last_name']),
             'exportFormats' => $exporter->formats(),
         ])->layout('layouts.app');
+    }
+
+    private function localToday(): string
+    {
+        return Carbon::now($this->moduleTimezone())->toDateString();
+    }
+
+    private function moduleTimezone(): string
+    {
+        $timezone = (string) config('app.timezone', 'America/Mexico_City');
+
+        return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
     }
 }

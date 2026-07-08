@@ -91,7 +91,9 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         // Evaluamos tanto por el ID 1 como por el nombre del rol en tu base de datos
-        return (int) $this->role_id === 1 || (optional($this->role)->name === 'Administrador');
+        $roleName = optional($this->role)->role ?? optional($this->role)->name;
+
+        return (int) $this->role_id === 1 || $roleName === 'Administrador';
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Livewire\TimeControl;
 
 use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\TimeReportService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,8 +19,8 @@ class MyProductivity extends Component
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
         // El rango predeterminado es el día actual completo.
-        $this->from = now()->toDateString();
-        $this->to = now()->toDateString();
+        $this->from = $this->localToday();
+        $this->to = $this->localToday();
     }
 
     /**
@@ -54,5 +55,17 @@ class MyProductivity extends Component
             'activityDetail' => $activityDetail,
             'exportFormats' => $exporter->formats(),
         ])->layout('layouts.app');
+    }
+
+    private function localToday(): string
+    {
+        return Carbon::now($this->moduleTimezone())->toDateString();
+    }
+
+    private function moduleTimezone(): string
+    {
+        $timezone = (string) config('app.timezone', 'America/Mexico_City');
+
+        return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
     }
 }

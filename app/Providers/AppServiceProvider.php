@@ -37,7 +37,10 @@ class AppServiceProvider extends ServiceProvider
          */
         Gate::define('operate-time-tracking', function (User $user) {
             // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
-            return in_array((int) $user->role_id, [1, 2, 3, 4, 5]);
+            $roleName = optional($user->role)->role ?? optional($user->role)->name;
+
+            return in_array((int) $user->role_id, [1, 2, 3, 4, 5], true)
+                || in_array($roleName, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
         });
 
         /**
@@ -45,7 +48,10 @@ class AppServiceProvider extends ServiceProvider
          */
         Gate::define('view-time-productivity', function (User $user) {
             // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
-            return in_array((int) $user->role_id, [1, 2, 3, 4, 5]);
+            $roleName = optional($user->role)->role ?? optional($user->role)->name;
+
+            return in_array((int) $user->role_id, [1, 2, 3, 4, 5], true)
+                || in_array($roleName, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
         });
     }
 }

@@ -17,7 +17,7 @@ class TimeEntry extends Model
     public const STATUS_LABELS = [
         self::STATUS_IN_PROGRESS => 'En progreso',
         self::STATUS_PAUSED => 'Pausada',
-        self::STATUS_FINISHED => 'Finalizada',
+        self::STATUS_FINISHED => 'Pausada',
         self::STATUS_AUTO_CLOSED => 'Cerrada automáticamente',
     ];
 

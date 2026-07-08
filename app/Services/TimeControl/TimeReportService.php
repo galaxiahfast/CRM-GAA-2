@@ -76,7 +76,7 @@ class TimeReportService
     {
         $columns = $this->activityDetailColumns($includeCollaborator);
         $groups = $this->sortedEntries($entries)
-            ->groupBy(fn (TimeEntry $e) => $e->entry_date->format('Y-m-d'))
+            ->groupBy(fn (TimeEntry $e) => $this->entryLocalDate($e))
             ->map(fn (Collection $dayEntries, string $dateKey) => [
                 'date' => Carbon::parse($dateKey)->format('d/m/Y'),
                 'rows' => $dayEntries
@@ -194,8 +194,22 @@ class TimeReportService
 
     private function entriesQuery(string $from, string $to)
     {
-        return TimeEntry::whereDate('entry_date', '>=', $from)
-            ->whereDate('entry_date', '<=', $to)
+        [$start, $end] = $this->localDateRange($from, $to);
+        $startDateTime = $start->toDateTimeString();
+        $endDateTime = $end->toDateTimeString();
+
+        return TimeEntry::where(function ($query) use ($start, $end, $startDateTime, $endDateTime) {
+                $query->whereBetween('entry_date', [
+                    $start->toDateString(),
+                    $end->toDateString(),
+                ])->orWhereHas('intervals', function ($intervals) use ($startDateTime, $endDateTime) {
+                    $intervals->where('started_at', '<=', $endDateTime)
+                        ->where(function ($range) use ($startDateTime) {
+                            $range->whereNull('ended_at')
+                                ->orWhere('ended_at', '>=', $startDateTime);
+                        });
+                });
+            })
             ->with([
                 'customer',
                 'subService',
@@ -204,6 +218,27 @@ class TimeReportService
                 'jobPositionSnapshot',
                 'physicalAreaSnapshot',
             ]);
+    }
+
+    /** @return array{0: Carbon, 1: Carbon} */
+    private function localDateRange(string $from, string $to): array
+    {
+        $timezone = $this->moduleTimezone();
+        $start = Carbon::parse($from, $timezone)->startOfDay();
+        $end = Carbon::parse($to, $timezone)->endOfDay();
+
+        if ($end->lessThan($start)) {
+            return [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        return [$start, $end];
+    }
+
+    private function moduleTimezone(): string
+    {
+        $timezone = (string) config('app.timezone', 'America/Mexico_City');
+
+        return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
     }
 
     /** @return list<string> */
@@ -259,12 +294,32 @@ class TimeReportService
 
         $start = $intervals->first()->started_at;
         $last = $intervals->sortByDesc('id')->first();
-        $end = $last->ended_at ?? ($entry->status === TimeEntry::STATUS_IN_PROGRESS ? now() : null);
+        $end = $last->ended_at ?? ($entry->status === TimeEntry::STATUS_IN_PROGRESS ? Carbon::now($this->moduleTimezone()) : null);
 
         return [
-            $start?->format('H:i') ?? '—',
-            $end?->format('H:i') ?? '—',
+            $this->formatLocalTime($start),
+            $this->formatLocalTime($end),
         ];
+    }
+
+    private function formatLocalTime(?Carbon $date): string
+    {
+        if (! $date) {
+            return '—';
+        }
+
+        return Carbon::parse($date->format('Y-m-d H:i:s'), $this->moduleTimezone())->format('H:i');
+    }
+
+    private function entryLocalDate(TimeEntry $entry): string
+    {
+        $firstInterval = $entry->intervals->sortBy('started_at')->first();
+
+        if ($firstInterval?->started_at) {
+            return Carbon::parse($firstInterval->started_at->format('Y-m-d H:i:s'), $this->moduleTimezone())->toDateString();
+        }
+
+        return Carbon::parse($entry->entry_date->format('Y-m-d'), $this->moduleTimezone())->toDateString();
     }
 
     /** @param  Collection<int, TimeEntry>  $entries */
@@ -274,7 +329,7 @@ class TimeReportService
             [$start] = $this->entryTimeRange($entry);
 
             return [
-                $entry->entry_date->format('Y-m-d'),
+                $this->entryLocalDate($entry),
                 $start === '—' ? '99:99' : $start,
             ];
         })->values();

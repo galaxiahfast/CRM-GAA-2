@@ -54,7 +54,7 @@ class TimeControlTest extends TestCase
         return compact('aux', 'admin', 'customer', 'sub');
     }
 
-    public function test_auxiliary_runs_full_timer_cycle_ignoring_dead_time(): void
+    public function test_auxiliary_runs_timer_cycle_ignoring_dead_time(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
         $timer = app(TimerService::class);
@@ -72,7 +72,7 @@ class TimeControlTest extends TestCase
         $timer->finish($entry);
 
         $entry->refresh();
-        $this->assertSame(TimeEntry::STATUS_FINISHED, $entry->status);
+        $this->assertSame(TimeEntry::STATUS_PAUSED, $entry->status);
         $this->assertSame(4 * 3600, $entry->total_duration_seconds); // 4h efectivas
         $this->assertCount(2, $entry->intervals);
 
@@ -99,14 +99,15 @@ class TimeControlTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_api_returns_422_when_already_active(): void
+    public function test_api_reuses_existing_daily_entry_when_already_active(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
-        app(TimerService::class)->start($aux, $customer->id, $sub->id);
+        $entry = app(TimerService::class)->start($aux, $customer->id, $sub->id);
 
         $this->actingAs($aux)
             ->postJson('/api/time-entries/start', ['customer_id' => $customer->id, 'sub_service_id' => $sub->id])
-            ->assertStatus(422);
+            ->assertCreated()
+            ->assertJsonPath('time_entry_id', $entry->id);
     }
 
     public function test_scheduler_auto_closes_in_progress_entry(): void

@@ -29,7 +29,7 @@ class TimerService
      */
     public function start(User $user, int $customerId, int $subServiceId): TimeEntry
     {
-        if ($this->activeEntry($user)) {
+        if ($this->runningEntry($user)) {
             throw new ActiveEntryException;
         }
 
@@ -40,6 +40,8 @@ class TimerService
         }
 
         return DB::transaction(function () use ($user, $customerId, $subServiceId, $profile) {
+            $now = $this->localNow();
+
             $entry = TimeEntry::create([
                 'user_id' => $user->id,
                 'customer_id' => $customerId,
@@ -47,14 +49,41 @@ class TimerService
                 'role_id_snapshot' => $user->role_id,
                 'job_position_id_snapshot' => $profile->job_position_id,
                 'physical_area_id_snapshot' => $profile->physical_area_id,
-                'entry_date' => Carbon::now()->toDateString(),
+                'entry_date' => $now->toDateString(),
                 'status' => TimeEntry::STATUS_IN_PROGRESS,
                 'total_duration_seconds' => 0,
             ]);
 
-            $entry->intervals()->create(['started_at' => Carbon::now()]);
+            $entry->intervals()->create(['started_at' => $now]);
 
             return $entry;
+        });
+    }
+
+    /**
+     * Inicia la actividad del dia o reanuda la fila ya existente para esa
+     * combinacion de cliente + actividad, pausando cualquier otro cronometro.
+     */
+    public function playToday(User $user, int $customerId, int $subServiceId): TimeEntry
+    {
+        return DB::transaction(function () use ($user, $customerId, $subServiceId) {
+            $today = $this->localNow()->toDateString();
+            $entry = TimeEntry::where('user_id', $user->id)
+                ->whereDate('entry_date', $today)
+                ->where('customer_id', $customerId)
+                ->where('sub_service_id', $subServiceId)
+                ->with('intervals')
+                ->first();
+
+            if ($entry) {
+                return $this->switchTo($user, $entry);
+            }
+
+            if ($running = $this->runningEntry($user)) {
+                $this->pause($running);
+            }
+
+            return $this->start($user, $customerId, $subServiceId);
         });
     }
 
@@ -66,7 +95,7 @@ class TimerService
         }
 
         return DB::transaction(function () use ($entry) {
-            $this->closeOpenInterval($entry, Carbon::now());
+            $this->closeOpenInterval($entry, $this->localNow());
             $entry->status = TimeEntry::STATUS_PAUSED;
             $entry->total_duration_seconds = $entry->load('intervals')->calculateEffectiveSeconds();
             $entry->save();
@@ -78,12 +107,12 @@ class TimerService
     /** Reanuda la actividad creando un nuevo intervalo. */
     public function resume(TimeEntry $entry): TimeEntry
     {
-        if ($entry->status !== TimeEntry::STATUS_PAUSED) {
+        if (! in_array($entry->status, [TimeEntry::STATUS_PAUSED, TimeEntry::STATUS_FINISHED], true)) {
             return $entry;
         }
 
         return DB::transaction(function () use ($entry) {
-            $entry->intervals()->create(['started_at' => Carbon::now()]);
+            $entry->intervals()->create(['started_at' => $this->localNow()]);
             $entry->status = TimeEntry::STATUS_IN_PROGRESS;
             $entry->save();
 
@@ -91,21 +120,27 @@ class TimerService
         });
     }
 
-    /** Finaliza la actividad por decisión del usuario (estado 2). */
+    /**
+     * Reanuda una entrada pausada asegurando que no quede otro cronómetro
+     * corriendo para el mismo usuario.
+     */
+    public function switchTo(User $user, TimeEntry $entry): TimeEntry
+    {
+        return DB::transaction(function () use ($user, $entry) {
+            $running = $this->runningEntry($user);
+
+            if ($running && $running->id !== $entry->id) {
+                $this->pause($running);
+            }
+
+            return $this->resume($entry);
+        });
+    }
+
+    /** Compatibilidad: el flujo simplificado ya no finaliza; solo pausa. */
     public function finish(TimeEntry $entry): TimeEntry
     {
-        if (! in_array($entry->status, [TimeEntry::STATUS_IN_PROGRESS, TimeEntry::STATUS_PAUSED], true)) {
-            return $entry;
-        }
-
-        return DB::transaction(function () use ($entry) {
-            $this->closeOpenInterval($entry, Carbon::now());
-            $entry->status = TimeEntry::STATUS_FINISHED;
-            $entry->total_duration_seconds = $entry->load('intervals')->calculateEffectiveSeconds();
-            $entry->save();
-
-            return $entry;
-        });
+        return $this->pause($entry);
     }
 
     /**
@@ -115,14 +150,14 @@ class TimerService
      */
     public function autoCloseOpenEntries(?Carbon $now = null): int
     {
-        $now = $now ?: Carbon::now();
+        $now = $now ? $now->copy()->timezone($this->moduleTimezone()) : $this->localNow();
         $count = 0;
 
         TimeEntry::where('status', TimeEntry::STATUS_IN_PROGRESS)
             ->with('intervals')
             ->each(function (TimeEntry $entry) use ($now, &$count) {
                 DB::transaction(function () use ($entry, $now) {
-                    $endOfDay = Carbon::parse($entry->entry_date)->endOfDay();
+                    $endOfDay = Carbon::parse($entry->entry_date, $this->moduleTimezone())->endOfDay();
                     $closeAt = $now->lessThan($endOfDay) ? $now->copy() : $endOfDay;
 
                     $this->closeOpenInterval($entry, $closeAt);
@@ -147,6 +182,14 @@ class TimerService
             ->first();
     }
 
+    public function runningEntry(User $user): ?TimeEntry
+    {
+        return TimeEntry::where('user_id', $user->id)
+            ->where('status', TimeEntry::STATUS_IN_PROGRESS)
+            ->latest('id')
+            ->first();
+    }
+
     private function closeOpenInterval(TimeEntry $entry, Carbon $endedAt): void
     {
         $open = $entry->intervals()->whereNull('ended_at')->latest('id')->first();
@@ -159,6 +202,18 @@ class TimerService
     }
 
     /** Recorta el último intervalo si la entrada excede el límite diario. */
+    private function localNow(): Carbon
+    {
+        return Carbon::now($this->moduleTimezone());
+    }
+
+    private function moduleTimezone(): string
+    {
+        $timezone = (string) config('app.timezone', 'America/Mexico_City');
+
+        return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
+    }
+
     private function capToDailyLimit(TimeEntry $entry): void
     {
         $maxSeconds = self::MAX_DAILY_HOURS * 3600;

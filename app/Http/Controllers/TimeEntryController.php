@@ -27,7 +27,7 @@ class TimeEntryController extends Controller
      */
     public function start(Request $request, TimerService $timer): JsonResponse
     {
-        if (Gate::denies('operate-time-tracking')) {
+        if ($request->user()->isAdmin() || Gate::denies('operate-time-tracking')) {
             abort(403, 'El rol Administrador no puede registrar tiempos.');
         }
 
@@ -37,7 +37,7 @@ class TimeEntryController extends Controller
         ]);
 
         try {
-            $entry = $timer->start($request->user(), $data['customer_id'], $data['sub_service_id']);
+            $entry = $timer->playToday($request->user(), $data['customer_id'], $data['sub_service_id']);
         } catch (ActiveEntryException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         } catch (NoOrganizationalProfileException $e) {
