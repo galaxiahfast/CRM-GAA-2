@@ -6,7 +6,7 @@
 @endphp
 
 <x-app-layout>
-    <div class="max-w-6xl mx-auto p-6 space-y-6 bg-[#f4f4f4] min-h-screen">
+    <div class="max-w-6xl mx-auto p-6 space-y-4 bg-[#f4f4f4] min-h-screen">
         <!-- Header -->
         <div class="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4 bg-[#f4f4f4]">
             <div class="flex items-start gap-3">
@@ -123,11 +123,33 @@
                         </p>
                     </div>
                 </div>
-
+                
                 <div class="h-[360px] w-full">
                     <canvas id="workedTimeChart"></canvas>
                 </div>
         </div>
+
+        <!-- Gráfico de pastel - Distribución por cliente -->
+        @if ($selectedUser && !empty($clientLabels))
+        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+            <div class="flex items-start gap-3">
+                <!-- Icono -->
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div>
+                    <p class="text-[15px] font-semibold text-black">Distribución por cliente</p>
+                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                        Porcentaje de tiempo trabajado por cada cliente en el periodo seleccionado.
+                    </p>
+                </div>
+            </div>
+            <div class="h-[360px] w-full p-4">
+                <canvas id="clientPieChart"></canvas>
+            </div>
+        </div>
+        @endif
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
@@ -210,7 +232,12 @@
                         padding: 12,
                         callbacks: {
                             label(context) {
-                                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} horas`;
+                                const totalSegundos = Math.round(context.parsed.y * 3600);
+                                const horas = Math.floor(totalSegundos / 3600);
+                                const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                const segundos = totalSegundos % 60;
+                                const tiempo = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+                                return `${context.dataset.label}: ${tiempo}`;
                             },
                         },
                     },
@@ -249,7 +276,13 @@
                                 size: 15,
                             },
                             callback(value) {
-                                return `${value} h`;
+                                // Convierte el número decimal a HH:MM:SS
+                                const totalSegundos = Math.round(value * 3600);
+                                const horas = Math.floor(totalSegundos / 3600);
+                                const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                const segundos = totalSegundos % 60;
+                                // ✅ Agrega "h" al final
+                                return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} h`;
                             },
                         },
                     },
@@ -269,5 +302,118 @@
             }]
         });
     });
+    
+    // Gráfico de pastel - Clientes
+    const pieCanvas = document.getElementById('clientPieChart');
+
+    if (pieCanvas && typeof Chart !== 'undefined') {
+        const clientLabels = @json($clientLabels);
+        const clientData = @json($clientData);
+        
+        // ✅ Función para generar colores automáticamente (incluso si son muchos)
+        const getColors = (count) => {
+            const baseColors = [
+                'rgba(26, 58, 107, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(14, 165, 233, 0.8)',
+                'rgba(249, 115, 22, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(168, 85, 247, 0.8)',
+                'rgba(236, 64, 122, 0.8)',
+                'rgba(0, 188, 212, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(76, 175, 80, 0.8)',
+                'rgba(233, 30, 99, 0.8)',
+            ];
+            
+            // Si hay más clientes que colores, repetir con opacidad variada
+            while (baseColors.length < count) {
+                const idx = baseColors.length % baseColors.length;
+                const color = baseColors[idx];
+                // Variar la opacidad para distinguirlos
+                const opacity = 0.5 + (idx % 3) * 0.15;
+                baseColors.push(color.replace(/0\.8/, opacity.toFixed(1)));
+            }
+            
+            return baseColors.slice(0, count);
+        };
+
+        if (clientLabels.length > 0) {
+            // ✅ Si hay más de 6 clientes, ajustar la leyenda
+            const legendPosition = clientLabels.length > 6 ? 'bottom' : 'right';
+            const legendFontSize = clientLabels.length > 8 ? 12 : 14;
+
+            new Chart(pieCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: clientLabels,
+                    datasets: [{
+                        data: clientData,
+                        backgroundColor: getColors(clientLabels.length),
+                        borderColor: '#f4f4f4',
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: legendPosition,  // ← Cambia según cantidad
+                            labels: {
+                                font: {
+                                    size: legendFontSize,  // ← Fuente más pequeña si hay muchos
+                                },
+                                padding: clientLabels.length > 8 ? 8 : 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                // ✅ Si hay muchos clientes, mostrar en columnas
+                                ...(clientLabels.length > 10 && {
+                                    generateLabels: function(chart) {
+                                        const data = chart.data;
+                                        return data.labels.map((label, i) => ({
+                                            text: label,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i,
+                                        }));
+                                    }
+                                }),
+                            },
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                            callbacks: {
+                                label(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                    const horas = context.parsed.toFixed(2);
+                                    return `${context.label}: ${horas} horas (${percentage}%)`;
+                                },
+                            },
+                        },
+                    },
+                    // ✅ Si hay muchos clientes y la leyenda está abajo, ajustar el gráfico
+                    ...(clientLabels.length > 8 && {
+                        layout: {
+                            padding: {
+                                bottom: 20,
+                            },
+                        },
+                    }),
+                },
+            });
+        }
+    }
 </script>
 </x-app-layout>

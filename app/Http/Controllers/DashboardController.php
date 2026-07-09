@@ -36,6 +36,10 @@ class DashboardController extends Controller
             'hours' => $chart['hours'],
             'averageHours' => $chart['averageHours'],
             'totalSeconds' => $chart['totalSeconds'],
+            // ✅ NUEVOS DATOS
+            'clientLabels' => $chart['clientLabels'],
+            'clientData' => $chart['clientData'],
+            'clientTotalSeconds' => $chart['clientTotalSeconds'],
         ]);
     }
 
@@ -107,18 +111,24 @@ class DashboardController extends Controller
             ->get();
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
-            ->with('intervals')
+            ->with(['intervals', 'customer'])
             ->get();
 
         $secondsByDate = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
             ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
+
+        // ✅ Agrupar por cliente
+        $secondsByClient = $entries
+            ->groupBy(fn (TimeEntry $entry) => $entry->customer->name ?? 'Sin cliente')
+            ->map(fn ($clientEntries) => (int) $clientEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()))
+            ->sortDesc();  // ← Ordenar de mayor a menor
 
         $totalSeconds = 0;
         $hours = [];
@@ -131,24 +141,45 @@ class DashboardController extends Controller
 
         $average = count($days) > 0 ? round(($totalSeconds / 3600) / count($days), 2) : 0;
 
+        // ✅ NUEVO: Limitar a 6 clientes principales + "Otros"
+        $maxClients = 6;
+        $topClients = $secondsByClient->take($maxClients);
+        $othersSum = $secondsByClient->skip($maxClients)->sum();
+
+        $clientLabels = $topClients->keys()->toArray();
+        $clientData = $topClients->values()->map(fn($s) => round($s / 3600, 2))->toArray();
+
+        // ✅ Si hay "Otros", agregarlos
+        if ($othersSum > 0) {
+            $clientLabels[] = 'Otros';
+            $clientData[] = round($othersSum / 3600, 2);
+        }
+
         return [
-            'labels' => array_map(fn (Carbon $day) => $day->format('d/m'), $days),
+            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
             'hours' => $hours,
             'averageHours' => array_fill(0, count($days), $average),
             'totalSeconds' => $totalSeconds,
+            'clientLabels' => $clientLabels,
+            'clientData' => $clientData,
+            'clientTotalSeconds' => $secondsByClient->sum(),
         ];
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int} */
     private function emptyChart(Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
 
         return [
-            'labels' => array_map(fn (Carbon $day) => $day->format('d/m'), $days),
+            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
             'hours' => array_fill(0, count($days), 0),
             'averageHours' => array_fill(0, count($days), 0),
             'totalSeconds' => 0,
+            // ✅ NUEVOS DATOS VACÍOS
+            'clientLabels' => [],
+            'clientData' => [],
+            'clientTotalSeconds' => 0,
         ];
     }
 
