@@ -1,17 +1,23 @@
 @php
     $fmtSeconds = function (int $seconds) {
         $seconds = max(0, $seconds);
-
         return sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
     };
 @endphp
 
 <x-app-layout>
-    <div class="max-w-6xl mx-auto p-6 space-y-6">
-        <div class="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Panel de Control</h1>
-                <p class="mt-1 text-sm text-gray-500">Tiempo trabajado por dia dentro del rango seleccionado.</p>
+    <div class="max-w-6xl mx-auto p-6 space-y-6 bg-[#f4f4f4] min-h-screen">
+        <!-- Header -->
+        <div class="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4 bg-[#f4f4f4]">
+            <div class="flex items-start gap-3">
+                <!-- Icono 20x20 -->
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div>
+                    <p class="text-[15px] font-semibold text-black">Panel de Control</p>
+                    <p class="text-[15px] text-gray-500 mt-[15px]">Tiempo trabajado por día dentro del rango seleccionado.</p>
+                </div>
             </div>
 
             <form method="GET" action="{{ route('time.dashboard') }}" class="flex flex-wrap items-end gap-3">
@@ -29,7 +35,7 @@
                             type="search"
                             placeholder="ID, nombre o correo"
                             oninput="document.getElementById('selected_user_id')?.remove()"
-                            class="h-11 w-64 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            class="h-11 w-64 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20"
                         >
                     </div>
                 @endif
@@ -41,7 +47,7 @@
                         name="fecha_inicio"
                         value="{{ $start->toDateString() }}"
                         type="date"
-                        class="h-11 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        class="h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20"
                     >
                 </div>
 
@@ -52,24 +58,24 @@
                         name="fecha_fin"
                         value="{{ $end->toDateString() }}"
                         type="date"
-                        class="h-11 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        class="h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20"
                     >
                 </div>
 
-                <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-800">
+                <button type="submit" class="inline-flex h-11 items-center justify-center rounded-xl bg-[#1A3A6B] px-4 text-sm font-medium text-white transition-colors hover:bg-[#15305a]">
                     Buscar
                 </button>
             </form>
         </div>
 
         @if ($isAdmin && $users->isNotEmpty())
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Resultados</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($users as $user)
                         <a
                             href="{{ route('time.dashboard', ['user_id' => $user->id, 'search' => $search, 'fecha_inicio' => $start->toDateString(), 'fecha_fin' => $end->toDateString()]) }}"
-                            class="inline-flex items-center rounded-lg border px-3 py-2 text-sm transition-colors {{ $selectedUser?->id === $user->id ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50' }}"
+                            class="inline-flex items-center rounded-xl border px-3 py-2 text-sm transition-colors {{ $selectedUser?->id === $user->id ? 'border-[#1A3A6B] bg-blue-50 text-[#1A3A6B]' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50' }}"
                         >
                             <span class="font-medium">{{ trim($user->name.' '.($user->last_name ?? '')) }}</span>
                             <span class="ml-2 text-xs text-gray-500">ID {{ $user->id }}</span>
@@ -79,121 +85,189 @@
             </div>
         @endif
 
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Colaborador</p>
                 <p class="mt-2 text-lg font-semibold text-gray-900">
                     {{ $selectedUser ? trim($selectedUser->name.' '.($selectedUser->last_name ?? '')) : 'Selecciona un usuario' }}
                 </p>
             </div>
 
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Rango</p>
                 <p class="mt-2 text-lg font-semibold text-gray-900">{{ $start->format('d/m/Y') }} - {{ $end->format('d/m/Y') }}</p>
             </div>
 
-            <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total trabajado</p>
                 <p class="mt-2 font-mono text-lg font-semibold text-gray-900">{{ $fmtSeconds($totalSeconds) }}</p>
             </div>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-base font-semibold text-gray-900">Tiempo trabajado por dia</h2>
-                    <p class="mt-1 text-sm text-gray-500">
-                        @if ($selectedUser)
-                            Barras de horas diarias y linea de promedio del rango seleccionado.
-                        @else
-                            Busca y selecciona un colaborador para visualizar la grafica.
-                        @endif
-                    </p>
+        <!-- Chart - Contenedor padre sin bordes -->
+        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                <div class="flex items-start gap-3">
+                    <!-- Icono 20x20 -->
+                    <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    <div>
+                        <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
+                        <p class="text-[15px] text-gray-500 mt-[15px]">
+                            @if ($selectedUser)
+                                Barras de horas diarias y línea de promedio del rango seleccionado.
+                            @else
+                                Busca y selecciona un colaborador para visualizar la gráfica.
+                            @endif
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="h-[360px]">
-                <canvas id="workedTimeChart"></canvas>
-            </div>
+                <div class="h-[360px] w-full">
+                    <canvas id="workedTimeChart"></canvas>
+                </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('workedTimeChart');
-
-            if (! canvas || typeof Chart === 'undefined') {
-                return;
-            }
-
-            new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: @json($labels),
-                    datasets: [
-                        {
-                            type: 'bar',
-                            label: 'Horas trabajadas',
-                            data: @json($hours),
-                            backgroundColor: 'rgba(37, 99, 235, 0.78)',
-                            borderColor: 'rgb(29, 78, 216)',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            maxBarThickness: 42,
-                            order: 2,
-                        },
-                        {
-                            type: 'line',
-                            label: 'Tendencia diaria', // Cambiado de 'Promedio del periodo'
-                            data: @json($hours),       // Usamos la misma variable de las barras azules
-                            borderColor: 'rgb(16, 185, 129)',
-                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                            borderWidth: 2,
-                            pointRadius: 4,            // Un poco más grande para que resalte sobre la barra
-                            pointHoverRadius: 6,
-                            tension: 0.35,             // Mantiene la curvatura suave entre puntos
-                            fill: false,
-                            order: 1,                  // 'order: 1' asegura que la línea se dibuje por ENCIMA de las barras
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                boxWidth: 12,
-                                usePointStyle: true,
-                            },
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label(context) {
-                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} horas`;
-                                },
-                            },
-                        },
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false,
-                            },
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback(value) {
-                                    return `${value} h`;
-                                },
-                            },
-                        },
-                    },
-                },
-            });
-        });
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
     </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.getElementById('workedTimeChart');
+
+        if (!canvas || typeof Chart === 'undefined') {
+            return;
+        }
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: @json($labels),
+                datasets: [{
+                    type: 'bar',
+                    label: 'Horas trabajadas',
+                    data: @json($hours),
+                    backgroundColor: 'rgba(26, 58, 107, 0.78)',
+                    borderColor: 'rgba(26, 58, 107, 0)',
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    maxBarThickness: 42,
+                    order: 2,
+                }, {
+                    type: 'line',
+                    label: 'Tendencia diaria',
+                    data: @json($hours),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: 'rgb(16, 185, 129)',
+                    pointBorderColor: 'rgba(16, 185, 129, 0)',
+                    pointBorderWidth: 0,
+                    tension: 0.35,
+                    fill: false,
+                    order: 1,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                layout: {
+                    padding: {
+                        top: 0,
+                    },
+                },
+
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            boxWidth: 14,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15,
+                            font: {
+                                size: 15,
+                            },
+                        },
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#1f2937',
+                        titleFont: {
+                            size: 15,
+                        },
+                        bodyFont: {
+                            size: 15,
+                        },
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 12,
+                        callbacks: {
+                            label(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} horas`;
+                            },
+                        },
+                    },
+                },
+
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.06)',
+                        },
+                        border: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.12)',
+                        },
+                        ticks: {
+                            display: true,
+                            font: {
+                                size: 15,
+                            },
+                        },
+                    },
+
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.06)',
+                        },
+                        border: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.12)',
+                        },
+                        ticks: {
+                            font: {
+                                size: 15,
+                            },
+                            callback(value) {
+                                return `${value} h`;
+                            },
+                        },
+                    },
+                },
+            },
+
+            plugins: [{
+                id: 'legendSpacing',
+                beforeInit(chart) {
+                    const fit = chart.legend.fit;
+
+                    chart.legend.fit = function () {
+                        fit.call(this);
+                        this.height += 15;
+                    };
+                }
+            }]
+        });
+    });
+</script>
 </x-app-layout>

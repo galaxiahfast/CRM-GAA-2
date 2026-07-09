@@ -137,6 +137,7 @@ Route::middleware([
         ->name('time.index');
 
     Route::get('/time/dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:view-time-productivity')
         ->name('time.dashboard');
 
     // 💡 SOLUCIÓN DEL 403: Forzamos la ruta a validar con el Gate unificado de Productividad
