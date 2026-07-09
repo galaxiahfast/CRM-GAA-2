@@ -36,10 +36,12 @@ class DashboardController extends Controller
             'hours' => $chart['hours'],
             'averageHours' => $chart['averageHours'],
             'totalSeconds' => $chart['totalSeconds'],
-            // ✅ NUEVOS DATOS
             'clientLabels' => $chart['clientLabels'],
             'clientData' => $chart['clientData'],
             'clientTotalSeconds' => $chart['clientTotalSeconds'],
+            'activityLabels' => $chart['activityLabels'],
+            'activityData' => $chart['activityData'],
+            'activityTotalSeconds' => $chart['activityTotalSeconds'],
         ]);
     }
 
@@ -111,24 +113,28 @@ class DashboardController extends Controller
             ->get();
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
-            ->with(['intervals', 'customer'])
+            ->with(['intervals', 'customer', 'subService'])
             ->get();
 
         $secondsByDate = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
             ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
 
-        // ✅ Agrupar por cliente
         $secondsByClient = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->customer->name ?? 'Sin cliente')
             ->map(fn ($clientEntries) => (int) $clientEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()))
-            ->sortDesc();  // ← Ordenar de mayor a menor
+            ->sortDesc();
+
+        $secondsByActivity = $entries
+            ->groupBy(fn (TimeEntry $entry) => $entry->subService->sub_service ?? 'Sin actividad')
+            ->map(fn ($activityEntries) => (int) $activityEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()))
+            ->sortDesc();
 
         $totalSeconds = 0;
         $hours = [];
@@ -141,7 +147,6 @@ class DashboardController extends Controller
 
         $average = count($days) > 0 ? round(($totalSeconds / 3600) / count($days), 2) : 0;
 
-        // ✅ NUEVO: Limitar a 6 clientes principales + "Otros"
         $maxClients = 6;
         $topClients = $secondsByClient->take($maxClients);
         $othersSum = $secondsByClient->skip($maxClients)->sum();
@@ -149,10 +154,21 @@ class DashboardController extends Controller
         $clientLabels = $topClients->keys()->toArray();
         $clientData = $topClients->values()->map(fn($s) => round($s / 3600, 2))->toArray();
 
-        // ✅ Si hay "Otros", agregarlos
         if ($othersSum > 0) {
             $clientLabels[] = 'Otros';
             $clientData[] = round($othersSum / 3600, 2);
+        }
+
+        $maxActivities = 8;
+        $topActivities = $secondsByActivity->take($maxActivities);
+        $othersActivitySum = $secondsByActivity->skip($maxActivities)->sum();
+
+        $activityLabels = $topActivities->keys()->toArray();
+        $activityData = $topActivities->values()->map(fn($s) => round($s / 3600, 2))->toArray();
+
+        if ($othersActivitySum > 0) {
+            $activityLabels[] = 'Otras';
+            $activityData[] = round($othersActivitySum / 3600, 2);
         }
 
         return [
@@ -163,10 +179,13 @@ class DashboardController extends Controller
             'clientLabels' => $clientLabels,
             'clientData' => $clientData,
             'clientTotalSeconds' => $secondsByClient->sum(),
+            'activityLabels' => $activityLabels,
+            'activityData' => $activityData,
+            'activityTotalSeconds' => $secondsByActivity->sum(),
         ];
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
     private function emptyChart(Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
@@ -176,10 +195,12 @@ class DashboardController extends Controller
             'hours' => array_fill(0, count($days), 0),
             'averageHours' => array_fill(0, count($days), 0),
             'totalSeconds' => 0,
-            // ✅ NUEVOS DATOS VACÍOS
             'clientLabels' => [],
             'clientData' => [],
             'clientTotalSeconds' => 0,
+            'activityLabels' => [],
+            'activityData' => [],
+            'activityTotalSeconds' => 0,
         ];
     }
 

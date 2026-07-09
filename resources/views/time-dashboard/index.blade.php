@@ -144,8 +144,29 @@
                     </p>
                 </div>
             </div>
-            <div class="h-[360px] w-full p-4">
+            <div class="h-[360px] w-full mt-4">
                 <canvas id="clientPieChart"></canvas>
+            </div>
+        </div>
+        @endif
+
+        <!-- Gráfico de actividades - Distribución por actividad -->
+        @if ($selectedUser && !empty($activityLabels))
+        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+            <div class="flex items-start gap-3">
+                <!-- Icono -->
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div>
+                    <p class="text-[15px] font-semibold text-black">Distribución por actividad</p>
+                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                        Tiempo trabajado por cada actividad en el periodo seleccionado.
+                    </p>
+                </div>
+            </div>
+            <div class="h-[400px] w-full">
+                <canvas id="activityChart"></canvas>
             </div>
         </div>
         @endif
@@ -302,7 +323,7 @@
             }]
         });
     });
-    
+
     // Gráfico de pastel - Clientes
     const pieCanvas = document.getElementById('clientPieChart');
 
@@ -343,8 +364,8 @@
         };
 
         if (clientLabels.length > 0) {
-            // ✅ Si hay más de 6 clientes, ajustar la leyenda
-            const legendPosition = clientLabels.length > 6 ? 'bottom' : 'right';
+            // ✅ Leyenda SIEMPRE a la derecha
+            const legendPosition = 'right';  // ← Siempre a la derecha
             const legendFontSize = clientLabels.length > 8 ? 12 : 14;
 
             new Chart(pieCanvas, {
@@ -411,6 +432,112 @@
                             },
                         },
                     }),
+                },
+            });
+        }
+    }
+
+    // Gráfico de barras horizontales - Actividades (Barras a la izquierda, etiquetas a la derecha)
+    const activityCanvas = document.getElementById('activityChart');
+
+    if (activityCanvas && typeof Chart !== 'undefined') {
+        const activityLabels = @json($activityLabels);
+        const activityData = @json($activityData);
+        
+        if (activityLabels.length > 0) {
+            // Colores para las actividades
+            const activityColors = [
+                'rgba(26, 58, 107, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(14, 165, 233, 0.8)',
+                'rgba(249, 115, 22, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(168, 85, 247, 0.8)',
+            ];
+
+            new Chart(activityCanvas, {
+                type: 'bar',
+                data: {
+                    labels: activityLabels,
+                    datasets: [{
+                        data: activityData,
+                        backgroundColor: activityColors.slice(0, activityLabels.length),
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }],
+                },
+                options: {
+                    indexAxis: 'y',  // ← Barras horizontales
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                            callbacks: {
+                                label(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((context.parsed.x / total) * 100).toFixed(1) : 0;
+                                    const horas = context.parsed.x.toFixed(2);
+                                    return `${horas} horas (${percentage}%)`;
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            reverse: true,  // ← Barras a la izquierda
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.06)',
+                            },
+                            border: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.12)',
+                            },
+                            ticks: {
+                                font: {
+                                    size: 13,
+                                },
+                                callback(value) {
+                                    const totalSegundos = Math.round(value * 3600);
+                                    const horas = Math.floor(totalSegundos / 3600);
+                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                    const segundos = totalSegundos % 60;
+                                    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} h`;
+                                },
+                            },
+                        },
+                        y: {
+                            position: 'right',  // ← 🔥 ETIQUETAS A LA DERECHA
+                            grid: {
+                                display: false,
+                            },
+                            border: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.12)',
+                            },
+                            ticks: {
+                                font: {
+                                    size: 13,
+                                },
+                            },
+                        },
+                    },
                 },
             });
         }
