@@ -145,16 +145,16 @@
                         },
                         {
                             type: 'line',
-                            label: 'Promedio del periodo',
-                            data: @json($averageHours),
+                            label: 'Tendencia diaria', // Cambiado de 'Promedio del periodo'
+                            data: @json($hours),       // Usamos la misma variable de las barras azules
                             borderColor: 'rgb(16, 185, 129)',
                             backgroundColor: 'rgba(16, 185, 129, 0.12)',
                             borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            tension: 0.35,
+                            pointRadius: 4,            // Un poco más grande para que resalte sobre la barra
+                            pointHoverRadius: 6,
+                            tension: 0.35,             // Mantiene la curvatura suave entre puntos
                             fill: false,
-                            order: 1,
+                            order: 1,                  // 'order: 1' asegura que la línea se dibuje por ENCIMA de las barras
                         },
                     ],
                 },
