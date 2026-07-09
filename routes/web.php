@@ -32,6 +32,7 @@ use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
 use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente importado para el checador
 
 use App\Http\Controllers\TimeEntryController;
+use App\Http\Controllers\DashboardController;
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -134,6 +135,9 @@ Route::middleware([
     Route::get('/time', IndexTimeControl::class)
         ->middleware('can:operate-time-tracking')
         ->name('time.index');
+
+    Route::get('/time/dashboard', [DashboardController::class, 'index'])
+        ->name('time.dashboard');
 
     // 💡 SOLUCIÓN DEL 403: Forzamos la ruta a validar con el Gate unificado de Productividad
     Route::get('/time/reports', MyProductivity::class)
