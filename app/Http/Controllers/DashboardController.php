@@ -38,10 +38,85 @@ class DashboardController extends Controller
             'totalSeconds' => $chart['totalSeconds'],
             'clientLabels' => $chart['clientLabels'],
             'clientData' => $chart['clientData'],
+            'clientIds' => $chart['clientIds'],
             'clientTotalSeconds' => $chart['clientTotalSeconds'],
             'activityLabels' => $chart['activityLabels'],
             'activityData' => $chart['activityData'],
             'activityTotalSeconds' => $chart['activityTotalSeconds'],
+        ]);
+    }
+
+    /**
+     * Obtiene los datos de una actividad específica para el gráfico
+     */
+    public function getActivityData(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $activityId = $request->integer('activity_id');
+        $start = Carbon::parse($request->query('fecha_inicio'));
+        $end = Carbon::parse($request->query('fecha_fin'));
+
+        // Obtener las entradas de esa actividad
+        $entries = TimeEntry::where('user_id', $user->id)
+            ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
+            ->whereHas('subService', function ($query) use ($activityId) {
+                $query->where('id', $activityId);
+            })
+            ->with('intervals')
+            ->get();
+
+        // Agrupar por día
+        $days = $this->daysBetween($start, $end);
+        $secondsByDate = $entries
+            ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
+
+        $hours = [];
+        foreach ($days as $day) {
+            $seconds = (int) ($secondsByDate[$day->toDateString()] ?? 0);
+            $hours[] = round($seconds / 3600, 2);
+        }
+
+        return response()->json([
+            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
+            'hours' => $hours,
+            'totalSeconds' => array_sum($hours) * 3600,
+        ]);
+    }
+
+    /**
+     * Obtiene los datos de un cliente específico para el gráfico
+     */
+    public function getClientData(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $clientId = $request->integer('client_id');
+        $start = Carbon::parse($request->query('fecha_inicio'));
+        $end = Carbon::parse($request->query('fecha_fin'));
+
+        // Obtener las entradas de ese cliente
+        $entries = TimeEntry::where('user_id', $user->id)
+            ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
+            ->where('customer_id', $clientId)
+            ->with('intervals')
+            ->get();
+
+        // Agrupar por día
+        $days = $this->daysBetween($start, $end);
+        $secondsByDate = $entries
+            ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
+
+        $hours = [];
+        foreach ($days as $day) {
+            $seconds = (int) ($secondsByDate[$day->toDateString()] ?? 0);
+            $hours[] = round($seconds / 3600, 2);
+        }
+
+        return response()->json([
+            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
+            'hours' => $hours,
+            'totalSeconds' => array_sum($hours) * 3600,
         ]);
     }
 
@@ -113,7 +188,7 @@ class DashboardController extends Controller
             ->get();
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
@@ -126,11 +201,23 @@ class DashboardController extends Controller
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
             ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
 
-        $secondsByClient = $entries
-            ->groupBy(fn (TimeEntry $entry) => $entry->customer->name ?? 'Sin cliente')
-            ->map(fn ($clientEntries) => (int) $clientEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()))
-            ->sortDesc();
+        // ✅ Agrupar por cliente (guardando el ID)
+        $clientGroups = $entries
+            ->groupBy(fn (TimeEntry $entry) => $entry->customer_id)
+            ->map(fn ($clientEntries) => [
+                'id' => $clientEntries->first()->customer_id,
+                'name' => $clientEntries->first()->customer->name ?? 'Sin cliente',
+                'seconds' => (int) $clientEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()),
+            ])
+            ->sortByDesc('seconds');
 
+        // ✅ Crear arrays para clientes
+        $clientLabels = $clientGroups->pluck('name')->values()->toArray();
+        $clientData = $clientGroups->map(fn($c) => round($c['seconds'] / 3600, 2))->values()->toArray();
+        $clientIds = $clientGroups->pluck('id')->values()->toArray();
+        $clientTotalSeconds = $clientGroups->sum('seconds');
+
+        // ✅ Agrupar por actividad
         $secondsByActivity = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->subService->sub_service ?? 'Sin actividad')
             ->map(fn ($activityEntries) => (int) $activityEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()))
@@ -147,18 +234,7 @@ class DashboardController extends Controller
 
         $average = count($days) > 0 ? round(($totalSeconds / 3600) / count($days), 2) : 0;
 
-        $maxClients = 6;
-        $topClients = $secondsByClient->take($maxClients);
-        $othersSum = $secondsByClient->skip($maxClients)->sum();
-
-        $clientLabels = $topClients->keys()->toArray();
-        $clientData = $topClients->values()->map(fn($s) => round($s / 3600, 2))->toArray();
-
-        if ($othersSum > 0) {
-            $clientLabels[] = 'Otros';
-            $clientData[] = round($othersSum / 3600, 2);
-        }
-
+        // ✅ Limitar actividades a 8 + "Otras"
         $maxActivities = 8;
         $topActivities = $secondsByActivity->take($maxActivities);
         $othersActivitySum = $secondsByActivity->skip($maxActivities)->sum();
@@ -178,14 +254,15 @@ class DashboardController extends Controller
             'totalSeconds' => $totalSeconds,
             'clientLabels' => $clientLabels,
             'clientData' => $clientData,
-            'clientTotalSeconds' => $secondsByClient->sum(),
+            'clientIds' => $clientIds,
+            'clientTotalSeconds' => $clientTotalSeconds,
             'activityLabels' => $activityLabels,
             'activityData' => $activityData,
             'activityTotalSeconds' => $secondsByActivity->sum(),
         ];
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int} */
     private function emptyChart(Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
@@ -197,6 +274,7 @@ class DashboardController extends Controller
             'totalSeconds' => 0,
             'clientLabels' => [],
             'clientData' => [],
+            'clientIds' => [],
             'clientTotalSeconds' => 0,
             'activityLabels' => [],
             'activityData' => [],

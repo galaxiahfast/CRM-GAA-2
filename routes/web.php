@@ -49,6 +49,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/time/activity-data', [DashboardController::class, 'getActivityData'])->name('time.activity-data');
+Route::get('/time/client-data', [DashboardController::class, 'getClientData'])->name('time.client-data');
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

@@ -10,7 +10,6 @@
         <!-- Header -->
         <div class="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4 bg-[#f4f4f4]">
             <div class="flex items-start gap-3">
-                <!-- Icono 20x20 -->
                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
@@ -105,35 +104,32 @@
             </div>
         </div>
 
-        <!-- Chart - Contenedor padre sin bordes -->
+        <!-- Chart - Gráfico de barras -->
         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                <div class="flex items-start gap-3">
-                    <!-- Icono 20x20 -->
-                    <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                    </svg>
-                    <div>
-                        <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
-                        <p class="text-[15px] text-gray-500 mt-[15px]">
-                            @if ($selectedUser)
-                                Barras de horas diarias y línea de promedio del rango seleccionado.
-                            @else
-                                Busca y selecciona un colaborador para visualizar la gráfica.
-                            @endif
-                        </p>
-                    </div>
+            <div class="flex items-start gap-3 p-4">
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div>
+                    <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
+                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                        @if ($selectedUser)
+                            Barras de horas diarias y línea de promedio del rango seleccionado.
+                        @else
+                            Busca y selecciona un colaborador para visualizar la gráfica.
+                        @endif
+                    </p>
                 </div>
-                
-                <div class="h-[360px] w-full">
-                    <canvas id="workedTimeChart"></canvas>
-                </div>
+            </div>
+            <div class="h-[360px] w-full p-4">
+                <canvas id="workedTimeChart"></canvas>
+            </div>
         </div>
 
         <!-- Gráfico de pastel - Distribución por cliente -->
         @if ($selectedUser && !empty($clientLabels))
         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3">
-                <!-- Icono -->
+            <div class="flex items-start gap-3 p-4">
                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
@@ -144,7 +140,7 @@
                     </p>
                 </div>
             </div>
-            <div class="h-[360px] w-full mt-4">
+            <div class="h-[360px] w-full p-4">
                 <canvas id="clientPieChart"></canvas>
             </div>
         </div>
@@ -153,8 +149,7 @@
         <!-- Gráfico de actividades - Distribución por actividad -->
         @if ($selectedUser && !empty($activityLabels))
         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3">
-                <!-- Icono -->
+            <div class="flex items-start gap-3 p-4">
                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
@@ -165,8 +160,74 @@
                     </p>
                 </div>
             </div>
-            <div class="h-[400px] w-full">
+            <div class="h-[400px] w-full p-4">
                 <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+        @endif
+
+        <!-- Gráfico de detalle por actividad -->
+        @if ($selectedUser && !empty($activityLabels))
+        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+            <div class="flex items-start gap-3 p-4">
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <p class="text-[15px] font-semibold text-black">Detalle por actividad</p>
+                            <p class="text-[15px] text-gray-500 mt-[15px]">
+                                Distribución diaria de la actividad seleccionada.
+                            </p>
+                        </div>
+                        <div class="w-64">
+                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar actividad</label>
+                            <select id="activitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                <option value="">Selecciona una actividad...</option>
+                                @foreach ($activityLabels as $index => $label)
+                                    <option value="{{ $index + 1 }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="h-[360px] w-full p-4">
+                <canvas id="activityDetailChart"></canvas>
+            </div>
+        </div>
+        @endif
+
+        <!-- Gráfico de detalle por cliente -->
+        @if ($selectedUser && !empty($clientLabels))
+        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+            <div class="flex items-start gap-3 p-4">
+                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <p class="text-[15px] font-semibold text-black">Detalle por cliente</p>
+                            <p class="text-[15px] text-gray-500 mt-[15px]">
+                                Distribución diaria del cliente seleccionado.
+                            </p>
+                        </div>
+                        <div class="w-64">
+                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar cliente</label>
+                            <select id="clientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                <option value="">Selecciona un cliente...</option>
+                                @foreach ($clientLabels as $index => $label)
+                                    <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="h-[360px] w-full p-4">
+                <canvas id="clientDetailChart"></canvas>
             </div>
         </div>
         @endif
@@ -175,372 +236,551 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
     </script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const canvas = document.getElementById('workedTimeChart');
-
-        if (!canvas || typeof Chart === 'undefined') {
-            return;
-        }
-
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: @json($labels),
-                datasets: [{
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ============================================================
+            // GRÁFICO 1: Barras - Horas por día
+            // ============================================================
+            const canvas = document.getElementById('workedTimeChart');
+            if (canvas && typeof Chart !== 'undefined') {
+                new Chart(canvas, {
                     type: 'bar',
-                    label: 'Horas trabajadas',
-                    data: @json($hours),
-                    backgroundColor: 'rgba(26, 58, 107, 0.78)',
-                    borderColor: 'rgba(26, 58, 107, 0)',
-                    borderWidth: 0,
-                    borderRadius: 6,
-                    maxBarThickness: 42,
-                    order: 2,
-                }, {
-                    type: 'line',
-                    label: 'Tendencia diaria',
-                    data: @json($hours),
-                    borderColor: 'rgb(16, 185, 129)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                    borderWidth: 2.5,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: 'rgb(16, 185, 129)',
-                    pointBorderColor: 'rgba(16, 185, 129, 0)',
-                    pointBorderWidth: 0,
-                    tension: 0.35,
-                    fill: false,
-                    order: 1,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-
-                layout: {
-                    padding: {
-                        top: 0,
+                    data: {
+                        labels: @json($labels),
+                        datasets: [{
+                            type: 'bar',
+                            label: 'Horas trabajadas',
+                            data: @json($hours),
+                            backgroundColor: 'rgba(26, 58, 107, 0.78)',
+                            borderColor: 'rgba(26, 58, 107, 0)',
+                            borderWidth: 0,
+                            borderRadius: 6,
+                            maxBarThickness: 42,
+                            order: 2,
+                        }, {
+                            type: 'line',
+                            label: 'Tendencia diaria',
+                            data: @json($hours),
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: 'rgb(16, 185, 129)',
+                            pointBorderColor: 'rgba(16, 185, 129, 0)',
+                            pointBorderWidth: 0,
+                            tension: 0.35,
+                            fill: false,
+                            order: 1,
+                        }],
                     },
-                },
-
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            boxWidth: 14,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 15,
-                            font: {
-                                size: 15,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 0 } },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    boxWidth: 14,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 15,
+                                    font: { size: 15 },
+                                },
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#1f2937',
+                                bodyColor: '#1f2937',
+                                titleFont: { size: 15 },
+                                bodyFont: { size: 15 },
+                                borderColor: 'rgba(0, 0, 0, 0.1)',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: 12,
+                                callbacks: {
+                                    label(context) {
+                                        const totalSegundos = Math.round(context.parsed.y * 3600);
+                                        const horas = Math.floor(totalSegundos / 3600);
+                                        const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                        const segundos = totalSegundos % 60;
+                                        const tiempo =
+                                            `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                        return `${context.dataset.label}: ${tiempo}`;
+                                    },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                ticks: { display: true, font: { size: 15 } },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                ticks: {
+                                    font: { size: 15 },
+                                    callback(value) {
+                                        const totalSegundos = Math.round(value * 3600);
+                                        const horas = Math.floor(totalSegundos / 3600);
+                                        const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                        const segundos = totalSegundos % 60;
+                                        return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                    },
+                                },
                             },
                         },
                     },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#1f2937',
-                        bodyColor: '#1f2937',
-                        titleFont: {
-                            size: 15,
-                        },
-                        bodyFont: {
-                            size: 15,
-                        },
-                        borderColor: 'rgba(0, 0, 0, 0.1)',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        padding: 12,
-                        callbacks: {
-                            label(context) {
-                                const totalSegundos = Math.round(context.parsed.y * 3600);
-                                const horas = Math.floor(totalSegundos / 3600);
-                                const minutos = Math.floor((totalSegundos % 3600) / 60);
-                                const segundos = totalSegundos % 60;
-                                const tiempo = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
-                                return `${context.dataset.label}: ${tiempo}`;
-                            },
-                        },
-                    },
-                },
-
-                scales: {
-                    x: {
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.06)',
-                        },
-                        border: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.12)',
-                        },
-                        ticks: {
-                            display: true,
-                            font: {
-                                size: 15,
-                            },
-                        },
-                    },
-
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.06)',
-                        },
-                        border: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.12)',
-                        },
-                        ticks: {
-                            font: {
-                                size: 15,
-                            },
-                            callback(value) {
-                                // Convierte el número decimal a HH:MM:SS
-                                const totalSegundos = Math.round(value * 3600);
-                                const horas = Math.floor(totalSegundos / 3600);
-                                const minutos = Math.floor((totalSegundos % 3600) / 60);
-                                const segundos = totalSegundos % 60;
-                                // ✅ Agrega "h" al final
-                                return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} h`;
-                            },
-                        },
-                    },
-                },
-            },
-
-            plugins: [{
-                id: 'legendSpacing',
-                beforeInit(chart) {
-                    const fit = chart.legend.fit;
-
-                    chart.legend.fit = function () {
-                        fit.call(this);
-                        this.height += 15;
-                    };
-                }
-            }]
-        });
-    });
-
-    // Gráfico de pastel - Clientes
-    const pieCanvas = document.getElementById('clientPieChart');
-
-    if (pieCanvas && typeof Chart !== 'undefined') {
-        const clientLabels = @json($clientLabels);
-        const clientData = @json($clientData);
-        
-        // ✅ Función para generar colores automáticamente (incluso si son muchos)
-        const getColors = (count) => {
-            const baseColors = [
-                'rgba(26, 58, 107, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(236, 72, 153, 0.8)',
-                'rgba(14, 165, 233, 0.8)',
-                'rgba(249, 115, 22, 0.8)',
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(168, 85, 247, 0.8)',
-                'rgba(236, 64, 122, 0.8)',
-                'rgba(0, 188, 212, 0.8)',
-                'rgba(255, 193, 7, 0.8)',
-                'rgba(76, 175, 80, 0.8)',
-                'rgba(233, 30, 99, 0.8)',
-            ];
-            
-            // Si hay más clientes que colores, repetir con opacidad variada
-            while (baseColors.length < count) {
-                const idx = baseColors.length % baseColors.length;
-                const color = baseColors[idx];
-                // Variar la opacidad para distinguirlos
-                const opacity = 0.5 + (idx % 3) * 0.15;
-                baseColors.push(color.replace(/0\.8/, opacity.toFixed(1)));
+                    plugins: [{
+                        id: 'legendSpacing',
+                        beforeInit(chart) {
+                            const fit = chart.legend.fit;
+                            chart.legend.fit = function() {
+                                fit.call(this);
+                                this.height += 15;
+                            };
+                        }
+                    }]
+                });
             }
-            
-            return baseColors.slice(0, count);
-        };
 
-        if (clientLabels.length > 0) {
-            // ✅ Leyenda SIEMPRE a la derecha
-            const legendPosition = 'right';  // ← Siempre a la derecha
-            const legendFontSize = clientLabels.length > 8 ? 12 : 14;
+            // ============================================================
+            // GRÁFICO 2: Pastel - Clientes
+            // ============================================================
+            const pieCanvas = document.getElementById('clientPieChart');
+            if (pieCanvas && typeof Chart !== 'undefined') {
+                const clientLabels = @json($clientLabels);
+                const clientData = @json($clientData);
 
-            new Chart(pieCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: clientLabels,
-                    datasets: [{
-                        data: clientData,
-                        backgroundColor: getColors(clientLabels.length),
-                        borderColor: '#f4f4f4',
-                        borderWidth: 3,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: legendPosition,  // ← Cambia según cantidad
-                            labels: {
-                                font: {
-                                    size: legendFontSize,  // ← Fuente más pequeña si hay muchos
-                                },
-                                padding: clientLabels.length > 8 ? 8 : 15,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                // ✅ Si hay muchos clientes, mostrar en columnas
-                                ...(clientLabels.length > 10 && {
-                                    generateLabels: function(chart) {
-                                        const data = chart.data;
-                                        return data.labels.map((label, i) => ({
-                                            text: label,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            hidden: false,
-                                            index: i,
-                                        }));
-                                    }
-                                }),
-                            },
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#1f2937',
-                            bodyColor: '#1f2937',
-                            borderColor: 'rgba(0, 0, 0, 0.1)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12,
-                            callbacks: {
-                                label(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
-                                    const horas = context.parsed.toFixed(2);
-                                    return `${context.label}: ${horas} horas (${percentage}%)`;
-                                },
-                            },
-                        },
-                    },
-                    // ✅ Si hay muchos clientes y la leyenda está abajo, ajustar el gráfico
-                    ...(clientLabels.length > 8 && {
-                        layout: {
-                            padding: {
-                                bottom: 20,
-                            },
-                        },
-                    }),
-                },
-            });
-        }
-    }
+                const getColors = (count) => {
+                    const baseColors = [
+                        'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
+                        'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
+                        'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
+                        'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
+                        'rgba(236, 64, 122, 0.8)', 'rgba(0, 188, 212, 0.8)',
+                        'rgba(255, 193, 7, 0.8)', 'rgba(76, 175, 80, 0.8)',
+                        'rgba(233, 30, 99, 0.8)',
+                    ];
+                    while (baseColors.length < count) {
+                        const idx = baseColors.length % baseColors.length;
+                        const color = baseColors[idx];
+                        const opacity = 0.5 + (idx % 3) * 0.15;
+                        baseColors.push(color.replace(/0\.8/, opacity.toFixed(1)));
+                    }
+                    return baseColors.slice(0, count);
+                };
 
-    // Gráfico de barras horizontales - Actividades (Barras a la izquierda, etiquetas a la derecha)
-    const activityCanvas = document.getElementById('activityChart');
+                if (clientLabels.length > 0) {
+                    const legendFontSize = clientLabels.length > 8 ? 12 : 14;
+                    new Chart(pieCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: clientLabels,
+                            datasets: [{
+                                data: clientData,
+                                backgroundColor: getColors(clientLabels.length),
+                                borderColor: '#f4f4f4',
+                                borderWidth: 3,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        font: { size: legendFontSize },
+                                        padding: clientLabels.length > 8 ? 8 : 15,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        ...(clientLabels.length > 10 && {
+                                            generateLabels: function(chart) {
+                                                const data = chart.data;
+                                                return data.labels.map((label, i) => ({
+                                                    text: label,
+                                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                                    hidden: false,
+                                                    index: i,
+                                                }));
+                                            }
+                                        }),
+                                    },
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#1f2937',
+                                    bodyColor: '#1f2937',
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    padding: 12,
+                                    callbacks: {
+                                        label(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) :
+                                                0;
+                                            const horas = context.parsed.toFixed(2);
+                                            return `${context.label}: ${horas} horas (${percentage}%)`;
+                                        },
+                                    },
+                                },
+                            },
+                            ...(clientLabels.length > 8 && {
+                                layout: { padding: { bottom: 20 } },
+                            }),
+                        },
+                    });
+                }
+            }
 
-    if (activityCanvas && typeof Chart !== 'undefined') {
-        const activityLabels = @json($activityLabels);
-        const activityData = @json($activityData);
-        
-        if (activityLabels.length > 0) {
-            // Colores para las actividades
-            const activityColors = [
-                'rgba(26, 58, 107, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(236, 72, 153, 0.8)',
-                'rgba(14, 165, 233, 0.8)',
-                'rgba(249, 115, 22, 0.8)',
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(168, 85, 247, 0.8)',
-            ];
+            // ============================================================
+            // GRÁFICO 3: Barras horizontales - Actividades
+            // ============================================================
+            const activityCanvas = document.getElementById('activityChart');
+            if (activityCanvas && typeof Chart !== 'undefined') {
+                const activityLabels = @json($activityLabels);
+                const activityData = @json($activityData);
 
-            new Chart(activityCanvas, {
-                type: 'bar',
-                data: {
-                    labels: activityLabels,
-                    datasets: [{
-                        data: activityData,
-                        backgroundColor: activityColors.slice(0, activityLabels.length),
-                        borderColor: 'rgba(255, 255, 255, 0.8)',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    }],
-                },
-                options: {
-                    indexAxis: 'y',  // ← Barras horizontales
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false,
+                if (activityLabels.length > 0) {
+                    const activityColors = [
+                        'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
+                        'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
+                        'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
+                        'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
+                    ];
+
+                    new Chart(activityCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: activityLabels,
+                            datasets: [{
+                                data: activityData,
+                                backgroundColor: activityColors.slice(0, activityLabels.length),
+                                borderColor: 'rgba(255, 255, 255, 0.8)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                            }],
                         },
-                        tooltip: {
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#1f2937',
-                            bodyColor: '#1f2937',
-                            borderColor: 'rgba(0, 0, 0, 0.1)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12,
-                            callbacks: {
-                                label(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed.x / total) * 100).toFixed(1) : 0;
-                                    const horas = context.parsed.x.toFixed(2);
-                                    return `${horas} horas (${percentage}%)`;
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#1f2937',
+                                    bodyColor: '#1f2937',
+                                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    padding: 12,
+                                    callbacks: {
+                                        label(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? ((context.parsed.x / total) * 100).toFixed(
+                                                1) : 0;
+                                            const horas = context.parsed.x.toFixed(2);
+                                            return `${horas} horas (${percentage}%)`;
+                                        },
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    reverse: true,
+                                    grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                    border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                    ticks: {
+                                        font: { size: 13 },
+                                        callback(value) {
+                                            const totalSegundos = Math.round(value * 3600);
+                                            const horas = Math.floor(totalSegundos / 3600);
+                                            const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                            const segundos = totalSegundos % 60;
+                                            return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} h`;
+                                        },
+                                    },
+                                },
+                                y: {
+                                    position: 'right',
+                                    grid: { display: false },
+                                    border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                    ticks: { font: { size: 13 } },
                                 },
                             },
                         },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            reverse: true,  // ← Barras a la izquierda
-                            grid: {
-                                display: true,
-                                color: 'rgba(0, 0, 0, 0.06)',
-                            },
-                            border: {
-                                display: true,
-                                color: 'rgba(0, 0, 0, 0.12)',
-                            },
-                            ticks: {
-                                font: {
-                                    size: 13,
+                    });
+                }
+            }
+
+            // ============================================================
+            // GRÁFICO 4: Detalle por Actividad (con carga por defecto)
+            // ============================================================
+            const detailCanvas = document.getElementById('activityDetailChart');
+            let detailChart = null;
+
+            if (detailCanvas && typeof Chart !== 'undefined') {
+                const activitySelector = document.getElementById('activitySelector');
+                const activityLabels = @json($activityLabels);
+
+                function loadActivityData(activityId) {
+                    if (!activityId) {
+                        if (detailChart) {
+                            detailChart.destroy();
+                            detailChart = null;
+                        }
+                        const ctx = detailCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, detailCanvas.width, detailCanvas.height);
+                        ctx.font = '16px Arial';
+                        ctx.fillStyle = '#999';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Selecciona una actividad para ver su detalle', detailCanvas.width / 2, detailCanvas.height / 2);
+                        return;
+                    }
+
+                    fetch(
+                            `{{ route('time.activity-data') }}?activity_id=${activityId}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
+                        )
+                        .then(response => response.json())
+                        .then(data => {
+                            if (detailChart) {
+                                detailChart.destroy();
+                            }
+                            const selectedOption = activitySelector.options[activitySelector.selectedIndex];
+                            const activityName = selectedOption ? selectedOption.text : 'Actividad';
+
+                            detailChart = new Chart(detailCanvas, {
+                                type: 'bar',
+                                data: {
+                                    labels: data.labels,
+                                    datasets: [{
+                                        label: activityName,
+                                        data: data.hours,
+                                        backgroundColor: 'rgba(26, 58, 107, 0.78)',
+                                        borderColor: 'rgba(26, 58, 107, 0)',
+                                        borderWidth: 0,
+                                        borderRadius: 6,
+                                        maxBarThickness: 42,
+                                    }],
                                 },
-                                callback(value) {
-                                    const totalSegundos = Math.round(value * 3600);
-                                    const horas = Math.floor(totalSegundos / 3600);
-                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
-                                    const segundos = totalSegundos % 60;
-                                    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} h`;
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            labels: {
+                                                boxWidth: 14,
+                                                usePointStyle: true,
+                                                pointStyle: 'circle',
+                                                padding: 15,
+                                                font: { size: 15 },
+                                            },
+                                        },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                            titleColor: '#1f2937',
+                                            bodyColor: '#1f2937',
+                                            titleFont: { size: 15 },
+                                            bodyFont: { size: 15 },
+                                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                                            borderWidth: 1,
+                                            cornerRadius: 8,
+                                            padding: 12,
+                                            callbacks: {
+                                                label(context) {
+                                                    const totalSegundos = Math.round(context.parsed.y * 3600);
+                                                    const horas = Math.floor(totalSegundos / 3600);
+                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const segundos = totalSegundos % 60;
+                                                    const tiempo =
+                                                        `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                                    return `${context.dataset.label}: ${tiempo}`;
+                                                },
+                                            },
+                                        },
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                            border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                            ticks: { display: true, font: { size: 15 } },
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                            border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                            ticks: {
+                                                font: { size: 15 },
+                                                callback(value) {
+                                                    const totalSegundos = Math.round(value * 3600);
+                                                    const horas = Math.floor(totalSegundos / 3600);
+                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const segundos = totalSegundos % 60;
+                                                    return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                                },
+                                            },
+                                        },
+                                    },
                                 },
-                            },
-                        },
-                        y: {
-                            position: 'right',  // ← 🔥 ETIQUETAS A LA DERECHA
-                            grid: {
-                                display: false,
-                            },
-                            border: {
-                                display: true,
-                                color: 'rgba(0, 0, 0, 0.12)',
-                            },
-                            ticks: {
-                                font: {
-                                    size: 13,
+                            });
+                        })
+                        .catch(error => console.error('Error cargando datos de actividad:', error));
+                }
+
+                if (activitySelector) {
+                    activitySelector.addEventListener('change', function() {
+                        loadActivityData(this.value);
+                    });
+
+                    // ✅ Cargar la primera actividad por defecto (la más alta)
+                    if (activityLabels.length > 0) {
+                        const defaultActivityId = 1; // La primera actividad (más alta porque están ordenadas)
+                        activitySelector.value = defaultActivityId;
+                        loadActivityData(defaultActivityId);
+                    }
+                }
+            }
+
+            // ============================================================
+            // GRÁFICO 5: Detalle por Cliente (con carga por defecto)
+            // ============================================================
+            const clientDetailCanvas = document.getElementById('clientDetailChart');
+            let clientDetailChart = null;
+
+            if (clientDetailCanvas && typeof Chart !== 'undefined') {
+                const clientSelector = document.getElementById('clientSelector');
+                const clientLabels = @json($clientLabels);
+                const clientIds = @json($clientIds);
+
+                function loadClientData(clientId) {
+                    if (!clientId) {
+                        if (clientDetailChart) {
+                            clientDetailChart.destroy();
+                            clientDetailChart = null;
+                        }
+                        const ctx = clientDetailCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, clientDetailCanvas.width, clientDetailCanvas.height);
+                        ctx.font = '16px Arial';
+                        ctx.fillStyle = '#999';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Selecciona un cliente para ver su detalle', clientDetailCanvas.width / 2, clientDetailCanvas.height / 2);
+                        return;
+                    }
+
+                    fetch(
+                            `{{ route('time.client-data') }}?client_id=${clientId}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
+                        )
+                        .then(response => response.json())
+                        .then(data => {
+                            if (clientDetailChart) {
+                                clientDetailChart.destroy();
+                            }
+                            const selectedOption = clientSelector.options[clientSelector.selectedIndex];
+                            const clientName = selectedOption ? selectedOption.text : 'Cliente';
+
+                            clientDetailChart = new Chart(clientDetailCanvas, {
+                                type: 'bar',
+                                data: {
+                                    labels: data.labels,
+                                    datasets: [{
+                                        label: clientName,
+                                        data: data.hours,
+                                        backgroundColor: 'rgba(16, 185, 129, 0.78)',
+                                        borderColor: 'rgba(16, 185, 129, 0)',
+                                        borderWidth: 0,
+                                        borderRadius: 6,
+                                        maxBarThickness: 42,
+                                    }],
                                 },
-                            },
-                        },
-                    },
-                },
-            });
-        }
-    }
-</script>
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            labels: {
+                                                boxWidth: 14,
+                                                usePointStyle: true,
+                                                pointStyle: 'circle',
+                                                padding: 15,
+                                                font: { size: 15 },
+                                            },
+                                        },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                            titleColor: '#1f2937',
+                                            bodyColor: '#1f2937',
+                                            titleFont: { size: 15 },
+                                            bodyFont: { size: 15 },
+                                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                                            borderWidth: 1,
+                                            cornerRadius: 8,
+                                            padding: 12,
+                                            callbacks: {
+                                                label(context) {
+                                                    const totalSegundos = Math.round(context.parsed.y * 3600);
+                                                    const horas = Math.floor(totalSegundos / 3600);
+                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const segundos = totalSegundos % 60;
+                                                    const tiempo =
+                                                        `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                                    return `${context.dataset.label}: ${tiempo}`;
+                                                },
+                                            },
+                                        },
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                            border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                            ticks: { display: true, font: { size: 15 } },
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                            border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                            ticks: {
+                                                font: { size: 15 },
+                                                callback(value) {
+                                                    const totalSegundos = Math.round(value * 3600);
+                                                    const horas = Math.floor(totalSegundos / 3600);
+                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const segundos = totalSegundos % 60;
+                                                    return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            });
+                        })
+                        .catch(error => console.error('Error cargando datos del cliente:', error));
+                }
+
+                if (clientSelector) {
+                    clientSelector.addEventListener('change', function() {
+                        loadClientData(this.value);
+                    });
+
+                    // ✅ Cargar el primer cliente por defecto (el más trabajado)
+                    if (clientIds.length > 0) {
+                        const defaultClientId = clientIds[0]; // El primer cliente (más trabajado porque están ordenados)
+                        clientSelector.value = defaultClientId;
+                        loadClientData(defaultClientId);
+                    }
+                }
+            }
+        });
+    </script>
 </x-app-layout>
