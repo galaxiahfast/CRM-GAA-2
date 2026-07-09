@@ -14,9 +14,7 @@ class DashboardController extends Controller
     {
         $viewer = $request->user();
         $isAdmin = $viewer->isAdmin();
-        $period = $request->string('period', 'week')->toString();
-        $period = in_array($period, ['week', 'month'], true) ? $period : 'week';
-        [$start, $end] = $this->currentPeriodRange($period);
+        [$start, $end] = $this->dateRangeFromRequest($request);
 
         $search = trim((string) $request->query('search', ''));
         $users = $isAdmin ? $this->searchUsers($search) : collect();
@@ -29,7 +27,6 @@ class DashboardController extends Controller
 
         return view('time-dashboard.index', [
             'isAdmin' => $isAdmin,
-            'period' => $period,
             'search' => $search,
             'users' => $users,
             'selectedUser' => $selectedUser,
@@ -37,20 +34,39 @@ class DashboardController extends Controller
             'end' => $end,
             'labels' => $chart['labels'],
             'hours' => $chart['hours'],
+            'averageHours' => $chart['averageHours'],
             'totalSeconds' => $chart['totalSeconds'],
         ]);
     }
 
     /** @return array{0: Carbon, 1: Carbon} */
-    private function currentPeriodRange(string $period): array
+    private function dateRangeFromRequest(Request $request): array
     {
-        $now = Carbon::now($this->moduleTimezone());
+        $timezone = $this->moduleTimezone();
+        $defaultStart = Carbon::now($timezone)->startOfWeek();
+        $defaultEnd = Carbon::now($timezone)->endOfWeek();
 
-        if ($period === 'month') {
-            return [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()];
+        $start = $this->parseDateInput((string) $request->query('fecha_inicio'), $defaultStart);
+        $end = $this->parseDateInput((string) $request->query('fecha_fin'), $defaultEnd);
+
+        if ($end->lessThan($start)) {
+            return [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
         }
 
-        return [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()];
+        return [$start->copy()->startOfDay(), $end->copy()->endOfDay()];
+    }
+
+    private function parseDateInput(string $value, Carbon $fallback): Carbon
+    {
+        if ($value === '') {
+            return $fallback->copy();
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value, $this->moduleTimezone());
+        } catch (\Throwable) {
+            return $fallback->copy();
+        }
     }
 
     private function selectedUser(Request $request, $users): ?User
@@ -91,7 +107,7 @@ class DashboardController extends Controller
             ->get();
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, totalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
@@ -113,14 +129,17 @@ class DashboardController extends Controller
             $hours[] = round($seconds / 3600, 2);
         }
 
+        $average = count($days) > 0 ? round(($totalSeconds / 3600) / count($days), 2) : 0;
+
         return [
             'labels' => array_map(fn (Carbon $day) => $day->format('d/m'), $days),
             'hours' => $hours,
+            'averageHours' => array_fill(0, count($days), $average),
             'totalSeconds' => $totalSeconds,
         ];
     }
 
-    /** @return array{labels: array<int, string>, hours: array<int, float>, totalSeconds: int} */
+    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int} */
     private function emptyChart(Carbon $start, Carbon $end): array
     {
         $days = $this->daysBetween($start, $end);
@@ -128,6 +147,7 @@ class DashboardController extends Controller
         return [
             'labels' => array_map(fn (Carbon $day) => $day->format('d/m'), $days),
             'hours' => array_fill(0, count($days), 0),
+            'averageHours' => array_fill(0, count($days), 0),
             'totalSeconds' => 0,
         ];
     }

@@ -11,10 +11,14 @@
         <div class="flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-gray-900">Panel de Control</h1>
-                <p class="mt-1 text-sm text-gray-500">Tiempo trabajado por dia para el periodo actual.</p>
+                <p class="mt-1 text-sm text-gray-500">Tiempo trabajado por dia dentro del rango seleccionado.</p>
             </div>
 
             <form method="GET" action="{{ route('time.dashboard') }}" class="flex flex-wrap items-end gap-3">
+                @if ($selectedUser)
+                    <input id="selected_user_id" type="hidden" name="user_id" value="{{ $selectedUser->id }}">
+                @endif
+
                 @if ($isAdmin)
                     <div>
                         <label for="search" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Colaborador</label>
@@ -24,21 +28,32 @@
                             value="{{ $search }}"
                             type="search"
                             placeholder="ID, nombre o correo"
+                            oninput="document.getElementById('selected_user_id')?.remove()"
                             class="h-11 w-64 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                         >
                     </div>
                 @endif
 
                 <div>
-                    <label for="period" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Periodo</label>
-                    <select
-                        id="period"
-                        name="period"
+                    <label for="fecha_inicio" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Desde</label>
+                    <input
+                        id="fecha_inicio"
+                        name="fecha_inicio"
+                        value="{{ $start->toDateString() }}"
+                        type="date"
                         class="h-11 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
-                        <option value="week" @selected($period === 'week')>Semana actual</option>
-                        <option value="month" @selected($period === 'month')>Mes actual</option>
-                    </select>
+                </div>
+
+                <div>
+                    <label for="fecha_fin" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Hasta</label>
+                    <input
+                        id="fecha_fin"
+                        name="fecha_fin"
+                        value="{{ $end->toDateString() }}"
+                        type="date"
+                        class="h-11 rounded-lg border border-gray-300 px-3 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    >
                 </div>
 
                 <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-800">
@@ -53,7 +68,7 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach ($users as $user)
                         <a
-                            href="{{ route('time.dashboard', ['user_id' => $user->id, 'search' => $search, 'period' => $period]) }}"
+                            href="{{ route('time.dashboard', ['user_id' => $user->id, 'search' => $search, 'fecha_inicio' => $start->toDateString(), 'fecha_fin' => $end->toDateString()]) }}"
                             class="inline-flex items-center rounded-lg border px-3 py-2 text-sm transition-colors {{ $selectedUser?->id === $user->id ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50' }}"
                         >
                             <span class="font-medium">{{ trim($user->name.' '.($user->last_name ?? '')) }}</span>
@@ -89,7 +104,7 @@
                     <h2 class="text-base font-semibold text-gray-900">Tiempo trabajado por dia</h2>
                     <p class="mt-1 text-sm text-gray-500">
                         @if ($selectedUser)
-                            Horas registradas para el colaborador seleccionado.
+                            Barras de horas diarias y linea de promedio del rango seleccionado.
                         @else
                             Busca y selecciona un colaborador para visualizar la grafica.
                         @endif
@@ -116,27 +131,48 @@
                 type: 'bar',
                 data: {
                     labels: @json($labels),
-                    datasets: [{
-                        label: 'Horas trabajadas',
-                        data: @json($hours),
-                        backgroundColor: 'rgba(37, 99, 235, 0.78)',
-                        borderColor: 'rgb(29, 78, 216)',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        maxBarThickness: 42,
-                    }],
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Horas trabajadas',
+                            data: @json($hours),
+                            backgroundColor: 'rgba(37, 99, 235, 0.78)',
+                            borderColor: 'rgb(29, 78, 216)',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            maxBarThickness: 42,
+                            order: 2,
+                        },
+                        {
+                            type: 'line',
+                            label: 'Promedio del periodo',
+                            data: @json($averageHours),
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            tension: 0.35,
+                            fill: false,
+                            order: 1,
+                        },
+                    ],
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false,
+                            display: true,
+                            labels: {
+                                boxWidth: 12,
+                                usePointStyle: true,
+                            },
                         },
                         tooltip: {
                             callbacks: {
                                 label(context) {
-                                    return `${context.parsed.y.toFixed(2)} horas`;
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} horas`;
                                 },
                             },
                         },
