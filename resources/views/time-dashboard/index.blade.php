@@ -84,26 +84,6 @@
             </div>
         @endif
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Colaborador</p>
-                <p class="mt-2 text-lg font-semibold text-gray-900">
-                    {{ $selectedUser ? trim($selectedUser->name.' '.($selectedUser->last_name ?? '')) : 'Selecciona un usuario' }}
-                </p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Rango</p>
-                <p class="mt-2 text-lg font-semibold text-gray-900">{{ $start->format('d/m/Y') }} - {{ $end->format('d/m/Y') }}</p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total trabajado</p>
-                <p class="mt-2 font-mono text-lg font-semibold text-gray-900">{{ $fmtSeconds($totalSeconds) }}</p>
-            </div>
-        </div>
-
         <!-- ============================================================ -->
         <!-- MENÚ DE PESTAÑAS                                              -->
         <!-- ============================================================ -->
@@ -116,7 +96,7 @@
                     🔍 Detalles
                 </button>
                 <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-colors" data-tab="tab-nueva">
-                    🚧 Nueva gráfica
+                    📈 Cliente + Actividad
                 </button>
             </div>
         </div>
@@ -128,7 +108,6 @@
 
             <!-- ==================== TAB 1: RESUMEN ==================== -->
             <div id="tab-resumen" class="tab-content space-y-6">
-                <h2 class="text-lg font-semibold text-gray-700">Resumen general</h2>
 
                 <!-- Gráfica 1: Tiempo trabajado por día -->
                 <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
@@ -195,7 +174,6 @@
 
             <!-- ==================== TAB 2: DETALLES ==================== -->
             <div id="tab-detalles" class="tab-content space-y-6 hidden">
-                <h2 class="text-lg font-semibold text-gray-700">Detalles por actividad y cliente</h2>
 
                 <!-- Gráfica 4: Detalle por actividad -->
                 @if ($selectedUser && !empty($activityLabels))
@@ -264,20 +242,8 @@
                 @endif
             </div>
 
-            <!-- ==================== TAB 3: NUEVA GRÁFICA ==================== -->
+            <!-- ==================== TAB 3: CLIENTE + ACTIVIDAD ==================== -->
             <div id="tab-nueva" class="tab-content space-y-6 hidden">
-                <h2 class="text-lg font-semibold text-gray-700">Tiempo por cliente + actividad</h2>
-                
-                <!-- Campos ocultos para la combinación más trabajada por defecto -->
-                @if($topClientActivity && $selectedUser)
-                    <input type="hidden" id="defaultClientId" value="{{ $topClientActivity['client_id'] }}">
-                    <input type="hidden" id="defaultActivityId" value="{{ $topClientActivity['activity_id'] }}">
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-gray-700">
-                        <span class="font-medium">📌 Mostrando por defecto:</span> 
-                        {{ $topClientActivity['client_name'] }} → {{ $topClientActivity['activity_name'] }} 
-                        ({{ gmdate('H:i', $topClientActivity['seconds']) }} total)
-                    </div>
-                @endif
 
                 <!-- Gráfica de Cliente + Actividad -->
                 <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
@@ -669,7 +635,7 @@
             if (detailCanvas && typeof Chart !== 'undefined') {
                 const activitySelector = document.getElementById('activitySelector');
                 const activityLabels = @json($activityLabels);
-                const activityIds = @json($activityIds); // ✅ Obtener los IDs reales
+                const activityIds = @json($activityIds);
 
                 function loadActivityData(activityId) {
                     if (!activityId) {
@@ -785,9 +751,8 @@
                         loadActivityData(this.value);
                     });
 
-                    // ✅ Cargar la primera actividad (la más trabajada) usando el ID real
                     if (activityLabels.length > 0 && activityIds.length > 0) {
-                        const defaultActivityId = activityIds[0]; // ✅ Primer ID real
+                        const defaultActivityId = activityIds[0];
                         activitySelector.value = defaultActivityId;
                         loadActivityData(defaultActivityId);
                     }
@@ -928,14 +893,12 @@
             }
 
             // ============================================================
-            // 7. GRÁFICO 6: Cliente + Actividad (NUEVA GRÁFICA)
+            // 7. GRÁFICO 6: Cliente + Actividad
             // ============================================================
             const clientActivityCanvas = document.getElementById('clientActivityChart');
             let clientActivityChart = null;
 
-            // ✅ Inicializar la gráfica primero
             if (clientActivityCanvas && typeof Chart !== 'undefined') {
-                console.log('🟢 Inicializando gráfica cliente+actividad');
                 clientActivityChart = new Chart(clientActivityCanvas, {
                     type: 'bar',
                     data: {
@@ -1011,54 +974,20 @@
                         },
                     }
                 });
-                console.log('🟢 Gráfica inicializada correctamente');
             }
 
-            // ✅ Función para cargar datos en la gráfica 6
             function loadClientActivityChart(clientId, activityId) {
-                // ✅ Convertir a números si son strings
                 clientId = parseInt(clientId);
                 activityId = parseInt(activityId);
-                
-                console.log('🔵 loadClientActivityChart llamado con:', {
-                    clientId: clientId,
-                    activityId: activityId,
-                    tipoClientId: typeof clientId,
-                    tipoActivityId: typeof activityId
-                });
 
-                // ✅ Verificar que sean números válidos
                 if (isNaN(clientId) || isNaN(activityId) || !clientId || !activityId) {
-                    console.error('❌ IDs inválidos:', { clientId, activityId });
                     return;
                 }
 
                 if (!clientActivityChart) {
-                    console.error('❌ clientActivityChart no está inicializado');
                     return;
                 }
 
-                // ✅ Si no hay IDs, intentar cargar por defecto
-                if (!clientId || !activityId) {
-                    console.log('🟡 No se recibieron IDs, buscando por defecto');
-                    const defaultClientId = parseInt(document.getElementById('defaultClientId')?.value);
-                    const defaultActivityId = parseInt(document.getElementById('defaultActivityId')?.value);
-                    console.log('🟡 Default IDs:', { defaultClientId, defaultActivityId });
-                    
-                    if (defaultClientId && defaultActivityId && !isNaN(defaultClientId) && !isNaN(defaultActivityId)) {
-                        clientId = defaultClientId;
-                        activityId = defaultActivityId;
-                        const clientSelect = document.getElementById('clientActivityClientSelector');
-                        const activitySelect = document.getElementById('clientActivityActivitySelector');
-                        if (clientSelect) clientSelect.value = clientId;
-                        if (activitySelect) activitySelect.value = activityId;
-                    } else {
-                        console.warn('⚠️ No hay IDs por defecto válidos');
-                        return;
-                    }
-                }
-
-                // ✅ CORRECTO - usar las fechas del backend
                 const params = new URLSearchParams({
                     client_id: clientId,
                     activity_id: activityId,
@@ -1066,107 +995,53 @@
                     fecha_fin: '{{ $end->toDateString() }}'
                 });
 
-                console.log('📤 Enviando fetch a:', '{{ route("dashboard.client-activity-data") }}?' + params);
-                console.log('📤 Parámetros:', {
-                    client_id: clientId,
-                    activity_id: activityId,
-                    fecha_inicio: '{{ $start->toDateString() }}',
-                    fecha_fin: '{{ $end->toDateString() }}'
-                });
-
                 fetch('{{ route("dashboard.client-activity-data") }}?' + params)
-                    .then(res => {
-                        console.log('📥 Respuesta recibida, status:', res.status);
-                        if (!res.ok) {
-                            throw new Error(`HTTP error! status: ${res.status}`);
-                        }
-                        return res.json();
-                    })
+                    .then(res => res.json())
                     .then(data => {
-                        console.log('📊 Datos recibidos del servidor:', data);
-                        console.log('📊 Labels:', data.labels);
-                        console.log('📊 Hours:', data.hours);
-                        
                         clientActivityChart.data.labels = data.labels;
                         clientActivityChart.data.datasets[0].data = data.hours;
-                        
-                        // ✅ Actualizar el label con la combinación seleccionada
+
                         const clientSelect = document.getElementById('clientActivityClientSelector');
                         const activitySelect = document.getElementById('clientActivityActivitySelector');
                         const clientName = clientSelect ? clientSelect.options[clientSelect.selectedIndex]?.text : 'Cliente';
                         const activityName = activitySelect ? activitySelect.options[activitySelect.selectedIndex]?.text : 'Actividad';
-                        
-                        console.log('🏷️ Actualizando label:', `${clientName} - ${activityName}`);
+
                         clientActivityChart.data.datasets[0].label = `${clientName} - ${activityName}`;
                         clientActivityChart.update();
-                        console.log('✅ Gráfica actualizada correctamente');
                     })
-                    .catch(error => {
-                        console.error('❌ Error cargando gráfica:', error);
-                    });
+                    .catch(error => console.error('Error cargando gráfica:', error));
             }
 
-            // ✅ Cargar la combinación más trabajada por defecto
             @if($topClientActivity && $selectedUser)
-                console.log('🟢 Cargando combinación por defecto:', {
-                    client_id: {{ $topClientActivity['client_id'] }},
-                    activity_id: {{ $topClientActivity['activity_id'] }},
-                    client_name: '{{ $topClientActivity['client_name'] }}',
-                    activity_name: '{{ $topClientActivity['activity_name'] }}',
-                    seconds: {{ $topClientActivity['seconds'] }}
-                });
-                
-                // ✅ Asegurar que son números y seleccionar en los dropdowns
                 const defaultClientId = parseInt({{ $topClientActivity['client_id'] }});
                 const defaultActivityId = parseInt({{ $topClientActivity['activity_id'] }});
-                
+
                 const clientSelect = document.getElementById('clientActivityClientSelector');
                 const activitySelect = document.getElementById('clientActivityActivitySelector');
-                
+
                 if (clientSelect) clientSelect.value = defaultClientId;
                 if (activitySelect) activitySelect.value = defaultActivityId;
-                
+
                 loadClientActivityChart(defaultClientId, defaultActivityId);
-            @else
-                console.warn('⚠️ No hay topClientActivity disponible');
             @endif
 
-            // ✅ Evento del botón "Cargar"
             const loadBtn = document.getElementById('loadClientActivityBtn');
             if (loadBtn) {
-                console.log('🟢 Botón "Cargar" encontrado, asignando evento');
                 loadBtn.addEventListener('click', function() {
-                    console.log('🟡 Botón "Cargar" clickeado');
-                    
                     const clientSelect = document.getElementById('clientActivityClientSelector');
                     const activitySelect = document.getElementById('clientActivityActivitySelector');
-                    
-                    // ✅ Convertir a número entero
+
                     const clientId = parseInt(clientSelect?.value);
                     const activityId = parseInt(activitySelect?.value);
-                    
-                    console.log('🟡 Valores seleccionados:', {
-                        clientId: clientId,
-                        activityId: activityId,
-                        clientText: clientSelect?.options[clientSelect.selectedIndex]?.text,
-                        activityText: activitySelect?.options[activitySelect.selectedIndex]?.text
-                    });
 
-                    // ✅ Verificar que sean números válidos
                     if (isNaN(clientId) || isNaN(activityId) || !clientId || !activityId) {
-                        console.warn('⚠️ IDs inválidos:', { clientId, activityId });
                         alert('Selecciona tanto un cliente como una actividad');
                         return;
                     }
 
                     loadClientActivityChart(clientId, activityId);
                 });
-            } else {
-                console.warn('⚠️ Botón "Cargar" no encontrado');
             }
-
-
         });
     </script>
-
 </x-app-layout>
