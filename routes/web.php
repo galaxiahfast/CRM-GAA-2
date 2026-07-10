@@ -49,8 +49,14 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/dashboard/client-activity-data', [DashboardController::class, 'getClientActivityData'])
+    ->name('dashboard.client-activity-data');
+    
 Route::get('/time/activity-data', [DashboardController::class, 'getActivityData'])->name('time.activity-data');
 Route::get('/time/client-data', [DashboardController::class, 'getClientData'])->name('time.client-data');
+
+
+
 
 Route::middleware([
     'auth:sanctum',

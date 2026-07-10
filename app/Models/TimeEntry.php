@@ -3,15 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class TimeEntry extends Model
 {
     public const STATUS_IN_PROGRESS = 0;
-
     public const STATUS_PAUSED = 1;
-
     public const STATUS_FINISHED = 2;
-
     public const STATUS_AUTO_CLOSED = 3;
 
     public const STATUS_LABELS = [
@@ -95,9 +93,26 @@ class TimeEntry extends Model
     public function calculateEffectiveSeconds(): int
     {
         return (int) $this->intervals->reduce(function (int $carry, TimeInterval $interval) {
+            // ✅ Si no tiene ended_at, usar el momento actual
             $end = $interval->ended_at ?? now();
-
-            return $carry + max(0, $end->diffInSeconds($interval->started_at, true));
+            $start = $interval->started_at;
+            
+            // ✅ Si ended_at es menor que started_at, usar abs() para obtener valor positivo
+            // Esto soluciona el problema de intervalos invertidos
+            $diff = abs($end->diffInSeconds($start));
+            
+            // ✅ Log solo si hay diferencia negativa (para depuración)
+            if ($end->lt($start)) {
+                Log::warning('Intervalo invertido detectado:', [
+                    'entry_id' => $this->id,
+                    'started_at' => $start,
+                    'ended_at' => $end,
+                    'diff_seconds' => $diff,
+                    'formatted' => gmdate('H:i:s', $diff)
+                ]);
+            }
+            
+            return $carry + $diff;
         }, 0);
     }
 }

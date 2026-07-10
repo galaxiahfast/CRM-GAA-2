@@ -104,142 +104,279 @@
             </div>
         </div>
 
-        <!-- Chart - Gráfico de barras -->
-        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3 p-4">
-                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                <div>
-                    <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
-                    <p class="text-[15px] text-gray-500 mt-[15px]">
-                        @if ($selectedUser)
-                            Barras de horas diarias y línea de promedio del rango seleccionado.
-                        @else
-                            Busca y selecciona un colaborador para visualizar la gráfica.
-                        @endif
-                    </p>
-                </div>
-            </div>
-            <div class="h-[360px] w-full p-4">
-                <canvas id="workedTimeChart"></canvas>
+        <!-- ============================================================ -->
+        <!-- MENÚ DE PESTAÑAS                                              -->
+        <!-- ============================================================ -->
+        <div class="mt-6 border-b border-gray-200 bg-white rounded-t-2xl shadow-sm overflow-hidden">
+            <div class="flex flex-wrap gap-1 px-4 pt-2">
+                <button class="tab-button active px-4 py-2 text-sm font-medium text-[#1A3A6B] border-b-2 border-[#1A3A6B] focus:outline-none transition-colors" data-tab="tab-resumen">
+                    📊 Resumen
+                </button>
+                <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-colors" data-tab="tab-detalles">
+                    🔍 Detalles
+                </button>
+                <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-colors" data-tab="tab-nueva">
+                    🚧 Nueva gráfica
+                </button>
             </div>
         </div>
 
-        <!-- Gráfico de pastel - Distribución por cliente -->
-        @if ($selectedUser && !empty($clientLabels))
-        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3 p-4">
-                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                <div>
-                    <p class="text-[15px] font-semibold text-black">Distribución por cliente</p>
-                    <p class="text-[15px] text-gray-500 mt-[15px]">
-                        Porcentaje de tiempo trabajado por cada cliente en el periodo seleccionado.
-                    </p>
-                </div>
-            </div>
-            <div class="h-[360px] w-full p-4">
-                <canvas id="clientPieChart"></canvas>
-            </div>
-        </div>
-        @endif
+        <!-- ============================================================ -->
+        <!-- CONTENEDORES DE PESTAÑAS                                     -->
+        <!-- ============================================================ -->
+        <div class="space-y-6">
 
-        <!-- Gráfico de actividades - Distribución por actividad -->
-        @if ($selectedUser && !empty($activityLabels))
-        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3 p-4">
-                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                <div>
-                    <p class="text-[15px] font-semibold text-black">Distribución por actividad</p>
-                    <p class="text-[15px] text-gray-500 mt-[15px]">
-                        Tiempo trabajado por cada actividad en el periodo seleccionado.
-                    </p>
-                </div>
-            </div>
-            <div class="h-[400px] w-full p-4">
-                <canvas id="activityChart"></canvas>
-            </div>
-        </div>
-        @endif
+            <!-- ==================== TAB 1: RESUMEN ==================== -->
+            <div id="tab-resumen" class="tab-content space-y-6">
+                <h2 class="text-lg font-semibold text-gray-700">Resumen general</h2>
 
-        <!-- Gráfico de detalle por actividad -->
-        @if ($selectedUser && !empty($activityLabels))
-        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3 p-4">
-                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between flex-wrap gap-4">
+                <!-- Gráfica 1: Tiempo trabajado por día -->
+                <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                    <div class="flex items-start gap-3 p-4">
+                        <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
                         <div>
-                            <p class="text-[15px] font-semibold text-black">Detalle por actividad</p>
+                            <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
                             <p class="text-[15px] text-gray-500 mt-[15px]">
-                                Distribución diaria de la actividad seleccionada.
+                                @if ($selectedUser)
+                                    Barras de horas diarias y línea de promedio del rango seleccionado.
+                                @else
+                                    Busca y selecciona un colaborador para visualizar la gráfica.
+                                @endif
                             </p>
                         </div>
-                        <div class="w-64">
-                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar actividad</label>
-                            <select id="activitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
-                                <option value="">Selecciona una actividad...</option>
-                                @foreach ($activityLabels as $index => $label)
-                                    <option value="{{ $index + 1 }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
+                    </div>
+                    <div class="h-[360px] w-full p-4">
+                        <canvas id="workedTimeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfica 2: Distribución por cliente -->
+                @if ($selectedUser && !empty($clientLabels))
+                    <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                        <div class="flex items-start gap-3 p-4">
+                            <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                            </svg>
+                            <div>
+                                <p class="text-[15px] font-semibold text-black">Distribución por cliente</p>
+                                <p class="text-[15px] text-gray-500 mt-[15px]">
+                                    Porcentaje de tiempo trabajado por cada cliente en el periodo seleccionado.
+                                </p>
+                            </div>
                         </div>
+                        <div class="h-[360px] w-full p-4">
+                            <canvas id="clientPieChart"></canvas>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Gráfica 3: Distribución por actividad -->
+                @if ($selectedUser && !empty($activityLabels))
+                    <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                        <div class="flex items-start gap-3 p-4">
+                            <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                            </svg>
+                            <div>
+                                <p class="text-[15px] font-semibold text-black">Distribución por actividad</p>
+                                <p class="text-[15px] text-gray-500 mt-[15px]">
+                                    Tiempo trabajado por cada actividad en el periodo seleccionado.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="h-[400px] w-full p-4">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- ==================== TAB 2: DETALLES ==================== -->
+            <div id="tab-detalles" class="tab-content space-y-6 hidden">
+                <h2 class="text-lg font-semibold text-gray-700">Detalles por actividad y cliente</h2>
+
+                <!-- Gráfica 4: Detalle por actividad -->
+                @if ($selectedUser && !empty($activityLabels))
+                    <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                        <div class="flex items-start gap-3 p-4">
+                            <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                            </svg>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between flex-wrap gap-4">
+                                    <div>
+                                        <p class="text-[15px] font-semibold text-black">Detalle por actividad</p>
+                                        <p class="text-[15px] text-gray-500 mt-[15px]">
+                                            Distribución diaria de la actividad seleccionada.
+                                        </p>
+                                    </div>
+                                    <div class="w-64">
+                                        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar actividad</label>
+                                        <select id="activitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                            <option value="">Selecciona una actividad...</option>
+                                            @foreach ($activityLabels as $index => $label)
+                                                <option value="{{ $activityIds[$index] ?? $index + 1 }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-[360px] w-full p-4">
+                            <canvas id="activityDetailChart"></canvas>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Gráfica 5: Detalle por cliente -->
+                @if ($selectedUser && !empty($clientLabels))
+                    <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                        <div class="flex items-start gap-3 p-4">
+                            <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                            </svg>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between flex-wrap gap-4">
+                                    <div>
+                                        <p class="text-[15px] font-semibold text-black">Detalle por cliente</p>
+                                        <p class="text-[15px] text-gray-500 mt-[15px]">
+                                            Distribución diaria del cliente seleccionado.
+                                        </p>
+                                    </div>
+                                    <div class="w-64">
+                                        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar cliente</label>
+                                        <select id="clientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                            <option value="">Selecciona un cliente...</option>
+                                            @foreach ($clientLabels as $index => $label)
+                                                <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-[360px] w-full p-4">
+                            <canvas id="clientDetailChart"></canvas>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- ==================== TAB 3: NUEVA GRÁFICA ==================== -->
+            <div id="tab-nueva" class="tab-content space-y-6 hidden">
+                <h2 class="text-lg font-semibold text-gray-700">Tiempo por cliente + actividad</h2>
+                
+                <!-- Campos ocultos para la combinación más trabajada por defecto -->
+                @if($topClientActivity && $selectedUser)
+                    <input type="hidden" id="defaultClientId" value="{{ $topClientActivity['client_id'] }}">
+                    <input type="hidden" id="defaultActivityId" value="{{ $topClientActivity['activity_id'] }}">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-gray-700">
+                        <span class="font-medium">📌 Mostrando por defecto:</span> 
+                        {{ $topClientActivity['client_name'] }} → {{ $topClientActivity['activity_name'] }} 
+                        ({{ gmdate('H:i', $topClientActivity['seconds']) }} total)
+                    </div>
+                @endif
+
+                <!-- Gráfica de Cliente + Actividad -->
+                <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                    <div class="flex items-start gap-3 p-4">
+                        <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                    <p class="text-[15px] font-semibold text-black">Tiempo por cliente + actividad</p>
+                                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                                        Distribución diaria de una combinación específica.
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-3">
+                                    <div class="w-48">
+                                        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Cliente</label>
+                                        <select id="clientActivityClientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                            <option value="">Todos los clientes</option>
+                                            @foreach ($clientLabels as $index => $label)
+                                                <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="w-48">
+                                        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Actividad</label>
+                                        <select id="clientActivityActivitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                            <option value="">Todas las actividades</option>
+                                            @foreach ($activityLabels as $index => $label)
+                                                <option value="{{ $activityIds[$index] ?? $index + 1 }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button id="loadClientActivityBtn" class="self-end h-11 rounded-xl bg-[#1A3A6B] px-4 text-sm font-medium text-white hover:bg-[#15305a]">
+                                        Cargar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-[360px] w-full p-4">
+                        <canvas id="clientActivityChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="h-[360px] w-full p-4">
-                <canvas id="activityDetailChart"></canvas>
-            </div>
-        </div>
-        @endif
 
-        <!-- Gráfico de detalle por cliente -->
-        @if ($selectedUser && !empty($clientLabels))
-        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-            <div class="flex items-start gap-3 p-4">
-                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <p class="text-[15px] font-semibold text-black">Detalle por cliente</p>
-                            <p class="text-[15px] text-gray-500 mt-[15px]">
-                                Distribución diaria del cliente seleccionado.
-                            </p>
-                        </div>
-                        <div class="w-64">
-                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar cliente</label>
-                            <select id="clientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
-                                <option value="">Selecciona un cliente...</option>
-                                @foreach ($clientLabels as $index => $label)
-                                    <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="h-[360px] w-full p-4">
-                <canvas id="clientDetailChart"></canvas>
-            </div>
         </div>
-        @endif
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
-    </script>
+    <!-- Primero cargas Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT PARA PESTAÑAS Y REDIMENSIONAMIENTO DE GRÁFICAS    -->
+    <!-- ============================================================ -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             // ============================================================
-            // GRÁFICO 1: Barras - Horas por día
+            // 1. LOGICA DE PESTAÑAS
+            // ============================================================
+            const tabs = document.querySelectorAll('.tab-button');
+            const contents = {
+                resumen: document.getElementById('tab-resumen'),
+                detalles: document.getElementById('tab-detalles'),
+                nueva: document.getElementById('tab-nueva')
+            };
+
+            function switchTab(tabId) {
+                Object.values(contents).forEach(el => el.classList.add('hidden'));
+                const target = document.getElementById(tabId);
+                if (target) target.classList.remove('hidden');
+
+                tabs.forEach(btn => {
+                    btn.classList.remove('active', 'text-[#1A3A6B]', 'border-[#1A3A6B]');
+                    btn.classList.add('text-gray-500', 'border-transparent');
+                    if (btn.dataset.tab === tabId) {
+                        btn.classList.add('active', 'text-[#1A3A6B]', 'border-[#1A3A6B]');
+                        btn.classList.remove('text-gray-500', 'border-transparent');
+                    }
+                });
+
+                const visibleCanvas = target.querySelectorAll('canvas');
+                visibleCanvas.forEach(canvas => {
+                    const chart = Chart.getChart(canvas);
+                    if (chart) {
+                        chart.resize();
+                    }
+                });
+            }
+
+            tabs.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    switchTab(this.dataset.tab);
+                });
+            });
+
+            // ============================================================
+            // 2. GRÁFICO 1: Barras - Horas por día
             // ============================================================
             const canvas = document.getElementById('workedTimeChart');
             if (canvas && typeof Chart !== 'undefined') {
@@ -349,7 +486,7 @@
             }
 
             // ============================================================
-            // GRÁFICO 2: Pastel - Clientes
+            // 3. GRÁFICO 2: Pastel - Clientes
             // ============================================================
             const pieCanvas = document.getElementById('clientPieChart');
             if (pieCanvas && typeof Chart !== 'undefined') {
@@ -441,7 +578,7 @@
             }
 
             // ============================================================
-            // GRÁFICO 3: Barras horizontales - Actividades
+            // 4. GRÁFICO 3: Barras horizontales - Actividades
             // ============================================================
             const activityCanvas = document.getElementById('activityChart');
             if (activityCanvas && typeof Chart !== 'undefined') {
@@ -524,7 +661,7 @@
             }
 
             // ============================================================
-            // GRÁFICO 4: Detalle por Actividad (con carga por defecto)
+            // 5. GRÁFICO 4: Detalle por Actividad
             // ============================================================
             const detailCanvas = document.getElementById('activityDetailChart');
             let detailChart = null;
@@ -532,6 +669,7 @@
             if (detailCanvas && typeof Chart !== 'undefined') {
                 const activitySelector = document.getElementById('activitySelector');
                 const activityLabels = @json($activityLabels);
+                const activityIds = @json($activityIds); // ✅ Obtener los IDs reales
 
                 function loadActivityData(activityId) {
                     if (!activityId) {
@@ -544,7 +682,8 @@
                         ctx.font = '16px Arial';
                         ctx.fillStyle = '#999';
                         ctx.textAlign = 'center';
-                        ctx.fillText('Selecciona una actividad para ver su detalle', detailCanvas.width / 2, detailCanvas.height / 2);
+                        ctx.fillText('Selecciona una actividad para ver su detalle', detailCanvas.width / 2, detailCanvas
+                            .height / 2);
                         return;
                     }
 
@@ -599,9 +738,11 @@
                                             padding: 12,
                                             callbacks: {
                                                 label(context) {
-                                                    const totalSegundos = Math.round(context.parsed.y * 3600);
+                                                    const totalSegundos = Math.round(context.parsed.y *
+                                                    3600);
                                                     const horas = Math.floor(totalSegundos / 3600);
-                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const minutos = Math.floor((totalSegundos % 3600) /
+                                                        60);
                                                     const segundos = totalSegundos % 60;
                                                     const tiempo =
                                                         `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
@@ -625,7 +766,8 @@
                                                 callback(value) {
                                                     const totalSegundos = Math.round(value * 3600);
                                                     const horas = Math.floor(totalSegundos / 3600);
-                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const minutos = Math.floor((totalSegundos % 3600) /
+                                                        60);
                                                     const segundos = totalSegundos % 60;
                                                     return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
                                                 },
@@ -643,9 +785,9 @@
                         loadActivityData(this.value);
                     });
 
-                    // ✅ Cargar la primera actividad por defecto (la más alta)
-                    if (activityLabels.length > 0) {
-                        const defaultActivityId = 1; // La primera actividad (más alta porque están ordenadas)
+                    // ✅ Cargar la primera actividad (la más trabajada) usando el ID real
+                    if (activityLabels.length > 0 && activityIds.length > 0) {
+                        const defaultActivityId = activityIds[0]; // ✅ Primer ID real
                         activitySelector.value = defaultActivityId;
                         loadActivityData(defaultActivityId);
                     }
@@ -653,7 +795,7 @@
             }
 
             // ============================================================
-            // GRÁFICO 5: Detalle por Cliente (con carga por defecto)
+            // 6. GRÁFICO 5: Detalle por Cliente
             // ============================================================
             const clientDetailCanvas = document.getElementById('clientDetailChart');
             let clientDetailChart = null;
@@ -674,7 +816,8 @@
                         ctx.font = '16px Arial';
                         ctx.fillStyle = '#999';
                         ctx.textAlign = 'center';
-                        ctx.fillText('Selecciona un cliente para ver su detalle', clientDetailCanvas.width / 2, clientDetailCanvas.height / 2);
+                        ctx.fillText('Selecciona un cliente para ver su detalle', clientDetailCanvas.width / 2,
+                            clientDetailCanvas.height / 2);
                         return;
                     }
 
@@ -729,9 +872,11 @@
                                             padding: 12,
                                             callbacks: {
                                                 label(context) {
-                                                    const totalSegundos = Math.round(context.parsed.y * 3600);
+                                                    const totalSegundos = Math.round(context.parsed.y *
+                                                    3600);
                                                     const horas = Math.floor(totalSegundos / 3600);
-                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const minutos = Math.floor((totalSegundos % 3600) /
+                                                        60);
                                                     const segundos = totalSegundos % 60;
                                                     const tiempo =
                                                         `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
@@ -755,7 +900,8 @@
                                                 callback(value) {
                                                     const totalSegundos = Math.round(value * 3600);
                                                     const horas = Math.floor(totalSegundos / 3600);
-                                                    const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                                    const minutos = Math.floor((totalSegundos % 3600) /
+                                                        60);
                                                     const segundos = totalSegundos % 60;
                                                     return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
                                                 },
@@ -773,14 +919,254 @@
                         loadClientData(this.value);
                     });
 
-                    // ✅ Cargar el primer cliente por defecto (el más trabajado)
                     if (clientIds.length > 0) {
-                        const defaultClientId = clientIds[0]; // El primer cliente (más trabajado porque están ordenados)
+                        const defaultClientId = clientIds[0];
                         clientSelector.value = defaultClientId;
                         loadClientData(defaultClientId);
                     }
                 }
             }
+
+            // ============================================================
+            // 7. GRÁFICO 6: Cliente + Actividad (NUEVA GRÁFICA)
+            // ============================================================
+            const clientActivityCanvas = document.getElementById('clientActivityChart');
+            let clientActivityChart = null;
+
+            // ✅ Inicializar la gráfica primero
+            if (clientActivityCanvas && typeof Chart !== 'undefined') {
+                console.log('🟢 Inicializando gráfica cliente+actividad');
+                clientActivityChart = new Chart(clientActivityCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Horas trabajadas',
+                            data: [],
+                            backgroundColor: 'rgba(26, 58, 107, 0.78)',
+                            borderColor: 'rgba(26, 58, 107, 0)',
+                            borderWidth: 0,
+                            borderRadius: 6,
+                            maxBarThickness: 42,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    boxWidth: 14,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 15,
+                                    font: { size: 15 },
+                                },
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#1f2937',
+                                bodyColor: '#1f2937',
+                                titleFont: { size: 15 },
+                                bodyFont: { size: 15 },
+                                borderColor: 'rgba(0, 0, 0, 0.1)',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: 12,
+                                callbacks: {
+                                    label(context) {
+                                        const totalSegundos = Math.round(context.parsed.y * 3600);
+                                        const horas = Math.floor(totalSegundos / 3600);
+                                        const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                        const segundos = totalSegundos % 60;
+                                        const tiempo =
+                                            `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                        return `${context.dataset.label}: ${tiempo}`;
+                                    },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                ticks: { display: true, font: { size: 15 } },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
+                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                ticks: {
+                                    font: { size: 15 },
+                                    callback(value) {
+                                        const totalSegundos = Math.round(value * 3600);
+                                        const horas = Math.floor(totalSegundos / 3600);
+                                        const minutos = Math.floor((totalSegundos % 3600) / 60);
+                                        const segundos = totalSegundos % 60;
+                                        return `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                    },
+                                },
+                            },
+                        },
+                    }
+                });
+                console.log('🟢 Gráfica inicializada correctamente');
+            }
+
+            // ✅ Función para cargar datos en la gráfica 6
+            function loadClientActivityChart(clientId, activityId) {
+                // ✅ Convertir a números si son strings
+                clientId = parseInt(clientId);
+                activityId = parseInt(activityId);
+                
+                console.log('🔵 loadClientActivityChart llamado con:', {
+                    clientId: clientId,
+                    activityId: activityId,
+                    tipoClientId: typeof clientId,
+                    tipoActivityId: typeof activityId
+                });
+
+                // ✅ Verificar que sean números válidos
+                if (isNaN(clientId) || isNaN(activityId) || !clientId || !activityId) {
+                    console.error('❌ IDs inválidos:', { clientId, activityId });
+                    return;
+                }
+
+                if (!clientActivityChart) {
+                    console.error('❌ clientActivityChart no está inicializado');
+                    return;
+                }
+
+                // ✅ Si no hay IDs, intentar cargar por defecto
+                if (!clientId || !activityId) {
+                    console.log('🟡 No se recibieron IDs, buscando por defecto');
+                    const defaultClientId = parseInt(document.getElementById('defaultClientId')?.value);
+                    const defaultActivityId = parseInt(document.getElementById('defaultActivityId')?.value);
+                    console.log('🟡 Default IDs:', { defaultClientId, defaultActivityId });
+                    
+                    if (defaultClientId && defaultActivityId && !isNaN(defaultClientId) && !isNaN(defaultActivityId)) {
+                        clientId = defaultClientId;
+                        activityId = defaultActivityId;
+                        const clientSelect = document.getElementById('clientActivityClientSelector');
+                        const activitySelect = document.getElementById('clientActivityActivitySelector');
+                        if (clientSelect) clientSelect.value = clientId;
+                        if (activitySelect) activitySelect.value = activityId;
+                    } else {
+                        console.warn('⚠️ No hay IDs por defecto válidos');
+                        return;
+                    }
+                }
+
+                // ✅ CORRECTO - usar las fechas del backend
+                const params = new URLSearchParams({
+                    client_id: clientId,
+                    activity_id: activityId,
+                    fecha_inicio: '{{ $start->toDateString() }}',
+                    fecha_fin: '{{ $end->toDateString() }}'
+                });
+
+                console.log('📤 Enviando fetch a:', '{{ route("dashboard.client-activity-data") }}?' + params);
+                console.log('📤 Parámetros:', {
+                    client_id: clientId,
+                    activity_id: activityId,
+                    fecha_inicio: '{{ $start->toDateString() }}',
+                    fecha_fin: '{{ $end->toDateString() }}'
+                });
+
+                fetch('{{ route("dashboard.client-activity-data") }}?' + params)
+                    .then(res => {
+                        console.log('📥 Respuesta recibida, status:', res.status);
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        console.log('📊 Datos recibidos del servidor:', data);
+                        console.log('📊 Labels:', data.labels);
+                        console.log('📊 Hours:', data.hours);
+                        
+                        clientActivityChart.data.labels = data.labels;
+                        clientActivityChart.data.datasets[0].data = data.hours;
+                        
+                        // ✅ Actualizar el label con la combinación seleccionada
+                        const clientSelect = document.getElementById('clientActivityClientSelector');
+                        const activitySelect = document.getElementById('clientActivityActivitySelector');
+                        const clientName = clientSelect ? clientSelect.options[clientSelect.selectedIndex]?.text : 'Cliente';
+                        const activityName = activitySelect ? activitySelect.options[activitySelect.selectedIndex]?.text : 'Actividad';
+                        
+                        console.log('🏷️ Actualizando label:', `${clientName} - ${activityName}`);
+                        clientActivityChart.data.datasets[0].label = `${clientName} - ${activityName}`;
+                        clientActivityChart.update();
+                        console.log('✅ Gráfica actualizada correctamente');
+                    })
+                    .catch(error => {
+                        console.error('❌ Error cargando gráfica:', error);
+                    });
+            }
+
+            // ✅ Cargar la combinación más trabajada por defecto
+            @if($topClientActivity && $selectedUser)
+                console.log('🟢 Cargando combinación por defecto:', {
+                    client_id: {{ $topClientActivity['client_id'] }},
+                    activity_id: {{ $topClientActivity['activity_id'] }},
+                    client_name: '{{ $topClientActivity['client_name'] }}',
+                    activity_name: '{{ $topClientActivity['activity_name'] }}',
+                    seconds: {{ $topClientActivity['seconds'] }}
+                });
+                
+                // ✅ Asegurar que son números y seleccionar en los dropdowns
+                const defaultClientId = parseInt({{ $topClientActivity['client_id'] }});
+                const defaultActivityId = parseInt({{ $topClientActivity['activity_id'] }});
+                
+                const clientSelect = document.getElementById('clientActivityClientSelector');
+                const activitySelect = document.getElementById('clientActivityActivitySelector');
+                
+                if (clientSelect) clientSelect.value = defaultClientId;
+                if (activitySelect) activitySelect.value = defaultActivityId;
+                
+                loadClientActivityChart(defaultClientId, defaultActivityId);
+            @else
+                console.warn('⚠️ No hay topClientActivity disponible');
+            @endif
+
+            // ✅ Evento del botón "Cargar"
+            const loadBtn = document.getElementById('loadClientActivityBtn');
+            if (loadBtn) {
+                console.log('🟢 Botón "Cargar" encontrado, asignando evento');
+                loadBtn.addEventListener('click', function() {
+                    console.log('🟡 Botón "Cargar" clickeado');
+                    
+                    const clientSelect = document.getElementById('clientActivityClientSelector');
+                    const activitySelect = document.getElementById('clientActivityActivitySelector');
+                    
+                    // ✅ Convertir a número entero
+                    const clientId = parseInt(clientSelect?.value);
+                    const activityId = parseInt(activitySelect?.value);
+                    
+                    console.log('🟡 Valores seleccionados:', {
+                        clientId: clientId,
+                        activityId: activityId,
+                        clientText: clientSelect?.options[clientSelect.selectedIndex]?.text,
+                        activityText: activitySelect?.options[activitySelect.selectedIndex]?.text
+                    });
+
+                    // ✅ Verificar que sean números válidos
+                    if (isNaN(clientId) || isNaN(activityId) || !clientId || !activityId) {
+                        console.warn('⚠️ IDs inválidos:', { clientId, activityId });
+                        alert('Selecciona tanto un cliente como una actividad');
+                        return;
+                    }
+
+                    loadClientActivityChart(clientId, activityId);
+                });
+            } else {
+                console.warn('⚠️ Botón "Cargar" no encontrado');
+            }
+
+
         });
     </script>
+
 </x-app-layout>
