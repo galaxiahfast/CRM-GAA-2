@@ -12,7 +12,7 @@
         <div style="min-width: 700px; padding: 0; margin: 0;">
 
             <!-- Header Superior con Migas de Pan -->
-            <div style="padding: 30px; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
+            <div style="padding: 40px; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
                     <span style="font-weight: 500;">Actividades</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
@@ -23,14 +23,14 @@
 
                 <!-- Botones de acción -->
                 <div style="display: flex; align-items: center; gap: 30px; white-space: nowrap; flex-shrink: 0;">
-                    <button style="display: flex; align-items: center; gap: 15px; padding: 8px 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                    <button style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         Descargar
                     </button>
 
-                    <button style="display: flex; align-items: center; gap: 15px; padding: 8px 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                    <button style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                         </svg>
@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <!-- Header principal sin fondo, sin bordes, sin redondeo -->
+            <!-- Header principal -->
             <div style="background-color: transparent; padding: 80px 80px 80px 80px; overflow: hidden; min-width: max-content;">
 
                 <!-- Encabezado -->
@@ -114,7 +114,7 @@
                                         type="search"
                                         placeholder="Buscar por ID, nombre o correo..."
                                         oninput="document.getElementById('selected_user_id')?.remove()"
-                                        style="height: 48px; width: 260px; border-radius: 0px; border: 1px solid #d1d5db; background-color: white; padding-left: 48px; padding-right: 16px; font-size: 15px; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; outline: none; flex-shrink: 0;"
+                                        style="height: 50px; width: 260px; border-radius: 0px; border: 1px solid #d1d5db; background-color: white; padding-left: 48px; padding-right: 16px; font-size: 15px; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; outline: none; flex-shrink: 0;"
                                         onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
                                         onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'"
                                     >
@@ -136,7 +136,7 @@
                                 name="fecha_inicio"
                                 value="{{ $start->toDateString() }}"
                                 type="date"
-                                style="height: 48px; width: 167px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
+                                style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
                                 onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
                                 onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'"
                             >
@@ -155,7 +155,7 @@
                                 name="fecha_fin"
                                 value="{{ $end->toDateString() }}"
                                 type="date"
-                                style="height: 48px; width: 167px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
+                                style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
                                 onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
                                 onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'"
                             >
@@ -163,7 +163,7 @@
 
                         <button
                             type="submit"
-                            style="display: inline-flex; height: 48px; width: 167px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; box-shadow: 0 4px 6px -1px rgba(26,58,107,0.2); border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0;"
+                            style="display: inline-flex; height: 50px; width: 180px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; box-shadow: 0 4px 6px -1px rgba(26,58,107,0.2); border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0;"
                             onmouseover="this.style.backgroundColor='#15305a'"
                             onmouseout="this.style.backgroundColor='#1A3A6B'"
                         >
@@ -249,28 +249,28 @@
             <!-- ============================================================ -->
             <!-- MENÚ DE PESTAÑAS                                              -->
             <!-- ============================================================ -->
-            <div style="padding-left: 80px; padding-right: 80px; margin-bottom: 30px; background-color: transparent; overflow: hidden;">
+            <div style="padding-left: 80px; padding-right: 80px; margin-bottom: 50px; background-color: transparent; overflow: hidden;">
                 <div style="display: flex; flex-wrap: nowrap; gap: 0px; padding: 0; margin: 0;">
-                    <button class="tab-button active" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 20px; font-size: 15px; font-weight: 500; color: #1A3A6B; border-bottom: 2px solid #1A3A6B; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-resumen">
+                    <button class="tab-button active" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #1A3A6B; border-bottom: 2px solid #1A3A6B; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-resumen">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                         Resumen
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-detalles" onmouseover="this.style.color='#374151'; this.style.borderBottomColor='#d1d5db'" onmouseout="this.style.color='#6b7280'; this.style.borderBottomColor='transparent'">
+                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-detalles">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 7v6m0 0l3-3m-3 3l-3-3"/>
                         </svg>
                         Detalle
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-nueva" onmouseover="this.style.color='#374151'; this.style.borderBottomColor='#d1d5db'" onmouseout="this.style.color='#6b7280'; this.style.borderBottomColor='transparent'">
+                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-nueva">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                         Cliente-Actividad
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-general" onmouseover="this.style.color='#374151'; this.style.borderBottomColor='#d1d5db'" onmouseout="this.style.color='#6b7280'; this.style.borderBottomColor='transparent'">
+                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-general">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                         </svg>
@@ -282,7 +282,7 @@
             <!-- ============================================================ -->
             <!-- CONTENEDORES DE PESTAÑAS                                     -->
             <!-- ============================================================ -->
-            <div class="space-y-6" style="padding-left: 80px; padding-right: 80px; min-width: 700px;">
+            <div class="space-y-6" style="padding-left: 80px; padding-right: 80px; min-width: 765px;">
 
                 <!-- ==================== TAB 1: RESUMEN ==================== -->
                 <div id="tab-resumen" class="tab-content space-y-6">
@@ -294,8 +294,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                             </svg>
                             <div>
-                                <p class="text-[15px] font-semibold text-black">Tiempo trabajado por día</p>
-                                <p class="text-[15px] text-gray-500 mt-[15px]">
+                                <p class="text-[15px] font-semibold text-black" style="margin-bottom: 8px;">Tiempo trabajado por día</p>
+                                <p class="text-[15px] text-gray-500" style="margin-bottom: 8px;">
                                     @if ($selectedUser)
                                         Barras de horas diarias y línea de promedio del rango seleccionado.
                                     @else
@@ -312,13 +312,13 @@
                     <!-- Gráfica 2: Distribución por cliente -->
                     @if ($selectedUser && !empty($clientLabels))
                         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                            <div class="flex items-start gap-3">
+                            <div class="flex items-start gap-3 p-4">
                                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
                                 <div>
-                                    <p class="text-[15px] font-semibold text-black">Distribución por cliente</p>
-                                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                                    <p class="text-[15px] mb-[8px] font-semibold text-black">Distribución por cliente</p>
+                                    <p class="text-[15px] text-gray-500">
                                         Porcentaje de tiempo trabajado por cada cliente en el periodo seleccionado.
                                     </p>
                                 </div>
@@ -332,13 +332,13 @@
                     <!-- Gráfica 3: Distribución por actividad -->
                     @if ($selectedUser && !empty($activityLabels))
                         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                            <div class="flex items-start gap-3">
+                            <div class="flex items-start gap-3 p-4">
                                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
                                 <div>
-                                    <p class="text-[15px] font-semibold text-black">Distribución por actividad</p>
-                                    <p class="text-[15px] text-gray-500 mt-[15px]">
+                                    <p class="text-[15px] mb-[8px] font-semibold text-black">Distribución por actividad</p>
+                                    <p class="text-[15px] text-gray-500">
                                         Tiempo trabajado por cada actividad en el periodo seleccionado.
                                     </p>
                                 </div>
@@ -363,8 +363,8 @@
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between flex-wrap gap-4">
                                         <div>
-                                            <p class="text-[15px] font-semibold text-black">Detalle por actividad</p>
-                                            <p class="text-[15px] text-gray-500 mt-[15px]">
+                                            <p class="text-[15px] mb-[8px] font-semibold text-black">Detalle por actividad</p>
+                                            <p class="text-[15px] text-gray-500">
                                                 Distribución diaria de la actividad seleccionada.
                                             </p>
                                         </div>
@@ -396,8 +396,8 @@
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between flex-wrap gap-4">
                                         <div>
-                                            <p class="text-[15px] font-semibold text-black">Detalle por cliente</p>
-                                            <p class="text-[15px] text-gray-500 mt-[15px]">
+                                            <p class="text-[15px] mb-[8px] font-semibold text-black">Detalle por cliente</p>
+                                            <p class="text-[15px] text-gray-500">
                                                 Distribución diaria del cliente seleccionado.
                                             </p>
                                         </div>
@@ -432,8 +432,8 @@
                             <div class="flex-1">
                                 <div class="flex items-center justify-between flex-wrap gap-4">
                                     <div>
-                                        <p class="text-[15px] font-semibold text-black">Tiempo por cliente + actividad</p>
-                                        <p class="text-[15px] text-gray-500 mt-[15px]">
+                                        <p class="text-[15px] mb-[8px] font-semibold text-black">Tiempo por cliente + actividad</p>
+                                        <p class="text-[15px] text-gray-500">
                                             Distribución diaria de una combinación específica.
                                         </p>
                                     </div>
@@ -526,6 +526,24 @@
             // ============================================================
             const canvas = document.getElementById('workedTimeChart');
             if (canvas && typeof Chart !== 'undefined') {
+                // Obtener los datos de horas del rango SELECCIONADO
+                const hoursData = @json($hours);
+                const maxHours = Math.max(...hoursData, 0);
+                
+                // Si el máximo es 0, usar 0.1 para que se vea algo
+                const maxY = Math.max(maxHours, 0.1);
+                
+                // Calcular stepSize para 5 marcas exactas (0, 25%, 50%, 75%, 100%)
+                const stepSize = maxY / 4;
+                
+                // REDONDEAR stepSize para evitar problemas con números muy pequeños
+                const roundedStepSize = Math.ceil(stepSize * 10000) / 10000;
+                
+                console.log('📊 Datos de horas:', hoursData);
+                console.log('📈 Máximo del rango:', maxY);
+                console.log('📐 Step size calculado:', stepSize);
+                console.log('📐 Step size redondeado:', roundedStepSize);
+                
                 new Chart(canvas, {
                     type: 'bar',
                     data: {
@@ -533,7 +551,7 @@
                         datasets: [{
                             type: 'bar',
                             label: 'Horas trabajadas',
-                            data: @json($hours),
+                            data: hoursData,
                             backgroundColor: 'rgba(26, 58, 107, 0.78)',
                             borderColor: 'rgba(26, 58, 107, 0)',
                             borderWidth: 0,
@@ -543,7 +561,7 @@
                         }, {
                             type: 'line',
                             label: 'Tendencia diaria',
-                            data: @json($hours),
+                            data: hoursData,
                             borderColor: 'rgb(16, 185, 129)',
                             backgroundColor: 'rgba(16, 185, 129, 0.12)',
                             borderWidth: 2.5,
@@ -560,7 +578,14 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: { padding: { top: 0 } },
+                        layout: { 
+                            padding: { 
+                                top: -25,     
+                                bottom: 0,
+                                left: 0,
+                                right: 0
+                            } 
+                        },
                         plugins: {
                             legend: {
                                 display: true,
@@ -568,7 +593,7 @@
                                     boxWidth: 14,
                                     usePointStyle: true,
                                     pointStyle: 'circle',
-                                    padding: 15,
+                                    padding: 30,
                                     font: { size: 15 },
                                 },
                             },
@@ -603,10 +628,14 @@
                             },
                             y: {
                                 beginAtZero: true,
+                                max: maxY,
                                 grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
                                 border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
                                 ticks: {
                                     font: { size: 15 },
+                                    stepSize: roundedStepSize,
+                                    // Forzar 5 marcas exactas
+                                    maxTicksLimit: 5,
                                     callback(value) {
                                         const totalSegundos = Math.round(value * 3600);
                                         const horas = Math.floor(totalSegundos / 3600);
@@ -624,7 +653,7 @@
                             const fit = chart.legend.fit;
                             chart.legend.fit = function() {
                                 fit.call(this);
-                                this.height += 15;
+                                this.height += 10;
                             };
                         }
                     }]
