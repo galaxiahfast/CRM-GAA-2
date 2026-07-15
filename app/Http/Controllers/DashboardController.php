@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class DashboardController extends Controller
 {
@@ -49,7 +51,7 @@ class DashboardController extends Controller
             'topClientActivity' => $chart['topClientActivity'],
         ]);
     }
-
+    
     /**
      * Obtiene los datos de una actividad específica para el gráfico
      */
@@ -277,6 +279,46 @@ class DashboardController extends Controller
             'hours' => $hours,
             'totalSeconds' => array_sum($hours) * 3600,
         ]);
+    }
+
+    public function generatePdf(Request $request)
+    {
+        $images = $request->input('images', []);
+
+        // Filtrar imágenes inválidas
+        $images = array_filter($images, function($img) {
+            return isset($img['src']) && 
+                str_starts_with($img['src'], 'data:image/') && 
+                strlen($img['src']) > 100;
+        });
+
+        // Reindexar
+        $images = array_values($images);
+
+        if (empty($images)) {
+            return response()->json(['error' => 'No se capturaron imágenes válidas'], 400);
+        }
+        $start = Carbon::parse($request->input('fecha_inicio'));
+        $end = Carbon::parse($request->input('fecha_fin'));
+        $selectedUserId = $request->input('user_id');
+        $selectedUser = $selectedUserId ? User::find($selectedUserId) : null;
+
+        // Datos adicionales para el PDF (por si quieres mostrar tablas)
+        $labels = $request->input('labels', []);
+        $hours = $request->input('hours', []);
+        $clientLabels = $request->input('clientLabels', []);
+        $clientData = $request->input('clientData', []);
+        $activityLabels = $request->input('activityLabels', []);
+        $activityData = $request->input('activityData', []);
+        $totalSeconds = $request->input('totalSeconds', 0);
+
+        $pdf = Pdf::loadView('time-dashboard.pdf', compact(
+            'images', 'selectedUser', 'start', 'end',
+            'labels', 'hours', 'clientLabels', 'clientData',
+            'activityLabels', 'activityData', 'totalSeconds'
+        ));
+
+        return $pdf->download('dashboard_tiempo.pdf');
     }
 
     /** @return array{0: Carbon, 1: Carbon} */

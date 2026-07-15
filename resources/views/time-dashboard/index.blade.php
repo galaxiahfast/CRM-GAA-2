@@ -23,14 +23,14 @@
 
                 <!-- Botones de acción -->
                 <div style="display: flex; align-items: center; gap: 30px; white-space: nowrap; flex-shrink: 0;">
-                    <button style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                    <button id="downloadPdfBtn" style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
-                        Descargar
+                        Descargar PDF
                     </button>
 
-                    <button style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                    <button id="printBtn" style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                         </svg>
@@ -1251,6 +1251,143 @@
                     loadClientActivityChart(clientId, activityId);
                 });
             }
+
+
+            // ============================================================
+            // 8. DESCARGA DE PDF CON GRÁFICAS CAPTURADAS
+            // ============================================================
+
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Cambiar estado del botón
+                    const originalHtml = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '⏳ Generando PDF...';
+
+                    // Pequeño retraso para asegurar que los canvas terminen de renderizar
+                    setTimeout(() => {
+                        // Capturar solo canvas con contenido
+                        const canvases = document.querySelectorAll('canvas');
+                        const images = [];
+
+                        canvases.forEach((canvas, index) => {
+                            // Si el canvas no tiene dimensiones, saltar
+                            if (canvas.width === 0 || canvas.height === 0) return;
+
+                            try {
+                                // Obtener datos de la imagen
+                                const dataUrl = canvas.toDataURL('image/png');
+                                
+                                // Verificar que sea una imagen válida (más de 50 caracteres y comienza con data:image)
+                                if (dataUrl && dataUrl.startsWith('data:image/') && dataUrl.length > 100) {
+                                    let title = 'Gráfica ' + (index + 1);
+                                    
+                                    // Intentar obtener el título desde el contenedor cercano
+                                    const parent = canvas.closest('.rounded-2xl');
+                                    if (parent) {
+                                        const titleEl = parent.querySelector('.font-semibold');
+                                        if (titleEl) title = titleEl.textContent.trim();
+                                    }
+                                    
+                                    images.push({ title: title, src: dataUrl });
+                                }
+                            } catch (error) {
+                                console.warn('Error capturando canvas:', error);
+                            }
+                        });
+
+                        // Si no hay imágenes, mostrar advertencia y restaurar botón
+                        if (images.length === 0) {
+                            alert('⚠️ No se encontraron gráficas para exportar. Asegúrate de que haya datos cargados y las gráficas estén visibles.');
+                            downloadBtn.disabled = false;
+                            downloadBtn.innerHTML = originalHtml;
+                            return;
+                        }
+
+                        // Obtener datos de filtros desde el formulario
+                        const form = document.querySelector('form[action="{{ route('time.dashboard') }}"]');
+                        const formData = new FormData(form);
+                        const params = new URLSearchParams(formData);
+
+                        // Construir payload
+                        const payload = {
+                            images: images,
+                            user_id: {{ $selectedUser ? $selectedUser->id : 0 }},
+                            fecha_inicio: params.get('fecha_inicio') || '{{ $start->toDateString() }}',
+                            fecha_fin: params.get('fecha_fin') || '{{ $end->toDateString() }}',
+                            // Datos adicionales por si se usan en el PDF (opcional)
+                            labels: @json($labels),
+                            hours: @json($hours),
+                            clientLabels: @json($clientLabels),
+                            clientData: @json($clientData),
+                            activityLabels: @json($activityLabels),
+                            activityData: @json($activityData),
+                            totalSeconds: @json($totalSeconds),
+                        };
+
+                        // Actualizar estado del botón
+                        downloadBtn.innerHTML = '📄 Descargando...';
+
+                        // Enviar por POST a la ruta de generación
+                        fetch('{{ route('dashboard.pdf.generate') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => {
+                                    throw new Error(err.error || 'Error en el servidor');
+                                });
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            // Crear enlace de descarga
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'dashboard_tiempo_' + new Date().toISOString().slice(0,10) + '.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+
+                            // Restaurar botón
+                            downloadBtn.disabled = false;
+                            downloadBtn.innerHTML = originalHtml;
+                        })
+                        .catch(error => {
+                            console.error('Error al generar PDF:', error);
+                            alert('❌ Hubo un error al generar el PDF: ' + error.message);
+                            downloadBtn.disabled = false;
+                            downloadBtn.innerHTML = originalHtml;
+                        });
+                    }, 500); // 500ms de retraso (puedes ajustar a 300ms si es suficiente)
+                });
+            }
+
+            // Botón de impresión
+            const printBtn = document.getElementById('printBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.print();
+                });
+            }
+
+
         });
+
+        
+    
+
+
     </script>
 </x-app-layout>

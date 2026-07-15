@@ -34,6 +34,8 @@ use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente impo
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\DashboardController;
 
+Route::get('/dashboard/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.pdf');
+Route::post('/dashboard/pdf', [DashboardController::class, 'generatePdf'])->name('dashboard.pdf.generate');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... tus otras rutas ...
