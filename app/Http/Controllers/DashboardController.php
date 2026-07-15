@@ -21,7 +21,9 @@ class DashboardController extends Controller
         [$start, $end] = $this->dateRangeFromRequest($request);
 
         $search = trim((string) $request->query('search', ''));
-        $users = $isAdmin ? $this->searchUsers($search) : collect();
+        
+        // ✅ Cambio 1: pasar false para NO limitar a 8 usuarios
+        $users = $isAdmin ? $this->searchUsers($search, false) : collect();
         $selectedUser = $isAdmin
             ? $this->selectedUser($request, $users)
             : $viewer;
@@ -229,7 +231,6 @@ class DashboardController extends Controller
 
         Log::info('Entries found:', ['count' => $entries->count()]);
 
-        // ✅ LOG DE CADA INTERVALO CORREGIDO
         foreach ($entries as $entry) {
             $seconds = $entry->calculateEffectiveSeconds();
             Log::info('Entry detail:', [
@@ -241,7 +242,6 @@ class DashboardController extends Controller
             ]);
             
             foreach ($entry->intervals as $interval) {
-                // ✅ Usar abs() para obtener valor positivo
                 $diff = $interval->started_at && $interval->ended_at 
                     ? abs($interval->ended_at->diffInSeconds($interval->started_at))
                     : 0;
@@ -285,14 +285,12 @@ class DashboardController extends Controller
     {
         $images = $request->input('images', []);
 
-        // Filtrar imágenes inválidas
         $images = array_filter($images, function($img) {
             return isset($img['src']) && 
                 str_starts_with($img['src'], 'data:image/') && 
                 strlen($img['src']) > 100;
         });
 
-        // Reindexar
         $images = array_values($images);
 
         if (empty($images)) {
@@ -303,7 +301,6 @@ class DashboardController extends Controller
         $selectedUserId = $request->input('user_id');
         $selectedUser = $selectedUserId ? User::find($selectedUserId) : null;
 
-        // Datos adicionales para el PDF (por si quieres mostrar tablas)
         $labels = $request->input('labels', []);
         $hours = $request->input('hours', []);
         $clientLabels = $request->input('clientLabels', []);
@@ -372,9 +369,10 @@ class DashboardController extends Controller
         return null;
     }
 
-    private function searchUsers(string $search)
+    // ✅ Cambio 2: Método searchUsers modificado con parámetro $limit
+    private function searchUsers(string $search, $limit = true)
     {
-        return User::with('role')
+        $query = User::with('role')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($nested) use ($search) {
                     $nested->where('id', $search)
@@ -384,9 +382,15 @@ class DashboardController extends Controller
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('name')
-            ->limit(8)
-            ->get();
+            ->orderBy('name');
+        
+        // ✅ Si $limit es true, aplicar límite de 8 (para la búsqueda)
+        // ✅ Si $limit es false, traer todos los usuarios
+        if ($limit) {
+            $query->limit(8);
+        }
+        
+        return $query->get();
     }
 
     /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int, topClientActivity: ?array} */
@@ -406,7 +410,6 @@ class DashboardController extends Controller
 
         Log::info('Total entries found:', ['count' => $entries->count()]);
 
-        // ✅ LOG DE CADA ENTRADA Y SUS INTERVALOS CORREGIDO
         foreach ($entries as $entry) {
             $seconds = $entry->calculateEffectiveSeconds();
             Log::info('Entry detail:', [
@@ -420,7 +423,6 @@ class DashboardController extends Controller
             ]);
             
             foreach ($entry->intervals as $interval) {
-                // ✅ Usar abs() para obtener valor positivo
                 $diff = $interval->started_at && $interval->ended_at 
                     ? abs($interval->ended_at->diffInSeconds($interval->started_at))
                     : 0;
@@ -460,7 +462,6 @@ class DashboardController extends Controller
         $clientIds = $clientGroups->pluck('id')->values()->toArray();
         $clientTotalSeconds = $clientGroups->sum('seconds');
 
-        // ✅ AHORA GUARDAMOS LOS IDs REALES DE LAS ACTIVIDADES
         $secondsByActivity = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->subService->sub_service ?? 'Sin actividad')
             ->map(function ($activityEntries) {
@@ -473,10 +474,9 @@ class DashboardController extends Controller
             })
             ->sortByDesc('seconds');
 
-        // ✅ Extraer los arrays con los IDs reales
         $activityLabels = $secondsByActivity->pluck('name')->values()->toArray();
         $activityData = $secondsByActivity->map(fn($a) => round($a['seconds'] / 3600, 4))->values()->toArray();
-        $activityIds = $secondsByActivity->pluck('id')->values()->toArray(); // ✅ IDs reales
+        $activityIds = $secondsByActivity->pluck('id')->values()->toArray();
 
         $totalSeconds = 0;
         $hours = [];
@@ -500,7 +500,7 @@ class DashboardController extends Controller
         if ($othersActivitySum > 0) {
             $activityLabels[] = 'Otras';
             $activityData[] = round($othersActivitySum / 3600, 4);
-            $activityIds[] = 0; // ID 0 para "Otras"
+            $activityIds[] = 0;
         }
 
         $topClientActivity = $this->getTopClientActivity($user, $start, $end);
@@ -516,7 +516,7 @@ class DashboardController extends Controller
             'clientTotalSeconds' => $clientTotalSeconds,
             'activityLabels' => $activityLabels,
             'activityData' => $activityData,
-            'activityIds' => $activityIds, // ✅ NUEVO: IDs reales de actividades
+            'activityIds' => $activityIds,
             'activityTotalSeconds' => $secondsByActivity->sum('seconds'),
             'topClientActivity' => $topClientActivity,
         ];
@@ -538,6 +538,7 @@ class DashboardController extends Controller
             'clientTotalSeconds' => 0,
             'activityLabels' => [],
             'activityData' => [],
+            'activityIds' => [],
             'activityTotalSeconds' => 0,
             'topClientActivity' => null,
         ];

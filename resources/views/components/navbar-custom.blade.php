@@ -174,38 +174,77 @@
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Actividades</span>
                 </li>
 
+                <!-- ========================================================== -->
+                <!-- SUBMENÚ: Control de Horas (para TODOS los usuarios)       -->
+                <!-- ========================================================== -->
                 @if (auth()->user()?->isAdmin())
-                    <!-- BOTÓN: Supervisión de horas (siempre visible) -->
-                    <li class="pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('time.admin.dashboard') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                            <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de horas</span>
-                        </a>
-                    </li>
-                    <li class="pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('time.dashboard') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                            <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                            </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
-                        </a>
-                    </li>
-                    <li class="pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('time.admin.profiles') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.profiles') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                            <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.profiles') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Perfiles organizacionales</span>
-                        </a>
+                    <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control, Perfiles -->
+                    <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <button @click="openTimeControl = !openTimeControl" 
+                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
+                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <div class="flex items-center">
+                                <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                                <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control de Horas</span>
+                            </div>
+                            <div class="ml-[15px] shrink-0">
+                                <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                                    :class="{ 'rotate-180': openTimeControl, 'rotate-0': !openTimeControl }"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </button>
+                        <!-- Sub-elementos del submenú -->
+                        <div x-show="openTimeControl" 
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 -translate-y-2"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-2"
+                            :class="collapsed ? 'pl-[15px]' : 'block'"
+                            class="relative mt-0 dynamic-sub-menu" 
+                            style="display: none;">
+                            <!-- Línea vertical siempre visible -->
+                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <ul class="space-y-0 w-full">
+                                <!-- Sub-elemento: Supervisión de horas -->
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('time.admin.dashboard') }}" 
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de horas</span>
+                                    </a>
+                                </li>
+                                <!-- Sub-elemento: Panel de Control -->
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('time.dashboard') }}"
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                                        </svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
+                                    </a>
+                                </li>
+                                <!-- Sub-elemento: Perfiles organizacionales -->
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('time.admin.profiles') }}"
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.profiles') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.profiles') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Perfiles organizacionales</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
                 @else
-                    <!-- ========================================================== -->
-                    <!-- SUBMENÚ: Control de Horas (con flecha siempre visible)   -->
-                    <!-- ========================================================== -->
+                    <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
                     <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"

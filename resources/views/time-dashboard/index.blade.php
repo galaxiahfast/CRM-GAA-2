@@ -89,7 +89,7 @@
                         @endif
 
                         @if ($isAdmin)
-                            <div style="min-width: 260px; flex: 0 0 auto;">
+                            <div style="min-width: 260px; flex: 0 0 auto; position: relative;">
                                 <label
                                     for="search"
                                     style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;"
@@ -113,12 +113,41 @@
                                         value="{{ $search }}"
                                         type="search"
                                         placeholder="Buscar por ID, nombre o correo..."
-                                        oninput="document.getElementById('selected_user_id')?.remove()"
+                                        autocomplete="off"
                                         style="height: 50px; width: 260px; border-radius: 0px; border: 1px solid #d1d5db; background-color: white; padding-left: 48px; padding-right: 16px; font-size: 15px; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; outline: none; flex-shrink: 0;"
                                         onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
                                         onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'"
                                     >
 
+                                    <!-- ✅ DROPDOWN DE COLABORADORES -->
+                                    <div id="userDropdown" style="position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; z-index: 1000; display: none;">
+                                        @foreach ($users as $user)
+                                            <a href="{{ route('time.dashboard', ['user_id' => $user->id, 'search' => $search, 'fecha_inicio' => $start->toDateString(), 'fecha_fin' => $end->toDateString()]) }}" 
+                                            class="user-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0"
+                                            style="text-decoration: none; color: inherit;"
+                                            data-name="{{ strtolower($user->name . ' ' . ($user->last_name ?? '')) }}"
+                                            data-id="{{ $user->id }}"
+                                            data-email="{{ strtolower($user->email) }}">
+                                                <div style="display: flex; height: 36px; width: 36px; align-items: center; justify-content: center; border-radius: 50%; background-color: #f3f4f6; color: #4b5563; font-weight: 600; font-size: 15px; flex-shrink: 0;">
+                                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                </div>
+                                                <div>
+                                                    <p style="font-size: 15px; font-weight: 600; color: #111827; margin: 0;">
+                                                        {{ trim($user->name . ' ' . ($user->last_name ?? '')) }}
+                                                    </p>
+                                                    <p style="font-size: 13px; color: #6b7280; margin: 0;">
+                                                        ID {{ $user->id }} • {{ $user->email }}
+                                                    </p>
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                        
+                                        @if ($users->isEmpty())
+                                            <div style="padding: 20px; text-align: center; color: #6b7280; font-size: 14px;">
+                                                No se encontraron colaboradores
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -185,66 +214,6 @@
                 </div>
 
             </div>
-
-            @if ($isAdmin && $users->isNotEmpty())
-
-            <div style="border: 1px solid #e5e7eb; border-radius: 0px; background-color: white; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; min-width: max-content;">
-
-                <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-
-                    <div>
-                        <h2 style="font-size: 18px; font-weight: 600; color: #111827; white-space: nowrap;">
-                            Resultados
-                        </h2>
-
-                        <p style="margin-top: 4px; font-size: 15px; color: #6b7280; white-space: nowrap;">
-                            Selecciona un colaborador para visualizar su información
-                        </p>
-                    </div>
-
-                </div>
-
-                <div style="display: flex; flex-wrap: nowrap; gap: 12px; overflow: hidden;">
-
-                    @foreach ($users as $user)
-
-                        <a
-                            href="{{ route('time.dashboard', [
-                                'user_id' => $user->id,
-                                'search' => $search,
-                                'fecha_inicio' => $start->toDateString(),
-                                'fecha_fin' => $end->toDateString()
-                            ]) }}"
-                            style="display: inline-flex; align-items: center; gap: 12px; border-radius: 0px; border: 1px solid {{ $selectedUser?->id === $user->id ? '#1A3A6B' : '#e5e7eb' }}; padding: 12px 20px; text-decoration: none; transition: all 0.2s; background-color: {{ $selectedUser?->id === $user->id ? 'rgba(26,58,107,0.05)' : 'white' }}; box-shadow: {{ $selectedUser?->id === $user->id ? '0 1px 2px rgba(0,0,0,0.05)' : 'none' }}; flex-shrink: 0;"
-                            onmouseover="this.style.borderColor='rgba(26,58,107,0.3)'; this.style.backgroundColor='#f9fafb'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'"
-                            onmouseout="this.style.borderColor='{{ $selectedUser?->id === $user->id ? '#1A3A6B' : '#e5e7eb' }}'; this.style.backgroundColor='{{ $selectedUser?->id === $user->id ? 'rgba(26,58,107,0.05)' : 'white' }}'; this.style.boxShadow='{{ $selectedUser?->id === $user->id ? '0 1px 2px rgba(0,0,0,0.05)' : 'none' }}'"
-                        >
-
-                            <div style="display: flex; height: 36px; width: 36px; align-items: center; justify-content: center; border-radius: 0px; background-color: {{ $selectedUser?->id === $user->id ? '#1A3A6B' : '#f3f4f6' }}; color: {{ $selectedUser?->id === $user->id ? 'white' : '#4b5563' }}; font-weight: 600; font-size: 15px; flex-shrink: 0;">
-                                {{ strtoupper(substr($user->name,0,1)) }}
-                            </div>
-
-                            <div>
-
-                                <p style="font-size: 15px; font-weight: 600; color: #111827; margin: 0; white-space: nowrap;">
-                                    {{ trim($user->name.' '.($user->last_name ?? '')) }}
-                                </p>
-
-                                <p style="font-size: 15px; color: #6b7280; margin: 0; white-space: nowrap;">
-                                    ID {{ $user->id }}
-                                </p>
-
-                            </div>
-
-                        </a>
-
-                    @endforeach
-
-                </div>
-
-            </div>
-
-            @endif
 
             <!-- ============================================================ -->
             <!-- MENÚ DE PESTAÑAS                                              -->
@@ -482,56 +451,148 @@
     <!-- ============================================================ -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
             // ============================================================
-            // 1. LOGICA DE PESTAÑAS
+            // 1. LOGICA DE PESTAÑAS - CORREGIDA (HOVER TEMPORAL + CLICK PERMANENTE)
             // ============================================================
             const tabs = document.querySelectorAll('.tab-button');
             const contents = {
-                resumen: document.getElementById('tab-resumen'),
-                detalles: document.getElementById('tab-detalles'),
-                nueva: document.getElementById('tab-nueva')
+                'tab-resumen': document.getElementById('tab-resumen'),
+                'tab-detalles': document.getElementById('tab-detalles'),
+                'tab-nueva': document.getElementById('tab-nueva'),
+                'tab-general': document.getElementById('tab-general')
             };
 
-            function switchTab(tabId) {
-                Object.values(contents).forEach(el => el.classList.add('hidden'));
-                const target = document.getElementById(tabId);
-                if (target) target.classList.remove('hidden');
+            // Variable para guardar la pestaña activa (seleccionada por click)
+            let activeTabId = null;
 
+            // Función para aplicar estilo "inactivo" (gris)
+            function setInactiveStyle(btn) {
+                btn.style.color = '#6b7280';
+                btn.style.borderBottomColor = '#d1d5db';
+                btn.style.borderBottomWidth = '2px';
+                btn.style.borderBottomStyle = 'solid';
+                btn.classList.remove('active');
+            }
+
+            // Función para aplicar estilo "activo" (azul)
+            function setActiveStyle(btn) {
+                btn.style.color = '#1A3A6B';
+                btn.style.borderBottomColor = '#1A3A6B';
+                btn.style.borderBottomWidth = '2px';
+                btn.style.borderBottomStyle = 'solid';
+                btn.classList.add('active');
+            }
+
+            // Función para actualizar todas las pestañas según el estado
+            function updateTabs(hoveredTab = null) {
                 tabs.forEach(btn => {
-                    btn.classList.remove('active', 'text-[#1A3A6B]', 'border-[#1A3A6B]');
-                    btn.classList.add('text-gray-500', 'border-transparent');
-                    if (btn.dataset.tab === tabId) {
-                        btn.classList.add('active', 'text-[#1A3A6B]', 'border-[#1A3A6B]');
-                        btn.classList.remove('text-gray-500', 'border-transparent');
+                    // Si es la pestaña activa Y no hay hover en otra pestaña
+                    if (btn.dataset.tab === activeTabId && !hoveredTab) {
+                        setActiveStyle(btn);
+                    } 
+                    // Si es la pestaña que está en hover
+                    else if (hoveredTab && btn === hoveredTab) {
+                        setActiveStyle(btn);
                     }
-                });
-
-                const visibleCanvas = target.querySelectorAll('canvas');
-                visibleCanvas.forEach(canvas => {
-                    const chart = Chart.getChart(canvas);
-                    if (chart) {
-                        chart.resize();
+                    // Si no, estilo inactivo
+                    else {
+                        setInactiveStyle(btn);
                     }
                 });
             }
 
+            // Función para cambiar la pestaña activa (click)
+            function switchTab(tabId) {
+                // Guardar la nueva pestaña activa
+                activeTabId = tabId;
+                
+                // Ocultar todos los contenidos
+                Object.values(contents).forEach(el => {
+                    if (el) el.classList.add('hidden');
+                });
+                
+                // Mostrar el contenido seleccionado
+                const target = contents[tabId];
+                if (target) {
+                    target.classList.remove('hidden');
+                }
+
+                // Actualizar estilos (sin hover)
+                updateTabs(null);
+
+                // Redimensionar gráficos en la pestaña visible
+                if (target) {
+                    const visibleCanvas = target.querySelectorAll('canvas');
+                    visibleCanvas.forEach(canvas => {
+                        const chart = Chart.getChart(canvas);
+                        if (chart) {
+                            setTimeout(() => chart.resize(), 100);
+                        }
+                    });
+                }
+            }
+
+            // Agregar eventos a cada pestaña
             tabs.forEach(btn => {
+                // Evento CLICK - cambia la pestaña permanentemente
                 btn.addEventListener('click', function(e) {
-                    switchTab(this.dataset.tab);
+                    const tabId = this.dataset.tab;
+                    if (tabId) {
+                        switchTab(tabId);
+                    }
+                });
+                
+                // Evento HOVER (mouse entra) - resalta temporalmente
+                btn.addEventListener('mouseenter', function() {
+                    // Resaltar esta pestaña (pero no cambiar la activa)
+                    updateTabs(this);
+                });
+                
+                // Evento HOVER (mouse sale) - vuelve a la pestaña activa
+                btn.addEventListener('mouseleave', function() {
+                    // Volver al estado original (pestaña activa)
+                    updateTabs(null);
                 });
             });
 
+            // Inicializar: detectar la pestaña activa
+            tabs.forEach(btn => {
+                // Buscar la que tiene la clase 'active' o estilo azul
+                if (btn.classList.contains('active') || btn.style.color === '#1A3A6B') {
+                    activeTabId = btn.dataset.tab;
+                }
+            });
+
+            // Si no hay pestaña activa, activar la primera
+            if (!activeTabId && tabs.length > 0) {
+                activeTabId = tabs[0].dataset.tab;
+            }
+
+            // Aplicar la pestaña activa
+            if (activeTabId) {
+                // Asegurar que el contenido correcto está visible
+                Object.values(contents).forEach(el => {
+                    if (el) el.classList.add('hidden');
+                });
+                const target = contents[activeTabId];
+                if (target) {
+                    target.classList.remove('hidden');
+                }
+                // Aplicar estilos
+                updateTabs(null);
+            }
+
             // ============================================================
-            // 2. GRÁFICO 1: Barras - Horas por día
+            // 2. GRÁFICO 1: Barras - Horas por día (CON 110% DE MÁRGEN)
             // ============================================================
             const canvas = document.getElementById('workedTimeChart');
             if (canvas && typeof Chart !== 'undefined') {
-                // Obtener los datos de horas del rango SELECCIONADO
                 const hoursData = @json($hours);
                 const maxHours = Math.max(...hoursData, 0);
                 
-                // Si el máximo es 0, usar 0.1 para que se vea algo
-                const maxY = Math.max(maxHours, 0.1);
+                // 🔥 CALCULAR EL 110% DEL MÁXIMO
+                const maxY = Math.max(maxHours * 1.1, 0.1); // 110% del máximo
                 
                 // Calcular stepSize para 5 marcas exactas (0, 25%, 50%, 75%, 100%)
                 const stepSize = maxY / 4;
@@ -540,8 +601,8 @@
                 const roundedStepSize = Math.ceil(stepSize * 10000) / 10000;
                 
                 console.log('📊 Datos de horas:', hoursData);
-                console.log('📈 Máximo del rango:', maxY);
-                console.log('📐 Step size calculado:', stepSize);
+                console.log('📈 Máximo del rango:', maxHours);
+                console.log('📈 Máximo ajustado (110%):', maxY);
                 console.log('📐 Step size redondeado:', roundedStepSize);
                 
                 new Chart(canvas, {
@@ -613,8 +674,7 @@
                                         const horas = Math.floor(totalSegundos / 3600);
                                         const minutos = Math.floor((totalSegundos % 3600) / 60);
                                         const segundos = totalSegundos % 60;
-                                        const tiempo =
-                                            `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
+                                        const tiempo = `${String(horas).padStart(2, '0')}h:${String(minutos).padStart(2, '0')}m:${String(segundos).padStart(2, '0')}s`;
                                         return `${context.dataset.label}: ${tiempo}`;
                                     },
                                 },
@@ -628,13 +688,12 @@
                             },
                             y: {
                                 beginAtZero: true,
-                                max: maxY,
+                                max: maxY, // ✅ USAR EL 110% DEL MÁXIMO
                                 grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
                                 border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
                                 ticks: {
                                     font: { size: 15 },
                                     stepSize: roundedStepSize,
-                                    // Forzar 5 marcas exactas
                                     maxTicksLimit: 5,
                                     callback(value) {
                                         const totalSegundos = Math.round(value * 3600);
@@ -660,97 +719,298 @@
                 });
             }
 
-            // ============================================================
-            // 3. GRÁFICO 2: Pastel - Clientes
-            // ============================================================
-            const pieCanvas = document.getElementById('clientPieChart');
-            if (pieCanvas && typeof Chart !== 'undefined') {
-                const clientLabels = @json($clientLabels);
-                const clientData = @json($clientData);
+// ============================================================
+// 3. GRÁFICO 2: Pastel - Clientes (CON TOOLTIP MEJORADO)
+// ============================================================
+const pieCanvas = document.getElementById('clientPieChart');
+if (pieCanvas && typeof Chart !== 'undefined') {
+    const clientLabels = @json($clientLabels);
+    const clientData = @json($clientData);
 
-                const getColors = (count) => {
-                    const baseColors = [
-                        'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
-                        'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
-                        'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
-                        'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
-                        'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
-                        'rgba(236, 64, 122, 0.8)', 'rgba(0, 188, 212, 0.8)',
-                        'rgba(255, 193, 7, 0.8)', 'rgba(76, 175, 80, 0.8)',
-                        'rgba(233, 30, 99, 0.8)',
-                    ];
-                    while (baseColors.length < count) {
-                        const idx = baseColors.length % baseColors.length;
-                        const color = baseColors[idx];
-                        const opacity = 0.5 + (idx % 3) * 0.15;
-                        baseColors.push(color.replace(/0\.8/, opacity.toFixed(1)));
-                    }
-                    return baseColors.slice(0, count);
-                };
+    // Función para truncar texto
+    const truncateText = (text, maxLength = 20) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    };
 
-                if (clientLabels.length > 0) {
-                    const legendFontSize = clientLabels.length > 8 ? 12 : 14;
-                    new Chart(pieCanvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: clientLabels,
-                            datasets: [{
-                                data: clientData,
-                                backgroundColor: getColors(clientLabels.length),
-                                borderColor: '#f4f4f4',
-                                borderWidth: 3,
-                            }],
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        font: { size: legendFontSize },
-                                        padding: clientLabels.length > 8 ? 8 : 15,
-                                        usePointStyle: true,
-                                        pointStyle: 'circle',
-                                        ...(clientLabels.length > 10 && {
-                                            generateLabels: function(chart) {
-                                                const data = chart.data;
-                                                return data.labels.map((label, i) => ({
-                                                    text: label,
-                                                    fillStyle: data.datasets[0].backgroundColor[i],
-                                                    hidden: false,
-                                                    index: i,
-                                                }));
-                                            }
-                                        }),
-                                    },
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                    titleColor: '#1f2937',
-                                    bodyColor: '#1f2937',
-                                    borderColor: 'rgba(0, 0, 0, 0.1)',
-                                    borderWidth: 1,
-                                    cornerRadius: 8,
-                                    padding: 12,
-                                    callbacks: {
-                                        label(context) {
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) :
-                                                0;
-                                            const horas = context.parsed.toFixed(2);
-                                            return `${context.label}: ${horas} horas (${percentage}%)`;
-                                        },
-                                    },
-                                },
+    // Función para formatear horas a HHh:MMm:SSs CON ESPACIADO
+    const formatHours = (hours) => {
+        const totalSegundos = Math.round(hours * 3600);
+        const h = Math.floor(totalSegundos / 3600);
+        const m = Math.floor((totalSegundos % 3600) / 60);
+        const s = totalSegundos % 60;
+        // ✅ Formato con espacios entre caracteres: 0 0 h : 0 0 m : 0 0 s
+        const hStr = String(h).padStart(2, '0').split('').join(' ');
+        const mStr = String(m).padStart(2, '0').split('').join(' ');
+        const sStr = String(s).padStart(2, '0').split('').join(' ');
+        return `${hStr} h : ${mStr} m : ${sStr} s`;
+    };
+
+    // Función para generar colores
+    const getColors = (count) => {
+        const baseColors = [
+            'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
+            'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
+            'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
+            'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
+            'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
+            'rgba(236, 64, 122, 0.8)', 'rgba(0, 188, 212, 0.8)',
+            'rgba(255, 193, 7, 0.8)', 'rgba(76, 175, 80, 0.8)',
+            'rgba(233, 30, 99, 0.8)',
+        ];
+        while (baseColors.length < count) {
+            const idx = baseColors.length % baseColors.length;
+            const color = baseColors[idx];
+            const opacity = 0.5 + (idx % 3) * 0.15;
+            baseColors.push(color.replace(/0\.8/, opacity.toFixed(1)));
+        }
+        return baseColors.slice(0, count);
+    };
+
+    // ✅ Función para obtener el color de un cliente específico
+    const getColorForClient = (index) => {
+        const colors = getColors(clientLabels.length);
+        return colors[index] || 'rgba(200, 200, 200, 0.8)';
+    };
+
+    if (clientLabels.length > 0) {
+        // Preparar datos: máximo 7 clientes + "Otros"
+        let processedLabels = [...clientLabels];
+        let processedData = [...clientData];
+        let othersData = [];
+        let othersColors = [];
+        
+        if (clientLabels.length > 7) {
+            const topLabels = clientLabels.slice(0, 7);
+            const topData = clientData.slice(0, 7);
+            const othersSum = clientData.slice(7).reduce((a, b) => a + b, 0);
+            
+            othersData = clientLabels.slice(7).map((label, index) => ({
+                label: label,
+                value: clientData.slice(7)[index],
+                color: getColorForClient(7 + index)
+            }));
+            
+            processedLabels = [...topLabels, 'Otros'];
+            processedData = [...topData, othersSum];
+        }
+
+        // Truncar nombres (excepto "Otros")
+        const truncatedLabels = processedLabels.map(label => 
+            label === 'Otros' ? label : truncateText(label, 20)
+        );
+
+        const colors = getColors(processedLabels.length);
+        const legendFontSize = processedLabels.length > 8 ? 12 : 14;
+        
+        const chart = new Chart(pieCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: truncatedLabels,
+                datasets: [{
+                    data: processedData,
+                    backgroundColor: colors,
+                    borderColor: '#f4f4f4',
+                    borderWidth: 3,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: { size: legendFontSize },
+                            padding: processedLabels.length > 8 ? 8 : 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                return data.labels.map((label, i) => ({
+                                    text: label,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    hidden: false,
+                                    index: i,
+                                    fullName: clientLabels[i] || label,
+                                }));
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                        titleColor: '#1A3A6B',
+                        bodyColor: '#374151',
+                        titleFont: { size: 15, weight: '600', family: "'Segoe UI', Arial, sans-serif" },
+                        bodyFont: { size: 15, weight: '400', family: "'Segoe UI', Arial, sans-serif" },
+                        borderColor: 'rgba(26, 58, 107, 0.15)',
+                        borderWidth: 2,
+                        cornerRadius: 12,
+                        padding: 20,
+                        titleMarginBottom: 12,
+                        bodySpacing: 8,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        // ✅ Configurar para mostrar la bolita de color
+                        boxWidth: 12,
+                        boxHeight: 12,
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                const index = item.dataIndex;
+                                if (processedLabels[index] === 'Otros') {
+                                    return '📦 Otros Clientes';
+                                }
+                                return clientLabels[index] || processedLabels[index];
                             },
-                            ...(clientLabels.length > 8 && {
-                                layout: { padding: { bottom: 20 } },
-                            }),
-                        },
-                    });
-                }
-            }
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                const tiempoFormateado = formatHours(context.parsed);
+                                
+                                // ✅ Formato: "02h:30m:15s (45.5%)"
+                                if (context.label === 'Otros' && othersData.length > 0) {
+                                    return `${tiempoFormateado} (${percentage}%)  •  ${othersData.length} clientes`;
+                                }
+                                return `${tiempoFormateado} (${percentage}%)`;
+                            },
+                            // ✅ Personalizar el color de la bolita
+                            labelColor: function(context) {
+                                const index = context.dataIndex;
+                                return {
+                                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                                    backgroundColor: context.dataset.backgroundColor[index] || 'rgba(200, 200, 200, 0.8)',
+                                    borderWidth: 2,
+                                    borderRadius: 50,
+                                    width: 14,
+                                    height: 14,
+                                };
+                            },
+                            afterBody: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                const index = item.dataIndex;
+                                
+                                if (processedLabels[index] === 'Otros' && othersData.length > 0) {
+                                    const totalOthers = othersData.reduce((sum, c) => sum + c.value, 0);
+                                    
+                                    // ✅ Formato con hora espaciada, porcentaje y bolita de color
+                                    const clientLines = othersData.map(c => {
+                                        const pct = totalOthers > 0 ? ((c.value / totalOthers) * 100).toFixed(1) : 0;
+                                        // ✅ Usar el formato con espaciado
+                                        const timeStr = formatHours(c.value);
+                                        return `${c.label}  ${timeStr} (${pct}%)`;
+                                    });
+                                    
+                                    const maxLines = 8;
+                                    let displayLines = clientLines;
+                                    let extraCount = 0;
+                                    
+                                    if (clientLines.length > maxLines) {
+                                        displayLines = clientLines.slice(0, maxLines);
+                                        extraCount = clientLines.length - maxLines;
+                                    }
+                                    
+                                    const result = [
+                                        '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬',
+                                        'Clientes agrupados'
+                                    ];
+                                    
+                                    result.push(...displayLines);
+                                    
+                                    if (extraCount > 0) {
+                                        result.push(`⋯ y ${extraCount} cliente${extraCount > 1 ? 's' : ''} más`);
+                                        result.push(`Total  ${formatHours(totalOthers)}`);
+                                    }
+                                    
+                                    result.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+                                    result.push('🖱 Haz clic para ver todos');
+                                    
+                                    return result;
+                                }
+                                return null;
+                            }
+                        }
+                    },
+                },
+                onClick: function(event, elements) {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (processedLabels[index] === 'Otros' && othersData.length > 0) {
+                            const totalOthers = othersData.reduce((sum, c) => sum + c.value, 0);
+                            const clientList = othersData
+                                .map((c, i) => {
+                                    const pct = totalOthers > 0 ? ((c.value / totalOthers) * 100).toFixed(1) : 0;
+                                    return `${String(i + 1).padStart(2, ' ')}. ${c.label.padEnd(35)} ${formatHours(c.value)} (${pct}%)`;
+                                })
+                                .join('\n');
+                            
+                            alert(
+                                `📦 CLIENTES EN "OTROS"\n` +
+                                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                                `${clientList}\n\n` +
+                                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                                `Total  ${formatHours(totalOthers)}\n` +
+                                `Clientes  ${othersData.length}`
+                            );
+                        }
+                    }
+                },
+                ...(processedLabels.length > 8 && {
+                    layout: { padding: { bottom: 20 } },
+                }),
+            },
+        });
+
+        // Tooltip personalizado para la leyenda (hover)
+        const legendContainer = pieCanvas.closest('.rounded-2xl');
+        if (legendContainer) {
+            const tooltipEl = document.createElement('div');
+            tooltipEl.id = 'legendTooltip';
+            tooltipEl.style.cssText = `
+                position: fixed;
+                background: rgba(255, 255, 255, 0.98);
+                color: #1A3A6B;
+                padding: 10px 18px;
+                border-radius: 8px;
+                border: 1.5px solid rgba(26, 58, 107, 0.15);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+                font-size: 14px;
+                font-weight: 600;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                pointer-events: none;
+                display: none;
+                z-index: 1000;
+                max-width: 320px;
+                word-wrap: break-word;
+                letter-spacing: 0.1px;
+            `;
+            document.body.appendChild(tooltipEl);
+            
+            const legendItems = legendContainer.querySelectorAll('li');
+            legendItems.forEach((item, index) => {
+                item.addEventListener('mouseenter', function(e) {
+                    if (index < clientLabels.length) {
+                        tooltipEl.textContent = clientLabels[index] || '';
+                        tooltipEl.style.display = 'block';
+                        tooltipEl.style.left = (e.clientX + 14) + 'px';
+                        tooltipEl.style.top = (e.clientY - 10) + 'px';
+                    }
+                });
+                
+                item.addEventListener('mousemove', function(e) {
+                    tooltipEl.style.left = (e.clientX + 14) + 'px';
+                    tooltipEl.style.top = (e.clientY - 10) + 'px';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    tooltipEl.style.display = 'none';
+                });
+            });
+        }
+
+        window.clientPieChart = chart;
+    }
+}
 
             // ============================================================
             // 4. GRÁFICO 3: Barras horizontales - Actividades
@@ -1385,7 +1645,104 @@
 
         });
 
-        
+        // ============================================================
+        // 9. DROPDOWN DE COLABORADORES - FILTRO EN TIEMPO REAL
+        // ============================================================
+        function filterUsers(searchTerm) {
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown) return;
+            
+            const items = dropdown.querySelectorAll('.user-item');
+            const searchLower = searchTerm.toLowerCase().trim();
+            
+            let hasVisible = false;
+            
+            items.forEach(item => {
+                const name = item.dataset.name || '';
+                const email = item.dataset.email || '';
+                const id = item.dataset.id || '';
+                
+                const matches = name.includes(searchLower) || 
+                            email.includes(searchLower) || 
+                            id.includes(searchLower);
+                
+                if (matches) {
+                    item.style.display = '';
+                    hasVisible = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // ✅ Siempre mostrar el dropdown si hay usuarios
+            if (items.length > 0) {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+            
+            // Mostrar mensaje si no hay resultados
+            const noResults = dropdown.querySelector('.no-results');
+            if (!hasVisible && items.length > 0) {
+                if (!noResults) {
+                    const msg = document.createElement('div');
+                    msg.className = 'no-results';
+                    msg.style.cssText = 'padding: 20px; text-align: center; color: #6b7280; font-size: 14px;';
+                    msg.textContent = 'No se encontraron colaboradores';
+                    dropdown.appendChild(msg);
+                }
+            } else if (noResults) {
+                noResults.remove();
+            }
+        }
+
+        // ✅ Al hacer clic en el input, mostrar el dropdown con todos los usuarios
+        document.getElementById('search')?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            if (!dropdown) return;
+            
+            // Mostrar todos los usuarios (resetear filtro)
+            const items = dropdown.querySelectorAll('.user-item');
+            items.forEach(item => item.style.display = '');
+            // Eliminar mensaje de "no resultados" si existe
+            const noResults = dropdown.querySelector('.no-results');
+            if (noResults) noResults.remove();
+            dropdown.style.display = 'block';
+        });
+
+        // ✅ Al escribir en el input, filtrar
+        document.getElementById('search')?.addEventListener('input', function() {
+            filterUsers(this.value);
+        });
+
+        // ✅ Ocultar el dropdown al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            const searchInput = document.getElementById('search');
+            const dropdown = document.getElementById('userDropdown');
+            if (searchInput && dropdown) {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            }
+        });
+
+        // ✅ Inicializar: mostrar el dropdown al cargar la página (solo si hay usuarios)
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('userDropdown');
+            const searchInput = document.getElementById('search');
+            
+            if (dropdown && searchInput) {
+                const items = dropdown.querySelectorAll('.user-item');
+                // Si hay usuarios, mostrar el dropdown
+                if (items.length > 0) {
+                    // Asegurar que todos los items estén visibles
+                    items.forEach(item => item.style.display = '');
+                    // Mostrar el dropdown
+                    dropdown.style.display = 'block';
+                }
+            }
+        });
     
 
 
