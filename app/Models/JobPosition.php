@@ -11,6 +11,11 @@ class JobPosition extends Model
 
     protected $fillable = ['name'];
 
+    public function hierarchyRelations()
+    {
+        return $this->hasMany(UserHierarchyRelation::class);
+    }
+
     // Historial de perfiles organizacionales que han tenido este puesto
     public function organizationalProfiles()
     {

@@ -33,6 +33,7 @@ use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente impo
 
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrganizationChartController;
 
 Route::get('/dashboard/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.pdf');
 Route::post('/dashboard/pdf', [DashboardController::class, 'generatePdf'])->name('dashboard.pdf.generate');
@@ -80,6 +81,12 @@ Route::middleware([
     // Index Administración
     Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
         Route::get('/administracion', IndexAdministracion::class)->name('administracion.index');
+
+        Route::prefix('administracion/org-chart')->name('administracion.org-chart.')->group(function () {
+            Route::get('/', [OrganizationChartController::class, 'index'])->name('index');
+            Route::post('/relations', [OrganizationChartController::class, 'store'])->name('store');
+            Route::delete('/relations/{relationId}', [OrganizationChartController::class, 'destroy'])->name('destroy');
+        });
     });
     
     // Gestión de Usuarios

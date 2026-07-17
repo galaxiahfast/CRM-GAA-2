@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             StatementsSeeder::class,
             StatesSeeder::class,
             TimeControlSeeder::class,
+            OrganizationChartSeeder::class,
         ]);
     }
 }

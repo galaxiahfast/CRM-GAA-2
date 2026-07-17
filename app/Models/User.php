@@ -120,4 +120,48 @@ class User extends Authenticatable
     {
         return $this->hasMany(TimeEntry::class, 'user_id');
     }
+
+    /**
+     * Relaciones jerárquicas donde este usuario es subordinado.
+     */
+    public function hierarchyRelationsAsSubordinate()
+    {
+        return $this->hasMany(UserHierarchyRelation::class, 'subordinate_id');
+    }
+
+    /**
+     * Relaciones jerárquicas donde este usuario es superior.
+     */
+    public function hierarchyRelationsAsSuperior()
+    {
+        return $this->hasMany(UserHierarchyRelation::class, 'superior_id');
+    }
+
+    /**
+     * Superiores directos (jefes) del usuario.
+     */
+    public function superiors()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_hierarchy_relations',
+            'subordinate_id',
+            'superior_id'
+        )->withPivot(['job_position_id', 'physical_area_id'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Subordinados directos del usuario.
+     */
+    public function subordinates()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_hierarchy_relations',
+            'superior_id',
+            'subordinate_id'
+        )->withPivot(['job_position_id', 'physical_area_id'])
+            ->withTimestamps();
+    }
 }

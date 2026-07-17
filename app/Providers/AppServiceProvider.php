@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Models\UserOrganizationalProfile;
+use App\Observers\UserHierarchyObserver;
+use App\Observers\UserOrganizationalProfileHierarchyObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        User::observe(UserHierarchyObserver::class);
+        UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
+
         /**
          * 💡 SUPERADMIN BYPASS (Gate::before)
          * Si el usuario es Administrador, saltarse todas las comprobaciones.

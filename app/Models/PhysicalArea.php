@@ -11,6 +11,11 @@ class PhysicalArea extends Model
 
     protected $fillable = ['name'];
 
+    public function hierarchyRelations()
+    {
+        return $this->hasMany(UserHierarchyRelation::class);
+    }
+
     // Historial de perfiles organizacionales ubicados en esta área
     public function organizationalProfiles()
     {
