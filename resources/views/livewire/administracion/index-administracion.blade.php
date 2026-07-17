@@ -192,6 +192,26 @@
                             <div><x-label for="edit-position" value="Puesto" /><select id="edit-position" wire:model="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
                             <div><x-label for="edit-area" value="Área / departamento" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
                         </div>
+                        <div class="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
+                            <div>
+                                <x-label for="edit-superiors" value="Jefes directos" />
+                                <select id="edit-superiors" multiple wire:model="userForm.superior_ids" class="mt-1 block w-full rounded-md border-gray-300">
+                                    @foreach ($availableUsers as $availableUser)
+                                        <option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>
+                                    @endforeach
+                                </select>
+                                <x-input-error for="userForm.superior_ids" />
+                            </div>
+                            <div>
+                                <x-label for="edit-subordinates" value="Subordinados directos" />
+                                <select id="edit-subordinates" multiple wire:model="userForm.subordinate_ids" class="mt-1 block w-full rounded-md border-gray-300">
+                                    @foreach ($availableUsers as $availableUser)
+                                        <option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>
+                                    @endforeach
+                                </select>
+                                <x-input-error for="userForm.subordinate_ids" />
+                            </div>
+                        </div>
                         @if ($userForm['is_auxiliar'] ?? false)
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div><x-label for="edit-hourly-rate" value="Precio por hora" /><x-input id="edit-hourly-rate" type="number" step="0.01" class="mt-1 block w-full" wire:model="userForm.hourly_rate" /><x-input-error for="userForm.hourly_rate" /></div>
@@ -255,7 +275,9 @@
                     @if (! $isEditingUser)
                         <button type="button" wire:click="beginEditingUser" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Editar</button>
                     @endif
+                    @if (false)
                     <a href="{{ route('administracion.edit.users', $selectedUserDetails['id']) }}" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Editar información</a>
+                    @endif
                     <button type="button" wire:click="closeUserDetails" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Cerrar</button>
                 </div>
             </div>

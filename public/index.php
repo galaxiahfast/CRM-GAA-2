@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Las respuestas de Livewire son JSON. Un warning de PHP no debe inyectarse
+// en el cuerpo de la respuesta y volverla inválida para el navegador.
+ini_set('display_errors', '0');
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

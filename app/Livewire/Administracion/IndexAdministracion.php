@@ -6,6 +6,7 @@ use App\Models\PhysicalArea;
 use App\Models\JobPosition;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserHierarchyRelation;
 use App\Models\UserInterns;
 use App\Services\Administracion\OrganizationChartService;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +109,8 @@ class IndexAdministracion extends Component
             'physical_area_id' => $profile?->physical_area_id,
             'hourly_rate' => $profile?->hourly_rate,
             'food_allowance' => $profile?->food_allowance,
+            'superior_ids' => $user->superiors->pluck('id')->all(),
+            'subordinate_ids' => $user->subordinates->pluck('id')->all(),
             'password' => '',
             'password_confirmation' => '',
             'is_auxiliar' => mb_strtolower((string) $role) === 'auxiliar',
@@ -153,7 +156,7 @@ class IndexAdministracion extends Component
         $this->userForm['is_auxiliar'] = Role::whereKey($roleId)->where('role', 'Auxiliar')->exists();
     }
 
-    public function saveSelectedUser(): void
+    public function saveSelectedUser(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
         abort_unless($this->selectedUserId, 404);
@@ -169,7 +172,12 @@ class IndexAdministracion extends Component
             'userForm.physical_area_id' => ['required', 'exists:physical_areas,id'],
             'userForm.hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'userForm.food_allowance' => ['nullable', 'numeric', 'min:0'],
+            'userForm.is_auxiliar' => ['boolean'],
             'userForm.password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'userForm.superior_ids' => ['nullable', 'array'],
+            'userForm.superior_ids.*' => ['integer', 'exists:users,id', 'distinct', 'different:'.$user->id],
+            'userForm.subordinate_ids' => ['nullable', 'array'],
+            'userForm.subordinate_ids.*' => ['integer', 'exists:users,id', 'distinct', 'different:'.$user->id],
         ];
 
         if (($this->userForm['is_auxiliar'] ?? false) === true) {
@@ -179,7 +187,9 @@ class IndexAdministracion extends Component
 
         $data = $this->validate($rules)['userForm'];
 
-        DB::transaction(function () use ($user, $data) {
+        $isAuxiliar = ($data['is_auxiliar'] ?? false) === true;
+
+        DB::transaction(function () use ($user, $data, $isAuxiliar, $chartService) {
             $user->update(array_filter([
                 'name' => $data['name'],
                 'last_name' => $data['last_name'] ?? null,
@@ -194,13 +204,23 @@ class IndexAdministracion extends Component
                 [
                     'job_position_id' => $data['job_position_id'],
                     'physical_area_id' => $data['physical_area_id'],
-                    'hourly_rate' => $data['hourly_rate'] ?? null,
-                    'food_allowance' => $data['food_allowance'] ?? null,
+                    // SQL Server tiene estas columnas NOT NULL en instalaciones existentes.
+                    // Los valores monetarios solo aplican a Auxiliar; los demás usan cero.
+                    'hourly_rate' => $isAuxiliar ? $data['hourly_rate'] : 0,
+                    'food_allowance' => $isAuxiliar ? $data['food_allowance'] : 0,
                     'valid_from' => now()->toDateString(),
                 ]
             );
+
+            $this->syncHierarchyRelations(
+                $user,
+                $data['superior_ids'] ?? [],
+                $data['subordinate_ids'] ?? [],
+                $chartService
+            );
         });
 
+        $this->loadOrgChart($chartService);
         $this->selectUser($user->id);
         $this->isEditingUser = false;
         session()->flash('success', 'Información del usuario actualizada.');
@@ -262,6 +282,56 @@ class IndexAdministracion extends Component
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
             'roles' => Role::orderBy('role')->get(['id', 'role']),
+            'availableUsers' => User::query()
+                ->whereKeyNot($this->selectedUserId ?: 0)
+                ->orderBy('name')
+                ->get(['id', 'name', 'last_name', 'email']),
         ])->layout('layouts.app');
+    }
+
+    /**
+     * Reemplaza únicamente las relaciones directas del usuario editado.
+     * OrganizationChartService conserva la validación contra ciclos.
+     *
+     * @param array<int, int|string> $superiorIds
+     * @param array<int, int|string> $subordinateIds
+     */
+    private function syncHierarchyRelations(
+        User $user,
+        array $superiorIds,
+        array $subordinateIds,
+        OrganizationChartService $chartService
+    ): void {
+        $superiorIds = array_values(array_unique(array_map('intval', $superiorIds)));
+        $subordinateIds = array_values(array_unique(array_map('intval', $subordinateIds)));
+
+        if (array_intersect($superiorIds, $subordinateIds)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'userForm.subordinate_ids' => 'Una persona no puede ser jefe y subordinado directo al mismo tiempo.',
+            ]);
+        }
+
+        UserHierarchyRelation::query()
+            ->where('subordinate_id', $user->id)
+            ->orWhere('superior_id', $user->id)
+            ->delete();
+
+        foreach ($superiorIds as $superiorId) {
+            $chartService->createRelation([
+                'subordinate_id' => $user->id,
+                'superior_id' => $superiorId,
+                'job_position_id' => null,
+                'physical_area_id' => null,
+            ]);
+        }
+
+        foreach ($subordinateIds as $subordinateId) {
+            $chartService->createRelation([
+                'subordinate_id' => $subordinateId,
+                'superior_id' => $user->id,
+                'job_position_id' => null,
+                'physical_area_id' => null,
+            ]);
+        }
     }
 }

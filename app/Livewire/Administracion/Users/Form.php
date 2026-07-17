@@ -132,19 +132,22 @@ class Form extends Component
         $data = $this->validate($rules);
         
         // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
-        $hourlyRate = $data['hourly_rate'] ?? null;
-        $foodAllowance = $data['food_allowance'] ?? null;
+        $isAuxiliarRole = $this->isAuxiliarRole($data['role_id']);
+        // Las instalaciones existentes en SQL Server pueden tener estas columnas
+        // como NOT NULL. Fuera del rol Auxiliar se persisten en cero.
+        $hourlyRate = $isAuxiliarRole ? ($data['hourly_rate'] ?? 0) : 0;
+        $foodAllowance = $isAuxiliarRole ? ($data['food_allowance'] ?? 0) : 0;
         $jobPositionId = $data['job_position_id'];
         $physicalAreaId = $data['physical_area_id'];
         unset($data['hourly_rate'], $data['food_allowance'], $data['job_position_id'], $data['physical_area_id']);
 
         try {
-            DB::transaction(function () use ($data, $hourlyRate, $foodAllowance, $jobPositionId, $physicalAreaId) {
+            DB::transaction(function () use ($data, $hourlyRate, $foodAllowance, $jobPositionId, $physicalAreaId, $isAuxiliarRole) {
                 if ($this->mode === 'create') {
                     $data['password'] = bcrypt($this->password);
                     $user = User::create($data);
 
-                    if ($this->isAuxiliarRole($data['role_id'])) {
+                    if ($isAuxiliarRole) {
                         UserInterns::create([
                             'intern_id' => $user->id,
                             'created_by' => auth()->id()
@@ -195,7 +198,7 @@ class Form extends Component
 
     public function cancel()
     {
-        return redirect()->to('/administracion/users');
+        return redirect()->route('administracion.index');
     }
 
     public function render()
