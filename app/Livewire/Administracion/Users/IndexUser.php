@@ -4,7 +4,6 @@ namespace App\Livewire\Administracion\Users;
 
 use Livewire\Component;
 use App\Models\User;
-use App\Models\UserInterns;
 
 class IndexUser extends Component
 {
@@ -29,6 +28,10 @@ class IndexUser extends Component
     }
     public function delete($id)
     {
+        // La eliminación se centraliza en el modal del organigrama, donde se
+        // exige escribir el nombre completo del usuario y se desvinculan jefes.
+        abort(403, 'Usa la confirmación segura del organigrama para eliminar usuarios.');
+
         try {
                 $user_id = User::with('interns')->find($id);
 

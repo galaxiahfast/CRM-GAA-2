@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\UserInterns;
 use App\Models\UserOrganizationalProfile;
+use App\Models\JobPosition;
+use App\Models\PhysicalArea;
 use Illuminate\Support\Facades\DB;
 
 class Form extends Component
@@ -27,6 +29,9 @@ class Form extends Component
     public $employee_id;
     public $hourly_rate = 25.00;     // Por defecto $25 pesos por hora
     public $food_allowance = 50.00;  // Por defecto $50 pesos de comida
+    public $job_position_id = '';
+    public $physical_area_id = '';
+    public bool $isSelectedAuxiliar = false;
 
     protected $messages = [
         'name.required' => 'El nombre es obligatorio.',
@@ -72,6 +77,8 @@ class Form extends Component
             if ($profile) {
                 $this->hourly_rate = $profile->hourly_rate;
                 $this->food_allowance = $profile->food_allowance;
+                $this->job_position_id = $profile->job_position_id;
+                $this->physical_area_id = $profile->physical_area_id;
             }
         }
         
@@ -88,6 +95,13 @@ class Form extends Component
                 abort(403, 'No tienes permisos para crear usuarios.');
             }
         }
+
+        $this->isSelectedAuxiliar = $isAuxiliar || $this->isAuxiliarRole($this->role_id);
+    }
+
+    public function updatedRoleId(): void
+    {
+        $this->isSelectedAuxiliar = $this->isAuxiliarRole($this->role_id);
     }
 
     public function save(Request $request)
@@ -101,9 +115,12 @@ class Form extends Component
             'role_id' => 'bail|required|exists:roles,id',
             // 🆕 Reglas de validación añadidas
             'employee_id' => 'nullable|string|max:50|unique:users,employee_id' . ($this->user ? ',' . $this->user->id : ''),
-            'hourly_rate' => 'required|numeric|min:0',
-            'food_allowance' => 'required|numeric|min:0',
+            'job_position_id' => 'bail|required|exists:job_positions,id',
+            'physical_area_id' => 'bail|required|exists:physical_areas,id',
         ];
+
+        $rules['hourly_rate'] = $this->isAuxiliarRole($this->role_id) ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
+        $rules['food_allowance'] = $this->isAuxiliarRole($this->role_id) ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
 
         if ($this->mode === 'edit') {
             if (!$this->password) {
@@ -115,17 +132,19 @@ class Form extends Component
         $data = $this->validate($rules);
         
         // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
-        $hourlyRate = $this->hourly_rate;
-        $foodAllowance = $this->food_allowance;
-        unset($data['hourly_rate'], $data['food_allowance']);
+        $hourlyRate = $data['hourly_rate'] ?? null;
+        $foodAllowance = $data['food_allowance'] ?? null;
+        $jobPositionId = $data['job_position_id'];
+        $physicalAreaId = $data['physical_area_id'];
+        unset($data['hourly_rate'], $data['food_allowance'], $data['job_position_id'], $data['physical_area_id']);
 
         try {
-            DB::transaction(function () use ($data, $hourlyRate, $foodAllowance) {
+            DB::transaction(function () use ($data, $hourlyRate, $foodAllowance, $jobPositionId, $physicalAreaId) {
                 if ($this->mode === 'create') {
                     $data['password'] = bcrypt($this->password);
                     $user = User::create($data);
 
-                    if ($data['role_id'] == 4) {
+                    if ($this->isAuxiliarRole($data['role_id'])) {
                         UserInterns::create([
                             'intern_id' => $user->id,
                             'created_by' => auth()->id()
@@ -135,9 +154,11 @@ class Form extends Component
                     // 🆕 Genera el perfil organizacional activo con sus montos por defecto
                     UserOrganizationalProfile::create([
                         'user_id' => $user->id,
-                        'job_position_id' => ($data['role_id'] == 4) ? 1 : 2, // 1 para Auxiliar/Intern, 2 para otros
+                        'job_position_id' => $jobPositionId,
+                        'physical_area_id' => $physicalAreaId,
                         'hourly_rate' => $hourlyRate,
                         'food_allowance' => $foodAllowance,
+                        'valid_from' => now()->toDateString(),
                         'is_active' => true
                     ]);
 
@@ -154,6 +175,8 @@ class Form extends Component
                     $this->user->activeOrganizationalProfile()->updateOrCreate(
                         ['user_id' => $this->user->id, 'is_active' => true],
                         [
+                            'job_position_id' => $jobPositionId,
+                            'physical_area_id' => $physicalAreaId,
                             'hourly_rate' => $hourlyRate,
                             'food_allowance' => $foodAllowance
                         ]
@@ -177,6 +200,14 @@ class Form extends Component
 
     public function render()
     {
-        return view('livewire.administracion.users.form');
+        return view('livewire.administracion.users.form', [
+            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
+            'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    private function isAuxiliarRole($roleId): bool
+    {
+        return Role::whereKey($roleId)->where('role', 'Auxiliar')->exists();
     }
 }

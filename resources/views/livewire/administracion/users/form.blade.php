@@ -42,7 +42,7 @@
 
             <div class="col-span-6">
                 <x-label for="role_id" class="block">Rol</x-label>
-                <select name="role_id" id="role_id" wire:model="role_id"
+                <select name="role_id" id="role_id" wire:model.live="role_id"
                     class="w-full rounded border">
                     <option selected disabled value="">Seleccione un rol</option>
                     @foreach ($roles as $role)
@@ -50,6 +50,28 @@
                     @endforeach
                 </select>
                 <x-input-error for="role_id" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-3">
+                <x-label for="job_position_id" class="block">Puesto de trabajo</x-label>
+                <select id="job_position_id" wire:model="job_position_id" class="w-full rounded border">
+                    <option value="">Seleccione un puesto</option>
+                    @foreach ($jobPositions as $position)
+                        <option value="{{ $position->id }}">{{ $position->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error for="job_position_id" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-3">
+                <x-label for="physical_area_id" class="block">Área / Departamento</x-label>
+                <select id="physical_area_id" wire:model="physical_area_id" class="w-full rounded border">
+                    <option value="">Seleccione un área</option>
+                    @foreach ($physicalAreas as $area)
+                        <option value="{{ $area->id }}">{{ $area->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error for="physical_area_id" class="mt-2" />
             </div>
 
             <!-- 🆕 Campos Añadidos: ID Checador, Precio Hora y Apoyo Comida -->
@@ -65,6 +87,7 @@
                 <x-input-error for="employee_id" class="mt-2" />
             </div>
 
+            @if ($isSelectedAuxiliar)
             <div class="col-span-6 sm:col-span-3">
                 <x-label for="hourly_rate" class="block">Precio por Hora ($)</x-label>
                 <x-input id="hourly_rate" type="number" step="0.01" wire:model="hourly_rate"
@@ -73,11 +96,12 @@
             </div>
 
             <div class="col-span-6 sm:col-span-3">
-                <x-label for="food_allowance" class="block">Apoyo de Comida por Día ($)</x-label>
+                <x-label for="food_allowance" class="block">Apoyo Económico por Día ($)</x-label>
                 <x-input id="food_allowance" type="number" step="0.01" wire:model="food_allowance"
                     class="w-full rounded border" />
                 <x-input-error for="food_allowance" class="mt-2" />
             </div>
+            @endif
         </x-slot>
 
         <x-slot name="actions">

@@ -6,7 +6,8 @@
         <span class="absolute -left-4 top-0 bottom-5 w-px bg-gray-300" aria-hidden="true"></span>
     @endif
 
-    <div class="inline-flex min-w-[220px] flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-blue-200 hover:shadow-md">
+    <button type="button" wire:key="org-node-{{ $node['id'] }}" wire:click="selectUser({{ (int) $node['id'] }})"
+        class="inline-flex min-w-[220px] flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <div class="flex items-start justify-between gap-2">
             <div>
                 <p class="text-sm font-semibold text-gray-800">{{ $node['name'] }}</p>
@@ -35,7 +36,7 @@
         @if (($node['subordinate_count'] ?? 0) > 0)
             <p class="mt-2 text-[10px] text-gray-400">{{ $node['subordinate_count'] }} subordinado(s) directo(s)</p>
         @endif
-    </div>
+    </button>
 
     @if (! empty($node['children']))
         <ul class="relative ml-6 mt-2 space-y-2 border-l border-gray-200 pl-6">

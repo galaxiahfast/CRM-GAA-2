@@ -39,9 +39,6 @@
                         @if ($user->email !== 'admin@datamid.com.mx')
                             <x-a-button href="{{ route('administracion.edit.users', $user) }}"
                                 color="blue">Editar</x-a-button>
-                            <x-danger-button wire:click="delete({{ $user->id }})"
-                                wire:confirm="¿Estás seguro de que deseas eliminar este usuario?"
-                                color="red">Eliminar</x-danger-button>
                         @endif
                     </td>
                 </tr>

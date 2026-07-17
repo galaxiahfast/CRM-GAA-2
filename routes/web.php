@@ -29,7 +29,7 @@ use App\Livewire\TimeControl\MyProductivity;
 use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
 use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
 use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
-use App\Livewire\TimeControl\Admin\AttendanceManagement; // 🆕 Componente importado para el checador
+use App\Livewire\TimeControl\Admin\AttendanceManagement;
 
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\DashboardController;
@@ -39,8 +39,6 @@ Route::get('/dashboard/pdf', [DashboardController::class, 'exportPdf'])->name('d
 Route::post('/dashboard/pdf', [DashboardController::class, 'generatePdf'])->name('dashboard.pdf.generate');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // ... tus otras rutas ...
-    
     // Rutas del módulo checador (asistencia biométrica)
     Route::post('/control-horas/consultar', [TimeEntryController::class, 'consultarAsistencia'])->name('control-horas.consultar');
     Route::get('/control-horas/export/{format}', [TimeEntryController::class, 'exportarAsistencia'])->name('control-horas.export');
@@ -58,16 +56,15 @@ Route::get('/dashboard/client-activity-data', [DashboardController::class, 'getC
 Route::get('/time/activity-data', [DashboardController::class, 'getActivityData'])->name('time.activity-data');
 Route::get('/time/client-data', [DashboardController::class, 'getClientData'])->name('time.client-data');
 
-
-
-
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
     
+    // ==========================================
     // DASHBOARD
+    // ==========================================
     Route::get('/dashboard/{customerId?}', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -79,71 +76,102 @@ Route::middleware([
     // ==========================================
     
     // Index Administración
-    Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
-        Route::get('/administracion', IndexAdministracion::class)->name('administracion.index');
+    Route::get('/administracion', IndexAdministracion::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->name('administracion.index');
 
-        Route::prefix('administracion/org-chart')->name('administracion.org-chart.')->group(function () {
+    // Organigrama - Solo Administrador
+    Route::prefix('administracion/org-chart')
+        ->middleware(['auth', 'role:Administrador'])
+        ->name('administracion.org-chart.')
+        ->group(function () {
             Route::get('/', [OrganizationChartController::class, 'index'])->name('index');
             Route::post('/relations', [OrganizationChartController::class, 'store'])->name('store');
             Route::delete('/relations/{relationId}', [OrganizationChartController::class, 'destroy'])->name('destroy');
         });
-    });
     
-    // Gestión de Usuarios
-    Route::middleware(['auth', 'role:Administrador,Coordinador'])->group(function () {
-        Route::get('/administracion/users', IndexUser::class)->name('administracion.section');
-    });
-
-    Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
-        Route::get('/administracion/users/create', function(){
-            return view('livewire.administracion.users.create');
-        })->name('administracion.create.users');
-        
-        Route::get('/administracion/users/{user}/edit', function(User $user){
-            return view('livewire.administracion.users.edit', compact('user'));
-        })->name('administracion.edit.users');
-    });
-
-    // Gestión de Roles
-    Route::middleware(['auth', 'role:Administrador'])->group(function () {
-        Route::get('/administracion/roles', IndexRole::class)->name('administracion.role');
-        Route::get('/administracion/create/roles', function(){
-            return view('livewire.administracion.roles.create');
-        })->name('administracion.role.create');
-        
-        Route::get('/administracion/roles/{role}/edit', function(Role $role) {
-            return view('livewire.administracion.roles.edit', compact('role'));
-        })->name('administracion.role.edit');
-    });
-
-    // Interns, Permissions & Relationships
-    Route::middleware(['auth', 'role:Administrador,Coordinador,Contador'])->group(function () {
-        Route::get('/administracion/interns', IndexInterns::class)->name('administracion.interns');
-        Route::get('/administracion/relationships', IndexRelationship::class)->name('administracion.relationships');
-    });
+    // ==========================================
+    // GESTIÓN DE USUARIOS
+    // ==========================================
     
-    Route::middleware(['auth', 'role:Administrador'])->group(function () {
-        Route::get('/administracion/permissions', IndexAdministracion::class)->name('administracion.permissions');
-    });
+    // Lista de usuarios - Administrador y Coordinador
+    Route::get('/administracion/users', IndexUser::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->name('administracion.section');
+
+    // Crear usuario - Administrador, Coordinador y Contador
+    Route::get('/administracion/users/create', function(){
+        return view('livewire.administracion.users.create');
+    })->middleware(['auth', 'role:Administrador,Coordinador,Contador'])
+      ->name('administracion.create.users');
+    
+    // Editar usuario - Administrador, Coordinador y Contador
+    Route::get('/administracion/users/{user}/edit', function(User $user){
+        return view('livewire.administracion.users.edit', compact('user'));
+    })->middleware(['auth', 'role:Administrador,Coordinador,Contador'])
+      ->name('administracion.edit.users');
 
     // ==========================================
-    // SECCIÓN CLIENTES (Costumers)
+    // GESTIÓN DE ROLES - Solo Administrador
+    // ==========================================
+    
+    // Lista de roles
+    Route::get('/administracion/roles', IndexRole::class)
+        ->middleware(['auth', 'role:Administrador'])
+        ->name('administracion.role');
+    
+    // Crear rol
+    Route::get('/administracion/create/roles', function(){
+        return view('livewire.administracion.roles.create');
+    })->middleware(['auth', 'role:Administrador'])
+      ->name('administracion.role.create');
+    
+    // Editar rol
+    Route::get('/administracion/roles/{role}/edit', function(Role $role) {
+        return view('livewire.administracion.roles.edit', compact('role'));
+    })->middleware(['auth', 'role:Administrador'])
+      ->name('administracion.role.edit');
+
+    // ==========================================
+    // INTERNS, RELATIONSHIPS & PERMISSIONS
+    // ==========================================
+    
+    // Interns - Administrador, Coordinador y Contador
+    Route::get('/administracion/interns', IndexInterns::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->name('administracion.interns');
+    
+    // Relationships - Administrador, Coordinador y Contador
+    Route::get('/administracion/relationships', IndexRelationship::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->name('administracion.relationships');
+    
+    // Permissions - Solo Administrador
+    Route::get('/administracion/permissions', IndexAdministracion::class)
+        ->middleware(['auth', 'role:Administrador'])
+        ->name('administracion.permissions');
+
+    // ==========================================
+    // SECCIÓN CLIENTES (Customers)
     // ==========================================
     Route::get('/customers', IndexCustomer::class)->name('customers.index');
     Route::get('/customers/{customer}/view', ViewCustomer::class)->name('customers.view');
     
-    Route::middleware(['auth', 'role:Administrador,Coordinador'])->group(function () {
-        Route::get('/customers/create', StoreCustomer::class)->name('customers.create');
-        Route::get('/customers/{customer}/edit', UpdateCustomer::class)->name('customers.edit');
-    });
+    Route::get('/customers/create', StoreCustomer::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->name('customers.create');
+    
+    Route::get('/customers/{customer}/edit', UpdateCustomer::class)
+        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->name('customers.edit');
 
-    // Test de Email institucional
-    Route::middleware(['auth', 'role:Administrador'])->group(function () {
-        Route::get('/test-email', function() {
-            Mail::to('prueba@datamid.com.mx')->send(new ReporteSemanal());
-            return "Correo enviado con exito";
-        });
-    });
+    // ==========================================
+    // TEST DE EMAIL INSTITUCIONAL
+    // ==========================================
+    Route::get('/test-email', function() {
+        Mail::to('prueba@datamid.com.mx')->send(new ReporteSemanal());
+        return "Correo enviado con exito";
+    })->middleware(['auth', 'role:Administrador']);
 
     // ==========================================
     // SECCIÓN MÓDULO CONTROL DE HORAS COMPLEJO
@@ -158,7 +186,6 @@ Route::middleware([
         ->middleware('can:view-time-productivity')
         ->name('time.dashboard');
 
-    // 💡 SOLUCIÓN DEL 403: Forzamos la ruta a validar con el Gate unificado de Productividad
     Route::get('/time/reports', MyProductivity::class)
         ->middleware('can:view-time-productivity')
         ->name('time.reports');
@@ -171,8 +198,6 @@ Route::middleware([
     Route::middleware('can:view-time-admin')->group(function () {
         Route::get('/time/admin', AdminTimeDashboard::class)->name('time.admin.dashboard');
         Route::get('/time/admin/profiles', OrganizationalProfiles::class)->name('time.admin.profiles');
-        
-        // 🆕 Nueva Vista Registrada: Control de Asistencia Biométrico (Checador)
         Route::get('/time/admin/attendance', AttendanceManagement::class)->name('time.admin.attendance');
     });
     
