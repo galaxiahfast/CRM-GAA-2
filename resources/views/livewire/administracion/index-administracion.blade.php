@@ -101,11 +101,22 @@
                 </div>
 
                 @if (count($orgChartTree) > 0)
-                    <ul class="space-y-4">
-                        @foreach ($orgChartTree as $rootNode)
-                            <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
-                        @endforeach
-                    </ul>
+                    <!-- Contenedor con pan y zoom -->
+                    <div id="org-tree-container" class="relative select-none overflow-hidden" style="height: 70vh; background: #f9fafb; border-radius: 0.75rem; border: 1px solid #e5e7eb; cursor: grab; touch-action: none;">
+                        <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); width: max-content; min-width: 100%; padding: 2rem;">
+                            <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
+                                @foreach ($orgChartTree as $rootNode)
+                                    @if ($rootNode['subordinate_count'] > 0)
+                                        <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                        <!-- Instrucciones de navegación -->
+                        <div class="absolute bottom-2 right-2 rounded bg-white/80 px-3 py-1 text-xs text-gray-500 shadow backdrop-blur-sm">
+                            🖱 Arrastra para mover · Rueda para zoom · Doble clic para reset
+                        </div>
+                    </div>
                 @else
                     <x-no-data title="Sin datos" subTitle="No hay nodos raíz para el filtro seleccionado." />
                 @endif
@@ -285,3 +296,86 @@
     @endif
     @endif
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('org-tree-container');
+        const wrapper = document.getElementById('org-tree-wrapper');
+
+        if (!container || !wrapper) return;
+
+        let isPanning = false;
+        let startX, startY, startTranslateX, startTranslateY;
+        let scale = 1;
+        let translateX = 0, translateY = 0;
+
+        function updateTransform() {
+            wrapper.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        }
+
+        // Prevenir selección de texto y eventos de arrastre nativos
+        container.addEventListener('dragstart', (e) => e.preventDefault());
+        container.addEventListener('selectstart', (e) => e.preventDefault());
+
+        // Zoom con rueda del mouse (captura en el contenedor)
+        container.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.min(Math.max(scale * delta, 0.3), 3);
+            scale = newScale;
+            updateTransform();
+        }, { passive: false });
+
+        // Iniciar pan solo si se hace clic en el contenedor (no en un nodo hijo)
+        container.addEventListener('mousedown', function(e) {
+            // Si el clic es sobre un botón o cualquier hijo interactivo, no iniciar pan
+            const target = e.target.closest('button, a, input, select, textarea');
+            if (target) return;
+
+            // Solo botón izquierdo
+            if (e.button !== 0) return;
+
+            isPanning = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTranslateX = translateX;
+            startTranslateY = translateY;
+            container.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        // Mover
+        window.addEventListener('mousemove', function(e) {
+            if (!isPanning) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            translateX = startTranslateX + dx;
+            translateY = startTranslateY + dy;
+            updateTransform();
+        });
+
+        // Soltar
+        window.addEventListener('mouseup', function() {
+            if (isPanning) {
+                isPanning = false;
+                container.style.cursor = 'grab';
+            }
+        });
+
+        // Reset al hacer doble clic en el contenedor (no en un botón)
+        container.addEventListener('dblclick', function(e) {
+            const target = e.target.closest('button, a');
+            if (target) return; // No reset si se hace doble clic en un nodo
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+        });
+
+        // Asegurar que el cursor sea grab por defecto
+        container.style.cursor = 'grab';
+    });
+</script>
+@endpush

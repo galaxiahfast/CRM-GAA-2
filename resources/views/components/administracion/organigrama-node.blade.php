@@ -1,13 +1,9 @@
 @props(['node', 'depth' => 0])
 
-<li class="relative pl-0 {{ $depth > 0 ? 'mt-3' : '' }}">
-    @if ($depth > 0)
-        <span class="absolute -left-4 top-5 h-px w-4 bg-gray-300" aria-hidden="true"></span>
-        <span class="absolute -left-4 top-0 bottom-5 w-px bg-gray-300" aria-hidden="true"></span>
-    @endif
-
+<div class="flex w-full flex-col items-center">
+    <!-- Nodo actual (superior) -->
     <button type="button" wire:key="org-node-{{ $node['id'] }}" wire:click="selectUser({{ (int) $node['id'] }})"
-        class="inline-flex min-w-[220px] flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        class="inline-flex min-w-[200px] flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <div class="flex items-start justify-between gap-2">
             <div>
                 <p class="text-sm font-semibold text-gray-800">{{ $node['name'] }}</p>
@@ -38,11 +34,23 @@
         @endif
     </button>
 
-    @if (! empty($node['children']))
-        <ul class="relative ml-6 mt-2 space-y-2 border-l border-gray-200 pl-6">
+    <!-- Conectores y subnodos (solo si tiene hijos) -->
+    @if (! empty($node['children']) && count($node['children']) > 0)
+        <!-- Línea vertical que baja del nodo padre -->
+        <div class="h-8 w-px flex-shrink-0 bg-gray-300"></div>
+
+        <!-- Contenedor de los hijos (distribución horizontal) -->
+        <div class="relative flex flex-wrap justify-center gap-6 pt-4">
+            <!-- Línea horizontal que une a todos los hijos (solo el ancho necesario) -->
+            <div class="absolute left-0 right-0 top-0 h-px bg-gray-300" style="width: calc(100% - 0px);"></div>
+
             @foreach ($node['children'] as $child)
-                <x-administracion.organigrama-node :node="$child" :depth="$depth + 1" />
+                <div class="relative flex flex-col items-center">
+                    <!-- Línea vertical que conecta cada hijo con la horizontal -->
+                    <div class="h-4 w-px flex-shrink-0 bg-gray-300"></div>
+                    <x-administracion.organigrama-node :node="$child" :depth="$depth + 1" />
+                </div>
             @endforeach
-        </ul>
+        </div>
     @endif
-</li>
+</div>
