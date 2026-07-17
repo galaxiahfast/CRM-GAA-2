@@ -3,7 +3,7 @@
 <div class="flex w-full flex-col items-center">
     <!-- Nodo actual (superior) -->
     <button type="button" wire:key="org-node-{{ $node['id'] }}" wire:click="selectUser({{ (int) $node['id'] }})"
-        class="inline-flex min-w-[200px] flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        class="org-node inline-flex min-w-[200px] flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <div class="flex items-start justify-between gap-2">
             <div>
                 <p class="text-sm font-semibold text-gray-800">{{ $node['name'] }}</p>

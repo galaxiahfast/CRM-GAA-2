@@ -101,9 +101,9 @@
                 </div>
 
                 @if (count($orgChartTree) > 0)
-                    <!-- Contenedor con pan y zoom -->
-                    <div id="org-tree-container" class="relative select-none overflow-hidden" style="height: 70vh; background: #f9fafb; border-radius: 0.75rem; border: 1px solid #e5e7eb; cursor: grab; touch-action: none;">
-                        <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); width: max-content; min-width: 100%; padding: 2rem;">
+                    <!-- Contenedor con pan y zoom (touch-action: none para evitar scroll táctil) -->
+                    <div id="org-tree-container" class="relative overflow-hidden" style="height: 70vh; background: #f9fafb; border-radius: 0.75rem; border: 1px solid #e5e7eb; touch-action: none;">
+                        <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 100%; padding: 2rem;">
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
                                     @if ($rootNode['subordinate_count'] > 0)
@@ -314,39 +314,53 @@
             wrapper.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         }
 
-        // Prevenir selección de texto y eventos de arrastre nativos
-        container.addEventListener('dragstart', (e) => e.preventDefault());
-        container.addEventListener('selectstart', (e) => e.preventDefault());
-
-        // Zoom con rueda del mouse (captura en el contenedor)
+        // --- Zoom con rueda del mouse (centrado en el puntero) ---
         container.addEventListener('wheel', function(e) {
             e.preventDefault();
-            e.stopPropagation();
+
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             const newScale = Math.min(Math.max(scale * delta, 0.3), 3);
+
+            // Calcular desplazamiento para centrar el zoom en el puntero
+            const dx = (mouseX - translateX) * (1 - newScale / scale);
+            const dy = (mouseY - translateY) * (1 - newScale / scale);
+
             scale = newScale;
+            translateX += dx;
+            translateY += dy;
+
             updateTransform();
         }, { passive: false });
 
-        // Iniciar pan solo si se hace clic en el contenedor (no en un nodo hijo)
+        // --- Pan con arrastre (solo si NO se hace clic en un nodo) ---
         container.addEventListener('mousedown', function(e) {
-            // Si el clic es sobre un botón o cualquier hijo interactivo, no iniciar pan
-            const target = e.target.closest('button, a, input, select, textarea');
-            if (target) return;
+            // Si el clic fue en un elemento con clase 'org-node' o un descendiente, no iniciar pan
+            let target = e.target;
+            while (target && target !== container) {
+                if (target.classList && target.classList.contains('org-node')) {
+                    return; // Ignorar, es un nodo
+                }
+                target = target.parentNode;
+            }
 
-            // Solo botón izquierdo
-            if (e.button !== 0) return;
+            // También ignorar si se hizo clic en botones, enlaces, etc. (opcional)
+            if (e.target.closest('button, a, input, select, textarea')) {
+                return;
+            }
 
             isPanning = true;
             startX = e.clientX;
             startY = e.clientY;
             startTranslateX = translateX;
             startTranslateY = translateY;
-            container.style.cursor = 'grabbing';
+            wrapper.style.cursor = 'grabbing';
             e.preventDefault();
         });
 
-        // Mover
         window.addEventListener('mousemove', function(e) {
             if (!isPanning) return;
             const dx = e.clientX - startX;
@@ -356,26 +370,27 @@
             updateTransform();
         });
 
-        // Soltar
         window.addEventListener('mouseup', function() {
             if (isPanning) {
                 isPanning = false;
-                container.style.cursor = 'grab';
+                wrapper.style.cursor = 'grab';
             }
         });
 
-        // Reset al hacer doble clic en el contenedor (no en un botón)
+        // Prevenir selección de texto durante el arrastre
+        container.addEventListener('selectstart', function(e) {
+            if (isPanning) e.preventDefault();
+        });
+
+        // Reset al hacer doble clic
         container.addEventListener('dblclick', function(e) {
-            const target = e.target.closest('button, a');
-            if (target) return; // No reset si se hace doble clic en un nodo
+            // Evitar que el doble clic seleccione texto o dispare otros eventos
+            e.preventDefault();
             scale = 1;
             translateX = 0;
             translateY = 0;
             updateTransform();
         });
-
-        // Asegurar que el cursor sea grab por defecto
-        container.style.cursor = 'grab';
     });
 </script>
 @endpush
