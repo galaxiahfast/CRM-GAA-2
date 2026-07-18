@@ -1,69 +1,132 @@
 @props(['node', 'depth' => 0])
 
 <div class="flex flex-col items-center visual-node-wrapper" wire:key="org-node-box-{{ $node['id'] }}">
-    <!-- Nodo actual -->
+    <!-- CARD PRINCIPAL: Grosor de 2px, gris uniforme y hover/focus con el azul de la etiqueta (#1e3a8a) -->
     <button type="button" 
         wire:click="selectUser({{ $node['id'] }})"
-        class="org-node inline-flex min-w-[220px] max-w-[280px] flex-shrink-0 flex-col rounded-xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 z-10">
+        class="org-node js-org-card inline-flex w-[260px] min-h-[150px] flex-shrink-0 flex-col items-center justify-center rounded-xl border-2 border-gray-300 bg-transparent p-4 text-center shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0 z-10 gap-[10px]">
         
-        <div class="flex items-start justify-between gap-2 w-full">
-            <div class="overflow-hidden">
-                <!-- CORREGIDO: title="..." ahora es un atributo HTML válido -->
-                <p class="text-sm font-semibold text-gray-800 truncate" title="{{ $node['name'] }}">{{ $node['name'] }}</p>
-                <p class="text-xs text-gray-500 truncate" title="{{ $node['email'] }}">{{ $node['email'] }}</p>
+        <!-- Contenedor Superior Agrupado -->
+        <div class="w-full flex flex-col h-auto gap-[5px]">
+            <!-- Bloque: NOMBRE -->
+            <div class="w-full flex flex-col h-auto">
+                <p class="text-sm font-semibold text-gray-800 truncate w-full leading-none" title="{{ $node['name'] }}">
+                    {{ $node['name'] }}
+                </p>
             </div>
+
+            <!-- Bloque: CORREO -->
+            <div class="w-full flex flex-col h-auto">
+                <p class="text-xs text-gray-500 truncate w-full leading-tight" title="{{ $node['email'] }}">
+                    {{ $node['email'] }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Bloque Central: Contenedor de ETIQUETAS (Fondo sólido, texto blanco, ancho compacto de 105px) -->
+        <div class="w-full flex flex-wrap items-center justify-center gap-[10px] overflow-hidden">
+            @if (!empty($node['role']))
+                <span class="inline-block w-[105px] rounded-md bg-[#1e3a8a] px-2 py-1 text-[10px] font-medium text-white truncate" title="{{ $node['role'] }}">
+                    {{ $node['role'] }}
+                </span>
+            @endif
+            @if (!empty($node['job_position']))
+                <span class="inline-block w-[105px] rounded-md bg-[#059669] px-2 py-1 text-[10px] font-medium text-white truncate" title="{{ $node['job_position'] }}">
+                    {{ $node['job_position'] }}
+                </span>
+            @endif
+            @if (!empty($node['physical_area']))
+                <span class="inline-block w-[105px] rounded-md bg-[#7c3aed] px-2 py-1 text-[10px] font-medium text-white truncate" title="{{ $node['physical_area'] }}">
+                    {{ $node['physical_area'] }}
+                </span>
+            @endif
             @if (($node['superior_count'] ?? 0) > 1)
-                <span class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700"
-                    title="Reporta a múltiples superiores">
+                <span class="inline-block w-[105px] rounded-md bg-[#d97706] px-2 py-1 text-[10px] font-medium text-white truncate" title="Reporta a múltiples superiores">
                     {{ $node['superior_count'] }} jefes
                 </span>
             @endif
         </div>
 
-        <div class="mt-2 flex flex-wrap gap-1">
-            @if (!empty($node['role']))
-                <span class="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">{{ $node['role'] }}</span>
-            @endif
-            @if (!empty($node['job_position']))
-                <span class="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">{{ $node['job_position'] }}</span>
-            @endif
-            @if (!empty($node['physical_area']))
-                <span class="rounded-md bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">{{ $node['physical_area'] }}</span>
+        <!-- Bloque Inferior: SUBORDINADOS -->
+        <div class="w-full shrink-0 flex flex-col h-auto">
+            @if (($node['subordinate_count'] ?? 0) > 0)
+                <p class="text-[10px] font-medium text-gray-400 italic w-full leading-none">
+                    {{ $node['subordinate_count'] }} subordinado(s) directo(s)
+                </p>
+            @else
+                <p class="text-[10px] font-medium text-gray-400 italic w-full leading-none">
+                    Sin subordinados
+                </p>
             @endif
         </div>
-
-        @if (($node['subordinate_count'] ?? 0) > 0)
-            <p class="mt-2 text-[10px] font-medium text-gray-400">
-                {{ $node['subordinate_count'] }} subordinado(s) directo(s)
-            </p>
-        @endif
     </button>
 
     <!-- Conectores y subnodos -->
     @if (!empty($node['children']) && count($node['children']) > 0)
-        <!-- Línea vertical descendente del padre -->
-        <div class="h-6 w-px bg-gray-300"></div>
-
-        <!-- Contenedor horizontal de hijos -->
+        <!-- Línea vertical descendente principal -->
+        <div class="h-6 w-[2px] bg-gray-300"></div>
+        
         <div class="flex items-start justify-center isolate">
             @foreach ($node['children'] as $index => $child)
-                <div class="relative flex flex-col items-center px-4">
+                <div class="relative flex flex-col items-center px-4 w-full">
                     
-                    <!-- CORREGIDO: Clases condicionales de Tailwind limpias sin colisión de left/right -->
-                    <div class="absolute top-0 h-px border-t border-gray-300
-                        @if(count($node['children']) === 1) left-1/2 right-1/2
-                        @elseif($index === 0) left-1/2 right-0
-                        @elseif($index === count($node['children']) - 1) left-0 right-1/2
-                        @else left-0 right-0 @endif">
-                    </div>
+                    <!-- Contenedor del Conector Redondeado de 2px con ajuste exacto -->
+                    <div @class([
+                        'absolute top-0 h-8 border-gray-300',
+                        // Si es hijo único: Línea vertical descendente pura sin desvíos
+                        'left-[calc(50%-1px)] w-[2px] border-l-2' => count($node['children']) === 1,
+                        // Primer hijo: curva superior izquierda
+                        'left-1/2 right-0 border-t-2 border-l-2 rounded-tl-xl' => count($node['children']) > 1 && $index === 0,
+                        // Último hijo: curva superior derecha
+                        'left-0 right-1/2 border-t-2 border-r-2 rounded-tr-xl' => count($node['children']) > 1 && $index === count($node['children']) - 1,
+                        // Hijos intermedios: paso horizontal continuo
+                        'left-0 right-0 border-t-2' => count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1,
+                    ])></div>
                     
-                    <!-- Línea vertical que entra al hijo -->
-                    <div class="h-6 w-px bg-gray-300 z-10"></div>
+                    <!-- Línea vertical descendente calibrada para los hijos intermedios -->
+                    @if(count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1)
+                        <div class="absolute top-0 left-[calc(50%-1px)] h-8 w-[2px] bg-gray-300"></div>
+                    @endif
 
-                    <!-- Llamada recursiva -->
+                    <!-- Espaciador físico controlado -->
+                    <div class="h-8 w-full"></div>
+                    
                     <x-administracion.organigrama-node :node="$child" :depth="$depth + 1" />
                 </div>
             @endforeach
         </div>
     @endif
 </div>
+
+<script>
+    document.addEventListener('livewire:navigated', () => {
+        equalizeNodeHeights();
+    });
+
+    document.addEventListener('livewire:update', () => {
+        equalizeNodeHeights();
+    });
+
+    function equalizeNodeHeights() {
+        const cards = document.querySelectorAll('.js-org-card');
+        if (cards.length === 0) return;
+
+        cards.forEach(card => {
+            card.style.height = 'auto';
+        });
+
+        let maxHeight = 0;
+        cards.forEach(card => {
+            const cardHeight = card.offsetHeight;
+            if (cardHeight > maxHeight) {
+                maxHeight = cardHeight;
+            }
+        });
+
+        cards.forEach(card => {
+            card.style.height = `${maxHeight}px`;
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', equalizeNodeHeights);
+</script>
