@@ -6,16 +6,13 @@
         wire:click="selectUser({{ $node['id'] }})"
         class="org-node js-org-card inline-flex w-[260px] min-h-[150px] flex-shrink-0 flex-col items-center justify-center rounded-xl border-2 border-gray-300 bg-transparent p-4 text-center shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0 z-10 gap-[10px]">
         
-        <!-- Contenedor Superior Agrupado -->
+        <!-- Contenido de la tarjeta (sin cambios) -->
         <div class="w-full flex flex-col h-auto gap-[5px]">
-            <!-- Bloque: NOMBRE -->
             <div class="w-full flex flex-col h-auto">
                 <p class="text-sm font-semibold text-gray-800 truncate w-full leading-none" title="{{ $node['name'] }}">
                     {{ $node['name'] }}
                 </p>
             </div>
-
-            <!-- Bloque: CORREO -->
             <div class="w-full flex flex-col h-auto">
                 <p class="text-xs text-gray-500 truncate w-full leading-tight" title="{{ $node['email'] }}">
                     {{ $node['email'] }}
@@ -23,7 +20,6 @@
             </div>
         </div>
 
-        <!-- Bloque Central: Contenedor de ETIQUETAS (Fondo sólido, texto blanco, ancho compacto de 105px) -->
         <div class="w-full flex flex-wrap items-center justify-center gap-[10px] overflow-hidden">
             @if (!empty($node['role']))
                 <span class="inline-block w-[105px] rounded-md bg-[#1e3a8a] px-2 py-1 text-[10px] font-medium text-white truncate" title="{{ $node['role'] }}">
@@ -47,7 +43,6 @@
             @endif
         </div>
 
-        <!-- Bloque Inferior: SUBORDINADOS -->
         <div class="w-full shrink-0 flex flex-col h-auto">
             @if (($node['subordinate_count'] ?? 0) > 0)
                 <p class="text-[10px] font-medium text-gray-400 italic w-full leading-none">
@@ -63,29 +58,29 @@
 
     <!-- Conectores y subnodos -->
     @if (!empty($node['children']) && count($node['children']) > 0)
-        <!-- Línea vertical descendente principal -->
-        <div class="h-6 w-[2px] bg-gray-300"></div>
+        <!-- Línea vertical descendente principal (USANDO BORDER, no w-[2px]) -->
+        <div class="h-6 border-l-2 border-gray-300"></div>
         
         <div class="flex items-start justify-center isolate">
             @foreach ($node['children'] as $index => $child)
                 <div class="relative flex flex-col items-center px-4 w-full">
                     
-                    <!-- Contenedor del Conector Redondeado de 2px con ajuste exacto -->
+                    <!-- Contenedor del Conector (TODO CON BORDER-2, sin mezclar) -->
                     <div @class([
                         'absolute top-0 h-8 border-gray-300',
-                        // Si es hijo único: Línea vertical descendente pura sin desvíos
-                        'left-[calc(50%-1px)] w-[2px] border-l-2' => count($node['children']) === 1,
+                        // Hijo único: línea vertical pura (sin bordes horizontales)
+                        'border-l-2' => count($node['children']) === 1,
                         // Primer hijo: curva superior izquierda
                         'left-1/2 right-0 border-t-2 border-l-2 rounded-tl-xl' => count($node['children']) > 1 && $index === 0,
                         // Último hijo: curva superior derecha
                         'left-0 right-1/2 border-t-2 border-r-2 rounded-tr-xl' => count($node['children']) > 1 && $index === count($node['children']) - 1,
-                        // Hijos intermedios: paso horizontal continuo
+                        // Hijos intermedios: línea horizontal continua
                         'left-0 right-0 border-t-2' => count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1,
                     ])></div>
                     
-                    <!-- Línea vertical descendente calibrada para los hijos intermedios -->
+                    <!-- Línea vertical descendente para hijos intermedios (USANDO BORDER) -->
                     @if(count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1)
-                        <div class="absolute top-0 left-[calc(50%-1px)] h-8 w-[2px] bg-gray-300"></div>
+                        <div class="absolute top-0 left-1/2 -translate-x-[1px] h-8 border-l-2 border-gray-300"></div>
                     @endif
 
                     <!-- Espaciador físico controlado -->
