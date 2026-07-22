@@ -13,9 +13,9 @@
     $orgChartTree = $orgChartTree ?? [];
 @endphp
 
-<div class="space-y-4 w-full min-w-[800px]" style="font-size: 15px;">
+<div class="space-y-4 w-full min-w-[800px]" style="font-size: 15px; background-color: #F3F3F3;">
     <!-- Accesos rápidos -->
-    <div class="overflow-hidden rounded-2xl bg-white shadow-lg">
+    <div class="overflow-hidden rounded-2xl shadow-lg" style="background-color: #F3F3F3;">
         <div class="border-b p-4">
             <h2 class="text-[15px] font-semibold text-gray-700">Secciones principales</h2>
         </div>
@@ -48,65 +48,71 @@
     @if (auth()->user()->isAdmin())
 
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div class="overflow-hidden rounded-2xl bg-white shadow-lg" style="padding: 80px;">
+    <div class="overflow-hidden rounded-2xl shadow-lg" style="padding: 80px; background-color: #F3F3F3;">
 
-        <!-- Encabezado -->
-        <div style="padding: 0 0 20px 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
-            <div style="max-width: 672px; flex-shrink: 0;">
-                <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
-                    <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 0px; background-color: rgba(26, 58, 107, 0.1); flex-shrink: 0;">
-                        <svg style="height: 28px; width: 28px; color: #1A3A6B; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: #111827; white-space: nowrap;">
-                            Organigrama
-                        </h1>
-                        <p style="font-size: 15px; color: #6b7280; white-space: nowrap;">
-                            Estructura jerárquica dinámica
-                        </p>
-                    </div>
+    <!-- Encabezado -->
+    <div style="padding: 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
+        <div style="max-width: 672px; flex-shrink: 0; display: flex; flex-direction: column; gap: 21px;">
+            
+            <!-- Grupo 1: Icono + Título / Subtítulo -->
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 0px; background-color: rgba(26, 58, 107, 0.1); flex-shrink: 0;">
+                    <svg style="height: 28px; width: 28px; color: #1A3A6B; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
                 </div>
-                <p style="max-width: 672px; font-size: 15px; line-height: 28px; color: #6b7280;">
-                    Visualización jerárquica de la organización,<br>con relaciones de supervisión y áreas.
-                </p>
-                <!-- Estadísticas completas -->
-                <div style="display: flex; flex-wrap: wrap; gap: 25px; margin-top: 15px; font-size: 15px; color: #6b7280;">
-                    <span><strong style="color: #1A3A6B;">{{ $totalUsers ?? 0 }}</strong> Usuarios totales</span>
-                    <span><strong style="color: #1A3A6B;">{{ $orgChartStats['in_tree'] ?? 0 }}</strong> En árbol</span>
-                    <span><strong style="color: #1A3A6B;">{{ $orgChartStats['relations'] ?? 0 }}</strong> Relaciones</span>
-                    <span><strong style="color: #1A3A6B;">{{ $totalRoles ?? 0 }}</strong> Roles</span>
-                    <span><strong style="color: #1A3A6B;">30</strong> Permisos</span>
+                <div style="display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                    <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: #111827; white-space: nowrap; line-height: 1.5; margin: 0;">
+                        Organigrama
+                    </h1>
+                    <p style="font-size: 15px; color: #6b7280; white-space: nowrap; line-height: 1.5; margin: 0;">
+                        Estructura jerárquica dinámica
+                    </p>
                 </div>
             </div>
-        </div>
 
-        <!-- Fila de controles (solo botones) -->
-        <div style="padding: 12px 0 80px 0; display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
-            <a href="{{ route('administracion.create.users') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
-                Agregar Usuario
-            </a>
-            <a href="{{ route('administracion.role.create') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
-                Agregar Rol
-            </a>
-            <a href="{{ route('administracion.permissions') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
-                Gestionar Permisos
-            </a>
+            <!-- Grupo 2: Descripción -->
+            <p style="max-width: 672px; font-size: 15px; line-height: 2; margin: 0; color: #6b7280;">
+                Gestión integral de la estructura organizacional, líneas de mando<br>y niveles de supervisión entre colaboradores, áreas y departamentos.
+            </p>
+
+            <!-- Grupo 3: Estadísticas -->
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: #6b7280;">
+                <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $totalUsers ?? 0 }}</strong> Usuarios totales</span>
+                <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $orgChartStats['in_tree'] ?? 0 }}</strong> En árbol</span>
+                <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $orgChartStats['relations'] ?? 0 }}</strong> Relaciones</span>
+                <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $totalRoles ?? 0 }}</strong> Roles</span>
+                <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">30</strong> Permisos</span>
+            </div>
+
         </div>
+    </div>
+
+    <!-- Grupo 4: Fila de controles / Botones -->
+    <div style="margin-top: 35px; padding: 0 0 80px 0; display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <a href="{{ route('administracion.create.users') }}"
+            class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
+            style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
+            onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
+            onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
+            Agregar Usuario
+        </a>
+        <a href="{{ route('administracion.role.create') }}"
+            class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
+            style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
+            onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
+            onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
+            Agregar Rol
+        </a>
+        <a href="{{ route('administracion.permissions') }}"
+            class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
+            style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
+            onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
+            onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
+            Gestionar Permisos
+        </a>
+    </div>
 
         <!-- Grid con ancho mínimo para evitar deformación -->
         <div class="grid grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="min-width: 800px; padding: 0;">
@@ -121,8 +127,8 @@
                 @endif
 
                 @if (count($orgChartTree) > 0)
-                    <!-- Contenedor con pan y zoom: altura igual al panel de la derecha -->
-                    <div id="org-tree-container" class="relative overflow-hidden border border-dashed border-gray-300 p-5" style="max-height: 520px; height: auto; background: #f9fafb; border-radius: 0.75rem; overflow-y: auto; touch-action: none;">
+                    <!-- Contenedor con pan y zoom -->
+                    <div id="org-tree-container" class="relative overflow-hidden border border-dashed border-gray-300 p-5" style="max-height: 520px; height: auto; background: #F3F3F3; border-radius: 0.75rem; overflow-y: auto; touch-action: none;">
                         <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
@@ -202,8 +208,8 @@
                 @endif
             </div>
 
-            <!-- Usuarios sin asignar (con padding 20px, sin bordes entre elementos, fuente 15px) -->
-            <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5" style="min-width: 250px;">
+            <!-- Usuarios sin asignar -->
+            <div class="rounded-xl border border-dashed border-gray-300 p-5" style="min-width: 250px; background-color: #F3F3F3;">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-[15px] font-semibold text-gray-700">Usuarios sin asignar</h3>
                     <span class="rounded-full bg-gray-200 px-2.5 py-0.5 text-[15px] font-medium text-gray-700">
@@ -412,11 +418,9 @@
                 translateX = targetX;
                 translateY = targetY;
                 updateTransform();
-                // Sin resaltado
             });
         }
 
-        // Eventos del contenedor
         container.addEventListener('wheel', function(e) {
             if (e.target.closest('#search-results') || e.target.closest('.search-result-item')) {
                 return;
