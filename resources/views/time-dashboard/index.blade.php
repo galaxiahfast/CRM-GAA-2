@@ -9,7 +9,7 @@
     <div class="w-full bg-[#f4f4f4] min-h-screen" style="overflow-x: auto;">
 
         <!-- Contenedor interno con min-width: 700px -->
-        <div style="min-width: 700px; padding: 0; margin: 0;">
+        <div style="min-width: 600px; padding: 0; margin: 0;">
 
             <!-- Header Superior con Migas de Pan -->
             <div style="padding: 40px; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
