@@ -16,42 +16,9 @@ class OrganizationChartService
      */
     public function buildChartData(?int $physicalAreaId = null): array
     {
-        // 1. Construir el árbol completo sin filtro (solo usuarios con relaciones)
-        $fullTree = $this->buildFullTree();
-
-        if (empty($physicalAreaId)) {
-            // Sin filtro, devolver el árbol completo y los usuarios sin asignar
-            return $this->prepareResult($fullTree);
-        }
-
-        // 2. Aplicar filtro por área: conservar nodos que coinciden + sus ancestros
-        $filteredTree = $this->filterTreeByArea($fullTree, $physicalAreaId);
-
-        // 3. Recalcular estadísticas y usuarios sin asignar basados en el árbol filtrado
-        return $this->prepareResult($filteredTree, $physicalAreaId);
-    }
-
-    /**
-     * Construye el árbol jerárquico completo, incluyendo **solo** usuarios que tienen
-     * al menos una relación (como superior o subordinado). Los usuarios aislados
-     * (sin jefe ni subordinados) no se incluyen en el árbol principal.
-     *
-     * @return array<int, array>
-     */
-    private function buildFullTree(): array
-    {
-        // Obtener todas las relaciones jerárquicas
+        // Obtener todas las relaciones (sin filtrar por área todavía)
         $relations = UserHierarchyRelation::all(['subordinate_id', 'superior_id']);
 
-        // Construir mapas de IDs de usuarios que participan en relaciones
-        $userIdsInRelations = collect();
-        foreach ($relations as $rel) {
-            $userIdsInRelations->push($rel->subordinate_id);
-            $userIdsInRelations->push($rel->superior_id);
-        }
-        $userIdsInRelations = $userIdsInRelations->unique()->toArray();
-
-        // Mapear superiores y subordinados por usuario
         $superiorIdsByUser = [];
         $subordinateIdsByUser = [];
 
@@ -60,31 +27,32 @@ class OrganizationChartService
             $subordinateIdsByUser[$relation->superior_id][] = $relation->subordinate_id;
         }
 
-        // Obtener **solo los usuarios que están en relaciones** (tienen al menos un superior o subordinado)
+        // Obtener todos los usuarios con sus perfiles
         $users = User::query()
             ->with([
                 'role:id,role',
                 'activeOrganizationalProfile.jobPosition:id,name',
                 'activeOrganizationalProfile.physicalArea:id,name',
             ])
-            ->whereIn('id', $userIdsInRelations)
             ->orderBy('name')
             ->get()
             ->keyBy('id');
 
+        // Identificar usuarios que tienen al menos una relación (son parte del árbol)
+        $usersWithRelations = array_unique(array_merge(
+            array_keys($superiorIdsByUser),
+            array_keys($subordinateIdsByUser)
+        ));
+
+        // Construir mapa de nodos para todos los usuarios
         $userMap = [];
-        $unassigned = [];
+        $allUnassigned = [];
 
         foreach ($users as $user) {
             $profile = $user->activeOrganizationalProfile;
             $superiorIds = $superiorIdsByUser[$user->id] ?? [];
             $subordinateIds = $subordinateIdsByUser[$user->id] ?? [];
             $missing = $this->resolveMissingAssignments($user, $superiorIds, $profile);
-
-            // Solo considerar que está "sin asignar" si no tiene superior y no tiene subordinados
-            // (es decir, es un nodo aislado que no debería estar en el árbol)
-            $hasSuperior = !empty($superiorIds);
-            $hasSubordinate = !empty($subordinateIds);
 
             $node = [
                 'id' => $user->id,
@@ -101,78 +69,140 @@ class OrganizationChartService
 
             $userMap[$user->id] = $node;
 
-            // Un usuario "sin asignar" es aquel que tiene al menos un campo faltante
-            // y además no está conectado a la jerarquía (no tiene superior ni subordinado)
-            if (!empty($missing) && !$hasSuperior && !$hasSubordinate) {
-                $unassigned[] = array_merge($node, ['missing' => $missing]);
+            // Si el usuario NO tiene relaciones y tiene campos faltantes, va a "usuarios sin asignar"
+            if (!in_array($user->id, $usersWithRelations) && !empty($missing)) {
+                $allUnassigned[] = array_merge($node, ['missing' => $missing]);
             }
         }
 
-        // Determinar el padre primario de cada usuario (el superior más pequeño, o null si es raíz)
-        $primaryParentByUser = [];
-        foreach ($userMap as $userId => $node) {
-            $superiorIds = $superiorIdsByUser[$userId] ?? [];
-            $primaryParentByUser[$userId] = empty($superiorIds) ? null : min($superiorIds);
+        // Construir el árbol completo (sin filtro de área)
+        $fullTree = $this->buildTreeFromUserMap($userMap, $superiorIdsByUser, $subordinateIdsByUser, $usersWithRelations);
+
+        // Si no hay filtro de área, devolver el árbol completo y los usuarios sin asignar
+        if (empty($physicalAreaId)) {
+            return [
+                'tree' => $fullTree,
+                'unassigned' => $allUnassigned,
+                'stats' => [
+                    'total_users' => $users->count(),
+                    'in_tree' => $this->countNodesInTree($fullTree),
+                    'unassigned' => count($allUnassigned),
+                    'relations' => $relations->count(),
+                    'cycles_detected' => $this->countExistingCycles($superiorIdsByUser),
+                ],
+            ];
         }
 
-        // Construir nodos raíz: aquellos que no tienen superior (raíz) y tienen al menos un subordinado
-        $roots = [];
-        $placed = [];
-
-        foreach ($userMap as $userId => $node) {
-            // Solo son raíz si no tienen superior y tienen al menos un subordinado
-            if ($primaryParentByUser[$userId] !== null) {
-                continue;
-            }
-            if (empty($subordinateIdsByUser[$userId] ?? [])) {
-                // No tiene subordinados → es un nodo aislado, no se muestra en el árbol
-                continue;
-            }
-
-            $roots[] = $this->buildTreeNode(
-                $userId,
-                $userMap,
-                $primaryParentByUser,
-                $placed,
-                null, // sin filtro de área
-                $users,
-                []
-            );
-        }
-
-        // Nodos huérfanos que no fueron colocados (por si algún nodo raíz no se agregó)
-        foreach ($userMap as $userId => $node) {
-            if (isset($placed[$userId])) {
-                continue;
-            }
-
-            // Si no tiene subordinados, no es parte del árbol
-            if (empty($subordinateIdsByUser[$userId] ?? [])) {
-                continue;
-            }
-
-            $roots[] = $this->buildTreeNode(
-                $userId,
-                $userMap,
-                $primaryParentByUser,
-                $placed,
-                null,
-                $users,
-                []
-            );
-        }
+        // Aplicar filtro por área: conservar nodos que coinciden + sus ancestros
+        $filteredTree = $this->filterTreeByArea($fullTree, $physicalAreaId);
 
         return [
-            'tree' => $roots,
-            'unassigned' => $unassigned,
+            'tree' => $filteredTree,
+            'unassigned' => $allUnassigned, // Los usuarios sin asignar son los mismos (sin relaciones)
             'stats' => [
                 'total_users' => $users->count(),
-                'in_tree' => count($placed),
-                'unassigned' => count($unassigned),
+                'in_tree' => $this->countNodesInTree($filteredTree),
+                'unassigned' => count($allUnassigned),
                 'relations' => $relations->count(),
                 'cycles_detected' => $this->countExistingCycles($superiorIdsByUser),
             ],
         ];
+    }
+
+    /**
+     * Construye el árbol a partir del mapa de usuarios, solo incluyendo nodos que tienen relaciones.
+     *
+     * @param array<int, array> $userMap
+     * @param array<int, array<int>> $superiorIdsByUser
+     * @param array<int, array<int>> $subordinateIdsByUser
+     * @param array<int> $usersWithRelations
+     * @return array<int, array>
+     */
+    private function buildTreeFromUserMap(array $userMap, array $superiorIdsByUser, array $subordinateIdsByUser, array $usersWithRelations): array
+    {
+        $roots = [];
+        $placed = [];
+
+        // Identificar nodos raíz: aquellos que están en el conjunto de usuarios con relaciones y no tienen superior
+        foreach ($usersWithRelations as $userId) {
+            if (!isset($userMap[$userId])) {
+                continue;
+            }
+
+            $superiorIds = $superiorIdsByUser[$userId] ?? [];
+            if (!empty($superiorIds)) {
+                continue; // Este usuario tiene superior, no es raíz
+            }
+
+            $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed);
+        }
+
+        // Si algún nodo no fue colocado (por ejemplo, si hay un ciclo o un error), lo agregamos como raíz huérfana
+        foreach ($usersWithRelations as $userId) {
+            if (!isset($placed[$userId]) && isset($userMap[$userId])) {
+                $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed);
+            }
+        }
+
+        return $roots;
+    }
+
+    /**
+     * Construye un nodo y sus descendientes recursivamente.
+     *
+     * @param int $userId
+     * @param array<int, array> $userMap
+     * @param array<int, array<int>> $superiorIdsByUser
+     * @param array<int, array<int>> $subordinateIdsByUser
+     * @param array<int, bool> $placed
+     * @param array<int, bool> $ancestors
+     * @return array
+     */
+    private function buildTreeNode(
+        int $userId,
+        array $userMap,
+        array $superiorIdsByUser,
+        array $subordinateIdsByUser,
+        array &$placed,
+        array $ancestors = []
+    ): array {
+        if (isset($placed[$userId]) || isset($ancestors[$userId])) {
+            return $userMap[$userId];
+        }
+
+        $placed[$userId] = true;
+        $ancestors[$userId] = true;
+        $node = $userMap[$userId];
+        $node['children'] = [];
+
+        // Obtener los subordinados directos (hijos) de este usuario
+        $childIds = $subordinateIdsByUser[$userId] ?? [];
+
+        foreach ($childIds as $childId) {
+            if (!isset($userMap[$childId])) {
+                continue;
+            }
+
+            // Verificar que el padre de este hijo sea este usuario (relación directa)
+            $parents = $superiorIdsByUser[$childId] ?? [];
+            if (!in_array($userId, $parents)) {
+                continue;
+            }
+
+            // Construir el nodo hijo recursivamente
+            $node['children'][] = $this->buildTreeNode(
+                $childId,
+                $userMap,
+                $superiorIdsByUser,
+                $subordinateIdsByUser,
+                $placed,
+                $ancestors
+            );
+        }
+
+        unset($ancestors[$userId]);
+
+        return $node;
     }
 
     /**
@@ -187,7 +217,7 @@ class OrganizationChartService
     {
         // 1. Obtener todos los nodos en una lista plana
         $allNodes = [];
-        $this->flattenTree($fullTree['tree'] ?? [], $allNodes);
+        $this->flattenTree($fullTree, $allNodes);
 
         // 2. IDs de nodos que tienen el área seleccionada o descendientes con esa área
         $matchingIds = [];
@@ -198,18 +228,7 @@ class OrganizationChartService
         }
 
         if (empty($matchingIds)) {
-            // No hay nodos que coincidan con el área
-            return [
-                'tree' => [],
-                'unassigned' => [],
-                'stats' => [
-                    'total_users' => 0,
-                    'in_tree' => 0,
-                    'unassigned' => 0,
-                    'relations' => 0,
-                    'cycles_detected' => 0,
-                ],
-            ];
+            return [];
         }
 
         // 3. Obtener todos los ancestros de esos nodos
@@ -219,27 +238,7 @@ class OrganizationChartService
         $visibleIds = array_unique(array_merge($matchingIds, $ancestorIds));
 
         // 5. Filtrar el árbol completo manteniendo solo los nodos visibles
-        $filteredTree = $this->filterTreeByIds($fullTree['tree'] ?? [], $visibleIds);
-
-        // 6. Recalcular usuarios sin asignar para el árbol filtrado (solo los que están en el árbol filtrado y tienen missing)
-        $unassigned = [];
-        foreach ($fullTree['unassigned'] ?? [] as $user) {
-            if (in_array($user['id'], $visibleIds)) {
-                $unassigned[] = $user;
-            }
-        }
-
-        return [
-            'tree' => $filteredTree,
-            'unassigned' => $unassigned,
-            'stats' => [
-                'total_users' => count($allNodes),
-                'in_tree' => count($visibleIds),
-                'unassigned' => count($unassigned),
-                'relations' => $fullTree['stats']['relations'] ?? 0,
-                'cycles_detected' => $fullTree['stats']['cycles_detected'] ?? 0,
-            ],
-        ];
+        return $this->filterTreeByIds($fullTree, $visibleIds);
     }
 
     /**
@@ -329,83 +328,16 @@ class OrganizationChartService
     }
 
     /**
-     * Prepara el resultado final.
+     * Cuenta el número total de nodos en el árbol.
      *
-     * @param array $treeData
-     * @param int|null $areaId
-     * @return array
+     * @param array<int, array> $tree
+     * @return int
      */
-    private function prepareResult(array $treeData, ?int $areaId = null): array
+    private function countNodesInTree(array $tree): int
     {
-        return [
-            'tree' => $treeData['tree'] ?? [],
-            'unassigned' => $treeData['unassigned'] ?? [],
-            'stats' => $treeData['stats'] ?? [
-                'total_users' => 0,
-                'in_tree' => 0,
-                'unassigned' => 0,
-                'relations' => 0,
-                'cycles_detected' => 0,
-            ],
-        ];
-    }
-
-    /**
-     * Construye el nodo del árbol recursivamente (sin filtro de área).
-     *
-     * @param int $userId
-     * @param array<int, array> $userMap
-     * @param array<int, int|null> $primaryParentByUser
-     * @param array<int, bool> $placed
-     * @param int|null $physicalAreaId
-     * @param Collection $users
-     * @param array<int, bool> $ancestors
-     * @return array
-     */
-    private function buildTreeNode(
-        int $userId,
-        array $userMap,
-        array $primaryParentByUser,
-        array &$placed,
-        ?int $physicalAreaId,
-        Collection $users,
-        array $ancestors
-    ): array {
-        if (isset($placed[$userId]) || isset($ancestors[$userId])) {
-            return $userMap[$userId];
-        }
-
-        $placed[$userId] = true;
-        $ancestors[$userId] = true;
-        $node = $userMap[$userId];
-        $node['children'] = [];
-
-        foreach ($userMap as $childId => $childNode) {
-            if (($primaryParentByUser[$childId] ?? null) !== $userId) {
-                continue;
-            }
-
-            if ($physicalAreaId !== null) {
-                $areaId = $users->get($childId)?->activeOrganizationalProfile?->physical_area_id;
-                if ((int) $areaId !== (int) $physicalAreaId) {
-                    continue;
-                }
-            }
-
-            $node['children'][] = $this->buildTreeNode(
-                $childId,
-                $userMap,
-                $primaryParentByUser,
-                $placed,
-                $physicalAreaId,
-                $users,
-                $ancestors
-            );
-        }
-
-        unset($ancestors[$userId]);
-
-        return $node;
+        $flat = [];
+        $this->flattenTree($tree, $flat);
+        return count($flat);
     }
 
     /**
