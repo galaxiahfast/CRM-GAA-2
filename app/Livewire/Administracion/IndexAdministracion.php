@@ -38,6 +38,13 @@ class IndexAdministracion extends Component
 
     public string $deleteConfirmationName = '';
 
+    public string $activeTab = 'datos';
+
+    public function setActiveTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
     public function mount(OrganizationChartService $chartService): void
     {
         $this->totalUsers = User::count();

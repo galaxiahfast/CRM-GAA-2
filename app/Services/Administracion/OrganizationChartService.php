@@ -385,6 +385,7 @@ class OrganizationChartService
     /**
      * @param  array<int>  $superiorIds
      * @return array<int, string>
+     * 
      */
     private function resolveMissingAssignments(User $user, array $superiorIds, ?UserOrganizationalProfile $profile): array
     {
@@ -503,3 +504,9 @@ class OrganizationChartService
         });
     }
 }
+
+
+
+
+
+/**/

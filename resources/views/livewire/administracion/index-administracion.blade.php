@@ -132,7 +132,6 @@
                         <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
-                                    {{-- ✅ Mostramos todos los nodos raíz sin condiciones --}}
                                     <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
                                 @endforeach
                             </div>
@@ -208,7 +207,7 @@
                 @endif
             </div>
 
-            <!-- Usuarios sin asignar (sin cambios) -->
+            <!-- Usuarios sin asignar -->
             <div class="rounded-xl border-2 border-dashed border-gray-400" style="min-width: 250px; background-color: #F3F3F3; max-height: 520px; overflow-y: auto; padding: 20px;">
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     <div class="flex items-center justify-between" style="line-height: 1; height: fit-content;">
@@ -293,37 +292,205 @@
         </div>
     </div>
 
-    @if ($selectedUserDetails)
-        <!-- MODAL (sin cambios) -->
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
-            <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-                <div class="flex items-start justify-between border-b p-6">
-                    <div>
-                        <h2 id="user-details-title" class="text-[15px] font-semibold text-gray-900">{{ $selectedUserDetails['name'] }}</h2>
-                        <p class="mt-1 text-[15px] text-gray-500">Detalles del usuario</p>
+    {{-- ============================================================ --}}
+{{-- MODAL DE USUARIO (CON PESTAÑAS Y SCROLL CONTROLADO) --}}
+{{-- ============================================================ --}}
+@if ($selectedUserDetails)
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+        <div class="relative w-full max-w-md max-h-[80vh] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-2xl" style="overscroll-behavior: contain;">
+            
+            <!-- Encabezado -->
+            <div class="sticky top-0 z-10 flex items-start justify-between border-b bg-white px-5 py-4">
+                <div>
+                    <h2 id="user-details-title" class="text-base font-semibold text-gray-900">
+                        {{ $selectedUserDetails['name'] ?? 'Usuario' }}
+                    </h2>
+                    <p class="text-sm text-gray-500">Detalles del usuario</p>
+                </div>
+                <button type="button" wire:click="closeUserDetails" class="text-2xl leading-none text-gray-400 hover:text-gray-700" aria-label="Cerrar">&times;</button>
+            </div>
+
+            @if ($isEditingUser)
+                {{-- Formulario de edición --}}
+                <form wire:submit="saveSelectedUser" class="space-y-4 p-5 text-sm">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div><x-label for="edit-name" value="Nombre" /><x-input id="edit-name" class="mt-1 block w-full" wire:model="userForm.name" /><x-input-error for="userForm.name" /></div>
+                        <div><x-label for="edit-last-name" value="Apellido" /><x-input id="edit-last-name" class="mt-1 block w-full" wire:model="userForm.last_name" /><x-input-error for="userForm.last_name" /></div>
+                        <div><x-label for="edit-email" value="Email" /><x-input id="edit-email" type="email" class="mt-1 block w-full" wire:model="userForm.email" /><x-input-error for="userForm.email" /></div>
+                        <div><x-label for="edit-employee-id" value="ID del checador" /><x-input id="edit-employee-id" class="mt-1 block w-full" wire:model="userForm.employee_id" /><x-input-error for="userForm.employee_id" /></div>
                     </div>
-                    <button type="button" wire:click="closeUserDetails" class="text-2xl leading-none text-gray-400 hover:text-gray-700" aria-label="Cerrar">&times;</button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><x-label for="edit-role" value="Rol" /><select id="edit-role" wire:model.live="userForm.role_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm"><option value="">Seleccione un rol</option>@foreach ($roles as $availableRole)<option value="{{ $availableRole->id }}">{{ $availableRole->role }}</option>@endforeach</select><x-input-error for="userForm.role_id" /></div>
+                        <div><x-label for="edit-position" value="Puesto" /><select id="edit-position" wire:model="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
+                    </div>
+                    <div><x-label for="edit-area" value="Área / departamento" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
+                    <div class="grid grid-cols-1 gap-4 border-t pt-4">
+                        <div><x-label for="edit-superiors" value="Jefes directos" /><select id="edit-superiors" multiple wire:model="userForm.superior_ids" class="mt-1 block w-full rounded-md border-gray-300 text-sm">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.superior_ids" /></div>
+                        <div><x-label for="edit-subordinates" value="Subordinados directos" /><select id="edit-subordinates" multiple wire:model="userForm.subordinate_ids" class="mt-1 block w-full rounded-md border-gray-300 text-sm">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.subordinate_ids" /></div>
+                    </div>
+                    @if ($userForm['is_auxiliar'] ?? false)
+                        <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                            <div><x-label for="edit-hourly-rate" value="Precio por hora" /><x-input id="edit-hourly-rate" type="number" step="0.01" class="mt-1 block w-full" wire:model="userForm.hourly_rate" /><x-input-error for="userForm.hourly_rate" /></div>
+                            <div><x-label for="edit-food-allowance" value="Apoyo económico por día" /><x-input id="edit-food-allowance" type="number" step="0.01" class="mt-1 block w-full" wire:model="userForm.food_allowance" /><x-input-error for="userForm.food_allowance" /></div>
+                        </div>
+                    @endif
+                    <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div><x-label for="edit-password" value="Nueva contraseña (opcional)" /><x-input id="edit-password" type="password" class="mt-1 block w-full" wire:model="userForm.password" /><x-input-error for="userForm.password" /></div>
+                        <div><x-label for="edit-password-confirmation" value="Confirmar contraseña" /><x-input id="edit-password-confirmation" type="password" class="mt-1 block w-full" wire:model="userForm.password_confirmation" /></div>
+                    </div>
+                    <div class="flex justify-end gap-3 border-t pt-4">
+                        <button type="button" wire:click="cancelEditingUser" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Cancelar</button>
+                        <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Guardar cambios</button>
+                    </div>
+                </form>
+            @else
+                {{-- Menú de pestañas --}}
+                <div class="flex border-b border-gray-200 bg-gray-50/80 px-5">
+                    <button 
+                        wire:click="setActiveTab('datos')"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $activeTab === 'datos' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                    >
+                        📋 Datos
+                    </button>
+                    <button 
+                        wire:click="setActiveTab('eliminar')"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $activeTab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                    >
+                        🗑️ Eliminar usuario
+                    </button>
                 </div>
 
-                @if ($isEditingUser)
-                    <form wire:submit="saveSelectedUser" class="space-y-4 p-6 text-[15px]">
-                        <!-- ... (formulario sin cambios) ... -->
-                    </form>
-                @else
-                    <div class="space-y-6 p-6 text-[15px]">
-                        <!-- ... (detalles sin cambios) ... -->
+                {{-- Contenido de las pestañas --}}
+                @if ($activeTab === 'datos')
+                    {{-- PESTAÑA: DATOS DEL USUARIO --}}
+                    <div class="px-5 py-4 divide-y divide-gray-100">
+                        <!-- DATOS GENERALES -->
+                        <div class="pb-4">
+                            <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Datos generales</h3>
+                            <dl class="space-y-3">
+                                <div class="flex flex-col">
+                                    <dt class="text-xs text-gray-500">Nombre completo</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['name'] ?? 'N/A' }}</dd>
+                                </div>
+                                <div class="flex flex-col">
+                                    <dt class="text-xs text-gray-500">Correo electrónico</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['email'] ?? 'N/A' }}</dd>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">Rol</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['role'] ?: 'Sin rol' }}</dd>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">ID del checador</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['employee_id'] ?: 'No asignado' }}</dd>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">Fecha de creación</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['created_at'] ?? 'N/A' }}</dd>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">Última actualización</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['updated_at'] ?? 'N/A' }}</dd>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <dt class="text-xs text-gray-500">Contraseña</dt>
+                                    <dd class="text-sm text-gray-600">•••••••• (protegida)</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <!-- ORGANIZACIONAL -->
+                        <div class="pt-4">
+                            <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Organizacional</h3>
+                            <dl class="space-y-3">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">Puesto</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['job_position'] ?: 'Sin asignar' }}</dd>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <dt class="text-xs text-gray-500">Área / departamento</dt>
+                                        <dd class="text-sm font-medium text-gray-900">{{ $selectedUserDetails['physical_area'] ?: 'Sin asignar' }}</dd>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <dt class="text-xs text-gray-500">Jefes directos</dt>
+                                    <dd class="text-sm font-medium text-gray-900">
+                                        @if (count($selectedUserDetails['superiors'] ?? []) > 0)
+                                            {{ implode(', ', $selectedUserDetails['superiors']) }}
+                                        @else
+                                            <span class="text-gray-400">Sin jefe asignado</span>
+                                        @endif
+                                    </dd>
+                                </div>
+                                <div class="flex flex-col">
+                                    <dt class="text-xs text-gray-500">Subordinados directos</dt>
+                                    <dd class="text-sm font-medium text-gray-900">
+                                        @if (count($selectedUserDetails['subordinates'] ?? []) > 0)
+                                            {{ implode(', ', $selectedUserDetails['subordinates']) }}
+                                        @else
+                                            <span class="text-gray-400">Sin subordinados</span>
+                                        @endif
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <!-- Datos de auxiliar (si aplica) -->
+                        @if ($selectedUserDetails['is_auxiliar'] ?? false)
+                            <div class="pt-4">
+                                <div class="rounded-lg bg-amber-50 p-4">
+                                    <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">Datos de auxiliar</h3>
+                                    <dl class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col">
+                                            <dt class="text-xs text-amber-600">Precio por hora</dt>
+                                            <dd class="text-sm font-medium text-amber-800">${{ number_format((float) ($selectedUserDetails['hourly_rate'] ?? 0), 2) }}</dd>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <dt class="text-xs text-amber-600">Apoyo económico por día</dt>
+                                            <dd class="text-sm font-medium text-amber-800">${{ number_format((float) ($selectedUserDetails['food_allowance'] ?? 0), 2) }}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @elseif ($activeTab === 'eliminar')
+                    {{-- PESTAÑA: ELIMINAR USUARIO --}}
+                    <div class="px-5 py-6">
+                        <div class="flex items-start gap-3 p-4 border-2 border-red-200 rounded-lg bg-red-50/50">
+                            <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <div class="flex-1">
+                                <h3 class="text-sm font-semibold text-red-700">¿Estás seguro de eliminar este usuario?</h3>
+                                <p class="text-xs text-gray-600 mt-1">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
+                                <p class="text-xs text-gray-600 mt-2">Para confirmar, escribe el nombre completo del usuario: <span class="font-semibold text-gray-800">{{ $selectedUserDetails['name'] ?? 'Usuario' }}</span></p>
+                                <div class="mt-4 flex flex-col gap-3">
+                                    <input type="text" wire:model="deleteConfirmationName" class="w-full rounded-lg border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Nombre completo del usuario">
+                                    <button type="button" wire:click="deleteSelectedUser" class="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                        Eliminar usuario permanentemente
+                                    </button>
+                                </div>
+                                @error('deleteConfirmationName') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
                     </div>
                 @endif
+            @endif
 
-                <div class="flex justify-end gap-3 border-t bg-gray-50 p-4">
-                    @if (! $isEditingUser)
-                        <button type="button" wire:click="beginEditingUser" class="rounded-lg bg-blue-600 px-4 py-2 text-[15px] font-medium text-white hover:bg-blue-700">Editar</button>
-                    @endif
-                    <button type="button" wire:click="closeUserDetails" class="rounded-lg border border-gray-300 px-4 py-2 text-[15px] font-medium text-gray-700 hover:bg-gray-100">Cerrar</button>
-                </div>
+            <!-- Pie (sticky) con botones de acción -->
+            <div class="sticky bottom-0 flex justify-end gap-3 border-t bg-gray-50 px-5 py-4">
+                @if (! $isEditingUser)
+                    <button type="button" wire:click="beginEditingUser" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">Editar</button>
+                @endif
+                <button type="button" wire:click="closeUserDetails" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">Cerrar</button>
             </div>
         </div>
-    @endif
+    </div>
+@endif
     @endif
 </div>
 
