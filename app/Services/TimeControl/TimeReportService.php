@@ -46,8 +46,25 @@ class TimeReportService
      */
     public function adminSupervision(?int $userId, string $from, string $to): array
     {
+        return $this->adminSupervisionForUsers($userId ? [$userId] : [], $from, $to);
+    }
+
+    /**
+     * Consolidado para un conjunto explícito de colaboradores.
+     *
+     * Las relaciones necesarias se cargan de forma anticipada desde la consulta
+     * base, por lo que los agrupamientos posteriores no generan consultas N+1.
+     * Un arreglo vacío conserva el comportamiento histórico: todos los usuarios.
+     *
+     * @param  list<int>  $userIds
+     * @return array{entries: Collection<int, TimeEntry>, total: int, byCollaborator: Collection<int, array>, byCustomer: Collection<int, array>, byPosition: Collection<int, array>, byArea: Collection<int, array>, autoClosedCount: int}
+     */
+    public function adminSupervisionForUsers(array $userIds, string $from, string $to): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+
         $entries = $this->entriesQuery($from, $to)
-            ->when($userId, fn ($q) => $q->where('user_id', $userId))
+            ->when($userIds !== [], fn ($q) => $q->whereIn('user_id', $userIds))
             ->get();
 
         $group = fn (string $key, callable $name) => $entries->groupBy($key)
@@ -167,6 +184,40 @@ class TimeReportService
         );
     }
 
+    /** Construye el reporte consolidado exportable de varios colaboradores. */
+    public function groupReport(Collection $users, string $from, string $to): ReportData
+    {
+        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to);
+        $rows = fn (Collection $group) => $group
+            ->map(fn ($row) => [$row['name'], $this->hms($row['seconds'])])
+            ->all();
+
+        return new ReportData(
+            title: 'Informe general de horas',
+            filenameBase: 'informe-general-horas_'.$from.'_'.$to,
+            meta: [
+                'Colaboradores seleccionados' => $users->map(fn (User $user) => trim($user->name.' '.($user->last_name ?? '')))->implode(', '),
+                'Total de colaboradores' => (string) $users->count(),
+                'Desde' => $from,
+                'Hasta' => $to,
+                'Horas efectivas totales' => $this->hms($data['total']),
+                'Cierres automáticos' => (string) $data['autoClosedCount'],
+            ],
+            sections: [
+                new ReportSection('Por colaborador', ['Colaborador', 'Tiempo'], $rows($data['byCollaborator'])),
+                new ReportSection('Por cliente', ['Cliente', 'Tiempo'], $rows($data['byCustomer'])),
+                new ReportSection('Por puesto profesional', ['Puesto', 'Tiempo'], $rows($data['byPosition'])),
+                new ReportSection('Por área física', ['Área', 'Tiempo'], $rows($data['byArea'])),
+                new ReportSection(
+                    'Detalle de actividades por colaborador y día',
+                    $this->activityDetailColumns(false),
+                    [],
+                    $this->activityDetailByCollaboratorAndDay($data['entries']),
+                ),
+            ],
+        );
+    }
+
     /** Formato legible de una actividad para reportes TXT. */
     public function formatActivityLine(array $columns, array $row): string
     {
@@ -281,6 +332,22 @@ class TimeReportService
         $description = trim((string) ($entry->subService->description ?? ''));
 
         return $description !== '' ? $description : '—';
+    }
+
+    /** @return list<array{date: string, rows: list<list<string>>}> */
+    private function activityDetailByCollaboratorAndDay(Collection $entries): array
+    {
+        return $entries->groupBy('user_id')
+            ->sortBy(fn (Collection $userEntries) => trim(($userEntries->first()->user->name ?? '').' '.($userEntries->first()->user->last_name ?? '')))
+            ->flatMap(function (Collection $userEntries) {
+                $collaborator = trim(($userEntries->first()->user->name ?? '—').' '.($userEntries->first()->user->last_name ?? ''));
+
+                return $this->sortedEntries($userEntries)->groupBy(fn (TimeEntry $entry) => $this->entryLocalDate($entry))
+                    ->map(fn (Collection $dayEntries, string $date) => [
+                        'date' => $collaborator.' · '.Carbon::parse($date)->format('d/m/Y'),
+                        'rows' => $dayEntries->map(fn (TimeEntry $entry) => $this->activityDetailRow($entry, false))->values()->all(),
+                    ]);
+            })->values()->all();
     }
 
     /** @return array{0: string, 1: string} */

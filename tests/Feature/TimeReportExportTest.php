@@ -121,6 +121,31 @@ class TimeReportExportTest extends TestCase
             ->assertFileDownloaded("supervision-horas_usuario-{$aux->id}_{$today}_{$today}.csv");
     }
 
+    public function test_admin_can_export_a_selected_group_report(): void
+    {
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+
+        $report = app(TimeReportService::class)->groupReport(collect([$aux]), $today, $today);
+        $this->assertSame('Informe general de horas', $report->title);
+        $this->assertSame('01:00:00', $report->meta['Horas efectivas totales']);
+        $this->assertSame('Detalle de actividades por colaborador y día', collect($report->sections)->last()->title);
+
+        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+            ->call('selectCollaboratorsByArea', (string) $aux->activeOrganizationalProfile->physical_area_id)
+            ->assertSet('selectedCollaboratorIds', [$aux->id])
+            ->call('selectCollaboratorsByPosition', (string) $aux->activeOrganizationalProfile->job_position_id)
+            ->call('selectCollaboratorsBySuperior', '0');
+
+        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+            ->set('selectedCollaboratorIds', [$aux->id])
+            ->set('from', $today)
+            ->set('to', $today)
+            ->call('generateGroupReport')
+            ->call('exportGroup', 'csv')
+            ->assertFileDownloaded("informe-general-horas_{$today}_{$today}.csv");
+    }
+
     public function test_user_report_includes_activity_detail_by_day(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();

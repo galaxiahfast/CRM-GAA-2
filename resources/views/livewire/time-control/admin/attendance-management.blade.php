@@ -62,15 +62,12 @@
     {{-- Encabezado --}}
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-gray-800">Control de Asistencia Biométrico (Checador)</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-800">Reloj Checador</h1>
             <p class="text-xs text-slate-500">Administración de marcas brutas, tarifas generales, ajustes por día y exportación.</p>
         </div>
         <div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
             <a href="{{ route('time.admin.dashboard') }}" class="px-3 py-1 text-xs font-semibold text-slate-700 bg-white rounded-md shadow-sm border border-slate-200 hover:text-blue-600 transition">
                 📊 Supervision General
-            </a>
-            <a href="{{ route('time.admin.corrections') }}" class="px-3 py-1 text-xs font-semibold text-slate-700 bg-white rounded-md shadow-sm border border-slate-200 hover:text-blue-600 transition">
-                📝 Actividades
             </a>
         </div>
     </div>

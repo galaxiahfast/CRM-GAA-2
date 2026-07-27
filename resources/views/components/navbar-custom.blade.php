@@ -178,7 +178,7 @@
                 <!-- SUBMENÚ: Control de Horas (para TODOS los usuarios)       -->
                 <!-- ========================================================== -->
                 @if (auth()->user()?->isAdmin())
-                    <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control, Perfiles -->
+                    <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
                     <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
@@ -231,13 +231,13 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
                                     </a>
                                 </li>
-                                <!-- Sub-elemento: Perfiles organizacionales -->
+                                <!-- Sub-elemento: Reloj Checador -->
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('time.admin.profiles') }}"
+                                    <a href="{{ route('time.admin.attendance') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.profiles') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                        <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.profiles') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Perfiles organizacionales</span>
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.attendance') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
                                     </a>
                                 </li>
                             </ul>

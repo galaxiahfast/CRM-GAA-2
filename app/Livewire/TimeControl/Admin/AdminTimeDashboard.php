@@ -9,6 +9,7 @@ use App\Services\TimeControl\TimeReportService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -21,6 +22,25 @@ class AdminTimeDashboard extends Component
     public ?int $userId = null;
 
     public string $searchCollaborator = '';
+
+    /** Estado aislado del nuevo informe consolidado. */
+    public string $activeReportTab = 'group';
+
+    /** @var list<int> */
+    public array $selectedCollaboratorIds = [];
+
+    /** @var list<int> Colaboradores de la última consulta grupal confirmada. */
+    public array $reportedCollaboratorIds = [];
+
+    public bool $groupReportIsCurrent = false;
+
+    /**
+     * Directorio liviano para el selector grupal. Se hidrata una vez al montar
+     * el componente y se usa en memoria durante los cambios de casillas.
+     *
+     * @var list<array<string, mixed>>
+     */
+    public array $groupCollaboratorDirectory = [];
 
     // 🆕 Propiedades añadidas para el control de Modificaciones y Bonos
     public bool $showModal = false;
@@ -37,6 +57,19 @@ class AdminTimeDashboard extends Component
         // Rango predeterminado de fechas
         $this->from = $this->localToday();
         $this->to = $this->localToday();
+        $this->activeReportTab = 'group';
+        $this->groupCollaboratorDirectory = $this->groupCollaborators()->map(fn (User $user) => [
+            'id' => $user->id,
+            'name' => trim($user->name.' '.($user->last_name ?? '')),
+            'area_id' => $user->activeOrganizationalProfile?->physical_area_id,
+            'area_name' => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada',
+            'position_id' => $user->activeOrganizationalProfile?->job_position_id,
+            'position_name' => $user->activeOrganizationalProfile?->jobPosition?->name ?? 'Sin puesto asignado',
+            'superiors' => $user->superiors->map(fn (User $superior) => [
+                'id' => $superior->id,
+                'name' => trim($superior->name.' '.($superior->last_name ?? '')),
+            ])->values()->all(),
+        ])->all();
     }
 
     public function selectCollaborator(int $id, string $fullName): void
@@ -48,6 +81,74 @@ class AdminTimeDashboard extends Component
     public function clearCollaborator(): void
     {
         $this->reset(['userId', 'searchCollaborator']);
+    }
+
+    public function showIndividualReport(): void
+    {
+        $this->activeReportTab = 'individual';
+    }
+
+    public function showGroupReport(): void
+    {
+        $this->activeReportTab = 'group';
+    }
+
+    public function selectAllCollaborators(): void
+    {
+        $this->selectedCollaboratorIds = $this->groupDirectory()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $this->groupReportIsCurrent = false;
+    }
+
+    public function clearGroupSelection(): void
+    {
+        $this->selectedCollaboratorIds = [];
+        $this->groupReportIsCurrent = false;
+    }
+
+    public function generateGroupReport(): void
+    {
+        $this->reportedCollaboratorIds = array_values(array_unique(array_map('intval', $this->selectedCollaboratorIds)));
+
+        if ($this->reportedCollaboratorIds === []) {
+            $this->addError('selectedCollaboratorIds', 'Selecciona al menos un colaborador para generar el informe.');
+            return;
+        }
+
+        $this->resetErrorBag('selectedCollaboratorIds');
+        $this->groupReportIsCurrent = true;
+    }
+
+    public function selectCollaboratorsByArea(int|string $areaId): void
+    {
+        $areaId = (int) $areaId;
+        if ($areaId <= 0) {
+            return;
+        }
+
+        $this->addToGroupSelection($this->groupDirectory()
+            ->where('area_id', $areaId)->pluck('id')->all());
+    }
+
+    public function selectCollaboratorsByPosition(int|string $positionId): void
+    {
+        $positionId = (int) $positionId;
+        if ($positionId <= 0) {
+            return;
+        }
+
+        $this->addToGroupSelection($this->groupDirectory()
+            ->where('position_id', $positionId)->pluck('id')->all());
+    }
+
+    public function selectCollaboratorsBySuperior(int|string $superiorId): void
+    {
+        $superiorId = (int) $superiorId;
+        if ($superiorId <= 0) {
+            return;
+        }
+
+        $this->addToGroupSelection($this->groupDirectory()
+            ->filter(fn (array $user) => collect($user['superiors'])->contains('id', $superiorId))->pluck('id')->all());
     }
 
     // 🆕 Abre el modal de ajuste cargando o sugiriendo datos iniciales
@@ -114,24 +215,87 @@ class AdminTimeDashboard extends Component
         return $exporter->download($format, $report);
     }
 
+    public function exportGroup(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    {
+        abort_unless(Gate::allows('view-time-admin'), 403);
+
+        $ids = $this->reportedGroupDirectory()->pluck('id')->all();
+        $users = User::whereIn('id', $ids)->orderBy('name')->get(['id', 'name', 'last_name']);
+        if (! $this->groupReportIsCurrent || $users->isEmpty()) {
+            $this->addError('selectedCollaboratorIds', 'Selecciona al menos un colaborador para descargar el informe grupal.');
+            abort(422);
+        }
+
+        return $exporter->download($format, $reports->groupReport($users, $this->from, $this->to));
+    }
+
     public function render(TimeReportService $reports, ReportExportManager $exporter)
     {
-        $data = $reports->adminSupervision($this->userId, $this->from, $this->to);
-        $activityDetail = $reports->activityDetailByDay($data['entries'], $this->userId === null);
+        $groupUsers = $this->groupDirectory();
+        $selectedGroupUsers = $this->selectedGroupDirectory();
+        $reportedGroupUsers = $this->reportedGroupDirectory();
+        $groupData = $this->groupReportIsCurrent && $reportedGroupUsers->isNotEmpty()
+            ? $reports->adminSupervisionForUsers($reportedGroupUsers->pluck('id')->all(), $this->from, $this->to)
+            : [
+                'entries' => collect(), 'total' => 0, 'byCollaborator' => collect(), 'byCustomer' => collect(),
+                'byPosition' => collect(), 'byArea' => collect(), 'autoClosedCount' => 0,
+            ];
+        $groupActivityDetail = $this->groupReportIsCurrent && $reportedGroupUsers->isNotEmpty()
+            ? $reports->activityDetailByDay($groupData['entries'], true)
+            : ['columns' => [], 'groups' => []];
 
         return view('livewire.time-control.admin.dashboard', [
-            'total' => $data['total'],
-            'byCollaborator' => $data['byCollaborator'],
-            'byCustomer' => $data['byCustomer'],
-            'byPosition' => $data['byPosition'],
-            'byArea' => $data['byArea'],
-            'autoClosedCount' => $data['autoClosedCount'],
-            'activityDetail' => $activityDetail,
-            'users' => User::whereDoesntHave('role', fn ($q) => $q->where('role', 'Administrador'))
-                ->orderBy('name')
-                ->get(['id', 'name', 'last_name']),
             'exportFormats' => $exporter->formats(),
+            'groupUsers' => $groupUsers,
+            'selectedGroupUsers' => $selectedGroupUsers,
+            'reportedGroupUsers' => $reportedGroupUsers,
+            'groupData' => $groupData,
+            'groupActivityDetail' => $groupActivityDetail,
         ])->layout('layouts.app');
+    }
+
+    /** @return Collection<int, User> */
+    private function groupCollaborators(): Collection
+    {
+        return User::query()
+            ->whereDoesntHave('role', fn ($q) => $q->where('role', 'Administrador'))
+            ->with([
+                'activeOrganizationalProfile.jobPosition:id,name',
+                'activeOrganizationalProfile.physicalArea:id,name',
+                'superiors:id,name,last_name',
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name', 'last_name']);
+    }
+
+    /** @return Collection<int, array{id:int, name:string}> */
+    private function groupDirectory(): Collection
+    {
+        return collect($this->groupCollaboratorDirectory);
+    }
+
+    /** @return Collection<int, array{id:int, name:string}> */
+    private function selectedGroupDirectory(): Collection
+    {
+        $ids = array_map('intval', $this->selectedCollaboratorIds);
+
+        return $this->groupDirectory()->whereIn('id', $ids)->values();
+    }
+
+    /** @return Collection<int, array{id:int, name:string}> */
+    private function reportedGroupDirectory(): Collection
+    {
+        return $this->groupDirectory()->whereIn('id', array_map('intval', $this->reportedCollaboratorIds))->values();
+    }
+
+    /** @param list<int> $ids */
+    private function addToGroupSelection(array $ids): void
+    {
+        $this->selectedCollaboratorIds = array_values(array_unique(array_merge(
+            array_map('intval', $this->selectedCollaboratorIds),
+            array_map('intval', $ids),
+        )));
+        $this->groupReportIsCurrent = false;
     }
 
     private function localToday(): string

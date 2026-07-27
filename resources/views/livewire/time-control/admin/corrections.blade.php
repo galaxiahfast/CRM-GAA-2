@@ -5,10 +5,9 @@
     };
 @endphp
 
-<div class="max-w-6xl mx-auto space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-gray-800">Corrección de registros de actividades</h1>
-        <a href="{{ route('time.admin.dashboard') }}" class="text-sm text-blue-700 underline">Supervisión General</a>
+<div class="max-w-6xl mx-auto space-y-4">
+    <div class="space-y-4">
+        <x-time-admin-tabs active="corrections" />
     </div>
 
     @if (session('success'))
@@ -121,4 +120,3 @@
         </div>
     @endif
 </div>
-
