@@ -22,7 +22,7 @@
 <div class="w-full bg-[#f4f4f4]" style="overflow-x: auto; padding: 32px 40px 40px;">
 
     <!-- Contenedor interno con min-width -->
-    <div style="min-width: 1000px; padding: 0; margin: 0; width: 100%;">
+    <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
 
         <!-- Header Superior con Migas de Pan -->
         <div style="padding: 0 0 40px 0; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
@@ -143,26 +143,27 @@
 
             </div>
 
-            <!-- Contenido con padding - SIN contador -->
-            <div style="padding: 20px 40px 20px 40px;">
+            <!-- Contenido con padding - CADA CONTENEDOR CON PADDING DE 20px -->
+            <div style="padding: 20px;">
 
                 @forelse ($usersByArea as $areaName => $areaUsers)
-                    <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0' : '20px' }}; border-radius: 8px; overflow: hidden; background-color: #fafafa;">
+                    <div style="border: 1px solid #e5e7eb; margin-bottom: 20px; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
                         <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
                             <span>{{ $areaName }}</span>
                             <span style="color: #9ca3af; font-weight: 400;">{{ $areaUsers->count() }} colaboradores</span>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px 16px; padding: 12px 16px; background-color: #ffffff;">
+                        <!-- Contenedor interno con padding de 20px -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
                             @foreach ($areaUsers as $user)
-                                <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #374151; cursor: pointer; padding: 4px 0; transition: all 0.15s;" 
-                                       onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='4px'; this.style.padding='4px 8px'; this.style.margin='0 -8px';"
-                                       onmouseout="this.style.backgroundColor='transparent'; this.style.padding='4px 0'; this.style.margin='0';">
-                                    <input type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" style="margin-top: 2px; border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0;" />
+                                <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: all 0.15s;"
+                                    onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='4px'; this.style.padding='4px 8px'; this.style.margin='0 -8px';"
+                                    onmouseout="this.style.backgroundColor='transparent'; this.style.padding='4px 0'; this.style.margin='0';">
+                                    <input type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0;" />
                                     <span>
                                         {{ $user['name'] }}
-                                        <small style="display: block; font-size: 12px; color: #9ca3af;">{{ $user['position_name'] }}</small>
+                                        <small style="display: block; font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
                                     </span>
                                 </label>
                             @endforeach
@@ -183,7 +184,7 @@
 
             </div>
 
-            <!-- Botones fijos abajo a la derecha - CON BORDE REDONDEADO ARRIBA IZQUIERDA Y SIN ESPACIO EXTRA -->
+            <!-- Botones fijos abajo a la derecha -->
             <div style="position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; padding: 20px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-top: 1px solid rgba(229, 231, 235, 0.1); width: fit-content; margin-left: auto; border-radius: 12px 0 0 0;">
                 <div style="display: flex; gap: 24px; background-color: transparent;">
                     <button type="button" wire:click="selectAllCollaborators" 
