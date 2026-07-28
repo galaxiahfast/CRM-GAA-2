@@ -3,19 +3,35 @@
     $usersByArea = $groupUsers->groupBy('area_name');
     $positions = $groupUsers->filter(fn (array $user) => $user['position_id'])->unique('position_id')->sortBy('position_name');
     $superiors = $groupUsers->flatMap(fn (array $user) => $user['superiors'])->unique('id')->sortBy('name');
+    $areaOptions = $usersByArea->map(fn ($users, $name) => ['id' => $users->first()['area_id'], 'name' => $name, 'count' => $users->count()])->filter(fn ($area) => $area['id'])->values();
+    $positionOptions = $positions->map(fn ($position) => ['id' => $position['position_id'], 'name' => $position['position_name']])->values();
+    $superiorOptions = $superiors->map(fn ($superior) => ['id' => $superior['id'], 'name' => $superior['name']])->values();
 @endphp
 
-<div class="w-full bg-[#f4f4f4] min-h-screen" style="overflow-x: auto; padding: 80px;">
+<style>
+    .group-filter-scrollbar::-webkit-scrollbar,
+    .group-scrollbar::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
+    .group-filter-scrollbar::-webkit-scrollbar-track,
+    .group-scrollbar::-webkit-scrollbar-track { background: #f8fafc !important; }
+    .group-filter-scrollbar::-webkit-scrollbar-thumb,
+    .group-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px !important; }
+    .group-filter-scrollbar,
+    .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
+</style>
+
+<div class="w-full bg-[#f4f4f4]" style="overflow-x: auto; padding: 32px 40px 40px;">
 
     <!-- Contenedor interno con min-width -->
-    <div style="min-width: 600px; padding: 0; margin: 0; width: 100%;">
+    <div style="min-width: 1000px; padding: 0; margin: 0; width: 100%;">
 
         <!-- Header Superior con Migas de Pan -->
         <div style="padding: 0 0 40px 0; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
             <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
-                <span style="font-weight: 500;">Informes</span>
+                <span style="font-weight: 500;">Actividades</span>
                 <span style="color: #d1d5db; font-weight: 300;">></span>
                 <span style="font-weight: 500;">Control de Horas</span>
+                <span style="color: #d1d5db; font-weight: 300;">></span>
+                <span style="font-weight: 500;">Supervisión de Horas</span>
                 <span style="color: #d1d5db; font-weight: 300;">></span>
                 <span style="color: #1A3A6B; font-weight: 600;">Informe General</span>
             </div>
@@ -114,101 +130,16 @@
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
+        <div class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
 
             <!-- Barra superior con filtros de búsqueda - FONDO TRANSPARENTE/BLANCO CON BLUR -->
             <div style="position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 20px; padding: 16px 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15);">
 
                 <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap;">Filtrar por:</span>
                 
-                <!-- Buscador de Área -->
-                <div style="position: relative; width: 200px; flex-shrink: 0;">
-                    <input 
-                        type="text" 
-                        placeholder="Área..."
-                        wire:model.live="searchArea"
-                        wire:keydown.enter="selectArea($event.target.value)"
-                        class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                        style="height: 40px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; background-color: rgba(255, 255, 255, 0.5);"
-                        autocomplete="off"
-                    >
-                    <div 
-                        id="search-area-results"
-                        style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto; display: {{ strlen($searchArea ?? '') > 0 ? 'block' : 'none' }}; z-index: 100;"
-                    >
-                        @if(!empty($searchArea))
-                            @php
-                                $filteredAreas = $usersByArea->filter(fn($users, $name) => stripos($name, $searchArea) !== false);
-                            @endphp
-                            @foreach($filteredAreas as $areaName => $areaUsers)
-                                @if($areaUsers->first()['area_id'])
-                                    <div wire:click="selectCollaboratorsByArea({{ $areaUsers->first()['area_id'] }})" style="padding: 10px 16px; cursor: pointer; font-size: 14px; color: #374151; border-bottom: 1px solid #f3f4f6;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">{{ $areaName }} ({{ $areaUsers->count() }})</div>
-                                @endif
-                            @endforeach
-                            @if($filteredAreas->isEmpty())
-                                <div style="padding: 10px 16px; color: #6b7280; font-size: 14px;">No se encontraron áreas</div>
-                            @endif
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Buscador de Puesto -->
-                <div style="position: relative; width: 200px; flex-shrink: 0;">
-                    <input 
-                        type="text" 
-                        placeholder="Puesto..."
-                        wire:model.live="searchPosition"
-                        wire:keydown.enter="selectPosition($event.target.value)"
-                        class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                        style="height: 40px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; background-color: rgba(255, 255, 255, 0.5);"
-                        autocomplete="off"
-                    >
-                    <div 
-                        id="search-position-results"
-                        style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto; display: {{ strlen($searchPosition ?? '') > 0 ? 'block' : 'none' }}; z-index: 100;"
-                    >
-                        @if(!empty($searchPosition))
-                            @php
-                                $filteredPositions = $positions->filter(fn($pos) => stripos($pos['position_name'], $searchPosition) !== false);
-                            @endphp
-                            @foreach($filteredPositions as $position)
-                                <div wire:click="selectCollaboratorsByPosition({{ $position['position_id'] }})" style="padding: 10px 16px; cursor: pointer; font-size: 14px; color: #374151; border-bottom: 1px solid #f3f4f6;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">{{ $position['position_name'] }}</div>
-                            @endforeach
-                            @if($filteredPositions->isEmpty())
-                                <div style="padding: 10px 16px; color: #6b7280; font-size: 14px;">No se encontraron puestos</div>
-                            @endif
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Buscador de Jefe Directo -->
-                <div style="position: relative; width: 200px; flex-shrink: 0;">
-                    <input 
-                        type="text" 
-                        placeholder="Jefe directo..."
-                        wire:model.live="searchSuperior"
-                        wire:keydown.enter="selectSuperior($event.target.value)"
-                        class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                        style="height: 40px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; background-color: rgba(255, 255, 255, 0.5);"
-                        autocomplete="off"
-                    >
-                    <div 
-                        id="search-superior-results"
-                        style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto; display: {{ strlen($searchSuperior ?? '') > 0 ? 'block' : 'none' }}; z-index: 100;"
-                    >
-                        @if(!empty($searchSuperior))
-                            @php
-                                $filteredSuperiors = $superiors->filter(fn($sup) => stripos($sup['name'], $searchSuperior) !== false);
-                            @endphp
-                            @foreach($filteredSuperiors as $superior)
-                                <div wire:click="selectCollaboratorsBySuperior({{ $superior['id'] }})" style="padding: 10px 16px; cursor: pointer; font-size: 14px; color: #374151; border-bottom: 1px solid #f3f4f6;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">{{ $superior['name'] }}</div>
-                            @endforeach
-                            @if($filteredSuperiors->isEmpty())
-                                <div style="padding: 10px 16px; color: #6b7280; font-size: 14px;">No se encontraron jefes</div>
-                            @endif
-                        @endif
-                    </div>
-                </div>
+                <x-group-search-filter label="Área..." :options="$areaOptions" select-method="selectCollaboratorsByArea" count-key="count" empty-message="No se encontraron áreas" />
+                <x-group-search-filter label="Puesto..." :options="$positionOptions" select-method="selectCollaboratorsByPosition" empty-message="No se encontraron puestos" />
+                <x-group-search-filter label="Jefe directo..." :options="$superiorOptions" select-method="selectCollaboratorsBySuperior" empty-message="No se encontraron jefes" />
 
             </div>
 
@@ -216,7 +147,7 @@
             <div style="padding: 20px 40px 20px 40px;">
 
                 @forelse ($usersByArea as $areaName => $areaUsers)
-                    <div style="border: 1px solid #e5e7eb; margin-bottom: 40px; border-radius: 8px; overflow: hidden; background-color: #fafafa;">
+                    <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0' : '20px' }}; border-radius: 8px; overflow: hidden; background-color: #fafafa;">
 
                         <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
                             <span>{{ $areaName }}</span>
@@ -254,7 +185,7 @@
 
             <!-- Botones fijos abajo a la derecha - CON BORDE REDONDEADO ARRIBA IZQUIERDA Y SIN ESPACIO EXTRA -->
             <div style="position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; padding: 20px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-top: 1px solid rgba(229, 231, 235, 0.1); width: fit-content; margin-left: auto; border-radius: 12px 0 0 0;">
-                <div style="display: flex; gap: 20px; background-color: transparent;">
+                <div style="display: flex; gap: 24px; background-color: transparent;">
                     <button type="button" wire:click="selectAllCollaborators" 
                         style="display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background-color: transparent; color: #1A3A6B; font-size: 14px; font-weight: 600; cursor: pointer; transition: color 0.2s; white-space: nowrap;"
                         onmouseover="this.style.color='#15305a'"
