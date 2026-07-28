@@ -27,7 +27,7 @@
         @click="open = true"
         @keydown.escape.prevent="open = false"
         class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-        style="height: 40px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; background-color: rgba(255, 255, 255, 0.5);"
+        style="height: 40px; width: 100%; padding: 20px 20px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; background-color: rgba(255, 255, 255, 0.5);"
         autocomplete="off"
     >
 
@@ -38,7 +38,7 @@
         style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto; z-index: 100;"
     >
         <template x-for="option in filteredOptions" :key="option.id">
-            <button type="button" @click="choose(option)" style="display: block; width: 100%; padding: 10px 16px; cursor: pointer; font-size: 14px; color: #374151; border: 0; border-bottom: 1px solid #f3f4f6; background: transparent; text-align: left;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
+            <button type="button" @click="choose(option)" style="display: block; width: 100%; padding: 20px; cursor: pointer; font-size: 14px; color: #374151; border: 0; border-bottom: 1px solid #f3f4f6; background: transparent; text-align: left;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                 <span x-text="option.name + (option.count ? ' (' + option.count + ')' : '')"></span>
             </button>
         </template>

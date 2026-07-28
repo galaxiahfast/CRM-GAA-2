@@ -133,7 +133,7 @@
         <div class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
 
             <!-- Barra superior con filtros de búsqueda - FONDO TRANSPARENTE/BLANCO CON BLUR -->
-            <div style="position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 20px; padding: 16px 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15);">
+            <div style="position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15);">
 
                 <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap;">Filtrar por:</span>
                 
@@ -144,26 +144,26 @@
             </div>
 
             <!-- Contenido con padding - CADA CONTENEDOR CON PADDING DE 20px -->
-            <div style="padding: 20px;">
+            <div style="padding: 0px 20px 0px 20px;">
 
                 @forelse ($usersByArea as $areaName => $areaUsers)
-                    <div style="border: 1px solid #e5e7eb; margin-bottom: 20px; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                    <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0px' : '20px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
-                        <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
-                            <span>{{ $areaName }}</span>
+                        <div style="background-color: #f3f4f6; padding: 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
+                            <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
                             <span style="color: #9ca3af; font-weight: 400;">{{ $areaUsers->count() }} colaboradores</span>
                         </div>
 
                         <!-- Contenedor interno con padding de 20px -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
                             @foreach ($areaUsers as $user)
-                                <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: all 0.15s;"
-                                    onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='4px'; this.style.padding='4px 8px'; this.style.margin='0 -8px';"
-                                    onmouseout="this.style.backgroundColor='transparent'; this.style.padding='4px 0'; this.style.margin='0';">
+                                <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
+                                    onmouseover="this.style.backgroundColor='#f3f4f6';"
+                                    onmouseout="this.style.backgroundColor='#fafafa';">
                                     <input type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0;" />
-                                    <span>
-                                        {{ $user['name'] }}
-                                        <small style="display: block; font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block truncate">{{ $user['name'] }}</span>
+                                        <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
                                     </span>
                                 </label>
                             @endforeach
