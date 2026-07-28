@@ -129,6 +129,23 @@ class AdminTimeDashboard extends Component
             ->where('area_id', $areaId)->pluck('id')->all());
     }
 
+    public function toggleCollaboratorsByArea(int|string $areaId, bool|string $selected): void
+    {
+        $areaId = (int) $areaId;
+        if ($areaId <= 0) {
+            return;
+        }
+
+        $areaUserIds = $this->groupDirectory()->where('area_id', $areaId)
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $selected = filter_var($selected, FILTER_VALIDATE_BOOLEAN);
+
+        $this->selectedCollaboratorIds = $selected
+            ? array_values(array_unique(array_merge($this->selectedCollaboratorIds, $areaUserIds)))
+            : array_values(array_diff(array_map('intval', $this->selectedCollaboratorIds), $areaUserIds));
+        $this->groupReportIsCurrent = false;
+    }
+
     public function selectCollaboratorsByPosition(int|string $positionId): void
     {
         $positionId = (int) $positionId;

@@ -1,11 +1,10 @@
 @php
     $fmt = fn (int $seconds) => sprintf('%02d:%02d:%02d', intdiv(max(0, $seconds), 3600), intdiv(max(0, $seconds) % 3600, 60), max(0, $seconds) % 60);
     $usersByArea = $groupUsers->groupBy('area_name');
-    $positions = $groupUsers->filter(fn (array $user) => $user['position_id'])->unique('position_id')->sortBy('position_name');
     $superiors = $groupUsers->flatMap(fn (array $user) => $user['superiors'])->unique('id')->sortBy('name');
-    $areaOptions = $usersByArea->map(fn ($users, $name) => ['id' => $users->first()['area_id'], 'name' => $name, 'count' => $users->count()])->filter(fn ($area) => $area['id'])->values();
-    $positionOptions = $positions->map(fn ($position) => ['id' => $position['position_id'], 'name' => $position['position_name']])->values();
-    $superiorOptions = $superiors->map(fn ($superior) => ['id' => $superior['id'], 'name' => $superior['name']])->values();
+    $areaOptions = $usersByArea->map(fn ($users, $name) => ['id' => $users->first()['area_id'], 'name' => $name, 'count' => $users->count(), 'user_ids' => $users->pluck('id')->map(fn ($id) => (int) $id)->values()->all()])->filter(fn ($area) => $area['id'])->values();
+    $superiorOptions = $superiors->map(fn ($superior) => ['id' => $superior['id'], 'name' => $superior['name'], 'user_ids' => $groupUsers->filter(fn (array $user) => collect($user['superiors'])->contains('id', $superior['id']))->pluck('id')->map(fn ($id) => (int) $id)->values()->all()])->values();
+    $userOptions = $groupUsers->map(fn ($user) => ['id' => $user['id'], 'name' => $user['name']])->values();
 @endphp
 
 <style>
@@ -19,10 +18,15 @@
     .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
 </style>
 
-<div class="w-full bg-[#f4f4f4]" style="overflow-x: auto; padding: 32px 40px 40px;">
+<div
+    data-group-selection-root
+    data-selected-ids='@json(array_values(array_map('intval', $selectedCollaboratorIds)))'
+    class="w-full bg-[#f4f4f4]"
+    style="overflow-x: auto; padding: 32px 40px 40px;"
+>
 
     <!-- Contenedor interno con min-width -->
-    <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
+    <div style="min-width: 1000px; padding: 0; margin: 0; width: 100%;">
 
         <!-- Header Superior con Migas de Pan -->
         <div style="padding: 0 0 40px 0; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
@@ -88,7 +92,7 @@
                     <!-- Contador de seleccionados -->
                     <div style="flex-shrink: 0; margin-top: 16px;">
                         <span style="display: inline-flex; align-items: center; border-radius: 9999px; background-color: rgba(26, 58, 107, 0.1); padding: 8px 20px; font-size: 14px; font-weight: 600; color: #1A3A6B; white-space: nowrap;">
-                            {{ $selectedGroupUsers->count() }} seleccionados
+                            <span data-selected-count>{{ $selectedGroupUsers->count() }}</span>&nbsp;seleccionados
                         </span>
                     </div>
 
@@ -130,37 +134,40 @@
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
+        <div data-selection-list class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
 
-            <!-- Barra superior con filtros de búsqueda - FONDO TRANSPARENTE/BLANCO CON BLUR -->
-            <div style="position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15);">
+            <!-- Barra superior con filtros de búsqueda - con borde inferior derecho redondeado -->
+            <div style="position: sticky; top: 0; z-index: 10; display: inline-flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15); border-radius: 0 0 12px 0; width: auto;">
 
                 <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap;">Filtrar por:</span>
                 
-                <x-group-search-filter label="Área..." :options="$areaOptions" select-method="selectCollaboratorsByArea" count-key="count" empty-message="No se encontraron áreas" />
-                <x-group-search-filter label="Puesto..." :options="$positionOptions" select-method="selectCollaboratorsByPosition" empty-message="No se encontraron puestos" />
-                <x-group-search-filter label="Jefe directo..." :options="$superiorOptions" select-method="selectCollaboratorsBySuperior" empty-message="No se encontraron jefes" />
+                <x-group-search-filter label="Área..." :options="$areaOptions" count-key="count" empty-message="No se encontraron áreas" />
+                <x-group-search-filter label="Usuario / Colaborador..." :options="$userOptions" empty-message="No se encontraron colaboradores" />
+                <x-group-search-filter label="Jefe directo..." :options="$superiorOptions" empty-message="No se encontraron jefes" />
 
             </div>
 
-            <!-- Contenido con padding - CADA CONTENEDOR CON PADDING DE 20px -->
+            <!-- Contenido con padding -->
             <div style="padding: 0px 20px 0px 20px;">
 
                 @forelse ($usersByArea as $areaName => $areaUsers)
+                    @php($areaUserIds = $areaUsers->pluck('id')->map(fn ($id) => (int) $id)->all())
                     <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0px' : '20px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
                         <div style="background-color: #f3f4f6; padding: 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
-                            <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
+                            <label style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1; cursor: pointer;">
+                                <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
+                                <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
+                            </label>
                             <span style="color: #9ca3af; font-weight: 400;">{{ $areaUsers->count() }} colaboradores</span>
                         </div>
 
-                        <!-- Contenedor interno con padding de 20px -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
                             @foreach ($areaUsers as $user)
                                 <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
                                     onmouseover="this.style.backgroundColor='#f3f4f6';"
                                     onmouseout="this.style.backgroundColor='#fafafa';">
-                                    <input type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0;" />
+                                    <input data-area-collaborator data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
                                     <span class="min-w-0 flex-1">
                                         <span class="block truncate">{{ $user['name'] }}</span>
                                         <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
@@ -187,7 +194,7 @@
             <!-- Botones fijos abajo a la derecha -->
             <div style="position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; padding: 20px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-top: 1px solid rgba(229, 231, 235, 0.1); width: fit-content; margin-left: auto; border-radius: 12px 0 0 0;">
                 <div style="display: flex; gap: 24px; background-color: transparent;">
-                    <button type="button" wire:click="selectAllCollaborators" 
+                    <button type="button" data-select-all
                         style="display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background-color: transparent; color: #1A3A6B; font-size: 14px; font-weight: 600; cursor: pointer; transition: color 0.2s; white-space: nowrap;"
                         onmouseover="this.style.color='#15305a'"
                         onmouseout="this.style.color='#1A3A6B'">
@@ -196,7 +203,7 @@
                         </svg>
                         Seleccionar todos
                     </button>
-                    <button type="button" wire:click="clearGroupSelection" 
+                    <button type="button" data-clear-selection
                         style="display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 14px; font-weight: 500; cursor: pointer; transition: color 0.2s; white-space: nowrap;"
                         onmouseover="this.style.color='#374151'"
                         onmouseout="this.style.color='#6b7280'">
@@ -299,3 +306,156 @@
 
     </div>
 </div>
+
+<script>
+    (() => {
+        const initialiseGroupReport = (root) => {
+            if (!root || root.dataset.selectionInitialised === 'true') return;
+
+            root.dataset.selectionInitialised = 'true';
+
+            const selectionList = root.querySelector('[data-selection-list]');
+            const count = root.querySelector('[data-selected-count]');
+            const selectedIds = new Set(JSON.parse(root.dataset.selectedIds || '[]').map(Number));
+
+            const collaboratorCheckboxes = () => [...selectionList.querySelectorAll('[data-collaborator-id]')];
+            const areaCheckboxes = () => [...selectionList.querySelectorAll('[data-area-checkbox]')];
+            const userIdsForArea = (checkbox) => JSON.parse(checkbox.dataset.userIds || '[]').map(Number);
+
+            const refresh = () => {
+                collaboratorCheckboxes().forEach((checkbox) => {
+                    checkbox.checked = selectedIds.has(Number(checkbox.dataset.collaboratorId));
+                });
+
+                areaCheckboxes().forEach((checkbox) => {
+                    const ids = userIdsForArea(checkbox);
+                    checkbox.checked = ids.length > 0 && ids.every((id) => selectedIds.has(id));
+                });
+
+                if (count) count.textContent = selectedIds.size;
+            };
+
+            const setCollaborator = (id, selected, notifyLivewire = true) => {
+                id = Number(id);
+
+                if (selected) selectedIds.add(id);
+                else selectedIds.delete(id);
+
+                const checkbox = selectionList.querySelector('[data-collaborator-id="' + id + '"]');
+                if (checkbox && checkbox.checked !== selected) {
+                    checkbox.checked = selected;
+                    if (notifyLivewire) checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            };
+
+            const setUsers = (ids, selected) => {
+                ids.forEach((id) => setCollaborator(id, selected));
+                refresh();
+            };
+
+            collaboratorCheckboxes().forEach((checkbox) => {
+                checkbox.addEventListener('change', () => {
+                    setCollaborator(checkbox.dataset.collaboratorId, checkbox.checked, false);
+                    refresh();
+                });
+            });
+
+            areaCheckboxes().forEach((checkbox) => {
+                checkbox.addEventListener('change', () => setUsers(userIdsForArea(checkbox), checkbox.checked));
+            });
+
+            root.querySelector('[data-select-all]')?.addEventListener('click', () => {
+                setUsers(collaboratorCheckboxes().map((checkbox) => Number(checkbox.dataset.collaboratorId)), true);
+            });
+
+            root.querySelector('[data-clear-selection]')?.addEventListener('click', () => {
+                setUsers(collaboratorCheckboxes().map((checkbox) => Number(checkbox.dataset.collaboratorId)), false);
+            });
+
+            root.addEventListener('group-selection', (event) => setUsers(event.detail.userIds || [], true));
+
+            root.querySelectorAll('[data-group-search]').forEach((search) => {
+                const input = search.querySelector('[data-group-search-input]');
+                const menu = search.querySelector('[data-group-search-menu]');
+                const options = JSON.parse(search.dataset.options || '[]');
+                const emptyMessage = JSON.parse(search.dataset.emptyMessage || '"Sin coincidencias"');
+
+                // Aplicar estilos al menú para que tenga scroll interno
+                if (menu) {
+                    menu.style.maxHeight = '200px';
+                    menu.style.overflowY = 'auto';
+                }
+
+                const close = () => { menu.style.display = 'none'; };
+                const render = () => {
+                    const term = input.value.trim().toLocaleLowerCase();
+                    const filtered = term === ''
+                        ? options
+                        : options.filter((option) => option.name.toLocaleLowerCase().includes(term));
+
+                    menu.replaceChildren();
+
+                    if (filtered.length === 0) {
+                        const message = document.createElement('p');
+                        message.textContent = emptyMessage;
+                        message.style.cssText = 'padding: 20px; color: #6b7280; font-size: 14px; margin: 0;';
+                        menu.append(message);
+                    }
+
+                    filtered.forEach((option) => {
+                        const button = document.createElement('button');
+                        const label = document.createElement('span');
+
+                        button.type = 'button';
+                        button.style.cssText = 'display: block; width: 100%; min-width: 0; padding: 20px; cursor: pointer; font-size: 14px; color: #374151; border: 0; border-bottom: 1px solid #f3f4f6; background: transparent; text-align: left; outline: none;';
+                        label.className = 'block truncate';
+                        label.textContent = option.name + (option.count ? ' (' + option.count + ')' : '');
+                        button.append(label);
+                        button.addEventListener('mouseenter', () => { button.style.backgroundColor = '#f3f4f6'; });
+                        button.addEventListener('mouseleave', () => { button.style.backgroundColor = 'transparent'; });
+                        button.addEventListener('click', () => {
+                            input.value = option.name;
+                            close();
+
+                            if (Array.isArray(option.user_ids)) {
+                                root.dispatchEvent(new CustomEvent('group-selection', { detail: { userIds: option.user_ids } }));
+                                return;
+                            }
+
+                            const checkbox = selectionList.querySelector('[data-collaborator-id="' + option.id + '"]');
+                            if (checkbox && !checkbox.checked) checkbox.click();
+                        });
+                        menu.append(button);
+                    });
+
+                    menu.style.display = 'block';
+                };
+
+                input.addEventListener('focus', render);
+                input.addEventListener('click', render);
+                input.addEventListener('input', render);
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') close();
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!search.contains(event.target)) close();
+                });
+            });
+
+            refresh();
+        };
+
+        const initialise = () => document.querySelectorAll('[data-group-selection-root]').forEach(initialiseGroupReport);
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
+        else initialise();
+        document.addEventListener('livewire:navigated', initialise);
+
+        document.addEventListener('livewire:init', () => {
+            window.Livewire?.hook('morph.updated', ({ el }) => {
+                if (el.matches?.('[data-group-selection-root]')) initialiseGroupReport(el);
+            });
+        }, { once: true });
+    })();
+</script>
