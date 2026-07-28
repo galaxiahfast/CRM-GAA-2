@@ -218,6 +218,63 @@ class TimeReportService
         );
     }
 
+    /**
+     * Un solo PDF con el detalle individual de cada colaborador seleccionado.
+     * La consulta de actividades se ejecuta una sola vez para evitar N+1 y
+     * repetir la misma carga por cada reporte individual.
+     */
+    public function individualReportsBatch(Collection $users, string $from, string $to): ReportData
+    {
+        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to);
+        $sections = [];
+
+        foreach ($users->sortBy(fn (User $user) => trim($user->name.' '.($user->last_name ?? ''))) as $user) {
+            $entries = $data['entries']->where('user_id', $user->id)->values();
+            $name = trim($user->name.' '.($user->last_name ?? ''));
+            $total = (int) $entries->sum('total_duration_seconds');
+            $byCustomer = $entries->groupBy('customer_id')
+                ->map(fn (Collection $group) => [
+                    'name' => $group->first()->customer->name ?? 'â€”',
+                    'seconds' => (int) $group->sum('total_duration_seconds'),
+                ])
+                ->sortByDesc('seconds')
+                ->values();
+            $detail = $this->activityDetailByDay($entries);
+
+            $sections[] = new ReportSection(
+                'Reporte individual: '.$name,
+                ['Métrica', 'Valor'],
+                [
+                    ['Periodo', $from.' al '.$to],
+                    ['Horas efectivas', $this->hms($total)],
+                    ['Cierres automáticos', (string) $entries->where('status', TimeEntry::STATUS_AUTO_CLOSED)->count()],
+                ],
+            );
+            $sections[] = new ReportSection(
+                'Por cliente · '.$name,
+                ['Cliente', 'Tiempo'],
+                $byCustomer->map(fn (array $row) => [$row['name'], $this->hms($row['seconds'])])->all(),
+            );
+            $sections[] = new ReportSection(
+                'Detalle de actividades · '.$name,
+                $detail['columns'],
+                [],
+                $detail['groups'],
+            );
+        }
+
+        return new ReportData(
+            title: 'Reportes individuales agrupados',
+            filenameBase: 'reportes-individuales_'.$from.'_'.$to,
+            meta: [
+                'Total de colaboradores' => (string) $users->count(),
+                'Desde' => $from,
+                'Hasta' => $to,
+            ],
+            sections: $sections,
+        );
+    }
+
     /** Formato legible de una actividad para reportes TXT. */
     public function formatActivityLine(array $columns, array $row): string
     {

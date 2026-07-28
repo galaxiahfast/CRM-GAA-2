@@ -246,6 +246,28 @@ class AdminTimeDashboard extends Component
         return $exporter->download($format, $reports->groupReport($users, $this->from, $this->to));
     }
 
+    public function exportSelectedIndividualReport(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    {
+        $users = $this->exportableReportedUsers();
+
+        if ($users->count() !== 1) {
+            $this->addError('selectedCollaboratorIds', 'Selecciona exactamente un colaborador para descargar su reporte individual.');
+            abort(422);
+        }
+
+        return $exporter->download('pdf', $reports->adminReport($users->first(), $this->from, $this->to));
+    }
+
+    public function exportSelectedIndividualBatch(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    {
+        return $exporter->download('pdf', $reports->individualReportsBatch($this->exportableReportedUsers(), $this->from, $this->to));
+    }
+
+    public function exportSelectedGeneralReport(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    {
+        return $exporter->download('pdf', $reports->groupReport($this->exportableReportedUsers(), $this->from, $this->to));
+    }
+
     public function render(TimeReportService $reports, ReportExportManager $exporter)
     {
         $groupUsers = $this->groupDirectory();
@@ -303,6 +325,22 @@ class AdminTimeDashboard extends Component
     private function reportedGroupDirectory(): Collection
     {
         return $this->groupDirectory()->whereIn('id', array_map('intval', $this->reportedCollaboratorIds))->values();
+    }
+
+    /** @return Collection<int, User> */
+    private function exportableReportedUsers(): Collection
+    {
+        abort_unless(Gate::allows('view-time-admin'), 403);
+
+        $ids = $this->reportedGroupDirectory()->pluck('id')->all();
+        $users = User::whereIn('id', $ids)->orderBy('name')->get(['id', 'name', 'last_name']);
+
+        if (! $this->groupReportIsCurrent || $users->isEmpty()) {
+            $this->addError('selectedCollaboratorIds', 'Genera el informe con al menos un colaborador antes de descargarlo.');
+            abort(422);
+        }
+
+        return $users;
     }
 
     /** @param list<int> $ids */

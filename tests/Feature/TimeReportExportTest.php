@@ -162,6 +162,29 @@ class TimeReportExportTest extends TestCase
         $this->assertSame('01:00:00', $detailSection->dayGroups[0]['rows'][0][4]);
     }
 
+    public function test_admin_can_export_the_three_group_pdf_modes(): void
+    {
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+
+        $batch = app(TimeReportService::class)->individualReportsBatch(collect([$aux]), $today, $today);
+        $this->assertSame('Reportes individuales agrupados', $batch->title);
+        $this->assertStringContainsString('Reporte individual:', $batch->sections[0]->title);
+
+        $component = Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+            ->set('selectedCollaboratorIds', [$aux->id])
+            ->set('from', $today)
+            ->set('to', $today)
+            ->call('generateGroupReport');
+
+        $component->call('exportSelectedIndividualReport')
+            ->assertFileDownloaded("supervision-horas_usuario-{$aux->id}_{$today}_{$today}.pdf");
+        $component->call('exportSelectedIndividualBatch')
+            ->assertFileDownloaded("reportes-individuales_{$today}_{$today}.pdf");
+        $component->call('exportSelectedGeneralReport')
+            ->assertFileDownloaded("informe-general-horas_{$today}_{$today}.pdf");
+    }
+
     public function test_admin_report_includes_activity_detail_respecting_user_filter(): void
     {
         ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();

@@ -12,6 +12,7 @@
         .meta td { padding: 2px 6px; }
         .meta td.label { color: #6b7280; width: 220px; }
         h2 { font-size: 13px; margin: 18px 0 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 2px; }
+        h2.report-start { page-break-before: always; }
         table.section { width: 100%; border-collapse: collapse; }
         table.section th, table.section td { border: 1px solid #e5e7eb; padding: 4px 6px; text-align: left; }
         table.section th { background: #f3f4f6; }
@@ -37,7 +38,7 @@
     @endif
 
     @foreach ($data->sections as $section)
-        <h2>{{ $section->title }}</h2>
+        <h2 @class(['report-start' => str_starts_with($section->title, 'Reporte individual:') && ! $loop->first])>{{ $section->title }}</h2>
         @if ($section->dayGroups !== null)
             @if (empty($section->dayGroups))
                 <p class="empty">Sin datos.</p>

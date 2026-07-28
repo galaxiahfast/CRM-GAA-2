@@ -21,6 +21,8 @@
 <div
     data-group-selection-root
     data-selected-ids='@json(array_values(array_map('intval', $selectedCollaboratorIds)))'
+    data-reported-ids='@json(array_values(array_map('intval', $reportedCollaboratorIds)))'
+    data-report-current="{{ $groupReportIsCurrent ? 'true' : 'false' }}"
     class="w-full bg-[#f4f4f4]"
     style="overflow-x: auto; padding: 32px 40px 40px;"
 >
@@ -41,14 +43,6 @@
             </div>
 
             <!-- Botones de acción -->
-            <div style="display: flex; align-items: center; gap: 30px; white-space: nowrap; flex-shrink: 0;">
-                <button wire:click="exportGroup('pdf')" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap; disabled:opacity-40;">
-                    <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Descargar PDF
-                </button>
-            </div>
         </div>
 
         <!-- Header principal -->
@@ -100,35 +94,6 @@
             </div>
 
             <!-- Filtros de fechas -->
-            <div style="background-color: transparent; margin-top: 24px; min-width: max-content;">
-
-                <form wire:submit.prevent="generateGroupReport" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 30px;">
-
-                    <div style="flex: 0 0 auto;">
-                        <label for="from" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">
-                            Desde
-                        </label>
-                        <input id="from" type="date" wire:model.defer="from" style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;" onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                    </div>
-
-                    <div style="flex: 0 0 auto;">
-                        <label for="to" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">
-                            Hasta
-                        </label>
-                        <input id="to" type="date" wire:model.defer="to" style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;" onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                    </div>
-
-                    <button type="submit" wire:loading.attr="disabled" style="display: inline-flex; height: 50px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; box-shadow: 0 4px 6px -1px rgba(26,58,107,0.2); border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0; disabled:opacity-50;" onmouseover="this.style.backgroundColor='#15305a'" onmouseout="this.style.backgroundColor='#1A3A6B'">
-                        <svg style="height: 20px; width: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Generar Reporte
-                    </button>
-
-                </form>
-
-            </div>
-
         </div>
 
         <!-- ============================================================ -->
@@ -220,34 +185,30 @@
         <!-- ============================================================ -->
         <!-- BOTONES DE EXPORTACIÓN                                        -->
         <!-- ============================================================ -->
+        <form wire:submit.prevent="generateGroupReport" style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 24px; min-width: max-content;">
+            <div style="flex: 0 0 auto;">
+                <label for="from" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Desde</label>
+                <input id="from" type="date" wire:model.defer="from" style="height: 50px; width: 180px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; outline: none;">
+            </div>
+            <div style="flex: 0 0 auto;">
+                <label for="to" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Hasta</label>
+                <input id="to" type="date" wire:model.defer="to" style="height: 50px; width: 180px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; outline: none;">
+            </div>
+            <button type="submit" wire:loading.attr="disabled" style="display: inline-flex; height: 50px; align-items: center; justify-content: center; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; border: none; cursor: pointer; disabled:opacity-50;">Generar Reporte</button>
+        </form>
+
         <div style="padding: 0 0 30px 0; background-color: transparent; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 2px solid #e5e7eb;">
             <div style="font-size: 14px; color: #6b7280;">Las selecciones se aplican sólo al generar el informe.</div>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button wire:click="exportGroup('csv')" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #059669; padding: 0 24px; font-size: 14px; font-weight: 600; color: white; border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
-                    <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    CSV
-                </button>
-                <button wire:click="exportGroup('txt')" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #374151; padding: 0 24px; font-size: 14px; font-weight: 600; color: white; border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#1f2937'" onmouseout="this.style.backgroundColor='#374151'">
-                    <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    TXT
-                </button>
-                <button wire:click="exportGroup('pdf')" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #dc2626; padding: 0 24px; font-size: 14px; font-weight: 600; color: white; border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#dc2626'">
-                    <svg style="width: 18px; height: 18px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    PDF
-                </button>
+                <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar Individual</button>
+                <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: #1A3A6B; color: white; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar Grupal</button>
+                <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar General</button>
             </div>
         </div>
 
         <!-- ============================================================ -->
         <!-- MÉTRICAS PRINCIPALES                                          -->
         <!-- ============================================================ -->
-        @if($groupReportIsCurrent && !$reportedGroupUsers->isEmpty())
         <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
 
@@ -281,7 +242,7 @@
                                 <span style="font-family: monospace; font-size: 14px; color: #111827; font-weight: 500;">{{ $fmt($row['seconds']) }}</span>
                             </div>
                         @empty
-                            <p style="font-size: 14px; color: #6b7280;">Selecciona colaboradores para consultar el consolidado.</p>
+                            <p style="font-size: 14px; color: #6b7280;">Sin datos.</p>
                         @endforelse
                     </div>
                 @endforeach
@@ -298,11 +259,14 @@
                     Ver detalle de actividades ({{ $groupData['entries']->count() }} registros)
                 </summary>
                 <div style="margin-top: 16px;">
-                    <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" />
+                    @if ($groupActivityDetail['groups'] === [])
+                        <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
+                    @else
+                        <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" />
+                    @endif
                 </div>
             </details>
         </div>
-        @endif
 
     </div>
 </div>
@@ -317,6 +281,8 @@
             const selectionList = root.querySelector('[data-selection-list]');
             const count = root.querySelector('[data-selected-count]');
             const selectedIds = new Set(JSON.parse(root.dataset.selectedIds || '[]').map(Number));
+            const reportedIds = new Set(JSON.parse(root.dataset.reportedIds || '[]').map(Number));
+            const reportIsCurrent = root.dataset.reportCurrent === 'true';
 
             const collaboratorCheckboxes = () => [...selectionList.querySelectorAll('[data-collaborator-id]')];
             const areaCheckboxes = () => [...selectionList.querySelectorAll('[data-area-checkbox]')];
@@ -333,6 +299,14 @@
                 });
 
                 if (count) count.textContent = selectedIds.size;
+
+                const selectionMatchesReport = selectedIds.size === reportedIds.size
+                    && [...selectedIds].every((id) => reportedIds.has(id));
+                const canExport = reportIsCurrent && selectionMatchesReport && selectedIds.size > 0;
+
+                root.querySelector('[data-export-individual]').disabled = !canExport || selectedIds.size !== 1;
+                root.querySelector('[data-export-group]').disabled = !canExport;
+                root.querySelector('[data-export-general]').disabled = !canExport;
             };
 
             const setCollaborator = (id, selected, notifyLivewire = true) => {
