@@ -29,7 +29,7 @@
 >
 
     <!-- Contenedor interno con min-width -->
-    <div style="min-width: 1000px; padding: 0; margin: 0; width: 100%;">
+    <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
 
         <!-- Header Superior con Migas de Pan -->
         <div style="padding: 0 0 40px 0; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">

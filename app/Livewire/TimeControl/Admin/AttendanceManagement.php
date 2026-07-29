@@ -48,7 +48,7 @@ class AttendanceManagement extends Component
 
     public function mount(): void
     {
-        $this->from = Carbon::now()->subDays(7)->toDateString();
+        $this->from = Carbon::now()->subDays(14)->toDateString();
         $this->to = Carbon::now()->toDateString();
     }
 
