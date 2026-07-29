@@ -13,7 +13,18 @@
     $orgChartTree = $orgChartTree ?? [];
 @endphp
 
-<div class="space-y-4 w-full min-w-[800px]" style="font-size: 15px; background-color: #F3F3F3;">
+<style>
+    .unassigned-users-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #1A3A6B #f8fafc;
+    }
+    .unassigned-users-scrollbar::-webkit-scrollbar { width: 6px; }
+    .unassigned-users-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 9999px; }
+    .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
+    .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #15305a !important; }
+</style>
+
+<div class="w-full min-w-0 space-y-4" style="font-size: 15px; background-color: #F3F3F3;">
     <!-- Accesos rápidos -->
     <div class="overflow-hidden rounded-2xl shadow-lg" style="background-color: #F3F3F3;">
         <div class="border-b p-4">
@@ -115,7 +126,7 @@
         </div>
 
         <!-- Grid con ancho mínimo para evitar deformación -->
-        <div class="grid grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="min-width: 800px; padding: 0;">
+        <div class="grid min-w-0 grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="padding: 0;">
 
             <!-- Árbol jerárquico -->
             <div class="xl:col-span-2" style="padding: 0;">
@@ -182,6 +193,7 @@
                                             scrollbar-width: thin;
                                             scrollbar-color: #1A3A6B #f1f1f1;
                                         }
+
                                     </style>
                                 </div>
                             </div>
@@ -208,72 +220,91 @@
             </div>
 
             <!-- Usuarios sin asignar -->
-            <div class="rounded-xl border-2 border-dashed border-gray-400" style="min-width: 250px; background-color: #F3F3F3; max-height: 520px; overflow-y: auto; padding: 20px;">
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div class="flex items-center justify-between" style="line-height: 1; height: fit-content;">
-                        <h3 class="text-[15px] font-semibold text-gray-700" style="line-height: 1; margin: 0; padding: 0;">
-                            Usuarios sin asignar
-                        </h3>
-                        <span class="rounded-full bg-gray-200 px-2 text-[15px] font-medium text-gray-700" 
-                              style="line-height: 1; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
-                            {{ count($unassignedUsers) }}
-                        </span>
+            <div class="unassigned-users-scrollbar rounded-xl border border-dashed border-gray-300" style="min-width: 400px; background-color: #F3F3F3; max-height: 520px; overflow-y: auto; padding: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="flex items-center justify-between" style="line-height: 1; height: fit-content;">
+                            <h3 class="text-[15px] font-semibold text-gray-700" style="line-height: 1; margin: 0; padding: 0;">
+                                Usuarios sin asignar
+                            </h3>
+                            <span class="rounded-full bg-gray-200 px-2 text-[15px] font-medium text-gray-700"
+                                  style="line-height: 1; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
+                                {{ count($unassignedUsers) }}
+                            </span>
+                        </div>
+                        <p class="text-[15px] text-gray-500" style="line-height: 1; margin: 0; padding: 0;">
+                            Sin jefe, puesto o área asignada.
+                        </p>
                     </div>
-                    <p class="text-[15px] text-gray-500" style="line-height: 1.3; margin: 0; padding: 0;">
-                        Usuarios que aún no tienen jefe, puesto o área asignada.
-                    </p>
                     @if (count($unassignedUsers) > 0)
-                        <ul class="overflow-y-auto" style="display: flex; flex-direction: column; gap: 20px; margin: 0; padding: 0; list-style: none;">
+                        <ul class="overflow-y-auto" style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;">
                             @foreach ($unassignedUsers as $user)
+                                @php
+                                    $nameParts = array_values(array_filter(preg_split('/\s+/', trim((string) $user['name']))));
+                                    $initials = implode('', array_map(
+                                        static fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)),
+                                        array_slice($nameParts, 0, 2)
+                                    ));
+                                @endphp
                                 <li style="list-style: none;">
                                     <button type="button" wire:key="unassigned-user-{{ $user['id'] }}" wire:click="selectUser({{ (int) $user['id'] }})"
-                                        class="w-full rounded-lg text-left outline-none focus:outline-none focus:ring-0"
-                                        style="padding: 20px; display: flex; flex-direction: column; gap: 20px; background-color: #F3F3F3; border: 2px dashed #9ca3af;">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                            <p class="text-[15px] font-medium text-gray-800" style="line-height: 1; margin: 0; padding: 0;">
-                                                {{ $user['name'] }}
-                                            </p>
-                                            @if(isset($user['created_at']))
-                                                <span class="text-[13px] text-gray-500" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
-                                                    {{ \Carbon\Carbon::parse($user['created_at'])->format('d/m/Y H:i') }}
-                                                </span>
-                                            @else
-                                                <span class="text-[13px] text-gray-400" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
-                                                    Fecha no disponible
-                                                </span>
-                                            @endif
+                                        class="w-full rounded-xl border border-dashed border-gray-300 bg-white p-[15px] text-left shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0"
+                                        style="display: flex; flex-direction: column; gap: 15px;">
+                                        <div class="flex min-w-0 items-start gap-[15px]">
+                                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">
+                                                {{ $initials !== '' ? $initials : '?' }}
+                                            </div>
+                                            <div class="min-w-0 flex-1" style="display: flex; flex-direction: column; gap: 15px;">
+                                                <div class="flex min-w-0 items-start justify-between gap-[15px]">
+                                                    <p class="min-w-0 flex-1 truncate text-[15px] font-medium text-gray-800" title="{{ $user['name'] }}" style="line-height: 1; margin: 0; padding: 0;">
+                                                        {{ $user['name'] }}
+                                                    </p>
+                                                    @if(! empty($user['created_at']))
+                                                        <span class="shrink-0 text-[13px] text-gray-500" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
+                                                            {{ \Carbon\Carbon::parse($user['created_at'])->format('d/m/Y') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="shrink-0 text-[13px] text-gray-400" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
+                                                            Fecha no disponible
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <p class="truncate text-[15px] text-gray-500" title="{{ $user['email'] }}" style="line-height: 1; margin: 0; padding: 0;">{{ $user['email'] }}</p>
+                                            </div>
                                         </div>
-                                        <p class="text-[15px] text-gray-500" style="line-height: 1; margin: 0; padding: 0;">{{ $user['email'] }}</p>
-                                        <div class="flex flex-wrap gap-1.5">
+                                        <div class="flex flex-wrap gap-[15px]">
                                             @foreach ($user['missing'] as $missingKey)
                                                 <span @class([
-                                                    'rounded-md text-[15px] font-medium text-white',
+                                                    'inline-flex w-[130px] shrink-0 items-center justify-center gap-[10px] rounded-md px-[20px] py-[10px] text-[15px] font-medium text-white',
                                                     'bg-[#D9383A]' => $missingKey === 'superior',
                                                     'bg-[#028A58]' => $missingKey === 'job_position',
                                                     'bg-[#8B3DFF]' => $missingKey === 'physical_area',
-                                                ]) style="padding: 10px 20px; line-height: 1; display: inline-flex; align-items: center;">
+                                                ]) style="line-height: 1;">
                                                     @if($missingKey === 'superior')
-                                                        Sin supervisor
+                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                                        <span class="min-w-0 truncate">Sin supervisor</span>
                                                     @elseif($missingKey === 'job_position')
-                                                        Sin puesto
+                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7l1 12h12l1-12M9 7V5a3 3 0 016 0v2" /></svg>
+                                                        <span class="min-w-0 truncate">Sin puesto</span>
                                                     @elseif($missingKey === 'physical_area')
-                                                        Sin área
+                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM8 8h2v2H8zm4 0h2v2h-2zm-4 4h2v2H8zm4 0h2v2h-2z" /></svg>
+                                                        <span class="min-w-0 truncate">Sin área</span>
                                                     @else
-                                                        {{ $missingLabels[$missingKey] ?? $missingKey }}
+                                                        <span class="min-w-0 truncate">{{ $missingLabels[$missingKey] ?? $missingKey }}</span>
                                                     @endif
                                                 </span>
                                             @endforeach
                                         </div>
                                         @if (! empty($user['role']) || ! empty($user['job_position']) || ! empty($user['physical_area']))
-                                            <div class="flex flex-wrap gap-[10px]">
+                                            <div class="flex flex-wrap gap-[15px]">
                                                 @if (! empty($user['role']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;">Rol: {{ $user['role'] }}</span>
+                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Rol:</strong> {{ $user['role'] }}</span>
                                                 @endif
                                                 @if (! empty($user['job_position']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;">Puesto: {{ $user['job_position'] }}</span>
+                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Puesto:</strong> {{ $user['job_position'] }}</span>
                                                 @endif
                                                 @if (! empty($user['physical_area']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;">Área: {{ $user['physical_area'] }}</span>
+                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Área:</strong> {{ $user['physical_area'] }}</span>
                                                 @endif
                                             </div>
                                         @endif

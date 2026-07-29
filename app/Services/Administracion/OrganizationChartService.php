@@ -58,6 +58,7 @@ class OrganizationChartService
                 'id' => $user->id,
                 'name' => trim("{$user->name} {$user->last_name}"),
                 'email' => $user->email,
+                'created_at' => $user->created_at?->toIso8601String(),
                 'role' => $user->role?->role,
                 'job_position' => $profile?->jobPosition?->name,
                 'physical_area' => $profile?->physicalArea?->name,
