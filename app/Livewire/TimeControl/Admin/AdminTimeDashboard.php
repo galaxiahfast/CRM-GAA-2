@@ -34,6 +34,8 @@ class AdminTimeDashboard extends Component
 
     public bool $groupReportIsCurrent = false;
 
+    public int $groupReportVersion = 0;
+
     /**
      * Directorio liviano para el selector grupal. Se hidrata una vez al montar
      * el componente y se usa en memoria durante los cambios de casillas.
@@ -105,8 +107,40 @@ class AdminTimeDashboard extends Component
         $this->groupReportIsCurrent = false;
     }
 
-    public function generateGroupReport(): void
+    /**
+     * Confirma una instantánea explícita del selector para el reporte.
+     * Los IDs pueden venir directamente del estado local del selector para
+     * evitar depender de la hidratación diferida de cientos de checkboxes.
+     *
+     * @param  list<int|string>|null  $collaboratorIds
+     */
+    public function generateGroupReport(?array $collaboratorIds = null, ?string $from = null, ?string $to = null): void
     {
+        if ($from !== null) {
+            $this->from = $from;
+        }
+
+        if ($to !== null) {
+            $this->to = $to;
+        }
+
+        if ($collaboratorIds !== null) {
+            $allowedIds = $this->groupDirectory()->pluck('id')->map(fn ($id) => (int) $id)->all();
+            $this->selectedCollaboratorIds = array_values(array_intersect(
+                array_values(array_unique(array_filter(array_map('intval', $collaboratorIds)))),
+                $allowedIds,
+            ));
+        }
+
+        $this->groupReportIsCurrent = false;
+        $this->reportedCollaboratorIds = [];
+        $this->resetErrorBag('selectedCollaboratorIds');
+
+        $this->validate([
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date'],
+        ]);
+
         $this->reportedCollaboratorIds = array_values(array_unique(array_map('intval', $this->selectedCollaboratorIds)));
 
         if ($this->reportedCollaboratorIds === []) {
@@ -114,7 +148,7 @@ class AdminTimeDashboard extends Component
             return;
         }
 
-        $this->resetErrorBag('selectedCollaboratorIds');
+        $this->groupReportVersion++;
         $this->groupReportIsCurrent = true;
     }
 
@@ -229,6 +263,8 @@ class AdminTimeDashboard extends Component
         $user = $this->userId ? User::find($this->userId) : null;
         $report = $reports->adminReport($user, $this->from, $this->to);
 
+        $this->skipRender();
+
         return $exporter->download($format, $report);
     }
 
@@ -237,11 +273,19 @@ class AdminTimeDashboard extends Component
         abort_unless(Gate::allows('view-time-admin'), 403);
 
         $ids = $this->reportedGroupDirectory()->pluck('id')->all();
-        $users = User::whereIn('id', $ids)->orderBy('name')->get(['id', 'name', 'last_name']);
+        $users = User::whereIn('id', $ids)
+            ->with([
+                'activeOrganizationalProfile.jobPosition:id,name',
+                'activeOrganizationalProfile.physicalArea:id,name',
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name', 'last_name']);
         if (! $this->groupReportIsCurrent || $users->isEmpty()) {
             $this->addError('selectedCollaboratorIds', 'Selecciona al menos un colaborador para descargar el informe grupal.');
             abort(422);
         }
+
+        $this->skipRender();
 
         return $exporter->download($format, $reports->groupReport($users, $this->from, $this->to));
     }
@@ -255,17 +299,25 @@ class AdminTimeDashboard extends Component
             abort(422);
         }
 
+        $this->skipRender();
+
         return $exporter->download('pdf', $reports->adminReport($users->first(), $this->from, $this->to));
     }
 
     public function exportSelectedIndividualBatch(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
     {
-        return $exporter->download('pdf', $reports->individualReportsBatch($this->exportableReportedUsers(), $this->from, $this->to));
+        $users = $this->exportableReportedUsers();
+        $this->skipRender();
+
+        return $exporter->download('pdf', $reports->individualReportsBatch($users, $this->from, $this->to));
     }
 
     public function exportSelectedGeneralReport(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
     {
-        return $exporter->download('pdf', $reports->groupReport($this->exportableReportedUsers(), $this->from, $this->to));
+        $users = $this->exportableReportedUsers();
+        $this->skipRender();
+
+        return $exporter->download('pdf', $reports->groupReport($users, $this->from, $this->to));
     }
 
     public function render(TimeReportService $reports, ReportExportManager $exporter)
@@ -274,7 +326,7 @@ class AdminTimeDashboard extends Component
         $selectedGroupUsers = $this->selectedGroupDirectory();
         $reportedGroupUsers = $this->reportedGroupDirectory();
         $groupData = $this->groupReportIsCurrent && $reportedGroupUsers->isNotEmpty()
-            ? $reports->adminSupervisionForUsers($reportedGroupUsers->pluck('id')->all(), $this->from, $this->to)
+            ? $reports->adminSupervisionForUsers($reportedGroupUsers->pluck('id')->all(), $this->from, $this->to, $reportedGroupUsers)
             : [
                 'entries' => collect(), 'total' => 0, 'byCollaborator' => collect(), 'byCustomer' => collect(),
                 'byPosition' => collect(), 'byArea' => collect(), 'autoClosedCount' => 0,
@@ -333,7 +385,13 @@ class AdminTimeDashboard extends Component
         abort_unless(Gate::allows('view-time-admin'), 403);
 
         $ids = $this->reportedGroupDirectory()->pluck('id')->all();
-        $users = User::whereIn('id', $ids)->orderBy('name')->get(['id', 'name', 'last_name']);
+        $users = User::whereIn('id', $ids)
+            ->with([
+                'activeOrganizationalProfile.jobPosition:id,name',
+                'activeOrganizationalProfile.physicalArea:id,name',
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name', 'last_name']);
 
         if (! $this->groupReportIsCurrent || $users->isEmpty()) {
             $this->addError('selectedCollaboratorIds', 'Genera el informe con al menos un colaborador antes de descargarlo.');

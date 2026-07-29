@@ -59,7 +59,7 @@ class TimeReportService
      * @param  list<int>  $userIds
      * @return array{entries: Collection<int, TimeEntry>, total: int, byCollaborator: Collection<int, array>, byCustomer: Collection<int, array>, byPosition: Collection<int, array>, byArea: Collection<int, array>, autoClosedCount: int}
      */
-    public function adminSupervisionForUsers(array $userIds, string $from, string $to): array
+    public function adminSupervisionForUsers(array $userIds, string $from, string $to, ?Collection $selectedUsers = null): array
     {
         $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
 
@@ -72,6 +72,54 @@ class TimeReportService
                 'name' => $name($g->first()),
                 'seconds' => (int) $g->sum('total_duration_seconds'),
             ])->sortByDesc('seconds')->values();
+
+        if ($selectedUsers !== null) {
+            $entrySecondsByUser = $entries->groupBy('user_id')
+                ->map(fn (Collection $items) => (int) $items->sum('total_duration_seconds'));
+            $selectedUsersById = $selectedUsers->keyBy(fn ($user) => (int) data_get($user, 'id'));
+            $originalGroup = $group;
+            $selectedCategoryName = function ($user, string $key): string {
+                $arrayKey = $key === 'job_position_id_snapshot' ? 'position_name' : 'area_name';
+                $relationPath = $key === 'job_position_id_snapshot'
+                    ? 'activeOrganizationalProfile.jobPosition.name'
+                    : 'activeOrganizationalProfile.physicalArea.name';
+                $fallback = $key === 'job_position_id_snapshot' ? 'Sin puesto asignado' : 'Sin área asignada';
+
+                return (string) (is_array($user)
+                    ? ($user[$arrayKey] ?? $fallback)
+                    : (data_get($user, $relationPath) ?? $fallback));
+            };
+
+            $group = function (string $key, callable $name) use ($originalGroup, $userIds, $entrySecondsByUser, $selectedUsersById, $selectedCategoryName): Collection {
+                if (in_array($key, ['job_position_id_snapshot', 'physical_area_id_snapshot'], true)) {
+                    $rows = $originalGroup($key, $name);
+                    $existingNames = $rows->pluck('name')->flip();
+                    $missingRows = $selectedUsersById
+                        ->map(fn ($user) => $selectedCategoryName($user, $key))
+                        ->filter(fn (string $category) => $category !== '' && ! $existingNames->has($category))
+                        ->unique()
+                        ->map(fn (string $category) => ['name' => $category, 'seconds' => 0]);
+
+                    return $rows->concat($missingRows)->sortByDesc('seconds')->values();
+                }
+
+                if ($key !== 'user_id') {
+                    return $originalGroup($key, $name);
+                }
+
+                return collect($userIds)->map(function (int $id) use ($entrySecondsByUser, $selectedUsersById) {
+                    $user = $selectedUsersById->get($id);
+                    $userName = is_array($user)
+                        ? (string) ($user['name'] ?? '-')
+                        : trim(($user?->name ?? '-').' '.($user?->last_name ?? ''));
+
+                    return [
+                        'name' => $userName,
+                        'seconds' => (int) ($entrySecondsByUser->get($id) ?? 0),
+                    ];
+                })->sortByDesc('seconds')->values();
+            };
+        }
 
         return [
             'entries' => $entries,
@@ -150,7 +198,7 @@ class TimeReportService
     /** Construye el reporte exportable de Supervisión de horas. */
     public function adminReport(?User $user, string $from, string $to): ReportData
     {
-        $data = $this->adminSupervision($user?->id, $from, $to);
+        $data = $this->adminSupervisionForUsers($user ? [$user->id] : [], $from, $to, $user ? collect([$user]) : null);
 
         $rows = fn (Collection $group) => $group
             ->map(fn ($row) => [$row['name'], $this->hms($row['seconds'])])
@@ -187,7 +235,7 @@ class TimeReportService
     /** Construye el reporte consolidado exportable de varios colaboradores. */
     public function groupReport(Collection $users, string $from, string $to): ReportData
     {
-        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to);
+        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to, $users);
         $rows = fn (Collection $group) => $group
             ->map(fn ($row) => [$row['name'], $this->hms($row['seconds'])])
             ->all();
@@ -225,11 +273,12 @@ class TimeReportService
      */
     public function individualReportsBatch(Collection $users, string $from, string $to): ReportData
     {
-        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to);
+        $data = $this->adminSupervisionForUsers($users->pluck('id')->all(), $from, $to, $users);
         $sections = [];
+        $entriesByUser = $data['entries']->groupBy('user_id');
 
         foreach ($users->sortBy(fn (User $user) => trim($user->name.' '.($user->last_name ?? ''))) as $user) {
-            $entries = $data['entries']->where('user_id', $user->id)->values();
+            $entries = ($entriesByUser->get($user->id) ?? collect())->values();
             $name = trim($user->name.' '.($user->last_name ?? ''));
             $total = (int) $entries->sum('total_duration_seconds');
             $byCustomer = $entries->groupBy('customer_id')
@@ -319,12 +368,17 @@ class TimeReportService
                 });
             })
             ->with([
-                'customer',
-                'subService',
-                'intervals',
-                'user',
-                'jobPositionSnapshot',
-                'physicalAreaSnapshot',
+                'customer:id,name',
+                'subService:id,sub_service,description',
+                'intervals:id,time_entry_id,started_at,ended_at',
+                'user:id,name,last_name',
+                'jobPositionSnapshot:id,name',
+                'physicalAreaSnapshot:id,name',
+            ])
+            ->select([
+                'id', 'user_id', 'customer_id', 'sub_service_id',
+                'job_position_id_snapshot', 'physical_area_id_snapshot',
+                'entry_date', 'status', 'total_duration_seconds',
             ]);
     }
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>{{ $data->title }}</title>
     <style>
-        * { font-family: DejaVu Sans, sans-serif; }
+        * { font-family: Helvetica, Arial, sans-serif; }
         body { font-size: 11px; color: #1f2937; margin: 24px; }
         h1 { font-size: 18px; margin: 0 0 4px; }
         .generated { color: #6b7280; font-size: 10px; margin-bottom: 12px; }
@@ -16,10 +16,10 @@
         table.section { width: 100%; border-collapse: collapse; }
         table.section th, table.section td { border: 1px solid #e5e7eb; padding: 4px 6px; text-align: left; }
         table.section th { background: #f3f4f6; }
-        table.section td.num, table.section th.num { text-align: right; font-family: DejaVu Sans Mono, monospace; }
+        table.section td.num, table.section th.num { text-align: right; font-family: Courier, monospace; }
         .empty { color: #9ca3af; font-style: italic; }
         .day-total-box { text-align: right; font-size: 11px; font-weight: bold; padding: 6px; color: #111827; }
-        .day-total-value { font-family: DejaVu Sans Mono, monospace; background: #f3f4f6; padding: 2px 6px; border: 1px solid #e5e7eb; margin-left: 4px; }
+        .day-total-value { font-family: Courier, monospace; background: #f3f4f6; padding: 2px 6px; border: 1px solid #e5e7eb; margin-left: 4px; }
     </style>
 </head>
 <body>

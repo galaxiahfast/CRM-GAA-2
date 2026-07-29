@@ -5,7 +5,7 @@
         <div>
             <h3 class="font-semibold text-gray-800 mb-2">{{ $group['date'] }}</h3>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-[15px]">
                     <thead>
                         <tr class="text-left text-gray-500 border-b">
                             @foreach ($columns as $column)
@@ -27,7 +27,6 @@
             </div>
         </div>
     @empty
-        <p class="text-gray-500 text-sm">Sin registros en el periodo.</p>
+        <p class="text-gray-500 text-[15px]">Sin registros en el periodo.</p>
     @endforelse
 </div>
- 

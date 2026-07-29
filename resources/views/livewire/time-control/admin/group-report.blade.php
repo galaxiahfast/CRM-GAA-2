@@ -16,6 +16,7 @@
     .group-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px !important; }
     .group-filter-scrollbar,
     .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
+    @keyframes group-report-spin { to { transform: rotate(360deg); } }
 </style>
 
 <div
@@ -99,9 +100,9 @@
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div data-selection-list class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #ffffff;">
+        <div wire:ignore data-selection-list class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #F4F4F4;">
 
-            <!-- Barra superior con filtros de búsqueda - con borde inferior derecho redondeado -->
+            <!-- Barra superior con filtros de búsqueda -->
             <div style="position: sticky; top: 0; z-index: 10; display: inline-flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15); border-radius: 0 0 12px 0; width: auto;">
 
                 <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap;">Filtrar por:</span>
@@ -119,7 +120,7 @@
                     @php($areaUserIds = $areaUsers->pluck('id')->map(fn ($id) => (int) $id)->all())
                     <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0px' : '20px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
-                        <div style="background-color: #f3f4f6; padding: 20px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
+                        <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
                             <label style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1; cursor: pointer;">
                                 <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
                                 <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
@@ -183,89 +184,117 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- BOTONES DE EXPORTACIÓN                                        -->
+        <!-- BOTONES DE EXPORTACIÓN Y REPORTE                             -->
         <!-- ============================================================ -->
-        <form wire:submit.prevent="generateGroupReport" style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 24px; min-width: max-content;">
+        <form data-report-form style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 24px; min-width: max-content; padding: 20px 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,0.05);">
             <div style="flex: 0 0 auto;">
                 <label for="from" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Desde</label>
-                <input id="from" type="date" wire:model.defer="from" style="height: 50px; width: 180px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; outline: none;">
+                <input id="from" type="date" wire:model.defer="from" style="height: 48px; width: 180px; border: 1px solid #d1d5db; border-radius: 12px; background-color: #ffffff; padding: 0 16px; font-size: 14px; color: #374151; outline: none;">
             </div>
             <div style="flex: 0 0 auto;">
                 <label for="to" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Hasta</label>
-                <input id="to" type="date" wire:model.defer="to" style="height: 50px; width: 180px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; outline: none;">
+                <input id="to" type="date" wire:model.defer="to" style="height: 48px; width: 180px; border: 1px solid #d1d5db; border-radius: 12px; background-color: #ffffff; padding: 0 16px; font-size: 14px; color: #374151; outline: none;">
             </div>
-            <button type="submit" wire:loading.attr="disabled" style="display: inline-flex; height: 50px; align-items: center; justify-content: center; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; border: none; cursor: pointer; disabled:opacity-50;">Generar Reporte</button>
+            <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display: inline-flex; height: 48px; align-items: center; justify-content: center; border-radius: 12px; background-color: #1A3A6B; padding: 0 28px; font-size: 14px; font-weight: 600; color: white; border: none; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,0.12); transition: background-color .2s; disabled:opacity-50;" onmouseover="this.style.backgroundColor='#15305a'" onmouseout="this.style.backgroundColor='#1A3A6B'">Generar Reporte</button>
         </form>
 
-        <div style="padding: 0 0 30px 0; background-color: transparent; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 2px solid #e5e7eb;">
-            <div style="font-size: 14px; color: #6b7280;">Las selecciones se aplican sólo al generar el informe.</div>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar Individual</button>
-                <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: #1A3A6B; color: white; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar Grupal</button>
-                <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 8px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; disabled:opacity-40;">Descargar General</button>
-            </div>
+        <div wire:loading.flex wire:target="generateGroupReport" style="display: none; min-height: 220px; align-items: center; justify-content: center; flex-direction: column; gap: 14px; border: 1px solid #dbe4f0; border-radius: 16px; background: #ffffff; color: #1A3A6B; box-shadow: 0 1px 2px rgba(15,23,42,0.05);">
+            <span style="width: 32px; height: 32px; border: 3px solid #dbe4f0; border-top-color: #1A3A6B; border-radius: 9999px; animation: group-report-spin .7s linear infinite;"></span>
+            <span style="font-size: 14px; font-weight: 600;">Calculando métricas y procesando datos...</span>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- MÉTRICAS PRINCIPALES                                          -->
-        <!-- ============================================================ -->
-        <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div wire:loading.remove wire:target="generateGroupReport" wire:key="group-report-results-{{ $groupReportVersion }}">
 
-                <!-- Horas efectivas del grupo -->
-                <div style="border: 1px solid #e5e7eb; border-radius: 12px; background-color: #f9fafb; padding: 20px 24px;">
-                    <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; font-weight: 600;">Horas efectivas del grupo</p>
-                    <p style="margin-top: 4px; font-size: 28px; font-family: monospace; font-weight: 700; color: #111827;">{{ $fmt($groupData['total']) }}</p>
-                </div>
+            <!-- Contenedor con borde punteado que envuelve botones de exportación, métricas y distribuciones -->
+            <div style="margin-top: 30px; border: 2px dashed #9ca3af; border-radius: 12px; padding: 20px; background-color: #F4F4F4; font-size: 15px;">
 
-                <!-- Cierres automáticos -->
-                <div style="border: 1px solid #fecaca; border-radius: 12px; background-color: #fef2f2; padding: 20px 24px;">
-                    <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #ef4444; font-weight: 600;">Cierres automáticos</p>
-                    <p style="margin-top: 4px; font-size: 28px; font-family: monospace; font-weight: 700; color: #dc2626;">{{ $groupData['autoClosedCount'] }}</p>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- DISTRIBUCIONES                                                -->
-        <!-- ============================================================ -->
-        <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-                @foreach (['Por colaborador' => $groupData['byCollaborator'], 'Por cliente' => $groupData['byCustomer'], 'Por puesto profesional' => $groupData['byPosition'], 'Por área física' => $groupData['byArea']] as $title => $rows)
-                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; background-color: white; padding: 16px 20px;">
-                        <h2 style="font-weight: 600; color: #374151; margin-bottom: 12px; font-size: 15px;">{{ $title }}</h2>
-                        @forelse ($rows as $row)
-                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #f3f4f6;">
-                                <span style="color: #374151;">{{ $row['name'] }}</span>
-                                <span style="font-family: monospace; font-size: 14px; color: #111827; font-weight: 500;">{{ $fmt($row['seconds']) }}</span>
-                            </div>
-                        @empty
-                            <p style="font-size: 14px; color: #6b7280;">Sin datos.</p>
-                        @endforelse
+                <!-- Botones de exportación (dentro del borde punteado) -->
+                <div style="padding: 0 0 20px 0; background-color: transparent; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 2px solid #e5e7eb;">
+                    <div style="font-size: 14px; color: #6b7280;">Las selecciones se aplican sólo al generar el informe.</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#eef2f7'" onmouseout="this.style.backgroundColor='transparent'">Descargar Individual</button>
+                        <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: #1A3A6B; color: white; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,0.12); transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#15305a'" onmouseout="this.style.backgroundColor='#1A3A6B'">Descargar Grupal</button>
+                        <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#eef2f7'" onmouseout="this.style.backgroundColor='transparent'">Descargar General</button>
                     </div>
-                @endforeach
-
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- DETALLE DE ACTIVIDADES                                        -->
-        <!-- ============================================================ -->
-        <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
-            <details style="border: 1px solid #e5e7eb; border-radius: 12px; background-color: #f9fafb; padding: 16px 20px;">
-                <summary style="cursor: pointer; font-weight: 600; color: #374151; font-size: 15px; outline: none;">
-                    Ver detalle de actividades ({{ $groupData['entries']->count() }} registros)
-                </summary>
-                <div style="margin-top: 16px;">
-                    @if ($groupActivityDetail['groups'] === [])
-                        <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
-                    @else
-                        <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" />
-                    @endif
                 </div>
-            </details>
+
+                <!-- ============================================================ -->
+                <!-- MÉTRICAS PRINCIPALES (2 bloques)                              -->
+                <!-- ============================================================ -->
+                <div style="padding: 20px 0 0 0; background-color: transparent; overflow: hidden;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+                        <!-- Horas efectivas del grupo -->
+                        <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                            <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                                Horas efectivas del grupo
+                            </div>
+                            <div style="padding: 16px; background-color: #ffffff;">
+                                <p style="font-family: monospace; font-size: 24px; font-weight: 700; color: #111827; margin: 0;">{{ $fmt($groupData['total']) }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Cierres automáticos -->
+                        <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                            <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #ef4444; border-bottom: 1px solid #e5e7eb;">
+                                Cierres automáticos
+                            </div>
+                            <div style="padding: 16px; background-color: #ffffff;">
+                                <p style="font-family: monospace; font-size: 24px; font-weight: 700; color: #dc2626; margin: 0;">{{ $groupData['autoClosedCount'] }}</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- DISTRIBUCIONES (4 bloques)                                    -->
+                <!-- ============================================================ -->
+                <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+                        @foreach (['Por colaborador' => $groupData['byCollaborator'], 'Por cliente' => $groupData['byCustomer'], 'Por puesto profesional' => $groupData['byPosition'], 'Por área física' => $groupData['byArea']] as $title => $rows)
+                            <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                                <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                                    {{ $title }}
+                                </div>
+                                <div style="padding: 12px 16px; background-color: #ffffff; max-height: 224px; overflow-y: auto; overscroll-behavior: contain;">
+                                    @forelse ($rows as $row)
+                                        <div style="display: flex; justify-content: space-between; gap: 12px; min-width: 0; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #f3f4f6;">
+                                            <span class="truncate" style="min-width: 0; flex: 1; color: #374151;">{{ $row['name'] }}</span>
+                                            <span style="flex: 0 0 auto; font-family: monospace; font-size: 14px; color: #111827; font-weight: 500;">{{ $fmt($row['seconds']) }}</span>
+                                        </div>
+                                    @empty
+                                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Sin datos.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- DETALLE DE ACTIVIDADES (1 bloque)                             -->
+                <!-- ============================================================ -->
+                <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
+                    <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                        <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                            Detalle de actividades
+                            <span style="font-weight: 400; color: #6b7280; font-size: 13px; margin-left: 8px;">({{ $groupData['entries']->count() }} registros)</span>
+                        </div>
+                        <div style="padding: 16px; background-color: #ffffff;">
+                            @if ($groupActivityDetail['groups'] === [])
+                                <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
+                            @else
+                                <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" />
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- Fin del contenedor con borde punteado -->
+
         </div>
 
     </div>
@@ -348,13 +377,31 @@
 
             root.addEventListener('group-selection', (event) => setUsers(event.detail.userIds || [], true));
 
+            const reportForm = root.querySelector('[data-report-form]');
+            reportForm?.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const componentRoot = root.closest('[wire\\:id]');
+                const component = componentRoot
+                    ? window.Livewire?.find(componentRoot.getAttribute('wire:id'))
+                    : null;
+
+                if (!component) return;
+
+                component.call(
+                    'generateGroupReport',
+                    [...selectedIds],
+                    reportForm.querySelector('#from')?.value ?? '',
+                    reportForm.querySelector('#to')?.value ?? '',
+                );
+            });
+
             root.querySelectorAll('[data-group-search]').forEach((search) => {
                 const input = search.querySelector('[data-group-search-input]');
                 const menu = search.querySelector('[data-group-search-menu]');
                 const options = JSON.parse(search.dataset.options || '[]');
                 const emptyMessage = JSON.parse(search.dataset.emptyMessage || '"Sin coincidencias"');
 
-                // Aplicar estilos al menú para que tenga scroll interno
                 if (menu) {
                     menu.style.maxHeight = '200px';
                     menu.style.overflowY = 'auto';
