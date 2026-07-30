@@ -2,12 +2,13 @@
 
 namespace App\Livewire\Administracion;
 
-use App\Models\PhysicalArea;
 use App\Models\JobPosition;
+use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserInterns;
+use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -41,6 +42,28 @@ class IndexAdministracion extends Component
 
     public string $activeTab = 'datos';
 
+    public bool $showPermissionsModal = false;
+
+    public bool $showJobPositionModal = false;
+
+    public bool $showPhysicalAreaModal = false;
+
+    public string $newJobPositionName = '';
+
+    public string $newPhysicalAreaName = '';
+
+    public string $jobPositionModalTab = 'crear';
+
+    public ?int $selectedJobPositionId = null;
+
+    public string $editJobPositionName = '';
+
+    public string $physicalAreaModalTab = 'crear';
+
+    public ?int $selectedPhysicalAreaManagementId = null;
+
+    public string $editPhysicalAreaName = '';
+
     public function setActiveTab(string $tab): void
     {
         $this->activeTab = $tab;
@@ -50,9 +73,240 @@ class IndexAdministracion extends Component
     {
         $this->totalUsers = User::count();
         $this->totalRoles = Role::count();
+        $this->showPermissionsModal = request()->routeIs('administracion.permissions');
+
         if ($this->canManageOrganization()) {
             $this->loadOrgChart($chartService);
         }
+    }
+
+    public function openPermissionsModal(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->showPermissionsModal = true;
+    }
+
+    public function closePermissionsModal(): void
+    {
+        $this->showPermissionsModal = false;
+    }
+
+    public function openJobPositionModal(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->showPhysicalAreaModal = false;
+        $this->showPermissionsModal = false;
+        $this->newJobPositionName = '';
+        $this->jobPositionModalTab = 'crear';
+        $this->selectedJobPositionId = null;
+        $this->editJobPositionName = '';
+        $this->resetValidation('newJobPositionName');
+        $this->showJobPositionModal = true;
+    }
+
+    public function closeJobPositionModal(): void
+    {
+        $this->showJobPositionModal = false;
+        $this->newJobPositionName = '';
+        $this->selectedJobPositionId = null;
+        $this->editJobPositionName = '';
+        $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName']);
+    }
+
+    public function saveJobPosition(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->newJobPositionName = $this->normalizeCatalogName($this->newJobPositionName);
+
+        $data = $this->validate([
+            'newJobPositionName' => ['required', 'string', 'max:255', Rule::unique('job_positions', 'name')],
+        ], [
+            'newJobPositionName.required' => 'El nombre del puesto es obligatorio.',
+            'newJobPositionName.max' => 'El nombre del puesto no debe exceder los 255 caracteres.',
+            'newJobPositionName.unique' => 'Este puesto de trabajo ya existe.',
+        ]);
+
+        DB::transaction(function () use ($data): void {
+            JobPosition::create(['name' => $data['newJobPositionName']]);
+        });
+
+        $this->closeJobPositionModal();
+        session()->flash('success', 'Puesto de trabajo agregado correctamente.');
+    }
+
+    public function setJobPositionModalTab(string $tab): void
+    {
+        $this->ensureOrganizationAdministrator();
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+
+        $this->jobPositionModalTab = $tab;
+        $this->selectedJobPositionId = null;
+        $this->editJobPositionName = '';
+        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
+    }
+
+    public function updatedSelectedJobPositionId($positionId): void
+    {
+        $this->ensureOrganizationAdministrator();
+
+        $this->selectedJobPositionId = filled($positionId) ? (int) $positionId : null;
+        $this->editJobPositionName = $this->selectedJobPositionId
+            ? (string) JobPosition::findOrFail($this->selectedJobPositionId)->name
+            : '';
+        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
+    }
+
+    public function updateJobPosition(OrganizationChartService $chartService): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->editJobPositionName = $this->normalizeCatalogName($this->editJobPositionName);
+
+        $data = $this->validate([
+            'selectedJobPositionId' => ['required', 'integer', 'exists:job_positions,id'],
+            'editJobPositionName' => ['required', 'string', 'max:255', Rule::unique('job_positions', 'name')->ignore($this->selectedJobPositionId)],
+        ]);
+
+        JobPosition::findOrFail($data['selectedJobPositionId'])->update(['name' => $data['editJobPositionName']]);
+
+        $this->loadOrgChart($chartService);
+        session()->flash('success', 'Puesto de trabajo actualizado correctamente.');
+    }
+
+    public function deleteJobPosition(OrganizationChartService $chartService): void
+    {
+        $this->ensureOrganizationAdministrator();
+
+        $data = $this->validate([
+            'selectedJobPositionId' => ['required', 'integer', 'exists:job_positions,id'],
+        ]);
+
+        $positionId = $data['selectedJobPositionId'];
+
+        if (DB::table('time_entries')->where('job_position_id_snapshot', $positionId)->exists()) {
+            $this->addError('selectedJobPositionId', 'No se puede eliminar este puesto porque forma parte del historial de horas.');
+
+            return;
+        }
+
+        DB::transaction(function () use ($positionId): void {
+            UserOrganizationalProfile::where('job_position_id', $positionId)->update(['job_position_id' => null]);
+            UserHierarchyRelation::where('job_position_id', $positionId)->update(['job_position_id' => null]);
+            JobPosition::findOrFail($positionId)->delete();
+        });
+
+        $this->selectedJobPositionId = null;
+        $this->editJobPositionName = '';
+        $this->loadOrgChart($chartService);
+        session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
+    }
+
+    public function openPhysicalAreaModal(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->showJobPositionModal = false;
+        $this->showPermissionsModal = false;
+        $this->newPhysicalAreaName = '';
+        $this->physicalAreaModalTab = 'crear';
+        $this->selectedPhysicalAreaManagementId = null;
+        $this->editPhysicalAreaName = '';
+        $this->resetValidation('newPhysicalAreaName');
+        $this->showPhysicalAreaModal = true;
+    }
+
+    public function closePhysicalAreaModal(): void
+    {
+        $this->showPhysicalAreaModal = false;
+        $this->newPhysicalAreaName = '';
+        $this->selectedPhysicalAreaManagementId = null;
+        $this->editPhysicalAreaName = '';
+        $this->resetValidation(['newPhysicalAreaName', 'selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+    }
+
+    public function savePhysicalArea(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->newPhysicalAreaName = $this->normalizeCatalogName($this->newPhysicalAreaName);
+
+        $data = $this->validate([
+            'newPhysicalAreaName' => ['required', 'string', 'max:255', Rule::unique('physical_areas', 'name')],
+        ], [
+            'newPhysicalAreaName.required' => 'El nombre del área o departamento es obligatorio.',
+            'newPhysicalAreaName.max' => 'El nombre del área no debe exceder los 255 caracteres.',
+            'newPhysicalAreaName.unique' => 'Esta área o departamento ya existe.',
+        ]);
+
+        DB::transaction(function () use ($data): void {
+            PhysicalArea::create(['name' => $data['newPhysicalAreaName']]);
+        });
+
+        $this->closePhysicalAreaModal();
+        session()->flash('success', 'Área o departamento agregado correctamente.');
+    }
+
+    public function setPhysicalAreaModalTab(string $tab): void
+    {
+        $this->ensureOrganizationAdministrator();
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+
+        $this->physicalAreaModalTab = $tab;
+        $this->selectedPhysicalAreaManagementId = null;
+        $this->editPhysicalAreaName = '';
+        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+    }
+
+    public function updatedSelectedPhysicalAreaManagementId($areaId): void
+    {
+        $this->ensureOrganizationAdministrator();
+
+        $this->selectedPhysicalAreaManagementId = filled($areaId) ? (int) $areaId : null;
+        $this->editPhysicalAreaName = $this->selectedPhysicalAreaManagementId
+            ? (string) PhysicalArea::findOrFail($this->selectedPhysicalAreaManagementId)->name
+            : '';
+        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+    }
+
+    public function updatePhysicalArea(OrganizationChartService $chartService): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $this->editPhysicalAreaName = $this->normalizeCatalogName($this->editPhysicalAreaName);
+
+        $data = $this->validate([
+            'selectedPhysicalAreaManagementId' => ['required', 'integer', 'exists:physical_areas,id'],
+            'editPhysicalAreaName' => ['required', 'string', 'max:255', Rule::unique('physical_areas', 'name')->ignore($this->selectedPhysicalAreaManagementId)],
+        ]);
+
+        PhysicalArea::findOrFail($data['selectedPhysicalAreaManagementId'])->update(['name' => $data['editPhysicalAreaName']]);
+
+        $this->loadOrgChart($chartService);
+        session()->flash('success', 'Área o departamento actualizado correctamente.');
+    }
+
+    public function deletePhysicalArea(OrganizationChartService $chartService): void
+    {
+        $this->ensureOrganizationAdministrator();
+
+        $data = $this->validate([
+            'selectedPhysicalAreaManagementId' => ['required', 'integer', 'exists:physical_areas,id'],
+        ]);
+
+        $areaId = $data['selectedPhysicalAreaManagementId'];
+
+        if (DB::table('time_entries')->where('physical_area_id_snapshot', $areaId)->exists()) {
+            $this->addError('selectedPhysicalAreaManagementId', 'No se puede eliminar esta área porque forma parte del historial de horas.');
+
+            return;
+        }
+
+        DB::transaction(function () use ($areaId): void {
+            UserOrganizationalProfile::where('physical_area_id', $areaId)->update(['physical_area_id' => null]);
+            UserHierarchyRelation::where('physical_area_id', $areaId)->update(['physical_area_id' => null]);
+            PhysicalArea::findOrFail($areaId)->delete();
+        });
+
+        $this->selectedPhysicalAreaManagementId = null;
+        $this->editPhysicalAreaName = '';
+        $this->loadOrgChart($chartService);
+        session()->flash('success', 'Área eliminada. Los usuarios relacionados quedaron sin área asignada.');
     }
 
     public function updatedSelectedPhysicalAreaId(OrganizationChartService $chartService): void
@@ -339,6 +593,11 @@ class IndexAdministracion extends Component
         abort_unless($this->canManageOrganization(), 403);
     }
 
+    private function normalizeCatalogName(string $name): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $name));
+    }
+
     public function render()
     {
         $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
@@ -445,8 +704,8 @@ class IndexAdministracion extends Component
      * Reemplaza únicamente las relaciones directas del usuario editado.
      * OrganizationChartService conserva la validación contra ciclos.
      *
-     * @param array<int, int|string> $superiorIds
-     * @param array<int, int|string> $subordinateIds
+     * @param  array<int, int|string>  $superiorIds
+     * @param  array<int, int|string>  $subordinateIds
      */
     private function syncHierarchyRelations(
         User $user,

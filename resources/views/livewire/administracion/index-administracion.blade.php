@@ -153,29 +153,65 @@
             </div>
         </div>
 
-        <!-- Grupo 4: Fila de controles / Botones -->
-        <div style="margin-top: 35px; padding: 0 0 80px 0; display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
-            <a href="{{ route('administracion.create.users') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
-                Agregar Usuario
-            </a>
-            <a href="{{ route('administracion.role.create') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
-                Agregar Rol
-            </a>
-            <a href="{{ route('administracion.permissions') }}"
-                class="inline-flex items-center justify-center rounded-lg text-[15px] font-medium text-white shadow-sm"
-                style="width: 180px; height: 50px; background-color: rgb(26, 58, 107); transition: background-color 0.2s; text-decoration: none;"
-                onmouseover="this.style.backgroundColor='rgb(20, 46, 85)'"
-                onmouseout="this.style.backgroundColor='rgb(26, 58, 107)'">
+        <!-- Grupo 4: Acciones centralizadas -->
+        <div style="margin-top: 35px; padding: 0 0 80px 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <div class="relative" x-data="{ open: false }" @click.away="open = false" @keydown.escape.window="open = false">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    :aria-expanded="open.toString()"
+                    aria-haspopup="menu"
+                    class="inline-flex h-[50px] min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#1A3A6B] px-5 text-[15px] font-medium text-white shadow-sm transition hover:bg-[#142e55] focus:outline-none focus:ring-0"
+                >
+                    Agregar...
+                    <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div
+                    x-cloak
+                    x-show="open"
+                    x-transition.origin.top.left
+                    role="menu"
+                    class="absolute left-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 shadow-lg"
+                    style="font-size: 15px;"
+                >
+                    <a href="{{ route('administracion.create.users') }}" role="menuitem"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B]">
+                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9a3 3 0 1 0-6 0 3 3 0 0 0 6 0ZM6 21a6 6 0 0 1 12 0M6 21H3m3 0h3m12 0h-3m3 0h-3M9 9a3 3 0 1 0-6 0 3 3 0 0 0 6 0Zm-6 12a6 6 0 0 1 6-6" />
+                        </svg>
+                        Agregar Usuario
+                    </a>
+                    <a href="{{ route('administracion.role.create') }}" role="menuitem"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B]">
+                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15.5 7.5 18l1.2-5L5 9.8l5.1-.4L12 4.7l1.9 4.7 5.1.4-3.7 3.2 1.2 5L12 15.5Z" />
+                        </svg>
+                        Agregar Rol
+                    </a>
+                    <button type="button" role="menuitem" wire:click="openJobPositionModal" @click="open = false"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01" />
+                        </svg>
+                        Agregar Puesto Operativo
+                    </button>
+                    <button type="button" role="menuitem" wire:click="openPhysicalAreaModal" @click="open = false"
+                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v4l2.5 2.5" />
+                        </svg>
+                        Agregar &Aacute;rea
+                    </button>
+                </div>
+            </div>
+
+            <button type="button" wire:click="openPermissionsModal"
+                class="inline-flex h-[50px] min-w-[180px] items-center justify-center rounded-xl bg-[#1A3A6B] px-5 text-[15px] font-medium text-white shadow-sm transition hover:bg-[#142e55] focus:outline-none focus:ring-0">
                 Gestionar Permisos
-            </a>
+            </button>
         </div>
 
         <!-- Grid con ancho mínimo para evitar deformación -->
@@ -382,6 +418,367 @@
 
         </div>
     </div>
+
+    {{-- ============================================================ --}}
+    {{-- MODAL PARA AGREGAR PUESTO DE TRABAJO                        --}}
+    {{-- ============================================================ --}}
+    @if ($showJobPositionModal)
+        <x-administration-compact-form-modal
+            submit="saveJobPosition"
+            close-action="closeJobPositionModal"
+            modal-id="job-position-form"
+            title="Puestos operativos"
+            subtitle="Administra las posiciones organizacionales."
+        >
+            <x-slot name="icon">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v8a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM10 7V5h4v2m-2 4v4" />
+                </svg>
+            </x-slot>
+
+            <x-slot name="navigation">
+                @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
+                    <button type="button" wire:click="setJobPositionModalTab('{{ $tab }}')"
+                        class="border-b-2 px-4 py-3 text-[15px] font-medium transition focus:outline-none focus:ring-0 {{ $jobPositionModalTab === $tab ? ($tab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-[#1A3A6B] text-[#1A3A6B]') : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </x-slot>
+
+            <x-slot name="form">
+                @if ($jobPositionModalTab === 'crear')
+                <label for="new-job-position-name" class="block text-[15px] font-medium text-gray-700">
+                    Nombre del puesto
+                </label>
+                <input
+                    id="new-job-position-name"
+                    type="text"
+                    maxlength="255"
+                    autocomplete="off"
+                    wire:model.defer="newJobPositionName"
+                    class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0"
+                    placeholder="Ej. Contador Senior"
+                    autofocus
+                >
+                <x-input-error for="newJobPositionName" class="mt-2 text-[15px]" />
+                @elseif ($jobPositionModalTab === 'editar')
+                    <div class="space-y-[15px]">
+                        <div>
+                            <label for="edit-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
+                            <select id="edit-job-position-id" wire:model.live="selectedJobPositionId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
+                                <option value="">Seleccione un puesto</option>
+                                @foreach ($jobPositions as $position)
+                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
+                        </div>
+                        @if ($selectedJobPositionId)
+                            <div>
+                                <label for="edit-job-position-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
+                                <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
+                                <x-input-error for="editJobPositionName" class="mt-2 text-[15px]" />
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="space-y-[15px]">
+                        <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El puesto se eliminará y los usuarios que lo tengan quedarán sin puesto asignado.</p>
+                        <div>
+                            <label for="delete-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
+                            <select id="delete-job-position-id" wire:model.live="selectedJobPositionId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-red-500 focus:outline-none focus:ring-0">
+                                <option value="">Seleccione un puesto</option>
+                                @foreach ($jobPositions as $position)
+                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
+                        </div>
+                    </div>
+                @endif
+            </x-slot>
+
+            <x-slot name="actions">
+                @if ($jobPositionModalTab === 'crear')
+                <button type="button" wire:click="closeJobPositionModal"
+                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                    Cancelar
+                </button>
+                <button type="submit" wire:loading.attr="disabled" wire:target="saveJobPosition"
+                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    <svg wire:loading wire:target="saveJobPosition" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span wire:loading.remove wire:target="saveJobPosition">Guardar</span>
+                    <span wire:loading wire:target="saveJobPosition">Guardando...</span>
+                </button>
+                @else
+                    <button type="button" wire:click="closeJobPositionModal"
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        Cancelar
+                    </button>
+                    @if ($jobPositionModalTab === 'editar')
+                        <button type="button" wire:click="updateJobPosition" wire:loading.attr="disabled" wire:target="updateJobPosition"
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:opacity-60">
+                            Guardar cambios
+                        </button>
+                    @else
+                        <button type="button" wire:click="deleteJobPosition" wire:loading.attr="disabled" wire:target="deleteJobPosition"
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:opacity-60">
+                            Eliminar
+                        </button>
+                    @endif
+                @endif
+            </x-slot>
+        </x-administration-compact-form-modal>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- MODAL PARA AGREGAR ÁREA / DEPARTAMENTO                      --}}
+    {{-- ============================================================ --}}
+    @if ($showPhysicalAreaModal)
+        <x-administration-compact-form-modal
+            submit="savePhysicalArea"
+            close-action="closePhysicalAreaModal"
+            modal-id="physical-area-form"
+            title="Áreas y departamentos"
+            subtitle="Administra las unidades organizacionales."
+        >
+            <x-slot name="icon">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m4 0V9a2 2 0 00-2-2h-2M8 7h4m-4 4h4m-4 4h4" />
+                </svg>
+            </x-slot>
+
+            <x-slot name="navigation">
+                @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
+                    <button type="button" wire:click="setPhysicalAreaModalTab('{{ $tab }}')"
+                        class="border-b-2 px-4 py-3 text-[15px] font-medium transition focus:outline-none focus:ring-0 {{ $physicalAreaModalTab === $tab ? ($tab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-[#1A3A6B] text-[#1A3A6B]') : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </x-slot>
+
+            <x-slot name="form">
+                @if ($physicalAreaModalTab === 'crear')
+                <label for="new-physical-area-name" class="block text-[15px] font-medium text-gray-700">
+                    Nombre del área o departamento
+                </label>
+                <input
+                    id="new-physical-area-name"
+                    type="text"
+                    maxlength="255"
+                    autocomplete="off"
+                    wire:model.defer="newPhysicalAreaName"
+                    class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0"
+                    placeholder="Ej. Auditoría"
+                    autofocus
+                >
+                <x-input-error for="newPhysicalAreaName" class="mt-2 text-[15px]" />
+                @elseif ($physicalAreaModalTab === 'editar')
+                    <div class="space-y-[15px]">
+                        <div>
+                            <label for="edit-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
+                            <select id="edit-physical-area-id" wire:model.live="selectedPhysicalAreaManagementId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
+                                <option value="">Seleccione un área</option>
+                                @foreach ($physicalAreas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
+                        </div>
+                        @if ($selectedPhysicalAreaManagementId)
+                            <div>
+                                <label for="edit-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
+                                <input id="edit-physical-area-name" type="text" maxlength="255" wire:model.defer="editPhysicalAreaName" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
+                                <x-input-error for="editPhysicalAreaName" class="mt-2 text-[15px]" />
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="space-y-[15px]">
+                        <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El área se eliminará y los usuarios que la tengan quedarán sin área asignada.</p>
+                        <div>
+                            <label for="delete-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
+                            <select id="delete-physical-area-id" wire:model.live="selectedPhysicalAreaManagementId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-red-500 focus:outline-none focus:ring-0">
+                                <option value="">Seleccione un área</option>
+                                @foreach ($physicalAreas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
+                        </div>
+                    </div>
+                @endif
+            </x-slot>
+
+            <x-slot name="actions">
+                @if ($physicalAreaModalTab === 'crear')
+                <button type="button" wire:click="closePhysicalAreaModal"
+                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                    Cancelar
+                </button>
+                <button type="submit" wire:loading.attr="disabled" wire:target="savePhysicalArea"
+                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    <svg wire:loading wire:target="savePhysicalArea" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span wire:loading.remove wire:target="savePhysicalArea">Guardar</span>
+                    <span wire:loading wire:target="savePhysicalArea">Guardando...</span>
+                </button>
+                @else
+                    <button type="button" wire:click="closePhysicalAreaModal"
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        Cancelar
+                    </button>
+                    @if ($physicalAreaModalTab === 'editar')
+                        <button type="button" wire:click="updatePhysicalArea" wire:loading.attr="disabled" wire:target="updatePhysicalArea"
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:opacity-60">
+                            Guardar cambios
+                        </button>
+                    @else
+                        <button type="button" wire:click="deletePhysicalArea" wire:loading.attr="disabled" wire:target="deletePhysicalArea"
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:opacity-60">
+                            Eliminar
+                        </button>
+                    @endif
+                @endif
+            </x-slot>
+        </x-administration-compact-form-modal>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- MODAL INFORMATIVO DE PERMISOS VIGENTES --}}
+    {{-- ============================================================ --}}
+    @if ($showPermissionsModal)
+        @php
+            $permissionProfiles = [
+                'Administrador' => [
+                    'label' => 'Acceso administrativo',
+                    'description' => 'Supervisa la configuración y la operación completa del sistema.',
+                    'permissions' => [
+                        'Administración y organigrama',
+                        'Gestión de usuarios',
+                        'Gestión de roles',
+                        'Consulta de permisos vigentes',
+                        'Control de horas y productividad',
+                    ],
+                ],
+                'Auxiliar' => [
+                    'label' => 'Acceso operativo',
+                    'description' => 'Opera sus actividades y consulta la información habilitada para su función.',
+                    'permissions' => [
+                        'Registro de actividades',
+                        'Operación de control de horas',
+                        'Reloj checador',
+                        'Consulta de productividad',
+                    ],
+                ],
+            ];
+        @endphp
+
+        <div
+            x-data
+            wire:click.self="closePermissionsModal"
+            @keydown.escape.window="$wire.closePermissionsModal()"
+            class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="permissions-modal-title"
+            data-administration-modal="permissions"
+        >
+            <div
+                class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl"
+                style="height: min(86vh, 760px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;"
+            >
+                <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">
+                    <div class="flex min-w-0 items-center gap-[15px]">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white shadow-sm">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div class="flex min-w-0 flex-col gap-[10px]">
+                            <h2 id="permissions-modal-title" class="truncate text-[15px] font-semibold leading-none text-gray-900" style="margin: 0;">
+                                Gestionar permisos
+                            </h2>
+                            <p class="truncate text-[15px] leading-none text-gray-500" style="margin: 0;">
+                                Accesos vigentes de Administrador y Auxiliar
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        wire:click="closePermissionsModal"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                        aria-label="Cerrar"
+                    >
+                        &times;
+                    </button>
+                </header>
+
+                <div class="administration-modal-scrollbar min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
+                    <div class="m-5 flex flex-col gap-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 text-[15px] shadow-sm">
+                        <div class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5">
+                            <div class="flex items-start gap-[15px]">
+                                <svg class="mt-0.5 h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="min-w-0">
+                                    <p class="text-[15px] font-semibold text-gray-800">Configuración de acceso actual</p>
+                                    <p class="mt-2 text-[15px] leading-6 text-gray-500">
+                                        Esta vista refleja las reglas vigentes del sistema. La autorización continúa protegida por sus políticas y middleware actuales.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-[15px] md:grid-cols-2">
+                            @foreach ($permissionProfiles as $roleName => $profile)
+                                @if ($roles->contains('role', $roleName))
+                                    <article class="flex min-w-0 flex-col rounded-xl border border-gray-200 bg-[#F3F3F3] p-5" data-permission-role="{{ $roleName }}">
+                                        <div class="min-w-0 border-b border-gray-200 pb-[15px]">
+                                            <h3 class="truncate text-[15px] font-semibold text-gray-900" title="{{ $roleName }}">{{ $roleName }}</h3>
+                                            <span class="mt-[10px] inline-flex max-w-full rounded-full bg-blue-100 px-3 py-1 text-[15px] font-medium text-[#1A3A6B]">
+                                                {{ $profile['label'] }}
+                                            </span>
+                                            <p class="mt-[10px] text-[15px] leading-6 text-gray-500">{{ $profile['description'] }}</p>
+                                        </div>
+
+                                        <ul class="mt-[15px] flex flex-col gap-[10px]" aria-label="Permisos de {{ $roleName }}">
+                                            @foreach ($profile['permissions'] as $permission)
+                                                <li class="flex min-w-0 items-center gap-[10px] rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+                                                    <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white">
+                                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </span>
+                                                    <span class="min-w-0 truncate text-[15px] text-gray-700" title="{{ $permission }}">{{ $permission }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </article>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="flex flex-shrink-0 justify-end border-t border-gray-300 bg-[#F3F3F3] p-5">
+                    <button
+                        type="button"
+                        wire:click="closePermissionsModal"
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0"
+                    >
+                        Cerrar
+                    </button>
+                </footer>
+            </div>
+        </div>
+    @endif
 
     {{-- ============================================================ --}}
 {{-- ============================================================ --}}

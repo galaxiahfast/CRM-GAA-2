@@ -2,16 +2,25 @@
 
 namespace App\Livewire\Administracion\Roles;
 
-use Livewire\Component;
+use App\Models\AccessPermission;
 use App\Models\Role;
+use App\Services\Authorization\PermissionAccessService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Throwable;
 
 class Form extends Component
 {
     public $roles = null;
+
     public $role = null;
+
     public $description = null;
+
     public $mode = 'create';
+
+    public array $permissionIds = [];
 
     public function mount($role = null)
     {
@@ -20,44 +29,83 @@ class Form extends Component
             $this->role = $role->role;
             $this->description = $role->description;
             $this->mode = 'edit';
+            $this->permissionIds = $role->accessPermissions()
+                ->pluck('access_permissions.id')
+                ->map(fn ($permissionId) => (int) $permissionId)
+                ->all();
         }
     }
-    public function save()
+
+    public function save(PermissionAccessService $permissions)
     {
+        if ($this->mode === 'edit'
+            && $this->roles
+            && in_array($this->roles->role, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true)) {
+            // Estos nombres forman parte de las reglas de acceso actuales.
+            $this->role = $this->roles->role;
+        }
+
         $rules = [
             'role' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('roles', 'role')->ignore($this->roles ? $this->roles->id : null)
+                Rule::unique('roles', 'role')->ignore($this->roles ? $this->roles->id : null),
             ],
             'description' => 'nullable|string|max:255',
+            'permissionIds' => ['array'],
+            'permissionIds.*' => [
+                'integer',
+                Rule::exists('access_permissions', 'id')->where('is_active', true),
+            ],
         ];
+
+        $data = $this->validate($rules);
+
         try {
-            $data = $this->validate($rules);
-            
-            if ($this->mode === 'create') {
-                $role = Role::create($data);
-            } elseif ($this->mode === 'edit' && $this->roles) {
-                $this->roles->update($data);
-            } else {
-                throw new \Exception('Modo inválido o rol no encontrado.');
-            }
+            DB::transaction(function () use ($data, $permissions): void {
+                $roleData = [
+                    'role' => $data['role'],
+                    'description' => $data['description'] ?? null,
+                ];
+
+                if ($this->mode === 'create') {
+                    $savedRole = Role::create($roleData);
+                } elseif ($this->mode === 'edit' && $this->roles) {
+                    $this->roles->update($roleData);
+                    $savedRole = $this->roles;
+                } else {
+                    throw new \RuntimeException('Modo inválido o rol no encontrado.');
+                }
+
+                $permissions->syncRolePermissions($savedRole, $data['permissionIds'] ?? []);
+            });
+
             session()->flash('success', 'Rol guardado exitosamente.');
+
             return redirect()->to('/administracion/roles');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Ocurrió un error al guardar el rol: ' . $e->getMessage());
+        } catch (Throwable $e) {
+            report($e);
+            session()->flash('error', 'Ocurrió un error al guardar el rol. Inténtalo nuevamente.');
+
             return;
         }
     }
-    
+
     public function cancel()
     {
-        return redirect()->to('/administracion/roles');
+        return redirect()->route('administracion.index');
     }
 
     public function render()
     {
-        return view('livewire.administracion.roles.form');
+        return view('livewire.administracion.roles.form', [
+            'availablePermissions' => AccessPermission::query()
+                ->active()
+                ->orderBy('module')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'key', 'name', 'module', 'description']),
+        ]);
     }
 }

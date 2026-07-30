@@ -2,36 +2,57 @@
 
 namespace App\Livewire\Administracion\Users;
 
-use Livewire\Component;
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\UserInterns;
-use App\Models\UserOrganizationalProfile;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UserInterns;
+use App\Models\UserOrganizationalProfile;
+use App\Services\Administracion\OrganizationChartService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class Form extends Component
 {
     public $user;
+
     public $name;
+
     public $last_name;
+
     public $email;
+
     public $password;
+
     public $password_confirmation;
+
     public $roles;
+
     public $role_id = '';
+
     public $isAuxiliar = false;
+
     public $mode = 'create';
 
     // 🆕 Nuevas propiedades para enlazar el checador y la nómina
     public $employee_id;
+
     public $hourly_rate = 25.00;     // Por defecto $25 pesos por hora
+
     public $food_allowance = 50.00;  // Por defecto $50 pesos de comida
+
     public $job_position_id = '';
+
     public $physical_area_id = '';
+
     public bool $isSelectedAuxiliar = false;
+
+    public string $managementTab = 'crear';
+
+    public ?int $managementUserId = null;
+
+    public string $deleteConfirmationName = '';
 
     protected $messages = [
         'name.required' => 'El nombre es obligatorio.',
@@ -71,6 +92,7 @@ class Form extends Component
             $this->role_id = $user->role_id;
             $this->employee_id = $user->employee_id; // 👈 Carga el ID de Hikvision
             $this->mode = 'edit';
+            $this->managementTab = 'editar';
 
             // 👈 Carga los valores monetarios actuales del perfil activo
             $profile = $user->activeOrganizationalProfile;
@@ -81,22 +103,76 @@ class Form extends Component
                 $this->physical_area_id = $profile->physical_area_id;
             }
         }
-        
+
         $this->roles = Role::all();
 
         $this->isAuxiliar = $isAuxiliar;
         if ($isAuxiliar) {
-            if (!in_array($role, ['Administrador', 'Coordinador', 'Contador'])) {
+            if (! in_array($role, ['Administrador', 'Coordinador', 'Contador'])) {
                 abort(403, 'No tienes permisos para crear interns.');
             }
             $this->roles = $this->roles->where('role', 'Auxiliar');
         } else {
-            if (!in_array($role, ['Administrador', 'Coordinador'])) {
+            if (! in_array($role, ['Administrador', 'Coordinador'])) {
                 abort(403, 'No tienes permisos para crear usuarios.');
             }
         }
 
         $this->isSelectedAuxiliar = $isAuxiliar || $this->isAuxiliarRole($this->role_id);
+    }
+
+    public function setManagementTab(string $tab)
+    {
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+
+        if ($tab === 'crear' && $this->mode === 'edit') {
+            return redirect()->route('administracion.create.users');
+        }
+
+        $this->managementTab = $tab;
+        $this->managementUserId = null;
+        $this->deleteConfirmationName = '';
+        $this->resetValidation(['managementUserId', 'deleteConfirmationName']);
+    }
+
+    public function editManagedUser()
+    {
+        $data = $this->validate([
+            'managementUserId' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        return redirect()->route('administracion.edit.users', $data['managementUserId']);
+    }
+
+    public function deleteManagedUser(OrganizationChartService $chartService)
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        $data = $this->validate([
+            'managementUserId' => ['required', 'integer', 'exists:users,id'],
+            'deleteConfirmationName' => ['required', 'string'],
+        ]);
+
+        $user = User::findOrFail($data['managementUserId']);
+        $fullName = trim("{$user->name} {$user->last_name}");
+
+        if (mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $data['deleteConfirmationName']))) !== mb_strtolower($fullName)) {
+            $this->addError('deleteConfirmationName', 'Debes escribir el nombre completo exacto del usuario para eliminarlo.');
+
+            return;
+        }
+
+        abort_if($user->id === auth()->id(), 422, 'No puedes eliminar tu propio usuario.');
+
+        DB::transaction(function () use ($user, $chartService): void {
+            $chartService->detachAllRelationsForUser($user->id);
+            UserInterns::where('intern_id', $user->id)->delete();
+            $user->delete();
+        });
+
+        session()->flash('success', 'Usuario eliminado correctamente.');
+
+        return redirect()->route('administracion.create.users');
     }
 
     public function updatedRoleId(): void
@@ -111,10 +187,10 @@ class Form extends Component
             'last_name' => 'nullable|string|max:255',
             'password' => 'bail|required|string|max:255|min:8|confirmed',
             'password_confirmation' => 'bail|required_with:password|same:password',
-            'email' => 'bail|required|email|max:255|unique:users,email' . ($this->user ? ',' . $this->user->id : ''),
+            'email' => 'bail|required|email|max:255|unique:users,email'.($this->user ? ','.$this->user->id : ''),
             'role_id' => 'bail|required|exists:roles,id',
             // 🆕 Reglas de validación añadidas
-            'employee_id' => 'nullable|string|max:50|unique:users,employee_id' . ($this->user ? ',' . $this->user->id : ''),
+            'employee_id' => 'nullable|string|max:50|unique:users,employee_id'.($this->user ? ','.$this->user->id : ''),
             'job_position_id' => 'bail|required|exists:job_positions,id',
             'physical_area_id' => 'bail|required|exists:physical_areas,id',
         ];
@@ -123,14 +199,14 @@ class Form extends Component
         $rules['food_allowance'] = $this->isAuxiliarRole($this->role_id) ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
 
         if ($this->mode === 'edit') {
-            if (!$this->password) {
+            if (! $this->password) {
                 unset($rules['password']);
                 unset($rules['password_confirmation']);
             }
         }
 
         $data = $this->validate($rules);
-        
+
         // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
         $isAuxiliarRole = $this->isAuxiliarRole($data['role_id']);
         // Las instalaciones existentes en SQL Server pueden tener estas columnas
@@ -150,7 +226,7 @@ class Form extends Component
                     if ($isAuxiliarRole) {
                         UserInterns::create([
                             'intern_id' => $user->id,
-                            'created_by' => auth()->id()
+                            'created_by' => auth()->id(),
                         ]);
                     }
 
@@ -162,7 +238,7 @@ class Form extends Component
                         'hourly_rate' => $hourlyRate,
                         'food_allowance' => $foodAllowance,
                         'valid_from' => now()->toDateString(),
-                        'is_active' => true
+                        'is_active' => true,
                     ]);
 
                 } elseif ($this->mode === 'edit' && $this->user) {
@@ -171,7 +247,7 @@ class Form extends Component
                     } else {
                         unset($data['password']);
                     }
-                    
+
                     $this->user->update($data);
 
                     // 🆕 Actualiza o crea el perfil organizacional si no existía uno previo
@@ -181,17 +257,19 @@ class Form extends Component
                             'job_position_id' => $jobPositionId,
                             'physical_area_id' => $physicalAreaId,
                             'hourly_rate' => $hourlyRate,
-                            'food_allowance' => $foodAllowance
+                            'food_allowance' => $foodAllowance,
                         ]
                     );
                 }
             });
 
             session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
-            return redirect()->to("/administracion/" . ($this->isAuxiliar ? 'interns' : 'users'));
+
+            return redirect()->to('/administracion/'.($this->isAuxiliar ? 'interns' : 'users'));
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Ocurrió un error al guardar el usuario: ' . $e->getMessage());
+            session()->flash('error', 'Ocurrió un error al guardar el usuario: '.$e->getMessage());
+
             return;
         }
     }
@@ -206,6 +284,18 @@ class Form extends Component
         return view('livewire.administracion.users.form', [
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
+            'employeeIdSuggestions' => DB::table('control_de_horas')
+                ->select('employeeID')
+                ->selectRaw('MAX(personName) as personName')
+                ->whereNotNull('employeeID')
+                ->where('employeeID', '<>', '')
+                ->groupBy('employeeID')
+                ->orderBy('employeeID')
+                ->get(),
+            'manageableUsers' => User::query()
+                ->orderBy('name')
+                ->orderBy('last_name')
+                ->get(['id', 'name', 'last_name', 'email']),
         ]);
     }
 

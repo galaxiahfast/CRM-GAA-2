@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\UserOrganizationalProfile;
 use App\Observers\UserHierarchyObserver;
 use App\Observers\UserOrganizationalProfileHierarchyObserver;
+use App\Services\Authorization\PermissionAccessService;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
     {
         User::observe(UserHierarchyObserver::class);
         UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
+
+        // Capa opt-in para módulos con permisos dinámicos. Se mantiene separada
+        // de Gate para que el bypass histórico de Administrador no impida revocar
+        // una sección cuando su permiso deje de existir.
+        Blade::if('rolePermission', function (string $permissionKey): bool {
+            return app(PermissionAccessService::class)->allows(auth()->user(), $permissionKey);
+        });
 
         /**
          * 💡 SUPERADMIN BYPASS (Gate::before)
