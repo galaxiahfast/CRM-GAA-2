@@ -36,7 +36,7 @@
             </p>
         </div>
 
-        <div class="w-full flex flex-wrap items-center justify-center" style="gap: 15px;">
+        <div class="w-full flex flex-wrap items-center justify-center" style="gap: 10px;">
             @if (!empty($node['role']))
                 <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#1e3a8a] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 
                       style="width: 110px; flex-shrink: 0; line-height: 1;" title="{{ $node['role'] }}">

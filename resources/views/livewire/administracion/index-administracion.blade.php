@@ -13,18 +13,49 @@
     $orgChartTree = $orgChartTree ?? [];
 @endphp
 
-<style>
-    .unassigned-users-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #1A3A6B #f8fafc;
-    }
-    .unassigned-users-scrollbar::-webkit-scrollbar { width: 6px; }
-    .unassigned-users-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 9999px; }
-    .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
-    .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #15305a !important; }
-</style>
-
 <div class="w-full min-w-0 space-y-4" style="font-size: 15px; background-color: #F3F3F3;">
+    <style>
+        .unassigned-users-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #1A3A6B #F3F3F3;
+        }
+        .unassigned-users-scrollbar::-webkit-scrollbar { width: 6px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #15305a !important; }
+
+        .administration-modal-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #1A3A6B #F3F3F3;
+        }
+        .administration-modal-scrollbar::-webkit-scrollbar { width: 6px; }
+        .administration-modal-scrollbar::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
+        .administration-modal-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
+        .org-user-modal input,
+        .org-user-modal select {
+            border-color: #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #F3F3F3;
+            box-shadow: none;
+        }
+        .org-user-modal .org-modal-fields > div:not(.grid),
+        .org-user-modal .org-modal-fields > .grid > div,
+        .org-user-modal .org-modal-financial > div {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #F3F3F3;
+        }
+        .org-user-modal .org-modal-fields p,
+        .org-user-modal .org-modal-financial p {
+            overflow: visible !important;
+            white-space: normal !important;
+            text-overflow: clip !important;
+            overflow-wrap: anywhere;
+        }
+    </style>
+
     <!-- Accesos rápidos -->
     <div class="overflow-hidden rounded-2xl shadow-lg" style="background-color: #F3F3F3;">
         <div class="border-b p-4">
@@ -221,14 +252,14 @@
 
             <!-- Usuarios sin asignar -->
             <div class="unassigned-users-scrollbar rounded-xl border border-dashed border-gray-300" style="min-width: 400px; background-color: #F3F3F3; max-height: 520px; overflow-y: auto; padding: 20px;">
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                        <div class="flex items-center justify-between" style="line-height: 1; height: fit-content;">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="flex w-full items-center justify-between" style="line-height: 1; height: 10px;">
                             <h3 class="text-[15px] font-semibold text-gray-700" style="line-height: 1; margin: 0; padding: 0;">
                                 Usuarios sin asignar
                             </h3>
                             <span class="rounded-full bg-gray-200 px-2 text-[15px] font-medium text-gray-700"
-                                  style="line-height: 1; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
+                                style="line-height: 1; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
                                 {{ count($unassignedUsers) }}
                             </span>
                         </div>
@@ -248,17 +279,21 @@
                                 @endphp
                                 <li style="list-style: none;">
                                     <button type="button" wire:key="unassigned-user-{{ $user['id'] }}" wire:click="selectUser({{ (int) $user['id'] }})"
-                                        class="w-full rounded-xl border border-dashed border-gray-300 bg-white p-[15px] text-left shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0"
-                                        style="display: flex; flex-direction: column; gap: 15px;">
-                                        <div class="flex min-w-0 items-start gap-[15px]">
+                                        class="w-full rounded-xl border border-dashed border-gray-300 bg-[#F3F3F3] p-[20px] text-left shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0"
+                                        style="display: flex; flex-direction: column; gap: 20px;">
+                                        <div class="flex min-w-0 items-start gap-[20px]">
                                             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">
                                                 {{ $initials !== '' ? $initials : '?' }}
                                             </div>
-                                            <div class="min-w-0 flex-1" style="display: flex; flex-direction: column; gap: 15px;">
-                                                <div class="flex min-w-0 items-start justify-between gap-[15px]">
+                                            <div class="min-w-0 flex-1" style="display: flex; flex-direction: column; gap: 13px;">
+                                                <div class="flex min-w-0 items-start justify-between gap-[0px]">
+
+                                                    {{--  --}}
                                                     <p class="min-w-0 flex-1 truncate text-[15px] font-medium text-gray-800" title="{{ $user['name'] }}" style="line-height: 1; margin: 0; padding: 0;">
                                                         {{ $user['name'] }}
                                                     </p>
+
+                                                    {{--  --}}
                                                     @if(! empty($user['created_at']))
                                                         <span class="shrink-0 text-[13px] text-gray-500" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
                                                             {{ \Carbon\Carbon::parse($user['created_at'])->format('d/m/Y') }}
@@ -269,10 +304,13 @@
                                                         </span>
                                                     @endif
                                                 </div>
+
+
+                                                {{--  --}}
                                                 <p class="truncate text-[15px] text-gray-500" title="{{ $user['email'] }}" style="line-height: 1; margin: 0; padding: 0;">{{ $user['email'] }}</p>
                                             </div>
                                         </div>
-                                        <div class="flex flex-wrap gap-[15px]">
+                                        <div class="flex flex-wrap gap-[10px]">
                                             @foreach ($user['missing'] as $missingKey)
                                                 <span @class([
                                                     'inline-flex w-[130px] shrink-0 items-center justify-center gap-[10px] rounded-md px-[20px] py-[10px] text-[15px] font-medium text-white',
@@ -296,7 +334,7 @@
                                             @endforeach
                                         </div>
                                         @if (! empty($user['role']) || ! empty($user['job_position']) || ! empty($user['physical_area']))
-                                            <div class="flex flex-wrap gap-[15px]">
+                                            <div class="flex flex-wrap gap-[20px]">
                                                 @if (! empty($user['role']))
                                                     <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Rol:</strong> {{ $user['role'] }}</span>
                                                 @endif
@@ -328,82 +366,91 @@
 {{-- MODAL DE USUARIO --}}
 {{-- ============================================================ --}}
 @if ($selectedUserDetails)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
         <!-- Contenedor principal: altura fija de 80vh -->
-        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl flex flex-col" style="height: 80vh; max-height: 80vh; font-size: 15px; overscroll-behavior: contain;">
+        <div class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
             
             <!-- ===== ENCABEZADO (fijo) ===== -->
-            <div class="flex-shrink-0 flex items-start justify-between border-b bg-white px-5 py-4">
-                <div style="width: 100%;">
-                    <h2 id="user-details-title" class="text-[15px] font-semibold text-gray-900 leading-none" style="margin: 0 0 10px 0;">
-                        {{ $selectedUserDetails['name'] ?? 'Usuario' }}
-                    </h2>
-                    <p class="text-[15px] text-gray-500 leading-tight" style="margin: 0;">Detalles del usuario</p>
+            <div class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">
+                <div class="flex min-w-0 items-center gap-[15px]">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white shadow-sm">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0" style="display: flex; flex-direction: column; gap: 10px;">
+                        <h2 id="user-details-title" class="truncate text-[15px] font-semibold text-gray-900 leading-none" title="{{ $selectedUserDetails['name'] ?? 'Usuario' }}" style="margin: 0;">
+                            {{ $selectedUserDetails['name'] ?? 'Usuario' }}
+                        </h2>
+                        <p class="text-[15px] text-gray-500 leading-none" style="margin: 0;">Detalles del usuario</p>
+                    </div>
                 </div>
-                <button type="button" wire:click="closeUserDetails" class="text-2xl leading-none text-gray-400 hover:text-gray-700" aria-label="Cerrar">&times;</button>
+                <button type="button" wire:click="closeUserDetails" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Cerrar">&times;</button>
             </div>
 
             @if ($isEditingUser)
                 {{-- ===== FORMULARIO DE EDICIÓN ===== --}}
-                <div class="flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
-                    <form wire:submit="saveSelectedUser" class="space-y-4 p-5 text-[15px]">
+                <div class="administration-modal-scrollbar min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
+                    <form wire:submit="saveSelectedUser" class="m-5 flex flex-col gap-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 text-[15px] shadow-sm">
                         <div class="grid grid-cols-1 gap-4">
                             <div><x-label for="edit-name" value="Nombre" class="text-[15px] mb-2.5 block" /><x-input id="edit-name" class="mt-1 block w-full text-[15px]" wire:model="userForm.name" /><x-input-error for="userForm.name" /></div>
                             <div><x-label for="edit-last-name" value="Apellido" class="text-[15px] mb-2.5 block" /><x-input id="edit-last-name" class="mt-1 block w-full text-[15px]" wire:model="userForm.last_name" /><x-input-error for="userForm.last_name" /></div>
                             <div><x-label for="edit-email" value="Email" class="text-[15px] mb-2.5 block" /><x-input id="edit-email" type="email" class="mt-1 block w-full text-[15px]" wire:model="userForm.email" /><x-input-error for="userForm.email" /></div>
                             <div><x-label for="edit-employee-id" value="ID del checador" class="text-[15px] mb-2.5 block" /><x-input id="edit-employee-id" class="mt-1 block w-full text-[15px]" wire:model="userForm.employee_id" /><x-input-error for="userForm.employee_id" /></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div><x-label for="edit-role" value="Rol" class="text-[15px] mb-2.5 block" /><select id="edit-role" wire:model.live="userForm.role_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un rol</option>@foreach ($roles as $availableRole)<option value="{{ $availableRole->id }}">{{ $availableRole->role }}</option>@endforeach</select><x-input-error for="userForm.role_id" /></div>
                             <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><select id="edit-position" wire:model="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
                         </div>
                         <div><x-label for="edit-area" value="Área / departamento" class="text-[15px] mb-2.5 block" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
-                        <div class="grid grid-cols-1 gap-4 border-t pt-4">
+                        <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4">
                             <div><x-label for="edit-superiors" value="Jefes directos" class="text-[15px] mb-2.5 block" /><select id="edit-superiors" multiple wire:model="userForm.superior_ids" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.superior_ids" /></div>
                             <div><x-label for="edit-subordinates" value="Subordinados directos" class="text-[15px] mb-2.5 block" /><select id="edit-subordinates" multiple wire:model="userForm.subordinate_ids" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.subordinate_ids" /></div>
                         </div>
                         @if ($userForm['is_auxiliar'] ?? false)
-                            <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                            <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4 sm:grid-cols-2">
                                 <div><x-label for="edit-hourly-rate" value="Precio por hora" class="text-[15px] mb-2.5 block" /><x-input id="edit-hourly-rate" type="number" step="0.01" class="mt-1 block w-full text-[15px]" wire:model="userForm.hourly_rate" /><x-input-error for="userForm.hourly_rate" /></div>
                                 <div><x-label for="edit-food-allowance" value="Apoyo económico por día" class="text-[15px] mb-2.5 block" /><x-input id="edit-food-allowance" type="number" step="0.01" class="mt-1 block w-full text-[15px]" wire:model="userForm.food_allowance" /><x-input-error for="userForm.food_allowance" /></div>
                             </div>
                         @endif
-                        <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4 sm:grid-cols-2">
                             <div><x-label for="edit-password" value="Nueva contraseña (opcional)" class="text-[15px] mb-2.5 block" /><x-input id="edit-password" type="password" class="mt-1 block w-full text-[15px]" wire:model="userForm.password" /><x-input-error for="userForm.password" /></div>
                             <div><x-label for="edit-password-confirmation" value="Confirmar contraseña" class="text-[15px] mb-2.5 block" /><x-input id="edit-password-confirmation" type="password" class="mt-1 block w-full text-[15px]" wire:model="userForm.password_confirmation" /></div>
                         </div>
                         <div class="flex justify-end gap-3 border-t pt-4">
-                            <button type="button" wire:click="cancelEditingUser" class="rounded-lg border border-gray-300 px-4 py-2 text-[15px] font-medium text-gray-700 hover:bg-gray-100">Cancelar</button>
-                            <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-[15px] font-medium text-white hover:bg-blue-700">Guardar cambios</button>
+                            <button type="button" wire:click="cancelEditingUser" class="rounded-lg border border-[#1A3A6B] bg-white px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-gray-100 focus:outline-none focus:ring-0">Cancelar</button>
+                            <button type="submit" class="rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0">Guardar cambios</button>
                         </div>
                     </form>
                 </div>
             @else
                 {{-- ===== MENÚ DE PESTAÑAS (fijo) ===== --}}
-                <div class="flex-shrink-0 flex border-b border-gray-200 bg-gray-50/80 px-5">
-                    <button 
+                <div class="flex flex-shrink-0 gap-[10px] border-b border-gray-300 bg-[#F3F3F3] px-5 pt-3">
+                    <button type="button"
                         wire:click="setActiveTab('datos')"
-                        class="px-4 py-2.5 text-[15px] font-medium border-b-2 transition-colors {{ $activeTab === 'datos' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                        class="inline-flex items-center gap-[10px] border-b-2 px-4 py-3 text-[15px] font-medium transition-colors focus:outline-none focus:ring-0 {{ $activeTab === 'datos' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}"
                     >
-                        📋 Datos
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 8h6m2 13H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /></svg>
+                        Datos
                     </button>
-                    <button 
+                    <button type="button"
                         wire:click="setActiveTab('eliminar')"
-                        class="px-4 py-2.5 text-[15px] font-medium border-b-2 transition-colors {{ $activeTab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                        class="inline-flex items-center gap-[10px] border-b-2 px-4 py-3 text-[15px] font-medium transition-colors focus:outline-none focus:ring-0 {{ $activeTab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}"
                     >
-                        🗑️ Eliminar usuario
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" /></svg>
+                        Eliminar usuario
                     </button>
                 </div>
 
                 {{-- ===== CONTENIDO SCROLLABLE ===== --}}
-                <div class="flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
+                <div class="administration-modal-scrollbar min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
                     @if ($activeTab === 'datos')
                         {{-- PESTAÑA DATOS --}}
-                        <div class="px-5 py-4" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="p-5" style="display: flex; flex-direction: column; gap: 15px;">
                             <!-- DATOS GENERALES -->
-                            <div style="display: flex; flex-direction: column;">
-                                <h3 class="text-[15px] font-semibold tracking-wider text-gray-400" style="padding-bottom: 20px; margin: 0;">Datos generales</h3>
-                                <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div class="overflow-hidden rounded-xl border border-dashed border-gray-300 bg-white shadow-sm" style="display: flex; flex-direction: column;">
+                                <h3 class="border-b border-gray-200 bg-gray-100 text-[15px] font-semibold text-gray-800" style="padding: 15px 20px; margin: 0;">Datos generales</h3>
+                                <div class="org-modal-fields p-5" style="display: flex; flex-direction: column; gap: 15px;">
                                     <!-- Nombre completo -->
                                     <div style="display: flex; flex-direction: column;">
                                         <span class="text-[15px] text-gray-500" style="margin-bottom: 10px;">Nombre completo</span>
@@ -415,7 +462,7 @@
                                         <p class="text-[15px] font-medium text-gray-800 leading-tight truncate" style="margin: 0;">{{ $selectedUserDetails['email'] ?? 'N/A' }}</p>
                                     </div>
                                     <!-- Rol + ID checador (2 columnas) -->
-                                    <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
+                                    <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                                         <div style="display: flex; flex-direction: column;">
                                             <span class="text-[15px] text-gray-500" style="margin-bottom: 10px;">Rol</span>
                                             <p class="text-[15px] font-medium text-gray-800 leading-tight truncate" style="margin: 0;">{{ $selectedUserDetails['role'] ?: 'Sin rol' }}</p>
@@ -426,7 +473,7 @@
                                         </div>
                                     </div>
                                     <!-- Fechas (2 columnas) -->
-                                    <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
+                                    <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                                         <div style="display: flex; flex-direction: column;">
                                             <span class="text-[15px] text-gray-500" style="margin-bottom: 10px;">Fecha de creación</span>
                                             <p class="text-[15px] font-medium text-gray-600 leading-tight truncate" style="margin: 0;">{{ $selectedUserDetails['created_at'] ?? 'N/A' }}</p>
@@ -445,11 +492,11 @@
                             </div>
 
                             <!-- ORGANIZACIONAL -->
-                            <div style="display: flex; flex-direction: column;">
-                                <h3 class="text-[15px] font-semibold tracking-wider text-gray-400" style="padding-bottom: 20px; margin: 0;">Organizacional</h3>
-                                <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div class="overflow-hidden rounded-xl border border-dashed border-gray-300 bg-white shadow-sm" style="display: flex; flex-direction: column;">
+                                <h3 class="border-b border-gray-200 bg-gray-100 text-[15px] font-semibold text-gray-800" style="padding: 15px 20px; margin: 0;">Organizacional</h3>
+                                <div class="org-modal-fields p-5" style="display: flex; flex-direction: column; gap: 15px;">
                                     <!-- Puesto + Área (2 columnas) -->
-                                    <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
+                                    <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                                         <div style="display: flex; flex-direction: column;">
                                             <span class="text-[15px] text-gray-500" style="margin-bottom: 10px;">Puesto</span>
                                             <p class="text-[15px] font-medium text-gray-800 leading-tight truncate" style="margin: 0;">{{ $selectedUserDetails['job_position'] ?: 'Sin asignar' }}</p>
@@ -487,9 +534,9 @@
                             <!-- Datos de auxiliar -->
                             @if ($selectedUserDetails['is_auxiliar'] ?? false)
                                 <div style="display: flex; flex-direction: column;">
-                                    <div class="rounded-lg bg-amber-50 p-4">
-                                        <h3 class="text-[15px] font-semibold tracking-wider text-amber-700" style="padding-bottom: 20px; margin: 0;">Datos de auxiliar</h3>
-                                        <div class="grid grid-cols-2 gap-x-5 gap-y-2.5">
+                                    <div class="overflow-hidden rounded-xl border border-dashed border-amber-300 bg-amber-50 shadow-sm">
+                                        <h3 class="border-b border-amber-200 bg-amber-100/70 text-[15px] font-semibold text-amber-800" style="padding: 15px 20px; margin: 0;">Datos de auxiliar</h3>
+                                        <div class="org-modal-financial grid grid-cols-1 gap-[15px] p-5 sm:grid-cols-2">
                                             <div style="display: flex; flex-direction: column;">
                                                 <span class="text-[15px] text-amber-600" style="margin-bottom: 10px;">Precio por hora</span>
                                                 <p class="text-[15px] font-medium text-amber-800 leading-tight truncate" style="margin: 0;">${{ number_format((float) ($selectedUserDetails['hourly_rate'] ?? 0), 2) }}</p>
@@ -506,44 +553,28 @@
 
                     @elseif ($activeTab === 'eliminar')
                         {{-- PESTAÑA ELIMINAR USUARIO --}}
-                        <!-- Contenedor que centra verticalmente todo el contenido -->
-                        <div style="display: flex; flex-direction: column; justify-content: center; min-height: 100%; padding: 20px;">
-                            <div class="flex items-start gap-3 border-2 border-red-200 rounded-lg bg-red-50/50" style="padding: 20px;">
-                                <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                                <div class="flex-1">
-                                    <!-- Contenedor de textos con gap=20px entre los divs -->
-                                    <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px;">
-                                        
-                                        <!-- Título -->
-                                        <div style="height: 20px; position: relative; overflow: hidden;">
-                                            <h3 style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; margin: 0; padding: 0; font-size: 15px; font-weight: 600; color: #b91c1c; line-height: 2;">¿Estás seguro de eliminar este usuario?</h3>
-                                        </div>
-                                        
-                                        <!-- Párrafo 1 -->
-                                        <div style="height: 30px; position: relative; overflow: hidden;">
-                                            <p style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; margin: 0; padding: 0; font-size: 15px; color: #4b5563; line-height: 2;">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
-                                        </div>
-                                        
-                                        <!-- Párrafo 2 -->
-                                        <div style="height: 30px; position: relative; overflow: hidden;">
-                                            <p style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; margin: 0; padding: 0; font-size: 15px; color: #4b5563; line-height: 2;">Para confirmar, escribe el nombre completo del usuario: <span class="font-semibold text-gray-800">{{ $selectedUserDetails['name'] ?? 'Usuario' }}</span></p>
-                                        </div>
-                                        
+                        <div class="flex min-h-full items-center p-5">
+                            <div class="w-full rounded-xl border border-dashed border-red-300 bg-white p-5 shadow-sm">
+                                <div class="flex items-start gap-[15px]">
+                                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
                                     </div>
-                                    <!-- Input y botón -->
-                                    <div class="flex flex-col gap-3">
-                                        <input type="text" wire:model="deleteConfirmationName" class="w-full rounded-lg border-gray-300 text-[15px] focus:border-red-500 focus:ring-red-500" placeholder="Nombre completo del usuario">
-                                        <button type="button" wire:click="deleteSelectedUser" class="w-full rounded-lg bg-red-600 px-4 py-2.5 text-[15px] font-medium text-white hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                                            Eliminar usuario permanentemente
-                                        </button>
-                                    </div>
-                                    @error('deleteConfirmationName')
-                                        <div style="height: 30px; position: relative; margin-top: 20px; overflow: hidden;">
-                                            <p class="text-[15px] text-red-600" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; margin: 0; padding: 0; line-height: 2;">{{ $message }}</p>
+                                    <div class="min-w-0 flex-1" style="display: flex; flex-direction: column; gap: 15px;">
+                                        <h3 class="text-[15px] font-semibold text-red-700" style="margin: 0;">¿Estás seguro de eliminar este usuario?</h3>
+                                        <p class="text-[15px] leading-relaxed text-gray-600" style="margin: 0;">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
+                                        <p class="text-[15px] leading-relaxed text-gray-600" style="margin: 0;">Para confirmar, escribe el nombre completo del usuario: <span class="font-semibold text-gray-800">{{ $selectedUserDetails['name'] ?? 'Usuario' }}</span></p>
+                                        <div class="flex flex-col gap-[15px]">
+                                            <input type="text" wire:model="deleteConfirmationName" class="w-full border-gray-300 px-4 py-3 text-[15px] focus:border-red-500 focus:ring-0" placeholder="Nombre completo del usuario">
+                                            <button type="button" wire:click="deleteSelectedUser" class="inline-flex w-full items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">
+                                                Eliminar usuario permanentemente
+                                            </button>
                                         </div>
-                                    @enderror
+                                        @error('deleteConfirmationName')
+                                            <p class="text-[15px] text-red-600" style="margin: 0;">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -552,11 +583,14 @@
             @endif
 
             {{-- ===== PIE CON BOTONES (fijo) ===== --}}
-            <div class="flex-shrink-0 flex justify-end gap-3 border-t bg-gray-50 px-5 py-4">
+            <div class="flex flex-shrink-0 justify-end gap-[15px] border-t border-gray-300 bg-[#F3F3F3] p-5">
                 @if (! $isEditingUser && $activeTab === 'datos')
-                    <button type="button" wire:click="beginEditingUser" class="rounded-lg bg-blue-600 px-4 py-2 text-[15px] font-medium text-white hover:bg-blue-700 transition-colors">Editar</button>
+                    <button type="button" wire:click="beginEditingUser" class="inline-flex items-center justify-center gap-[10px] rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        Editar
+                    </button>
                 @endif
-                <button type="button" wire:click="closeUserDetails" class="rounded-lg border border-gray-300 px-4 py-2 text-[15px] font-medium text-gray-700 hover:bg-gray-100 transition-colors">Cerrar</button>
+                <button type="button" wire:click="closeUserDetails" class="rounded-lg border border-[#1A3A6B] bg-white px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-gray-100 focus:outline-none focus:ring-0">Cerrar</button>
             </div>
 
         </div> {{-- fin contenedor principal --}}
