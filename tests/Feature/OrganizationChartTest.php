@@ -9,9 +9,12 @@ use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
+use App\Livewire\Administracion\IndexAdministracion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class OrganizationChartTest extends TestCase
@@ -245,5 +248,140 @@ class OrganizationChartTest extends TestCase
         $this->actingAs($admin)
             ->get('/administracion')
             ->assertOk();
+    }
+
+    public function test_user_edit_modal_lists_existing_attendance_ids_with_their_names(): void
+    {
+        ['adminRole' => $adminRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $administrator = $this->createUser($adminRole, 'admin-attendance-id@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject-attendance-id@test.mx', 'Usuario Editado');
+
+        DB::table('control_de_horas')->insert([
+            'employeeID' => 'BIO-77',
+            'personName' => 'Persona del Checador',
+            'authDateTime' => now(),
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->call('beginEditingUser')
+            ->assertSee('BIO-77')
+            ->assertSee('Persona del Checador');
+    }
+
+    public function test_editing_hierarchy_lists_exclude_the_same_person_from_the_opposite_relation(): void
+    {
+        ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+        $area = PhysicalArea::create(['name' => 'Contabilidad']);
+        $position = JobPosition::create(['name' => 'Contador']);
+
+        $administrator = $this->createUser($adminRole, 'admin-hierarchy@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject@test.mx', 'Usuario Editado');
+        $candidate = $this->createUser($contadorRole, 'candidate@test.mx', 'Candidato Organigrama');
+        $member = $this->createUser($auxRole, 'member@test.mx', 'Miembro Organigrama');
+
+        foreach ([$subject, $candidate, $member] as $user) {
+            $this->assignProfile($user, $position, $area);
+        }
+
+        app(OrganizationChartService::class)->createRelation([
+            'subordinate_id' => $member->id,
+            'superior_id' => $candidate->id,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->set('userForm.subordinate_ids', [$candidate->id])
+            ->set('userForm.superior_ids', [$candidate->id])
+            ->assertSet('userForm.superior_ids', [$candidate->id])
+            ->assertSet('userForm.subordinate_ids', []);
+    }
+
+    public function test_editing_excludes_a_superiors_ancestors_from_subordinate_selection(): void
+    {
+        ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $administrator = $this->createUser($adminRole, 'admin-lineage@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject-lineage@test.mx', 'Usuario Editado');
+        $director = $this->createUser($contadorRole, 'director@test.mx', 'Director');
+        $manager = $this->createUser($contadorRole, 'manager@test.mx', 'Gerente');
+        $member = $this->createUser($auxRole, 'member-lineage@test.mx', 'Miembro Organigrama');
+
+        $service = app(OrganizationChartService::class);
+        $service->createRelation([
+            'subordinate_id' => $manager->id,
+            'superior_id' => $director->id,
+        ]);
+        $service->createRelation([
+            'subordinate_id' => $member->id,
+            'superior_id' => $manager->id,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->set('userForm.superior_ids', [$manager->id])
+            ->set('userForm.subordinate_ids', [$director->id])
+            ->assertSet('userForm.superior_ids', [$manager->id])
+            ->assertSet('userForm.subordinate_ids', []);
+    }
+
+    public function test_editing_allows_multiple_superiors_from_the_same_reporting_line(): void
+    {
+        ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $administrator = $this->createUser($adminRole, 'admin-multiple@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject-multiple@test.mx', 'Usuario Editado');
+        $director = $this->createUser($contadorRole, 'director-multiple@test.mx', 'Director');
+        $manager = $this->createUser($contadorRole, 'manager-multiple@test.mx', 'Gerente');
+        $member = $this->createUser($auxRole, 'member-multiple@test.mx', 'Miembro Organigrama');
+
+        $service = app(OrganizationChartService::class);
+        $service->createRelation([
+            'subordinate_id' => $manager->id,
+            'superior_id' => $director->id,
+        ]);
+        $service->createRelation([
+            'subordinate_id' => $member->id,
+            'superior_id' => $manager->id,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->set('userForm.superior_ids', [$manager->id, $director->id])
+            ->assertSet('userForm.superior_ids', [$manager->id, $director->id]);
+    }
+
+    public function test_editing_rejects_a_superior_who_is_not_part_of_the_organization_chart(): void
+    {
+        ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+        $area = PhysicalArea::create(['name' => 'Contabilidad']);
+        $position = JobPosition::create(['name' => 'Contador']);
+
+        $administrator = $this->createUser($adminRole, 'admin-validation@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject-validation@test.mx', 'Usuario Editado');
+        $chartSuperior = $this->createUser($contadorRole, 'chart-superior@test.mx', 'Jefe Organigrama');
+        $chartMember = $this->createUser($auxRole, 'chart-member@test.mx', 'Miembro Organigrama');
+        $outsideUser = $this->createUser($contadorRole, 'outside@test.mx', 'Usuario Sin Organigrama');
+
+        foreach ([$subject, $chartSuperior, $chartMember, $outsideUser] as $user) {
+            $this->assignProfile($user, $position, $area);
+        }
+
+        app(OrganizationChartService::class)->createRelation([
+            'subordinate_id' => $chartMember->id,
+            'superior_id' => $chartSuperior->id,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->set('userForm.superior_ids', [$outsideUser->id])
+            ->call('saveSelectedUser')
+            ->assertHasErrors('userForm.superior_ids.0');
     }
 }

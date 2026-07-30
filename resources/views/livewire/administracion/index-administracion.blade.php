@@ -54,6 +54,28 @@
             text-overflow: clip !important;
             overflow-wrap: anywhere;
         }
+        .org-user-modal .hierarchy-selection-card {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            background-color: #F3F3F3;
+        }
+        .org-user-modal .hierarchy-selection-list {
+            min-height: 10rem;
+            max-height: 12rem;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            background-color: #fff;
+            color: #1f2937;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #1A3A6B #F3F3F3;
+        }
+        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar { width: 6px; }
+        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
+        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
     </style>
 
     <!-- Accesos rápidos -->
@@ -368,7 +390,7 @@
 @if ($selectedUserDetails)
     <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
         <!-- Contenedor principal: altura fija de 80vh -->
-        <div class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
+        <div x-data @click.outside="$wire.closeUserDetails()" class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
             
             <!-- ===== ENCABEZADO (fijo) ===== -->
             <div class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">
@@ -396,16 +418,123 @@
                             <div><x-label for="edit-name" value="Nombre" class="text-[15px] mb-2.5 block" /><x-input id="edit-name" class="mt-1 block w-full text-[15px]" wire:model="userForm.name" /><x-input-error for="userForm.name" /></div>
                             <div><x-label for="edit-last-name" value="Apellido" class="text-[15px] mb-2.5 block" /><x-input id="edit-last-name" class="mt-1 block w-full text-[15px]" wire:model="userForm.last_name" /><x-input-error for="userForm.last_name" /></div>
                             <div><x-label for="edit-email" value="Email" class="text-[15px] mb-2.5 block" /><x-input id="edit-email" type="email" class="mt-1 block w-full text-[15px]" wire:model="userForm.email" /><x-input-error for="userForm.email" /></div>
-                            <div><x-label for="edit-employee-id" value="ID del checador" class="text-[15px] mb-2.5 block" /><x-input id="edit-employee-id" class="mt-1 block w-full text-[15px]" wire:model="userForm.employee_id" /><x-input-error for="userForm.employee_id" /></div>
+                            <div>
+                                <x-label for="edit-employee-id" value="ID del reloj checador" class="mb-2.5 block text-[15px]" />
+                                <div
+                                    class="relative"
+                                    x-data="{ open: false, search: @js((string) ($userForm['employee_id'] ?? '')) }"
+                                    @click.outside="open = false"
+                                >
+                                    <x-input
+                                        id="edit-employee-id"
+                                        type="text"
+                                        autocomplete="off"
+                                        maxlength="50"
+                                        class="mt-1 block w-full pr-12 text-[15px]"
+                                        wire:model="userForm.employee_id"
+                                        x-model="search"
+                                        @input="open = true"
+                                        @focus="open = true"
+                                        @click="open = true"
+                                        @keydown.escape="open = false"
+                                        aria-autocomplete="list"
+                                        aria-controls="employee-id-suggestions"
+                                        x-bind:aria-expanded="open"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="absolute right-0 top-0 flex h-full w-12 items-center justify-center text-gray-500 transition hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                                        @click="open = !open"
+                                        aria-label="Mostrar sugerencias del reloj checador"
+                                    >
+                                        <svg class="h-4 w-4 transition-transform" x-bind:class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div
+                                        id="employee-id-suggestions"
+                                        x-cloak
+                                        x-show="open"
+                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter-start="opacity-0 -translate-y-1"
+                                        x-transition:enter-end="opacity-100 translate-y-0"
+                                        x-transition:leave="transition ease-in duration-100"
+                                        x-transition:leave-start="opacity-100 translate-y-0"
+                                        x-transition:leave-end="opacity-0 -translate-y-1"
+                                        class="administration-modal-scrollbar absolute z-[60] mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg"
+                                        role="listbox"
+                                    >
+                                        @foreach ($employeeIdSuggestions as $employeeIdSuggestion)
+                                            <button
+                                                type="button"
+                                                data-employee-id="{{ $employeeIdSuggestion->employeeID }}"
+                                                data-person-name="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}"
+                                                x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())"
+                                                @click="search = $el.dataset.employeeId; $wire.set('userForm.employee_id', $el.dataset.employeeId); open = false"
+                                                class="flex w-full min-w-0 items-center gap-4 rounded-lg px-4 py-3 text-left transition hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-0"
+                                                role="option"
+                                            >
+                                                <span class="w-20 shrink-0 truncate text-[15px] font-semibold text-[#1A3A6B]" title="{{ $employeeIdSuggestion->employeeID }}">{{ $employeeIdSuggestion->employeeID }}</span>
+                                                <span class="min-w-0 flex-1 truncate text-[15px] text-gray-600" title="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}">{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}</span>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-[15px] text-gray-500">Selecciona un ID registrado; la sugerencia muestra el nombre detectado por el checador.</p>
+                                <x-input-error for="userForm.employee_id" />
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div><x-label for="edit-role" value="Rol" class="text-[15px] mb-2.5 block" /><select id="edit-role" wire:model.live="userForm.role_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un rol</option>@foreach ($roles as $availableRole)<option value="{{ $availableRole->id }}">{{ $availableRole->role }}</option>@endforeach</select><x-input-error for="userForm.role_id" /></div>
                             <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><select id="edit-position" wire:model="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
                         </div>
                         <div><x-label for="edit-area" value="Área / departamento" class="text-[15px] mb-2.5 block" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
-                        <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4">
-                            <div><x-label for="edit-superiors" value="Jefes directos" class="text-[15px] mb-2.5 block" /><select id="edit-superiors" multiple wire:model="userForm.superior_ids" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.superior_ids" /></div>
-                            <div><x-label for="edit-subordinates" value="Subordinados directos" class="text-[15px] mb-2.5 block" /><select id="edit-subordinates" multiple wire:model="userForm.subordinate_ids" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]">@foreach ($availableUsers as $availableUser)<option value="{{ $availableUser->id }}">{{ trim($availableUser->name.' '.$availableUser->last_name) }} — {{ $availableUser->email }}</option>@endforeach</select><x-input-error for="userForm.subordinate_ids" /></div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="hierarchy-selection-card">
+                                <div class="mb-2.5 flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <x-label for="edit-superiors" value="Jefes directos" class="block text-[15px] font-semibold text-gray-700" />
+                                        <p class="mt-1 text-[15px] text-gray-500">Solo colaboradores ya asignados al organigrama.</p>
+                                    </div>
+                                </div>
+                                <div id="edit-superiors" class="hierarchy-selection-list block w-full text-[15px]" role="group" aria-label="Jefes directos">
+                                    @forelse ($superiorCandidates as $superiorCandidate)
+                                        <label wire:key="superior-candidate-{{ $superiorCandidate->id }}" class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
+                                            <input type="checkbox" value="{{ $superiorCandidate->id }}" wire:model.live="userForm.superior_ids" class="h-4 w-4 shrink-0 rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                            <span class="min-w-0 flex-1" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ $superiorCandidate->email }}">
+                                                <span class="block truncate text-[15px] font-medium text-gray-800">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
+                                                <span class="block truncate text-[15px] text-gray-500">{{ $superiorCandidate->email }}</span>
+                                            </span>
+                                        </label>
+                                    @empty
+                                        <p class="px-3 py-2.5 text-[15px] text-gray-500">No hay colaboradores asignados al organigrama.</p>
+                                    @endforelse
+                                </div>
+                                <x-input-error for="userForm.superior_ids" />
+                            </div>
+                            <div class="hierarchy-selection-card">
+                                <div class="mb-2.5 flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <x-label for="edit-subordinates" value="Subordinados directos" class="block text-[15px] font-semibold text-gray-700" />
+                                        <p class="mt-1 text-[15px] text-gray-500">Los jefes seleccionados y su línea de mando se excluyen automáticamente.</p>
+                                    </div>
+                                </div>
+                                <div id="edit-subordinates" class="hierarchy-selection-list block w-full text-[15px]" role="group" aria-label="Subordinados directos">
+                                    @forelse ($subordinateCandidates as $subordinateCandidate)
+                                        <label wire:key="subordinate-candidate-{{ $subordinateCandidate->id }}" class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
+                                            <input type="checkbox" value="{{ $subordinateCandidate->id }}" wire:model.live="userForm.subordinate_ids" class="h-4 w-4 shrink-0 rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                            <span class="min-w-0 flex-1" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ $subordinateCandidate->email }}">
+                                                <span class="block truncate text-[15px] font-medium text-gray-800">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span>
+                                                <span class="block truncate text-[15px] text-gray-500">{{ $subordinateCandidate->email }}</span>
+                                            </span>
+                                        </label>
+                                    @empty
+                                        <p class="px-3 py-2.5 text-[15px] text-gray-500">No hay colaboradores disponibles.</p>
+                                    @endforelse
+                                </div>
+                                <x-input-error for="userForm.subordinate_ids" />
+                            </div>
                         </div>
                         @if ($userForm['is_auxiliar'] ?? false)
                             <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4 sm:grid-cols-2">

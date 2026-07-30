@@ -10,6 +10,7 @@ use App\Models\UserHierarchyRelation;
 use App\Models\UserInterns;
 use App\Services\Administracion\OrganizationChartService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class IndexAdministracion extends Component
@@ -163,12 +164,55 @@ class IndexAdministracion extends Component
         $this->userForm['is_auxiliar'] = Role::whereKey($roleId)->where('role', 'Auxiliar')->exists();
     }
 
+    /**
+     * Mantiene las dos listas jerárquicas como conjuntos excluyentes durante
+     * la edición, antes de que se persista cualquier relación.
+     *
+     * @param  array<int, int|string>|int|string|null  $superiorIds
+     */
+    public function updatedUserFormSuperiorIds($superiorIds): void
+    {
+        $normalizedSuperiorIds = $this->normalizeHierarchyUserIds($superiorIds);
+        $excludedSubordinateIds = $this->superiorLineageIds($normalizedSuperiorIds);
+
+        $this->userForm['superior_ids'] = $normalizedSuperiorIds;
+        $this->userForm['subordinate_ids'] = array_values(array_diff(
+            $this->normalizeHierarchyUserIds($this->userForm['subordinate_ids'] ?? []),
+            $excludedSubordinateIds
+        ));
+    }
+
+    /**
+     * Mantiene las dos listas jerárquicas como conjuntos excluyentes durante
+     * la edición, antes de que se persista cualquier relación.
+     *
+     * @param  array<int, int|string>|int|string|null  $subordinateIds
+     */
+    public function updatedUserFormSubordinateIds($subordinateIds): void
+    {
+        $excludedSubordinateIds = $this->superiorLineageIds(
+            $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? [])
+        );
+        $normalizedSubordinateIds = array_values(array_diff(
+            $this->normalizeHierarchyUserIds($subordinateIds),
+            $excludedSubordinateIds
+        ));
+
+        $this->userForm['subordinate_ids'] = $normalizedSubordinateIds;
+        $this->userForm['superior_ids'] = array_values(array_diff(
+            $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []),
+            $normalizedSubordinateIds
+        ));
+    }
+
     public function saveSelectedUser(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
         abort_unless($this->selectedUserId, 404);
 
         $user = User::findOrFail($this->selectedUserId);
+        $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
+        $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds);
         $rules = [
             'userForm.name' => ['required', 'string', 'max:255'],
             'userForm.last_name' => ['nullable', 'string', 'max:255'],
@@ -182,9 +226,21 @@ class IndexAdministracion extends Component
             'userForm.is_auxiliar' => ['boolean'],
             'userForm.password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'userForm.superior_ids' => ['nullable', 'array'],
-            'userForm.superior_ids.*' => ['integer', 'exists:users,id', 'distinct', 'different:'.$user->id],
+            'userForm.superior_ids.*' => [
+                'integer',
+                'exists:users,id',
+                'distinct',
+                'different:'.$user->id,
+                Rule::in($this->hierarchyCandidateIds()),
+            ],
             'userForm.subordinate_ids' => ['nullable', 'array'],
-            'userForm.subordinate_ids.*' => ['integer', 'exists:users,id', 'distinct', 'different:'.$user->id],
+            'userForm.subordinate_ids.*' => [
+                'integer',
+                'exists:users,id',
+                'distinct',
+                'different:'.$user->id,
+                Rule::notIn($excludedSubordinateIds),
+            ],
         ];
 
         if (($this->userForm['is_auxiliar'] ?? false) === true) {
@@ -285,15 +341,104 @@ class IndexAdministracion extends Component
 
     public function render()
     {
+        $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
+        $selectedSubordinateIds = $this->normalizeHierarchyUserIds($this->userForm['subordinate_ids'] ?? []);
+        $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds);
+
         return view('livewire.administracion.index-administracion', [
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
             'roles' => Role::orderBy('role')->get(['id', 'role']),
-            'availableUsers' => User::query()
+            'employeeIdSuggestions' => DB::table('control_de_horas')
+                ->select('employeeID')
+                ->selectRaw('MAX(personName) as personName')
+                ->whereNotNull('employeeID')
+                ->where('employeeID', '<>', '')
+                ->groupBy('employeeID')
+                ->orderBy('employeeID')
+                ->get(),
+            // Un jefe debe pertenecer ya al organigrama (tener alguna relación).
+            'superiorCandidates' => User::query()
                 ->whereKeyNot($this->selectedUserId ?: 0)
+                ->whereIn('id', $this->hierarchyCandidateIds())
+                ->when($selectedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $selectedSubordinateIds))
+                ->orderBy('name')
+                ->get(['id', 'name', 'last_name', 'email']),
+            // Un subordinado puede provenir de la lista general, excepto los
+            // jefes seleccionados y todos los superiores de su línea de mando.
+            'subordinateCandidates' => User::query()
+                ->whereKeyNot($this->selectedUserId ?: 0)
+                ->when($excludedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $excludedSubordinateIds))
                 ->orderBy('name')
                 ->get(['id', 'name', 'last_name', 'email']),
         ])->layout('layouts.app');
+    }
+
+    /**
+     * @param  array<int, int|string>|int|string|null  $userIds
+     * @return array<int, int>
+     */
+    private function normalizeHierarchyUserIds($userIds): array
+    {
+        return array_values(array_unique(array_filter(
+            array_map('intval', (array) $userIds),
+            fn (int $userId) => $userId > 0 && $userId !== $this->selectedUserId
+        )));
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function hierarchyCandidateIds(): array
+    {
+        return UserHierarchyRelation::query()
+            ->pluck('superior_id')
+            ->merge(UserHierarchyRelation::query()->pluck('subordinate_id'))
+            ->map(fn ($userId) => (int) $userId)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Incluye los jefes directos seleccionados y toda su línea de mando.
+     * Las relaciones están orientadas como subordinado -> superior.
+     *
+     * @param  array<int, int>  $superiorIds
+     * @return array<int, int>
+     */
+    private function superiorLineageIds(array $superiorIds): array
+    {
+        if ($superiorIds === []) {
+            return [];
+        }
+
+        $superiorsBySubordinate = [];
+
+        foreach (UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']) as $relation) {
+            $superiorsBySubordinate[(int) $relation->subordinate_id][] = (int) $relation->superior_id;
+        }
+
+        $lineage = [];
+        $pendingIds = $superiorIds;
+
+        while ($pendingIds !== []) {
+            $currentUserId = array_pop($pendingIds);
+
+            if (isset($lineage[$currentUserId])) {
+                continue;
+            }
+
+            $lineage[$currentUserId] = true;
+
+            foreach ($superiorsBySubordinate[$currentUserId] ?? [] as $superiorId) {
+                if (! isset($lineage[$superiorId])) {
+                    $pendingIds[] = $superiorId;
+                }
+            }
+        }
+
+        return array_map('intval', array_keys($lineage));
     }
 
     /**
