@@ -5,30 +5,48 @@ namespace App\Livewire;
 use App\Models\Customer;
 use App\Models\CustomerFile;
 use App\Models\Service;
+use Illuminate\Support\Facades\File;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\File;
 
 class Dashboard extends Component
 {
     use WithPagination;
+
     public $search = '';
+
     public $months = null;
+
     public $years = [2023, 2024, 2025, 2026, 2027, 2028];
+
     public $selectedMonth = null;
+
     public $selectedYear = null;
+
     public $totalFilesMonth = 0;
+
     public $totalFilesYear = 0;
+
     public $totalFiles = 0;
-    public $customers = null;
+
+    public $customers = [];
+
     public $customerIds = null;
+
     public $services = null;
+
     public $serviceRelation = null;
+
     public $percentage = 0;
+
     public $percentages = [];
+
     public $customerId = null;
+
     public $filterType = 'incomplete';
+
     public $totalFilesAvaible = 0;
+
     protected $paginationTheme = 'tailwind';
 
     public function mount($customer = null)
@@ -50,36 +68,41 @@ class Dashboard extends Component
     public function getCustomers()
     {
         $user = auth()->user();
-        $role = auth()->user()->role->role;
-        if($role === "Administrador" || $role === "Coordinador"){
+        $role = $user->role?->role;
+
+        // Un rol nuevo puede no tener todavía una regla de clientes asociada.
+        // En ese caso el dashboard debe mostrarse vacío, no fallar al iniciar sesión.
+        $this->customers = collect();
+
+        if ($user->isAdmin() || $role === 'Coordinador') {
             $this->customers = Customer::all();
-        } elseif($role === 'Contador'){
+        } elseif ($role === 'Contador') {
             $this->customers = Customer::whereHas('accountants', function ($q) use ($user) {
                 $q->where('accountant_id', $user->id);
             })
-            ->whereNull('deleted_at')
-            ->with(['accountants' => function ($q) {
-                $q->wherePivot('status', 1);
-            }])
-            ->get();
-        } elseif ($role === 'Auxiliar') {
-            {
-                $this->customers = Customer::whereHas('interns', function ($q) use ($user) {
-                    $q->where('intern_id', $user->id);
-                })
+                ->whereNull('deleted_at')
+                ->with(['accountants' => function ($q) {
+                    $q->wherePivot('status', 1);
+                }])
+                ->get();
+        } elseif ($user->role?->usesPermissionProfile(\App\Models\Role::PROFILE_AUXILIARY) || $role === 'Auxiliar') {
+
+            $this->customers = Customer::whereHas('interns', function ($q) use ($user) {
+                $q->where('intern_id', $user->id);
+            })
                 ->whereNull('deleted_at')
                 ->with(['interns'])
                 ->get();
-            }
+
         }
     }
 
     public function calculatePercentage()
     {
-        foreach ($this->customers as $customer) {
-            //Servicio 1 y 2 cliente 1
+        foreach (collect($this->customers) as $customer) {
+            // Servicio 1 y 2 cliente 1
             $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
-        
+
             foreach ($uniqueServiceIds as $serviceId) {
                 $key = "{$customer->id}-{$serviceId}";
                 $subServicesIds = $customer->services
@@ -89,62 +112,64 @@ class Dashboard extends Component
                     ->whereIn('sub_service_id', $subServicesIds)
                     ->when($this->selectedMonth || $this->selectedYear, function ($query) {
                         $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);
+                            ->whereMonth('upload_period', $this->selectedMonth);
                     })
                     ->count();
 
                 $totalFilesAvaible = $subServicesIds->count() * 2;
 
-                if($subServicesIds->contains(1)) {
+                if ($subServicesIds->contains(1)) {
                     $totalFilesAvaible -= 2;
                     $totalFilesAvaible += $customer->states->count() * 2;
 
                     $complementariaAcuseStates = CustomerFile::where('customer_id', $customer->id)
-                    ->where('declaration_type', 0)
-                    ->where('file_type', 1)
-                    ->whereNotNull('state_id')
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                        $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
-                    ->get();
-                
+                        ->where('declaration_type', 0)
+                        ->where('file_type', 1)
+                        ->whereNotNull('state_id')
+                        ->when($this->selectedMonth && $this->selectedYear, function ($query) {
+                            $query->whereYear('upload_period', $this->selectedYear)
+                                ->whereMonth('upload_period', $this->selectedMonth);
+                        })
+                        ->get();
+
                     foreach ($complementariaAcuseStates as $file) {
                         $hasNormalComprobanteState = CustomerFile::where('customer_id', $customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('state_id', $file->state_id)
-                        ->exists();
+                            ->where('declaration_type', 1)
+                            ->where('file_type', 0)
+                            ->where('state_id', $file->state_id)
+                            ->exists();
 
-                        if($hasNormalComprobanteState) {
+                        if ($hasNormalComprobanteState) {
                             $totalFilesAvaible--;
                             $filesCount--;
                         } else {
                             $totalFilesAvaible--;
                         }
                     }
-                } 
-                
+                }
+
                 if ($subServicesIds->contains(6)) {
                     $totalFilesAvaible -= 2;
                     $totalFilesAvaible += $customer->statements->count() * 2;
                     $complementariaAcuseStatements = CustomerFile::where('customer_id', $customer->id)
-                    ->where('declaration_type', 0)
-                    ->where('file_type', 1)
-                    ->whereNotNull('statement_id')
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                        $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
-                    ->get();
+                        ->where('declaration_type', 0)
+                        ->where('file_type', 1)
+                        ->whereNotNull('statement_id')
+                        ->when($this->selectedMonth && $this->selectedYear, function ($query) {
+                            $query->whereYear('upload_period', $this->selectedYear)
+                                ->whereMonth('upload_period', $this->selectedMonth);
+                        })
+                        ->get();
 
                     foreach ($complementariaAcuseStatements as $file) {
                         $hasNormalComprobanteStatement = CustomerFile::where('customer_id', $customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('statement_id', $file->statement_id)
-                        ->exists();
+                            ->where('declaration_type', 1)
+                            ->where('file_type', 0)
+                            ->where('statement_id', $file->statement_id)
+                            ->exists();
 
-                        if($hasNormalComprobanteStatement) {
-                            $totalFilesAvaible --;
+                        if ($hasNormalComprobanteStatement) {
+                            $totalFilesAvaible--;
                             $filesCount--;
                         } else {
                             $totalFilesAvaible--;
@@ -160,17 +185,18 @@ class Dashboard extends Component
                         ->whereIn('sub_service_id', $subServicesIds)
                         ->whereIn('sub_service_id', $otherServices->pluck('id'))
                         ->whereNotNull('sub_service_id')
-                        ->when($this->selectedMonth && $this->selectedYear, function ($query){
+                        ->when($this->selectedMonth && $this->selectedYear, function ($query) {
                             $query->whereYear('upload_period', $this->selectedYear)
-                            ->whereMonth('upload_period', $this->selectedMonth);})
+                                ->whereMonth('upload_period', $this->selectedMonth);
+                        })
                         ->get();
-                    
+
                     foreach ($complementariaAcuseSub as $file) {
                         $hasNormalComprobanteSub = CustomerFile::where('customer_id', $customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('sub_service_id', $file->sub_service_id)
-                        ->exists();
+                            ->where('declaration_type', 1)
+                            ->where('file_type', 0)
+                            ->where('sub_service_id', $file->sub_service_id)
+                            ->exists();
 
                         if ($hasNormalComprobanteSub) {
                             $totalFilesAvaible--;
@@ -181,18 +207,17 @@ class Dashboard extends Component
                     }
                 }
 
-
-
-                $complementaryAcuse = CustomerFile::where('customer_id',  $customer->id)
+                $complementaryAcuse = CustomerFile::where('customer_id', $customer->id)
                     ->where('declaration_type', 0)
                     ->where('file_type', 1)
                     ->whereIn('sub_service_id', $subServicesIds)
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
+                    ->when($this->selectedMonth && $this->selectedYear, function ($query) {
                         $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
+                            ->whereMonth('upload_period', $this->selectedMonth);
+                    })
                     ->count();
-                
-                if($complementaryAcuse > 0) {
+
+                if ($complementaryAcuse > 0) {
                     $totalFilesAvaible += $complementaryAcuse * 2;
                 }
                 $percentage = $filesCount > 0 ? round(($filesCount / $totalFilesAvaible) * 100) : 0;
@@ -215,10 +240,10 @@ class Dashboard extends Component
     public function getFilteredCustomersProperty()
     {
         if (empty($this->percentages)) {
-            return $this->customers;
+            return collect($this->customers);
         }
 
-        return $this->customers->filter(function ($customer) {
+        return collect($this->customers)->filter(function ($customer) {
             $customerPercentages = collect($this->percentages)
                 ->filter(function ($percentage, $key) use ($customer) {
                     return str_starts_with($key, "{$customer->id}-");
@@ -233,23 +258,23 @@ class Dashboard extends Component
             if ($this->filterType === 'complete') {
                 return $average == 100;
             }
-    
+
             return $average < 100;
         });
     }
 
     public function countTotalFilesMonth()
     {
-        $this->totalFilesMonth = CustomerFile::whereIn('customer_id', $this->customerIds)->when($this->selectedMonth && $this->selectedYear, function ($query){
-                $query->whereYear('upload_period', $this->selectedYear)
-            ->whereMonth('upload_period', $this->selectedMonth);
+        $this->totalFilesMonth = CustomerFile::whereIn('customer_id', $this->customerIds)->when($this->selectedMonth && $this->selectedYear, function ($query) {
+            $query->whereYear('upload_period', $this->selectedYear)
+                ->whereMonth('upload_period', $this->selectedMonth);
         })->count();
     }
 
     public function countTotalFilesYear()
     {
-        $this->totalFilesYear = CustomerFile::whereIn('customer_id', $this->customerIds)->when($this->selectedYear, function ($query){
-                $query->whereYear('upload_period', $this->selectedYear);
+        $this->totalFilesYear = CustomerFile::whereIn('customer_id', $this->customerIds)->when($this->selectedYear, function ($query) {
+            $query->whereYear('upload_period', $this->selectedYear);
         })->count();
     }
 
@@ -263,6 +288,7 @@ class Dashboard extends Component
         $this->calculatePercentage();
         $this->countTotalFilesMonth();
     }
+
     public function updatedSelectedYear()
     {
         $this->calculatePercentage();
@@ -274,20 +300,20 @@ class Dashboard extends Component
     {
         $this->customers = Customer::when($this->search, function ($query) {
             $query->where('name', 'like', "%{$this->search}%")
-            ->orWhere('rfc', 'like', "%{$this->search}%")
-            ->orWhere('last_name', 'like', "%{$this->search}%");
+                ->orWhere('rfc', 'like', "%{$this->search}%")
+                ->orWhere('last_name', 'like', "%{$this->search}%");
         })
-        ->orderByRaw("CASE
+            ->orderByRaw("CASE
             WHEN name LIKE '{$this->search}%' THEN 1
             WHEN rfc LIKE '{$this->search}%' THEN 2
             ELSE 3
             END")
-        ->get();
+            ->get();
     }
 
     public function annualReport($customerId)
     {
-        redirect()->to('/dashboard/' . $customerId . '/report', $this->selectedYear);
+        redirect()->to('/dashboard/'.$customerId.'/report', $this->selectedYear);
     }
 
     public function redirectToCreateCustomer()
@@ -298,7 +324,6 @@ class Dashboard extends Component
     public function render()
     {
         $user = auth()->user();
-        $role = auth()->user()->role->role;
         $customersPaginate = collect();
 
         // if($role === "Administrador"){
@@ -329,16 +354,16 @@ class Dashboard extends Component
             $q->where('accountant_id', $user->id);
         });
 
-
         $customersPaginate = $createdCustomers
             ->union($assignedCustomers)
             ->whereNull('deleted_at')
-            ->with([ 'accountants' => function ($q) {
+            ->with(['accountants' => function ($q) {
                 $q->wherePivot('status', 1);
             }])
-            ->paginate(9); 
+            ->paginate(9);
+
         return view('livewire.dashboard', [
-            'customersPaginate' => $customersPaginate
+            'customersPaginate' => $customersPaginate,
         ]);
     }
 }

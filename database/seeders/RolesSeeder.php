@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
-USE Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\DB;
 
 class RolesSeeder extends Seeder
 {
@@ -14,11 +13,13 @@ class RolesSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table("roles")->insert([
-            ['role' => 'Administrador', 'description' => 'Rol para administrar todas las funciones del sistema'],
-            ['role' => 'Coordinador', 'description'=> 'Rol para los coordinadores con casi todas las funciones del sistema'],
-            ['role' => 'Contador', 'description'=> 'Rol para los contadores con menos funcionalidades en el sistema'],
-            ['role' => 'Auxiliar', 'description'=> 'Rol para los auxiliares con funciones especificas'],
-        ]);
+        foreach ([
+            ['role' => 'Administrador', 'description' => 'Rol para administrar todas las funciones del sistema', 'permission_profile' => Role::PROFILE_ADMINISTRATOR],
+            ['role' => 'Coordinador', 'description' => 'Rol para los coordinadores con casi todas las funciones del sistema', 'permission_profile' => Role::PROFILE_CUSTOM],
+            ['role' => 'Contador', 'description' => 'Rol para los contadores con menos funcionalidades en el sistema', 'permission_profile' => Role::PROFILE_CUSTOM],
+            ['role' => 'Auxiliar', 'description' => 'Rol para los auxiliares con funciones especificas', 'permission_profile' => Role::PROFILE_AUXILIARY],
+        ] as $role) {
+            DB::table('roles')->updateOrInsert(['role' => $role['role']], $role);
+        }
     }
 }

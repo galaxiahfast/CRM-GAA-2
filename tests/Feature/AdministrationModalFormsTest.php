@@ -273,6 +273,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('permissionIds', [$permission->id])
             ->set('role', 'Supervisor operativo')
             ->set('description', 'Supervisa la operación diaria')
+            ->set('permissionProfile', Role::PROFILE_AUXILIARY)
             ->set('permissionIds', [])
             ->call('save')
             ->assertHasNoErrors()
@@ -282,6 +283,7 @@ class AdministrationModalFormsTest extends TestCase
             'id' => $role->id,
             'role' => 'Supervisor operativo',
             'description' => 'Supervisa la operación diaria',
+            'permission_profile' => Role::PROFILE_AUXILIARY,
         ]);
         $this->assertDatabaseMissing('role_access_permission', [
             'role_id' => $role->id,

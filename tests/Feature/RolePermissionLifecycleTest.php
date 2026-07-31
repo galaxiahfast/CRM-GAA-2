@@ -11,6 +11,7 @@ use App\Models\UserHierarchyRelation;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
 use App\Services\Authorization\PermissionAccessService;
+use Database\Seeders\AccessPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Hash;
@@ -142,6 +143,61 @@ class RolePermissionLifecycleTest extends TestCase
         ]);
         $this->assertDatabaseHas('roles', ['id' => $role->id]);
         $this->assertDatabaseCount('role_access_permission', 1);
+    }
+
+    public function test_auxiliary_profile_inherits_operational_permissions_but_not_administration(): void
+    {
+        $role = Role::create([
+            'role' => 'Auxiliar de auditoría',
+            'permission_profile' => Role::PROFILE_AUXILIARY,
+        ]);
+        $user = $this->createUser($role, 'profile-auxiliary@test.mx');
+        $access = app(PermissionAccessService::class);
+
+        $this->assertTrue($access->allows($user, 'activities.manage'));
+        $this->assertTrue($access->allows($user, 'time-control.clock.use'));
+        $this->assertFalse($access->allows($user, 'administration.roles.manage'));
+    }
+
+    public function test_custom_profile_uses_only_selected_permissions(): void
+    {
+        $role = Role::create([
+            'role' => 'Consulta clientes',
+            'permission_profile' => Role::PROFILE_CUSTOM,
+        ]);
+        $user = $this->createUser($role, 'profile-custom@test.mx');
+        $viewCustomers = AccessPermission::where('key', 'customers.view')->firstOrFail();
+
+        app(PermissionAccessService::class)->syncRoleAccess(
+            $role,
+            Role::PROFILE_CUSTOM,
+            [$viewCustomers->id]
+        );
+
+        $access = app(PermissionAccessService::class);
+        $this->assertTrue($access->allows($user, 'customers.view'));
+        $this->assertFalse($access->allows($user, 'customers.manage'));
+    }
+
+    public function test_catalog_sync_deactivates_removed_keys_without_deleting_history(): void
+    {
+        $role = Role::create(['role' => 'Histórico', 'permission_profile' => Role::PROFILE_CUSTOM]);
+        $permission = AccessPermission::create([
+            'key' => 'removed.from.code',
+            'name' => 'Permiso retirado',
+        ]);
+        $role->accessPermissions()->attach($permission->id);
+
+        $this->seed(AccessPermissionSeeder::class);
+
+        $this->assertDatabaseHas('access_permissions', [
+            'id' => $permission->id,
+            'is_active' => false,
+        ]);
+        $this->assertDatabaseHas('role_access_permission', [
+            'role_id' => $role->id,
+            'access_permission_id' => $permission->id,
+        ]);
     }
 
     private function createUser(Role $role, string $email): User

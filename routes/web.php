@@ -1,39 +1,33 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ReporteSemanal;
-
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrganizationChartController;
+use App\Http\Controllers\TimeEntryController;
 // Modelos
-use App\Models\Customer;
-use App\Models\User;
-use App\Models\Role;
-
+use App\Livewire\Administracion\IndexAdministracion;
+use App\Livewire\Administracion\Interns\IndexInterns;
 // Componentes Locales (Clientes y Administración)
+use App\Livewire\Administracion\Relationship\IndexRelationship;
+use App\Livewire\Administracion\Roles\IndexRole;
+use App\Livewire\Administracion\Users\IndexUser;
 use App\Livewire\Customer\IndexCustomer;
 use App\Livewire\Customer\StoreCustomer;
 use App\Livewire\Customer\UpdateCustomer;
 use App\Livewire\Customer\ViewCustomer;
-use App\Livewire\Administracion\IndexAdministracion;
-use App\Livewire\Administracion\Interns\IndexInterns;
-use App\Livewire\Administracion\Relationship\IndexRelationship;
-use App\Livewire\Administracion\Roles\IndexRole;
-use App\Livewire\Administracion\Users\IndexUser;
 use App\Livewire\CustomerReport;
-
-use App\Livewire\TimeControl\AttendanceClock;
-
+use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
+use App\Livewire\TimeControl\Admin\AttendanceManagement;
+use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
 // Componentes Remotos (Control de Horas Complejo)
+use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
+use App\Livewire\TimeControl\AttendanceClock;
 use App\Livewire\TimeControl\IndexTimeControl;
 use App\Livewire\TimeControl\MyProductivity;
-use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
-use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
-use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
-use App\Livewire\TimeControl\Admin\AttendanceManagement;
-
-use App\Http\Controllers\TimeEntryController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OrganizationChartController;
+use App\Mail\ReporteSemanal;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.pdf');
 Route::post('/dashboard/pdf', [DashboardController::class, 'generatePdf'])->name('dashboard.pdf.generate');
@@ -52,7 +46,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard/client-activity-data', [DashboardController::class, 'getClientActivityData'])
     ->name('dashboard.client-activity-data');
-    
+
 Route::get('/time/activity-data', [DashboardController::class, 'getActivityData'])->name('time.activity-data');
 Route::get('/time/client-data', [DashboardController::class, 'getClientData'])->name('time.client-data');
 
@@ -61,7 +55,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    
+
     // ==========================================
     // DASHBOARD
     // ==========================================
@@ -74,134 +68,139 @@ Route::middleware([
     // ==========================================
     // SECCIÓN ADMINISTRACIÓN (Seguridad Local Activa)
     // ==========================================
-    
+
     // Index Administración
     Route::get('/administracion', IndexAdministracion::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->middleware('access.permission:administration.organization.manage')
         ->name('administracion.index');
 
     // Organigrama - Solo Administrador
     Route::prefix('administracion/org-chart')
-        ->middleware(['auth', 'role:Administrador'])
+        ->middleware('access.permission:administration.organization.manage')
         ->name('administracion.org-chart.')
         ->group(function () {
             Route::get('/', [OrganizationChartController::class, 'index'])->name('index');
             Route::post('/relations', [OrganizationChartController::class, 'store'])->name('store');
             Route::delete('/relations/{relationId}', [OrganizationChartController::class, 'destroy'])->name('destroy');
         });
-    
+
     // ==========================================
     // GESTIÓN DE USUARIOS
     // ==========================================
-    
+
     // Lista de usuarios - Administrador y Coordinador
     Route::get('/administracion/users', IndexUser::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->middleware('access.permission:administration.users.manage')
         ->name('administracion.section');
 
     // Crear usuario - Administrador, Coordinador y Contador
-    Route::get('/administracion/users/create', function(){
+    Route::get('/administracion/users/create', function () {
         return view('livewire.administracion.users.create');
-    })->middleware(['auth', 'role:Administrador,Coordinador,Contador'])
-      ->name('administracion.create.users');
-    
+    })->middleware('access.permission:administration.users.manage')
+        ->name('administracion.create.users');
+
     // Editar usuario - Administrador, Coordinador y Contador
-    Route::get('/administracion/users/{user}/edit', function(User $user){
+    Route::get('/administracion/users/{user}/edit', function (User $user) {
         return view('livewire.administracion.users.edit', compact('user'));
-    })->middleware(['auth', 'role:Administrador,Coordinador,Contador'])
-      ->name('administracion.edit.users');
+    })->middleware('access.permission:administration.users.manage')
+        ->name('administracion.edit.users');
 
     // ==========================================
     // GESTIÓN DE ROLES - Solo Administrador
     // ==========================================
-    
+
     // Lista de roles
     Route::get('/administracion/roles', IndexRole::class)
-        ->middleware(['auth', 'role:Administrador'])
+        ->middleware('access.permission:administration.roles.manage')
         ->name('administracion.role');
-    
+
     // Crear rol
-    Route::get('/administracion/create/roles', function(){
+    Route::get('/administracion/create/roles', function () {
         return view('livewire.administracion.roles.create');
-    })->middleware(['auth', 'role:Administrador'])
-      ->name('administracion.role.create');
-    
+    })->middleware('access.permission:administration.roles.manage')
+        ->name('administracion.role.create');
+
     // Editar rol
-    Route::get('/administracion/roles/{role}/edit', function(Role $role) {
+    Route::get('/administracion/roles/{role}/edit', function (Role $role) {
         return view('livewire.administracion.roles.edit', compact('role'));
-    })->middleware(['auth', 'role:Administrador'])
-      ->name('administracion.role.edit');
+    })->middleware('access.permission:administration.roles.manage')
+        ->name('administracion.role.edit');
 
     // ==========================================
     // INTERNS, RELATIONSHIPS & PERMISSIONS
     // ==========================================
-    
+
     // Interns - Administrador, Coordinador y Contador
     Route::get('/administracion/interns', IndexInterns::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->middleware('access.permission:administration.assignments.manage')
         ->name('administracion.interns');
-    
+
     // Relationships - Administrador, Coordinador y Contador
     Route::get('/administracion/relationships', IndexRelationship::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador,Contador,Auxiliar'])
+        ->middleware('access.permission:administration.assignments.manage')
         ->name('administracion.relationships');
-    
+
     // Permissions - Solo Administrador
     Route::get('/administracion/permissions', IndexAdministracion::class)
-        ->middleware(['auth', 'role:Administrador'])
+        ->middleware('access.permission:administration.permissions.manage')
         ->name('administracion.permissions');
 
     // ==========================================
     // SECCIÓN CLIENTES (Customers)
     // ==========================================
-    Route::get('/customers', IndexCustomer::class)->name('customers.index');
-    Route::get('/customers/{customer}/view', ViewCustomer::class)->name('customers.view');
-    
+    Route::get('/customers', IndexCustomer::class)
+        ->middleware('access.permission:customers.view')
+        ->name('customers.index');
+    Route::get('/customers/{customer}/view', ViewCustomer::class)
+        ->middleware('access.permission:customers.view')
+        ->name('customers.view');
+
     Route::get('/customers/create', StoreCustomer::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->middleware('access.permission:customers.manage')
         ->name('customers.create');
-    
+
     Route::get('/customers/{customer}/edit', UpdateCustomer::class)
-        ->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->middleware('access.permission:customers.manage')
         ->name('customers.edit');
 
     // ==========================================
     // TEST DE EMAIL INSTITUCIONAL
     // ==========================================
-    Route::get('/test-email', function() {
-        Mail::to('prueba@datamid.com.mx')->send(new ReporteSemanal());
-        return "Correo enviado con exito";
-    })->middleware(['auth', 'role:Administrador']);
+    Route::get('/test-email', function () {
+        Mail::to('prueba@datamid.com.mx')->send(new ReporteSemanal);
+
+        return 'Correo enviado con exito';
+    })->middleware('access.permission:administration.organization.manage');
 
     // ==========================================
     // SECCIÓN MÓDULO CONTROL DE HORAS COMPLEJO
     // ==========================================
-    
+
     // Operativo (Auxiliar / Coordinador / Contador / Administrador)
     Route::get('/time', IndexTimeControl::class)
-        ->middleware('can:operate-time-tracking')
+        ->middleware('access.permission:activities.manage')
         ->name('time.index');
 
     Route::get('/time/dashboard', [DashboardController::class, 'index'])
-        ->middleware('can:view-time-productivity')
+        ->middleware('access.permission:time-control.productivity.view')
         ->name('time.dashboard');
 
     Route::get('/time/reports', MyProductivity::class)
-        ->middleware('can:view-time-productivity')
+        ->middleware('access.permission:time-control.productivity.view')
         ->name('time.reports');
 
     Route::get('/time/attendance', AttendanceClock::class)
-        ->middleware('can:operate-time-tracking')
+        ->middleware('access.permission:time-control.clock.use')
         ->name('time.attendance');
 
     // Administración del módulo (Solo usuarios con permisos avanzados)
-    Route::middleware('can:view-time-admin')->group(function () {
+    Route::middleware('access.permission:time-control.supervision.view')->group(function () {
         Route::get('/time/admin', AdminTimeDashboard::class)->name('time.admin.dashboard');
         Route::get('/time/admin/profiles', OrganizationalProfiles::class)->name('time.admin.profiles');
         Route::get('/time/admin/attendance', AttendanceManagement::class)->name('time.admin.attendance');
     });
-    
+
     Route::get('/time/admin/corrections', CorrectTimeEntry::class)
-        ->middleware('can:correct-time-tracking')
+        ->middleware('access.permission:time-control.supervision.view')
         ->name('time.admin.corrections');
 });

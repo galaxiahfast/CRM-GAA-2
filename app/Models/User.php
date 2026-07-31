@@ -16,6 +16,7 @@ class User extends Authenticatable
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
+
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
@@ -93,7 +94,9 @@ class User extends Authenticatable
         // Evaluamos tanto por el ID 1 como por el nombre del rol en tu base de datos
         $roleName = optional($this->role)->role ?? optional($this->role)->name;
 
-        return (int) $this->role_id === 1 || $roleName === 'Administrador';
+        return $this->role?->usesPermissionProfile(Role::PROFILE_ADMINISTRATOR)
+            || (int) $this->role_id === 1
+            || $roleName === 'Administrador';
     }
 
     /**

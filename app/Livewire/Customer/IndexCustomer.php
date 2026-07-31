@@ -2,25 +2,26 @@
 
 namespace App\Livewire\Customer;
 
-use Livewire\Component;
 use App\Models\Customer;
-use App\Models\CustomerFile;
+use Livewire\Component;
 
 class IndexCustomer extends Component
 {
     public $search;
+
     public $customers;
+
     public function destroy($id)
     {
         try {
             $idCustomer = Customer::where('id', $id)->select('id')->first();
 
-            if (!$idCustomer) {
+            if (! $idCustomer) {
                 return redirect()->route('customers.index')->with('error', 'Cliente no encontrado');
             }
 
             $idCustomer->update([
-                'deleted_at' => now()
+                'deleted_at' => now(),
             ]);
 
             session()->flash('success', 'Cliente eliminado');
@@ -35,16 +36,16 @@ class IndexCustomer extends Component
     {
         $this->customers = Customer::when($this->search, function ($query) {
             $query->where('name', 'like', "%{$this->search}%")
-            ->orWhere('rfc', 'like', "%{$this->search}%")
-            ->orWhere('email', 'like', "%{$this->search}%")
-            ->orWhere('address', 'like', "%{$this->search}%");
+                ->orWhere('rfc', 'like', "%{$this->search}%")
+                ->orWhere('email', 'like', "%{$this->search}%")
+                ->orWhere('address', 'like', "%{$this->search}%");
         })
-        ->orderByRaw("CASE
+            ->orderByRaw("CASE
             WHEN name LIKE '{$this->search}%' THEN 1
             WHEN rfc LIKE '{$this->search}%' THEN 2
             ELSE 3
             END")
-        ->get();
+            ->get();
         // dump($this->customers);
 
     }
@@ -59,7 +60,7 @@ class IndexCustomer extends Component
         if ($this->search) {
             return view('livewire.customer.index-customer')->layout('layouts.app');
         }
-    
+
         $user = auth()->user();
         $role = auth()->user()->role->role;
 
@@ -69,19 +70,18 @@ class IndexCustomer extends Component
         //     $q->where('accountant_id', $user->id);
         // });
 
-        if($role === "Administrador" || $role === "Coordinador"){
+        if ($user->isAdmin() || $role === 'Coordinador') {
             $this->customers = Customer::all();
-        } else{
+        } else {
             $this->customers = Customer::whereHas('accountants', function ($q) use ($user) {
                 $q->where('accountant_id', $user->id);
             })
-            ->whereNull('deleted_at')
-            ->with(['accountants' => function ($q) {
-                $q->wherePivot('status', 1);
-            }])
-            ->get();
+                ->whereNull('deleted_at')
+                ->with(['accountants' => function ($q) {
+                    $q->wherePivot('status', 1);
+                }])
+                ->get();
         }
-
 
         return view('livewire.customer.index-customer')->layout('layouts.app');
     }

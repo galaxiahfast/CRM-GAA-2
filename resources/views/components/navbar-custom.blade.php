@@ -1,3 +1,28 @@
+@php
+    $permissionAccess = app(\App\Services\Authorization\PermissionAccessService::class);
+    $currentUser = auth()->user();
+    $canAdministration = $permissionAccess->allows($currentUser, 'administration.organization.manage');
+    $canManageUsers = $permissionAccess->allows($currentUser, 'administration.users.manage');
+    $canManageRoles = $permissionAccess->allows($currentUser, 'administration.roles.manage');
+    $canManagePermissions = $permissionAccess->allows($currentUser, 'administration.permissions.manage');
+    $canManageAssignments = $permissionAccess->allows($currentUser, 'administration.assignments.manage');
+    $canAdministrationSection = $canAdministration || $canManageUsers || $canManageRoles || $canManagePermissions || $canManageAssignments;
+    $administrationRoute = $canAdministration
+        ? route('administracion.index')
+        : ($canManageUsers
+            ? route('administracion.section')
+            : ($canManageRoles
+                ? route('administracion.role')
+                : ($canManagePermissions
+                    ? route('administracion.permissions')
+                    : route('administracion.interns'))));
+    $canCustomers = $permissionAccess->allows($currentUser, 'customers.view');
+    $canTimeActivities = $permissionAccess->allows($currentUser, 'activities.manage');
+    $canTimeClock = $permissionAccess->allows($currentUser, 'time-control.clock.use');
+    $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
+    $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
+    $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
+@endphp
 <!-- ============================================================ -->
 <!-- CONTENEDOR PRINCIPAL CON x-data COMPARTIDO                    -->
 <!-- ============================================================ -->
@@ -146,18 +171,21 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Administración (siempre visible)                    -->
                 <!-- ========================================================== -->
+                @if ($canAdministrationSection)
                 <li class="pt-[15px] px-[15px] pb-0 m-0">
-                    <a href="{{ route('administracion.index') }}"
+                    <a href="{{ $administrationRoute }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                         <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
                     </a>
                 </li>
+                @endif
 
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Clientes (siempre visible)                          -->
                 <!-- ========================================================== -->
+                @if ($canCustomers)
                 <li class="pt-[15px] px-[15px] pb-0 m-0">
                     <a href="{{ route('customers.index') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
@@ -166,6 +194,7 @@
                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Clientes</span>
                     </a>
                 </li>
+                @endif
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: ACTIVIDADES (oculta en modo compacto)            -->
@@ -177,7 +206,7 @@
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Control de Horas (para TODOS los usuarios)       -->
                 <!-- ========================================================== -->
-                @if (auth()->user()?->isAdmin())
+                @if ($canTimeControl && $canTimeSupervision)
                     <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
                     <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
@@ -243,7 +272,7 @@
                             </ul>
                         </div>
                     </li>
-                @else
+                @elseif ($canTimeControl)
                     <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
                     <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
@@ -276,6 +305,7 @@
                             <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Cronómetro -->
+                                @if ($canTimeActivities)
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
@@ -287,7 +317,9 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Cronómetro</span>
                                     </a>
                                 </li>
+                                @endif
                                 <!-- Sub-elemento: Reloj Checador -->
+                                @if ($canTimeClock)
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.attendance') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
@@ -298,7 +330,9 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
                                     </a>
                                 </li>
+                                @endif
                                 <!-- Sub-elemento: Mi Productividad -->
+                                @if ($canTimeProductivity)
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
@@ -320,6 +354,7 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
                                     </a>
                                 </li>
+                                @endif
                             </ul>
                         </div>
                     </li>

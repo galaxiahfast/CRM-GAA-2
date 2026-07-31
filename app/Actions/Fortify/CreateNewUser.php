@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -26,11 +27,23 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
+        $defaultRole = Role::query()->firstOrCreate(
+            ['role' => 'Auxiliar'],
+            [
+                'description' => 'Rol operativo predeterminado',
+                'permission_profile' => Role::PROFILE_AUXILIARY,
+            ]
+        );
+
+        if (! $defaultRole->usesPermissionProfile(Role::PROFILE_AUXILIARY)) {
+            $defaultRole->update(['permission_profile' => Role::PROFILE_AUXILIARY]);
+        }
+
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            'role_id' => 3
+            'role_id' => $defaultRole->id,
         ]);
     }
 }

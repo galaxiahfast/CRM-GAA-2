@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Administracion;
 
+use App\Models\AccessPermission;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
 use App\Models\Role;
@@ -604,7 +605,8 @@ class IndexAdministracion extends Component
 
     private function canManageOrganization(): bool
     {
-        return auth()->check() && auth()->user()->isAdmin();
+        return app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.organization.manage');
     }
 
     private function ensureOrganizationAdministrator(): void
@@ -627,6 +629,25 @@ class IndexAdministracion extends Component
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
             'roles' => Role::orderBy('role')->get(['id', 'role']),
+            'basePermissionProfiles' => collect([
+                'Administrador' => ['profile' => Role::PROFILE_ADMINISTRATOR, 'label' => 'Acceso administrativo'],
+                'Auxiliar' => ['profile' => Role::PROFILE_AUXILIARY, 'label' => 'Acceso operativo'],
+            ])->map(function (array $definition): array {
+                $profile = config('access-permissions.profiles.'.$definition['profile'], []);
+                $keys = app(\App\Services\Authorization\PermissionAccessService::class)
+                    ->permissionKeysForProfile($definition['profile']);
+
+                return [
+                    'label' => $definition['label'],
+                    'description' => $profile['description'] ?? '',
+                    'permissions' => AccessPermission::query()
+                        ->active()
+                        ->whereIn('key', $keys)
+                        ->orderBy('sort_order')
+                        ->pluck('name')
+                        ->all(),
+                ];
+            })->all(),
             'employeeIdSuggestions' => DB::table('control_de_horas')
                 ->select('employeeID')
                 ->selectRaw('MAX(personName) as personName')

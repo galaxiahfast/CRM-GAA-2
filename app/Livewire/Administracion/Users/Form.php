@@ -82,7 +82,8 @@ class Form extends Component
     public function mount($user = null, $isAuxiliar = false)
     {
         $authUser = auth()->user();
-        $role = $authUser->role->role ?? null;
+        $canManageUsers = app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows($authUser, 'administration.users.manage');
 
         if ($user && $user->exists) {
             $this->user = $user;
@@ -108,12 +109,12 @@ class Form extends Component
 
         $this->isAuxiliar = $isAuxiliar;
         if ($isAuxiliar) {
-            if (! in_array($role, ['Administrador', 'Coordinador', 'Contador'])) {
+            if (! $canManageUsers) {
                 abort(403, 'No tienes permisos para crear interns.');
             }
             $this->roles = $this->roles->where('role', 'Auxiliar');
         } else {
-            if (! in_array($role, ['Administrador', 'Coordinador'])) {
+            if (! $canManageUsers) {
                 abort(403, 'No tienes permisos para crear usuarios.');
             }
         }

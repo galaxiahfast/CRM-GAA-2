@@ -1,6 +1,12 @@
 @php
     $role = auth()->user()->role->role;
     $roleId = (int) auth()->user()->role_id;
+    $permissionAccess = app(\App\Services\Authorization\PermissionAccessService::class);
+    $canManageOrganization = $permissionAccess->allows(auth()->user(), 'administration.organization.manage');
+    $canManageUsers = $permissionAccess->allows(auth()->user(), 'administration.users.manage');
+    $canManageRoles = $permissionAccess->allows(auth()->user(), 'administration.roles.manage');
+    $canManagePermissions = $permissionAccess->allows(auth()->user(), 'administration.permissions.manage');
+    $canManageAssignments = $permissionAccess->allows(auth()->user(), 'administration.assignments.manage');
 
     $missingLabels = [
         'superior' => 'Sin jefe',
@@ -84,20 +90,22 @@
             <h2 class="text-[15px] font-semibold text-gray-700">Secciones principales</h2>
         </div>
         <div class="grid grid-cols-6 justify-items-center gap-6 p-4">
-            @if (in_array($roleId, [1, 2], true))
+            @if ($canManageUsers)
                 <a href="{{ route('administracion.section') }}" class="block">
                     <x-access-icon color="blue" icon="feathericon-users" text="Usuarios" />
                 </a>
             @endif
-            @if ($roleId === 1)
+            @if ($canManageRoles)
                 <a href="{{ route('administracion.role') }}" class="block">
                     <x-access-icon color="red" icon="feathericon-lock" text="Roles" />
                 </a>
-                <div aria-disabled="true">
-                    <x-access-icon color="green" icon="feathericon-shield" text="Permisos" />
-                </div>
             @endif
-            @if (in_array($roleId, [1, 2, 3, 4], true))
+            @if ($canManagePermissions)
+                <a href="{{ route('administracion.permissions') }}" class="block">
+                    <x-access-icon color="green" icon="feathericon-shield" text="Permisos" />
+                </a>
+            @endif
+            @if ($canManageAssignments)
                 <a href="{{ route('administracion.interns') }}" class="block">
                     <x-access-icon color="purple" icon="feathericon-user" text="Auxiliares" />
                 </a>
@@ -109,7 +117,7 @@
     </div>
 
     {{-- La información jerárquica solamente se entrega a administradores. --}}
-    @if (auth()->user()->isAdmin())
+    @if ($canManageOrganization)
 
     <!-- Organigrama con padding de 80px en todos los lados -->
     <div class="overflow-hidden rounded-2xl shadow-lg" style="padding: 80px; background-color: #F3F3F3;">
@@ -654,29 +662,7 @@
     {{-- ============================================================ --}}
     @if ($showPermissionsModal)
         @php
-            $permissionProfiles = [
-                'Administrador' => [
-                    'label' => 'Acceso administrativo',
-                    'description' => 'Supervisa la configuración y la operación completa del sistema.',
-                    'permissions' => [
-                        'Administración y organigrama',
-                        'Gestión de usuarios',
-                        'Gestión de roles',
-                        'Consulta de permisos vigentes',
-                        'Control de horas y productividad',
-                    ],
-                ],
-                'Auxiliar' => [
-                    'label' => 'Acceso operativo',
-                    'description' => 'Opera sus actividades y consulta la información habilitada para su función.',
-                    'permissions' => [
-                        'Registro de actividades',
-                        'Operación de control de horas',
-                        'Reloj checador',
-                        'Consulta de productividad',
-                    ],
-                ],
-            ];
+            $permissionProfiles = $basePermissionProfiles;
         @endphp
 
         <div

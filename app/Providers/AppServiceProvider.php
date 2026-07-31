@@ -51,22 +51,20 @@ class AppServiceProvider extends ServiceProvider
          * Permiso para operar el reloj de control de tiempos (Cualquier usuario logueado)
          */
         Gate::define('operate-time-tracking', function (User $user) {
-            // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
-            $roleName = optional($user->role)->role ?? optional($user->role)->name;
-
-            return in_array((int) $user->role_id, [1, 2, 3, 4, 5], true)
-                || in_array($roleName, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
+            return app(PermissionAccessService::class)->allows($user, 'activities.manage');
         });
 
         /**
          * Permiso para ver la sección de Productividad
          */
         Gate::define('view-time-productivity', function (User $user) {
-            // Permitir a Administrador, Coordinador, Contador, Auxiliar (IDs del 1 al 5)
-            $roleName = optional($user->role)->role ?? optional($user->role)->name;
-
-            return in_array((int) $user->role_id, [1, 2, 3, 4, 5], true)
-                || in_array($roleName, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
+            return app(PermissionAccessService::class)->allows($user, 'time-control.productivity.view');
         });
+
+        Gate::define('view-time-admin', fn (User $user): bool => app(PermissionAccessService::class)
+            ->allows($user, 'time-control.supervision.view'));
+
+        Gate::define('correct-time-tracking', fn (User $user): bool => app(PermissionAccessService::class)
+            ->allows($user, 'time-control.supervision.view'));
     }
 }

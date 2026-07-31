@@ -107,10 +107,30 @@
             <div class="min-w-0">
                 <h2 class="text-[15px] font-semibold text-gray-900">Permisos del rol</h2>
                 <p class="mt-1 text-[15px] leading-6 text-gray-500">
-                    Asigna los accesos dinámicos que correspondan. Si una clave se elimina del catálogo, deja de otorgar acceso sin modificar los usuarios asociados al rol.
+                    Elige un perfil base o configura individualmente los apartados disponibles.
                 </p>
             </div>
 
+            <div class="mt-[15px] grid grid-cols-1 gap-[10px] md:grid-cols-3">
+                @foreach ($permissionProfiles as $profileKey => $profile)
+                    <label wire:key="permission-profile-{{ $profileKey }}" class="flex cursor-pointer items-start gap-[10px] rounded-xl border border-gray-200 bg-white p-4 transition hover:border-[#1A3A6B]">
+                        <input
+                            type="radio"
+                            value="{{ $profileKey }}"
+                            wire:model.live="permissionProfile"
+                            @disabled($isProtectedSystemRole && (($role === 'Administrador' && $profileKey !== 'administrator') || ($role === 'Auxiliar' && $profileKey !== 'auxiliary')))
+                            class="mt-0.5 h-4 w-4 shrink-0 border-gray-300 text-[#1A3A6B] focus:ring-0"
+                        >
+                        <span class="min-w-0">
+                            <span class="block text-[15px] font-semibold text-gray-800">{{ $profile['label'] }}</span>
+                            <span class="mt-1 block text-[13px] leading-5 text-gray-500">{{ $profile['description'] }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+            <x-input-error for="permissionProfile" class="mt-2 text-[15px]" />
+
+            @if ($permissionProfile === 'custom')
             <div class="administration-form-scrollbar mt-[15px] max-h-72 overflow-y-auto pr-1">
                 @forelse ($availablePermissions->groupBy(fn ($permission) => $permission->module ?: 'General') as $module => $modulePermissions)
                     <fieldset class="mb-[15px] rounded-xl border border-gray-200 bg-white p-4 last:mb-0">
@@ -150,6 +170,12 @@
 
             <x-input-error for="permissionIds" class="mt-2 text-[15px]" />
             <x-input-error for="permissionIds.*" class="mt-2 text-[15px]" />
+            @else
+                <div class="mt-[15px] rounded-xl border border-blue-200 bg-blue-50 p-4 text-[15px] leading-6 text-[#1A3A6B]">
+                    Los permisos se sincronizarán con el perfil
+                    <strong>{{ $permissionProfiles[$permissionProfile]['label'] ?? $permissionProfile }}</strong>.
+                </div>
+            @endif
         </section>
     </x-slot>
 

@@ -1,5 +1,7 @@
 @php
     $role = auth()->user()->role->role;
+    $canManageCustomers = app(\App\Services\Authorization\PermissionAccessService::class)
+        ->allows(auth()->user(), 'customers.manage');
 @endphp
 
 <div class="relative overflow-x-auto">
@@ -27,7 +29,7 @@
                 class="block w-80 rounded-lg border border-gray-300 bg-gray-50 py-2 ps-10 text-sm text-gray-900 focus:border-matisse-500 focus:ring-matisse-500"
                 placeholder="Busca un cliente">
         </div>
-        @if (in_array($role, ['Administrador', 'Coordinador']))
+        @if ($canManageCustomers)
             <a href="{{ route('customers.create') }}"
                 class="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-matisse-900 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-matisse-600 focus:bg-matisse-700 focus:outline-none focus:ring-2 focus:ring-matisse-500 focus:ring-offset-2 active:bg-matisse-900 disabled:opacity-50">
                 Agregar cliente
@@ -119,7 +121,7 @@
                         <x-tooltip id="tooltip-view-{{ $customer->id }}"
                             content="Seguimiento del cliente" />
 
-                        @if (in_array($role, ['Administrador', 'Coordinador']))
+                        @if ($canManageCustomers)
                             <a data-tooltip-target="tooltip-edit-{{ $customer->id }}"
                                 href="{{ route('customers.edit', $customer->id) }}"
                                 class="text-yellow-700 hover:text-yellow-500">

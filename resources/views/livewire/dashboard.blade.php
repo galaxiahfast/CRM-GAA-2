@@ -1,5 +1,7 @@
 @php
     $role = auth()->user()->role->role;
+    $canManageCustomers = app(\App\Services\Authorization\PermissionAccessService::class)
+        ->allows(auth()->user(), 'customers.manage');
 @endphp
 
 <div class="space-y-6 p-6">
@@ -36,7 +38,7 @@
     </div>
 
     <!-- Top Stats -->
-    @if (in_array($role, ['Administrador', 'Coordinador']))
+    @if ($canManageCustomers)
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="bg-white p-4 shadow-xl">
                 <p class="text-sm text-gray-500">Archivos mensuales subidos</p>
@@ -61,7 +63,7 @@
     <!-- Reporte de clientes -->
     <h2 class="border-b border-gray-300 text-lg font-semibold">Informe de clientes</h2>
     @if ($this->customers->isEmpty())
-        @if (in_array($role, ['Administrador', 'Coordinador']))
+        @if ($canManageCustomers)
             <x-no-data title="No hay clientes" subTitle="No se encontraron clientes para gestionar"
                 titleButton="Agregar" click="redirectToCreateCustomer"></x-no-data>
         @else
