@@ -46,7 +46,7 @@ class Form extends Component
 
     public $physical_area_id = '';
 
-    public bool $isSelectedAuxiliar = false;
+    public bool $isHourlyPosition = false;
 
     public string $managementTab = 'crear';
 
@@ -119,7 +119,7 @@ class Form extends Component
             }
         }
 
-        $this->isSelectedAuxiliar = $isAuxiliar || $this->isAuxiliarRole($this->role_id);
+        $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
     }
 
     public function setManagementTab(string $tab)
@@ -176,9 +176,9 @@ class Form extends Component
         return redirect()->route('administracion.create.users');
     }
 
-    public function updatedRoleId(): void
+    public function updatedJobPositionId(): void
     {
-        $this->isSelectedAuxiliar = $this->isAuxiliarRole($this->role_id);
+        $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
     }
 
     public function save(Request $request)
@@ -196,8 +196,9 @@ class Form extends Component
             'physical_area_id' => 'bail|required|exists:physical_areas,id',
         ];
 
-        $rules['hourly_rate'] = $this->isAuxiliarRole($this->role_id) ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
-        $rules['food_allowance'] = $this->isAuxiliarRole($this->role_id) ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
+        $isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
+        $rules['hourly_rate'] = $isHourlyPosition ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
+        $rules['food_allowance'] = $isHourlyPosition ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
 
         if ($this->mode === 'edit') {
             if (! $this->password) {
@@ -211,9 +212,9 @@ class Form extends Component
         // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
         $isAuxiliarRole = $this->isAuxiliarRole($data['role_id']);
         // Las instalaciones existentes en SQL Server pueden tener estas columnas
-        // como NOT NULL. Fuera del rol Auxiliar se persisten en cero.
-        $hourlyRate = $isAuxiliarRole ? ($data['hourly_rate'] ?? 0) : 0;
-        $foodAllowance = $isAuxiliarRole ? ($data['food_allowance'] ?? 0) : 0;
+        // como NOT NULL. En puestos de tiempo completo se persisten en cero.
+        $hourlyRate = $isHourlyPosition ? ($data['hourly_rate'] ?? 0) : 0;
+        $foodAllowance = $isHourlyPosition ? ($data['food_allowance'] ?? 0) : 0;
         $jobPositionId = $data['job_position_id'];
         $physicalAreaId = $data['physical_area_id'];
         unset($data['hourly_rate'], $data['food_allowance'], $data['job_position_id'], $data['physical_area_id']);
@@ -283,7 +284,7 @@ class Form extends Component
     public function render()
     {
         return view('livewire.administracion.users.form', [
-            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
+            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name', 'payment_type']),
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
             'employeeIdSuggestions' => DB::table('control_de_horas')
                 ->select('employeeID')
@@ -303,5 +304,13 @@ class Form extends Component
     private function isAuxiliarRole($roleId): bool
     {
         return Role::whereKey($roleId)->where('role', 'Auxiliar')->exists();
+    }
+
+    private function isHourlyJobPosition($positionId): bool
+    {
+        return JobPosition::query()
+            ->whereKey((int) $positionId)
+            ->where('payment_type', JobPosition::PAYMENT_HOURLY)
+            ->exists();
     }
 }

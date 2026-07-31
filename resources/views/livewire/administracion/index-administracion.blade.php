@@ -469,6 +469,20 @@
                     autofocus
                 >
                 <x-input-error for="newJobPositionName" class="mt-2 text-[15px]" />
+                <fieldset class="mt-[15px]">
+                    <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
+                    <div class="mt-2 grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                        <label class="flex cursor-pointer items-start gap-[10px] rounded-lg border border-gray-300 bg-white p-3">
+                            <input type="radio" value="full_time" wire:model="newJobPositionPaymentType" class="mt-0.5 h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0">
+                            <span><span class="block text-[15px] font-medium text-gray-800">Tiempo completo</span><span class="mt-1 block text-[13px] text-gray-500">Sin cálculo de tarifa por hora.</span></span>
+                        </label>
+                        <label class="flex cursor-pointer items-start gap-[10px] rounded-lg border border-gray-300 bg-white p-3">
+                            <input type="radio" value="hourly" wire:model="newJobPositionPaymentType" class="mt-0.5 h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0">
+                            <span><span class="block text-[15px] font-medium text-gray-800">Pago por hora</span><span class="mt-1 block text-[13px] text-gray-500">Habilita tarifa y apoyo económico.</span></span>
+                        </label>
+                    </div>
+                    <x-input-error for="newJobPositionPaymentType" class="mt-2 text-[15px]" />
+                </fieldset>
                 @elseif ($jobPositionModalTab === 'editar')
                     <div class="space-y-[15px]">
                         <div>
@@ -487,6 +501,18 @@
                                 <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
                                 <x-input-error for="editJobPositionName" class="mt-2 text-[15px]" />
                             </div>
+                            <fieldset>
+                                <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
+                                <div class="mt-2 grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-gray-300 bg-white p-3 text-[15px] text-gray-700">
+                                        <input type="radio" value="full_time" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0"> Tiempo completo
+                                    </label>
+                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-gray-300 bg-white p-3 text-[15px] text-gray-700">
+                                        <input type="radio" value="hourly" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0"> Pago por hora
+                                    </label>
+                                </div>
+                                <x-input-error for="editJobPositionPaymentType" class="mt-2 text-[15px]" />
+                            </fieldset>
                         @endif
                     </div>
                 @else
@@ -870,7 +896,7 @@
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div><x-label for="edit-role" value="Rol" class="text-[15px] mb-2.5 block" /><select id="edit-role" wire:model.live="userForm.role_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un rol</option>@foreach ($roles as $availableRole)<option value="{{ $availableRole->id }}">{{ $availableRole->role }}</option>@endforeach</select><x-input-error for="userForm.role_id" /></div>
-                            <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><select id="edit-position" wire:model="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
+                            <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><select id="edit-position" wire:model.live="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }} — {{ $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo' }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
                         </div>
                         <div><x-label for="edit-area" value="Área / departamento" class="text-[15px] mb-2.5 block" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
                         <div class="grid grid-cols-1 gap-4">
@@ -923,7 +949,7 @@
                                 <x-input-error for="userForm.subordinate_ids" />
                             </div>
                         </div>
-                        @if ($userForm['is_auxiliar'] ?? false)
+                        @if ($userForm['is_hourly_position'] ?? false)
                             <div class="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-[#F3F3F3] p-4 sm:grid-cols-2">
                                 <div><x-label for="edit-hourly-rate" value="Precio por hora" class="text-[15px] mb-2.5 block" /><x-input id="edit-hourly-rate" type="number" step="0.01" class="mt-1 block w-full text-[15px]" wire:model="userForm.hourly_rate" /><x-input-error for="userForm.hourly_rate" /></div>
                                 <div><x-label for="edit-food-allowance" value="Apoyo económico por día" class="text-[15px] mb-2.5 block" /><x-input id="edit-food-allowance" type="number" step="0.01" class="mt-1 block w-full text-[15px]" wire:model="userForm.food_allowance" /><x-input-error for="userForm.food_allowance" /></div>
@@ -1048,7 +1074,7 @@
                             </div>
 
                             <!-- Datos de auxiliar -->
-                            @if ($selectedUserDetails['is_auxiliar'] ?? false)
+                            @if ($selectedUserDetails['is_hourly_position'] ?? false)
                                 <div style="display: flex; flex-direction: column;">
                                     <div class="overflow-hidden rounded-xl border border-dashed border-amber-300 bg-amber-50 shadow-sm">
                                         <h3 class="border-b border-amber-200 bg-amber-100/70 text-[15px] font-semibold text-amber-800" style="padding: 15px 20px; margin: 0;">Datos de auxiliar</h3>

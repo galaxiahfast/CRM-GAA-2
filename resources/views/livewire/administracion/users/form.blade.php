@@ -95,10 +95,10 @@
 
                     <div class="min-w-0">
                         <label for="job_position_id" class="block text-[15px] font-medium text-gray-700">Puesto de trabajo</label>
-                        <select id="job_position_id" wire:model="job_position_id" class="{{ $inputClasses }}">
+                        <select id="job_position_id" wire:model.live="job_position_id" class="{{ $inputClasses }}">
                             <option value="">Seleccione un puesto</option>
                             @foreach ($jobPositions as $position)
-                                <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                <option value="{{ $position->id }}">{{ $position->name }} — {{ $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo' }}</option>
                             @endforeach
                         </select>
                         <x-input-error for="job_position_id" class="mt-2 text-[15px]" />
@@ -203,7 +203,7 @@
                         <x-input-error for="employee_id" class="mt-2 text-[15px]" />
                     </div>
 
-                    @if ($isSelectedAuxiliar)
+                    @if ($isHourlyPosition)
                         <div class="min-w-0">
                             <label for="hourly_rate" class="block text-[15px] font-medium text-gray-700">Precio por hora ($)</label>
                             <input id="hourly_rate" type="number" step="0.01" min="0" wire:model="hourly_rate" class="{{ $inputClasses }}">

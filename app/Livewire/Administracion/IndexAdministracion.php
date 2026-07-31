@@ -51,6 +51,8 @@ class IndexAdministracion extends Component
 
     public string $newJobPositionName = '';
 
+    public string $newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
+
     public string $newPhysicalAreaName = '';
 
     public string $jobPositionModalTab = 'crear';
@@ -58,6 +60,8 @@ class IndexAdministracion extends Component
     public ?int $selectedJobPositionId = null;
 
     public string $editJobPositionName = '';
+
+    public string $editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
 
     public string $physicalAreaModalTab = 'crear';
 
@@ -98,9 +102,11 @@ class IndexAdministracion extends Component
         $this->showPhysicalAreaModal = false;
         $this->showPermissionsModal = false;
         $this->newJobPositionName = '';
+        $this->newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->jobPositionModalTab = 'crear';
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
+        $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->resetValidation('newJobPositionName');
         $this->showJobPositionModal = true;
     }
@@ -109,8 +115,10 @@ class IndexAdministracion extends Component
     {
         $this->showJobPositionModal = false;
         $this->newJobPositionName = '';
+        $this->newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
+        $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName']);
     }
 
@@ -121,6 +129,7 @@ class IndexAdministracion extends Component
 
         $data = $this->validate([
             'newJobPositionName' => ['required', 'string', 'max:255', Rule::unique('job_positions', 'name')],
+            'newJobPositionPaymentType' => ['required', Rule::in(JobPosition::paymentTypes())],
         ], [
             'newJobPositionName.required' => 'El nombre del puesto es obligatorio.',
             'newJobPositionName.max' => 'El nombre del puesto no debe exceder los 255 caracteres.',
@@ -128,7 +137,10 @@ class IndexAdministracion extends Component
         ]);
 
         DB::transaction(function () use ($data): void {
-            JobPosition::create(['name' => $data['newJobPositionName']]);
+            JobPosition::create([
+                'name' => $data['newJobPositionName'],
+                'payment_type' => $data['newJobPositionPaymentType'],
+            ]);
         });
 
         $this->closeJobPositionModal();
@@ -143,6 +155,7 @@ class IndexAdministracion extends Component
         $this->jobPositionModalTab = $tab;
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
+        $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
     }
 
@@ -151,9 +164,11 @@ class IndexAdministracion extends Component
         $this->ensureOrganizationAdministrator();
 
         $this->selectedJobPositionId = filled($positionId) ? (int) $positionId : null;
-        $this->editJobPositionName = $this->selectedJobPositionId
-            ? (string) JobPosition::findOrFail($this->selectedJobPositionId)->name
-            : '';
+        $position = $this->selectedJobPositionId
+            ? JobPosition::findOrFail($this->selectedJobPositionId)
+            : null;
+        $this->editJobPositionName = (string) ($position?->name ?? '');
+        $this->editJobPositionPaymentType = (string) ($position?->payment_type ?? JobPosition::PAYMENT_FULL_TIME);
         $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
     }
 
@@ -165,9 +180,22 @@ class IndexAdministracion extends Component
         $data = $this->validate([
             'selectedJobPositionId' => ['required', 'integer', 'exists:job_positions,id'],
             'editJobPositionName' => ['required', 'string', 'max:255', Rule::unique('job_positions', 'name')->ignore($this->selectedJobPositionId)],
+            'editJobPositionPaymentType' => ['required', Rule::in(JobPosition::paymentTypes())],
         ]);
 
-        JobPosition::findOrFail($data['selectedJobPositionId'])->update(['name' => $data['editJobPositionName']]);
+        DB::transaction(function () use ($data): void {
+            JobPosition::findOrFail($data['selectedJobPositionId'])->update([
+                'name' => $data['editJobPositionName'],
+                'payment_type' => $data['editJobPositionPaymentType'],
+            ]);
+
+            if ($data['editJobPositionPaymentType'] === JobPosition::PAYMENT_FULL_TIME) {
+                UserOrganizationalProfile::query()
+                    ->where('job_position_id', $data['selectedJobPositionId'])
+                    ->where('is_active', true)
+                    ->update(['hourly_rate' => 0, 'food_allowance' => 0]);
+            }
+        });
 
         $this->loadOrgChart($chartService);
         session()->flash('success', 'Puesto de trabajo actualizado correctamente.');
@@ -197,6 +225,7 @@ class IndexAdministracion extends Component
 
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
+        $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->loadOrgChart($chartService);
         session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
     }
@@ -350,7 +379,7 @@ class IndexAdministracion extends Component
 
         $user = User::with([
             'role:id,role',
-            'activeOrganizationalProfile.jobPosition:id,name',
+            'activeOrganizationalProfile.jobPosition:id,name,payment_type',
             'activeOrganizationalProfile.physicalArea:id,name',
             'superiors:id,name,last_name,email',
             'subordinates:id,name,last_name,email',
@@ -377,6 +406,7 @@ class IndexAdministracion extends Component
             'password' => '',
             'password_confirmation' => '',
             'is_auxiliar' => mb_strtolower((string) $role) === 'auxiliar',
+            'is_hourly_position' => $profile?->jobPosition?->isHourly() ?? false,
         ];
         $this->selectedUserDetails = [
             'id' => $user->id,
@@ -389,6 +419,7 @@ class IndexAdministracion extends Component
             'job_position' => $profile?->jobPosition?->name,
             'physical_area' => $profile?->physicalArea?->name,
             'is_auxiliar' => mb_strtolower((string) $role) === 'auxiliar',
+            'is_hourly_position' => $profile?->jobPosition?->isHourly() ?? false,
             'hourly_rate' => $profile?->hourly_rate,
             'food_allowance' => $profile?->food_allowance,
             'superiors' => $user->superiors->map(fn (User $person) => trim("{$person->name} {$person->last_name}"))->values()->all(),
@@ -417,6 +448,14 @@ class IndexAdministracion extends Component
     public function updatedUserFormRoleId($roleId): void
     {
         $this->userForm['is_auxiliar'] = Role::whereKey($roleId)->where('role', 'Auxiliar')->exists();
+    }
+
+    public function updatedUserFormJobPositionId($positionId): void
+    {
+        $this->userForm['is_hourly_position'] = JobPosition::query()
+            ->whereKey((int) $positionId)
+            ->where('payment_type', JobPosition::PAYMENT_HOURLY)
+            ->exists();
     }
 
     /**
@@ -477,6 +516,11 @@ class IndexAdministracion extends Component
         abort_unless($this->selectedUserId, 404);
 
         $user = User::findOrFail($this->selectedUserId);
+        $isHourlyPosition = JobPosition::query()
+            ->whereKey((int) ($this->userForm['job_position_id'] ?? 0))
+            ->where('payment_type', JobPosition::PAYMENT_HOURLY)
+            ->exists();
+        $this->userForm['is_hourly_position'] = $isHourlyPosition;
         $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
         $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds);
         $rules = [
@@ -490,6 +534,7 @@ class IndexAdministracion extends Component
             'userForm.hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'userForm.food_allowance' => ['nullable', 'numeric', 'min:0'],
             'userForm.is_auxiliar' => ['boolean'],
+            'userForm.is_hourly_position' => ['boolean'],
             'userForm.password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'userForm.superior_ids' => ['nullable', 'array', 'max:1'],
             'userForm.superior_ids.*' => [
@@ -517,16 +562,14 @@ class IndexAdministracion extends Component
             ],
         ];
 
-        if (($this->userForm['is_auxiliar'] ?? false) === true) {
+        if ($isHourlyPosition) {
             $rules['userForm.hourly_rate'] = ['required', 'numeric', 'min:0'];
             $rules['userForm.food_allowance'] = ['required', 'numeric', 'min:0'];
         }
 
         $data = $this->validate($rules)['userForm'];
 
-        $isAuxiliar = ($data['is_auxiliar'] ?? false) === true;
-
-        DB::transaction(function () use ($user, $data, $isAuxiliar, $chartService) {
+        DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService) {
             $user->update(array_filter([
                 'name' => $data['name'],
                 'last_name' => $data['last_name'] ?? null,
@@ -543,8 +586,8 @@ class IndexAdministracion extends Component
                     'physical_area_id' => $data['physical_area_id'],
                     // SQL Server tiene estas columnas NOT NULL en instalaciones existentes.
                     // Los valores monetarios solo aplican a Auxiliar; los demás usan cero.
-                    'hourly_rate' => $isAuxiliar ? $data['hourly_rate'] : 0,
-                    'food_allowance' => $isAuxiliar ? $data['food_allowance'] : 0,
+                    'hourly_rate' => $isHourlyPosition ? $data['hourly_rate'] : 0,
+                    'food_allowance' => $isHourlyPosition ? $data['food_allowance'] : 0,
                     'valid_from' => now()->toDateString(),
                 ]
             );
@@ -627,7 +670,7 @@ class IndexAdministracion extends Component
 
         return view('livewire.administracion.index-administracion', [
             'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
-            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
+            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name', 'payment_type']),
             'roles' => Role::orderBy('role')->get(['id', 'role']),
             'basePermissionProfiles' => collect([
                 'Administrador' => ['profile' => Role::PROFILE_ADMINISTRATOR, 'label' => 'Acceso administrativo'],

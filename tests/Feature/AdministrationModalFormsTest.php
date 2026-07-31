@@ -33,7 +33,10 @@ class AdministrationModalFormsTest extends TestCase
             'description' => 'Acceso operativo',
         ]);
         $administrator = $this->createUser($administratorRole, 'admin-user-form@test.mx');
-        $position = JobPosition::create(['name' => 'Auxiliar de auditoría']);
+        $position = JobPosition::create([
+            'name' => 'Auxiliar de auditoría',
+            'payment_type' => JobPosition::PAYMENT_HOURLY,
+        ]);
         $area = PhysicalArea::create(['name' => 'Auditoría']);
         DB::table('control_de_horas')->insert([
             [
@@ -85,6 +88,8 @@ class AdministrationModalFormsTest extends TestCase
             'job_position_id' => $position->id,
             'physical_area_id' => $area->id,
             'is_active' => true,
+            'hourly_rate' => 125.50,
+            'food_allowance' => 75,
         ]);
     }
 
@@ -106,12 +111,16 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('data-administration-modal="job-position-form"')
             ->assertSeeHtml('@click.outside="$wire.closeJobPositionModal()"')
             ->set('newJobPositionName', '  Auditor   de Calidad  ')
+            ->set('newJobPositionPaymentType', JobPosition::PAYMENT_HOURLY)
             ->call('saveJobPosition')
             ->assertHasNoErrors()
             ->assertSet('showJobPositionModal', false)
             ->assertSet('newJobPositionName', '');
 
-        $this->assertDatabaseHas('job_positions', ['name' => 'Auditor de Calidad']);
+        $this->assertDatabaseHas('job_positions', [
+            'name' => 'Auditor de Calidad',
+            'payment_type' => JobPosition::PAYMENT_HOURLY,
+        ]);
 
         $component
             ->call('openPhysicalAreaModal')
@@ -126,6 +135,40 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('newPhysicalAreaName', '');
 
         $this->assertDatabaseHas('physical_areas', ['name' => 'Control Interno']);
+    }
+
+    public function test_hourly_compensation_depends_on_position_instead_of_role(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $accountantRole = Role::create(['role' => 'Contador']);
+        $administrator = $this->createUser($administratorRole, 'admin-hourly-position@test.mx');
+        $position = JobPosition::create([
+            'name' => 'Consultor por hora',
+            'payment_type' => JobPosition::PAYMENT_HOURLY,
+        ]);
+        $area = PhysicalArea::create(['name' => 'Consultoría']);
+
+        Livewire::actingAs($administrator)
+            ->test(UserForm::class)
+            ->set('name', 'Consultor')
+            ->set('email', 'consultor-hourly@test.mx')
+            ->set('password', 'password-seguro')
+            ->set('password_confirmation', 'password-seguro')
+            ->set('role_id', $accountantRole->id)
+            ->set('job_position_id', $position->id)
+            ->assertSet('isHourlyPosition', true)
+            ->set('physical_area_id', $area->id)
+            ->set('hourly_rate', 200)
+            ->set('food_allowance', 90)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $user = User::where('email', 'consultor-hourly@test.mx')->firstOrFail();
+        $this->assertDatabaseHas('user_organizational_profiles', [
+            'user_id' => $user->id,
+            'hourly_rate' => 200,
+            'food_allowance' => 90,
+        ]);
     }
 
     public function test_catalog_modals_reject_duplicates_and_are_restricted_to_administrators(): void
@@ -217,6 +260,47 @@ class AdministrationModalFormsTest extends TestCase
             'user_id' => $collaborator->id,
             'job_position_id' => null,
             'physical_area_id' => null,
+        ]);
+    }
+
+    public function test_changing_a_position_to_full_time_clears_active_hourly_compensation(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $administrator = $this->createUser($administratorRole, 'admin-payment-type@test.mx');
+        $collaborator = $this->createUser($administratorRole, 'hourly-collaborator@test.mx');
+        $position = JobPosition::create([
+            'name' => 'Capturista por hora',
+            'payment_type' => JobPosition::PAYMENT_HOURLY,
+        ]);
+        $area = PhysicalArea::create(['name' => 'Captura']);
+        UserOrganizationalProfile::create([
+            'user_id' => $collaborator->id,
+            'job_position_id' => $position->id,
+            'physical_area_id' => $area->id,
+            'hourly_rate' => 150,
+            'food_allowance' => 80,
+            'valid_from' => now()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('openJobPositionModal')
+            ->call('setJobPositionModalTab', 'editar')
+            ->set('selectedJobPositionId', $position->id)
+            ->assertSet('editJobPositionPaymentType', JobPosition::PAYMENT_HOURLY)
+            ->set('editJobPositionPaymentType', JobPosition::PAYMENT_FULL_TIME)
+            ->call('updateJobPosition')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('job_positions', [
+            'id' => $position->id,
+            'payment_type' => JobPosition::PAYMENT_FULL_TIME,
+        ]);
+        $this->assertDatabaseHas('user_organizational_profiles', [
+            'user_id' => $collaborator->id,
+            'hourly_rate' => 0,
+            'food_allowance' => 0,
         ]);
     }
 
