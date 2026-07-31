@@ -474,6 +474,17 @@ class OrganizationChartService
         $subordinateId = (int) $attributes['subordinate_id'];
         $superiorId = (int) $attributes['superior_id'];
 
+        // La tabla sigue siendo relacional para facilitar una futura vuelta a
+        // muchos-a-muchos. Por ahora cada subordinado solo reporta a un jefe.
+        if (UserHierarchyRelation::query()
+            ->where('subordinate_id', $subordinateId)
+            ->where('superior_id', '<>', $superiorId)
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'superior_id' => 'El subordinado ya tiene un jefe directo asignado.',
+            ]);
+        }
+
         if ($this->wouldCreateCycle($subordinateId, $superiorId)) {
             throw ValidationException::withMessages([
                 'superior_id' => 'La relación jerárquica generaría un ciclo infinito.',

@@ -891,14 +891,18 @@
                             <div class="hierarchy-selection-card">
                                 <div class="mb-2.5 flex items-start justify-between gap-3">
                                     <div class="min-w-0">
-                                        <x-label for="edit-superiors" value="Jefes directos" class="block text-[15px] font-semibold text-gray-700" />
-                                        <p class="mt-1 text-[15px] text-gray-500">Solo colaboradores ya asignados al organigrama.</p>
+                                        <x-label for="edit-superiors" value="Jefe directo" class="block text-[15px] font-semibold text-gray-700" />
+                                        <p class="mt-1 text-[15px] text-gray-500">Solo se permite uno y debe estar asignado al organigrama.</p>
                                     </div>
                                 </div>
-                                <div id="edit-superiors" class="hierarchy-selection-list block w-full text-[15px]" role="group" aria-label="Jefes directos">
+                                <div id="edit-superiors" class="hierarchy-selection-list block w-full text-[15px]" role="group" aria-label="Jefe directo">
+                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
+                                        <input type="radio" name="edit-superior" wire:click="clearSuperiorSelection" @checked(empty($userForm['superior_ids'])) class="h-4 w-4 shrink-0 border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                        <span class="text-[15px] font-medium text-gray-600">Sin jefe directo</span>
+                                    </label>
                                     @forelse ($superiorCandidates as $superiorCandidate)
                                         <label wire:key="superior-candidate-{{ $superiorCandidate->id }}" class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
-                                            <input type="checkbox" value="{{ $superiorCandidate->id }}" wire:model.live="userForm.superior_ids" class="h-4 w-4 shrink-0 rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                            <input type="radio" name="edit-superior" value="{{ $superiorCandidate->id }}" wire:click="selectSuperior({{ $superiorCandidate->id }})" @checked(in_array($superiorCandidate->id, $userForm['superior_ids'] ?? [])) class="h-4 w-4 shrink-0 border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
                                             <span class="min-w-0 flex-1" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ $superiorCandidate->email }}">
                                                 <span class="block truncate text-[15px] font-medium text-gray-800">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
                                                 <span class="block truncate text-[15px] text-gray-500">{{ $superiorCandidate->email }}</span>
@@ -914,7 +918,7 @@
                                 <div class="mb-2.5 flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <x-label for="edit-subordinates" value="Subordinados directos" class="block text-[15px] font-semibold text-gray-700" />
-                                        <p class="mt-1 text-[15px] text-gray-500">Los jefes seleccionados y su línea de mando se excluyen automáticamente.</p>
+                                        <p class="mt-1 text-[15px] text-gray-500">Solo aparecen personas sin jefe o que ya te reportan directamente.</p>
                                     </div>
                                 </div>
                                 <div id="edit-subordinates" class="hierarchy-selection-list block w-full text-[15px]" role="group" aria-label="Subordinados directos">

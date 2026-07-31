@@ -427,6 +427,7 @@ class IndexAdministracion extends Component
     public function updatedUserFormSuperiorIds($superiorIds): void
     {
         $normalizedSuperiorIds = $this->normalizeHierarchyUserIds($superiorIds);
+        $normalizedSuperiorIds = array_slice($normalizedSuperiorIds, -1);
         $excludedSubordinateIds = $this->superiorLineageIds($normalizedSuperiorIds);
 
         $this->userForm['superior_ids'] = $normalizedSuperiorIds;
@@ -434,6 +435,16 @@ class IndexAdministracion extends Component
             $this->normalizeHierarchyUserIds($this->userForm['subordinate_ids'] ?? []),
             $excludedSubordinateIds
         ));
+    }
+
+    public function selectSuperior(int $superiorId): void
+    {
+        $this->updatedUserFormSuperiorIds([$superiorId]);
+    }
+
+    public function clearSuperiorSelection(): void
+    {
+        $this->updatedUserFormSuperiorIds([]);
     }
 
     /**
@@ -479,7 +490,7 @@ class IndexAdministracion extends Component
             'userForm.food_allowance' => ['nullable', 'numeric', 'min:0'],
             'userForm.is_auxiliar' => ['boolean'],
             'userForm.password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'userForm.superior_ids' => ['nullable', 'array'],
+            'userForm.superior_ids' => ['nullable', 'array', 'max:1'],
             'userForm.superior_ids.*' => [
                 'integer',
                 'exists:users,id',
@@ -494,6 +505,14 @@ class IndexAdministracion extends Component
                 'distinct',
                 'different:'.$user->id,
                 Rule::notIn($excludedSubordinateIds),
+                function ($attribute, $value, $fail) use ($user): void {
+                    if (UserHierarchyRelation::query()
+                        ->where('subordinate_id', (int) $value)
+                        ->where('superior_id', '<>', $user->id)
+                        ->exists()) {
+                        $fail('El subordinado ya tiene un jefe directo asignado.');
+                    }
+                },
             ],
         ];
 
@@ -628,6 +647,9 @@ class IndexAdministracion extends Component
             'subordinateCandidates' => User::query()
                 ->whereKeyNot($this->selectedUserId ?: 0)
                 ->when($excludedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $excludedSubordinateIds))
+                ->whereDoesntHave('hierarchyRelationsAsSubordinate', function ($query): void {
+                    $query->where('superior_id', '<>', $this->selectedUserId ?: 0);
+                })
                 ->orderBy('name')
                 ->get(['id', 'name', 'last_name', 'email']),
         ])->layout('layouts.app');
@@ -715,6 +737,12 @@ class IndexAdministracion extends Component
     ): void {
         $superiorIds = array_values(array_unique(array_map('intval', $superiorIds)));
         $subordinateIds = array_values(array_unique(array_map('intval', $subordinateIds)));
+
+        if (count($superiorIds) > 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'userForm.superior_ids' => 'Cada subordinado solo puede tener un jefe directo.',
+            ]);
+        }
 
         if (array_intersect($superiorIds, $subordinateIds)) {
             throw \Illuminate\Validation\ValidationException::withMessages([

@@ -329,7 +329,7 @@ class OrganizationChartTest extends TestCase
             ->assertSet('userForm.subordinate_ids', []);
     }
 
-    public function test_editing_allows_multiple_superiors_from_the_same_reporting_line(): void
+    public function test_editing_keeps_only_the_last_selected_superior(): void
     {
         ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
 
@@ -353,7 +353,53 @@ class OrganizationChartTest extends TestCase
             ->test(IndexAdministracion::class)
             ->call('selectUser', $subject->id)
             ->set('userForm.superior_ids', [$manager->id, $director->id])
-            ->assertSet('userForm.superior_ids', [$manager->id, $director->id]);
+            ->assertSet('userForm.superior_ids', [$director->id]);
+    }
+
+    public function test_service_rejects_a_second_superior_for_the_same_subordinate(): void
+    {
+        ['contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $firstBoss = $this->createUser($contadorRole, 'first-boss@test.mx', 'Primer Jefe');
+        $secondBoss = $this->createUser($contadorRole, 'second-boss@test.mx', 'Segundo Jefe');
+        $subordinate = $this->createUser($auxRole, 'single-boss@test.mx', 'Subordinado');
+        $service = app(OrganizationChartService::class);
+
+        $service->createRelation([
+            'subordinate_id' => $subordinate->id,
+            'superior_id' => $firstBoss->id,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        $service->createRelation([
+            'subordinate_id' => $subordinate->id,
+            'superior_id' => $secondBoss->id,
+        ]);
+    }
+
+    public function test_editing_does_not_offer_a_subordinate_assigned_to_another_boss(): void
+    {
+        ['adminRole' => $adminRole, 'contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $administrator = $this->createUser($adminRole, 'admin-candidates@test.mx', 'Administrador');
+        $firstBoss = $this->createUser($contadorRole, 'assigned-boss@test.mx', 'Jefe Actual');
+        $secondBoss = $this->createUser($contadorRole, 'editing-boss@test.mx', 'Jefe Editado');
+        $assignedSubordinate = $this->createUser($auxRole, 'assigned-subordinate@test.mx', 'Subordinado Ocupado');
+        $availableSubordinate = $this->createUser($auxRole, 'available-subordinate@test.mx', 'Subordinado Disponible');
+
+        app(OrganizationChartService::class)->createRelation([
+            'subordinate_id' => $assignedSubordinate->id,
+            'superior_id' => $firstBoss->id,
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(IndexAdministracion::class)
+            ->call('selectUser', $secondBoss->id)
+            ->assertViewHas('subordinateCandidates', function ($candidates) use ($assignedSubordinate, $availableSubordinate): bool {
+                return ! $candidates->contains('id', $assignedSubordinate->id)
+                    && $candidates->contains('id', $availableSubordinate->id);
+            });
     }
 
     public function test_editing_rejects_a_superior_who_is_not_part_of_the_organization_chart(): void
