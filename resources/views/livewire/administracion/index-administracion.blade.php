@@ -168,7 +168,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
                     </svg>
                 </button>
-
+                
                 <div
                     x-cloak
                     x-show="open"
