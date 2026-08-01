@@ -82,6 +82,79 @@
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar { width: 6px; }
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
+
+        /* Estilo para el contenedor en modo fullscreen */
+        #org-tree-container.fullscreen-active {
+            max-height: 100vh !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            border: none !important;
+            padding: 20px !important;
+        }
+
+        /* Select de áreas: truncar texto y dejar espacio para la flecha */
+        #physical-area-filter {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 32px !important;
+            text-overflow: ellipsis !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            min-width: 150px;
+            max-width: 200px;
+        }
+        #physical-area-filter option {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
+        #fullscreen-toggle {
+            outline: none !important;
+            box-shadow: none !important;
+            border-color: #d1d5db;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            background-color: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #fullscreen-toggle:hover,
+        #fullscreen-toggle:focus,
+        #fullscreen-toggle:active {
+            outline: none !important;
+            box-shadow: none !important;
+            border-color: #d1d5db; /* Sin cambio a azul */
+            background-color: #ffffff;
+        }
+        #fullscreen-toggle svg {
+            width: 24px;
+            height: 24px;
+            color: #1A3A6B;
+        }
+
+        /* Contenedor del mensaje sin datos ocupa todo el espacio */
+        .org-tree-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            color: #6b7280;
+            font-size: 15px;
+            text-align: center;
+        }
     </style>
 
     <!-- Accesos rápidos -->
@@ -234,9 +307,93 @@
                     </div>
                 @endif
 
-                @if (count($orgChartTree) > 0)
-                    <!-- Contenedor con pan y zoom -->
-                    <div id="org-tree-container" class="relative overflow-hidden border border-dashed border-gray-300 p-5" style="max-height: 520px; height: auto; background: #F3F3F3; border-radius: 0.75rem; touch-action: none;">
+                <!-- Contenedor con pan y zoom (siempre visible) -->
+                <div id="org-tree-container" class="relative overflow-hidden border border-dashed border-gray-300 p-5" style="max-height: 520px; height: auto; background: #F3F3F3; border-radius: 0.75rem; touch-action: none;">
+
+                    <!-- LEYENDA (siempre visible) -->
+                    <div class="absolute top-0 left-0 p-5 bg-white/80 backdrop-blur-sm rounded-br-xl border-r border-b border-white/30 shadow-sm" style="z-index: 30;">
+                        <div class="text-[15px] text-gray-700 flex flex-col items-start gap-[10px]">
+                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #1e3a8a;"></span> Rol</div>
+                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #059669;"></span> Puesto</div>
+                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #7c3aed;"></span> Área</div>
+                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #d97706;"></span> Múltiples jefes</div>
+                        </div>
+                    </div>
+
+                    <!-- BUSCADOR + SELECT + BOTÓN FULLSCREEN (siempre visibles) -->
+                    <div class="absolute top-0 right-0 p-5 flex items-center gap-5" style="z-index: 30;">
+                        <!-- Buscador -->
+                        <div style="position: relative; flex: 1;">
+                            <input 
+                                id="node-search-input"
+                                type="text" 
+                                placeholder="Buscar colaborador..."
+                                class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
+                                style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
+                                autocomplete="off"
+                            >
+                            <div 
+                                id="search-results"
+                                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
+                            >
+                                <style>
+                                    #search-results::-webkit-scrollbar {
+                                        width: 4px;
+                                        height: 4px;
+                                    }
+                                    #search-results::-webkit-scrollbar-track {
+                                        background: #f1f1f1;
+                                        border-radius: 10px;
+                                    }
+                                    #search-results::-webkit-scrollbar-thumb {
+                                        background: #1A3A6B;
+                                        border-radius: 10px;
+                                    }
+                                    #search-results::-webkit-scrollbar-thumb:hover {
+                                        background: #15305a;
+                                    }
+                                    #search-results {
+                                        scrollbar-width: thin;
+                                        scrollbar-color: #1A3A6B #f1f1f1;
+                                    }
+                                </style>
+                            </div>
+                        </div>
+
+                        <!-- Filtro por área (con truncado) -->
+                        <select id="physical-area-filter" wire:model.live="selectedPhysicalAreaId"
+                            class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
+                            style="height: 50px; min-width: 150px; max-width: 200px; padding: 0 32px 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; cursor: pointer; background-color: rgba(255, 255, 255, 0.8); appearance: none; -webkit-appearance: none; -moz-appearance: none; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"
+                            title="Filtrar por área">
+                            <option value="">Todas las áreas</option>
+                            @foreach ($physicalAreas as $area)
+                                <option value="{{ $area->id }}" title="{{ $area->name }}">{{ $area->name }}</option>
+                            @endforeach
+                        </select>
+
+                        <!-- BOTÓN DE PANTALLA COMPLETA (cuadrado, sin borde azul) -->
+                        <button id="fullscreen-toggle"
+                            aria-label="Alternar pantalla completa">
+                            <!-- Icono expandir (visible por defecto) -->
+                            <svg id="fullscreen-icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                            </svg>
+                            <!-- Icono comprimir (oculto por defecto) - inverso exacto del expandir -->
+                            <svg id="fullscreen-icon-compress" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display: none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V3m0 6H3m6 0L3 3m12 0v6m0 0h6m-6 0l6-6M9 21v-6m0 0H3m6 0L3 15m12 6v-6m0 0h6m-6 0l6 6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- INSTRUCCIONES (siempre visibles) -->
+                    <div class="absolute bottom-0 right-0 p-5 bg-white/80 backdrop-blur-sm rounded-tl-xl border-l border-t border-white/30 shadow-sm" style="z-index: 30;">
+                        <div class="text-[15px] text-gray-500">
+                            Arrastra para mover · Rueda para zoom · Doble clic para reset
+                        </div>
+                    </div>
+
+                    <!-- CONTENIDO PRINCIPAL: árbol o mensaje sin datos (profesional) -->
+                    @if (count($orgChartTree) > 0)
                         <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
@@ -244,76 +401,12 @@
                                 @endforeach
                             </div>
                         </div>
-
-                        <!-- LEYENDA -->
-                        <div class="absolute top-0 left-0 p-5 bg-white/80 backdrop-blur-sm rounded-br-xl border-r border-b border-white/30 shadow-sm" style="z-index: 30;">
-                            <div class="text-[15px] text-gray-700 flex flex-col items-start gap-[10px]">
-                                <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #1e3a8a;"></span> Rol</div>
-                                <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #059669;"></span> Puesto</div>
-                                <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #7c3aed;"></span> Área</div>
-                                <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #d97706;"></span> Múltiples jefes</div>
-                            </div>
+                    @else
+                        <div class="org-tree-empty">
+                            <span>No se encontraron nodos para el filtro seleccionado.</span>
                         </div>
-
-                        <!-- BUSCADOR + SELECT -->
-                        <div class="absolute top-0 right-0 p-5 flex items-center gap-5" style="z-index: 30;">
-                            <div style="position: relative; flex: 1;">
-                                <input 
-                                    id="node-search-input"
-                                    type="text" 
-                                    placeholder="Buscar colaborador..."
-                                    class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                                    style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
-                                    autocomplete="off"
-                                >
-                                <div 
-                                    id="search-results"
-                                    style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
-                                >
-                                    <style>
-                                        #search-results::-webkit-scrollbar {
-                                            width: 4px;
-                                            height: 4px;
-                                        }
-                                        #search-results::-webkit-scrollbar-track {
-                                            background: #f1f1f1;
-                                            border-radius: 10px;
-                                        }
-                                        #search-results::-webkit-scrollbar-thumb {
-                                            background: #1A3A6B;
-                                            border-radius: 10px;
-                                        }
-                                        #search-results::-webkit-scrollbar-thumb:hover {
-                                            background: #15305a;
-                                        }
-                                        #search-results {
-                                            scrollbar-width: thin;
-                                            scrollbar-color: #1A3A6B #f1f1f1;
-                                        }
-
-                                    </style>
-                                </div>
-                            </div>
-                            <select id="physical-area-filter" wire:model.live="selectedPhysicalAreaId"
-                                class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                                style="height: 50px; min-width: 180px; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; cursor: pointer; background-color: rgba(255, 255, 255, 0.8);">
-                                <option value="">Todas las áreas</option>
-                                @foreach ($physicalAreas as $area)
-                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- INSTRUCCIONES -->
-                        <div class="absolute bottom-0 right-0 p-5 bg-white/80 backdrop-blur-sm rounded-tl-xl border-l border-t border-white/30 shadow-sm" style="z-index: 30;">
-                            <div class="text-[15px] text-gray-500">
-                                Arrastra para mover · Rueda para zoom · Doble clic para reset
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <x-no-data title="Sin datos" subTitle="No hay nodos para el filtro seleccionado." />
-                @endif
+                    @endif
+                </div>
             </div>
 
             <!-- Usuarios sin asignar -->
@@ -1256,7 +1349,7 @@
         });
 
         // ============================================================
-        // BUSCADOR DE NODOS (resultados alineados a la izquierda)
+        // BUSCADOR DE NODOS
         // ============================================================
         const searchInput = document.getElementById('node-search-input');
         const searchResults = document.getElementById('search-results');
@@ -1387,6 +1480,40 @@
         });
 
         setTimeout(() => { allNodes = []; loadAllNodes(); }, 500);
+
+        // ============================================================
+        // BOTÓN DE PANTALLA COMPLETA
+        // ============================================================
+        const fullscreenBtn = document.getElementById('fullscreen-toggle');
+        const iconExpand = document.getElementById('fullscreen-icon-expand');
+        const iconCompress = document.getElementById('fullscreen-icon-compress');
+
+        if (fullscreenBtn && container) {
+            fullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen().catch(err => {
+                        console.warn('Error al entrar en pantalla completa:', err);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            document.addEventListener('fullscreenchange', function() {
+                const isFullscreen = document.fullscreenElement === container;
+
+                // Alternar iconos
+                iconExpand.style.display = isFullscreen ? 'none' : 'block';
+                iconCompress.style.display = isFullscreen ? 'block' : 'none';
+
+                // Añadir/quitar clase para estilos adicionales
+                container.classList.toggle('fullscreen-active', isFullscreen);
+
+                if (isFullscreen) {
+                    setTimeout(resetView, 100);
+                }
+            });
+        }
     });
 </script>
 @endpush
