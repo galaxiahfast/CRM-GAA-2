@@ -84,34 +84,19 @@
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
 
         /* Estilo para el contenedor en modo fullscreen */
-        #org-tree-container.fullscreen-active {
-            max-height: 100vh !important;
+        body.org-chart-fullscreen {
+            overflow: hidden;
+        }
+        body.org-chart-fullscreen #org-tree-container {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9000 !important;
+            width: 100vw !important;
+            max-height: none !important;
             height: 100vh !important;
             border-radius: 0 !important;
             border: none !important;
             padding: 20px !important;
-        }
-
-        /* Select de áreas: truncar texto y dejar espacio para la flecha */
-        #physical-area-filter {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 12px;
-            padding-right: 32px !important;
-            text-overflow: ellipsis !important;
-            overflow: hidden !important;
-            white-space: nowrap !important;
-            min-width: 150px;
-            max-width: 200px;
-        }
-        #physical-area-filter option {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
@@ -129,7 +114,7 @@
         #fullscreen-toggle {
             outline: none !important;
             box-shadow: none !important;
-            border-color: #d1d5db;
+            border: 1px solid #d1d5db;
             width: 50px;
             height: 50px;
             display: flex;
@@ -339,7 +324,7 @@
                                 id="node-search-input"
                                 type="text" 
                                 placeholder="Buscar colaborador..."
-                                class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
+                                class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm"
                                 style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
                                 autocomplete="off"
                             >
@@ -358,7 +343,7 @@
                             }" @click.away="open = false; query = ''" @keydown.escape.window="open = false; query = ''">
                             <input id="physical-area-filter" x-ref="areaInput" type="text" x-model="query" @focus="open = true" @input="open = true"
                                 :placeholder="selected && !open ? (areas.find(area => area.id === selected)?.name || 'Todas las áreas') : 'Todas las áreas'"
-                                class="h-[50px] w-full rounded-lg border border-gray-300 bg-white/80 px-4 pr-10 text-[15px] shadow-sm backdrop-blur-sm focus:border-gray-300 focus:outline-none focus:ring-0"
+                                class="h-[50px] w-full rounded-lg border border-gray-300 bg-white/80 px-4 pr-10 text-[15px] backdrop-blur-sm focus:border-gray-300 focus:outline-none focus:ring-0"
                                 autocomplete="off" aria-label="Buscar o filtrar por área">
                             <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.areaInput.focus())"
                                 class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-500 focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
@@ -1243,6 +1228,8 @@
         if (!container || !wrapper) return;
 
         let isPanning = false;
+        let didDrag = false;
+        let panStartedOnNode = false;
         let startX, startY, startTranslateX, startTranslateY;
         let scale = 1;
         let translateX = 0, translateY = 0;
@@ -1298,35 +1285,31 @@
         }, { passive: false });
 
         container.addEventListener('mousedown', function(e) {
-            if (e.target.closest('#node-search-input') || e.target.closest('#search-results') || e.target.closest('.search-result-item')) {
+            if (e.button !== 0 || e.target.closest('#node-search-input, #search-results, .search-result-item, #physical-area-filter, #physical-area-results, #fullscreen-toggle')) {
                 return;
             }
 
-            let target = e.target;
-            while (target && target !== container) {
-                if (target.classList && target.classList.contains('org-node')) {
-                    return;
-                }
-                target = target.parentNode;
-            }
-
-            if (e.target.closest('button, a, input, select, textarea')) {
+            const node = e.target.closest('.org-node');
+            if (!node && e.target.closest('button, a, input, select, textarea')) {
                 return;
             }
 
             isPanning = true;
+            didDrag = false;
+            panStartedOnNode = Boolean(node);
             startX = e.clientX;
             startY = e.clientY;
             startTranslateX = translateX;
             startTranslateY = translateY;
             wrapper.style.cursor = 'grabbing';
-            e.preventDefault();
         });
 
         window.addEventListener('mousemove', function(e) {
             if (!isPanning) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
+            if (!didDrag && Math.hypot(dx, dy) < 5) return;
+            didDrag = true;
             translateX = startTranslateX + dx;
             translateY = startTranslateY + dy;
             updateTransform();
@@ -1338,6 +1321,15 @@
                 wrapper.style.cursor = 'grab';
             }
         });
+
+        container.addEventListener('click', function(e) {
+            if (didDrag && panStartedOnNode && e.target.closest('.org-node')) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                didDrag = false;
+                panStartedOnNode = false;
+            }
+        }, true);
 
         container.addEventListener('selectstart', function(e) {
             if (isPanning) e.preventDefault();
@@ -1489,28 +1481,21 @@
         const iconCompress = document.getElementById('fullscreen-icon-compress');
 
         if (fullscreenBtn && container) {
-            fullscreenBtn.addEventListener('click', function() {
-                if (!document.fullscreenElement) {
-                    container.requestFullscreen().catch(err => {
-                        console.warn('Error al entrar en pantalla completa:', err);
-                    });
-                } else {
-                    document.exitFullscreen();
-                }
-            });
-
-            document.addEventListener('fullscreenchange', function() {
-                const isFullscreen = document.fullscreenElement === container;
-
-                // Alternar iconos
+            const setFullscreenMode = function(isFullscreen) {
+                document.body.classList.toggle('org-chart-fullscreen', isFullscreen);
                 iconExpand.style.display = isFullscreen ? 'none' : 'block';
                 iconCompress.style.display = isFullscreen ? 'block' : 'none';
+                fullscreenBtn.setAttribute('aria-label', isFullscreen ? 'Salir de pantalla completa' : 'Ver en pantalla completa');
+                if (isFullscreen) setTimeout(resetView, 100);
+            };
 
-                // Añadir/quitar clase para estilos adicionales
-                container.classList.toggle('fullscreen-active', isFullscreen);
+            fullscreenBtn.addEventListener('click', function() {
+                setFullscreenMode(!document.body.classList.contains('org-chart-fullscreen'));
+            });
 
-                if (isFullscreen) {
-                    setTimeout(resetView, 100);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.body.classList.contains('org-chart-fullscreen')) {
+                    setFullscreenMode(false);
                 }
             });
         }

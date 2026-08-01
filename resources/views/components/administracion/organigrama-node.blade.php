@@ -14,7 +14,6 @@
 
 <div class="flex flex-col items-center visual-node-wrapper" wire:key="org-node-box-{{ $node['id'] }}">
     <button type="button"
-        onclick="if (document.fullscreenElement) { event.preventDefault(); event.stopImmediatePropagation(); document.exitFullscreen().then(() => this.click()); }"
         wire:click="selectUser({{ $node['id'] }})"
         data-id="{{ $node['id'] }}"
         class="org-node js-org-card inline-flex w-[280px] flex-shrink-0 flex-col items-center rounded-xl border-2 border-gray-300 bg-transparent p-[20px] text-center shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0 z-10"
