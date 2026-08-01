@@ -115,6 +115,17 @@
         }
 
         /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
+        #search-results,
+        #physical-area-results { scrollbar-width: thin; scrollbar-color: #1A3A6B #f1f1f1; }
+        #search-results::-webkit-scrollbar,
+        #physical-area-results::-webkit-scrollbar { width: 4px; height: 4px; }
+        #search-results::-webkit-scrollbar-track,
+        #physical-area-results::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 9999px; }
+        #search-results::-webkit-scrollbar-thumb,
+        #physical-area-results::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
+        #search-results::-webkit-scrollbar-thumb:hover,
+        #physical-area-results::-webkit-scrollbar-thumb:hover { background: #15305a; }
+
         #fullscreen-toggle {
             outline: none !important;
             box-shadow: none !important;
@@ -335,52 +346,41 @@
                             <div 
                                 id="search-results"
                                 style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
-                            >
-                                <style>
-                                    #search-results::-webkit-scrollbar {
-                                        width: 4px;
-                                        height: 4px;
-                                    }
-                                    #search-results::-webkit-scrollbar-track {
-                                        background: #f1f1f1;
-                                        border-radius: 10px;
-                                    }
-                                    #search-results::-webkit-scrollbar-thumb {
-                                        background: #1A3A6B;
-                                        border-radius: 10px;
-                                    }
-                                    #search-results::-webkit-scrollbar-thumb:hover {
-                                        background: #15305a;
-                                    }
-                                    #search-results {
-                                        scrollbar-width: thin;
-                                        scrollbar-color: #1A3A6B #f1f1f1;
-                                    }
-                                </style>
+                            ></div>
+                        </div>
+
+                        <!-- Filtro por área con búsqueda -->
+                        <div class="relative w-[200px]" x-data="{
+                                open: false, query: '', selected: @js((string) ($selectedPhysicalAreaId ?? '')),
+                                areas: @js($physicalAreas->map(fn ($area) => ['id' => (string) $area->id, 'name' => $area->name])->values()),
+                                get filteredAreas() { const term = this.query.toLocaleLowerCase().trim(); return term ? this.areas.filter(area => area.name.toLocaleLowerCase().includes(term)) : this.areas; },
+                                choose(id) { this.selected = id; this.query = ''; this.open = false; $wire.set('selectedPhysicalAreaId', id); }
+                            }" @click.away="open = false; query = ''" @keydown.escape.window="open = false; query = ''">
+                            <input id="physical-area-filter" x-ref="areaInput" type="text" x-model="query" @focus="open = true" @input="open = true"
+                                :placeholder="selected && !open ? (areas.find(area => area.id === selected)?.name || 'Todas las áreas') : 'Todas las áreas'"
+                                class="h-[50px] w-full rounded-lg border border-gray-300 bg-white/80 px-4 pr-10 text-[15px] shadow-sm backdrop-blur-sm focus:border-gray-300 focus:outline-none focus:ring-0"
+                                autocomplete="off" aria-label="Buscar o filtrar por área">
+                            <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.areaInput.focus())"
+                                class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-500 focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
+                                <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
+                            </button>
+                            <div x-cloak x-show="open" id="physical-area-results" class="absolute left-0 right-0 top-[54px] max-h-[300px] overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-lg" style="z-index: 100;">
+                                <button type="button" @mousedown.prevent="choose('')" class="block w-full border-b border-gray-100 px-4 py-3 text-left text-[15px] hover:bg-[#f0f4ff]">Todas las áreas</button>
+                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" x-text="area.name" class="block w-full border-b border-gray-100 px-4 py-3 text-left text-[15px] hover:bg-[#f0f4ff]"></button></template>
+                                <div x-show="filteredAreas.length === 0" class="px-4 py-3 text-center text-sm text-gray-500">No se encontraron áreas</div>
                             </div>
                         </div>
 
-                        <!-- Filtro por área (con truncado) -->
-                        <select id="physical-area-filter" wire:model.live="selectedPhysicalAreaId"
-                            class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm"
-                            style="height: 50px; min-width: 150px; max-width: 200px; padding: 0 32px 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30; cursor: pointer; background-color: rgba(255, 255, 255, 0.8); appearance: none; -webkit-appearance: none; -moz-appearance: none; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"
-                            title="Filtrar por área">
-                            <option value="">Todas las áreas</option>
-                            @foreach ($physicalAreas as $area)
-                                <option value="{{ $area->id }}" title="{{ $area->name }}">{{ $area->name }}</option>
-                            @endforeach
-                        </select>
-
                         <!-- BOTÓN DE PANTALLA COMPLETA (cuadrado, sin borde azul) -->
-                        <button id="fullscreen-toggle"
+                        <button id="fullscreen-toggle" type="button"
                             aria-label="Alternar pantalla completa">
                             <!-- Icono expandir (visible por defecto) -->
                             <svg id="fullscreen-icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
                             </svg>
                             <!-- Icono comprimir (oculto por defecto) - inverso exacto del expandir -->
                             <svg id="fullscreen-icon-compress" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="display: none;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V3m0 6H3m6 0L3 3m12 0v6m0 0h6m-6 0l6-6M9 21v-6m0 0H3m6 0L3 15m12 6v-6m0 0h6m-6 0l6 6" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5" />
                             </svg>
                         </button>
                     </div>
@@ -1279,7 +1279,7 @@
         }
 
         container.addEventListener('wheel', function(e) {
-            if (e.target.closest('#search-results') || e.target.closest('.search-result-item')) {
+            if (e.target.closest('#search-results') || e.target.closest('.search-result-item') || e.target.closest('#physical-area-results')) {
                 return;
             }
             
