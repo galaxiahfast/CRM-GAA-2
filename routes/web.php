@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\TimeEntryController;
@@ -41,8 +42,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
+})->name('home');
+
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+    ->middleware(['guest', 'throttle:5,1'])
+    ->name('password.email');
 
 Route::get('/dashboard/client-activity-data', [DashboardController::class, 'getClientActivityData'])
     ->name('dashboard.client-activity-data');

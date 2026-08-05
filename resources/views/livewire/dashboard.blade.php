@@ -5,6 +5,26 @@
 @endphp
 
 <div class="space-y-6 p-6">
+    @if (!$dashboardReady)
+        <div class="animate-pulse space-y-6" role="status" aria-label="Cargando panel">
+            <div class="flex items-center justify-between gap-4">
+                <div class="h-8 w-48 rounded-lg bg-gray-200"></div>
+                <div class="h-10 w-72 rounded-lg bg-gray-200"></div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                @foreach (range(1, 3) as $placeholder)
+                    <div class="h-24 rounded-xl border border-gray-200 bg-white shadow-sm"></div>
+                @endforeach
+            </div>
+            <div class="h-7 w-52 rounded-lg bg-gray-200"></div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (range(1, 6) as $placeholder)
+                    <div class="h-52 rounded-2xl border border-gray-200 bg-white shadow-sm"></div>
+                @endforeach
+            </div>
+            <span class="sr-only">Cargando información del dashboard...</span>
+        </div>
+    @else
     <!-- Tabs -->
     <div class="flex items-center justify-between">
         <div class="flex gap-6 border-b border-gray-200">
@@ -62,6 +82,9 @@
 
     <!-- Reporte de clientes -->
     <h2 class="border-b border-gray-300 text-lg font-semibold">Informe de clientes</h2>
+    @php
+        $filteredCustomers = $this->filteredCustomers;
+    @endphp
     @if ($this->customers->isEmpty())
         @if ($canManageCustomers)
             <x-no-data title="No hay clientes" subTitle="No se encontraron clientes para gestionar"
@@ -76,7 +99,7 @@
                 <span class="text-lg font-medium">Sin clientes asignados</span>
             </div>
         @endif
-    @elseif($this->filteredCustomers->isEmpty())
+    @elseif($filteredCustomers->isEmpty())
         <div class="flex flex-col items-center justify-center py-8 text-gray-600">
             <div class="mb-3 rounded-full bg-indigo-100 p-4 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500"
@@ -90,7 +113,7 @@
         </div>
     @else
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($this->filteredCustomers as $customer)
+            @foreach ($filteredCustomers->take($visibleCustomerLimit) as $customer)
                 @php
                     $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
                 @endphp
@@ -173,10 +196,22 @@
                 </a>
             @endforeach
         </div>
+        @if ($filteredCustomers->count() > $visibleCustomerLimit)
+            <div class="flex justify-center pt-2">
+                <button
+                    wire:click="showMoreCustomers"
+                    type="button"
+                    class="rounded-xl border border-[#1a3a6b] bg-white px-5 py-2.5 text-[15px] font-semibold text-[#1a3a6b] shadow-sm transition-colors hover:bg-blue-50"
+                >
+                    Mostrar más
+                </button>
+            </div>
+        @endif
         {{-- <div class="mt-4 flex justify-center text-sm">
             <div class="scale-90">
                 {{ $customersPaginate->links() }}
 </div>
 </div> --}}
+    @endif
     @endif
 </div>

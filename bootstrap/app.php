@@ -53,6 +53,17 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (Throwable $exception, Request $request) {
+            // Estas excepciones forman parte del flujo normal de Laravel
+            // (redirecciones de autenticación, validación, autorización y 404).
+            // Dejarlas al renderer nativo evita convertir una sesión vencida
+            // en una página 500 genérica.
+            if ($exception instanceof ValidationException
+                || $exception instanceof AuthenticationException
+                || $exception instanceof AuthorizationException
+                || $exception instanceof ModelNotFoundException) {
+                return null;
+            }
+
             $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500;
 
             if ($status < 500 || $request->expectsJson() || $request->hasHeader('X-Livewire')) {

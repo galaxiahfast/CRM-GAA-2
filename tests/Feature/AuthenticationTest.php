@@ -41,4 +41,25 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_authenticated_users_are_sent_from_the_entry_page_to_the_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/')
+            ->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_logging_out_returns_to_the_same_canonical_login(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/logout')
+            ->assertRedirect('/');
+
+        $this->assertGuest();
+        $this->get('/')->assertRedirect(route('login', absolute: false));
+    }
 }

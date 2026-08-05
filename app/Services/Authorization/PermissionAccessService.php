@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class PermissionAccessService
 {
+    /** @var array<string, bool> */
+    private array $requestPermissionResults = [];
+
+    /** @var array<string, array<string, true>> */
+    private array $requestPermissionKeys = [];
+
     public function permissionKeysForProfile(string $profile): array
     {
         return collect(config('access-permissions.catalog', []))
@@ -43,28 +49,45 @@ class PermissionAccessService
             $profile = Role::PROFILE_AUXILIARY;
         }
 
-        if (in_array($profile, [Role::PROFILE_ADMINISTRATOR, Role::PROFILE_AUXILIARY], true)) {
-            if (! in_array($permissionKey, $this->permissionKeysForProfile($profile), true)) {
-                return false;
-            }
+        $cacheKey = (int) $user->role_id.'|'.($profile ?: Role::PROFILE_CUSTOM).'|'.$permissionKey;
 
-            return AccessPermission::query()
-                ->active()
-                ->where('key', $permissionKey)
-                ->exists();
+        if (array_key_exists($cacheKey, $this->requestPermissionResults)) {
+            return $this->requestPermissionResults[$cacheKey];
         }
 
-        return DB::table('access_permissions as access_permission')
-            ->join(
-                'role_access_permission as role_permission',
-                'role_permission.access_permission_id',
-                '=',
-                'access_permission.id'
-            )
-            ->where('role_permission.role_id', (int) $user->role_id)
-            ->where('access_permission.key', $permissionKey)
-            ->where('access_permission.is_active', true)
-            ->exists();
+        if (in_array($profile, [Role::PROFILE_ADMINISTRATOR, Role::PROFILE_AUXILIARY], true)) {
+            if (! in_array($permissionKey, $this->permissionKeysForProfile($profile), true)) {
+                return $this->requestPermissionResults[$cacheKey] = false;
+            }
+
+            $profileCacheKey = 'profile|'.$profile;
+            $activeKeys = $this->requestPermissionKeys[$profileCacheKey]
+                ??= AccessPermission::query()
+                    ->active()
+                    ->whereIn('key', $this->permissionKeysForProfile($profile))
+                    ->pluck('key')
+                    ->mapWithKeys(fn (string $key): array => [$key => true])
+                    ->all();
+
+            return $this->requestPermissionResults[$cacheKey] = isset($activeKeys[$permissionKey]);
+        }
+
+        $roleCacheKey = 'role|'.(int) $user->role_id;
+        $activeKeys = $this->requestPermissionKeys[$roleCacheKey]
+            ??= DB::table('access_permissions as access_permission')
+                ->join(
+                    'role_access_permission as role_permission',
+                    'role_permission.access_permission_id',
+                    '=',
+                    'access_permission.id'
+                )
+                ->where('role_permission.role_id', (int) $user->role_id)
+                ->where('access_permission.is_active', true)
+                ->pluck('access_permission.key')
+                ->mapWithKeys(fn (string $key): array => [$key => true])
+                ->all();
+
+        return $this->requestPermissionResults[$cacheKey] = isset($activeKeys[$permissionKey]);
     }
 
     /**
@@ -87,6 +110,7 @@ class PermissionAccessService
 
         $role->accessPermissions()->sync($validPermissionIds);
         $role->unsetRelation('accessPermissions');
+        $this->flushRequestCache();
     }
 
     public function syncRoleAccess(Role $role, string $profile, array $permissionIds = []): void
@@ -117,5 +141,13 @@ class PermissionAccessService
         DB::transaction(function () use ($permission): void {
             $permission->delete();
         });
+
+        $this->flushRequestCache();
+    }
+
+    private function flushRequestCache(): void
+    {
+        $this->requestPermissionResults = [];
+        $this->requestPermissionKeys = [];
     }
 }

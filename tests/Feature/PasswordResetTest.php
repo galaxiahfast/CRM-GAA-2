@@ -41,6 +41,22 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
+    public function test_reset_password_requires_the_exact_registered_email(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create(['email' => 'Exact.Case@example.com']);
+
+        $response = $this->from('/forgot-password')->post('/forgot-password', [
+            'email' => 'exact.case@example.com',
+        ]);
+
+        $response->assertRedirect('/forgot-password');
+        $response->assertSessionHasErrors('email');
+        Notification::assertNothingSent();
+        $this->assertSame('Exact.Case@example.com', $user->fresh()->email);
+    }
+
     public function test_reset_password_screen_can_be_rendered(): void
     {
         if (! Features::enabled(Features::resetPasswords())) {

@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
+use App\Models\User;
+use App\Services\Authorization\PermissionAccessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 use Laravel\Jetstream\Jetstream;
@@ -49,5 +52,12 @@ class RegistrationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+
+        $user = User::query()->where('email', 'test@example.com')->firstOrFail();
+
+        $this->assertSame(Role::PROFILE_AUXILIARY, $user->role?->permission_profile);
+        $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'customers.view'));
+        $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'activities.manage'));
+        $this->assertFalse(app(PermissionAccessService::class)->allows($user, 'administration.organization.manage'));
     }
 }

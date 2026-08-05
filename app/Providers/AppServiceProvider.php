@@ -81,26 +81,36 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(Login::class, function (Login $event): void {
             if ($event->user instanceof User) {
-                app(SystemNotificationService::class)->loginSucceeded(
-                    $event->user,
-                    request()->ip(),
-                    request()->userAgent(),
-                );
+                $user = $event->user;
+                $ipAddress = request()->ip();
+                $userAgent = request()->userAgent();
+
+                app()->terminating(function () use ($user, $ipAddress, $userAgent): void {
+                    app(SystemNotificationService::class)->loginSucceeded(
+                        $user,
+                        $ipAddress,
+                        $userAgent,
+                    );
+                });
             }
         });
 
         Event::listen(Failed::class, function (Failed $event): void {
-            try {
-                $user = $event->user instanceof User
-                    ? $event->user
-                    : User::query()->where('email', $event->credentials['email'] ?? null)->first();
+            $eventUser = $event->user instanceof User ? $event->user : null;
+            $email = $event->credentials['email'] ?? null;
+            $ipAddress = request()->ip();
 
-                if ($user) {
-                    app(SystemNotificationService::class)->loginFailed($user, request()->ip());
+            app()->terminating(function () use ($eventUser, $email, $ipAddress): void {
+                try {
+                    $user = $eventUser ?: User::query()->where('email', $email)->first();
+
+                    if ($user) {
+                        app(SystemNotificationService::class)->loginFailed($user, $ipAddress);
+                    }
+                } catch (Throwable) {
+                    // El aviso diferido tampoco debe interrumpir la respuesta.
                 }
-            } catch (Throwable) {
-                // La alerta nunca debe interrumpir el flujo de autenticación.
-            }
+            });
         });
 
         Event::listen(JobFailed::class, function (JobFailed $event): void {
