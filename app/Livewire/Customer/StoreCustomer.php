@@ -84,6 +84,8 @@ class StoreCustomer extends IndexCustomer
 
     public function mount($customer = null)
     {
+        $this->ensureCanManageCustomers();
+
         $this->statements = Statement::all();
         $this->states = State::all();
         $this->services = Service::with('subServices')->get();
@@ -241,6 +243,7 @@ class StoreCustomer extends IndexCustomer
     }
     public function storeCustomer()
     {
+        $this->ensureCanManageCustomers();
 
         try {
             $this->validate();

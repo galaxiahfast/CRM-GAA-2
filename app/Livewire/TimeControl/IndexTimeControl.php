@@ -9,6 +9,7 @@ use App\Services\TimeControl\Exceptions\ActiveEntryException;
 use App\Services\TimeControl\Exceptions\NoOrganizationalProfileException;
 use App\Services\TimeControl\TimerService;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class IndexTimeControl extends Component
@@ -29,7 +30,10 @@ class IndexTimeControl extends Component
     public function start(TimerService $timer): void
     {
         $this->validate([
-            'customerId' => ['required', 'exists:customers,id'],
+            'customerId' => [
+                'required',
+                Rule::exists('customers', 'id')->whereNull('deleted_at'),
+            ],
             'subServiceId' => ['required', 'exists:sub_services,id'],
             'description' => ['nullable', 'string', 'max:500'],
         ], [], [
@@ -107,6 +111,7 @@ class IndexTimeControl extends Component
             ->get();
 
         $customers = Customer::orderBy('name')
+            ->whereNull('deleted_at')
             ->get(['id', 'name', 'last_name'])
             ->map(fn ($c) => [
                 'id' => $c->id,

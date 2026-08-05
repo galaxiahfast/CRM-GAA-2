@@ -282,6 +282,10 @@
                         </svg>
                         Agregar &Aacute;rea
                     </button>
+                    @if (auth()->user()->isAdmin())
+                        <livewire:customer.catalog-manager />
+                        <livewire:time-control.activity-catalog-manager />
+                    @endif
                 </div>
             </div>
 

@@ -1,7 +1,9 @@
 @php
-    $role = auth()->user()->role->role;
-    $canManageCustomers = app(\App\Services\Authorization\PermissionAccessService::class)
-        ->allows(auth()->user(), 'customers.manage');
+    $user = auth()->user();
+    $role = $user->role->role;
+    $canManageCustomers = $user->isAdmin()
+        && app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows($user, 'customers.manage');
 @endphp
 
 <div class="relative overflow-x-auto">
@@ -148,7 +150,7 @@
     @if ($customers->isEmpty())
         <x-no-data click="renderToCreateCustomer()" title="Sin clientes"
             subTitle="Aún no hay clientes disponibles, agrega nuevos clientes para gestionarlos."
-            titleButton="Agregar Cliente"></x-no-data>
+            :titleButton="$canManageCustomers ? 'Agregar Cliente' : ''"></x-no-data>
     @endif
 
     <script>

@@ -56,7 +56,9 @@ class Dashboard extends Component
         $this->selectedYear = now()->year;
 
         $this->services = Service::with('subServices')->get()->keyBy('id');
-        $this->customerIds = Customer::where('created_by', auth()->id())->pluck('id');
+        $this->customerIds = Customer::whereNull('deleted_at')
+            ->where('created_by', auth()->id())
+            ->pluck('id');
 
         $this->getCustomers();
         $this->countTotalFilesMonth();
@@ -75,7 +77,7 @@ class Dashboard extends Component
         $this->customers = collect();
 
         if ($user->isAdmin() || $role === 'Coordinador') {
-            $this->customers = Customer::all();
+            $this->customers = Customer::whereNull('deleted_at')->get();
         } elseif ($role === 'Contador') {
             $this->customers = Customer::whereHas('accountants', function ($q) use ($user) {
                 $q->where('accountant_id', $user->id);
@@ -298,16 +300,21 @@ class Dashboard extends Component
 
     public function updatedSearch()
     {
-        $this->customers = Customer::when($this->search, function ($query) {
-            $query->where('name', 'like', "%{$this->search}%")
-                ->orWhere('rfc', 'like', "%{$this->search}%")
-                ->orWhere('last_name', 'like', "%{$this->search}%");
-        })
-            ->orderByRaw("CASE
-            WHEN name LIKE '{$this->search}%' THEN 1
-            WHEN rfc LIKE '{$this->search}%' THEN 2
-            ELSE 3
-            END")
+        $search = trim((string) $this->search);
+
+        $this->customers = Customer::query()
+            ->whereNull('deleted_at')
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('rfc', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                });
+            })
+            ->orderByRaw(
+                'CASE WHEN name LIKE ? THEN 1 WHEN rfc LIKE ? THEN 2 ELSE 3 END',
+                [$search.'%', $search.'%'],
+            )
             ->get();
     }
 
@@ -350,9 +357,10 @@ class Dashboard extends Component
         //         ->paginate(9);
         // }
         $createdCustomers = Customer::whereNull('deleted_at');
-        $assignedCustomers = Customer::whereHas('accountants', function ($q) use ($user) {
-            $q->where('accountant_id', $user->id);
-        });
+        $assignedCustomers = Customer::whereNull('deleted_at')
+            ->whereHas('accountants', function ($q) use ($user) {
+                $q->where('accountant_id', $user->id);
+            });
 
         $customersPaginate = $createdCustomers
             ->union($assignedCustomers)

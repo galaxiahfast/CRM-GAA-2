@@ -8,15 +8,16 @@
         </div>
         <h1 class="mt-3 text-lg text-gray-800">{{$title}}</h1>
         <p class="mt-2 text-gray-500">{{$subTitle}}</p>
-        <div class="flex items-center mt-4 sm:mx-auto gap-x-3">
+        @if ($titleButton !== '')
+            <div class="flex items-center mt-4 sm:mx-auto gap-x-3">
+                <button wire:click='{{ $click }}' class="flex items-center justify-center w-1/2 px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 bg-blue-500 rounded-lg shrink-0 sm:w-auto gap-x-2 hover:bg-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
 
-            <button wire:click='{{ $click }}' class="flex items-center justify-center w-1/2 px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 bg-blue-500 rounded-lg shrink-0 sm:w-auto gap-x-2 hover:bg-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-
-                <span>{{$titleButton}}</span>
-            </button>
-        </div>
+                    <span>{{$titleButton}}</span>
+                </button>
+            </div>
+        @endif
     </div>
 </div>

@@ -53,6 +53,8 @@ class UpdateCustomer extends StoreCustomer
     }
     public function updateCustomer()
     {
+        $this->ensureCanManageCustomers();
+
         $this->validate([
             'name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
