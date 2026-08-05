@@ -50,6 +50,7 @@ class IndexRole extends Component
 
             return redirect()->route('administracion.role', ['tab' => 'delete']);
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al eliminar el rol: '.$e->getMessage());
 
             return;

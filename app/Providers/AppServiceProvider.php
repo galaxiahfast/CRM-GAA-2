@@ -7,9 +7,16 @@ use App\Models\UserOrganizationalProfile;
 use App\Observers\UserHierarchyObserver;
 use App\Observers\UserOrganizationalProfileHierarchyObserver;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\Notifications\SystemNotificationService;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
     {
         User::observe(UserHierarchyObserver::class);
         UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
+
+        $this->registerSystemNotificationListeners();
 
         // Capa opt-in para módulos con permisos dinámicos. Se mantiene separada
         // de Gate para que el bypass histórico de Administrador no impida revocar
@@ -66,5 +75,48 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('correct-time-tracking', fn (User $user): bool => app(PermissionAccessService::class)
             ->allows($user, 'time-control.supervision.view'));
+    }
+
+    private function registerSystemNotificationListeners(): void
+    {
+        Event::listen(Login::class, function (Login $event): void {
+            if ($event->user instanceof User) {
+                app(SystemNotificationService::class)->loginSucceeded(
+                    $event->user,
+                    request()->ip(),
+                    request()->userAgent(),
+                );
+            }
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            try {
+                $user = $event->user instanceof User
+                    ? $event->user
+                    : User::query()->where('email', $event->credentials['email'] ?? null)->first();
+
+                if ($user) {
+                    app(SystemNotificationService::class)->loginFailed($user, request()->ip());
+                }
+            } catch (Throwable) {
+                // La alerta nunca debe interrumpir el flujo de autenticación.
+            }
+        });
+
+        Event::listen(JobFailed::class, function (JobFailed $event): void {
+            app(SystemNotificationService::class)->reportIncident($event->exception, context: [
+                'source' => 'queue',
+                'connection' => $event->connectionName,
+                'queue' => $event->job->getQueue(),
+                'job' => $event->job->resolveName(),
+            ]);
+        });
+
+        Event::listen(ScheduledTaskFailed::class, function (ScheduledTaskFailed $event): void {
+            app(SystemNotificationService::class)->reportIncident($event->exception, context: [
+                'source' => 'scheduler',
+                'task' => $event->task->getSummaryForDisplay(),
+            ]);
+        });
     }
 }

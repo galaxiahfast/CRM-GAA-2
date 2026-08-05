@@ -311,6 +311,7 @@ class StoreCustomer extends IndexCustomer
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->addError('validationError', $e->validator->errors()->first());
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al crear el cliente.' . $e->getMessage());
         }
     }

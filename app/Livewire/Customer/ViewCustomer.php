@@ -580,6 +580,7 @@ class ViewCustomer extends IndexCustomer
                 $this->successMessage = 'PDF cargado exitosamente';
             }
         } catch (\Exception $e) {
+            report($e);
             $this->addError("pdfs.$declarationType.$fileType", 'Error al cargar el PDF');
         } finally {
             $pdfFile->delete();
@@ -663,6 +664,7 @@ class ViewCustomer extends IndexCustomer
             $this->typeMessage = 'error';
             $this->successMessage = 'PDF eliminado con éxito';
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Error al eliminar el PDF');
         } finally {
             $this->iconSVG = 'feathericon-trash';

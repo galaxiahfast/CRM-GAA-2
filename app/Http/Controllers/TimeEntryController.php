@@ -76,9 +76,11 @@ class TimeEntryController extends Controller
 
             return response()->json($resultado, 200);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'message' => 'Error al procesar el reporte de asistencia.',
-                'error' => $e->getMessage(),
+                'reference' => app(\App\Services\Notifications\SystemNotificationService::class)->referenceFor($e),
             ], 500);
         }
     }

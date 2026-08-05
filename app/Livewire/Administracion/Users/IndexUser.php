@@ -54,6 +54,7 @@ class IndexUser extends Component
                     return redirect()->to('/administracion/users');
                 }
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al eliminar el rol: ' . $e->getMessage());
             return;
         }

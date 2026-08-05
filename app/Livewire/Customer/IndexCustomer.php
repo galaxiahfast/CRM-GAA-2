@@ -26,6 +26,7 @@ class IndexCustomer extends Component
 
             session()->flash('success', 'Cliente eliminado');
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Error al eliminar el cliente');
         }
 

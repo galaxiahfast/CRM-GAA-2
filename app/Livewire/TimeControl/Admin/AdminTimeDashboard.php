@@ -252,6 +252,7 @@ class AdminTimeDashboard extends Component
             session()->flash('success', 'Ajuste operativo y bonificación aplicados correctamente.');
             $this->showModal = false;
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Error al procesar el ajuste: ' . $e->getMessage());
         }
     }

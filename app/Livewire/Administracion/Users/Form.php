@@ -270,6 +270,7 @@ class Form extends Component
             return redirect()->to('/administracion/'.($this->isAuxiliar ? 'interns' : 'users'));
 
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al guardar el usuario: '.$e->getMessage());
 
             return;

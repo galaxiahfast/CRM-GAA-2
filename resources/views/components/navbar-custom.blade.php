@@ -54,32 +54,8 @@
             </div>
             
             <div class="flex items-center gap-[15px]">
-                <!-- Notificaciones -->
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" type="button"
-                        class="flex items-center justify-center text-white transition-colors duration-200 focus:outline-none relative p-[10px] rounded-lg border border-white/60">
-                        <svg class="w-[20px] h-[20px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
-                    </button>
-                    <div x-show="open" @click.away="open = false"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95"
-                        x-transition:enter-end="opacity-100 scale-100"
-                        class="absolute right-0 mt-[23px] w-72 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-[100]"
-                        style="display: none;">
-                        <div class="px-4 py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-700">Notificaciones</span>
-                        </div>
-                        <div class="px-4 py-8 text-center">
-                            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <p class="text-sm text-gray-500">No hay notificaciones</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Notificaciones en tiempo real -->
+                <livewire:notification-center />
 
                 <!-- AVATAR -->
                 <div class="flex items-center">

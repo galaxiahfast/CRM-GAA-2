@@ -13,4 +13,27 @@ div.dataTables_filter {
     display: none;
 }
 
+/* Scroll corporativo para listas compactas de notificaciones. */
+.notification-scrollbar {
+    scrollbar-color: #1a3a6b transparent;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+
+.notification-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notification-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notification-scrollbar::-webkit-scrollbar-thumb {
+    background: #1a3a6b;
+    border-radius: 9999px;
+}
+
+.notification-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #15305a;
+}
 

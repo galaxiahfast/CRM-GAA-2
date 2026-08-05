@@ -118,6 +118,7 @@ class UpdateCustomer extends StoreCustomer
             session()->flash('success', 'Cliente actualizado correctamente');
             return redirect()->route('customers.index');
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al actualizar el cliente');
         }
     }
@@ -144,6 +145,7 @@ class UpdateCustomer extends StoreCustomer
                 session()->flash('success', 'Foto eliminada correctamente');
             }
         } catch (\Exception $e) {
+            report($e);
             session()->flash('error', 'Ocurrió un error al eliminar la foto');
         }
     }

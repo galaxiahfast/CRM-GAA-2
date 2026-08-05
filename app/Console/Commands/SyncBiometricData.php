@@ -164,6 +164,7 @@ class SyncBiometricData extends Command
                 }
 
             } catch (\Exception $ex) {
+                report($ex);
                 $this->error("\n>> ERROR CRÍTICO DURANTE TRANSFERENCIA: " . $ex->getMessage());
                 break;
             }
