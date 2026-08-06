@@ -34,3 +34,10 @@ Schedule::command('biometric:sync')->everyMinute()->withoutOverlapping();
 // 2. MANTENIMIENTO PROFUNDO (Una vez al día)
 // Valida los últimos 30 días contra el hardware y purga inconsistencias a las 11:00 PM
 Schedule::command('biometric:sync --maintenance')->dailyAt('23:00')->withoutOverlapping();
+
+// Cierra los cronómetros que sigan activos al terminar la jornada. Se usa
+// una zona horaria explícita porque APP_TIMEZONE puede permanecer en UTC.
+Schedule::command('time:auto-close')
+    ->dailyAt(config('time-control.auto_close_at', '21:00'))
+    ->timezone(config('time-control.timezone', 'America/Mexico_City'))
+    ->withoutOverlapping();

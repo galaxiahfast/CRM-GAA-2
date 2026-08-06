@@ -128,4 +128,22 @@ class TimeControlTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_full_shift_from_three_to_nine_is_not_truncated(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $timer = app(TimerService::class);
+
+        Carbon::setTestNow(Carbon::create(2026, 6, 10, 3, 0, 0, 'America/Mexico_City'));
+        $entry = $timer->start($aux, $customer->id, $sub->id);
+
+        Carbon::setTestNow(Carbon::create(2026, 6, 10, 21, 0, 0, 'America/Mexico_City'));
+        $timer->autoCloseOpenEntries();
+
+        $entry->refresh();
+        $this->assertSame(TimeEntry::STATUS_AUTO_CLOSED, $entry->status);
+        $this->assertSame(18 * 3600, $entry->total_duration_seconds);
+
+        Carbon::setTestNow();
+    }
 }

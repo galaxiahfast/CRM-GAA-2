@@ -32,7 +32,10 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // Una jornada operativa puede extenderse de 03:00 a 21:00. El valor por
+    // defecto cubre ese turno completo con margen, incluso si la pestaña queda
+    // en segundo plano y el navegador limita sus temporizadores.
+    'lifetime' => (int) env('SESSION_LIFETIME', 1200),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

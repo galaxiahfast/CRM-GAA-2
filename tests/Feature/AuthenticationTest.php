@@ -14,7 +14,13 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSeeText('GONZÁLEZ')
+            ->assertSeeText('ALONZO')
+            ->assertSeeText('Y ASOCIADOS S.C.P')
+            ->assertSee('data-social-provider="facebook"', false)
+            ->assertSee('data-social-provider="google"', false)
+            ->assertSee('data-social-provider="apple"', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -61,5 +67,16 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $this->get('/')->assertRedirect(route('login', absolute: false));
+    }
+
+    public function test_logout_uses_the_safe_session_validation_flow(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('data-session-logout', false)
+            ->assertSee('$root.requestSubmit();', false);
     }
 }

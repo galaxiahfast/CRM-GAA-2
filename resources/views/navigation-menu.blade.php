@@ -128,11 +128,11 @@
                             <div class="border-t border-gray-200"></div>
 
                             <!-- Authentication -->
-                            <form method="POST" action="{{ route('logout') }}" x-data>
+                            <form method="POST" action="{{ route('logout') }}" x-data data-session-logout>
                                 @csrf
 
                                 <x-dropdown-link href="{{ route('logout') }}"
-                                    @click.prevent="$root.submit();">
+                                    @click.prevent="$root.requestSubmit();">
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>
@@ -197,11 +197,11 @@
                 @endif
 
                 <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}" x-data>
+                <form method="POST" action="{{ route('logout') }}" x-data data-session-logout>
                     @csrf
 
                     <x-responsive-nav-link href="{{ route('logout') }}"
-                        @click.prevent="$root.submit();">
+                        @click.prevent="$root.requestSubmit();">
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>

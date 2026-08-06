@@ -21,7 +21,11 @@
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased">
+<body
+    class="font-sans antialiased"
+    data-session-keep-alive-url="{{ route('session.keep-alive') }}"
+    data-login-url="{{ route('login') }}"
+>
 
     <x-banner />
 

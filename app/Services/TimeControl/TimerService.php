@@ -17,9 +17,6 @@ use Illuminate\Support\Facades\DB;
  */
 class TimerService
 {
-    /** Límite teórico máximo de horas por jornada (9:00-18:00 + 4h extra). */
-    public const MAX_DAILY_HOURS = 13;
-
     /**
      * Inicia una nueva actividad para el usuario, congelando su contexto
      * organizacional actual (snapshot).
@@ -209,14 +206,12 @@ class TimerService
 
     private function moduleTimezone(): string
     {
-        $timezone = (string) config('app.timezone', 'America/Mexico_City');
-
-        return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
+        return (string) config('time-control.timezone', 'America/Mexico_City');
     }
 
     private function capToDailyLimit(TimeEntry $entry): void
     {
-        $maxSeconds = self::MAX_DAILY_HOURS * 3600;
+        $maxSeconds = (int) config('time-control.max_daily_hours', 18) * 3600;
         $entry->load('intervals');
         $total = $entry->calculateEffectiveSeconds();
 

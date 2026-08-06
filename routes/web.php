@@ -63,6 +63,12 @@ Route::middleware([
     'verified',
 ])->group(function () {
 
+    // Mantiene vigente la sesión durante la jornada sin tocar el estado del
+    // cronómetro. La fuente de verdad del tiempo permanece en la base de datos.
+    Route::get('/session/keep-alive', function () {
+        return response()->noContent();
+    })->name('session.keep-alive');
+
     // ==========================================
     // DASHBOARD
     // ==========================================

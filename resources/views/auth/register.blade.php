@@ -53,6 +53,5 @@
 
         <p class="mt-5 text-center text-[15px] text-gray-500">¿Ya tienes cuenta? <a href="{{ route('login') }}" class="font-semibold text-[#1A3A6B] hover:text-[#2F80B7]">Iniciar sesión</a></p>
 
-        <x-auth-social-buttons />
     </x-authentication-card>
 </x-guest-layout>

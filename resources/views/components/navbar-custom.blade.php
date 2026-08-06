@@ -74,9 +74,9 @@
                                 </x-dropdown-link>
                             @endif
                             <div class="border-t border-gray-200"></div>
-                            <form method="POST" action="{{ route('logout') }}" x-data>
+                            <form method="POST" action="{{ route('logout') }}" x-data data-session-logout>
                                 @csrf
-                                <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.requestSubmit();">
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>
