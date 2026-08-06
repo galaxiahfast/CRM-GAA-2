@@ -13,6 +13,16 @@ div.dataTables_filter {
     display: none;
 }
 
+/* Mantiene transparentes los campos del login incluso con autocompletado. */
+.auth-login-input:-webkit-autofill,
+.auth-login-input:-webkit-autofill:hover,
+.auth-login-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #17365d;
+    caret-color: #17365d;
+    font-size: 12px !important;
+    transition: background-color 9999s ease-out 0s;
+}
+
 /* Scroll corporativo para listas compactas de notificaciones. */
 .notification-scrollbar {
     scrollbar-color: #1a3a6b transparent;
@@ -36,4 +46,3 @@ div.dataTables_filter {
 .notification-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #15305a;
 }
-

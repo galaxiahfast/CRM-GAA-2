@@ -1,69 +1,93 @@
 <x-guest-layout>
     <x-authentication-card compact>
-        <a href="/" class="mx-auto flex w-fit flex-col items-center rounded-xl font-serif text-white focus:outline-none focus:ring-2 focus:ring-white/80" aria-label="González Alonzo y Asociados">
-            <span class="text-[34px] font-bold leading-[0.88] tracking-[-0.03em] sm:text-[38px]">GONZÁLEZ</span>
-            <span class="text-[34px] font-bold leading-[0.92] tracking-[-0.03em] sm:text-[38px]">ALONZO</span>
-            <span class="mt-1 text-[15px] font-semibold tracking-[0.04em] sm:text-[16px]">Y ASOCIADOS S.C.P</span>
-        </a>
-
-        <div class="mt-6 text-center">
-            <h1 class="text-2xl font-semibold tracking-tight text-white">Inicia sesión</h1>
+        <!-- Footer superior: Nombre empresa izquierda | DataMID del Sureste derecha -->
+        <div class="absolute inset-x-4 top-6 flex items-center justify-between text-[12px] font-semibold italic text-[#1A3A6B]/70 sm:inset-x-10">
+            <span class="whitespace-nowrap">González Alonzo y Asociados S.C.P</span>
+            <span class="whitespace-nowrap">DataMID del Sureste</span>
         </div>
 
-        @if ($errors->any())
-            <div class="mt-6 rounded-xl border border-red-300/30 bg-red-400/10 px-4 py-3 text-[15px] text-red-100" role="alert">
-                Revisa el correo y la contraseña e intenta nuevamente.
-            </div>
-        @endif
+        <!-- Contenido centrado -->
+        <div class="flex min-h-[400px] flex-col items-center justify-center">
+            <div class="w-full max-w-[420px] text-center">
+                <div class="mb-6">
+                    <h1 class="text-[22px] font-semibold tracking-[0.01em] text-[#1A3A6B]">Inicio de sesión</h1>
+                </div>
 
-        @session('status')
-            <div class="mt-6 rounded-xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-[15px] text-emerald-100" role="status">
-                {{ $value }}
-            </div>
-        @endsession
+                @if ($errors->any())
+                    <div class="mb-6 rounded-lg border border-red-200/80 bg-red-50/80 px-4 py-3 text-[15px] text-red-700" role="alert">
+                        Revisa el correo y la contraseña e intenta nuevamente.
+                    </div>
+                @endif
 
-        <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
-            @csrf
+                @session('status')
+                    <div class="mb-6 rounded-lg border border-emerald-200/80 bg-emerald-50/80 px-4 py-3 text-[15px] text-emerald-700" role="status">
+                        {{ $value }}
+                    </div>
+                @endsession
 
-            <div>
-                <label for="email" class="block text-[14px] font-medium text-blue-50">Correo electrónico</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
-                    class="mt-2 block h-12 w-full rounded-xl border border-white/25 bg-white/10 px-4 text-[15px] text-white shadow-sm placeholder:text-blue-100/45 focus:border-blue-200/70 focus:outline-none focus:ring-2 focus:ring-blue-200/15"
-                    placeholder="nombre@empresa.com">
-            </div>
+                <form method="POST" action="{{ route('login') }}" class="space-y-4">
+                    @csrf
 
-            <div>
-                <label for="password" class="block text-[14px] font-medium text-blue-50">Contraseña</label>
-                <input id="password" type="password" name="password" required autocomplete="current-password"
-                    class="mt-2 block h-12 w-full rounded-xl border border-white/25 bg-white/10 px-4 text-[15px] text-white shadow-sm placeholder:text-blue-100/45 focus:border-blue-200/70 focus:outline-none focus:ring-2 focus:ring-blue-200/15"
-                    placeholder="••••••••">
-            </div>
+                    <div class="text-left">
+                        <label for="email" class="block text-[15px] font-medium text-[#1A3A6B]">Correo electrónico</label>
+                        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
+                            class="auth-login-input mt-[10px] block h-11 w-full rounded-lg border border-[#1A3A6B]/40 bg-transparent px-4 text-[12px] text-[#000000] shadow-none placeholder:text-[12px] placeholder:text-[#7089A8] focus:border-[#1A3A6B] focus:bg-transparent focus:outline-none focus:ring-0"
+                            placeholder="nombre@empresa.com">
+                    </div>
 
-            <div class="flex items-center justify-between gap-4">
-                <label for="remember_me" class="flex cursor-pointer items-center gap-2 text-[13px] text-blue-100/85">
-                    <input id="remember_me" name="remember" type="checkbox" class="h-4 w-4 rounded border-white/30 bg-white/10 text-[#2F80B7] focus:ring-blue-200/40">
-                    <span>Recordar sesión</span>
-                </label>
+                    <div class="mt-[20px] text-left" x-data="{ passwordVisible: false }">
+                        <label for="password" class="block text-[15px] font-medium text-[#1A3A6B]">Contraseña</label>
+                        <div class="relative mt-[10px]">
+                            <input id="password" :type="passwordVisible ? 'text' : 'password'" name="password" required autocomplete="current-password"
+                                class="auth-login-input block h-11 w-full rounded-lg border border-[#1A3A6B]/40 bg-transparent px-4 pr-11 text-[12px] text-[#000000] shadow-none placeholder:text-[12px] placeholder:text-[#7089A8] focus:border-[#1A3A6B] focus:bg-transparent focus:outline-none focus:ring-0"
+                                placeholder="••••••••">
+                            <button type="button"
+                                class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#1A3A6B]/70 hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                                @click="passwordVisible = !passwordVisible"
+                                :aria-label="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                                :title="passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                                <svg x-show="!passwordVisible" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 12s3.5-6 9.75-6 9.75 6 9.75 6-3.5 6-9.75 6S2.25 12 2.25 12z" />
+                                    <circle cx="12" cy="12" r="2.75" stroke-width="1.8" />
+                                </svg>
+                                <svg x-show="passwordVisible" x-cloak class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 6.15A10.5 10.5 0 0112 6c6.25 0 9.75 6 9.75 6a15.5 15.5 0 01-2.1 2.72M6.15 6.15C3.55 8.02 2.25 12 2.25 12S5.75 18 12 18c1.48 0 2.79-.34 3.93-.88M9.88 9.88A3 3 0 0014.12 14.12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-right text-[13px] font-medium text-blue-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-100/30">
-                        Olvidé mi contraseña
-                    </a>
+                    <div class="flex items-center justify-between gap-4 mt-[20px]">
+                        <label for="remember_me" class="flex cursor-pointer items-center gap-2 text-[12px] text-[#000000] whitespace-nowrap">
+                            <input id="remember_me" name="remember" type="checkbox" class="h-3.5 w-3.5 rounded border-[#1A3A6B]/50 bg-transparent text-[#1A3A6B] focus:ring-0 focus:ring-offset-0">
+                            <span>Mantener sesión iniciada</span>
+                        </label>
+
+                        @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="border-b border-transparent text-right text-[12px] font-semibold text-[#1A3A6B] whitespace-nowrap transition-colors hover:border-[#1A3A6B]/40 hover:text-[#15305A] focus:outline-none">
+                                ¿Olvidaste tu contraseña?
+                            </a>
+                        @endif
+                    </div>
+
+                    <button type="submit" class="flex h-11 w-full items-center justify-center rounded-lg bg-[#1A3A6B] px-5 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(26,58,107,0.24)] transition-colors hover:bg-[#15305A] focus:outline-none focus:ring-0">
+                        Iniciar sesión
+                    </button>
+                </form>
+
+                @if (Route::has('register'))
+                    <p class="mt-5 text-center text-[12px] text-[#000000]">
+                        ¿No tienes cuenta?
+                        <a href="{{ route('register') }}" class="font-semibold text-[#1A3A6B] hover:text-[#15305A]">Regístrate aquí</a>
+                    </p>
                 @endif
             </div>
+        </div>
 
-            <button type="submit" class="flex h-12 w-full items-center justify-center rounded-xl bg-white px-5 text-[15px] font-semibold text-[#102746] shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#102746]">
-                Iniciar sesión
-            </button>
-        </form>
-
-        <x-auth-social-buttons dark />
-
-        @if (Route::has('register'))
-            <p class="mt-5 text-center text-[13px] text-blue-100/75">
-                ¿Aún no tienes cuenta?
-                <a href="{{ route('register') }}" class="font-semibold text-white hover:text-blue-100">Registrarse</a>
-            </p>
-        @endif
+        <!-- Footer inferior en una sola línea con negritas y cursivas -->
+        <div class="absolute inset-x-4 bottom-6 flex items-center justify-between gap-4 text-[12px] font-semibold italic leading-4 text-[#1A3A6B]/70 sm:inset-x-10">
+            <span class="whitespace-nowrap">Políticas de privacidad</span>
+            <span class="whitespace-nowrap">&copy; {{ now()->year }} Todos los derechos reservados</span>
+        </div>
     </x-authentication-card>
 </x-guest-layout>

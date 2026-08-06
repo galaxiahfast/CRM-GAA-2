@@ -15,12 +15,12 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200)
-            ->assertSeeText('GONZÁLEZ')
-            ->assertSeeText('ALONZO')
-            ->assertSeeText('Y ASOCIADOS S.C.P')
-            ->assertSee('data-social-provider="facebook"', false)
-            ->assertSee('data-social-provider="google"', false)
-            ->assertSee('data-social-provider="apple"', false);
+            ->assertSeeText('González Alonzo y Asociados S.C.P')
+            ->assertSeeText('Políticas de privacidad')
+            ->assertSeeText('Todos los derechos reservados')
+            ->assertDontSee('data-social-provider="facebook"', false)
+            ->assertDontSee('data-social-provider="google"', false)
+            ->assertDontSee('data-social-provider="apple"', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -34,6 +34,20 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_users_can_keep_the_session_started(): void
+    {
+        $user = User::factory()->create();
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => 'on',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotNull($user->fresh()->getRememberToken());
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
