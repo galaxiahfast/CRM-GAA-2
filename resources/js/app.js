@@ -55,48 +55,6 @@ const keepSessionAlive = async () => {
     }
 };
 
-const submitLogoutSafely = async (event) => {
-    const form = event.target.closest('form[data-session-logout]');
-
-    if (!form || form.dataset.sessionLogoutReady === '1') {
-        return;
-    }
-
-    event.preventDefault();
-
-    const keepAliveUrl = document.body?.dataset.sessionKeepAliveUrl;
-    const loginUrl = document.body?.dataset.loginUrl || '/login';
-
-    if (!keepAliveUrl) {
-        form.submit();
-        return;
-    }
-
-    try {
-        const response = await fetch(keepAliveUrl, {
-            method: 'GET',
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-
-        if (!response.ok) {
-            window.location.assign(loginUrl);
-            return;
-        }
-
-        form.dataset.sessionLogoutReady = '1';
-        form.requestSubmit();
-    } catch {
-        // Sin conexión no hay una sesión remota que cerrar. Evita dejar al
-        // usuario atrapado en una confirmación de expiración del navegador.
-        window.location.assign(loginUrl);
-    }
-};
-
 document.addEventListener('livewire:init', () => {
     window.Livewire.hook('request', ({ fail }) => {
         fail(({ status, preventDefault }) => {
@@ -123,4 +81,3 @@ document.addEventListener('visibilitychange', () => {
         keepSessionAlive();
     }
 });
-document.addEventListener('submit', submitLogoutSafely, true);
