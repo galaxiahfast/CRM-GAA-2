@@ -47,15 +47,44 @@ class AttendanceSettingsService
         ]);
     }
 
-    public function saveDayOverride(string $employeeId, string $date, float $hourlyRate, float $bonusAmount): void
+    /** @param list<string> $marksBefore @param list<string> $marksAfter */
+    public function saveDayOverride(
+        string $employeeId,
+        string $date,
+        float $dailyPayAmount,
+        float $bonusAmount,
+        string $comment,
+        ?int $adminId = null,
+        array $marksBefore = [],
+        array $marksAfter = [],
+    ): void
     {
         $stored = $this->readFile($employeeId);
 
         $dayOverrides = $stored['day_overrides'] ?? [];
+        $previous = $dayOverrides[$date] ?? [];
+        $history = is_array($previous['history'] ?? null) ? $previous['history'] : [];
+        $history[] = [
+            'admin_id' => $adminId,
+            'comment' => $comment,
+            'changed_at' => now()->toIso8601String(),
+            'marks_before' => array_values($marksBefore),
+            'marks_after' => array_values($marksAfter),
+            'daily_pay_before' => $previous['daily_pay_amount'] ?? null,
+            'daily_pay_after' => round($dailyPayAmount, 2),
+            'bonus_before' => $previous['bonus_amount'] ?? null,
+            'bonus_after' => round($bonusAmount, 2),
+        ];
+
         $dayOverrides[$date] = [
-            'hourly_rate' => round($hourlyRate, 2),
+            'hourly_rate' => (float) ($previous['hourly_rate'] ?? $stored['hourly_rate'] ?? self::DEFAULT_HOURLY_RATE),
+            'daily_pay_amount' => round($dailyPayAmount, 2),
             'bonus_amount' => round($bonusAmount, 2),
             'modified_individual' => true,
+            'comment' => $comment,
+            'modified_by' => $adminId,
+            'modified_at' => now()->toIso8601String(),
+            'history' => $history,
         ];
 
         $this->writeFile($employeeId, [
@@ -69,7 +98,7 @@ class AttendanceSettingsService
      * Resuelve tarifa y bono para un día concreto según jerarquía de modificaciones.
      *
      * @param  array{hourly_rate: float, bonus_amount: float, day_overrides: array<string, array{hourly_rate: float, bonus_amount: float, modified_individual: bool}>}  $settings
-     * @return array{hourly_rate: float, bonus_amount: float, modified_individual: bool}
+     * @return array{hourly_rate: float, bonus_amount: float, daily_pay_amount: ?float, modified_individual: bool, comment: ?string}
      */
     public function resolveForDay(array $settings, string $date, bool $isCorrecto): array
     {
@@ -83,7 +112,11 @@ class AttendanceSettingsService
         return [
             'hourly_rate' => (float) $hourlyRate,
             'bonus_amount' => (float) $bonusAmount,
+            'daily_pay_amount' => array_key_exists('daily_pay_amount', (array) $override)
+                ? (float) $override['daily_pay_amount']
+                : null,
             'modified_individual' => (bool) ($override['modified_individual'] ?? false),
+            'comment' => isset($override['comment']) ? (string) $override['comment'] : null,
         ];
     }
 

@@ -75,8 +75,15 @@ class AttendanceService
             $hourlyRate = $rates['hourly_rate'];
             $bonoDia = $rates['bonus_amount'];
 
-            $pagoBase = $esCorrecto ? round($horasDecimal * $hourlyRate, 2) : 0.0;
+            $pagoBase = $esCorrecto
+                ? ($rates['daily_pay_amount'] !== null
+                    ? round($rates['daily_pay_amount'], 2)
+                    : round($horasDecimal * $hourlyRate, 2))
+                : 0.0;
             $totalDia = $esCorrecto ? round($pagoBase + $bonoDia, 2) : 0.0;
+            $estado = $tieneImpares
+                ? ($rates['modified_individual'] ? 'Modificado / Revisar' : 'Impar / Revisar')
+                : ($rates['modified_individual'] ? 'Corregido' : 'Correcto');
 
             $resumenNomina[] = [
                 'fecha' => $fechaStr,
@@ -86,8 +93,9 @@ class AttendanceService
                 'bono' => '$'.number_format($bonoDia, 2, '.', ','),
                 'total' => '$'.number_format($totalDia, 2, '.', ','),
                 'requiere_revision' => $tieneImpares,
-                'estado' => $tieneImpares ? 'Impar / Revisar' : 'Correcto',
+                'estado' => $estado,
                 'modified_individual' => $rates['modified_individual'],
+                'correction_comment' => $rates['comment'],
                 'hourly_rate' => $hourlyRate,
                 'detalles_marcas' => implode(', ', $marcasImprimir),
                 'tiempo_segundos' => $tiempoNeto,

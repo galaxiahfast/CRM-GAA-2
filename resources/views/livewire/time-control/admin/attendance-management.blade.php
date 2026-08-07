@@ -251,16 +251,26 @@
                                 <td class="p-4 text-center font-mono text-green-600">{{ $row['bono'] }}</td>
                                 <td class="p-4 text-right font-bold text-slate-900 pr-6">{{ $row['total'] }}</td>
                                 <td class="p-4 text-center">
-                                    @if ($row['requiere_revision'])
+                                    @if (($row['estado'] ?? '') === 'Corregido')
+                                        <span class="inline-flex items-center whitespace-nowrap rounded-full bg-blue-100 px-3 py-1 text-[15px] font-semibold text-blue-800">Corregido</span>
+                                    @elseif ($row['requiere_revision'])
                                         <span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 text-[15px] font-semibold text-red-800">⚠️ Impar / Revisar</span>
                                     @else
                                         <span class="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-3 py-1 text-[15px] font-semibold text-green-800">Correcto</span>
                                     @endif
                                 </td>
                                 <td class="p-4 text-center">
-                                    <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" class="rounded-none border border-[#1A3A6B] bg-transparent px-4 py-2 text-[15px] font-semibold text-[#1A3A6B] transition-colors hover:bg-[#f3f4f6]">
-                                        Ajustar
-                                    </button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-0">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
+                                        </button>
+                                        <button type="button" title="Copiar (próximamente)" aria-label="Copiar jornada" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg>
+                                        </button>
+                                        <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" title="Editar jornada" aria-label="Editar jornada" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-[#1A3A6B] hover:bg-blue-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -303,32 +313,91 @@
 
     {{-- Modal de ajuste por día --}}
     @if($showAttendanceModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="w-full max-w-md overflow-hidden border border-[#e5e7eb] bg-[#ffffff] shadow-xl">
-                <div class="flex items-center justify-between border-b border-[#e5e7eb] bg-[#f3f4f6] p-5">
-                    <div>
-                        <h3 class="text-[15px] font-bold text-gray-800">Ajuste Individual por Día</h3>
-                        <p class="mt-1 max-w-xs truncate text-[15px] text-gray-500" title="{{ $selectedEmployeeName }} — {{ $selectedDate }}">{{ $selectedEmployeeName }} — {{ $selectedDate }}</p>
+        <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" wire:keydown.escape.window="closeModal">
+            <div x-data @click.away="$wire.closeModal()" class="flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-[#F3F3F3] shadow-2xl">
+                <div class="flex items-center justify-between gap-4 border-b border-gray-300 px-4 py-3">
+                    <div class="flex min-w-0 items-center gap-[15px]">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1A3A6B] text-white">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-[15px] font-semibold text-gray-900">Editar jornada del día</h3>
+                            <p class="mt-1 truncate text-[15px] text-gray-500" title="{{ $selectedEmployeeName }} — {{ $selectedDate }}">{{ $selectedEmployeeName }} — {{ $selectedDate }}</p>
+                        </div>
                     </div>
-                    <button type="button" wire:click="closeModal" class="text-[15px] text-gray-400 hover:text-gray-600">✕</button>
+                    <button type="button" wire:click="closeModal" aria-label="Cerrar" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
 
-                <div class="space-y-5 p-6">
-                    <div>
-                        <label class="mb-2 block text-[15px] font-medium text-[#1A3A6B]">Precio por Hora ($)</label>
-                        <input type="number" step="0.01" wire:model="modalHourlyRate" class="h-[50px] w-full rounded-none border border-[#d1d5db] bg-transparent px-5 text-[15px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10" />
-                    </div>
-                    <div>
-                        <label class="mb-2 block text-[15px] font-medium text-[#1A3A6B]">Bono del Día ($)</label>
-                        <input type="number" step="0.01" wire:model="modalBonusAmount" class="h-[50px] w-full rounded-none border border-[#d1d5db] bg-transparent px-5 text-[15px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10" />
-                    </div>
-                    <p class="text-[15px] leading-6 text-gray-500">Este ajuste tiene prioridad sobre las tarifas generales hasta que se vuelvan a aplicar.</p>
-                </div>
+                <form wire:submit="saveDayAdjustment" class="flex min-h-0 flex-1 flex-col">
+                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-4 text-[15px]">
+                        <section class="rounded-xl border border-gray-300 bg-white p-4 shadow-sm">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h4 class="text-[15px] font-semibold text-gray-900">Marcas / Chequeos</h4>
+                                    <p class="mt-1 text-[15px] text-gray-500">Ordena la jornada agregando o eliminando marcas con precisión de segundos.</p>
+                                </div>
+                                <button type="button" wire:click="addAttendanceMark" class="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#1A3A6B] bg-white px-3 text-[15px] font-medium text-[#1A3A6B] hover:bg-blue-50 focus:outline-none focus:ring-0">
+                                    <span class="text-lg leading-none">+</span> Agregar marca
+                                </button>
+                            </div>
 
-                <div class="flex justify-end gap-3 border-t border-[#e5e7eb] bg-[#f3f4f6] px-6 py-4">
-                    <button type="button" wire:click="closeModal" class="h-11 rounded-none border border-[#1A3A6B] bg-transparent px-5 text-[15px] font-semibold text-[#1A3A6B] hover:bg-[#f8fafc]">Cancelar</button>
-                    <button type="button" wire:click="saveDayAdjustment" class="h-11 rounded-none border-0 bg-[#1A3A6B] px-5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#15305a]">Guardar Ajuste</button>
-                </div>
+                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                @foreach ($modalMarks as $index => $mark)
+                                    <div class="rounded-lg border border-gray-200 bg-[#F3F3F3] p-2.5" wire:key="attendance-mark-{{ $selectedDate }}-{{ $index }}">
+                                        <div class="mb-2 flex items-center justify-between gap-3">
+                                            <label for="attendance-mark-{{ $index }}" class="text-[15px] font-medium text-gray-700">Chequeo {{ $index + 1 }}</label>
+                                            <span class="rounded-full px-2 py-0.5 text-[12px] font-semibold {{ $index % 2 === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' }}">{{ $index % 2 === 0 ? 'Entrada' : 'Salida' }}</span>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model="modalMarks.{{ $index }}" class="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                            <button type="button" wire:click="removeAttendanceMark({{ $index }})" aria-label="Eliminar chequeo {{ $index + 1 }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 focus:outline-none focus:ring-0">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
+                                            </button>
+                                        </div>
+                                        @error('modalMarks.'.$index) <p class="mt-2 text-[13px] text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('modalMarks') <p class="mt-3 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                            <p class="mt-3 rounded-lg border px-3 py-2 text-[15px] {{ count($modalMarks) % 2 === 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700' }}">
+                                {{ count($modalMarks) % 2 === 0 ? 'La jornada tiene marcas pares y quedará como corregida.' : 'La jornada conserva marcas impares y seguirá requiriendo revisión.' }}
+                            </p>
+                        </section>
+
+                        <section class="rounded-xl border border-gray-300 bg-white p-4 shadow-sm">
+                            <h4 class="text-[15px] font-semibold text-gray-900">Pago y bono del día</h4>
+                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Pago base del día ($)</label>
+                                    <input type="number" min="0" step="0.01" wire:model="modalDailyPay" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    @error('modalDailyPay') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Bono del día ($)</label>
+                                    <input type="number" min="0" step="0.01" wire:model="modalBonusAmount" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    @error('modalBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-xl border border-gray-300 bg-white p-4 shadow-sm">
+                            <label for="attendance-change-comment" class="mb-2 block text-[15px] font-medium text-gray-700">Comentario o motivo del cambio <span class="text-red-600">*</span></label>
+                            <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 py-2 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0"></textarea>
+                            @error('modalChangeComment') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                            <p class="mt-2 text-[15px] text-gray-500">El comentario quedará registrado en el historial del día.</p>
+                        </section>
+                    </div>
+
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-gray-300 bg-[#F3F3F3] px-4 py-3">
+                        <button type="button" wire:click="closeModal" class="inline-flex h-10 items-center justify-center rounded-lg border border-[#1A3A6B] bg-white px-5 text-[15px] font-medium text-[#1A3A6B] hover:bg-gray-100 focus:outline-none focus:ring-0">Cancelar</button>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="saveDayAdjustment" class="inline-flex h-10 items-center justify-center rounded-lg bg-[#1A3A6B] px-5 text-[15px] font-medium text-white hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                            <span wire:loading.remove wire:target="saveDayAdjustment">Guardar cambios</span>
+                            <span wire:loading wire:target="saveDayAdjustment">Guardando...</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif

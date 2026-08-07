@@ -147,6 +147,7 @@ class TimeEntryController extends Controller
             'fecha' => ['required', 'date'],
             'pago' => ['required', 'numeric', 'min:0'],
             'bono' => ['required', 'numeric', 'min:0'],
+            'comentario' => ['required', 'string', 'min:5', 'max:500'],
         ]);
 
         $this->settingsService->saveDayOverride(
@@ -154,6 +155,8 @@ class TimeEntryController extends Controller
             $data['fecha'],
             (float) $data['pago'],
             (float) $data['bono'],
+            trim($data['comentario']),
+            $request->user()->id,
         );
 
         return response()->json(['message' => 'Ajuste del día guardado.']);
