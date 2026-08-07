@@ -284,10 +284,13 @@
                             <span style="font-weight: 400; color: #6b7280; font-size: 13px; margin-left: 8px;">({{ $groupData['entries']->count() }} registros)</span>
                         </div>
                         <div style="padding: 16px; background-color: #ffffff;">
+                            @error('activityEdit')
+                                <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[15px] text-amber-800">{{ $message }}</div>
+                            @enderror
                             @if ($groupActivityDetail['groups'] === [])
                                 <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
                             @else
-                                <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" />
+                                <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" :hidden-columns="['Observaciones']" actions />
                             @endif
                         </div>
                     </div>
@@ -299,6 +302,82 @@
 
     </div>
 </div>
+
+@if ($showActivityEditModal)
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
+        role="dialog" aria-modal="true" aria-labelledby="activity-edit-title"
+        wire:keydown.escape.window="closeActivityEditModal">
+        <div x-data @click.away="$wire.closeActivityEditModal()"
+            class="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-[#F3F3F3] shadow-2xl">
+            <div class="flex items-center justify-between gap-5 border-b border-gray-300 px-5 py-4">
+                <div class="flex min-w-0 items-center gap-[15px]">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1A3A6B] text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 id="activity-edit-title" class="truncate text-[15px] font-semibold text-gray-900">Editar horario de actividad</h2>
+                        <p class="mt-1 truncate text-[15px] text-gray-500">{{ $editingActivityName }}</p>
+                    </div>
+                </div>
+                <button type="button" wire:click="closeActivityEditModal" aria-label="Cerrar"
+                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-0">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form wire:submit="saveActivityTimes" class="flex min-h-0 flex-1 flex-col">
+                <div class="overflow-y-auto p-5 text-[15px]">
+                    <div class="rounded-xl border border-gray-300 bg-white p-5 shadow-sm">
+                        <h3 class="text-[15px] font-semibold text-gray-900">Horario registrado</h3>
+                        <p class="mt-1 text-[15px] text-gray-500">La duración efectiva se recalculará automáticamente al guardar.</p>
+
+                        <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div>
+                                <label for="activity-start-time" class="mb-2 block text-[15px] font-medium text-gray-700">Hora de inicio</label>
+                                <input id="activity-start-time" type="time" step="1" wire:model="activityStartTime"
+                                    class="h-12 w-full rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                @error('activityStartTime') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="activity-end-time" class="mb-2 block text-[15px] font-medium text-gray-700">Hora de fin</label>
+                                <input id="activity-end-time" type="time" step="1" wire:model="activityEndTime"
+                                    class="h-12 w-full rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                @error('activityEndTime') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="mt-5">
+                            <label for="activity-correction-comment" class="mb-2 block text-[15px] font-medium text-gray-700">
+                                Comentario o motivo de la corrección <span class="text-red-600" aria-hidden="true">*</span>
+                            </label>
+                            <textarea id="activity-correction-comment" wire:model="activityCorrectionComment" rows="4" maxlength="500" required
+                                placeholder="Describe por qué es necesario corregir el horario de esta actividad..."
+                                class="w-full resize-y rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 py-3 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0"></textarea>
+                            <div class="mt-2 flex items-start justify-between gap-4">
+                                @error('activityCorrectionComment')
+                                    <p class="text-[15px] text-red-600">{{ $message }}</p>
+                                @else
+                                    <p class="text-[15px] text-gray-500">Este comentario quedará registrado en el historial.</p>
+                                @enderror
+                                <span class="shrink-0 text-[13px] text-gray-400">Máximo 500 caracteres</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex shrink-0 justify-end gap-[15px] border-t border-gray-300 bg-[#F3F3F3] p-5">
+                    <button type="button" wire:click="closeActivityEditModal"
+                        class="inline-flex h-12 items-center justify-center rounded-xl border border-[#1A3A6B] bg-white px-6 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-gray-100 focus:outline-none focus:ring-0">Cancelar</button>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="saveActivityTimes"
+                        class="inline-flex h-12 items-center justify-center rounded-xl bg-[#1A3A6B] px-6 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                        <span wire:loading.remove wire:target="saveActivityTimes">Guardar cambios</span>
+                        <span wire:loading wire:target="saveActivityTimes">Guardando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endif
 
 <script>
     (() => {

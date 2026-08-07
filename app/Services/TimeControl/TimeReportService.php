@@ -144,6 +144,7 @@ class TimeReportService
             ->groupBy(fn (TimeEntry $e) => $this->entryLocalDate($e))
             ->map(fn (Collection $dayEntries, string $dateKey) => [
                 'date' => Carbon::parse($dateKey)->format('d/m/Y'),
+                'entry_ids' => $dayEntries->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
                 'rows' => $dayEntries
                     ->map(fn (TimeEntry $e) => $this->activityDetailRow($e, $includeCollaborator))
                     ->values()
@@ -486,7 +487,7 @@ class TimeReportService
             return '—';
         }
 
-        return Carbon::parse($date->format('Y-m-d H:i:s'), $this->moduleTimezone())->format('H:i');
+        return Carbon::parse($date->format('Y-m-d H:i:s'), $this->moduleTimezone())->format('H:i:s');
     }
 
     private function entryLocalDate(TimeEntry $entry): string

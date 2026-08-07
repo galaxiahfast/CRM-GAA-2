@@ -53,6 +53,18 @@ class AdminTimeDashboard extends Component
     public $dailyBonus = 0;
     public string $bonusReason = '';
 
+    public bool $showActivityEditModal = false;
+
+    public ?int $editingActivityId = null;
+
+    public string $editingActivityName = '';
+
+    public string $activityStartTime = '';
+
+    public string $activityEndTime = '';
+
+    public string $activityCorrectionComment = '';
+
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
@@ -257,6 +269,109 @@ class AdminTimeDashboard extends Component
         }
     }
 
+    public function openActivityEditModal(int $entryId): void
+    {
+        abort_unless(Gate::allows('correct-time-tracking'), 403);
+
+        $entry = $this->editableReportedEntry($entryId);
+        $intervals = $entry->intervals->sortBy('started_at')->values();
+        $first = $intervals->first();
+        $last = $intervals->sortByDesc('id')->first();
+
+        if (! $first || ! $last || ! $last->ended_at) {
+            $this->addError('activityEdit', 'La actividad debe estar finalizada antes de corregir sus horas.');
+            return;
+        }
+
+        $this->resetValidation();
+        $this->editingActivityId = $entry->id;
+        $this->editingActivityName = $entry->subService?->sub_service ?? 'Actividad';
+        $this->activityStartTime = $first->started_at->format('H:i:s');
+        $this->activityEndTime = $last->ended_at->format('H:i:s');
+        $this->activityCorrectionComment = '';
+        $this->showActivityEditModal = true;
+    }
+
+    public function closeActivityEditModal(): void
+    {
+        $this->reset([
+            'showActivityEditModal', 'editingActivityId', 'editingActivityName',
+            'activityStartTime', 'activityEndTime', 'activityCorrectionComment',
+        ]);
+        $this->resetValidation();
+    }
+
+    public function saveActivityTimes(): void
+    {
+        abort_unless(Gate::allows('correct-time-tracking'), 403);
+
+        $this->activityCorrectionComment = trim($this->activityCorrectionComment);
+
+        $this->validate([
+            'editingActivityId' => ['required', 'integer'],
+            'activityStartTime' => ['required', 'date_format:H:i:s'],
+            'activityEndTime' => ['required', 'date_format:H:i:s'],
+            'activityCorrectionComment' => ['required', 'string', 'min:5', 'max:500'],
+        ], [], [
+            'activityStartTime' => 'hora de inicio',
+            'activityEndTime' => 'hora de fin',
+            'activityCorrectionComment' => 'comentario o motivo de la corrección',
+        ]);
+
+        $entry = $this->editableReportedEntry((int) $this->editingActivityId);
+        $oldValues = $this->activitySnapshot($entry);
+
+        DB::transaction(function () use ($entry, $oldValues): void {
+            $entry->refresh()->load('intervals');
+            $intervals = $entry->intervals->sortBy('started_at')->values();
+            $first = $intervals->first();
+            $last = $intervals->sortByDesc('id')->first();
+
+            abort_unless($first && $last && $last->ended_at, 422, 'La actividad ya no está disponible para edición.');
+
+            // Conserva la fecha y zona horaria con las que Eloquent hidrató el
+            // intervalo; el input solamente reemplaza la porción de hora.
+            $newStart = $first->started_at->copy()->setTimeFromTimeString($this->activityStartTime);
+            $newEnd = $last->ended_at->copy()->setTimeFromTimeString($this->activityEndTime);
+
+            if ($newEnd->lessThanOrEqualTo($newStart)) {
+                $this->addError('activityEndTime', 'La hora de fin debe ser posterior a la hora de inicio.');
+                return;
+            }
+            if ($first->ended_at && $newStart->greaterThanOrEqualTo($first->ended_at)) {
+                $this->addError('activityStartTime', 'La hora de inicio debe ser anterior al cierre de su primer intervalo.');
+                return;
+            }
+            if ($newEnd->lessThanOrEqualTo($last->started_at)) {
+                $this->addError('activityEndTime', 'La hora de fin debe ser posterior al inicio de su último intervalo.');
+                return;
+            }
+
+            $first->started_at = $newStart;
+            $first->save();
+            $last->ended_at = $newEnd;
+            $last->save();
+
+            $entry->load('intervals');
+            $entry->total_duration_seconds = $entry->calculateEffectiveSeconds();
+            $entry->save();
+
+            $entry->audits()->create([
+                'admin_id' => auth()->id(),
+                'old_values' => $oldValues,
+                'new_values' => $this->activitySnapshot($entry->fresh('intervals')),
+                'reason' => $this->activityCorrectionComment,
+            ]);
+        });
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+
+        $this->closeActivityEditModal();
+        session()->flash('success', 'La actividad se actualizó y las horas efectivas fueron recalculadas.');
+    }
+
     public function export(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
@@ -422,5 +537,39 @@ class AdminTimeDashboard extends Component
         $timezone = (string) config('app.timezone', 'America/Mexico_City');
 
         return $timezone === 'UTC' ? 'America/Mexico_City' : $timezone;
+    }
+
+    private function editableReportedEntry(int $entryId): TimeEntry
+    {
+        abort_unless($this->groupReportIsCurrent && $this->reportedCollaboratorIds !== [], 404);
+
+        $timezone = $this->moduleTimezone();
+        $start = Carbon::parse($this->from, $timezone)->startOfDay();
+        $end = Carbon::parse($this->to, $timezone)->endOfDay();
+
+        return TimeEntry::query()
+            ->whereKey($entryId)
+            ->whereIn('user_id', array_map('intval', $this->reportedCollaboratorIds))
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
+                    ->orWhereHas('intervals', fn ($intervals) => $intervals
+                        ->where('started_at', '<=', $end->toDateTimeString())
+                        ->where(fn ($range) => $range->whereNull('ended_at')->orWhere('ended_at', '>=', $start->toDateTimeString())));
+            })
+            ->with(['intervals', 'subService:id,sub_service'])
+            ->firstOrFail();
+    }
+
+    private function activitySnapshot(TimeEntry $entry): array
+    {
+        return [
+            'total_duration_seconds' => (int) $entry->total_duration_seconds,
+            'status' => (int) $entry->status,
+            'intervals' => $entry->intervals->map(fn ($interval) => [
+                'id' => $interval->id,
+                'started_at' => optional($interval->started_at)->toDateTimeString(),
+                'ended_at' => optional($interval->ended_at)?->toDateTimeString(),
+            ])->values()->all(),
+        ];
     }
 }

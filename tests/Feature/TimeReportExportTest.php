@@ -10,6 +10,7 @@ use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\SubService;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Reports\ReportExportManager;
@@ -144,6 +145,41 @@ class TimeReportExportTest extends TestCase
             ->call('generateGroupReport')
             ->call('exportGroup', 'csv')
             ->assertFileDownloaded("informe-general-horas_{$today}_{$today}.csv");
+    }
+
+    public function test_admin_can_edit_activity_times_from_general_report_with_recalculation_and_audit(): void
+    {
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+        $entry = TimeEntry::with('intervals')->where('user_id', $aux->id)->firstOrFail();
+        $editedStart = $entry->intervals->first()->started_at->copy()->subSeconds(30)->format('H:i:s');
+        $editedEnd = $entry->intervals->first()->ended_at->copy()->addSeconds(45)->format('H:i:s');
+        $correctionReason = 'Corrección validada con precisión de segundos.';
+
+        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+            ->set('selectedCollaboratorIds', [$aux->id])
+            ->set('from', $today)
+            ->set('to', $today)
+            ->call('generateGroupReport')
+            ->call('openActivityEditModal', $entry->id)
+            ->assertSet('showActivityEditModal', true)
+            ->set('activityStartTime', $editedStart)
+            ->set('activityEndTime', $editedEnd)
+            ->call('saveActivityTimes')
+            ->assertHasErrors(['activityCorrectionComment' => 'required'])
+            ->set('activityCorrectionComment', $correctionReason)
+            ->call('saveActivityTimes')
+            ->assertHasNoErrors()
+            ->assertSet('showActivityEditModal', false);
+
+        $entry->refresh()->load('intervals', 'audits');
+
+        $this->assertSame(3675, $entry->total_duration_seconds);
+        $this->assertSame($editedStart, $entry->intervals->first()->started_at->format('H:i:s'));
+        $this->assertSame($editedEnd, $entry->intervals->first()->ended_at->format('H:i:s'));
+        $this->assertCount(1, $entry->audits);
+        $this->assertSame($admin->id, $entry->audits->first()->admin_id);
+        $this->assertSame($correctionReason, $entry->audits->first()->reason);
     }
 
     public function test_user_report_includes_activity_detail_by_day(): void
