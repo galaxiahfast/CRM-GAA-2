@@ -80,115 +80,212 @@
 
         <div id="panel_resultados_checador" class="mx-20 mb-10 space-y-8 text-[15px]">
             <section aria-label="Acumulados del periodo" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="flex h-14 items-center border-b border-[#d1d5db] bg-[#f4f4f4] px-3 font-semibold leading-5 text-gray-600">Tiempo Neto</header>
-                    <div id="kpi_tiempo_neto" class="truncate px-4 py-5 font-mono text-[15px] font-semibold text-[#1A3A6B]" title="00h 00m 00s" aria-live="polite">00h 00m 00s</div>
+                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <span class="absolute inset-x-0 top-0 h-1 bg-[#1A3A6B]"></span>
+                    <header class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                        <span class="truncate font-medium text-gray-500">Tiempo Neto</span>
+                    </header>
+                    <div id="kpi_tiempo_neto" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-[#1A3A6B]" title="00h 00m 00s" aria-live="polite">00h 00m 00s</div>
                 </article>
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="flex h-14 items-center border-b border-[#d1d5db] bg-[#f4f4f4] px-3 font-semibold leading-5 text-gray-600">Horas Decimales</header>
-                    <div id="kpi_horas_decimales" class="truncate px-4 py-5 text-[15px] font-semibold text-[#1A3A6B]" title="0.00" aria-live="polite">0.00</div>
+                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <span class="absolute inset-x-0 top-0 h-1 bg-indigo-500"></span>
+                    <header class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h8M8 11h2m4 0h2m-8 4h2m4 0h2" />
+                            </svg>
+                        </span>
+                        <span class="truncate font-medium text-gray-500">Horas Decimales</span>
+                    </header>
+                    <div id="kpi_horas_decimales" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-indigo-600" title="0.00" aria-live="polite">0.00</div>
                 </article>
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="flex h-14 items-center border-b border-[#d1d5db] bg-[#f4f4f4] px-3 font-semibold leading-5 text-gray-600">Pago Base</header>
-                    <div id="kpi_pago_base" class="truncate px-4 py-5 text-[15px] font-semibold text-[#1A3A6B]" title="$0.00" aria-live="polite">$0.00</div>
+                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <span class="absolute inset-x-0 top-0 h-1 bg-sky-500"></span>
+                    <header class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7.5A2.5 2.5 0 015.5 5H18a2 2 0 012 2v2H6a3 3 0 000 6h14v2a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-9zM20 9v6h-4a3 3 0 010-6h4z" />
+                            </svg>
+                        </span>
+                        <span class="truncate font-medium text-gray-500">Pago Base</span>
+                    </header>
+                    <div id="kpi_pago_base" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-sky-600" title="$0.00" aria-live="polite">$0.00</div>
                 </article>
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="flex h-14 items-center border-b border-[#d1d5db] bg-[#f4f4f4] px-3 font-semibold leading-5 text-gray-600">Bono</header>
-                    <div id="kpi_bono" class="truncate px-4 py-5 text-[15px] font-semibold text-[#1A3A6B]" title="$0.00" aria-live="polite">$0.00</div>
+                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <span class="absolute inset-x-0 top-0 h-1 bg-amber-500"></span>
+                    <header class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 12v8H4v-8m-1-5h18v5H3V7zm9 13V7m0 0H8.5A2.5 2.5 0 118 2c2 0 4 5 4 5zm0 0h3.5A2.5 2.5 0 1016 2c-2 0-4 5-4 5z" />
+                            </svg>
+                        </span>
+                        <span class="truncate font-medium text-gray-500">Bono</span>
+                    </header>
+                    <div id="kpi_bono" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-amber-600" title="$0.00" aria-live="polite">$0.00</div>
                 </article>
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="flex h-14 items-center border-b border-[#d1d5db] bg-[#f4f4f4] px-3 font-semibold leading-5 text-gray-600">Total Día</header>
-                    <div id="kpi_total_dia" class="truncate px-4 py-5 text-[15px] font-semibold text-emerald-600" title="$0.00" aria-live="polite">$0.00</div>
+                <article class="relative min-w-0 overflow-hidden rounded-xl border border-emerald-200 bg-white p-5 shadow-[0_8px_24px_rgba(16,185,129,0.10)]">
+                    <span class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></span>
+                    <header class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 17l5-5 4 4 7-8m0 0h-5m5 0v5" />
+                            </svg>
+                        </span>
+                        <span class="truncate font-medium text-gray-500">Total Día</span>
+                    </header>
+                    <div id="kpi_total_dia" class="mt-5 truncate text-[20px] font-bold tracking-tight text-emerald-600" title="$0.00" aria-live="polite">$0.00</div>
                 </article>
             </section>
 
             <section aria-label="Estadísticas del periodo" class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="border-b border-[#d1d5db] bg-[#f4f4f4] px-5 py-4">
-                        <h2 class="font-semibold text-gray-800">Evolución del Tiempo Neto por día</h2>
-                        <p class="mt-1 text-gray-500">Horas efectivas calculadas dentro del periodo seleccionado.</p>
+                <article class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <header class="flex min-h-[76px] items-center gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <h2 class="truncate font-semibold text-gray-800">Tiempo neto por día</h2>
+                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Duración efectiva de cada jornada</p>
+                        </div>
                     </header>
-                    <div class="relative h-[300px] p-5">
+                    <div class="grid grid-cols-2 border-b border-gray-200 bg-white">
+                        <div class="min-w-0 px-5 py-3">
+                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Promedio diario</span>
+                            <strong id="promedio_tiempo_checador" class="mt-1 block truncate text-[14px] font-semibold text-[#1A3A6B]">00h 00m 00s</strong>
+                        </div>
+                        <div class="min-w-0 border-l border-gray-200 px-5 py-3">
+                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Jornada máxima</span>
+                            <strong id="maximo_tiempo_checador" class="mt-1 block truncate text-[14px] font-semibold text-gray-700">00h 00m 00s</strong>
+                        </div>
+                    </div>
+                    <div class="relative h-[300px] p-4">
                         <div id="grafica_tiempo_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de tiempo neto por día"></div>
                         <div id="grafica_tiempo_vacia" class="absolute inset-0 flex items-center justify-center px-6 text-center text-gray-400">Sin datos para mostrar en el periodo.</div>
                     </div>
                 </article>
 
-                <article class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                    <header class="border-b border-[#d1d5db] bg-[#f4f4f4] px-5 py-4">
-                        <h2 class="font-semibold text-gray-800">Evolución de ganancias por día</h2>
-                        <p class="mt-1 text-gray-500">Importe total diario generado dentro del periodo seleccionado.</p>
+                <article class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                    <header class="flex min-h-[76px] items-center gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 7-8m0 0h-5m5 0v5" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <h2 class="truncate font-semibold text-gray-800">Ganancias por día</h2>
+                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Pago total generado por jornada</p>
+                        </div>
                     </header>
-                    <div class="relative h-[300px] p-5">
+                    <div class="grid grid-cols-2 border-b border-gray-200 bg-white">
+                        <div class="min-w-0 px-5 py-3">
+                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Promedio diario</span>
+                            <strong id="promedio_ganancias_checador" class="mt-1 block truncate text-[14px] font-semibold text-emerald-700">$0.00</strong>
+                        </div>
+                        <div class="min-w-0 border-l border-gray-200 px-5 py-3">
+                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Ingreso máximo</span>
+                            <strong id="maximo_ganancias_checador" class="mt-1 block truncate text-[14px] font-semibold text-gray-700">$0.00</strong>
+                        </div>
+                    </div>
+                    <div class="relative h-[300px] p-4">
                         <div id="grafica_ganancias_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de ganancias por día"></div>
                         <div id="grafica_ganancias_vacia" class="absolute inset-0 flex items-center justify-center px-6 text-center text-gray-400">Sin datos para mostrar en el periodo.</div>
                     </div>
                 </article>
             </section>
 
-            <div id="checador_export_bar" class="hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] px-6 py-4 shadow-sm">
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="mr-2 font-semibold text-gray-700">Exportar reporte del periodo:</span>
-                    @foreach (['csv', 'pdf', 'txt'] as $format)
-                        <button type="button" onclick="exportarChecador('{{ $format }}')"
-                            class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 text-[15px] font-medium text-gray-500 transition-colors hover:text-[#1A3A6B]">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <section aria-label="Detalle diario del checador" class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
+                <header class="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zm0 5h16M9 4v16m6-11v11" />
                             </svg>
-                            {{ strtoupper($format) }}
+                        </span>
+                        <div class="min-w-0">
+                            <h2 class="truncate font-semibold text-gray-800">Detalle de jornadas</h2>
+                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Marcas, tiempos e importes del periodo consultado</p>
+                        </div>
+                    </div>
+                    <div id="checador_export_bar" class="hidden">
+                        <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="exportarChecador('csv')" title="Exportar CSV" aria-label="Exportar reporte en CSV"
+                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
+                            </svg>
+                            <span class="text-[13px] font-semibold">CSV</span>
                         </button>
-                    @endforeach
-                </div>
-            </div>
+                        <button type="button" onclick="exportarChecador('pdf')" title="Exportar PDF" aria-label="Exportar reporte en PDF"
+                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 focus:outline-none focus:ring-4 focus:ring-rose-100">
+                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
+                            </svg>
+                            <span class="text-[13px] font-semibold">PDF</span>
+                        </button>
+                        <button type="button" onclick="exportarChecador('txt')" title="Exportar TXT" aria-label="Exportar reporte en TXT"
+                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-slate-100">
+                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
+                            </svg>
+                            <span class="text-[13px] font-semibold">TXT</span>
+                        </button>
+                        </div>
+                    </div>
+                </header>
 
-            <section aria-label="Detalle diario del checador" class="overflow-hidden rounded-xl border border-[#d1d5db] bg-[#f4f4f4] shadow-sm">
-                <div class="attendance-clock-scrollbar max-h-[560px] overflow-x-auto overflow-y-auto">
-                    <table class="divide-y divide-[#e5e7eb] text-[15px]" style="margin: 20px; width: calc(100% - 40px); min-width: 1500px; table-layout: fixed;">
+                <div class="p-4">
+                    <div class="attendance-clock-scrollbar max-h-[560px] overflow-auto rounded-xl border border-gray-200">
+                    <table class="w-full table-fixed border-separate border-spacing-0 text-[15px]" style="min-width: 1515px;">
                         <colgroup>
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
-                            <col style="width: 187.5px;">
+                            <col style="width: 175px;">
+                            <col style="width: 365px;">
+                            <col style="width: 175px;">
+                            <col style="width: 150px;">
+                            <col style="width: 145px;">
+                            <col style="width: 130px;">
+                            <col style="width: 155px;">
+                            <col style="width: 220px;">
                         </colgroup>
-                        <thead class="sticky top-0 z-10 bg-[#f4f4f4]">
+                        <thead class="sticky top-0 z-20 bg-gray-50 shadow-[0_1px_0_#e5e7eb]">
                             <tr>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">
-                                    Fecha Jornada
-                                    <span class="ml-1 font-medium text-[#1A3A6B]">({{ auth()->user()->employee_id ?? 'Sin ID' }})</span>
-                                </th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Marcas / Chequeos</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Tiempo Neto</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Hrs Decimales</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Pago Base</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Bono</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-[#1A3A6B]">Total del Día</th>
-                                <th class="truncate px-6 py-4 text-left font-semibold text-gray-500">Estado</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Fecha Jornada</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Marcas / Chequeos</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Tiempo Neto</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Hrs Decimales</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Pago Base</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Bono</th>
+                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Total del Día</th>
+                                <th class="py-4 pl-5 pr-8 text-left align-middle text-[15px] font-semibold text-gray-600">Estado</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla_checador_body" class="divide-y divide-[#d1d5db] bg-[#f4f4f4] text-[15px]">
+                        <tbody id="tabla_checador_body" class="bg-white text-[15px] font-normal text-gray-700">
                             <tr>
                                 <td colspan="8" class="px-6 py-10 text-center text-gray-400">
                                     Consultando las marcas de los últimos 15 días...
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot class="border-t border-[#d1d5db] bg-[#f4f4f4] font-bold text-gray-900">
+                        <tfoot class="sticky bottom-0 z-20 bg-[#f3f6fa] font-semibold text-gray-800 shadow-[0_-1px_0_#dbe3ee]">
                             <tr>
-                                <td class="truncate px-6 py-4">TOTAL ACUMULADO</td>
-                                <td class="px-6 py-4"></td>
-                                <td id="total_tiempo" class="truncate px-6 py-4 font-mono text-gray-700">00h 00m 00s</td>
-                                <td id="total_decimal" class="truncate px-6 py-4">0.00</td>
-                                <td id="total_pago_h" class="truncate px-6 py-4">$0.00</td>
-                                <td id="total_bonos" class="truncate px-6 py-4">$0.00</td>
-                                <td id="total_general" class="truncate px-6 py-4 font-semibold text-emerald-600">$0.00</td>
-                                <td class="px-6 py-4"></td>
+                                <td class="px-5 py-4 text-[15px] font-semibold text-gray-800">Total acumulado</td>
+                                <td class="px-5 py-4"></td>
+                                <td id="total_tiempo" class="whitespace-nowrap px-5 py-4">00h 00m 00s</td>
+                                <td id="total_decimal" class="whitespace-nowrap px-5 py-4">0.00</td>
+                                <td id="total_pago_h" class="whitespace-nowrap px-5 py-4">$0.00</td>
+                                <td id="total_bonos" class="whitespace-nowrap px-5 py-4">$0.00</td>
+                                <td id="total_general" class="whitespace-nowrap px-5 py-4 text-emerald-600">$0.00</td>
+                                <td class="py-4 pl-5 pr-8"></td>
                             </tr>
                         </tfoot>
                     </table>
+                    </div>
                 </div>
             </section>
         </div>
@@ -273,9 +370,12 @@ function agregarTextoSvgChecador(svg, texto, atributos = {}) {
     svg.appendChild(elemento);
 }
 
-function fechaCortaChecador(fecha) {
+function partesFechaChecador(fecha) {
     const partes = String(fecha).split('-');
-    return partes.length === 3 ? partes[2] + '/' + partes[1] : String(fecha);
+
+    return partes.length === 3
+        ? { corta: partes[2] + '/' + partes[1], anio: partes[0], completa: partes[2] + '/' + partes[1] + '/' + partes[0] }
+        : { corta: String(fecha), anio: '', completa: String(fecha) };
 }
 
 function activarMarcaGraficaChecador(elemento, opacidadActiva) {
@@ -298,14 +398,21 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
     contenedor.replaceChildren();
 
     const ancho = Math.max(320, Math.round(contenedor.clientWidth || 620));
-    const alto = Math.max(240, Math.round(contenedor.clientHeight || 260));
-    const margen = { superior: 18, derecho: 18, inferior: 48, izquierdo: 72 };
+    const alto = Math.max(220, Math.round(contenedor.clientHeight || 268));
+    // Ambas gráficas comparten exactamente la misma retícula y canales de ejes.
+    const margen = { superior: 10, derecho: 18, inferior: 50, izquierdo: 72 };
     const anchoGrafica = Math.max(1, ancho - margen.izquierdo - margen.derecho);
     const altoGrafica = Math.max(1, alto - margen.superior - margen.inferior);
     const baseY = margen.superior + altoGrafica;
-    const maximoDatos = Math.max(...valores, 0);
-    const maximoEje = maximoDatos > 0 ? maximoDatos * 1.12 : 1;
+    const valoresNumericos = valores.map(valor => Math.max(0, Number(valor) || 0));
+    const maximoDatos = Math.max(...valoresNumericos, 0);
+    const promedio = valoresNumericos.reduce((total, valor) => total + valor, 0) / Math.max(1, valoresNumericos.length);
     const pasos = 4;
+    const magnitud = maximoDatos > 0 ? 10 ** Math.floor(Math.log10(maximoDatos / pasos)) : 1;
+    const pasoCrudo = maximoDatos > 0 ? maximoDatos / pasos / magnitud : 1;
+    const factorPaso = pasoCrudo <= 1 ? 1 : (pasoCrudo <= 2 ? 2 : (pasoCrudo <= 5 ? 5 : 10));
+    const pasoEje = factorPaso * magnitud;
+    const maximoEje = maximoDatos > 0 ? Math.max(pasoEje, Math.ceil(maximoDatos / pasoEje) * pasoEje) : pasos;
 
     const svg = crearElementoSvgChecador('svg', {
         viewBox: '0 0 ' + ancho + ' ' + alto,
@@ -318,42 +425,95 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
     for (let paso = 0; paso <= pasos; paso++) {
         const proporcion = paso / pasos;
         const y = margen.superior + (altoGrafica * proporcion);
-        const valorEje = maximoEje * (1 - proporcion);
+        const valorEje = maximoEje - (maximoEje * proporcion);
 
         svg.appendChild(crearElementoSvgChecador('line', {
             x1: margen.izquierdo,
             x2: ancho - margen.derecho,
             y1: y,
             y2: y,
-            stroke: '#e5e7eb',
-            'stroke-width': 1,
-            'stroke-dasharray': paso === pasos ? '0' : '4 5',
+            stroke: paso === pasos ? '#94a3b8' : '#dbe3ee',
+            'stroke-width': paso === pasos ? 1.25 : 1,
+            'stroke-dasharray': paso === pasos ? '0' : '4 4',
         }));
 
         agregarTextoSvgChecador(svg, configuracion.formatearEje(valorEje), {
-            x: margen.izquierdo - 10,
-            y: y + 5,
+            x: margen.izquierdo - 14,
+            y: y + 4,
             'text-anchor': 'end',
+            'font-size': 12,
+            'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
         });
     }
 
     const cantidad = Math.max(1, valores.length);
+    const rellenoHorizontal = configuracion.tipo === 'barras'
+        ? Math.min(22, anchoGrafica / Math.max(2, cantidad * 2))
+        : 4;
+    const anchoDatos = Math.max(1, anchoGrafica - (rellenoHorizontal * 2));
     const obtenerX = indice => cantidad === 1
         ? margen.izquierdo + (anchoGrafica / 2)
-        : margen.izquierdo + (anchoGrafica * indice / (cantidad - 1));
-    const obtenerY = valor => baseY - ((Number(valor) || 0) / maximoEje * altoGrafica);
-    const maximoEtiquetas = Math.max(2, Math.floor(anchoGrafica / 78));
-    const saltoEtiquetas = Math.max(1, Math.ceil(cantidad / maximoEtiquetas));
+        : margen.izquierdo + rellenoHorizontal + (anchoDatos * indice / (cantidad - 1));
+    const obtenerY = valor => baseY - ((Math.max(0, Number(valor) || 0) / maximoEje) * altoGrafica);
+    const maximoEtiquetas = Math.max(2, Math.floor(anchoGrafica / 92));
+    const cantidadEtiquetas = Math.min(cantidad, maximoEtiquetas);
+    const indicesEtiquetas = new Set();
+
+    for (let indiceEtiqueta = 0; indiceEtiqueta < cantidadEtiquetas; indiceEtiqueta++) {
+        indicesEtiquetas.add(Math.round(indiceEtiqueta * (cantidad - 1) / Math.max(1, cantidadEtiquetas - 1)));
+    }
 
     etiquetas.forEach((etiqueta, indice) => {
-        if (indice % saltoEtiquetas !== 0 && indice !== etiquetas.length - 1) return;
+        if (!indicesEtiquetas.has(indice)) return;
 
-        agregarTextoSvgChecador(svg, fechaCortaChecador(etiqueta), {
+        svg.appendChild(crearElementoSvgChecador('line', {
+            x1: obtenerX(indice),
+            x2: obtenerX(indice),
+            y1: margen.superior,
+            y2: baseY,
+            stroke: '#edf1f6',
+            'stroke-width': 1,
+            'stroke-dasharray': '3 4',
+        }));
+
+        const fecha = partesFechaChecador(etiqueta);
+        const textoFecha = crearElementoSvgChecador('text', {
             x: obtenerX(indice),
-            y: alto - 16,
+            y: alto - 25,
+            fill: '#64748b',
             'text-anchor': 'middle',
+            'font-size': 12,
+            'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
         });
+        const lineaFecha = crearElementoSvgChecador('tspan', { x: obtenerX(indice), dy: 0 });
+        lineaFecha.textContent = fecha.corta;
+        textoFecha.appendChild(lineaFecha);
+
+        if (fecha.anio) {
+            const lineaAnio = crearElementoSvgChecador('tspan', {
+                x: obtenerX(indice),
+                dy: 15,
+                fill: '#94a3b8',
+                'font-size': 10,
+            });
+            lineaAnio.textContent = fecha.anio;
+            textoFecha.appendChild(lineaAnio);
+        }
+
+        svg.appendChild(textoFecha);
     });
+
+    const promedioY = obtenerY(promedio);
+    svg.appendChild(crearElementoSvgChecador('line', {
+        x1: margen.izquierdo,
+        x2: ancho - margen.derecho,
+        y1: promedioY,
+        y2: promedioY,
+        stroke: configuracion.color,
+        'stroke-width': 1.5,
+        'stroke-dasharray': '7 5',
+        opacity: 0.5,
+    }));
 
     if (configuracion.tipo === 'linea') {
         const puntos = valores.map((valor, indice) => obtenerX(indice) + ',' + obtenerY(valor));
@@ -362,7 +522,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             const area = crearElementoSvgChecador('polygon', {
                 points: margen.izquierdo + ',' + baseY + ' ' + puntos.join(' ') + ' ' + obtenerX(valores.length - 1) + ',' + baseY,
                 fill: configuracion.color,
-                opacity: 0.1,
+                opacity: 0.12,
             });
             svg.appendChild(area);
         }
@@ -380,7 +540,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             const punto = crearElementoSvgChecador('circle', {
                 cx: obtenerX(indice),
                 cy: obtenerY(valor),
-                r: 5,
+                r: cantidad > 24 ? 3.5 : 4.5,
                 fill: configuracion.color,
                 stroke: '#ffffff',
                 'stroke-width': 2,
@@ -397,14 +557,15 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         const anchoBarra = Math.min(42, Math.max(8, espacio * 0.62));
 
         valores.forEach((valor, indice) => {
-            const altoBarra = maximoDatos > 0 ? Math.max(2, (Number(valor) || 0) / maximoEje * altoGrafica) : 2;
+            const altoBarra = valor > 0 ? Math.max(2, baseY - obtenerY(valor)) : 0;
             const barra = crearElementoSvgChecador('rect', {
                 x: obtenerX(indice) - (anchoBarra / 2),
                 y: baseY - altoBarra,
                 width: anchoBarra,
                 height: altoBarra,
-                rx: 5,
+                rx: Math.min(5, anchoBarra / 3),
                 fill: configuracion.color,
+                opacity: 0.88,
                 'aria-label': etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice),
             });
             const titulo = crearElementoSvgChecador('title');
@@ -418,37 +579,51 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
     contenedor.appendChild(svg);
 }
 
+let ultimoResumenGraficasChecador = [];
+let temporizadorResizeGraficasChecador = null;
+
 function actualizarGraficasChecador(resumen = []) {
     const filas = Array.isArray(resumen)
         ? [...resumen].sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)))
         : [];
+    ultimoResumenGraficasChecador = filas;
 
     if (filas.length === 0) {
         document.getElementById('grafica_tiempo_checador')?.replaceChildren();
         document.getElementById('grafica_ganancias_checador')?.replaceChildren();
         alternarEstadoGraficaChecador('grafica_tiempo_checador', 'grafica_tiempo_vacia', false);
         alternarEstadoGraficaChecador('grafica_ganancias_checador', 'grafica_ganancias_vacia', false);
+        asignarValorChecador('promedio_tiempo_checador', '00h 00m 00s');
+        asignarValorChecador('maximo_tiempo_checador', '00h 00m 00s');
+        asignarValorChecador('promedio_ganancias_checador', '$0.00');
+        asignarValorChecador('maximo_ganancias_checador', '$0.00');
         return;
     }
 
     const etiquetas = filas.map(item => item.fecha);
     const tiemposSegundos = filas.map(item => Number(item.tiempo_segundos) || 0);
-    const tiemposHoras = tiemposSegundos.map(segundos => segundos / 3600);
     const ganancias = filas.map(item => Number(item.total_raw) || 0);
     const formatoMoneda = new Intl.NumberFormat('es-MX', {
         style: 'currency',
         currency: 'MXN',
         minimumFractionDigits: 2,
     });
+    const promedioTiempo = tiemposSegundos.reduce((total, valor) => total + valor, 0) / tiemposSegundos.length;
+    const promedioGanancias = ganancias.reduce((total, valor) => total + valor, 0) / ganancias.length;
+
+    asignarValorChecador('promedio_tiempo_checador', formatearSegundosChecador(promedioTiempo));
+    asignarValorChecador('maximo_tiempo_checador', formatearSegundosChecador(Math.max(...tiemposSegundos)));
+    asignarValorChecador('promedio_ganancias_checador', formatoMoneda.format(promedioGanancias));
+    asignarValorChecador('maximo_ganancias_checador', formatoMoneda.format(Math.max(...ganancias)));
 
     alternarEstadoGraficaChecador('grafica_tiempo_checador', 'grafica_tiempo_vacia', true);
     alternarEstadoGraficaChecador('grafica_ganancias_checador', 'grafica_ganancias_vacia', true);
 
-    renderizarGraficaSvgChecador('grafica_tiempo_checador', etiquetas, tiemposHoras, {
+    renderizarGraficaSvgChecador('grafica_tiempo_checador', etiquetas, tiemposSegundos, {
         tipo: 'linea',
         color: '#1A3A6B',
         descripcion: 'Evolución del tiempo neto por día',
-        formatearEje: valor => (Math.round(valor * 10) / 10) + ' h',
+        formatearEje: valor => formatearSegundosChecador(valor).replaceAll('h ', ':').replaceAll('m ', ':').replace('s', ''),
         formatearDetalle: (_valor, indice) => formatearSegundosChecador(tiemposSegundos[indice]),
     });
 
@@ -460,6 +635,15 @@ function actualizarGraficasChecador(resumen = []) {
         formatearDetalle: valor => formatoMoneda.format(valor),
     });
 }
+
+window.addEventListener('resize', () => {
+    window.clearTimeout(temporizadorResizeGraficasChecador);
+    temporizadorResizeGraficasChecador = window.setTimeout(() => {
+        if (ultimoResumenGraficasChecador.length > 0) {
+            actualizarGraficasChecador(ultimoResumenGraficasChecador);
+        }
+    }, 160);
+});
 
 function establecerCargaChecador(cargando) {
     const boton = document.getElementById('btn_revisar_horas');
@@ -530,21 +714,21 @@ function revisarHorasChecador() {
         data.resumen.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = item.requiere_revision
-                ? 'bg-red-50/70 hover:bg-red-100/80 transition-colors'
-                : 'hover:bg-gray-50 transition-colors';
+                ? 'bg-red-50/60 transition-colors hover:bg-red-50'
+                : 'transition-colors hover:bg-slate-50/70';
 
             tr.innerHTML = `
-                <td class="px-6 py-3.5 font-medium text-gray-900" style="font-size: 15px;">${item.fecha}</td>
-                <td class="max-w-xs truncate px-6 py-3.5 font-mono text-gray-500" style="font-size: 15px;" title="${item.detalles_marcas}">${item.detalles_marcas}</td>
-                <td class="px-6 py-3.5 font-mono text-gray-600" style="font-size: 15px;">${item.neto}</td>
-                <td class="px-6 py-3.5 text-gray-600" style="font-size: 15px;">${item.horas_decimal}</td>
-                <td class="px-6 py-3.5 text-gray-600" style="font-size: 15px;">${item.pago_horas}</td>
-                <td class="px-6 py-3.5 text-gray-600" style="font-size: 15px;">${item.bono}</td>
-                <td class="px-6 py-3.5 font-semibold text-gray-800" style="font-size: 15px;">${item.total}</td>
-                <td class="px-6 py-3.5" style="font-size: 15px;">
+                <td class="border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.fecha}</td>
+                <td class="whitespace-normal break-words border-b border-gray-100 px-5 py-4 align-top font-normal leading-7 text-gray-700" style="font-size: 15px;" title="${item.detalles_marcas}">${item.detalles_marcas}</td>
+                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.neto}</td>
+                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.horas_decimal}</td>
+                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.pago_horas}</td>
+                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.bono}</td>
+                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-emerald-600" style="font-size: 15px;">${item.total}</td>
+                <td class="border-b border-gray-100 py-4 pl-5 pr-8 align-top font-normal" style="font-size: 15px;">
                     ${item.requiere_revision
-                        ? '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 font-semibold text-red-800" style="font-size: 15px;">⚠️ Impar / Revisar</span>'
-                        : '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-3 py-1 font-semibold text-green-800" style="font-size: 15px;">Correcto</span>'
+                        ? '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 font-normal text-red-800" style="font-size: 15px;">⚠️ Impar / Revisar</span>'
+                        : '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-3 py-1 font-normal text-green-800" style="font-size: 15px;">Correcto</span>'
                     }
                 </td>
             `;
