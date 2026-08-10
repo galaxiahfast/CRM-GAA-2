@@ -16,6 +16,9 @@ if (window.Livewire) {
 // mientras el navegador autenticado siga abierto actualizará last_activity.
 const SESSION_KEEP_ALIVE_INTERVAL = 30 * 1000;
 const SESSION_RECOVERY_KEY = 'session-recovery-in-progress';
+let keepAliveRequest = null;
+let keepAliveController = null;
+let sessionIsClosing = false;
 
 const recoverExpiredSession = () => {
     const loginUrl = document.body?.dataset.loginUrl || '/login';
@@ -34,28 +37,43 @@ const recoverExpiredSession = () => {
 const keepSessionAlive = async () => {
     const url = document.body?.dataset.sessionKeepAliveUrl;
 
-    if (!url || !navigator.onLine) {
+    if (!url || !navigator.onLine || sessionIsClosing || keepAliveRequest) {
         return;
     }
 
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
+    keepAliveController = new AbortController();
+    keepAliveRequest = fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        signal: keepAliveController.signal,
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
 
+    try {
+        const response = await keepAliveRequest;
         if (response.status === 401 || response.status === 419) {
             recoverExpiredSession();
         }
     } catch {
         // Una caída de red no debe bloquear la interfaz ni el cronómetro.
+    } finally {
+        keepAliveRequest = null;
+        keepAliveController = null;
     }
 };
+
+document.addEventListener('submit', (event) => {
+    if (!event.target.closest?.('[data-session-logout]')) {
+        return;
+    }
+
+    sessionIsClosing = true;
+    keepAliveController?.abort();
+}, { capture: true });
 
 document.addEventListener('livewire:init', () => {
     window.Livewire.hook('request', ({ fail }) => {

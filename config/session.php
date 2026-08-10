@@ -117,7 +117,13 @@ return [
     |
     */
 
-    'lottery' => [2, 100],
+    // La limpieza principal se ejecuta desde el scheduler para no penalizar
+    // aleatoriamente solicitudes de login, navegación o Livewire. Se conserva
+    // una probabilidad mínima como respaldo si el scheduler se interrumpe.
+    'lottery' => [
+        (int) env('SESSION_LOTTERY_HITS', 1),
+        (int) env('SESSION_LOTTERY_ODDS', 1000),
+    ],
 
     /*
     |--------------------------------------------------------------------------

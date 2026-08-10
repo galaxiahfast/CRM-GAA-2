@@ -2,158 +2,148 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Customer;
 use App\Models\CustomerFile;
+use App\Models\Service;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 
 class CustomerReport extends Dashboard
 {
-    public $months  = null;
-    public $customer = null;
-    public $notFound = false;
+    public $months = null;
 
+    public $customer = null;
+
+    public $notFound = false;
 
     public function mount($customerId = null)
     {
-        parent::mount($customerId);
-    
-        $this->customer = Customer::find($customerId);
-        
-        if(!$this->customer) {
+        // El reporte solo necesita un cliente. Evitar parent::mount() impide
+        // cargar y calcular el dashboard completo antes de abrir este detalle.
+        $this->months = collect(json_decode(File::get(resource_path('/data/months.json')), true));
+        $this->selectedMonth = now()->month - 1;
+        $this->selectedYear = now()->year;
+        $this->customer = Customer::query()
+            ->with(['services:id,service_id', 'states:id', 'statements:id'])
+            ->find($customerId);
+
+        if (! $this->customer) {
             $this->notFound = true;
+
             return;
         }
+
+        $serviceIds = $this->customer->services->pluck('service_id')->unique();
+        $this->services = Service::query()
+            ->whereKey($serviceIds)
+            ->get()
+            ->keyBy('id');
 
         $this->calculatePercentageAnnual();
     }
 
-    public function calculatePercentageAnnual()
+    public function calculatePercentageAnnual(): void
     {
-        $uniqueServiceIds = $this->customer->services->pluck("service_id")->unique();
-        foreach ($this->months as $month)
-        {
-            $selectedMonthLoop = $month['number'];
-            foreach($uniqueServiceIds as $serviceId)
-                {
-                    $key = "{$this->customer->id}-{$serviceId}-{$month["number"]}";
-                    $subServicesIds = $this->customer->services
-                        ->where('service_id', $serviceId)
-                        ->pluck('id');
-                    $filesCounts = $this->customer->files()
-                        ->whereIn('sub_service_id', $subServicesIds)
-                        ->when($this->selectedYear && $month, function ($query) use ($selectedMonthLoop) {
-                            $query->whereYear('upload_period', $this->selectedYear)
-                            ->whereMonth('upload_period', $selectedMonthLoop);
-                        })->count();
+        $customerId = (int) $this->customer->id;
+        $uniqueServiceIds = $this->customer->services->pluck('service_id')->unique();
 
-                    $totalFilesAvaibles = $subServicesIds->count() * 2;
+        $annualFilesByMonth = CustomerFile::query()
+            ->select(['id', 'sub_service_id', 'file_type', 'declaration_type', 'statement_id', 'state_id', 'upload_period'])
+            ->where('customer_id', $customerId)
+            ->whereYear('upload_period', $this->selectedYear)
+            ->get()
+            ->groupBy(fn (CustomerFile $file): int => Carbon::parse($file->upload_period)->month);
 
-                    if($subServicesIds->contains(1)) {
-                    $totalFilesAvaibles -= 2;
-                    $totalFilesAvaibles += $this->customer->states->count() * 2;
+        // Se conserva la regla histórica: los acuses complementarios se
+        // comparan contra el mes seleccionado, no contra cada fila anual.
+        $complementaryFiles = CustomerFile::query()
+            ->select(['id', 'sub_service_id', 'statement_id', 'state_id'])
+            ->where('customer_id', $customerId)
+            ->where('declaration_type', 0)
+            ->where('file_type', 1)
+            ->when($this->selectedMonth && $this->selectedYear, function ($query): void {
+                $query->whereYear('upload_period', $this->selectedYear)
+                    ->whereMonth('upload_period', $this->selectedMonth);
+            })
+            ->get();
 
-                    $complementariaAcuseStates = CustomerFile::where('customer_id', $this->customer->id)
-                    ->where('declaration_type', 0)
-                    ->where('file_type', 1)
-                    ->whereNotNull('state_id')
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                        $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
-                    ->get();
-                
-                    foreach ($complementariaAcuseStates as $file) {
-                        $hasNormalComprobanteState = CustomerFile::where('customer_id', $this->customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('state_id', $file->state_id)
-                        ->exists();
+        $normalFiles = CustomerFile::query()
+            ->select(['sub_service_id', 'statement_id', 'state_id'])
+            ->where('customer_id', $customerId)
+            ->where('declaration_type', 1)
+            ->where('file_type', 0)
+            ->get();
 
-                        if($hasNormalComprobanteState) {
-                            $totalFilesAvaibles--;
-                            $filesCounts--;
-                        } else {
-                            $totalFilesAvaibles--;
-                        }
-                    }
-                } 
-                
-                if ($subServicesIds->contains(6)) {
-                    $totalFilesAvaibles -= 2;
-                    $totalFilesAvaibles += $this->customer->statements->count() * 2;
-                    $complementariaAcuseStatements = CustomerFile::where('customer_id', $this->customer->id)
-                    ->where('declaration_type', 0)
-                    ->where('file_type', 1)
-                    ->whereNotNull('statement_id')
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                        $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
-                    ->get();
+        $normalStateIds = $normalFiles->pluck('state_id')->filter()->map(fn ($id) => (int) $id)->flip();
+        $normalStatementIds = $normalFiles->pluck('statement_id')->filter()->map(fn ($id) => (int) $id)->flip();
+        $normalSubServiceIds = $normalFiles->pluck('sub_service_id')->filter()->map(fn ($id) => (int) $id)->flip();
+        $otherServiceIds = $this->customer->services->whereNotIn('id', [1, 6])->pluck('id');
 
-                    foreach ($complementariaAcuseStatements as $file) {
-                        $hasNormalComprobanteStatement = CustomerFile::where('customer_id', $this->customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('statement_id', $file->statement_id)
-                        ->exists();
+        foreach ($this->months as $month) {
+            $monthNumber = (int) $month['number'];
+            $monthFiles = $annualFilesByMonth->get($monthNumber, collect());
 
-                        if($hasNormalComprobanteStatement) {
-                            $totalFilesAvaibles--;
-                            $filesCounts--;
-                        } else {
-                            $totalFilesAvaibles--;
+            foreach ($uniqueServiceIds as $serviceId) {
+                $key = "{$customerId}-{$serviceId}-{$monthNumber}";
+                $subServiceIds = $this->customer->services
+                    ->where('service_id', $serviceId)
+                    ->pluck('id');
+                $filesCount = $monthFiles->whereIn('sub_service_id', $subServiceIds)->count();
+                $totalFilesAvailable = $subServiceIds->count() * 2;
+
+                if ($subServiceIds->contains(1)) {
+                    $totalFilesAvailable -= 2;
+                    $totalFilesAvailable += $this->customer->states->count() * 2;
+
+                    foreach ($complementaryFiles->whereNotNull('state_id') as $file) {
+                        $totalFilesAvailable--;
+                        if ($normalStateIds->has((int) $file->state_id)) {
+                            $filesCount--;
                         }
                     }
                 }
 
-                $otherServices = $this->customer->services->whereNotIn('id', [1, 6]);
-                if ($otherServices->isNotEmpty()) {
-                    $complementariaAcuseSub = CustomerFile::where('customer_id', $this->customer->id)
-                        ->where('declaration_type', 0)
-                        ->where('file_type', 1)
-                        ->whereIn('sub_service_id', $subServicesIds)
-                        ->whereIn('sub_service_id', $otherServices->pluck('id'))
-                        ->whereNotNull('sub_service_id')
-                        ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                            $query->whereYear('upload_period', $this->selectedYear)
-                            ->whereMonth('upload_period', $this->selectedMonth);})
-                        ->get();
-                    
-                    foreach ($complementariaAcuseSub as $file) {
-                        $hasNormalComprobanteSub = CustomerFile::where('customer_id', $this->customer->id)
-                        ->where('declaration_type', 1)
-                        ->where('file_type', 0)
-                        ->where('sub_service_id', $file->sub_service_id)
-                        ->exists();
+                if ($subServiceIds->contains(6)) {
+                    $totalFilesAvailable -= 2;
+                    $totalFilesAvailable += $this->customer->statements->count() * 2;
 
-                        if ($hasNormalComprobanteSub) {
-                            $totalFilesAvaibles--;
-                            $filesCounts--;
-                        } else {
-                            $totalFilesAvaibles--;
+                    foreach ($complementaryFiles->whereNotNull('statement_id') as $file) {
+                        $totalFilesAvailable--;
+                        if ($normalStatementIds->has((int) $file->statement_id)) {
+                            $filesCount--;
                         }
                     }
                 }
 
+                if ($otherServiceIds->isNotEmpty()) {
+                    $complementarySubServices = $complementaryFiles
+                        ->whereIn('sub_service_id', $subServiceIds)
+                        ->whereIn('sub_service_id', $otherServiceIds)
+                        ->whereNotNull('sub_service_id');
 
+                    foreach ($complementarySubServices as $file) {
+                        $totalFilesAvailable--;
+                        if ($normalSubServiceIds->has((int) $file->sub_service_id)) {
+                            $filesCount--;
+                        }
+                    }
+                }
 
-                $complementaryAcuse = CustomerFile::where('customer_id',  $this->customer->id)
-                    ->where('declaration_type', 0)
-                    ->where('file_type', 1)
-                    ->whereIn('sub_service_id', $subServicesIds)
-                    ->when($this->selectedMonth && $this->selectedYear, function ($query){
-                        $query->whereYear('upload_period', $this->selectedYear)
-                        ->whereMonth('upload_period', $this->selectedMonth);})
+                $complementaryCount = $complementaryFiles
+                    ->whereIn('sub_service_id', $subServiceIds)
                     ->count();
-                
-                if($complementaryAcuse > 0) {
-                    $totalFilesAvaibles += $complementaryAcuse * 2;
+
+                if ($complementaryCount > 0) {
+                    $totalFilesAvailable += $complementaryCount * 2;
                 }
 
-                    $percentage = $filesCounts > 0 ? round(($filesCounts / $totalFilesAvaibles) * 100) : 0;
-                    $this->percentages[$key] = $percentage;
-                }            
+                $this->percentages[$key] = $filesCount > 0
+                    ? round(($filesCount / $totalFilesAvailable) * 100)
+                    : 0;
+            }
         }
     }
+
     public function render()
     {
         return view('livewire.customer-report')->layout('layouts.app');

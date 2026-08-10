@@ -1,7 +1,7 @@
 <div
     class="relative"
     x-data="{ open: false, filterOpen: false }"
-    wire:poll.5s.visible
+    wire:poll.30s.visible
     @keydown.escape.window="filterOpen ? filterOpen = false : open = false"
 >
     <button

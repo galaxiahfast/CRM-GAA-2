@@ -40,11 +40,6 @@ class IndexCustomer extends Component
         return redirect()->route('customers.index');
     }
 
-    public function updatedSearch()
-    {
-        $this->loadCustomers();
-    }
-
     public function renderToCreateCustomer()
     {
         $this->ensureCanManageCustomers();

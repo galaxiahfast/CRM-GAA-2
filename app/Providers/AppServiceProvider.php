@@ -2,12 +2,19 @@
 
 namespace App\Providers;
 
+use App\Models\AccessPermission;
+use App\Models\Customer;
+use App\Models\JobPosition;
+use App\Models\PhysicalArea;
+use App\Models\Role;
+use App\Models\SubService;
 use App\Models\User;
 use App\Models\UserOrganizationalProfile;
 use App\Observers\UserHierarchyObserver;
 use App\Observers\UserOrganizationalProfileHierarchyObserver;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\Notifications\SystemNotificationService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Console\Events\ScheduledTaskFailed;
@@ -25,7 +32,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Una sola instancia por petición comparte los resultados de permisos
+        // entre middleware, Gates y navegación sin conservarlos entre usuarios.
+        $this->app->scoped(PermissionAccessService::class);
     }
 
     /**
@@ -35,6 +44,18 @@ class AppServiceProvider extends ServiceProvider
     {
         User::observe(UserHierarchyObserver::class);
         UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
+
+        $forgetAdministrationReferences = fn () => app(ReferenceDataCache::class)->forgetAdministration();
+        foreach ([AccessPermission::class, JobPosition::class, PhysicalArea::class, Role::class] as $model) {
+            $model::saved($forgetAdministrationReferences);
+            $model::deleted($forgetAdministrationReferences);
+        }
+
+        $forgetTimeControlReferences = fn () => app(ReferenceDataCache::class)->forgetTimeControl();
+        foreach ([Customer::class, SubService::class] as $model) {
+            $model::saved($forgetTimeControlReferences);
+            $model::deleted($forgetTimeControlReferences);
+        }
 
         $this->registerSystemNotificationListeners();
 

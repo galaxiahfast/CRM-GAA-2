@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Administracion;
 
-use App\Models\AccessPermission;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
 use App\Models\Role;
@@ -11,6 +10,8 @@ use App\Models\UserHierarchyRelation;
 use App\Models\UserInterns;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
+use App\Services\ReferenceDataCache;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -666,43 +667,21 @@ class IndexAdministracion extends Component
     {
         $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
         $selectedSubordinateIds = $this->normalizeHierarchyUserIds($this->userForm['subordinate_ids'] ?? []);
-        $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds);
+        $hierarchyRelations = UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']);
+        $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds, $hierarchyRelations);
+        $references = app(ReferenceDataCache::class);
+        $administrationReferences = $references->administration();
 
         return view('livewire.administracion.index-administracion', [
-            'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
-            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name', 'payment_type']),
-            'roles' => Role::orderBy('role')->get(['id', 'role']),
-            'basePermissionProfiles' => collect([
-                'Administrador' => ['profile' => Role::PROFILE_ADMINISTRATOR, 'label' => 'Acceso administrativo'],
-                'Auxiliar' => ['profile' => Role::PROFILE_AUXILIARY, 'label' => 'Acceso operativo'],
-            ])->map(function (array $definition): array {
-                $profile = config('access-permissions.profiles.'.$definition['profile'], []);
-                $keys = app(\App\Services\Authorization\PermissionAccessService::class)
-                    ->permissionKeysForProfile($definition['profile']);
-
-                return [
-                    'label' => $definition['label'],
-                    'description' => $profile['description'] ?? '',
-                    'permissions' => AccessPermission::query()
-                        ->active()
-                        ->whereIn('key', $keys)
-                        ->orderBy('sort_order')
-                        ->pluck('name')
-                        ->all(),
-                ];
-            })->all(),
-            'employeeIdSuggestions' => DB::table('control_de_horas')
-                ->select('employeeID')
-                ->selectRaw('MAX(personName) as personName')
-                ->whereNotNull('employeeID')
-                ->where('employeeID', '<>', '')
-                ->groupBy('employeeID')
-                ->orderBy('employeeID')
-                ->get(),
+            'physicalAreas' => $administrationReferences['physicalAreas'],
+            'jobPositions' => $administrationReferences['jobPositions'],
+            'roles' => $administrationReferences['roles'],
+            'basePermissionProfiles' => $administrationReferences['basePermissionProfiles'],
+            'employeeIdSuggestions' => $references->employeeSuggestions(),
             // Un jefe debe pertenecer ya al organigrama (tener alguna relación).
             'superiorCandidates' => User::query()
                 ->whereKeyNot($this->selectedUserId ?: 0)
-                ->whereIn('id', $this->hierarchyCandidateIds())
+                ->whereIn('id', $this->hierarchyCandidateIds($hierarchyRelations))
                 ->when($selectedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $selectedSubordinateIds))
                 ->orderBy('name')
                 ->get(['id', 'name', 'last_name', 'email']),
@@ -734,11 +713,15 @@ class IndexAdministracion extends Component
     /**
      * @return array<int, int>
      */
-    private function hierarchyCandidateIds(): array
+    private function hierarchyCandidateIds(?Collection $relations = null): array
     {
-        return UserHierarchyRelation::query()
-            ->pluck('superior_id')
-            ->merge(UserHierarchyRelation::query()->pluck('subordinate_id'))
+        $relations ??= UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']);
+
+        return $relations
+            ->flatMap(fn (UserHierarchyRelation $relation): array => [
+                $relation->superior_id,
+                $relation->subordinate_id,
+            ])
             ->map(fn ($userId) => (int) $userId)
             ->unique()
             ->values()
@@ -752,15 +735,17 @@ class IndexAdministracion extends Component
      * @param  array<int, int>  $superiorIds
      * @return array<int, int>
      */
-    private function superiorLineageIds(array $superiorIds): array
+    private function superiorLineageIds(array $superiorIds, ?Collection $relations = null): array
     {
         if ($superiorIds === []) {
             return [];
         }
 
+        $relations ??= UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']);
+
         $superiorsBySubordinate = [];
 
-        foreach (UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']) as $relation) {
+        foreach ($relations as $relation) {
             $superiorsBySubordinate[(int) $relation->subordinate_id][] = (int) $relation->superior_id;
         }
 

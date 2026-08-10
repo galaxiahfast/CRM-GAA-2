@@ -4,6 +4,7 @@ use App\Mail\ReporteSemanal;
 use App\Models\SupportChatMessage;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 
@@ -41,6 +42,21 @@ Schedule::command('biometric:sync --maintenance')->dailyAt('23:00')->withoutOver
 Schedule::command('time:auto-close')
     ->dailyAt(config('time-control.auto_close_at', '21:00'))
     ->timezone(config('time-control.timezone', 'America/Mexico_City'))
+    ->withoutOverlapping();
+
+// Evita que la recolección de sesiones vencidas recaiga aleatoriamente sobre
+// una petición interactiva. El pequeño lottery de respaldo sigue habilitado.
+Schedule::call(function (): void {
+    if (config('session.driver') !== 'database') {
+        return;
+    }
+
+    $cutoff = now()->subMinutes((int) config('session.lifetime', 120))->timestamp;
+    DB::table((string) config('session.table', 'sessions'))
+        ->where('last_activity', '<=', $cutoff)
+        ->delete();
+})->everyThirtyMinutes()
+    ->name('sessions:prune-expired')
     ->withoutOverlapping();
 
 // El chat general de soporte conserva únicamente los mensajes del día actual.

@@ -2,9 +2,8 @@
 
 namespace App\Livewire\TimeControl;
 
-use App\Models\Customer;
-use App\Models\SubService;
 use App\Models\TimeEntry;
+use App\Services\ReferenceDataCache;
 use App\Services\TimeControl\Exceptions\ActiveEntryException;
 use App\Services\TimeControl\Exceptions\NoOrganizationalProfileException;
 use App\Services\TimeControl\TimerService;
@@ -110,20 +109,7 @@ class IndexTimeControl extends Component
             ->latest('id')
             ->get();
 
-        $customers = Customer::orderBy('name')
-            ->whereNull('deleted_at')
-            ->get(['id', 'name', 'last_name'])
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'search_name' => mb_strtolower(trim($c->name.' '.$c->last_name)),
-            ]);
-
-        $subServices = SubService::orderBy('sub_service')
-            ->get(['id', 'sub_service'])
-            ->map(fn ($s) => [
-                'id' => $s->id,
-                'search_name' => mb_strtolower(trim($s->sub_service)),
-            ]);
+        $catalogs = app(ReferenceDataCache::class)->timeControl();
 
         $todayTotalSeconds = (int) $todayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds());
 
@@ -131,8 +117,8 @@ class IndexTimeControl extends Component
             'active' => $active,
             'accumulatedSeconds' => $accumulatedSeconds,
             'openStartedAt' => $openStartedAt,
-            'customers' => $customers,
-            'subServices' => $subServices,
+            'customers' => $catalogs['customers'],
+            'subServices' => $catalogs['subServices'],
             'todayEntries' => $todayEntries,
             'todayTotalSeconds' => $todayTotalSeconds,
         ])->layout('layouts.app');

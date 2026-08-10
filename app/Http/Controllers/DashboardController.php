@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\TimeEntry;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Carbon;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
@@ -21,7 +20,7 @@ class DashboardController extends Controller
         [$start, $end] = $this->dateRangeFromRequest($request);
 
         $search = trim((string) $request->query('search', ''));
-        
+
         // ✅ Cambio 1: pasar false para NO limitar a 8 usuarios
         $users = $isAdmin ? $this->searchUsers($search, false) : collect();
         $selectedUser = $isAdmin
@@ -53,7 +52,7 @@ class DashboardController extends Controller
             'topClientActivity' => $chart['topClientActivity'],
         ]);
     }
-    
+
     /**
      * Obtiene los datos de una actividad específica para el gráfico
      */
@@ -64,36 +63,18 @@ class DashboardController extends Controller
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        Log::info('=== getActivityData ===', [
-            'user_id' => $user->id,
-            'activity_id' => $activityId,
-            'start' => $start->toDateString(),
-            'end' => $end->toDateString()
-        ]);
-
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
-            ->whereHas('subService', function ($query) use ($activityId) {
-                $query->where('id', $activityId);
-            })
+            ->where('sub_service_id', $activityId)
             ->with('intervals')
             ->get();
-
-        Log::info('Entries found:', ['count' => $entries->count()]);
 
         $days = $this->daysBetween($start, $end);
         $secondsByDate = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
-            ->map(function ($dayEntries) {
-                $total = (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds());
-                Log::info('Day total:', [
-                    'date' => $dayEntries->first()->entry_date,
-                    'total_seconds' => $total,
-                    'formatted' => gmdate('H:i:s', $total),
-                    'entries' => $dayEntries->count()
-                ]);
-                return $total;
-            });
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(
+                fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()
+            ));
 
         $hours = [];
         foreach ($days as $day) {
@@ -118,34 +99,18 @@ class DashboardController extends Controller
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        Log::info('=== getClientData ===', [
-            'user_id' => $user->id,
-            'client_id' => $clientId,
-            'start' => $start->toDateString(),
-            'end' => $end->toDateString()
-        ]);
-
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->where('customer_id', $clientId)
             ->with('intervals')
             ->get();
 
-        Log::info('Entries found:', ['count' => $entries->count()]);
-
         $days = $this->daysBetween($start, $end);
         $secondsByDate = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
-            ->map(function ($dayEntries) {
-                $total = (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds());
-                Log::info('Day total:', [
-                    'date' => $dayEntries->first()->entry_date,
-                    'total_seconds' => $total,
-                    'formatted' => gmdate('H:i:s', $total),
-                    'entries' => $dayEntries->count()
-                ]);
-                return $total;
-            });
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(
+                fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()
+            ));
 
         $hours = [];
         foreach ($days as $day) {
@@ -163,25 +128,20 @@ class DashboardController extends Controller
     /**
      * Obtiene la combinación cliente-actividad con más horas trabajadas
      */
-    private function getTopClientActivity(User $user, Carbon $start, Carbon $end): ?array
+    private function getTopClientActivity(Collection $entries, array $secondsByEntry): ?array
     {
-        $entries = TimeEntry::where('user_id', $user->id)
-            ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
-            ->with(['intervals', 'customer', 'subService'])
-            ->get();
-
         if ($entries->isEmpty()) {
             return null;
         }
 
         $grouped = $entries->groupBy(function ($entry) {
-            return $entry->customer_id . '|' . ($entry->sub_service_id ?? 0);
+            return $entry->customer_id.'|'.($entry->sub_service_id ?? 0);
         });
 
-        $combinations = $grouped->map(function ($group) {
+        $combinations = $grouped->map(function ($group) use ($secondsByEntry) {
             $first = $group->first();
-            $seconds = (int) $group->sum(fn(TimeEntry $entry) => $entry->calculateEffectiveSeconds());
-            
+            $seconds = (int) $group->sum(fn (TimeEntry $entry) => $secondsByEntry[$entry->id] ?? 0);
+
             return [
                 'client_id' => $first->customer_id,
                 'client_name' => $first->customer->name ?? 'Sin cliente',
@@ -191,16 +151,7 @@ class DashboardController extends Controller
             ];
         });
 
-        $top = $combinations->sortByDesc('seconds')->first();
-
-        Log::info('Top Client Activity:', [
-            'client_id' => $top['client_id'] ?? null,
-            'activity_id' => $top['activity_id'] ?? null,
-            'seconds' => $top['seconds'] ?? 0,
-            'formatted' => isset($top['seconds']) ? gmdate('H:i:s', $top['seconds']) : '0'
-        ]);
-
-        return $top;
+        return $combinations->sortByDesc('seconds')->first();
     }
 
     /**
@@ -214,59 +165,19 @@ class DashboardController extends Controller
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        Log::info('=== getClientActivityData ===', [
-            'user_id' => $user->id,
-            'client_id' => $clientId,
-            'activity_id' => $activityId,
-            'start' => $start->toDateString(),
-            'end' => $end->toDateString()
-        ]);
-
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->where('customer_id', $clientId)
-            ->whereHas('subService', fn($q) => $q->where('id', $activityId))
+            ->where('sub_service_id', $activityId)
             ->with('intervals')
             ->get();
 
-        Log::info('Entries found:', ['count' => $entries->count()]);
-
-        foreach ($entries as $entry) {
-            $seconds = $entry->calculateEffectiveSeconds();
-            Log::info('Entry detail:', [
-                'entry_id' => $entry->id,
-                'date' => $entry->entry_date,
-                'total_seconds' => $seconds,
-                'formatted' => gmdate('H:i:s', $seconds),
-                'intervals_count' => $entry->intervals->count()
-            ]);
-            
-            foreach ($entry->intervals as $interval) {
-                $diff = $interval->started_at && $interval->ended_at 
-                    ? abs($interval->ended_at->diffInSeconds($interval->started_at))
-                    : 0;
-                Log::info('Interval:', [
-                    'started_at' => $interval->started_at,
-                    'ended_at' => $interval->ended_at,
-                    'diff_seconds' => $diff,
-                    'formatted' => gmdate('H:i:s', $diff)
-                ]);
-            }
-        }
-
         $days = $this->daysBetween($start, $end);
         $secondsByDate = $entries
-            ->groupBy(fn(TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
-            ->map(function ($dayEntries) {
-                $total = (int) $dayEntries->sum(fn(TimeEntry $entry) => $entry->calculateEffectiveSeconds());
-                Log::info('Day total:', [
-                    'date' => $dayEntries->first()->entry_date,
-                    'total_seconds' => $total,
-                    'formatted' => gmdate('H:i:s', $total),
-                    'entries' => $dayEntries->count()
-                ]);
-                return $total;
-            });
+            ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(
+                fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()
+            ));
 
         $hours = [];
         foreach ($days as $day) {
@@ -275,7 +186,7 @@ class DashboardController extends Controller
         }
 
         return response()->json([
-            'labels' => array_map(fn(Carbon $day) => $day->format('d/m/Y'), $days),
+            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
             'hours' => $hours,
             'totalSeconds' => array_sum($hours) * 3600,
         ]);
@@ -285,9 +196,9 @@ class DashboardController extends Controller
     {
         $images = $request->input('images', []);
 
-        $images = array_filter($images, function($img) {
-            return isset($img['src']) && 
-                str_starts_with($img['src'], 'data:image/') && 
+        $images = array_filter($images, function ($img) {
+            return isset($img['src']) &&
+                str_starts_with($img['src'], 'data:image/') &&
                 strlen($img['src']) > 100;
         });
 
@@ -383,72 +294,46 @@ class DashboardController extends Controller
                 });
             })
             ->orderBy('name');
-        
+
         // ✅ Si $limit es true, aplicar límite de 8 (para la búsqueda)
         // ✅ Si $limit es false, traer todos los usuarios
         if ($limit) {
             $query->limit(8);
         }
-        
+
         return $query->get();
     }
 
     /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int, topClientActivity: ?array} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
-        Log::info('=== workedTimeByDay ===', [
-            'user_id' => $user->id,
-            'start' => $start->toDateString(),
-            'end' => $end->toDateString()
-        ]);
-
         $days = $this->daysBetween($start, $end);
         $entries = TimeEntry::where('user_id', $user->id)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->with(['intervals', 'customer', 'subService'])
             ->get();
 
-        Log::info('Total entries found:', ['count' => $entries->count()]);
-
-        foreach ($entries as $entry) {
-            $seconds = $entry->calculateEffectiveSeconds();
-            Log::info('Entry detail:', [
-                'entry_id' => $entry->id,
-                'date' => $entry->entry_date,
-                'customer' => $entry->customer->name ?? 'Sin cliente',
-                'activity' => $entry->subService->sub_service ?? 'Sin actividad',
-                'total_seconds' => $seconds,
-                'formatted' => gmdate('H:i:s', $seconds),
-                'intervals_count' => $entry->intervals->count()
-            ]);
-            
-            foreach ($entry->intervals as $interval) {
-                $diff = $interval->started_at && $interval->ended_at 
-                    ? abs($interval->ended_at->diffInSeconds($interval->started_at))
-                    : 0;
-                Log::info('Interval:', [
-                    'started_at' => $interval->started_at,
-                    'ended_at' => $interval->ended_at,
-                    'diff_seconds' => $diff,
-                    'formatted' => gmdate('H:i:s', $diff)
-                ]);
-            }
-        }
+        // El mismo tiempo efectivo alimenta cuatro agrupaciones. Calcularlo
+        // una sola vez evita recorrer todos los intervalos repetidamente.
+        $secondsByEntry = $entries
+            ->mapWithKeys(fn (TimeEntry $entry): array => [
+                $entry->id => $entry->calculateEffectiveSeconds(),
+            ])
+            ->all();
 
         $secondsByDate = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->entry_date->format('Y-m-d'))
-            ->map(fn ($dayEntries) => (int) $dayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()));
+            ->map(fn ($dayEntries) => (int) $dayEntries->sum(
+                fn (TimeEntry $entry) => $secondsByEntry[$entry->id] ?? 0
+            ));
 
         $clientGroups = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->customer_id)
-            ->map(function ($clientEntries) {
-                $total = (int) $clientEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds());
-                Log::info('Client group:', [
-                    'client_id' => $clientEntries->first()->customer_id,
-                    'client_name' => $clientEntries->first()->customer->name ?? 'Sin cliente',
-                    'total_seconds' => $total,
-                    'formatted' => gmdate('H:i:s', $total)
-                ]);
+            ->map(function ($clientEntries) use ($secondsByEntry) {
+                $total = (int) $clientEntries->sum(
+                    fn (TimeEntry $entry) => $secondsByEntry[$entry->id] ?? 0
+                );
+
                 return [
                     'id' => $clientEntries->first()->customer_id,
                     'name' => $clientEntries->first()->customer->name ?? 'Sin cliente',
@@ -458,24 +343,27 @@ class DashboardController extends Controller
             ->sortByDesc('seconds');
 
         $clientLabels = $clientGroups->pluck('name')->values()->toArray();
-        $clientData = $clientGroups->map(fn($c) => round($c['seconds'] / 3600, 4))->values()->toArray();
+        $clientData = $clientGroups->map(fn ($c) => round($c['seconds'] / 3600, 4))->values()->toArray();
         $clientIds = $clientGroups->pluck('id')->values()->toArray();
         $clientTotalSeconds = $clientGroups->sum('seconds');
 
         $secondsByActivity = $entries
             ->groupBy(fn (TimeEntry $entry) => $entry->subService->sub_service ?? 'Sin actividad')
-            ->map(function ($activityEntries) {
+            ->map(function ($activityEntries) use ($secondsByEntry) {
                 $first = $activityEntries->first();
+
                 return [
                     'name' => $first->subService->sub_service ?? 'Sin actividad',
                     'id' => $first->sub_service_id ?? 0,
-                    'seconds' => (int) $activityEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds()),
+                    'seconds' => (int) $activityEntries->sum(
+                        fn (TimeEntry $entry) => $secondsByEntry[$entry->id] ?? 0
+                    ),
                 ];
             })
             ->sortByDesc('seconds');
 
         $activityLabels = $secondsByActivity->pluck('name')->values()->toArray();
-        $activityData = $secondsByActivity->map(fn($a) => round($a['seconds'] / 3600, 4))->values()->toArray();
+        $activityData = $secondsByActivity->map(fn ($a) => round($a['seconds'] / 3600, 4))->values()->toArray();
         $activityIds = $secondsByActivity->pluck('id')->values()->toArray();
 
         $totalSeconds = 0;
@@ -494,7 +382,7 @@ class DashboardController extends Controller
         $othersActivitySum = $secondsByActivity->skip($maxActivities)->sum('seconds');
 
         $activityLabels = $topActivities->pluck('name')->values()->toArray();
-        $activityData = $topActivities->map(fn($a) => round($a['seconds'] / 3600, 4))->values()->toArray();
+        $activityData = $topActivities->map(fn ($a) => round($a['seconds'] / 3600, 4))->values()->toArray();
         $activityIds = $topActivities->pluck('id')->values()->toArray();
 
         if ($othersActivitySum > 0) {
@@ -503,7 +391,7 @@ class DashboardController extends Controller
             $activityIds[] = 0;
         }
 
-        $topClientActivity = $this->getTopClientActivity($user, $start, $end);
+        $topClientActivity = $this->getTopClientActivity($entries, $secondsByEntry);
 
         return [
             'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),

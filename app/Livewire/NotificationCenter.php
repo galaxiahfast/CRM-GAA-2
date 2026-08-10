@@ -94,15 +94,22 @@ class NotificationCenter extends Component
 
     public function render(): View
     {
-        $query = $this->filteredNotificationsQuery();
-        $notifications = $query?->limit(20)->get() ?? collect();
+        $notifications = $this->filteredNotificationsQuery()?->limit(20)->get() ?? collect();
         $visibleIds = $notifications->modelKeys();
         $selectedVisible = array_intersect($visibleIds, $this->selected);
+        $counts = auth()->user()?->notifications()
+            // The Notifications relationship is ordered by newest first. MySQL
+            // rejects that ORDER BY when this query only contains aggregates.
+            ->reorder()
+            ->toBase()
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw('SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread_count')
+            ->first();
 
         return view('livewire.notification-center', [
             'notifications' => $notifications,
-            'unreadCount' => auth()->user()?->unreadNotifications()->count() ?? 0,
-            'totalCount' => auth()->user()?->notifications()->count() ?? 0,
+            'unreadCount' => (int) ($counts->unread_count ?? 0),
+            'totalCount' => (int) ($counts->total_count ?? 0),
             'allVisibleSelected' => $visibleIds !== [] && count($selectedVisible) === count($visibleIds),
         ]);
     }
