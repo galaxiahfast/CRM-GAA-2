@@ -135,21 +135,28 @@ class TimeReportService
     /**
      * Detalle de actividades agrupado por día (misma estructura en UI y exportación).
      *
-     * @return array{columns: list<string>, groups: list<array{date: string, rows: list<list<string>>}>}
+     * @return array{columns: list<string>, groups: list<array{date: string, entry_ids: list<int>, total_effective: string, rows: list<list<string>>}>}
      */
-    public function activityDetailByDay(Collection $entries, bool $includeCollaborator = false): array
+    public function activityDetailByDay(
+        Collection $entries,
+        bool $includeCollaborator = false,
+        bool $showIntervals = false,
+    ): array
     {
-        $columns = $this->activityDetailColumns($includeCollaborator);
+        $columns = $this->activityDetailColumns($includeCollaborator, $showIntervals);
         $groups = $this->sortedEntries($entries)
             ->groupBy(fn (TimeEntry $e) => $this->entryLocalDate($e))
-            ->map(fn (Collection $dayEntries, string $dateKey) => [
-                'date' => Carbon::parse($dateKey)->format('d/m/Y'),
-                'entry_ids' => $dayEntries->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
-                'rows' => $dayEntries
-                    ->map(fn (TimeEntry $e) => $this->activityDetailRow($e, $includeCollaborator))
-                    ->values()
-                    ->all(),
-            ])
+            ->map(function (Collection $dayEntries, string $dateKey) use ($includeCollaborator, $showIntervals): array {
+                return [
+                    'date' => Carbon::parse($dateKey)->format('d/m/Y'),
+                    'entry_ids' => $dayEntries->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+                    'total_effective' => $this->hmsLabel((int) $dayEntries->sum('total_duration_seconds')),
+                    'rows' => $dayEntries
+                        ->map(fn (TimeEntry $e) => $this->activityDetailRow($e, $includeCollaborator, $showIntervals))
+                        ->values()
+                        ->all(),
+                ];
+            })
             ->values()
             ->all();
 
@@ -405,9 +412,11 @@ class TimeReportService
     }
 
     /** @return list<string> */
-    private function activityDetailColumns(bool $includeCollaborator): array
+    private function activityDetailColumns(bool $includeCollaborator, bool $showIntervals = false): array
     {
-        $columns = ['Inicio', 'Fin', 'Actividad', 'Cliente', 'Tiempo efectivo', 'Puesto profesional', 'Área física', 'Observaciones'];
+        $columns = $showIntervals
+            ? ['Intervalos', 'Actividad', 'Cliente', 'Tiempo efectivo', 'Puesto profesional', 'Área física', 'Observaciones']
+            : ['Inicio', 'Fin', 'Actividad', 'Cliente', 'Tiempo efectivo', 'Puesto profesional', 'Área física', 'Observaciones'];
 
         if ($includeCollaborator) {
             array_unshift($columns, 'Colaborador');
@@ -417,26 +426,55 @@ class TimeReportService
     }
 
     /** @return list<string> */
-    private function activityDetailRow(TimeEntry $entry, bool $includeCollaborator): array
+    private function activityDetailRow(TimeEntry $entry, bool $includeCollaborator, bool $showIntervals = false): array
     {
-        [$start, $end] = $this->entryTimeRange($entry);
+        if ($showIntervals) {
+            $row = [
+                $this->entryIntervals($entry),
+                $entry->subService->sub_service ?? '—',
+                $entry->customer->name ?? '—',
+                $this->hms((int) $entry->total_duration_seconds),
+                $entry->jobPositionSnapshot->name ?? '—',
+                $entry->physicalAreaSnapshot->name ?? '—',
+                $this->activityObservations($entry),
+            ];
+        } else {
+            [$start, $end] = $this->entryTimeRange($entry);
 
-        $row = [
-            $start,
-            $end,
-            $entry->subService->sub_service ?? '—',
-            $entry->customer->name ?? '—',
-            $this->hms((int) $entry->total_duration_seconds),
-            $entry->jobPositionSnapshot->name ?? '—',
-            $entry->physicalAreaSnapshot->name ?? '—',
-            $this->activityObservations($entry),
-        ];
+            $row = [
+                $start,
+                $end,
+                $entry->subService->sub_service ?? '—',
+                $entry->customer->name ?? '—',
+                $this->hms((int) $entry->total_duration_seconds),
+                $entry->jobPositionSnapshot->name ?? '—',
+                $entry->physicalAreaSnapshot->name ?? '—',
+                $this->activityObservations($entry),
+            ];
+        }
 
         if ($includeCollaborator) {
             array_unshift($row, trim(($entry->user->name ?? '—').' '.($entry->user->last_name ?? '')));
         }
 
         return $row;
+    }
+
+    private function entryIntervals(TimeEntry $entry): string
+    {
+        if ($entry->intervals->isEmpty()) {
+            return '—';
+        }
+
+        return $entry->intervals
+            ->sortBy('started_at')
+            ->map(function ($interval) use ($entry): string {
+                $end = $interval->ended_at
+                    ?? ($entry->status === TimeEntry::STATUS_IN_PROGRESS ? Carbon::now($this->moduleTimezone()) : null);
+
+                return $this->formatLocalTime($interval->started_at).' – '.$this->formatLocalTime($end);
+            })
+            ->implode(' | ');
     }
 
     private function activityObservations(TimeEntry $entry): string
@@ -457,6 +495,7 @@ class TimeReportService
                 return $this->sortedEntries($userEntries)->groupBy(fn (TimeEntry $entry) => $this->entryLocalDate($entry))
                     ->map(fn (Collection $dayEntries, string $date) => [
                         'date' => $collaborator.' · '.Carbon::parse($date)->format('d/m/Y'),
+                        'total_effective' => $this->hmsLabel((int) $dayEntries->sum('total_duration_seconds')),
                         'rows' => $dayEntries->map(fn (TimeEntry $entry) => $this->activityDetailRow($entry, false))->values()->all(),
                     ]);
             })->values()->all();
@@ -519,5 +558,12 @@ class TimeReportService
         $seconds = max(0, $seconds);
 
         return sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
+    }
+
+    private function hmsLabel(int $seconds): string
+    {
+        $seconds = max(0, $seconds);
+
+        return sprintf('%02dh %02dm %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
     }
 }

@@ -15,7 +15,7 @@
     .group-filter-scrollbar::-webkit-scrollbar-thumb,
     .group-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px !important; }
     .group-filter-scrollbar,
-    .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
+    .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; scrollbar-gutter: stable; }
     @keyframes group-report-spin { to { transform: rotate(360deg); } }
 </style>
 
@@ -290,7 +290,7 @@
                             @if ($groupActivityDetail['groups'] === [])
                                 <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
                             @else
-                                <x-time-activity-detail :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" :hidden-columns="['Observaciones']" actions />
+                                <x-time-activity-detail class="group-scrollbar max-h-[680px] overflow-y-auto pr-2" :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" :hidden-columns="['Observaciones']" actions />
                             @endif
                         </div>
                     </div>

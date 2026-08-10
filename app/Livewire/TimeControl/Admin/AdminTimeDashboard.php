@@ -448,7 +448,7 @@ class AdminTimeDashboard extends Component
                 'byPosition' => collect(), 'byArea' => collect(), 'autoClosedCount' => 0,
             ];
         $groupActivityDetail = $this->groupReportIsCurrent && $reportedGroupUsers->isNotEmpty()
-            ? $reports->activityDetailByDay($groupData['entries'], true)
+            ? $reports->activityDetailByDay($groupData['entries'], true, true)
             : ['columns' => [], 'groups' => []];
 
         return view('livewire.time-control.admin.dashboard', [

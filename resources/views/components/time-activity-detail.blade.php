@@ -22,9 +22,13 @@
                         <p class="mt-0.5 text-[13px] text-gray-500">{{ count($group['rows']) }} {{ count($group['rows']) === 1 ? 'actividad registrada' : 'actividades registradas' }}</p>
                     </div>
                 </div>
+                <div class="flex shrink-0 items-center gap-3 rounded-lg border border-[#1A3A6B]/15 bg-white px-3 py-2 shadow-sm">
+                    <span class="text-[12px] font-semibold uppercase tracking-wide text-gray-500">Total efectivo</span>
+                    <span class="whitespace-nowrap font-mono text-[14px] font-semibold text-[#1A3A6B]">{{ $group['total_effective'] ?? '00h 00m 00s' }}</span>
+                </div>
             </div>
             <div class="group-scrollbar overflow-x-auto">
-                <table class="w-full min-w-[1100px] table-fixed border-collapse text-[15px]">
+                <table class="w-full min-w-[1400px] table-fixed border-collapse text-[15px]">
                     <thead>
                         <tr class="border-b border-gray-200 bg-gray-50 text-gray-600">
                             @foreach ($visibleColumnIndexes as $columnIndex)
@@ -46,7 +50,17 @@
                                         $cell = $row[$columnIndex] ?? '';
                                     @endphp
                                     <td class="px-4 py-3 text-left align-middle text-gray-700" style="width: {{ $columnWidth }};">
-                                        <span class="block truncate {{ in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true) ? 'font-mono text-[14px] font-medium text-gray-900' : '' }}" title="{{ $cell }}">{{ $cell }}</span>
+                                        @if ($column === 'Intervalos')
+                                            <div class="flex flex-col items-start gap-1.5" title="{{ $cell }}">
+                                                @foreach (explode(' | ', (string) $cell) as $interval)
+                                                    <span class="inline-flex whitespace-nowrap rounded-md border border-[#1A3A6B]/10 bg-[#1A3A6B]/[0.055] px-2 py-1 font-mono text-[13px] font-medium text-[#1A3A6B]">
+                                                        {{ $interval }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="block truncate {{ in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true) ? 'font-mono text-[14px] font-medium text-gray-900' : '' }}" title="{{ $cell }}">{{ $cell }}</span>
+                                        @endif
                                     </td>
                                 @endforeach
                                 @if ($actions)

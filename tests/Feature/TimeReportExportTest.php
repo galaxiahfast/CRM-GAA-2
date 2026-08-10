@@ -182,6 +182,46 @@ class TimeReportExportTest extends TestCase
         $this->assertSame($correctionReason, $entry->audits->first()->reason);
     }
 
+    public function test_general_report_displays_all_activity_intervals_and_the_effective_daily_total(): void
+    {
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+        $entry = TimeEntry::with('intervals')->where('user_id', $aux->id)->firstOrFail();
+        $firstInterval = $entry->intervals->first();
+        $secondStart = $firstInterval->ended_at->copy()->addMinutes(15);
+        $secondEnd = $secondStart->copy()->addMinutes(30);
+
+        $entry->intervals()->create([
+            'started_at' => $secondStart,
+            'ended_at' => $secondEnd,
+        ]);
+        $entry->update(['total_duration_seconds' => 5400]);
+
+        $data = app(TimeReportService::class)->adminSupervisionForUsers(
+            [$aux->id],
+            $today,
+            $today,
+            collect([$aux]),
+        );
+        $detail = app(TimeReportService::class)->activityDetailByDay($data['entries'], true, true);
+
+        $this->assertSame(['Colaborador', 'Intervalos', 'Actividad', 'Cliente', 'Tiempo efectivo', 'Puesto profesional', 'Área física', 'Observaciones'], $detail['columns']);
+        $this->assertSame('01h 30m 00s', $detail['groups'][0]['total_effective']);
+        $this->assertStringContainsString(
+            $secondStart->format('H:i:s').' – '.$secondEnd->format('H:i:s'),
+            $detail['groups'][0]['rows'][0][1],
+        );
+
+        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+            ->set('selectedCollaboratorIds', [$aux->id])
+            ->set('from', $today)
+            ->set('to', $today)
+            ->call('generateGroupReport')
+            ->assertSee('Intervalos')
+            ->assertSee('Total efectivo')
+            ->assertSee('01h 30m 00s');
+    }
+
     public function test_user_report_includes_activity_detail_by_day(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();
