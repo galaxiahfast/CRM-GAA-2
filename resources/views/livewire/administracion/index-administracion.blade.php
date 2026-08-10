@@ -456,6 +456,21 @@
 
                                                 {{--  --}}
                                                 <p class="truncate text-[15px] text-gray-500" title="{{ $user['email'] }}" style="line-height: 1; margin: 0; padding: 0;">{{ $user['email'] }}</p>
+
+                                                <div class="flex min-w-0 items-center gap-2" title="{{ $user['presence_label'] ?? 'Sin actividad registrada' }}" style="line-height: 1; margin: 0; padding: 0;">
+                                                    <span @class([
+                                                        'h-2 w-2 shrink-0 rounded-full',
+                                                        'bg-emerald-500' => $user['is_online'] ?? false,
+                                                        'bg-gray-400' => ! ($user['is_online'] ?? false),
+                                                    ])></span>
+                                                    <span @class([
+                                                        'truncate text-[13px] font-medium',
+                                                        'text-emerald-600' => $user['is_online'] ?? false,
+                                                        'text-gray-500' => ! ($user['is_online'] ?? false),
+                                                    ])>
+                                                        {{ $user['presence_label'] ?? 'Sin actividad registrada' }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="flex flex-wrap gap-[10px]">

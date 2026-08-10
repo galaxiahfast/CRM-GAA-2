@@ -1,10 +1,11 @@
 <?php
 
+use App\Mail\ReporteSemanal;
+use App\Models\SupportChatMessage;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
-use App\Mail\ReporteSemanal;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,7 @@ Artisan::command('inspire', function () {
 
 // Envíos de Reportes de Correo Existentes
 Schedule::call(function () {
-    Mail::to('diego_cen@gonzalezalonzo.net')->send(new ReporteSemanal());
+    Mail::to('diego_cen@gonzalezalonzo.net')->send(new ReporteSemanal);
 })->cron('0 8 5,17,28 * *');
 
 /*
@@ -40,4 +41,13 @@ Schedule::command('biometric:sync --maintenance')->dailyAt('23:00')->withoutOver
 Schedule::command('time:auto-close')
     ->dailyAt(config('time-control.auto_close_at', '21:00'))
     ->timezone(config('time-control.timezone', 'America/Mexico_City'))
+    ->withoutOverlapping();
+
+// El chat general de soporte conserva únicamente los mensajes del día actual.
+Schedule::call(function () {
+    $startOfToday = now(config('support.timezone', 'America/Mexico_City'))->startOfDay()->utc();
+    SupportChatMessage::query()->where('created_at', '<', $startOfToday)->delete();
+})->dailyAt('00:05')
+    ->timezone(config('support.timezone', 'America/Mexico_City'))
+    ->name('support-chat:clear-previous-days')
     ->withoutOverlapping();

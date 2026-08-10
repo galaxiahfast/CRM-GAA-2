@@ -36,6 +36,21 @@
             </p>
         </div>
 
+        <div class="flex h-[10px] w-full items-center justify-center gap-2" title="{{ $node['presence_label'] ?? 'Sin actividad registrada' }}">
+            <span @class([
+                'h-2 w-2 shrink-0 rounded-full',
+                'bg-emerald-500' => $node['is_online'] ?? false,
+                'bg-gray-400' => ! ($node['is_online'] ?? false),
+            ])></span>
+            <span @class([
+                'truncate text-[10px] font-medium leading-none',
+                'text-emerald-600' => $node['is_online'] ?? false,
+                'text-gray-500' => ! ($node['is_online'] ?? false),
+            ])>
+                {{ $node['presence_label'] ?? 'Sin actividad registrada' }}
+            </span>
+        </div>
+
         <div class="w-full flex flex-wrap items-center justify-center" style="gap: 10px;">
             @if (!empty($node['role']))
                 <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#1e3a8a] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 

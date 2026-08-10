@@ -16,6 +16,8 @@ use App\Livewire\Customer\StoreCustomer;
 use App\Livewire\Customer\UpdateCustomer;
 use App\Livewire\Customer\ViewCustomer;
 use App\Livewire\CustomerReport;
+use App\Livewire\Support\QuestionsBot;
+use App\Livewire\Support\TicketChat;
 use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
 use App\Livewire\TimeControl\Admin\AttendanceManagement;
 use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
@@ -216,4 +218,12 @@ Route::middleware([
     Route::get('/time/admin/corrections', CorrectTimeEntry::class)
         ->middleware('access.permission:time-control.supervision.view')
         ->name('time.admin.corrections');
+
+    // ==========================================
+    // SOPORTE (Disponible para todos los usuarios autenticados)
+    // ==========================================
+    Route::prefix('soporte')->name('soporte.')->group(function () {
+        Route::get('/ticket', TicketChat::class)->name('ticket');
+        Route::get('/preguntas', QuestionsBot::class)->name('preguntas');
+    });
 });

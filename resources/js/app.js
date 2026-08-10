@@ -12,7 +12,9 @@ if (window.Livewire) {
     document.addEventListener('livewire:init', registerLivewireSortable, { once: true });
 }
 
-const SESSION_KEEP_ALIVE_INTERVAL = 5 * 60 * 1000;
+// Además de mantener la sesión, este pulso permite reflejar presencia real:
+// mientras el navegador autenticado siga abierto actualizará last_activity.
+const SESSION_KEEP_ALIVE_INTERVAL = 30 * 1000;
 const SESSION_RECOVERY_KEY = 'session-recovery-in-progress';
 
 const recoverExpiredSession = () => {

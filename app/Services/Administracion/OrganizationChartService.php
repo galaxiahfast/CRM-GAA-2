@@ -5,6 +5,7 @@ namespace App\Services\Administracion;
 use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserOrganizationalProfile;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,15 @@ class OrganizationChartService
             $superiorIdsByUser[$relation->subordinate_id][] = $relation->superior_id;
             $subordinateIdsByUser[$relation->superior_id][] = $relation->subordinate_id;
         }
+
+        // Aprovechar la actividad que Laravel ya registra en las sesiones.
+        // No se altera la autenticación ni se agrega un segundo mecanismo de presencia.
+        $lastActivityByUser = DB::table('sessions')
+            ->whereNotNull('user_id')
+            ->select('user_id', DB::raw('MAX(last_activity) as last_activity'))
+            ->groupBy('user_id')
+            ->pluck('last_activity', 'user_id');
+        $onlineThreshold = now()->subMinute()->timestamp;
 
         // Obtener todos los usuarios con sus perfiles
         $users = User::query()
@@ -53,6 +63,11 @@ class OrganizationChartService
             $superiorIds = $superiorIdsByUser[$user->id] ?? [];
             $subordinateIds = $subordinateIdsByUser[$user->id] ?? [];
             $missing = $this->resolveMissingAssignments($user, $superiorIds, $profile);
+            $lastActivityTimestamp = (int) ($lastActivityByUser[$user->id] ?? 0);
+            $isOnline = $lastActivityTimestamp >= $onlineThreshold;
+            $lastActivity = $lastActivityTimestamp > 0
+                ? Carbon::createFromTimestamp($lastActivityTimestamp)->locale('es')
+                : null;
 
             $node = [
                 'id' => $user->id,
@@ -65,6 +80,10 @@ class OrganizationChartService
                 'physical_area_id' => $profile?->physical_area_id,
                 'superior_count' => count($superiorIds),
                 'subordinate_count' => count($subordinateIds),
+                'is_online' => $isOnline,
+                'presence_label' => $isOnline
+                    ? 'En línea'
+                    : ($lastActivity ? 'Hace '.$lastActivity->diffForHumans(now(), true) : 'Sin actividad registrada'),
                 'children' => [],
             ];
 
