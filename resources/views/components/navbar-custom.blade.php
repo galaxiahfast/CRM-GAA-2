@@ -112,7 +112,7 @@
     >
         
         <!-- Contenedor del menú -->
-        <div class="flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain" 
+        <div class="sidebar-menu-scrollbar flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain"
             :style="collapsed ? 'opacity: 1;' : 'opacity: 1; transition: opacity 300ms ease-in-out;'">
             <ul class="font-medium inline-block min-w-full m-0 p-0">
 

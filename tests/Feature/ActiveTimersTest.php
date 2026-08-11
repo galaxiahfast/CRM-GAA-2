@@ -28,7 +28,7 @@ class ActiveTimersTest extends TestCase
         $this->assertFalse(Route::has('time.admin.corrections'));
     }
 
-    public function test_supervisor_sees_only_running_timers_with_activity_and_hierarchy(): void
+    public function test_supervisor_sees_only_running_timers_with_operational_activity(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-08-11 13:30:00', config('time-control.timezone')));
 
@@ -102,12 +102,18 @@ class ActiveTimersTest extends TestCase
             ->assertSet('activeTimers.0.name', 'Ana Activa')
             ->assertSet('activeTimers.0.activity', 'Conciliación bancaria')
             ->assertSet('activeTimers.0.customer', 'Cliente en línea')
+            ->assertSet('activeTimers.0.position', 'Auxiliar contable')
+            ->assertSet('activeTimers.0.area', 'Contabilidad')
             ->assertSet('activeTimers.0.elapsed_seconds', 900)
             ->assertSet('activeTimers.0.superiors.0.name', 'Jefa Directa')
             ->assertSet('activeTimers.0.subordinates.0.name', 'Luis Subordinado')
             ->assertCount('activeTimers', 1)
             ->assertSee('Personas con cronómetro activo')
             ->assertSee('wire:poll.3s.visible="refreshActiveTimers"', false)
+            ->assertSee('wire:ignore', false)
+            ->assertSee('Sincronización activa')
+            ->assertSee('Jefe directo')
+            ->assertSee('Subordinados')
             ->assertDontSee('Usuario Pausado');
 
         Carbon::setTestNow();

@@ -14,8 +14,6 @@ class ActiveTimers extends Component
     /** @var array<int, array<string, mixed>> */
     public array $activeTimers = [];
 
-    public string $lastUpdatedAt = '';
-
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
@@ -33,10 +31,12 @@ class ActiveTimers extends Component
             ->with([
                 'customer:id,name',
                 'subService:id,sub_service',
+                'jobPositionSnapshot:id,name',
+                'physicalAreaSnapshot:id,name',
                 'intervals:id,time_entry_id,started_at,ended_at',
                 'user:id,name,last_name,email,profile_photo_path',
-                'user.superiors:id,name,last_name,email,profile_photo_path',
-                'user.subordinates:id,name,last_name,email,profile_photo_path',
+                'user.superiors:id,name,last_name',
+                'user.subordinates:id,name,last_name',
             ])
             ->get()
             ->sortBy(fn (TimeEntry $entry): string => $this->userName($entry->user))
@@ -56,6 +56,8 @@ class ActiveTimers extends Component
                     'photo_url' => $user ? $this->profilePhotoUrl($user) : null,
                     'activity' => $entry->subService?->sub_service ?? 'Actividad no disponible',
                     'customer' => $entry->customer?->name ?? 'Sin cliente asignado',
+                    'position' => $entry->jobPositionSnapshot?->name ?? 'Sin puesto asignado',
+                    'area' => $entry->physicalAreaSnapshot?->name ?? 'Sin área asignada',
                     'elapsed_seconds' => $this->elapsedSeconds($entry, $now),
                     'started_at' => $openInterval
                         ? Carbon::parse((string) $openInterval->getRawOriginal('started_at'), $this->timezone())->format('H:i')
@@ -75,7 +77,6 @@ class ActiveTimers extends Component
             ->values()
             ->all();
 
-        $this->lastUpdatedAt = $now->format('H:i:s');
         $this->dispatch('active-timers-refreshed');
     }
 

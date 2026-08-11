@@ -46,3 +46,22 @@ div.dataTables_filter {
 .notification-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #15305a;
 }
+
+/* Scroll discreto del menú lateral. */
+.sidebar-menu-scrollbar {
+    scrollbar-color: #1a3a6b transparent;
+    scrollbar-width: thin;
+}
+
+.sidebar-menu-scrollbar::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sidebar-menu-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-menu-scrollbar::-webkit-scrollbar-thumb {
+    background: #1a3a6b;
+    border-radius: 9999px;
+}
