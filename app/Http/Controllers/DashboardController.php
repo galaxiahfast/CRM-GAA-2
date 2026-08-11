@@ -30,7 +30,7 @@ class DashboardController extends Controller
             ? $this->workedTimeByDay($selectedUser, $start, $end)
             : $this->emptyChart($start, $end);
 
-        return view('time-dashboard.index', [
+        return view('time-dashboard.informe-productividad', [
             'isAdmin' => $isAdmin,
             'search' => $search,
             'users' => $users,

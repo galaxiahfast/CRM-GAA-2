@@ -5,27 +5,27 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\TimeEntryController;
 // Modelos
-use App\Livewire\Administracion\IndexAdministracion;
-use App\Livewire\Administracion\Interns\IndexInterns;
+use App\Livewire\Administracion\Interns\GestionAuxiliares;
+use App\Livewire\Administracion\PanelAdministracion;
 // Componentes Locales (Clientes y Administración)
-use App\Livewire\Administracion\Relationship\IndexRelationship;
-use App\Livewire\Administracion\Roles\IndexRole;
-use App\Livewire\Administracion\Users\IndexUser;
-use App\Livewire\Customer\IndexCustomer;
-use App\Livewire\Customer\StoreCustomer;
-use App\Livewire\Customer\UpdateCustomer;
-use App\Livewire\Customer\ViewCustomer;
+use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
+use App\Livewire\Administracion\Roles\GestionRoles;
+use App\Livewire\Administracion\Users\GestionUsuarios;
+use App\Livewire\Customer\CrearCliente;
+use App\Livewire\Customer\DetalleCliente;
+use App\Livewire\Customer\EditarCliente;
+use App\Livewire\Customer\GestionClientes;
 use App\Livewire\CustomerReport;
 use App\Livewire\Support\QuestionsBot;
 use App\Livewire\Support\TicketChat;
-use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
 use App\Livewire\TimeControl\Admin\AttendanceManagement;
 use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
+use App\Livewire\TimeControl\Admin\InformeGeneralHoras;
 // Componentes Remotos (Control de Horas Complejo)
 use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
 use App\Livewire\TimeControl\AttendanceClock;
-use App\Livewire\TimeControl\IndexTimeControl;
 use App\Livewire\TimeControl\MyProductivity;
+use App\Livewire\TimeControl\RegistroActividades;
 use App\Mail\ReporteSemanal;
 use App\Models\Role;
 use App\Models\User;
@@ -71,6 +71,10 @@ Route::middleware([
         return response()->noContent();
     })->name('session.keep-alive');
 
+    // Pantalla ligera posterior al login. El dashboard conserva su ruta y su
+    // carga original para ejecutarse únicamente cuando el usuario lo solicita.
+    Route::view('/inicio', 'inicio')->name('inicio');
+
     // ==========================================
     // DASHBOARD
     // ==========================================
@@ -85,7 +89,7 @@ Route::middleware([
     // ==========================================
 
     // Index Administración
-    Route::get('/administracion', IndexAdministracion::class)
+    Route::get('/administracion', PanelAdministracion::class)
         ->middleware('access.permission:administration.organization.manage')
         ->name('administracion.index');
 
@@ -104,7 +108,7 @@ Route::middleware([
     // ==========================================
 
     // Lista de usuarios - Administrador y Coordinador
-    Route::get('/administracion/users', IndexUser::class)
+    Route::get('/administracion/users', GestionUsuarios::class)
         ->middleware('access.permission:administration.users.manage')
         ->name('administracion.section');
 
@@ -125,7 +129,7 @@ Route::middleware([
     // ==========================================
 
     // Lista de roles
-    Route::get('/administracion/roles', IndexRole::class)
+    Route::get('/administracion/roles', GestionRoles::class)
         ->middleware('access.permission:administration.roles.manage')
         ->name('administracion.role');
 
@@ -146,35 +150,35 @@ Route::middleware([
     // ==========================================
 
     // Interns - Administrador, Coordinador y Contador
-    Route::get('/administracion/interns', IndexInterns::class)
+    Route::get('/administracion/interns', GestionAuxiliares::class)
         ->middleware('access.permission:administration.assignments.manage')
         ->name('administracion.interns');
 
     // Relationships - Administrador, Coordinador y Contador
-    Route::get('/administracion/relationships', IndexRelationship::class)
+    Route::get('/administracion/relationships', GestionRelacionesJerarquicas::class)
         ->middleware('access.permission:administration.assignments.manage')
         ->name('administracion.relationships');
 
     // Permissions - Solo Administrador
-    Route::get('/administracion/permissions', IndexAdministracion::class)
+    Route::get('/administracion/permissions', PanelAdministracion::class)
         ->middleware('access.permission:administration.permissions.manage')
         ->name('administracion.permissions');
 
     // ==========================================
     // SECCIÓN CLIENTES (Customers)
     // ==========================================
-    Route::get('/customers', IndexCustomer::class)
+    Route::get('/customers', GestionClientes::class)
         ->middleware('access.permission:customers.view')
         ->name('customers.index');
-    Route::get('/customers/{customer}/view', ViewCustomer::class)
+    Route::get('/customers/{customer}/view', DetalleCliente::class)
         ->middleware('access.permission:customers.view')
         ->name('customers.view');
 
-    Route::get('/customers/create', StoreCustomer::class)
+    Route::get('/customers/create', CrearCliente::class)
         ->middleware('access.permission:customers.manage')
         ->name('customers.create');
 
-    Route::get('/customers/{customer}/edit', UpdateCustomer::class)
+    Route::get('/customers/{customer}/edit', EditarCliente::class)
         ->middleware('access.permission:customers.manage')
         ->name('customers.edit');
 
@@ -192,7 +196,7 @@ Route::middleware([
     // ==========================================
 
     // Operativo (Auxiliar / Coordinador / Contador / Administrador)
-    Route::get('/time', IndexTimeControl::class)
+    Route::get('/time', RegistroActividades::class)
         ->middleware('access.permission:activities.manage')
         ->name('time.index');
 
@@ -210,7 +214,7 @@ Route::middleware([
 
     // Administración del módulo (Solo usuarios con permisos avanzados)
     Route::middleware('access.permission:time-control.supervision.view')->group(function () {
-        Route::get('/time/admin', AdminTimeDashboard::class)->name('time.admin.dashboard');
+        Route::get('/time/admin', InformeGeneralHoras::class)->name('time.admin.dashboard');
         Route::get('/time/admin/profiles', OrganizationalProfiles::class)->name('time.admin.profiles');
         Route::get('/time/admin/attendance', AttendanceManagement::class)->name('time.admin.attendance');
     });

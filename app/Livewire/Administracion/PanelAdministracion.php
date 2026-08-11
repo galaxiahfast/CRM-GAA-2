@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
-class IndexAdministracion extends Component
+class PanelAdministracion extends Component
 {
     public $totalUsers = 0;
 
@@ -672,7 +672,7 @@ class IndexAdministracion extends Component
         $references = app(ReferenceDataCache::class);
         $administrationReferences = $references->administration();
 
-        return view('livewire.administracion.index-administracion', [
+        return view('livewire.administracion.panel-administracion', [
             'physicalAreas' => $administrationReferences['physicalAreas'],
             'jobPositions' => $administrationReferences['jobPositions'],
             'roles' => $administrationReferences['roles'],

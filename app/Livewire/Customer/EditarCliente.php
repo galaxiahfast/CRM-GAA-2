@@ -8,7 +8,7 @@ use App\Models\Statement;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
-class UpdateCustomer extends StoreCustomer
+class EditarCliente extends CrearCliente
 {
     public $customer;
     public $customerId;
@@ -154,6 +154,6 @@ class UpdateCustomer extends StoreCustomer
 
     public function render()
     {
-        return view('livewire.customer.update-customer')->layout('layouts.app');
+        return view('livewire.customer.editar-cliente')->layout('layouts.app');
     }
 }

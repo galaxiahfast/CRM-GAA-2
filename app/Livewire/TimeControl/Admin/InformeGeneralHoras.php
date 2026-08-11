@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class AdminTimeDashboard extends Component
+class InformeGeneralHoras extends Component
 {
     public string $from;
 
@@ -451,7 +451,7 @@ class AdminTimeDashboard extends Component
             ? $reports->activityDetailByDay($groupData['entries'], true, true)
             : ['columns' => [], 'groups' => []];
 
-        return view('livewire.time-control.admin.dashboard', [
+        return view('livewire.time-control.admin.informe-general-horas', [
             'exportFormats' => $exporter->formats(),
             'groupUsers' => $groupUsers,
             'selectedGroupUsers' => $selectedGroupUsers,

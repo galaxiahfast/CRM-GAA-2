@@ -127,13 +127,27 @@
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
                 <!-- ========================================================== -->
                 <li class="pt-[15px] px-[15px] pb-0 m-0">
+                    <a href="{{ route('inicio') }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('inicio') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('inicio') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+                        </svg>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Inicio</span>
+                    </a>
+                </li>
+
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Dashboard (vista completa anterior)                -->
+                <!-- ========================================================== -->
+                <li class="pt-[15px] px-[15px] pb-0 m-0">
                     <a href="{{ route('dashboard') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v8H4V4Zm10 0h6v4h-6V4ZM4 16h6v4H4v-4Zm10-4h6v8h-6v-8Z" />
                         </svg>
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Inicio</span>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Dashboard</span>
                     </a>
                 </li>
 

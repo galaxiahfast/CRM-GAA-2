@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -33,7 +34,48 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('inicio', absolute: false));
+    }
+
+    public function test_lightweight_start_page_does_not_query_dashboard_data(): void
+    {
+        $user = User::factory()->create();
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = mb_strtolower($query->sql);
+        });
+
+        $this->actingAs($user)
+            ->get('/inicio')
+            ->assertOk()
+            ->assertSeeText('Sesión iniciada correctamente')
+            ->assertSeeText($user->name)
+            ->assertSeeText('Inicio')
+            ->assertSeeText('Dashboard')
+            ->assertSee('data-session-logout', false);
+
+        $dashboardTables = ['customers', 'customer_files', 'services', 'sub_services'];
+
+        foreach ($dashboardTables as $table) {
+            $this->assertFalse(
+                collect($queries)->contains(fn (string $sql): bool => str_contains($sql, $table)),
+                "La pantalla ligera consultó la tabla pesada [{$table}]."
+            );
+        }
+    }
+
+    public function test_login_preserves_the_original_protected_destination(): void
+    {
+        $user = User::factory()->create();
+
+        $this->get(route('soporte.ticket'))
+            ->assertRedirect(route('login'));
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect(route('soporte.ticket', absolute: false));
     }
 
     public function test_users_can_keep_the_session_started(): void

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\TimeControl\Admin\AdminTimeDashboard;
+use App\Livewire\TimeControl\Admin\InformeGeneralHoras;
 use App\Livewire\TimeControl\MyProductivity;
 use App\Models\Customer;
 use App\Models\JobPosition;
@@ -79,7 +79,7 @@ class TimeReportExportTest extends TestCase
     {
         ['admin' => $admin] = $this->seedWithEntry();
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->assertSet('from', now()->toDateString())
             ->assertSet('to', now()->toDateString());
     }
@@ -114,7 +114,7 @@ class TimeReportExportTest extends TestCase
         ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
         $today = now()->toDateString();
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->set('userId', $aux->id)
             ->set('from', $today)
             ->set('to', $today)
@@ -132,13 +132,13 @@ class TimeReportExportTest extends TestCase
         $this->assertSame('01:00:00', $report->meta['Horas efectivas totales']);
         $this->assertSame('Detalle de actividades por colaborador y día', collect($report->sections)->last()->title);
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->call('selectCollaboratorsByArea', (string) $aux->activeOrganizationalProfile->physical_area_id)
             ->assertSet('selectedCollaboratorIds', [$aux->id])
             ->call('selectCollaboratorsByPosition', (string) $aux->activeOrganizationalProfile->job_position_id)
             ->call('selectCollaboratorsBySuperior', '0');
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->set('selectedCollaboratorIds', [$aux->id])
             ->set('from', $today)
             ->set('to', $today)
@@ -156,7 +156,7 @@ class TimeReportExportTest extends TestCase
         $editedEnd = $entry->intervals->first()->ended_at->copy()->addSeconds(45)->format('H:i:s');
         $correctionReason = 'Corrección validada con precisión de segundos.';
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->set('selectedCollaboratorIds', [$aux->id])
             ->set('from', $today)
             ->set('to', $today)
@@ -212,7 +212,7 @@ class TimeReportExportTest extends TestCase
             $detail['groups'][0]['rows'][0][1],
         );
 
-        Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->set('selectedCollaboratorIds', [$aux->id])
             ->set('from', $today)
             ->set('to', $today)
@@ -247,7 +247,7 @@ class TimeReportExportTest extends TestCase
         $this->assertSame('Reportes individuales agrupados', $batch->title);
         $this->assertStringContainsString('Reporte individual:', $batch->sections[0]->title);
 
-        $component = Livewire::actingAs($admin)->test(AdminTimeDashboard::class)
+        $component = Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->set('selectedCollaboratorIds', [$aux->id])
             ->set('from', $today)
             ->set('to', $today)

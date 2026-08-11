@@ -11,6 +11,8 @@ class NotificationCenter extends Component
 {
     public string $filter = 'all';
 
+    public bool $notificationsLoaded = false;
+
     public bool $selectionMode = false;
 
     /** @var array<int, string> */
@@ -18,8 +20,14 @@ class NotificationCenter extends Component
 
     private const FILTERS = ['all', 'unread', 'read', 'system', 'auth'];
 
+    public function loadNotifications(): void
+    {
+        $this->notificationsLoaded = true;
+    }
+
     public function markAsRead(string $notificationId): void
     {
+        $this->loadNotifications();
         $notification = $this->ownedNotification($notificationId);
 
         if ($notification && ! $notification->read_at) {
@@ -29,6 +37,7 @@ class NotificationCenter extends Component
 
     public function markAllAsRead(): void
     {
+        $this->loadNotifications();
         auth()->user()?->unreadNotifications()->update(['read_at' => now()]);
     }
 
@@ -38,18 +47,21 @@ class NotificationCenter extends Component
             return;
         }
 
+        $this->loadNotifications();
         $this->filter = $filter;
         $this->selected = [];
     }
 
     public function toggleSelectionMode(): void
     {
+        $this->loadNotifications();
         $this->selectionMode = ! $this->selectionMode;
         $this->selected = [];
     }
 
     public function toggleSelectAll(): void
     {
+        $this->loadNotifications();
         $visibleIds = $this->filteredNotificationsQuery()
             ?->limit(20)
             ->pluck('id')
@@ -75,12 +87,15 @@ class NotificationCenter extends Component
 
     public function deleteNotification(string $notificationId): void
     {
+        $this->loadNotifications();
         $this->ownedNotification($notificationId)?->delete();
         $this->selected = array_values(array_diff($this->selected, [$notificationId]));
     }
 
     public function deleteSelected(): void
     {
+        $this->loadNotifications();
+
         if ($this->selected === []) {
             return;
         }
@@ -94,8 +109,10 @@ class NotificationCenter extends Component
 
     public function render(): View
     {
-        $notifications = $this->filteredNotificationsQuery()?->limit(20)->get() ?? collect();
-        $visibleIds = $notifications->modelKeys();
+        $notifications = $this->notificationsLoaded
+            ? ($this->filteredNotificationsQuery()?->limit(20)->get() ?? collect())
+            : collect();
+        $visibleIds = $notifications->pluck('id')->all();
         $selectedVisible = array_intersect($visibleIds, $this->selected);
         $counts = auth()->user()?->notifications()
             // The Notifications relationship is ordered by newest first. MySQL

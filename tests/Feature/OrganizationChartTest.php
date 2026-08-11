@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
-use App\Livewire\Administracion\IndexAdministracion;
+use App\Livewire\Administracion\PanelAdministracion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -264,7 +264,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $subject->id)
             ->call('beginEditingUser')
             ->assertSee('BIO-77')
@@ -292,7 +292,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $subject->id)
             ->set('userForm.subordinate_ids', [$candidate->id])
             ->set('userForm.superior_ids', [$candidate->id])
@@ -321,7 +321,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $subject->id)
             ->set('userForm.superior_ids', [$manager->id])
             ->set('userForm.subordinate_ids', [$director->id])
@@ -350,7 +350,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $subject->id)
             ->set('userForm.superior_ids', [$manager->id, $director->id])
             ->assertSet('userForm.superior_ids', [$director->id]);
@@ -394,7 +394,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $secondBoss->id)
             ->assertViewHas('subordinateCandidates', function ($candidates) use ($assignedSubordinate, $availableSubordinate): bool {
                 return ! $candidates->contains('id', $assignedSubordinate->id)
@@ -424,7 +424,7 @@ class OrganizationChartTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('selectUser', $subject->id)
             ->set('userForm.superior_ids', [$outsideUser->id])
             ->call('saveSelectedUser')

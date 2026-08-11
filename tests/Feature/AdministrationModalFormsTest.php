@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Administracion\IndexAdministracion;
+use App\Livewire\Administracion\PanelAdministracion;
 use App\Livewire\Administracion\Roles\Form as RoleForm;
-use App\Livewire\Administracion\Roles\IndexRole;
+use App\Livewire\Administracion\Roles\GestionRoles;
 use App\Livewire\Administracion\Users\Form as UserForm;
 use App\Models\AccessPermission;
 use App\Models\JobPosition;
@@ -99,7 +99,7 @@ class AdministrationModalFormsTest extends TestCase
         $administrator = $this->createUser($administratorRole, 'admin-catalog-modals@test.mx');
 
         $component = Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->assertSet('showJobPositionModal', false)
             ->assertSet('showPhysicalAreaModal', false)
             ->assertSee('Agregar Puesto Operativo')
@@ -181,7 +181,7 @@ class AdministrationModalFormsTest extends TestCase
         PhysicalArea::create(['name' => 'Fiscal']);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('openJobPositionModal')
             ->set('newJobPositionName', 'Auditor')
             ->call('saveJobPosition')
@@ -197,7 +197,7 @@ class AdministrationModalFormsTest extends TestCase
         $this->assertSame(1, PhysicalArea::where('name', 'Fiscal')->count());
 
         Livewire::actingAs($coordinator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('openJobPositionModal')
             ->assertStatus(403);
     }
@@ -221,7 +221,7 @@ class AdministrationModalFormsTest extends TestCase
         ]);
 
         $component = Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('openJobPositionModal')
             ->assertSee('Crear')
             ->assertSee('Editar')
@@ -284,7 +284,7 @@ class AdministrationModalFormsTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->call('openJobPositionModal')
             ->call('setJobPositionModalTab', 'editar')
             ->set('selectedJobPositionId', $position->id)
@@ -406,14 +406,14 @@ class AdministrationModalFormsTest extends TestCase
         $assignedUser = $this->createUser($assignedRole, 'assigned-role@test.mx');
 
         Livewire::actingAs($administrator)
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->call('deleteRole', $administratorRole->id);
 
         $this->assertDatabaseHas('roles', ['id' => $administratorRole->id]);
         $this->assertDatabaseHas('users', ['id' => $administrator->id]);
 
         Livewire::actingAs($administrator)
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->call('deleteRole', $assignedRole->id);
 
         $this->assertDatabaseHas('roles', ['id' => $assignedRole->id]);
@@ -421,7 +421,7 @@ class AdministrationModalFormsTest extends TestCase
 
         Livewire::actingAs($administrator)
             ->withQueryParams(['tab' => 'delete'])
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->assertSet('activeTab', 'delete')
             ->assertSeeHtml('data-administration-modal="roles-management"')
             ->assertSeeHtml('wire:click.self="cancel"')
@@ -436,18 +436,18 @@ class AdministrationModalFormsTest extends TestCase
 
         Livewire::actingAs($administrator)
             ->withQueryParams(['tab' => 'edit'])
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->assertSet('activeTab', 'edit')
             ->assertSeeHtml(route('administracion.role.edit', $assignedRole))
             ->assertDontSeeHtml('wire:click="deleteRole('.$assignedRole->id.')"');
 
         Livewire::actingAs($administrator)
             ->withQueryParams(['tab' => 'invalid'])
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->assertSet('activeTab', 'edit');
 
         Livewire::actingAs($administrator)
-            ->test(IndexRole::class)
+            ->test(GestionRoles::class)
             ->call('cancel')
             ->assertRedirect(route('administracion.index'));
     }
@@ -461,7 +461,7 @@ class AdministrationModalFormsTest extends TestCase
         $administrator = $this->createUser($administratorRole, 'admin-permissions@test.mx');
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->assertSet('showPermissionsModal', false)
             ->call('openPermissionsModal')
             ->assertSet('showPermissionsModal', true)

@@ -15,7 +15,7 @@ use App\Models\Statement;
 use Illuminate\Support\Facades\File;
 use Livewire\WithFileUploads;
 
-class StoreCustomer extends IndexCustomer
+class CrearCliente extends GestionClientes
 {
     use WithFileUploads;
     public $searchA;
@@ -321,7 +321,7 @@ class StoreCustomer extends IndexCustomer
 
     public function render()
     {
-        return view('livewire.customer.store-customer')->layout('layouts.app');
+        return view('livewire.customer.crear-cliente')->layout('layouts.app');
     }
 
     public function returnPage()

@@ -22,6 +22,12 @@ class PerformanceOptimizationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_test_suite_keeps_an_isolated_in_memory_database_when_local_config_is_cached(): void
+    {
+        $this->assertSame('sqlite', config('database.default'));
+        $this->assertSame(':memory:', config('database.connections.sqlite.database'));
+    }
+
     public function test_permission_results_share_one_request_scoped_service(): void
     {
         $this->assertSame(
@@ -61,7 +67,7 @@ class PerformanceOptimizationTest extends TestCase
         ));
     }
 
-    public function test_notification_center_combines_total_and_unread_counts_in_one_query(): void
+    public function test_notification_center_defers_the_list_and_combines_counts_in_one_query(): void
     {
         $user = User::factory()->create();
         $user->notify(new SystemEventNotification([
@@ -73,23 +79,33 @@ class PerformanceOptimizationTest extends TestCase
 
         DB::enableQueryLog();
 
-        Livewire::actingAs($user)
+        $component = Livewire::actingAs($user)
             ->test(NotificationCenter::class)
+            ->assertDontSee('Contenido que solo debe cargarse con el panel abierto.');
+
+        $initialNotificationQueries = collect(DB::getQueryLog())
+            ->pluck('query')
+            ->filter(fn (string $query): bool => str_contains($query, 'notifications'));
+
+        $this->assertCount(1, $initialNotificationQueries);
+        $aggregateQuery = $initialNotificationQueries->first();
+
+        $this->assertStringContainsString('count(*)', strtolower($aggregateQuery));
+        $this->assertStringNotContainsString('order by', strtolower($aggregateQuery));
+
+        DB::flushQueryLog();
+
+        $component
+            ->call('loadNotifications')
             ->assertSee('Contenido que solo debe cargarse con el panel abierto.');
 
-        $notificationQueries = collect(DB::getQueryLog())
+        $openedNotificationQueries = collect(DB::getQueryLog())
             ->pluck('query')
             ->filter(fn (string $query): bool => str_contains($query, 'notifications'));
 
         DB::disableQueryLog();
 
-        $this->assertCount(2, $notificationQueries);
-        $aggregateQuery = $notificationQueries->first(
-            fn (string $query): bool => str_contains(strtolower($query), 'count(*)')
-        );
-
-        $this->assertNotNull($aggregateQuery);
-        $this->assertStringNotContainsString('order by', strtolower($aggregateQuery));
+        $this->assertCount(2, $openedNotificationQueries);
     }
 
     public function test_high_frequency_queries_have_composite_indexes(): void

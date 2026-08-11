@@ -69,6 +69,8 @@ class NotificationCenterTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(NotificationCenter::class)
+            ->assertDontSee('Aviso propio')
+            ->call('loadNotifications')
             ->assertSee('Aviso propio')
             ->assertDontSee('Aviso ajeno')
             ->call('markAsRead', $otherNotification->id)
@@ -157,6 +159,7 @@ class NotificationCenterTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(NotificationCenter::class)
+            ->call('loadNotifications')
             ->call('setFilter', 'unread')
             ->assertSee('Falla operativa')
             ->assertDontSee('Acceso reciente')

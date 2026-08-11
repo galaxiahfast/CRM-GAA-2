@@ -6,6 +6,7 @@
 >
     <button
         @click="open = !open; filterOpen = false"
+        wire:click="loadNotifications"
         type="button"
         class="relative flex items-center justify-center rounded-lg border border-white/60 p-[10px] text-white transition-colors duration-200 hover:border-white focus:outline-none focus:ring-2 focus:ring-white/40"
         aria-label="Abrir notificaciones"
@@ -54,6 +55,12 @@
             @endif
         </header>
 
+        @if (! $notificationsLoaded)
+            <div class="rounded-b-xl px-4 py-10 text-center" aria-live="polite">
+                <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#1a3a6b]"></div>
+                <p class="mt-3 text-[12px] text-gray-500">Cargando notificaciones...</p>
+            </div>
+        @else
         <div class="relative flex min-h-[58px] flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-white px-3 py-2.5">
             <div class="relative" @click.away="filterOpen = false">
                 <button
@@ -200,6 +207,7 @@
                     </article>
                 @endforeach
             </div>
+        @endif
         @endif
     </section>
 </div>

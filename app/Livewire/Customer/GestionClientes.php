@@ -6,7 +6,7 @@ use App\Models\Customer;
 use App\Services\Authorization\PermissionAccessService;
 use Livewire\Component;
 
-class IndexCustomer extends Component
+class GestionClientes extends Component
 {
     public $search;
 
@@ -51,7 +51,7 @@ class IndexCustomer extends Component
     {
         $this->loadCustomers();
 
-        return view('livewire.customer.index-customer')->layout('layouts.app');
+        return view('livewire.customer.gestion-clientes')->layout('layouts.app');
     }
 
     private function loadCustomers(): void

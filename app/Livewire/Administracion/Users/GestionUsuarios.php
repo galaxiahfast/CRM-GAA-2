@@ -5,7 +5,7 @@ namespace App\Livewire\Administracion\Users;
 use Livewire\Component;
 use App\Models\User;
 
-class IndexUser extends Component
+class GestionUsuarios extends Component
 {
     public $users = null;
     public $search = '';
@@ -62,6 +62,6 @@ class IndexUser extends Component
 
     public function render()
     {
-        return view('livewire.administracion.users.index-user')->layout('layouts.app');
+        return view('livewire.administracion.users.gestion-usuarios')->layout('layouts.app');
     }
 }

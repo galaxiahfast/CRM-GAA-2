@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
-class IndexTimeControl extends Component
+class RegistroActividades extends Component
 {
     public ?int $customerId = null;
 
@@ -113,7 +113,7 @@ class IndexTimeControl extends Component
 
         $todayTotalSeconds = (int) $todayEntries->sum(fn (TimeEntry $entry) => $entry->calculateEffectiveSeconds());
 
-        return view('livewire.time-control.index-time-control', [
+        return view('livewire.time-control.registro-actividades', [
             'active' => $active,
             'accumulatedSeconds' => $accumulatedSeconds,
             'openStartedAt' => $openStartedAt,

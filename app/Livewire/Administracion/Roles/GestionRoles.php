@@ -6,7 +6,7 @@ use App\Models\Role;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-class IndexRole extends Component
+class GestionRoles extends Component
 {
     public $roles = null;
 
@@ -64,7 +64,7 @@ class IndexRole extends Component
 
     public function render()
     {
-        return view('livewire.administracion.roles.index-role')->layout('layouts.app');
+        return view('livewire.administracion.roles.gestion-roles')->layout('layouts.app');
     }
 
     private function loadRoles(): void

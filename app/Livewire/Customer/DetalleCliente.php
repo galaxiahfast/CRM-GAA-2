@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
-class ViewCustomer extends IndexCustomer
+class DetalleCliente extends GestionClientes
 {
     use WithFileUploads;
     public $services;
@@ -675,7 +675,7 @@ class ViewCustomer extends IndexCustomer
 
     public function render(): mixed
     {
-        return view('livewire.customer.view-customer')->layout('layouts.app');
+        return view('livewire.customer.detalle-cliente')->layout('layouts.app');
     }
 
 }

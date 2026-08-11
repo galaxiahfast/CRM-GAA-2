@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Administracion\IndexAdministracion;
+use App\Livewire\Administracion\PanelAdministracion;
 use App\Livewire\Customer\CatalogManager as CustomerCatalogManager;
-use App\Livewire\Customer\IndexCustomer;
-use App\Livewire\Customer\StoreCustomer;
+use App\Livewire\Customer\CrearCliente;
+use App\Livewire\Customer\GestionClientes;
 use App\Livewire\Dashboard;
 use App\Livewire\TimeControl\ActivityCatalogManager;
-use App\Livewire\TimeControl\IndexTimeControl;
+use App\Livewire\TimeControl\RegistroActividades;
 use App\Models\AccessPermission;
 use App\Models\Customer;
 use App\Models\JobPosition;
@@ -316,7 +316,7 @@ class CatalogManagementModalTest extends TestCase
             ->assertForbidden();
 
         Livewire::actingAs($user)
-            ->test(StoreCustomer::class)
+            ->test(CrearCliente::class)
             ->assertForbidden();
     }
 
@@ -353,14 +353,14 @@ class CatalogManagementModalTest extends TestCase
         ]);
 
         Livewire::actingAs($manager)
-            ->test(IndexCustomer::class)
+            ->test(GestionClientes::class)
             ->assertDontSee('Agregar Cliente')
             ->assertDontSee('Agregar Actividad')
             ->assertSee('Cliente visible')
             ->assertDontSee('Cliente eliminado');
 
         Livewire::actingAs($manager)
-            ->test(IndexTimeControl::class)
+            ->test(RegistroActividades::class)
             ->assertDontSee('Agregar Cliente')
             ->assertDontSee('Agregar Actividad')
             ->assertViewHas('customers', fn ($customers) => $customers->contains('id', $activeCustomer->id))
@@ -368,7 +368,7 @@ class CatalogManagementModalTest extends TestCase
             ->assertViewHas('subServices', fn ($activities) => $activities->contains('id', $activity->id));
 
         Livewire::actingAs($administrator)
-            ->test(IndexAdministracion::class)
+            ->test(PanelAdministracion::class)
             ->assertSee('Agregar Cliente')
             ->assertSee('Agregar Actividad');
 
@@ -376,11 +376,11 @@ class CatalogManagementModalTest extends TestCase
         $activity->delete();
 
         Livewire::actingAs($manager)
-            ->test(IndexCustomer::class)
+            ->test(GestionClientes::class)
             ->assertDontSee('Agregar Cliente');
 
         Livewire::actingAs($manager)
-            ->test(IndexTimeControl::class)
+            ->test(RegistroActividades::class)
             ->assertViewHas('customers', fn ($customers) => ! $customers->contains('id', $activeCustomer->id))
             ->assertViewHas('subServices', fn ($activities) => ! $activities->contains('id', $activity->id));
     }

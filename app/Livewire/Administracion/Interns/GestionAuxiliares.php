@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Administracion\Interns;
 
-use App\Livewire\Administracion\Users\IndexUser;
+use App\Livewire\Administracion\Users\GestionUsuarios;
 use App\Models\User;
 
-class IndexInterns extends IndexUser
+class GestionAuxiliares extends GestionUsuarios
 {
     public function mount()
     {
@@ -20,6 +20,6 @@ class IndexInterns extends IndexUser
 
     public function render()
     {
-        return view('livewire.administracion.interns.index-interns')->layout('layouts.app');
+        return view('livewire.administracion.interns.gestion-auxiliares')->layout('layouts.app');
     }
 }

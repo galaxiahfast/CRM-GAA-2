@@ -8,7 +8,7 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class IndexRelationship extends Component
+class GestionRelacionesJerarquicas extends Component
 {
     use WithPagination;
     
@@ -89,7 +89,7 @@ class IndexRelationship extends Component
                 $q->wherePivot('status', 1);
             }])
             ->paginate(5);
-        return view('livewire.administracion.relationship.index-relationship', [
+        return view('livewire.administracion.relationship.gestion-relaciones-jerarquicas', [
             'customers' => $customers
         ])->layout('layouts.app');
     }
