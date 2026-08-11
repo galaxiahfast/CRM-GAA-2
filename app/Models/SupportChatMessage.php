@@ -13,6 +13,7 @@ class SupportChatMessage extends Model
     protected $fillable = [
         'user_id',
         'message',
+        'automatic_key',
     ];
 
     public function user(): BelongsTo

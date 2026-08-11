@@ -3,6 +3,18 @@
 return [
     'timezone' => env('SUPPORT_TIMEZONE', 'America/Mexico_City'),
 
+    'automated_user' => [
+        'name' => env('SUPPORT_AUTOMATED_USER_NAME', 'Sofía'),
+        'last_name' => env('SUPPORT_AUTOMATED_USER_LAST_NAME', 'Soporte'),
+        'email' => env('SUPPORT_AUTOMATED_USER_EMAIL', 'sofia.soporte@sistema.local'),
+        'avatar' => env('SUPPORT_AUTOMATED_USER_AVATAR', 'img/support/sofia-avatar.svg'),
+    ],
+
+    'always_online_emails' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('SUPPORT_ALWAYS_ONLINE_EMAILS', 'administrador@datamid.com.mx'))
+    ))),
+
     'questions' => [
         'general' => [
             'label' => 'Primeros pasos',

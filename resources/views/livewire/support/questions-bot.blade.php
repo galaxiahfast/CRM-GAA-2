@@ -1,7 +1,9 @@
 <div class="min-h-[calc(100dvh-90px)] text-[15px] text-gray-700">
-    <header class="border-b border-gray-200 px-6 py-6 lg:px-10">
+    <header class="flex items-center justify-between gap-20 whitespace-nowrap border-b border-gray-200 px-[40px] py-[25px]">
         <div class="flex items-center gap-3 text-gray-500">
             <span class="font-medium">Soporte</span>
+            <span class="text-gray-300">&gt;</span>
+            <span class="font-medium">Centro de ayuda</span>
             <span class="text-gray-300">&gt;</span>
             <span class="font-semibold text-[#1A3A6B]">Preguntas</span>
         </div>

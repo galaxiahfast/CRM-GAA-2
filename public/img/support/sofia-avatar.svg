@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title description">
+  <title id="title">Sofía Soporte</title>
+  <desc id="description">Retrato ilustrado de Sofía</desc>
+  <defs>
+    <linearGradient id="background" x1="34" y1="26" x2="222" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EDF3FA"/>
+      <stop offset="1" stop-color="#CBD9ED"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="76" y1="167" x2="183" y2="242" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#244A7D"/>
+      <stop offset="1" stop-color="#142F56"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#background)"/>
+  <circle cx="128" cy="91" r="56" fill="#49352F"/>
+  <path d="M66 94c0-38 26-66 62-66 38 0 64 28 64 67-11-15-27-26-45-31-19 17-44 28-73 30Z" fill="#2D2526"/>
+  <path d="M81 90c0-31 19-52 47-52 29 0 48 21 48 52v22c0 30-21 54-48 54s-47-24-47-54Z" fill="#E7B08C"/>
+  <path d="M82 91c13-3 43-11 64-29 9 3 21 12 30 25V74c0-29-20-48-49-48-31 0-50 22-50 54Z" fill="#35292A"/>
+  <ellipse cx="108" cy="105" rx="4" ry="5" fill="#3D302F"/>
+  <ellipse cx="149" cy="105" rx="4" ry="5" fill="#3D302F"/>
+  <path d="M116 130c7 6 17 6 24 0" fill="none" stroke="#A95F59" stroke-linecap="round" stroke-width="4"/>
+  <path d="M101 91c6-4 13-4 19-1M139 90c6-3 13-2 18 2" fill="none" stroke="#49352F" stroke-linecap="round" stroke-width="3"/>
+  <path d="M107 157v20l21 17 21-17v-20" fill="#D99B79"/>
+  <path d="M44 256c2-49 32-82 67-87l17 24 17-24c36 5 66 38 68 87Z" fill="url(#shirt)"/>
+  <path d="m107 169 21 24-18 25-20-39ZM149 169l-21 24 18 25 20-39Z" fill="#F8FAFC"/>
+  <circle cx="128" cy="225" r="5" fill="#9FB5D3"/>
+</svg>
