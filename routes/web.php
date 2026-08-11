@@ -18,8 +18,8 @@ use App\Livewire\Customer\GestionClientes;
 use App\Livewire\CustomerReport;
 use App\Livewire\Support\QuestionsBot;
 use App\Livewire\Support\TicketChat;
+use App\Livewire\TimeControl\Admin\ActiveTimers;
 use App\Livewire\TimeControl\Admin\AttendanceManagement;
-use App\Livewire\TimeControl\Admin\CorrectTimeEntry;
 use App\Livewire\TimeControl\Admin\InformeGeneralHoras;
 // Componentes Remotos (Control de Horas Complejo)
 use App\Livewire\TimeControl\Admin\OrganizationalProfiles;
@@ -219,9 +219,9 @@ Route::middleware([
         Route::get('/time/admin/attendance', AttendanceManagement::class)->name('time.admin.attendance');
     });
 
-    Route::get('/time/admin/corrections', CorrectTimeEntry::class)
+    Route::get('/time/admin/online', ActiveTimers::class)
         ->middleware('access.permission:time-control.supervision.view')
-        ->name('time.admin.corrections');
+        ->name('time.admin.online');
 
     // ==========================================
     // SOPORTE (Disponible para todos los usuarios autenticados)
