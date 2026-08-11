@@ -529,16 +529,27 @@ class TicketChat extends Component
         );
         $settings = (array) config('support.automated_user', []);
 
-        return User::query()->firstOrCreate(
+        $user = User::query()->firstOrCreate(
             ['email' => $settings['email'] ?? 'sofia.soporte@sistema.local'],
             [
-                'name' => $settings['name'] ?? 'Sofía',
-                'last_name' => $settings['last_name'] ?? 'Soporte',
+                'name' => $settings['name'] ?? 'Sofia',
+                'last_name' => $settings['last_name'] ?? 'Soporte (bot)',
                 'email_verified_at' => now(),
                 'password' => Str::random(64),
                 'role_id' => $role->id,
             ]
         );
+
+        $expectedIdentity = [
+            'name' => $settings['name'] ?? 'Sofia',
+            'last_name' => $settings['last_name'] ?? 'Soporte (bot)',
+        ];
+
+        if ($user->only(array_keys($expectedIdentity)) !== $expectedIdentity) {
+            $user->updateQuietly($expectedIdentity);
+        }
+
+        return $user;
     }
 
     public function render(): View

@@ -4,8 +4,8 @@ return [
     'timezone' => env('SUPPORT_TIMEZONE', 'America/Mexico_City'),
 
     'automated_user' => [
-        'name' => env('SUPPORT_AUTOMATED_USER_NAME', 'Sofía'),
-        'last_name' => env('SUPPORT_AUTOMATED_USER_LAST_NAME', 'Soporte'),
+        'name' => 'Sofia',
+        'last_name' => 'Soporte (bot)',
         'email' => env('SUPPORT_AUTOMATED_USER_EMAIL', 'sofia.soporte@sistema.local'),
         'avatar' => env('SUPPORT_AUTOMATED_USER_AVATAR', 'img/support/sofia-avatar.svg'),
     ],

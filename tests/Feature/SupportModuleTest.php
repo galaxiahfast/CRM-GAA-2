@@ -51,7 +51,9 @@ class SupportModuleTest extends TestCase
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
             ->assertSeeText('Preguntas')
-            ->assertSee('px-[40px] py-[25px]', false);
+            ->assertSee('px-[40px] py-[25px]', false)
+            ->assertSee('group flex w-full items-center gap-3', false)
+            ->assertDontSee('group flex w-full items-start gap-3', false);
     }
 
     public function test_authenticated_user_can_download_the_daily_conversation_as_pdf(): void
@@ -102,6 +104,11 @@ class SupportModuleTest extends TestCase
     {
         $user = User::factory()->create();
         User::factory()->create([
+            'name' => 'Sofía',
+            'last_name' => 'Soporte',
+            'email' => 'sofia.soporte@sistema.local',
+        ]);
+        User::factory()->create([
             'name' => 'Dioni',
             'last_name' => 'Colaborador',
             'email' => 'administrador@datamid.com.mx',
@@ -111,7 +118,7 @@ class SupportModuleTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->assertSee('Sofía Soporte')
+            ->assertSee('Sofia Soporte (bot)')
             ->assertSee('sofia.soporte@sistema.local')
             ->assertSee('img/support/sofia-avatar.svg', false)
             ->assertSee('martes 11 de agosto de 2026')
@@ -119,6 +126,11 @@ class SupportModuleTest extends TestCase
 
         $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'sofia.soporte@sistema.local'));
         $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'administrador@datamid.com.mx'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'sofia.soporte@sistema.local',
+            'name' => 'Sofia',
+            'last_name' => 'Soporte (bot)',
+        ]);
 
         $component->set('message', '@sof');
         $this->assertFalse(collect($component->get('mentionSuggestions'))->contains('email', 'sofia.soporte@sistema.local'));

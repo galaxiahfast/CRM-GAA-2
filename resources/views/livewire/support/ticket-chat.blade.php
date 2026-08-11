@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2.5 text-[13px] text-emerald-700">
+            <div class="flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2.5 text-[15px] text-emerald-700">
                 <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 Disponible para todos los usuarios
             </div>
@@ -71,13 +71,13 @@
                     <div>
                         <div class="flex items-center justify-between gap-3">
                             <p class="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-400">Personas en línea</p>
-                            <span class="text-[11px] font-medium text-gray-400">{{ count($onlineUsers) }} en línea</span>
+                            <span class="text-[12px] font-medium text-gray-400">{{ count($onlineUsers) }} en línea</span>
                         </div>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[15px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
                             @forelse ($onlineUsers as $onlineUser)
                                 <div wire:key="online-user-{{ $onlineUser['id'] }}" class="flex items-center gap-[10px] rounded-xl px-[10px] py-[10px] transition hover:bg-white/60">
-                                    <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-[#1A3A6B] shadow-sm ring-1 ring-gray-200">
+                                    <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#1A3A6B] shadow-sm ring-1 ring-gray-200">
                                         @if ($onlineUser['photo_url'])
                                             <img src="{{ $onlineUser['photo_url'] }}" alt="Foto de {{ $onlineUser['name'] }}" class="h-full w-full rounded-full object-cover">
                                         @else
@@ -86,13 +86,13 @@
                                         <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-100" aria-label="En línea"></span>
                                     </span>
                                     <div class="min-w-0">
-                                        <p class="truncate text-[13px] font-semibold text-gray-700">
+                                        <p class="truncate text-[15px] font-semibold text-gray-700">
                                             {{ $onlineUser['name'] }}
                                             @if ($onlineUser['is_current'])
                                                 <span class="font-normal text-gray-400">(Tú)</span>
                                             @endif
                                         </p>
-                                        <p class="truncate text-[11px] text-gray-400">{{ $onlineUser['email'] }}</p>
+                                        <p class="truncate text-[12px] text-gray-400">{{ $onlineUser['email'] }}</p>
                                     </div>
                                 </div>
                             @empty
@@ -163,7 +163,7 @@
                 <div x-show="searchOpen" x-transition class="border-b border-gray-200 px-[25px] py-[10px]" style="display: none;">
                     <div class="relative">
                         <svg class="pointer-events-none absolute left-[15px] top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                        <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" type="text" placeholder="Buscar por nombre, correo o contenido…" class="h-[40px] w-full rounded-xl border border-gray-300 bg-transparent pl-[45px] pr-[40px] text-[13px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10">
+                        <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" type="text" placeholder="Buscar por nombre, correo o contenido…" class="h-[40px] w-full rounded-xl border border-gray-300 bg-transparent pl-[45px] pr-[40px] text-[15px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10">
                         <button x-show="searchQuery" @click="searchQuery = ''; $refs.searchInput.focus()" type="button" class="absolute right-[10px] top-1/2 flex h-[25px] w-[25px] -translate-y-1/2 items-center justify-center bg-transparent text-gray-400 hover:text-[#1A3A6B]" aria-label="Limpiar búsqueda">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" /></svg>
                         </button>
@@ -173,7 +173,7 @@
                 <div x-ref="messages" @scroll="trackPosition()" class="support-chat-scrollbar min-h-0 flex-1 space-y-[15px] overflow-y-auto px-[25px] py-[25px]">
                     <div x-show="searchQuery && !hasSearchResults()" class="py-[40px] text-center" style="display: none;">
                         <svg class="mx-auto h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                        <p class="mt-[10px] text-[13px] font-medium text-gray-500">No se encontraron mensajes.</p>
+                        <p class="mt-[10px] text-[15px] font-medium text-gray-500">No se encontraron mensajes.</p>
                     </div>
                     @forelse ($messages as $chatMessage)
                         @php
@@ -199,10 +199,10 @@
                                 <div class="flex min-w-0 items-start gap-[15px] border-b border-current/10 pb-[10px]">
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate font-semibold text-gray-800">{{ $chatMessage['name'] }}</p>
-                                        <p class="truncate text-[11px] text-gray-500">{{ $chatMessage['email'] }}</p>
+                                        <p class="truncate text-[12px] text-gray-500">{{ $chatMessage['email'] }}</p>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-[10px]">
-                                        <span class="pt-0.5 text-[11px] text-gray-400">{{ $chatMessage['time'] }}</span>
+                                        <span class="pt-0.5 text-[12px] text-gray-400">{{ $chatMessage['time'] }}</span>
                                         @if ($chatMessage['can_delete'])
                                             <button
                                                 type="button"
@@ -232,7 +232,7 @@
                                 <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg>
                             </span>
                             <p class="mt-4 font-semibold text-gray-600">Inicia la conversación del día</p>
-                            <p class="mt-1 max-w-sm text-[13px] text-gray-400">Escribe el primer mensaje para solicitar ayuda o conversar con los demás colaboradores.</p>
+                            <p class="mt-1 max-w-sm text-[15px] text-gray-400">Escribe el primer mensaje para solicitar ayuda o conversar con los demás colaboradores.</p>
                         </div>
                     @endforelse
                 </div>
@@ -258,7 +258,7 @@
                                 <div data-mention-suggestions class="absolute bottom-[calc(100%+10px)] left-0 z-30 w-full max-w-[440px] overflow-hidden rounded-2xl border border-[#1A3A6B]/15 bg-white shadow-[0_18px_45px_rgba(15,35,66,0.16)]">
                                     <div class="border-b border-gray-100 px-[15px] py-[12px]">
                                         <p class="text-[12px] font-semibold text-gray-700">Mencionar en el mensaje</p>
-                                        <p class="mt-[5px] text-[11px] text-gray-400">Selecciona una persona o notifica a todos.</p>
+                                        <p class="mt-[5px] text-[12px] text-gray-400">Selecciona una persona o notifica a todos.</p>
                                     </div>
                                     <div class="support-chat-scrollbar max-h-[300px] overflow-y-auto p-2">
                                         @foreach ($mentionSuggestions as $suggestion)
@@ -273,7 +273,7 @@
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                                                     </span>
                                                 @else
-                                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1A3A6B]/15 bg-[#1A3A6B]/[0.04] text-[11px] font-semibold text-[#1A3A6B] transition group-hover:bg-white">
+                                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1A3A6B]/15 bg-[#1A3A6B]/[0.04] text-[12px] font-semibold text-[#1A3A6B] transition group-hover:bg-white">
                                                         @if ($suggestion['photo_url'])
                                                             <img src="{{ $suggestion['photo_url'] }}" alt="Foto de {{ $suggestion['name'] }}" class="h-full w-full object-cover">
                                                         @else
@@ -282,8 +282,8 @@
                                                     </span>
                                                 @endif
                                                 <span class="min-w-0 flex-1">
-                                                    <span class="block truncate text-[13px] font-semibold text-gray-700">{{ $suggestion['name'] }}</span>
-                                                    <span class="mt-0.5 block truncate text-[11px] text-gray-400">{{ $suggestion['email'] }}</span>
+                                                    <span class="block truncate text-[15px] font-semibold text-gray-700">{{ $suggestion['name'] }}</span>
+                                                    <span class="mt-0.5 block truncate text-[12px] text-gray-400">{{ $suggestion['email'] }}</span>
                                                 </span>
                                                 <svg class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                                             </button>
@@ -293,7 +293,7 @@
                             @endif
 
                             @error('message') <p class="mt-[10px] text-[12px] text-red-600">{{ $message }}</p> @enderror
-                            <p class="mt-[10px] text-[11px] text-gray-400">Escribe @ para mencionar · Enter para enviar</p>
+                            <p class="mt-[10px] text-[12px] text-gray-400">Escribe @ para mencionar · Enter para enviar</p>
                         </div>
                         <button type="submit" wire:loading.attr="disabled" wire:target="sendMessage"
                             class="inline-flex h-[54px] shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#1A3A6B] px-5 font-semibold text-white shadow-sm transition hover:bg-[#15305a] disabled:cursor-wait disabled:opacity-60">

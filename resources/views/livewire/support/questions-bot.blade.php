@@ -38,12 +38,12 @@
                         <button wire:click="selectCategory('{{ $categoryKey }}')" type="button"
                             class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition {{ $category === $categoryKey ? 'border-[#b9c9e2] bg-[#eef4fc] font-semibold text-[#1A3A6B]' : 'border-transparent text-gray-600 hover:border-gray-200' }}">
                             <span>{{ $categoryData['label'] }}</span>
-                            <span class="flex h-6 min-w-6 items-center justify-center rounded-full border border-current px-1 text-[11px]">{{ count($categoryData['items']) }}</span>
+                            <span class="flex h-6 min-w-6 items-center justify-center rounded-full border border-current px-1 text-[12px]">{{ count($categoryData['items']) }}</span>
                         </button>
                     @endforeach
                 </nav>
 
-                <div class="mt-6 rounded-xl border border-gray-200 p-4 text-[13px] leading-5 text-gray-500">
+                <div class="mt-6 rounded-xl border border-gray-200 p-4 text-[15px] leading-6 text-gray-500">
                     ¿No encontraste tu respuesta? Utiliza el Chat general de Ticket para conversar con otros colaboradores.
                 </div>
             </aside>
@@ -57,12 +57,12 @@
                 <div class="support-questions-scrollbar mt-4 max-h-[535px] space-y-3 overflow-y-auto pr-1">
                     @foreach (($questionBank[$category]['items'] ?? []) as $questionKey => $item)
                         <button wire:click="ask('{{ $category }}', '{{ $questionKey }}')" type="button"
-                            class="group flex w-full items-start gap-3 rounded-xl border p-4 text-left transition {{ $selectedQuestion === $item['question'] ? 'border-[#b9c9e2] bg-[#eef4fc]' : 'border-gray-200 hover:border-[#b9c9e2]' }}">
+                            class="group flex w-full items-center gap-3 rounded-xl border p-4 text-left transition {{ $selectedQuestion === $item['question'] ? 'border-[#b9c9e2] bg-[#eef4fc]' : 'border-gray-200 hover:border-[#b9c9e2]' }}">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-[#1A3A6B] transition group-hover:border-[#b9c9e2]">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.1 9a3 3 0 115.8 1c0 2-2.9 2-2.9 4m0 3h.01" /></svg>
                             </span>
                             <span class="min-w-0 flex-1 font-medium leading-6 text-gray-700">{{ $item['question'] }}</span>
-                            <svg class="mt-1 h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
+                            <svg class="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
                         </button>
                     @endforeach
                 </div>
@@ -121,12 +121,12 @@
                         <div class="flex min-h-[280px] flex-col items-center justify-center px-6 text-center text-gray-400">
                             <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M12 6v6l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <p class="mt-3 font-medium">Esperando tu pregunta</p>
-                            <p class="mt-1 text-[13px]">Selecciona una opción de la lista para ver la respuesta.</p>
+                            <p class="mt-1 text-[15px]">Selecciona una opción de la lista para ver la respuesta.</p>
                         </div>
                     @endforelse
                 </div>
 
-                <footer class="border-t border-gray-200 px-5 py-3 text-center text-[11px] text-gray-400">
+                <footer class="border-t border-gray-200 px-5 py-3 text-center text-[12px] text-gray-400">
                     Esta conversación es temporal y se elimina al salir de este apartado.
                 </footer>
             </section>
