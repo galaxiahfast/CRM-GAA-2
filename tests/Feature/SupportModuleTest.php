@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Support\QuestionsBot;
 use App\Livewire\Support\TicketChat;
+use App\Models\Role;
 use App\Models\SupportChatMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -159,6 +160,115 @@ class SupportModuleTest extends TestCase
             ->assertSee('Carlos')
             ->assertSee('carlos@example.test')
             ->assertSee('Mensaje compartido para todos.');
+    }
+
+    public function test_automatic_greeting_uses_the_application_storage_timezone(): void
+    {
+        config([
+            'app.timezone' => 'America/Mexico_City',
+            'support.timezone' => 'America/Mexico_City',
+        ]);
+        Carbon::setTestNow(Carbon::parse('2026-08-11 13:22:00', 'America/Mexico_City'));
+        $user = User::factory()->create();
+
+        $component = Livewire::actingAs($user)->test(TicketChat::class);
+        $greeting = collect($component->get('messages'))->firstWhere(
+            'automatic_key',
+            'daily-greeting:2026-08-11:afternoon'
+        );
+
+        $this->assertSame('13:22', $greeting['time']);
+        $this->assertSame('Buenas tardes', $greeting['message']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_existing_greeting_with_utc_shift_is_repaired_on_the_server(): void
+    {
+        config([
+            'app.timezone' => 'America/Mexico_City',
+            'support.timezone' => 'America/Mexico_City',
+        ]);
+        Carbon::setTestNow(Carbon::parse('2026-08-11 13:30:00', 'America/Mexico_City'));
+        $user = User::factory()->create();
+        $sofia = User::factory()->create([
+            'name' => 'Sofía',
+            'last_name' => 'Soporte',
+            'email' => 'sofia.soporte@sistema.local',
+        ]);
+
+        DB::table('support_chat_messages')->insert([
+            'user_id' => $sofia->id,
+            'message' => 'Buenas tardes',
+            'automatic_key' => 'daily-greeting:2026-08-11:afternoon',
+            'created_at' => '2026-08-11 19:22:00',
+            'updated_at' => '2026-08-11 19:22:00',
+        ]);
+
+        $component = Livewire::actingAs($user)->test(TicketChat::class);
+        $greeting = collect($component->get('messages'))->firstWhere(
+            'automatic_key',
+            'daily-greeting:2026-08-11:afternoon'
+        );
+
+        $this->assertSame('13:22', $greeting['time']);
+        $this->assertDatabaseHas('support_chat_messages', [
+            'automatic_key' => 'daily-greeting:2026-08-11:afternoon',
+            'created_at' => '2026-08-11 13:22:00',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_users_can_delete_their_own_messages_but_not_messages_from_others(): void
+    {
+        $author = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $ownMessage = SupportChatMessage::create([
+            'user_id' => $author->id,
+            'message' => 'Mensaje que eliminaré.',
+        ]);
+        $otherMessage = SupportChatMessage::create([
+            'user_id' => $otherUser->id,
+            'message' => 'Mensaje de otra persona.',
+        ]);
+
+        Livewire::actingAs($author)
+            ->test(TicketChat::class)
+            ->call('deleteMessage', $ownMessage->id)
+            ->assertSee('Mensaje eliminado')
+            ->assertDontSee('Mensaje que eliminaré.');
+
+        $this->assertSoftDeleted('support_chat_messages', ['id' => $ownMessage->id]);
+
+        Livewire::actingAs($author)
+            ->test(TicketChat::class)
+            ->call('deleteMessage', $otherMessage->id)
+            ->assertForbidden();
+
+        $this->assertNotSoftDeleted('support_chat_messages', ['id' => $otherMessage->id]);
+    }
+
+    public function test_administrators_can_delete_messages_from_any_user(): void
+    {
+        $administratorRole = Role::create([
+            'role' => 'Administrador',
+            'permission_profile' => Role::PROFILE_ADMINISTRATOR,
+        ]);
+        $administrator = User::factory()->create(['role_id' => $administratorRole->id]);
+        $author = User::factory()->create();
+        $message = SupportChatMessage::create([
+            'user_id' => $author->id,
+            'message' => 'Mensaje moderado por administración.',
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(TicketChat::class)
+            ->call('deleteMessage', $message->id)
+            ->assertSee('Mensaje eliminado')
+            ->assertDontSee('Mensaje moderado por administración.');
+
+        $this->assertSoftDeleted('support_chat_messages', ['id' => $message->id]);
     }
 
     public function test_profile_photos_are_rendered_in_ticket_chat(): void

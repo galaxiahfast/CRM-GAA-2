@@ -36,16 +36,19 @@ class TicketChat extends Component
     /** @var array<int, int> */
     public array $alwaysOnlineUserIds = [];
 
+    public bool $canDeleteAllMessages = false;
+
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);
 
         [$start] = $this->dayBounds();
-        SupportChatMessage::query()->where('created_at', '<', $start)->delete();
+        SupportChatMessage::withTrashed()->where('created_at', '<', $start)->forceDelete();
 
         $now = Carbon::now($this->timezone());
         $this->todayLabel = $now->locale('es')->translatedFormat('l d \d\e F \d\e Y');
         $this->automatedUserId = (int) $this->automatedUser()->id;
+        $this->canDeleteAllMessages = $this->isSupportAdministrator(auth()->user()->loadMissing('role'));
         $this->alwaysOnlineUserIds = User::query()
             ->whereIn('email', (array) config('support.always_online_emails', []))
             ->pluck('id')
@@ -138,6 +141,20 @@ class TicketChat extends Component
         $this->dispatch('support-messages-refreshed');
     }
 
+    public function deleteMessage(int $messageId): void
+    {
+        $message = SupportChatMessage::query()->findOrFail($messageId);
+        $user = User::query()->with('role')->findOrFail((int) auth()->id());
+
+        abort_unless(
+            (int) $message->user_id === (int) $user->id || $this->isSupportAdministrator($user),
+            403
+        );
+
+        $message->delete();
+        $this->refreshMessages();
+    }
+
     public function downloadPdf(): StreamedResponse
     {
         abort_unless(auth()->check(), 403);
@@ -165,6 +182,7 @@ class TicketChat extends Component
         $currentUserId = (int) auth()->id();
 
         return SupportChatMessage::query()
+            ->withTrashed()
             ->with('user:id,name,last_name,email,profile_photo_path')
             ->whereBetween('created_at', [$start, $end])
             ->oldest('created_at')
@@ -174,12 +192,15 @@ class TicketChat extends Component
                 'id' => $message->id,
                 'name' => trim(($message->user?->name ?? 'Usuario').' '.($message->user?->last_name ?? '')),
                 'email' => $message->user?->email ?? 'Correo no disponible',
-                'message' => $message->message,
+                'message' => $message->trashed() ? '' : $message->message,
                 'automatic_key' => $message->automatic_key,
                 'photo_url' => $message->user ? $this->profilePhotoUrl($message->user) : null,
                 'pdf_photo_data' => $includePdfPhotos && $message->user ? $this->profilePhotoDataUri($message->user) : null,
                 'time' => $message->created_at->timezone($this->timezone())->format('H:i'),
                 'is_mine' => (int) $message->user_id === $currentUserId,
+                'is_deleted' => $message->trashed(),
+                'can_delete' => ! $message->trashed()
+                    && ((int) $message->user_id === $currentUserId || $this->canDeleteAllMessages),
             ])
             ->all();
     }
@@ -439,7 +460,18 @@ class TicketChat extends Component
         };
         $automaticKey = 'daily-greeting:'.$now->toDateString().':'.$period;
 
-        if (collect($this->messages)->contains('automatic_key', $automaticKey)) {
+        $loadedGreeting = collect($this->messages)->firstWhere('automatic_key', $automaticKey);
+        if ($loadedGreeting && $this->hourMatchesGreetingPeriod((int) substr($loadedGreeting['time'], 0, 2), $period)) {
+            return;
+        }
+
+        $existingGreeting = SupportChatMessage::withTrashed()
+            ->where('automatic_key', $automaticKey)
+            ->first();
+
+        if ($existingGreeting) {
+            $this->repairAutomaticMessageTimezone($existingGreeting, $period);
+
             return;
         }
 
@@ -447,9 +479,43 @@ class TicketChat extends Component
             'user_id' => $this->automatedUserId ?: $this->automatedUser()->id,
             'message' => $this->greetingForHour($now->hour),
             'automatic_key' => $automaticKey,
-            'created_at' => $now->copy()->utc(),
-            'updated_at' => $now->copy()->utc(),
+            'created_at' => $now->copy()->timezone($this->applicationTimezone()),
+            'updated_at' => $now->copy()->timezone($this->applicationTimezone()),
         ]);
+    }
+
+    private function repairAutomaticMessageTimezone(SupportChatMessage $message, string $period): void
+    {
+        if ($message->trashed() || $this->hourMatchesGreetingPeriod(
+            $message->created_at->timezone($this->timezone())->hour,
+            $period
+        )) {
+            return;
+        }
+
+        $corrected = Carbon::parse((string) $message->getRawOriginal('created_at'), 'UTC')
+            ->timezone($this->applicationTimezone());
+
+        if (! $this->hourMatchesGreetingPeriod($corrected->copy()->timezone($this->timezone())->hour, $period)) {
+            return;
+        }
+
+        DB::table('support_chat_messages')
+            ->where('id', $message->id)
+            ->update([
+                'created_at' => $corrected,
+                'updated_at' => $corrected,
+            ]);
+    }
+
+    private function hourMatchesGreetingPeriod(int $hour, string $period): bool
+    {
+        return match ($period) {
+            'morning' => $hour < 12,
+            'afternoon' => $hour >= 12 && $hour < 19,
+            'night' => $hour >= 19,
+            default => false,
+        };
     }
 
     private function automatedUser(): User
@@ -486,9 +552,20 @@ class TicketChat extends Component
         $now = Carbon::now($this->timezone());
 
         return [
-            $now->copy()->startOfDay()->utc(),
-            $now->copy()->endOfDay()->utc(),
+            $now->copy()->startOfDay()->timezone($this->applicationTimezone()),
+            $now->copy()->endOfDay()->timezone($this->applicationTimezone()),
         ];
+    }
+
+    private function applicationTimezone(): string
+    {
+        return (string) config('app.timezone', 'UTC');
+    }
+
+    private function isSupportAdministrator(User $user): bool
+    {
+        return $user->role?->usesPermissionProfile(Role::PROFILE_ADMINISTRATOR) === true
+            || $user->role?->role === 'Administrador';
     }
 
     private function timezone(): string

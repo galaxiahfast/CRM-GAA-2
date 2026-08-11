@@ -39,6 +39,7 @@
         .email { margin-top: 1px; color: #7c8a9e; font-size: 7px; }
         .time { width: 42px; color: #8492a6; font-size: 7px; text-align: right; vertical-align: top; }
         .content { margin-top: 8px; color: #42526a; font-size: 9px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: break-word; }
+        .content.deleted { color: #8492a6; font-style: italic; }
         .empty { padding: 32px 20px; border: 1px dashed #cbd5e1; color: #728197; text-align: center; }
         .footer { position: fixed; right: 0; bottom: -25px; left: 0; color: #8a98aa; font-size: 7px; text-align: center; }
     </style>
@@ -113,7 +114,11 @@
                                 <td class="time">{{ $message['time'] }}</td>
                             </tr>
                         </table>
-                        <div class="content">{{ $message['message'] }}</div>
+                        @if ($message['is_deleted'] ?? false)
+                            <div class="content deleted">Mensaje eliminado</div>
+                        @else
+                            <div class="content">{{ $message['message'] }}</div>
+                        @endif
                     </div>
                 </td>
 

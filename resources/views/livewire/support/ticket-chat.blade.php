@@ -183,7 +183,7 @@
                         <article
                             wire:key="support-message-{{ $chatMessage['id'] }}"
                             data-chat-message
-                            data-search="{{ mb_strtolower($chatMessage['name'].' '.$chatMessage['email'].' '.$chatMessage['message']) }}"
+                            data-search="{{ mb_strtolower($chatMessage['name'].' '.$chatMessage['email'].' '.($chatMessage['is_deleted'] ? 'Mensaje eliminado' : $chatMessage['message'])) }}"
                             x-show="!normalizedSearch() || ($el.dataset.search || '').includes(normalizedSearch())"
                             class="flex items-end justify-start gap-[15px] {{ $chatMessage['is_mine'] ? 'flex-row-reverse' : '' }}"
                         >
@@ -201,9 +201,29 @@
                                         <p class="truncate font-semibold text-gray-800">{{ $chatMessage['name'] }}</p>
                                         <p class="truncate text-[11px] text-gray-500">{{ $chatMessage['email'] }}</p>
                                     </div>
-                                    <span class="shrink-0 pt-0.5 text-[11px] text-gray-400">{{ $chatMessage['time'] }}</span>
+                                    <div class="flex shrink-0 items-center gap-[10px]">
+                                        <span class="pt-0.5 text-[11px] text-gray-400">{{ $chatMessage['time'] }}</span>
+                                        @if ($chatMessage['can_delete'])
+                                            <button
+                                                type="button"
+                                                wire:click="deleteMessage({{ $chatMessage['id'] }})"
+                                                wire:confirm="¿Deseas eliminar este mensaje?"
+                                                wire:loading.attr="disabled"
+                                                wire:target="deleteMessage({{ $chatMessage['id'] }})"
+                                                class="no-print inline-flex h-6 w-6 items-center justify-center rounded-md bg-transparent text-gray-300 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-wait disabled:opacity-50"
+                                                aria-label="Eliminar mensaje"
+                                                title="Eliminar mensaje"
+                                            >
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m3 0V4.8A1.8 1.8 0 019.8 3h4.4A1.8 1.8 0 0116 4.8V7M3 7h18" /></svg>
+                                            </button>
+                                        @endif
+                                    </div>
                                 </div>
-                                <p class="mt-[10px] whitespace-pre-wrap break-words leading-6 text-gray-700">{{ $chatMessage['message'] }}</p>
+                                @if ($chatMessage['is_deleted'])
+                                    <p class="mt-[10px] italic leading-6 text-gray-400">Mensaje eliminado</p>
+                                @else
+                                    <p class="mt-[10px] whitespace-pre-wrap break-words leading-6 text-gray-700">{{ $chatMessage['message'] }}</p>
+                                @endif
                             </div>
                         </article>
                     @empty
