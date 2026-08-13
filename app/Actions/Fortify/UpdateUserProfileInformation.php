@@ -22,6 +22,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'last_name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'profile_description' => ['nullable', 'string', 'max:500'],
+            'instagram_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'facebook_url' => ['nullable', 'url:http,https', 'max:2048'],
         ])->validateWithBag('updateProfileInformation');
 
         if (isset($input['photo'])) {
@@ -36,6 +39,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'name' => $input['name'],
                 'last_name' => $input['last_name'] ?? null,
                 'email' => $input['email'],
+                'profile_description' => $this->nullableTrimmed($input['profile_description'] ?? null),
+                'instagram_url' => $this->nullableTrimmed($input['instagram_url'] ?? null),
+                'facebook_url' => $this->nullableTrimmed($input['facebook_url'] ?? null),
             ])->save();
         }
     }
@@ -52,8 +58,18 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'last_name' => $input['last_name'] ?? null,
             'email' => $input['email'],
             'email_verified_at' => null,
+            'profile_description' => $this->nullableTrimmed($input['profile_description'] ?? null),
+            'instagram_url' => $this->nullableTrimmed($input['instagram_url'] ?? null),
+            'facebook_url' => $this->nullableTrimmed($input['facebook_url'] ?? null),
         ])->save();
 
         $user->sendEmailVerificationNotification();
+    }
+
+    private function nullableTrimmed(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 }

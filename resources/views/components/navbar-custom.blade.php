@@ -31,7 +31,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed top-0 z-[90] w-full bg-[#1a3a6b] border-b border-gray-200 py-[15px] px-[15px] flex items-center h-[90px]">
+    <nav id="main-nav" class="fixed top-0 z-[90] flex h-[90px] w-full items-center bg-[#1a3a6b] px-[15px] py-[15px]">
         <div class="flex items-center justify-between w-full">
             <div class="flex items-center justify-start rtl:justify-end">
                 <div class="flex items-center">

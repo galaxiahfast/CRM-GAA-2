@@ -30,6 +30,11 @@ class JetstreamServiceProvider extends ServiceProvider
             'profile.update-profile-information-form',
             \App\Livewire\Profile\UpdateProfileInformationForm::class
         );
+
+        Livewire::component(
+            'profile.logout-other-browser-sessions-form',
+            \App\Livewire\Profile\LogoutOtherBrowserSessionsForm::class
+        );
     }
 
     /**

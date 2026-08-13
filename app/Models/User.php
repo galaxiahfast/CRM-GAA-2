@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -33,6 +34,10 @@ class User extends Authenticatable
         'password',
         'role_id',
         'employee_id', // Permitir guardar el ID vinculado al checador Hikvision
+        'profile_cover_path',
+        'profile_description',
+        'instagram_url',
+        'facebook_url',
     ];
 
     /**
@@ -166,5 +171,28 @@ class User extends Authenticatable
             'subordinate_id'
         )->withPivot(['job_position_id', 'physical_area_id'])
             ->withTimestamps();
+    }
+
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'follower_id', 'followed_id')->withTimestamps();
+    }
+
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_follows', 'followed_id', 'follower_id')->withTimestamps();
+    }
+
+    public function friends()
+    {
+        $friendIds = Friendship::query()
+            ->where('status', Friendship::ACCEPTED)
+            ->where(fn ($query) => $query->where('requester_id', $this->id)->orWhere('addressee_id', $this->id))
+            ->get(['requester_id', 'addressee_id'])
+            ->map(fn (Friendship $friendship) => $friendship->requester_id === $this->id
+                ? $friendship->addressee_id
+                : $friendship->requester_id);
+
+        return static::query()->whereKey($friendIds);
     }
 }

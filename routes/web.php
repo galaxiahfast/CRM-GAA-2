@@ -16,6 +16,7 @@ use App\Livewire\Customer\DetalleCliente;
 use App\Livewire\Customer\EditarCliente;
 use App\Livewire\Customer\GestionClientes;
 use App\Livewire\CustomerReport;
+use App\Livewire\Profile\ProfileDirectory;
 use App\Livewire\Support\QuestionsBot;
 use App\Livewire\Support\TicketChat;
 use App\Livewire\TimeControl\Admin\ActiveTimers;
@@ -74,6 +75,9 @@ Route::middleware([
     // Pantalla ligera posterior al login. El dashboard conserva su ruta y su
     // carga original para ejecutarse únicamente cuando el usuario lo solicita.
     Route::view('/inicio', 'inicio')->name('inicio');
+
+    Route::get('/perfiles', ProfileDirectory::class)->name('profiles.index');
+    Route::get('/perfiles/{user}', ProfileDirectory::class)->name('profiles.show');
 
     // ==========================================
     // DASHBOARD

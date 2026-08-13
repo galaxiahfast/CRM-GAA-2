@@ -65,3 +65,28 @@ div.dataTables_filter {
     background: #1a3a6b;
     border-radius: 9999px;
 }
+
+/* Scroll del directorio lateral de personas del perfil. */
+.profile-people-scrollbar {
+    scrollbar-color: #1a3a6b #e5e7eb;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+
+.profile-people-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.profile-people-scrollbar::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 9999px;
+}
+
+.profile-people-scrollbar::-webkit-scrollbar-thumb {
+    background: #1a3a6b;
+    border-radius: 9999px;
+}
+
+.profile-people-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #15305a;
+}
