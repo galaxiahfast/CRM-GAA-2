@@ -90,3 +90,27 @@ div.dataTables_filter {
 .profile-people-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #15305a;
 }
+
+/* Scroll horizontal del perfil sin reservar espacio vertical a la derecha. */
+.profile-page-scrollbar {
+    scrollbar-color: #1a3a6b #e5e7eb;
+    scrollbar-width: thin;
+    scrollbar-gutter: auto;
+}
+
+.profile-page-scrollbar::-webkit-scrollbar {
+    height: 6px;
+}
+
+.profile-page-scrollbar::-webkit-scrollbar-track {
+    background: #e5e7eb;
+}
+
+.profile-page-scrollbar::-webkit-scrollbar-thumb {
+    background: #1a3a6b;
+    border-radius: 9999px;
+}
+
+.profile-page-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #15305a;
+}
