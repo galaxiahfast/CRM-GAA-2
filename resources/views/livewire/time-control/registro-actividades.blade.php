@@ -334,9 +334,9 @@
                 <p class="mt-[5px]">Selecciona un cliente y una actividad para comenzar.</p>
             </div>
         @else
-            <div class="notification-scrollbar overflow-x-auto">
+            <div class="notification-scrollbar max-h-[600px] overflow-auto">
                 <table class="w-full border-collapse text-left text-[15px]">
-                    <thead class="border-b border-zinc-200">
+                    <thead class="sticky top-0 z-10 border-b border-zinc-200 bg-white">
                         <tr class="text-[15px] font-bold text-black">
                             <th class="min-w-[180px] p-[20px] font-bold align-middle">Cliente</th>
                             <th class="whitespace-nowrap p-[20px] font-bold align-middle">Actividad</th>
