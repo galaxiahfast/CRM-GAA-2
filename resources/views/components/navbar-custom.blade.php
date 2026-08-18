@@ -59,27 +59,52 @@
 
                 <!-- AVATAR -->
                 <div class="flex items-center">
-                    <x-dropdown align="right" width="48">
+                    <x-dropdown
+                        align="right"
+                        width="72"
+                        contentClasses="overflow-hidden rounded-2xl bg-white p-0 ring-0"
+                        dropdownClasses="rounded-2xl border border-zinc-200 shadow-[0_18px_45px_rgba(0,0,0,0.14)]"
+                    >
                         <x-slot name="content">
-                            <div class="px-4 py-3 text-sm text-gray-900">
-                                <div class="font-bold truncate">{{ Auth::user()->name }}</div>
-                                <div class="font-normal truncate">{{ Auth::user()->email }}</div>
+                            <div class="border-b border-zinc-200 p-[20px] text-black">
+                                <p class="text-[20px] font-semibold">Mi cuenta</p>
+                                <div class="mt-[15px] flex min-w-0 items-center gap-[15px]">
+                                    <div class="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
+                                        @if(Auth::user()->profile_photo_path)
+                                            <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
+                                        @else
+                                            <span class="text-[15px] font-semibold text-black">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1).mb_substr(Auth::user()->last_name ?? '', 0, 1)) }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="truncate text-[15px] font-semibold" title="{{ trim(Auth::user()->name.' '.Auth::user()->last_name) }}">{{ trim(Auth::user()->name.' '.Auth::user()->last_name) }}</p>
+                                        <p class="mt-1 truncate text-[15px] text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <x-dropdown-link href="{{ route('profile.show') }}">
-                                {{ __('Profile') }}
-                            </x-dropdown-link>
+
+                            <div class="p-[10px]">
+                                <a href="{{ route('profile.show') }}" class="flex h-10 w-full items-center gap-[15px] rounded-xl px-[15px] text-[15px] font-semibold text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">
+                                    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                                    Mi perfil
+                                </a>
                             @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                                <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                                    {{ __('API Tokens') }}
-                                </x-dropdown-link>
+                                <a href="{{ route('api-tokens.index') }}" class="mt-[10px] flex h-10 w-full items-center gap-[15px] rounded-xl px-[15px] text-[15px] font-semibold text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">
+                                    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 7a4 4 0 11-7.75 1.36L3 12.61V16h3v3h3v2h4l2.64-2.64A4 4 0 0015 7z" /></svg>
+                                    Tokens de API
+                                </a>
                             @endif
-                            <div class="border-t border-gray-200"></div>
-                            <form method="POST" action="{{ route('logout') }}" x-data data-session-logout>
+                            </div>
+
+                            <div class="border-t border-zinc-200 p-[10px]">
+                              <form method="POST" action="{{ route('logout') }}" x-data data-session-logout>
                                 @csrf
-                                <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.requestSubmit();">
-                                    {{ __('Log Out') }}
-                                </x-dropdown-link>
-                            </form>
+                                <button type="button" @click.prevent="$root.requestSubmit();" class="flex h-10 w-full items-center gap-[15px] rounded-xl px-[15px] text-left text-[15px] font-semibold text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">
+                                    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 17l5-5-5-5m5 5H3m10-9h6a2 2 0 012 2v14a2 2 0 01-2 2h-6" /></svg>
+                                    Cerrar sesión
+                                </button>
+                              </form>
+                            </div>
                         </x-slot>
                         <x-slot name="trigger">
                             <button class="flex items-center justify-center overflow-hidden p-[10px] rounded-lg border border-white/60 transition-colors duration-200">

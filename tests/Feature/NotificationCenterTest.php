@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\NotificationCenter;
 use App\Models\Role;
+use App\Models\SupportChatMessage;
 use App\Models\User;
 use App\Notifications\SystemEventNotification;
 use App\Services\Notifications\SystemNotificationService;
@@ -233,4 +234,27 @@ class NotificationCenterTest extends TestCase
         $this->assertDatabaseHas('notifications', ['id' => $readNotification->id]);
         $this->assertSame(1, $user->fresh()->notifications()->count());
     }
+
+    public function test_notification_problem_can_be_reported_to_ticket_chat(): void
+    {
+        $user = User::factory()->create();
+        $user->notify(new SystemEventNotification([
+            'category' => 'system',
+            'severity' => 'error',
+            'title' => 'Notificación incorrecta',
+            'message' => 'Este contenido necesita revisión.',
+        ]));
+        $notification = $user->notifications()->first();
+
+        Livewire::actingAs($user)
+            ->test(NotificationCenter::class)
+            ->call('reportProblem', (string) $notification->id)
+            ->assertRedirect(route('soporte.ticket'));
+
+        $report = SupportChatMessage::query()->where('user_id', $user->id)->first();
+        $this->assertNotNull($report);
+        $this->assertStringContainsString('Notificación incorrecta', $report->message);
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
 }

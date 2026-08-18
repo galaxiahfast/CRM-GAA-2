@@ -3,13 +3,13 @@
         <main class="w-full">
             <div class="profile-page-scrollbar overflow-x-auto overscroll-x-contain">
                 <div class="min-h-[calc(100dvh-90px)] w-full min-w-[1000px] overflow-hidden">
-                    <header class="no-print flex items-center justify-between gap-20 whitespace-nowrap border-b border-gray-200 px-[80px] py-[40px]">
+                    <header class="no-print flex items-center justify-between gap-20 whitespace-nowrap border-b border-gray-200 p-[40px]">
                         <nav class="flex items-center gap-3 text-gray-500" aria-label="Ruta de navegación">
                             <span class="font-medium">Centro de Información</span>
                             <span class="text-gray-300">&gt;</span>
                             <a href="{{ route('profiles.index') }}" class="font-medium transition-colors hover:text-black">Perfiles</a>
                             <span class="text-gray-300">&gt;</span>
-                            <span class="font-semibold text-black">Información del colaborador</span>
+                            <span class="font-semibold text-black">{{ trim(auth()->user()->name.' '.auth()->user()->last_name) }}</span>
                         </nav>
 
                         <div class="flex items-center gap-[30px]">
@@ -29,9 +29,7 @@
                     </header>
                     <div class="min-w-0">
                         @if (Laravel\Fortify\Features::canUpdateProfileInformation()) @livewire('profile.update-profile-information-form') @endif
-                        @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords())) <div class="px-[80px] py-[25px]">@livewire('profile.update-password-form')</div> @endif
                         @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication()) <div class="px-[80px] py-[25px]">@livewire('profile.two-factor-authentication-form')</div> @endif
-                        @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures()) <div class="px-[80px] py-[25px]">@livewire('profile.delete-user-form')</div> @endif
                     </div>
                 </div>
             </div>

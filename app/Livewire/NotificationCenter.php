@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Models\SupportChatMessage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class NotificationCenter extends Component
@@ -62,6 +64,7 @@ class NotificationCenter extends Component
     public function toggleSelectAll(): void
     {
         $this->loadNotifications();
+        $this->selectionMode = true;
         $visibleIds = $this->filteredNotificationsQuery()
             ?->limit(20)
             ->pluck('id')
@@ -92,6 +95,34 @@ class NotificationCenter extends Component
         $this->selected = array_values(array_diff($this->selected, [$notificationId]));
     }
 
+    public function reportProblem(string $notificationId)
+    {
+        $this->loadNotifications();
+        $notification = $this->ownedNotification($notificationId);
+
+        if (! $notification) {
+            return null;
+        }
+
+        $data = $notification->data;
+        SupportChatMessage::create([
+            'user_id' => auth()->id(),
+            'message' => Str::limit(implode("\n", [
+                'Reporte para el equipo de notificaciones',
+                'Título: '.($data['title'] ?? 'Aviso del sistema'),
+                'Mensaje: '.($data['message'] ?? 'Sin detalle'),
+                'Fecha: '.($notification->created_at?->format('d/m/Y H:i:s') ?? 'No disponible'),
+                'Identificador: '.$notification->id,
+            ]), 1000, ''),
+        ]);
+
+        if (! $notification->read_at) {
+            $notification->markAsRead();
+        }
+
+        return $this->redirectRoute('soporte.ticket', navigate: true);
+    }
+
     public function deleteSelected(): void
     {
         $this->loadNotifications();
@@ -105,6 +136,7 @@ class NotificationCenter extends Component
             ->delete();
 
         $this->selected = [];
+        $this->selectionMode = false;
     }
 
     public function render(): View

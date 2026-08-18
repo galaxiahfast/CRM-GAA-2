@@ -8,8 +8,35 @@
         $friends = $allFriends->take(8);
     @endphp
 
-    <form wire:submit="updateProfileInformation">
-        <main class="mx-auto w-full max-w-[1500px] space-y-[25px] px-[40px] py-[25px]">
+    @if ($standalone)
+        <header class="no-print flex items-center justify-between gap-20 whitespace-nowrap border-b border-zinc-200 p-[40px]">
+            <nav class="flex min-w-0 items-center gap-3 text-zinc-500" aria-label="Ruta de navegación">
+                <span class="font-medium">Centro de Información</span>
+                <span class="text-zinc-300">&gt;</span>
+                <span class="font-medium text-zinc-500">Perfiles</span>
+                <span class="text-zinc-300">&gt;</span>
+                <span class="max-w-[320px] truncate font-semibold text-black" title="{{ trim($this->user->name.' '.$this->user->last_name) }}">{{ trim($this->user->name.' '.$this->user->last_name) }}</span>
+            </nav>
+
+            <div class="flex shrink-0 items-center gap-[30px]">
+                <button type="button" aria-label="Descargar perfil en PDF" title="Descargar PDF" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 font-medium text-zinc-500 transition-colors hover:text-black">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    <span>Descargar PDF</span>
+                </button>
+                <button type="button" onclick="window.print()" aria-label="Imprimir perfil" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 font-medium text-zinc-500 transition-colors hover:text-black">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" /></svg>
+                    <span>Imprimir</span>
+                </button>
+            </div>
+        </header>
+    @endif
+
+    @if ($this->isOwnProfile)
+        <form wire:submit="updateProfileInformation">
+    @else
+        <div>
+    @endif
+        <main class="mx-auto w-full max-w-[1500px] space-y-[25px] p-[40px]">
             <section class="flex items-end justify-between gap-[20px]">
                 <div class="flex items-start gap-[15px]">
                     <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-black">
@@ -22,7 +49,28 @@
                 </div>
 
                 <div class="no-print flex items-center gap-[15px]">
-                    @if ($editing)
+                    @if (! $this->isOwnProfile)
+                        @php($friendship = $this->friendship)
+                        @if (! $friendship)
+                            <button type="button" wire:click="requestFriendship" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm8 3h-6m3-3v6" /></svg>
+                                Seguir
+                            </button>
+                        @elseif ($friendship->status === \App\Models\Friendship::PENDING && $friendship->addressee_id === auth()->id())
+                            <button type="button" wire:click="acceptFriendship" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">Aceptar solicitud</button>
+                        @elseif ($friendship->status === \App\Models\Friendship::PENDING)
+                            <button type="button" disabled class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 px-5 font-semibold text-zinc-500">Solicitud enviada</button>
+                        @else
+                            <button type="button" wire:click="removeFriendship" wire:confirm="¿Quieres dejar de seguir a esta persona y eliminarla de tus amigos?" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm8 2h-6" /></svg>
+                                Amigos
+                            </button>
+                        @endif
+                        <a href="{{ route('profile.show') }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 font-semibold text-black transition hover:bg-zinc-100">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6" /></svg>
+                            Regresar a mi perfil
+                        </a>
+                    @elseif ($editing)
                         <button type="button" wire:click="cancelEditing" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-5 font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50">Cancelar</button>
                         <button type="submit" wire:loading.attr="disabled" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h12l2 2v14H5V4zm3 0v6h8V4M8 20v-6h8v6" /></svg>
@@ -92,15 +140,22 @@
 
                         <div class="mt-[15px]">
                             @if ($editing)
-                                <div class="space-y-2">
-                                    <input aria-label="Nombre" type="text" wire:model="state.name" class="h-10 w-full rounded-xl border-zinc-200 bg-white text-center font-semibold text-black focus:border-black focus:ring-black/10">
-                                    <input aria-label="Apellido" type="text" wire:model="state.last_name" class="h-10 w-full rounded-xl border-zinc-200 bg-white text-center font-semibold text-black focus:border-black focus:ring-black/10">
-                                    <x-input-error for="name" /><x-input-error for="last_name" />
+                                <div class="space-y-[15px] text-left">
+                                    <div>
+                                        <label for="profile-name" class="mb-2 block font-semibold text-black">Nombres</label>
+                                        <input id="profile-name" type="text" wire:model="state.name" autocomplete="given-name" placeholder="Escribe tus nombres" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                        <x-input-error for="name" class="mt-2" />
+                                    </div>
+                                    <div>
+                                        <label for="profile-last-name" class="mb-2 block font-semibold text-black">Apellidos</label>
+                                        <input id="profile-last-name" type="text" wire:model="state.last_name" autocomplete="family-name" placeholder="Escribe tus apellidos" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                        <x-input-error for="last_name" class="mt-2" />
+                                    </div>
                                 </div>
                             @else
                                 <h2 class="text-xl font-bold text-gray-900">{{ $this->user->name }} {{ $this->user->last_name }}</h2>
                             @endif
-                            <p class="mt-1 text-[12px] text-gray-500">González Alonzo y Asociados S.C.P.</p>
+                            <p class="{{ $editing ? 'mt-[20px]' : 'mt-1' }} text-[12px] text-gray-500">González Alonzo y Asociados S.C.P.</p>
                             <span class="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-medium {{ $isOnline ? 'border-emerald-200 text-emerald-700' : 'border-gray-200 text-gray-500' }}">
                                 <span class="h-2 w-2 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>{{ $isOnline ? 'Disponible' : 'Desconectado' }}
                             </span>
@@ -108,10 +163,14 @@
 
                         <div class="mt-[20px] space-y-[6px] border-t border-zinc-200 pt-[15px] text-left">
                             <div class="flex items-start gap-3 rounded-xl px-3 py-2 text-gray-600">
-                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 @if ($editing)
-                                    <input aria-label="Correo electrónico" type="email" wire:model="state.email" class="min-w-0 flex-1 border-0 border-b border-dashed border-zinc-400 bg-transparent p-0 pb-1 text-[13px] focus:border-black focus:ring-0">
+                                    <div class="min-w-0 flex-1">
+                                        <label for="profile-email" class="mb-2 block font-semibold text-black">Correo electrónico</label>
+                                        <input id="profile-email" type="email" wire:model="state.email" autocomplete="email" placeholder="nombre@empresa.com" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                        <x-input-error for="email" class="mt-2" />
+                                    </div>
                                 @else
+                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                     <span class="min-w-0 truncate text-[13px]" title="{{ $this->user->email }}">{{ $this->user->email }}</span>
                                 @endif
                             </div>
@@ -148,7 +207,8 @@
                                 <div><p class="font-semibold text-gray-800">Acerca de mí</p><p class="text-[12px] text-gray-400">Presentación personal y profesional</p></div>
                             </div>
                             @if ($editing)
-                                <textarea aria-label="Descripción" wire:model="state.profile_description" rows="7" maxlength="500" class="mt-[20px] block w-full resize-none rounded-xl border-zinc-200 bg-white text-[15px] leading-7 text-zinc-700 focus:border-black focus:ring-black/10" placeholder="Escribe una descripción sobre ti..."></textarea>
+                                <label for="profile-description" class="mb-2 mt-[20px] block font-semibold text-black">Descripción del perfil</label>
+                                <textarea id="profile-description" wire:model="state.profile_description" rows="7" maxlength="500" class="block w-full resize-none rounded-xl border-zinc-200 bg-white text-[15px] leading-7 text-zinc-700 focus:border-black focus:ring-black/10" placeholder="Cuéntanos sobre tu experiencia, funciones o intereses profesionales..."></textarea>
                                 <x-input-error for="profile_description" class="mt-2" />
                             @else
                                 <p class="mt-[20px] text-justify leading-7 text-gray-600">{{ $this->user->profile_description ?: 'Colaborador de González Alonzo y Asociados S.C.P., ubicado en Mérida, Yucatán, México. Este perfil reúne información profesional y organizacional para facilitar la comunicación, la colaboración y el contacto con otros integrantes del equipo.' }}</p>
@@ -195,13 +255,89 @@
                         </div>
                     </article>
 
-                    @livewire('profile.logout-other-browser-sessions-form')
+                    @if ($editing)
+                        <article class="mt-[25px] rounded-2xl border border-zinc-200 bg-white p-[25px] shadow-[0_4px_14px_rgba(0,0,0,0.025)]">
+                            <header class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-black">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                </span>
+                                <div>
+                                    <h3 class="font-semibold text-black">Seguridad y contraseña</h3>
+                                    <p class="text-zinc-500">Este cambio requiere comprobar tu contraseña actual y repetir la nueva.</p>
+                                </div>
+                                </div>
+                                <span class="shrink-0 rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1 font-semibold text-black">Verificación doble</span>
+                            </header>
+
+                            <div class="mt-[20px] grid gap-[20px] xl:grid-cols-3">
+                                <div>
+                                    <label for="current-password" class="mb-2 block font-semibold text-black">1. Contraseña actual</label>
+                                    <input id="current-password" type="password" wire:model="currentPassword" autocomplete="current-password" placeholder="Escribe tu contraseña actual" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                    <x-input-error for="currentPassword" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="new-password" class="mb-2 block font-semibold text-black">2. Nueva contraseña</label>
+                                    <input id="new-password" type="password" wire:model="newPassword" autocomplete="new-password" placeholder="Escribe la nueva contraseña" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                    <x-input-error for="newPassword" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="new-password-confirmation" class="mb-2 block font-semibold text-black">3. Repite la nueva contraseña</label>
+                                    <input id="new-password-confirmation" type="password" wire:model="newPasswordConfirmation" autocomplete="new-password" placeholder="Repite la nueva contraseña" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                    <x-input-error for="newPasswordConfirmation" class="mt-2" />
+                                </div>
+                            </div>
+                            <p class="mt-[15px] text-zinc-500">La nueva contraseña debe coincidir en los dos últimos campos. Se actualizará cuando presiones “Guardar cambios”.</p>
+                        </article>
+                    @endif
+
+                    @if ($this->isOwnProfile)
+                        @livewire('profile.logout-other-browser-sessions-form')
+                    @endif
+
+                    @if ($editing)
+                        <article class="mt-[25px] rounded-2xl border border-red-200 bg-red-50/60 p-[20px]">
+                            <header class="flex items-center justify-between gap-[20px]">
+                                <div class="flex min-w-0 items-start gap-3">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-700">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </span>
+                                    <div>
+                                        <h3 class="font-semibold text-red-800">Zona de peligro: eliminar perfil</h3>
+                                        <p class="mt-1 text-red-700">No es un cambio de contraseña. Esta acción es permanente y eliminará tu cuenta junto con sus datos asociados.</p>
+                                    </div>
+                                </div>
+                                <button type="button" wire:click="deleteAccount" wire:confirm="¿Estás seguro de que deseas eliminar tu perfil? Esta acción no se puede deshacer." class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-red-700 px-5 font-semibold whitespace-nowrap text-white transition hover:bg-red-800 disabled:opacity-50" wire:loading.attr="disabled" wire:target="deleteAccount">
+                                    Eliminar mi perfil
+                                </button>
+                            </header>
+
+                            <div class="mt-[15px] grid gap-[15px] xl:grid-cols-2">
+                                <div>
+                                    <label for="deletion-name" class="mb-2 block font-semibold text-black">Escribe tu nombre completo para confirmar</label>
+                                    <input id="deletion-name" type="text" wire:model="deletionName" autocomplete="off" placeholder="{{ trim($this->user->name.' '.$this->user->last_name) }}" class="h-11 w-full rounded-xl border-zinc-300 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                    <p class="mt-2 text-zinc-500">Debes escribir exactamente: <span class="font-semibold text-black">{{ trim($this->user->name.' '.$this->user->last_name) }}</span></p>
+                                    <x-input-error for="deletionName" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="deletion-password" class="mb-2 block font-semibold text-black">Contraseña actual</label>
+                                    <input id="deletion-password" type="password" wire:model="deletionPassword" autocomplete="current-password" placeholder="Confirma tu contraseña actual" class="h-11 w-full rounded-xl border-zinc-300 bg-white px-3 text-black focus:border-black focus:ring-black/10">
+                                    <x-input-error for="deletionPassword" class="mt-2" />
+                                </div>
+                            </div>
+
+                        </article>
+                    @endif
                 </div>
             </section>
 
             <x-action-message on="saved" class="text-sm font-medium text-emerald-600">Perfil actualizado correctamente.</x-action-message>
         </main>
-    </form>
+    @if ($this->isOwnProfile)
+        </form>
+    @else
+        </div>
+    @endif
 
     <template x-teleport="body">
         <div x-cloak x-show="friendsDirectoryOpen" class="fixed inset-x-0 bottom-0 top-[90px] z-[100]" role="dialog" aria-modal="true" aria-label="Directorio de amigos">

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Profile\UpdateProfileInformationForm;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -66,5 +67,50 @@ class ProfileInformationTest extends TestCase
             ->set('state.instagram_url', 'instagram sin url')
             ->call('updateProfileInformation')
             ->assertHasErrors(['instagram_url']);
+    }
+
+    public function test_password_can_be_changed_from_profile_editing(): void
+    {
+        $this->actingAs($user = User::factory()->create([
+            'password' => Hash::make('Current-password-123'),
+        ]));
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->set('currentPassword', 'Current-password-123')
+            ->set('newPassword', 'New-password-456')
+            ->set('newPasswordConfirmation', 'New-password-456')
+            ->call('updateProfileInformation')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(Hash::check('New-password-456', $user->fresh()->password));
+    }
+
+    public function test_profile_deletion_requires_the_exact_full_name_and_current_password(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'name' => 'María',
+            'last_name' => 'López Pérez',
+            'password' => Hash::make('Current-password-123'),
+        ]));
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->set('deletionName', 'Otro nombre')
+            ->set('deletionPassword', 'contraseña-incorrecta')
+            ->call('deleteAccount')
+            ->assertHasErrors(['deletionName', 'deletionPassword']);
+    }
+
+    public function test_another_users_profile_uses_the_shared_design_with_social_actions(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $profile = User::factory()->create(['name' => 'Perfil', 'last_name' => 'Compartido']);
+
+        $this->get(route('profiles.show', $profile))
+            ->assertOk()
+            ->assertSee('Perfil Compartido')
+            ->assertSee('Seguir')
+            ->assertSee('Regresar a mi perfil')
+            ->assertDontSee('Editar perfil')
+            ->assertDontSee('Sesiones y dispositivos');
     }
 }

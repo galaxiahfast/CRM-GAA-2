@@ -25,7 +25,7 @@ div.dataTables_filter {
 
 /* Scroll corporativo para listas compactas de notificaciones. */
 .notification-scrollbar {
-    scrollbar-color: #1a3a6b transparent;
+    scrollbar-color: #000 transparent;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
 }
@@ -39,12 +39,12 @@ div.dataTables_filter {
 }
 
 .notification-scrollbar::-webkit-scrollbar-thumb {
-    background: #1a3a6b;
+    background: #000;
     border-radius: 9999px;
 }
 
 .notification-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #15305a;
+    background: #27272a;
 }
 
 /* Scroll discreto del menú lateral. */
