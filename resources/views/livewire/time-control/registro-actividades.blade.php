@@ -41,8 +41,71 @@
     $todayOpenStart = $active ? $openStartFor($active) : '';
 @endphp
 
-<div data-clock-particle-network class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700">
+<div
+    data-clock-particle-network
+    class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+    x-data="{
+        viewScale: 100,
+        isFullscreen: false,
+        init() {
+            const savedScale = Number(localStorage.getItem('time-control-view-scale'));
+            if (savedScale >= 70 && savedScale <= 100) {
+                this.viewScale = savedScale;
+            }
+        },
+        saveScale() {
+            localStorage.setItem('time-control-view-scale', String(this.viewScale));
+        },
+        async toggleFullscreen(container) {
+            if (document.fullscreenElement === container) {
+                await document.exitFullscreen();
+                return;
+            }
+
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+
+            await container.requestFullscreen();
+        }
+    }"
+    @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
+>
     <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.55]" aria-hidden="true"></canvas>
+
+    <div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+        <input
+            type="range"
+            min="70"
+            max="100"
+            step="5"
+            x-model.number="viewScale"
+            @input="saveScale()"
+            class="h-1.5 w-[130px] cursor-pointer accent-black"
+            aria-label="Ajustar tamaño de la vista del cronómetro"
+        >
+        <span class="w-[42px] text-right text-[15px] font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
+        <span class="h-5 w-px bg-zinc-200" aria-hidden="true"></span>
+        <button
+            type="button"
+            @click="toggleFullscreen($root)"
+            class="inline-flex cursor-pointer items-center justify-center rounded-lg p-[5px] text-black transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-black/15"
+            :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el cronómetro en pantalla completa'"
+            :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'"
+        >
+            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/>
+            </svg>
+            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>
+            </svg>
+        </button>
+    </div>
+
+    <div
+        class="relative z-10 w-full origin-top"
+        :style="`transform: scale(${viewScale / 100});`"
+    >
     <header class="relative z-10 flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-gray-200 bg-white/75 p-[50px]">
         <div class="flex items-center gap-[15px] text-gray-500">
             <span class="font-medium">Actividades</span>
@@ -479,6 +542,7 @@
     </div>
     </section>
     </main>
+    </div>
 
     @if ($showDeleteModal)
         <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-entry-title">
