@@ -103,8 +103,8 @@
     </div>
 
     <div
-        class="relative z-10 w-full origin-top"
-        :style="`transform: scale(${viewScale / 100});`"
+        class="relative z-10 origin-top"
+        :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
     >
     <header class="relative z-10 flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-gray-200 bg-white/75 p-[50px]">
         <div class="flex items-center gap-[15px] text-gray-500">
@@ -132,7 +132,7 @@
         </div>
     </header>
 
-    <main class="relative z-10 mx-auto w-full max-w-[1500px] space-y-[20px] p-[50px]">
+    <main class="relative z-10 mx-auto w-full space-y-[20px] p-[50px]">
     <section class="flex flex-wrap items-end justify-between gap-[20px]">
         <div class="flex items-center gap-[20px]">
             <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/75 text-black">
