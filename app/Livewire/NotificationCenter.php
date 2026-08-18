@@ -2,10 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Models\Friendship;
 use App\Models\SupportChatMessage;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -41,6 +44,45 @@ class NotificationCenter extends Component
     {
         $this->loadNotifications();
         auth()->user()?->unreadNotifications()->update(['read_at' => now()]);
+    }
+
+    public function acceptFriendRequest(string $notificationId): void
+    {
+        $this->loadNotifications();
+        $notification = $this->ownedNotification($notificationId);
+        $friendship = $notification ? $this->pendingFriendshipForNotification($notification) : null;
+
+        if (! $notification || ! $friendship) {
+            return;
+        }
+
+        DB::transaction(function () use ($friendship): void {
+            $friendship->update(['status' => Friendship::ACCEPTED]);
+            auth()->user()->following()->syncWithoutDetaching([$friendship->requester_id]);
+            $friendship->requester->following()->syncWithoutDetaching([auth()->id()]);
+        });
+
+        $notification->markAsRead();
+        $this->dispatch('friendship-updated');
+    }
+
+    public function cancelFriendRequest(string $notificationId): void
+    {
+        $this->loadNotifications();
+        $notification = $this->ownedNotification($notificationId);
+        $friendship = $notification ? $this->pendingFriendshipForNotification($notification) : null;
+
+        if (! $notification || ! $friendship) {
+            return;
+        }
+
+        DB::transaction(function () use ($friendship): void {
+            User::find($friendship->requester_id)?->following()->detach(auth()->id());
+            $friendship->delete();
+        });
+
+        $notification->markAsRead();
+        $this->dispatch('friendship-updated');
     }
 
     public function setFilter(string $filter): void
@@ -146,6 +188,28 @@ class NotificationCenter extends Component
             : collect();
         $visibleIds = $notifications->pluck('id')->all();
         $selectedVisible = array_intersect($visibleIds, $this->selected);
+        $senderIds = $notifications
+            ->map(fn (DatabaseNotification $notification) => (int) data_get($notification->data, 'context.sender_id'))
+            ->filter()
+            ->unique()
+            ->values();
+        $pendingBySender = $senderIds->isEmpty()
+            ? collect()
+            : Friendship::query()
+                ->where('addressee_id', auth()->id())
+                ->where('status', Friendship::PENDING)
+                ->whereIn('requester_id', $senderIds)
+                ->get()
+                ->keyBy('requester_id');
+        $pendingFriendRequests = $notifications->mapWithKeys(function (DatabaseNotification $notification) use ($pendingBySender): array {
+            if (($notification->data['category'] ?? null) !== 'social') {
+                return [];
+            }
+
+            $friendship = $pendingBySender->get((int) data_get($notification->data, 'context.sender_id'));
+
+            return $friendship ? [(string) $notification->id => $friendship->id] : [];
+        });
         $counts = auth()->user()?->notifications()
             // The Notifications relationship is ordered by newest first. MySQL
             // rejects that ORDER BY when this query only contains aggregates.
@@ -160,12 +224,30 @@ class NotificationCenter extends Component
             'unreadCount' => (int) ($counts->unread_count ?? 0),
             'totalCount' => (int) ($counts->total_count ?? 0),
             'allVisibleSelected' => $visibleIds !== [] && count($selectedVisible) === count($visibleIds),
+            'pendingFriendRequests' => $pendingFriendRequests,
         ]);
     }
 
     private function ownedNotification(string $notificationId): ?DatabaseNotification
     {
         return auth()->user()?->notifications()->whereKey($notificationId)->first();
+    }
+
+    private function pendingFriendshipForNotification(DatabaseNotification $notification): ?Friendship
+    {
+        $data = $notification->data;
+        $senderId = (int) data_get($data, 'context.sender_id');
+
+        if (($data['category'] ?? null) !== 'social' || $senderId < 1) {
+            return null;
+        }
+
+        return Friendship::query()
+            ->with('requester')
+            ->where('requester_id', $senderId)
+            ->where('addressee_id', auth()->id())
+            ->where('status', Friendship::PENDING)
+            ->first();
     }
 
     private function filteredNotificationsQuery(): ?MorphMany

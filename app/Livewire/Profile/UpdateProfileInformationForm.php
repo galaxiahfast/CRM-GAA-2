@@ -13,6 +13,7 @@ use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 use Laravel\Jetstream\Contracts\DeletesUsers;
 use Laravel\Jetstream\Http\Livewire\UpdateProfileInformationForm as JetstreamUpdateProfileInformationForm;
+use Livewire\Attributes\On;
 
 class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
 {
@@ -71,6 +72,12 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
         }
 
         return $this->friendshipQuery($this->getUserProperty()->id)->first();
+    }
+
+    #[On('friendship-updated')]
+    public function refreshFriendships(): void
+    {
+        $this->friendCount = $this->getUserProperty()->friends()->count();
     }
 
     public function requestFriendship(): void

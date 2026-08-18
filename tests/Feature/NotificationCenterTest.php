@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\NotificationCenter;
+use App\Models\Friendship;
 use App\Models\Role;
 use App\Models\SupportChatMessage;
 use App\Models\User;
@@ -254,6 +255,67 @@ class NotificationCenterTest extends TestCase
         $report = SupportChatMessage::query()->where('user_id', $user->id)->first();
         $this->assertNotNull($report);
         $this->assertStringContainsString('Notificación incorrecta', $report->message);
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_incoming_friend_request_can_be_accepted_from_its_notification(): void
+    {
+        $requester = User::factory()->create();
+        $recipient = User::factory()->create();
+        $friendship = Friendship::create([
+            'requester_id' => $requester->id,
+            'addressee_id' => $recipient->id,
+            'status' => Friendship::PENDING,
+        ]);
+        $requester->following()->syncWithoutDetaching([$recipient->id]);
+        $recipient->notify(new SystemEventNotification([
+            'category' => 'social',
+            'severity' => 'info',
+            'title' => 'Nueva solicitud de seguimiento',
+            'message' => 'Tienes una solicitud pendiente.',
+            'context' => ['sender_id' => $requester->id, 'friendship_status' => Friendship::PENDING],
+        ]));
+        $notification = $recipient->notifications()->firstOrFail();
+
+        Livewire::actingAs($recipient)
+            ->test(NotificationCenter::class)
+            ->call('loadNotifications')
+            ->assertSee('Aceptar')
+            ->assertSee('Cancelar')
+            ->call('acceptFriendRequest', (string) $notification->id);
+
+        $this->assertSame(Friendship::ACCEPTED, $friendship->fresh()->status);
+        $this->assertTrue($recipient->fresh()->following()->whereKey($requester->id)->exists());
+        $this->assertTrue($requester->fresh()->following()->whereKey($recipient->id)->exists());
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_incoming_friend_request_can_be_cancelled_from_its_notification(): void
+    {
+        $requester = User::factory()->create();
+        $recipient = User::factory()->create();
+        $friendship = Friendship::create([
+            'requester_id' => $requester->id,
+            'addressee_id' => $recipient->id,
+            'status' => Friendship::PENDING,
+        ]);
+        $requester->following()->syncWithoutDetaching([$recipient->id]);
+        $recipient->notify(new SystemEventNotification([
+            'category' => 'social',
+            'severity' => 'info',
+            'title' => 'Nueva solicitud de seguimiento',
+            'message' => 'Tienes una solicitud pendiente.',
+            'context' => ['sender_id' => $requester->id, 'friendship_status' => Friendship::PENDING],
+        ]));
+        $notification = $recipient->notifications()->firstOrFail();
+
+        Livewire::actingAs($recipient)
+            ->test(NotificationCenter::class)
+            ->call('loadNotifications')
+            ->call('cancelFriendRequest', (string) $notification->id);
+
+        $this->assertDatabaseMissing('friendships', ['id' => $friendship->id]);
+        $this->assertFalse($requester->fresh()->following()->whereKey($recipient->id)->exists());
         $this->assertNotNull($notification->fresh()->read_at);
     }
 

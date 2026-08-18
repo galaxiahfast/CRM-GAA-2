@@ -155,7 +155,7 @@
                             </span>
                         @endif
 
-                        <button wire:click="markAsRead('{{ $notification->id }}')" type="button" class="min-w-0 flex-1 text-left">
+                        <div wire:click="markAsRead('{{ $notification->id }}')" class="min-w-0 flex-1 cursor-pointer text-left">
                             <span class="flex items-start gap-2 pr-9">
                                 <span class="font-semibold {{ $notification->read_at ? 'text-gray-600' : 'text-gray-900' }}">{{ $data['title'] ?? 'Aviso del sistema' }}</span>
                                 @if (! $notification->read_at)
@@ -163,8 +163,30 @@
                                 @endif
                             </span>
                             <span class="mt-1 block break-words leading-6 {{ $notification->read_at ? 'text-zinc-500' : 'text-zinc-700' }}">{{ $data['message'] ?? '' }}</span>
+                            @if ($pendingFriendRequests->has((string) $notification->id))
+                                <span class="mt-[15px] flex items-center gap-[10px]">
+                                    <button
+                                        type="button"
+                                        wire:click.stop="acceptFriendRequest('{{ $notification->id }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="acceptFriendRequest('{{ $notification->id }}'),cancelFriendRequest('{{ $notification->id }}')"
+                                        class="inline-flex items-center justify-center rounded-xl bg-black px-[15px] py-[10px] font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-50"
+                                    >
+                                        Aceptar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click.stop="cancelFriendRequest('{{ $notification->id }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="acceptFriendRequest('{{ $notification->id }}'),cancelFriendRequest('{{ $notification->id }}')"
+                                        class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-[15px] py-[10px] font-medium text-black transition-colors hover:bg-zinc-100 disabled:cursor-wait disabled:opacity-50"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </span>
+                            @endif
                             <span class="mt-2 block text-zinc-500" title="{{ $notification->created_at?->format('d/m/Y H:i:s') }}">{{ $notification->created_at?->diffForHumans() }}</span>
-                        </button>
+                        </div>
 
                         @if (! $selectionMode)
                             <button
