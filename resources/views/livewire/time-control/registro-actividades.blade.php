@@ -41,8 +41,9 @@
     $todayOpenStart = $active ? $openStartFor($active) : '';
 @endphp
 
-<div class="support-monochrome min-h-[calc(100dvh-90px)] w-full bg-white text-[15px] text-zinc-700">
-    <header class="flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-gray-200 p-[50px]">
+<div data-clock-particle-network class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700">
+    <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.55]" aria-hidden="true"></canvas>
+    <header class="relative z-10 flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-gray-200 bg-white/75 p-[50px]">
         <div class="flex items-center gap-[15px] text-gray-500">
             <span class="font-medium">Actividades</span>
             <span class="text-gray-300">&gt;</span>
@@ -68,10 +69,10 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full max-w-[1500px] space-y-[20px] p-[50px]">
+    <main class="relative z-10 mx-auto w-full max-w-[1500px] space-y-[20px] p-[50px]">
     <section class="flex flex-wrap items-end justify-between gap-[20px]">
         <div class="flex items-center gap-[20px]">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/75 text-black">
                 <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -88,7 +89,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
             </a>
-            <a href="{{ route('time.dashboard') }}" class="group inline-flex items-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">
+            <a href="{{ route('time.dashboard') }}" class="group inline-flex items-center rounded-xl border border-zinc-200 bg-white/75 px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-white">
                 Panel de control
                 <svg class="ml-[10px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -106,8 +107,8 @@
         </div>
     @endif
 
-    <section class="grid min-h-[520px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:grid-cols-[360px_minmax(0,1fr)]">
-    <aside class="border-b border-zinc-200 bg-zinc-50/40 p-[20px] xl:border-b-0 xl:border-r">
+    <section class="grid min-h-[520px] overflow-hidden rounded-xl border border-zinc-200 bg-white/65 shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:grid-cols-[360px_minmax(0,1fr)]">
+    <aside class="border-b border-zinc-200 bg-white/55 p-[20px] xl:border-b-0 xl:border-r">
         <div class="mb-[20px] border-b border-zinc-200 pb-[20px]">
             <h2 class="text-[15px] font-semibold text-black">Nuevo registro</h2>
             <p class="mt-[5px] text-[15px] leading-6 text-zinc-500">Selecciona dónde trabajarás.</p>
@@ -156,7 +157,7 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             :placeholder="selectedName || '-- Escribe o selecciona un cliente --'"
-                            class="w-full truncate rounded-xl border border-zinc-200 bg-white py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                            class="w-full truncate rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
                             @keydown.escape="open = false"
                         >
 
@@ -226,7 +227,7 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             :placeholder="selectedName || '-- Escribe o selecciona una actividad --'"
-                            class="w-full truncate rounded-xl border border-zinc-200 bg-white py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                            class="w-full truncate rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
                             @keydown.escape="open = false"
                         >
 
@@ -270,13 +271,13 @@
                 </button>
             </div>
         </form>
-        <div class="mt-[20px] rounded-xl border border-zinc-200 bg-white p-[20px] text-[15px] leading-6 text-zinc-500">
-            Solo puede existir un cronómetro activo. Al iniciar otro registro, el anterior se pausa automáticamente.
+        <div class="mt-[20px] rounded-xl border border-zinc-200 bg-white/70 p-[20px] text-justify text-[15px] leading-6 text-zinc-500">
+            Solo puede existir un cronómetro activo. Al iniciar otro registro, el anterior se detiene de manera automática.
         </div>
     </aside>
 
     <div
-        class="min-w-0 bg-white p-[20px]"
+        class="min-w-0 bg-white/55 p-[20px]"
         x-data="{
             totalDisplay: '00:00:00',
             totalTimerId: null,
