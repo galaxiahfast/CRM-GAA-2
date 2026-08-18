@@ -16,6 +16,27 @@ class AttendanceManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_first_collaborator_with_employee_id_is_loaded_by_default(): void
+    {
+        Storage::fake('local');
+        $adminRole = Role::create(['role' => 'Administrador']);
+        $admin = User::create([
+            'name' => 'Admin', 'email' => 'admin-default@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $adminRole->id,
+        ]);
+        $collaborator = User::create([
+            'name' => 'Ana', 'last_name' => 'Asistencia', 'email' => 'ana@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $adminRole->id, 'employee_id' => 'EMP-DEFAULT',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(AttendanceManagement::class)
+            ->assertSet('userId', $collaborator->id)
+            ->assertSet('searchCollaborator', 'Ana Asistencia')
+            ->assertSet('employeeId', 'EMP-DEFAULT')
+            ->assertSet('searched', true);
+    }
+
     public function test_admin_can_correct_daily_marks_pay_and_bonus_with_comment(): void
     {
         Storage::fake('local');

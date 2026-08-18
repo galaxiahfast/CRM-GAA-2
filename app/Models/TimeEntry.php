@@ -28,12 +28,14 @@ class TimeEntry extends Model
         'physical_area_id_snapshot',
         'entry_date',
         'status',
+        'sort_order',
         'total_duration_seconds',
     ];
 
     protected $casts = [
         'entry_date' => 'date',
         'status' => 'integer',
+        'sort_order' => 'integer',
         'total_duration_seconds' => 'integer',
     ];
 

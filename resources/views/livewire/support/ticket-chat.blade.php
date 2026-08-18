@@ -1,4 +1,4 @@
-<div class="min-h-[calc(100dvh-90px)] w-full bg-gray-100 text-[15px] text-gray-700">
+<div class="support-monochrome min-h-[calc(100dvh-90px)] w-full bg-white text-[15px] text-zinc-700">
     <div class="min-h-[calc(100dvh-90px)] min-w-[1300px]">
     <header class="flex items-center justify-between gap-20 whitespace-nowrap border-b border-gray-200 px-[40px] py-[25px]">
         <div class="flex items-center gap-3 text-gray-500">
@@ -312,17 +312,17 @@
     <style>
         html, body, .support-page-scrollbar, .support-chat-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #1A3A6B #f8fafc;
+            scrollbar-color: #000 #fff;
         }
         html::-webkit-scrollbar, body::-webkit-scrollbar, .support-page-scrollbar::-webkit-scrollbar, .support-chat-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, .support-page-scrollbar::-webkit-scrollbar-track, .support-chat-scrollbar::-webkit-scrollbar-track {
-            background: #f8fafc;
+            background: #fff;
         }
         html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, .support-page-scrollbar::-webkit-scrollbar-thumb, .support-chat-scrollbar::-webkit-scrollbar-thumb {
-            background: #1A3A6B;
+            background: #000;
             border-radius: 9999px;
         }
         .support-message-input {

@@ -56,11 +56,28 @@ class AttendanceManagement extends Component
     /** @var array<string, string> */
     public $totalsFooter = [];
 
-    public function mount(): void
+    public function mount(
+        AttendanceService $attendanceService,
+        AttendanceSettingsService $settingsService,
+    ): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
         $this->from = Carbon::now()->subDays(14)->toDateString();
         $this->to = Carbon::now()->toDateString();
+
+        $defaultUser = User::query()
+            ->select(['id', 'name', 'last_name', 'employee_id'])
+            ->whereNotNull('employee_id')
+            ->where('employee_id', '!=', '')
+            ->orderBy('name')
+            ->orderBy('last_name')
+            ->first();
+
+        if ($defaultUser) {
+            $this->userId = $defaultUser->id;
+            $this->searchCollaborator = trim($defaultUser->name.' '.$defaultUser->last_name);
+            $this->searchAttendance($attendanceService, $settingsService);
+        }
     }
 
     public function clearCollaborator(): void
@@ -281,7 +298,10 @@ class AttendanceManagement extends Component
 
     public function render()
     {
-        $users = User::select('id', 'name', 'last_name', 'employee_id')->get();
+        $users = User::select('id', 'name', 'last_name', 'employee_id')
+            ->orderBy('name')
+            ->orderBy('last_name')
+            ->get();
 
         return view('livewire.time-control.admin.attendance-management', [
             'users' => $users,

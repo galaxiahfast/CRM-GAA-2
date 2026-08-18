@@ -1,6 +1,7 @@
 import './bootstrap';
 import 'flowbite';
 import './auth-particle-network';
+import './activity-sortable';
 
 // Este plugin debe registrarse después de que Livewire 3 expone window.Livewire.
 // Cargarlo antes produce un error JavaScript y rompe las peticiones wire:click.

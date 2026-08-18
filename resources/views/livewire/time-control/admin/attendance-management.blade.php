@@ -1,4 +1,4 @@
-<div class="w-full min-h-screen bg-[#f4f4f4] overflow-x-auto text-[15px]"
+<div class="support-monochrome attendance-monochrome min-h-screen w-full overflow-x-auto bg-white text-[15px]"
      x-data="{
         showErrorBanner: false,
         search: @js($searchCollaborator),
@@ -50,9 +50,9 @@
 
     <style>
         .attendance-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .attendance-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
-        .attendance-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
-        .attendance-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
+        .attendance-scrollbar::-webkit-scrollbar-track { background: #fff; }
+        .attendance-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
+        .attendance-scrollbar { scrollbar-width: thin; scrollbar-color: #000 #fff; }
     </style>
 
     <div class="w-full min-w-[1000px]">
@@ -81,7 +81,7 @@
     @endif
 
     {{-- Encabezado y migas de pan --}}
-    <div class="flex items-center justify-between gap-12 whitespace-nowrap border-b-2 border-[#e5e7eb] px-10 py-10">
+    <div class="flex items-center justify-between gap-12 whitespace-nowrap border-b border-zinc-200 px-10 py-10">
         <div class="flex items-center gap-[15px] text-[15px] text-gray-500">
             <span class="font-medium">Actividades</span>
             <span class="font-light text-gray-300">&gt;</span>
@@ -110,7 +110,7 @@
     </div>
 
     <div class="mx-20 mt-20 flex items-start gap-[15px]">
-        <div class="flex h-14 w-14 shrink-0 items-center justify-center bg-[#1A3A6B]/10 text-[#1A3A6B]">
+        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -206,7 +206,7 @@
     @endif
 
     {{-- Tabla de resultados --}}
-    <div class="border-2 border-dotted border-gray-400 p-2">
+    <div>
         <div class="overflow-hidden border border-[#e5e7eb] bg-[#ffffff] shadow-sm">
             <div class="border-b border-[#e5e7eb] bg-[#f3f4f6] px-6 py-4">
                 <h2 class="text-[15px] font-semibold text-gray-800">Jornadas del periodo</h2>

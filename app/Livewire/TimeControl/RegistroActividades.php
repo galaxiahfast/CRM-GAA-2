@@ -4,12 +4,16 @@ namespace App\Livewire\TimeControl;
 
 use App\Models\TimeEntry;
 use App\Services\ReferenceDataCache;
+use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\Exceptions\ActiveEntryException;
 use App\Services\TimeControl\Exceptions\NoOrganizationalProfileException;
+use App\Services\TimeControl\TimeReportService;
 use App\Services\TimeControl\TimerService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RegistroActividades extends Component
 {
@@ -18,6 +22,14 @@ class RegistroActividades extends Component
     public ?int $subServiceId = null;
 
     public string $description = '';
+
+    public bool $showDeleteModal = false;
+
+    public ?int $deleteEntryId = null;
+
+    public string $deleteActivityName = '';
+
+    public string $deleteConfirmation = '';
 
     public function mount(): void
     {
@@ -74,6 +86,147 @@ class RegistroActividades extends Component
         }
     }
 
+    public function downloadPdf(TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    {
+        $today = $this->localToday();
+        $report = $reports->userReport(auth()->user(), $today, $today);
+
+        return $exporter->download('pdf', $report);
+    }
+
+    public function requestDeletion(int $entryId): void
+    {
+        $this->resetValidation('deleteConfirmation');
+
+        $entry = TimeEntry::query()
+            ->where('user_id', auth()->id())
+            ->with('subService:id,sub_service')
+            ->withCount('audits')
+            ->find($entryId);
+
+        if (! $entry) {
+            $this->addError('timer', 'La actividad no existe o no te pertenece.');
+
+            return;
+        }
+
+        if ($entry->status === TimeEntry::STATUS_IN_PROGRESS) {
+            $this->addError('timer', 'No puedes eliminar una actividad en progreso. Primero debes pausarla.');
+
+            return;
+        }
+
+        if ($entry->status === TimeEntry::STATUS_AUTO_CLOSED) {
+            $this->addError('timer', 'No puedes eliminar una actividad cerrada automáticamente.');
+
+            return;
+        }
+
+        if ($entry->audits_count > 0) {
+            $this->addError('timer', 'No puedes eliminar una actividad que fue corregida por un administrador.');
+
+            return;
+        }
+
+        $this->deleteEntryId = $entry->id;
+        $this->deleteActivityName = $entry->subService?->sub_service ?? 'Actividad sin nombre';
+        $this->deleteConfirmation = '';
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDeletion(): void
+    {
+        $this->reset(['showDeleteModal', 'deleteEntryId', 'deleteActivityName', 'deleteConfirmation']);
+        $this->resetValidation('deleteConfirmation');
+    }
+
+    public function deleteEntry(): void
+    {
+        $this->validate([
+            'deleteConfirmation' => ['required', 'string', 'max:255'],
+        ], [], [
+            'deleteConfirmation' => 'nombre de la actividad',
+        ]);
+
+        $error = DB::transaction(function (): ?string {
+            $entry = TimeEntry::query()
+                ->where('user_id', auth()->id())
+                ->with('subService:id,sub_service')
+                ->withCount('audits')
+                ->lockForUpdate()
+                ->find($this->deleteEntryId);
+
+            if (! $entry) {
+                return 'La actividad ya no existe o no te pertenece.';
+            }
+
+            if ($entry->status === TimeEntry::STATUS_IN_PROGRESS) {
+                return 'La actividad está en progreso. Debes pausarla antes de eliminarla.';
+            }
+
+            if ($entry->status === TimeEntry::STATUS_AUTO_CLOSED) {
+                return 'Las actividades cerradas automáticamente no se pueden eliminar.';
+            }
+
+            if ($entry->audits_count > 0) {
+                return 'Las actividades corregidas por un administrador no se pueden eliminar.';
+            }
+
+            $activityName = $entry->subService?->sub_service ?? 'Actividad sin nombre';
+
+            if (! hash_equals($activityName, trim($this->deleteConfirmation))) {
+                return 'Escribe exactamente el nombre de la actividad para confirmar.';
+            }
+
+            $entry->delete();
+
+            return null;
+        });
+
+        if ($error) {
+            $this->addError('deleteConfirmation', $error);
+
+            return;
+        }
+
+        $this->cancelDeletion();
+    }
+
+    /** @param array<int, array{value:mixed}> $orderedItems */
+    public function updateActivityOrder(array $orderedItems): void
+    {
+        $requestedIds = collect($orderedItems)
+            ->pluck('value')
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($requestedIds->isEmpty()) {
+            return;
+        }
+
+        $ownedIds = TimeEntry::query()
+            ->where('user_id', auth()->id())
+            ->whereDate('entry_date', $this->localToday())
+            ->whereIn('id', $requestedIds)
+            ->pluck('id');
+
+        $safeOrder = $requestedIds
+            ->filter(fn (int $id) => $ownedIds->contains($id))
+            ->values();
+
+        DB::transaction(function () use ($safeOrder): void {
+            foreach ($safeOrder as $index => $entryId) {
+                TimeEntry::query()
+                    ->where('user_id', auth()->id())
+                    ->whereDate('entry_date', $this->localToday())
+                    ->whereKey($entryId)
+                    ->update(['sort_order' => $index + 1]);
+            }
+        });
+    }
+
     private function ownedTrackableEntry(int $entryId): ?TimeEntry
     {
         return TimeEntry::where('user_id', auth()->id())
@@ -106,6 +259,8 @@ class RegistroActividades extends Component
         $todayEntries = TimeEntry::where('user_id', auth()->id())
             ->whereDate('entry_date', $this->localToday())
             ->with(['customer', 'subService', 'intervals'])
+            ->orderByRaw('CASE WHEN sort_order = 0 THEN 0 ELSE 1 END')
+            ->orderBy('sort_order')
             ->latest('id')
             ->get();
 

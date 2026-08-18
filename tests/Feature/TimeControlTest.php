@@ -16,6 +16,7 @@ use App\Services\TimeControl\TimerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class TimeControlTest extends TestCase
@@ -145,5 +146,92 @@ class TimeControlTest extends TestCase
         $this->assertSame(18 * 3600, $entry->total_duration_seconds);
 
         Carbon::setTestNow();
+    }
+
+    public function test_user_deletes_a_paused_activity_only_after_typing_its_exact_name(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $timer = app(TimerService::class);
+        $entry = $timer->start($aux, $customer->id, $sub->id);
+        $timer->pause($entry);
+        $intervalId = $entry->intervals()->firstOrFail()->id;
+
+        $component = Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->call('requestDeletion', $entry->id)
+            ->assertSet('showDeleteModal', true)
+            ->assertSet('deleteActivityName', 'Cálculo de impuestos')
+            ->set('deleteConfirmation', 'Calculo de impuestos')
+            ->call('deleteEntry')
+            ->assertHasErrors('deleteConfirmation');
+
+        $this->assertDatabaseHas('time_entries', ['id' => $entry->id]);
+
+        $component
+            ->set('deleteConfirmation', 'Cálculo de impuestos')
+            ->call('deleteEntry')
+            ->assertSet('showDeleteModal', false);
+
+        $this->assertDatabaseMissing('time_entries', ['id' => $entry->id]);
+        $this->assertDatabaseMissing('time_intervals', ['id' => $intervalId]);
+    }
+
+    public function test_user_cannot_delete_an_active_or_someone_elses_activity(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $entry = app(TimerService::class)->start($aux, $customer->id, $sub->id);
+
+        Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->call('requestDeletion', $entry->id)
+            ->assertSet('showDeleteModal', false)
+            ->assertHasErrors('timer');
+
+        $otherRole = Role::where('role', 'Auxiliar')->firstOrFail();
+        $other = User::create([
+            'name' => 'Otro', 'email' => 'otro@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $otherRole->id,
+        ]);
+
+        Livewire::actingAs($other)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->call('requestDeletion', $entry->id)
+            ->assertSet('showDeleteModal', false)
+            ->assertHasErrors('timer');
+
+        $this->assertDatabaseHas('time_entries', ['id' => $entry->id]);
+    }
+
+    public function test_user_reorders_activities_without_changing_timer_data(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $secondSub = SubService::create([
+            'sub_service' => 'Revisión mensual',
+            'service_id' => $sub->service_id,
+            'unique_key' => 'REV-MENSUAL',
+        ]);
+        $timer = app(TimerService::class);
+
+        $first = $timer->start($aux, $customer->id, $sub->id);
+        $timer->pause($first);
+        $second = $timer->start($aux, $customer->id, $secondSub->id);
+        $timer->pause($second);
+
+        $firstSnapshot = $first->fresh()->only(['status', 'total_duration_seconds']);
+        $secondSnapshot = $second->fresh()->only(['status', 'total_duration_seconds']);
+        $firstIntervalId = $first->intervals()->firstOrFail()->id;
+        $secondIntervalId = $second->intervals()->firstOrFail()->id;
+
+        Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->call('updateActivityOrder', [
+                ['value' => $first->id],
+                ['value' => $second->id],
+            ]);
+
+        $this->assertDatabaseHas('time_entries', ['id' => $first->id, 'sort_order' => 1] + $firstSnapshot);
+        $this->assertDatabaseHas('time_entries', ['id' => $second->id, 'sort_order' => 2] + $secondSnapshot);
+        $this->assertDatabaseHas('time_intervals', ['id' => $firstIntervalId, 'time_entry_id' => $first->id]);
+        $this->assertDatabaseHas('time_intervals', ['id' => $secondIntervalId, 'time_entry_id' => $second->id]);
     }
 }

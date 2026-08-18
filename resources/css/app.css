@@ -32,6 +32,7 @@ div.dataTables_filter {
 
 .notification-scrollbar::-webkit-scrollbar {
     width: 5px;
+    height: 5px;
 }
 
 .notification-scrollbar::-webkit-scrollbar-track {
@@ -45,6 +46,98 @@ div.dataTables_filter {
 
 .notification-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #27272a;
+}
+
+/* Lenguaje visual monocromático compartido por las vistas de soporte. */
+.support-monochrome {
+    background: #fff;
+    color: #3f3f46;
+    font-size: 15px;
+}
+
+.support-monochrome [class*="text-[#1A3A6B]"] {
+    color: #000 !important;
+}
+
+.support-monochrome [class*="bg-[#1A3A6B]"] {
+    background-color: #000 !important;
+}
+
+.support-monochrome [class*="hover:bg-[#1A3A6B]"]:hover,
+.support-monochrome [class*="hover:bg-[#15305a]"]:hover {
+    background-color: #27272a !important;
+}
+
+.support-monochrome [class*="bg-[#eef4fc]"] {
+    background-color: #fafafa !important;
+}
+
+.support-monochrome [class*="border-[#b9c9e2]"],
+.support-monochrome [class*="border-[#cbd9ed]"],
+.support-monochrome [class*="border-[#1A3A6B]"] {
+    border-color: #d4d4d8 !important;
+}
+
+.support-monochrome [class*="shadow-[0_8px_24px_rgba(15,35,66"] {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .05) !important;
+}
+
+.support-monochrome :is(input, textarea, button, a):focus-visible {
+    outline: none !important;
+    --tw-ring-color: rgba(0, 0, 0, .12) !important;
+}
+
+.support-monochrome :is(input, textarea):focus {
+    border-color: #000 !important;
+    --tw-ring-color: rgba(0, 0, 0, .10) !important;
+}
+
+.support-monochrome :is([class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[12px]"], [class*="text-[13px]"], [class*="text-sm"], [class*="text-base"], [class*="text-lg"]) {
+    font-size: 15px !important;
+}
+
+.support-monochrome :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
+    font-size: 20px !important;
+}
+
+.support-monochrome .uppercase {
+    text-transform: none !important;
+}
+
+.support-monochrome [class*="tracking-"] {
+    letter-spacing: normal !important;
+}
+
+.support-monochrome [data-support-chat-panel] {
+    background: #fff !important;
+    border-color: #e4e4e7 !important;
+}
+
+.support-monochrome [data-support-daily-note] {
+    background: #fafafa !important;
+    color: #52525b !important;
+}
+
+.support-monochrome [data-support-daily-note] svg {
+    color: #71717a !important;
+}
+
+.support-monochrome [data-support-assistant-icon] {
+    background: #f4f4f5 !important;
+    border: 1px solid #e4e4e7 !important;
+    color: #18181b !important;
+}
+
+.attendance-monochrome .rounded-none {
+    border-radius: .75rem !important;
+}
+
+.attendance-monochrome :is(.overflow-hidden.border, .overflow-hidden.border-2) {
+    border-radius: 1rem;
+}
+
+.attendance-monochrome table thead tr {
+    background: #fafafa !important;
 }
 
 /* Scroll discreto del menú lateral. */

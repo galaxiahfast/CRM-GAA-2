@@ -1,4 +1,4 @@
-<div class="min-h-[calc(100dvh-90px)] text-[15px] text-gray-700">
+<div class="support-monochrome min-h-[calc(100dvh-90px)] bg-white text-[15px] text-zinc-700">
     <header class="flex items-center justify-between gap-20 whitespace-nowrap border-b border-gray-200 px-[40px] py-[25px]">
         <div class="flex items-center gap-3 text-gray-500">
             <span class="font-medium">Soporte</span>
@@ -23,7 +23,7 @@
         <section class="grid min-h-[640px] grid-cols-1 overflow-hidden rounded-xl border border-gray-200 shadow-[0_8px_24px_rgba(15,35,66,0.06)] xl:h-[640px] xl:min-h-0 xl:grid-cols-[310px_390px_minmax(0,1fr)]">
             <aside class="border-b border-gray-200 p-5 xl:border-b-0 xl:border-r">
                 <div class="flex items-center gap-3 border-b border-gray-200 pb-5">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1A3A6B] text-white">
+                    <span data-support-assistant-icon class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-black">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3a6 6 0 00-6 6v3a6 6 0 0012 0V9a6 6 0 00-6-6zm-2 7h.01M14 10h.01M9 14c1.5 1.3 4.5 1.3 6 0M5 21a7 7 0 0114 0" /></svg>
                     </span>
                     <div>
@@ -89,7 +89,7 @@
 
                 <div x-ref="history" class="support-questions-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
                     <div class="flex items-end gap-3">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white">
+                        <span data-support-assistant-icon class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-black">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 10h.01M15 10h.01M9 14c1.5 1.3 4.5 1.3 6 0M12 3a7 7 0 00-7 7v3a7 7 0 0014 0v-3a7 7 0 00-7-7z" /></svg>
                         </span>
                         <div class="max-w-[82%] rounded-xl border border-gray-200 bg-white px-4 py-3 leading-6 text-gray-700">
@@ -109,7 +109,7 @@
                             </div>
 
                             <div class="flex items-end gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white">
+                                <span data-support-assistant-icon class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-black">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 10h.01M15 10h.01M9 14c1.5 1.3 4.5 1.3 6 0M12 3a7 7 0 00-7 7v3a7 7 0 0014 0v-3a7 7 0 00-7-7z" /></svg>
                                 </span>
                                 <div class="max-w-[82%] rounded-xl border border-gray-200 bg-white px-4 py-3 leading-7 text-gray-700 shadow-[0_3px_10px_rgba(15,35,66,0.04)]">
@@ -134,9 +134,9 @@
     </main>
 
     <style>
-        .support-questions-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B transparent; }
+        .support-questions-scrollbar { scrollbar-width: thin; scrollbar-color: #000 transparent; }
         .support-questions-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .support-questions-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .support-questions-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
+        .support-questions-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
     </style>
 </div>
