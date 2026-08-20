@@ -2,6 +2,7 @@
 
 namespace App\Livewire\TimeControl;
 
+use App\Models\TimeEntry;
 use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\TimeReportService;
 use Illuminate\Support\Carbon;
@@ -18,9 +19,15 @@ class MyProductivity extends Component
     public function mount(): void
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
-        // El rango predeterminado es el día actual completo.
-        $this->from = $this->localToday();
-        $this->to = $this->localToday();
+        $latestActivityDate = TimeEntry::query()
+            ->where('user_id', auth()->id())
+            ->max('entry_date');
+        $defaultDate = $latestActivityDate
+            ? Carbon::parse($latestActivityDate, $this->moduleTimezone())->toDateString()
+            : $this->localToday();
+
+        $this->from = $defaultDate;
+        $this->to = $defaultDate;
     }
 
     /**

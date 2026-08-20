@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Support;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionsBot extends Component
 {
@@ -52,6 +55,25 @@ class QuestionsBot extends Component
         $this->selectedQuestion = null;
         $this->selectedAnswer = null;
         $this->conversation = [];
+    }
+
+    public function downloadPdf(): StreamedResponse
+    {
+        abort_unless(auth()->check(), 403);
+
+        $generatedAt = Carbon::now((string) config('support.timezone', 'America/Mexico_City'));
+        $userName = trim((auth()->user()->name ?? '').' '.(auth()->user()->last_name ?? '')) ?: 'Usuario';
+        $pdf = Pdf::loadView('pdf.support-questions-conversation', [
+            'conversation' => $this->conversation,
+            'generatedAt' => $generatedAt->format('d/m/Y H:i'),
+            'generatedBy' => $userName,
+        ])->setPaper('a4');
+
+        return response()->streamDownload(
+            static fn () => print $pdf->output(),
+            'conversacion-asistente-'.$generatedAt->format('Y-m-d-His').'.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     public function render(): View

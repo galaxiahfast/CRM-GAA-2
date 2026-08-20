@@ -139,7 +139,7 @@
 
                 <div class="space-y-[20px] p-[20px]">
                     <div>
-                        <p class="text-[15px] font-semibold text-black">Chat de la semana</p>
+                        <p class="text-[15px] font-semibold text-black">Chat del día</p>
                             <p class="mt-[10px] text-[15px] font-medium leading-6 text-zinc-600">{{ $todayLabel }}</p>
                     </div>
 
@@ -279,7 +279,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8h.01M11 12h1v4h1m8-4a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </span>
-                    <p class="text-justify leading-6">La conversación conserva los mensajes durante 7 días. Al superar ese periodo, se eliminan automáticamente.</p>
+                    <p class="text-justify leading-6">La conversación conserva únicamente los mensajes del día. Al comenzar un nuevo día, los mensajes anteriores se eliminan automáticamente.</p>
                 </div>
 
                 <div x-show="searchOpen" x-transition class="border-b border-zinc-200 p-[20px]" style="display: none;">
@@ -358,17 +358,19 @@
                                     <p class="mt-[15px] italic leading-6 text-zinc-400">Mensaje eliminado</p>
                                 @else
                                     @if ($chatMessage['sticker_url'])
-                                        <div class="group relative">
+                                        <div class="group">
                                             <div class="mb-[10px] flex items-center gap-[10px] text-[15px] {{ $chatMessage['is_mine'] ? 'justify-end text-right' : 'justify-start text-left' }}">
                                                 <a href="{{ $chatMessage['is_mine'] ? route('profile.show') : route('profiles.show', $chatMessage['user_id']) }}" class="max-w-[135px] truncate font-semibold text-black hover:text-zinc-600" title="Ver perfil de {{ $chatMessage['name'] }}">{{ $chatMessage['name'] }}</a>
                                                 <span class="shrink-0 text-zinc-500">{{ $chatMessage['time'] }}</span>
                                             </div>
-                                            <img src="{{ $chatMessage['sticker_url'] }}" alt="Sticker enviado por {{ $chatMessage['name'] }}" class="block h-[180px] w-[180px] rounded-2xl object-cover" title="{{ $chatMessage['name'] }} · {{ $chatMessage['time'] }}">
-                                            @if ($chatMessage['can_delete'])
-                                                <button type="button" wire:click="deleteMessage({{ $chatMessage['id'] }})" wire:confirm="¿Deseas eliminar este sticker?" wire:loading.attr="disabled" wire:target="deleteMessage({{ $chatMessage['id'] }})" class="no-print absolute right-[10px] top-[10px] inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/90 text-red-600 opacity-0 shadow-sm outline-none transition group-hover:opacity-100 hover:bg-red-50 focus:opacity-100 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50" aria-label="Eliminar sticker" title="Eliminar sticker">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18" /></svg>
-                                                </button>
-                                            @endif
+                                            <div class="relative">
+                                                <img src="{{ $chatMessage['sticker_url'] }}" alt="Sticker enviado por {{ $chatMessage['name'] }}" class="block h-[180px] w-[180px] rounded-2xl object-cover" title="{{ $chatMessage['name'] }} · {{ $chatMessage['time'] }}">
+                                                @if ($chatMessage['can_delete'])
+                                                    <button type="button" wire:click="deleteMessage({{ $chatMessage['id'] }})" wire:confirm="¿Deseas eliminar este sticker?" wire:loading.attr="disabled" wire:target="deleteMessage({{ $chatMessage['id'] }})" class="no-print absolute right-[10px] top-[10px] inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-white/95 text-red-600 opacity-0 shadow-sm outline-none transition group-hover:opacity-100 hover:bg-red-50 focus:opacity-100 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50" aria-label="Eliminar sticker" title="Eliminar sticker">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18" /></svg>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </div>
                                     @endif
                                     @if ($chatMessage['image_url'])
@@ -391,6 +393,20 @@
                                             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                                         </a>
                                     @endif
+                                    <div class="no-print mt-[15px] flex items-center gap-[10px] {{ $chatMessage['is_mine'] ? 'justify-end' : 'justify-start' }}">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'like')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'like')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'like' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-black hover:bg-zinc-100' }}" aria-label="Me gusta" title="Me gusta">
+                                            <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'like' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 10v11H3V10h4Zm0 10h10.2a2 2 0 0 0 1.94-1.52l1.5-6A2 2 0 0 0 18.7 10H14l.7-4.2A2.4 2.4 0 0 0 12.33 3L7 10Z" /></svg>
+                                            <span>{{ $chatMessage['reactions']['like'] }}</span>
+                                        </button>
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'heart')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'heart')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'heart' ? 'border-red-700 bg-red-700 text-white' : 'border-zinc-200 bg-white text-red-700 hover:bg-red-50' }}" aria-label="Me encanta" title="Me encanta">
+                                            <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'heart' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" /></svg>
+                                            <span>{{ $chatMessage['reactions']['heart'] }}</span>
+                                        </button>
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'dislike' ? 'border-zinc-700 bg-zinc-700 text-white' : 'border-zinc-200 bg-white text-black hover:bg-zinc-100' }}" aria-label="No me gusta" title="No me gusta">
+                                            <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'dislike' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 14V3H3v11h4Zm0-10h10.2a2 2 0 0 1 1.94 1.52l1.5 6A2 2 0 0 1 18.7 14H14l.7 4.2A2.4 2.4 0 0 1 12.33 21L7 14Z" /></svg>
+                                            <span>{{ $chatMessage['reactions']['dislike'] }}</span>
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
                         </article>
@@ -399,7 +415,7 @@
                             <span class="flex h-16 w-16 items-center justify-center rounded-full border border-gray-200 text-gray-300">
                                 <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg>
                             </span>
-                            <p class="mt-4 font-semibold text-gray-600">Inicia la conversación de la semana</p>
+                            <p class="mt-4 font-semibold text-gray-600">Inicia la conversación del día</p>
                             <p class="mt-1 max-w-sm text-[15px] text-gray-400">Escribe el primer mensaje para solicitar ayuda o conversar con los demás colaboradores.</p>
                         </div>
                     @endforelse
@@ -591,6 +607,13 @@
         .support-message-input {
             scrollbar-width: none;
             -ms-overflow-style: none;
+        }
+        .support-monochrome .support-message-input:focus,
+        .support-monochrome .support-message-input:focus-visible {
+            border-color: #d4d4d8 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            --tw-ring-color: transparent !important;
         }
         .support-message-input::-webkit-scrollbar {
             display: none;

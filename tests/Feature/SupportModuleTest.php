@@ -54,8 +54,10 @@ class SupportModuleTest extends TestCase
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
             ->assertSeeText('Preguntas')
-            ->assertSee('px-[40px] py-[25px]', false)
-            ->assertSee('group flex w-full items-center gap-3', false)
+            ->assertSee('min-w-[1200px]', false)
+            ->assertSee('p-[50px]', false)
+            ->assertSee('xl:grid-cols-[340px_420px_minmax(0,1fr)]', false)
+            ->assertSee('group flex w-full items-center gap-[15px]', false)
             ->assertDontSee('group flex w-full items-start gap-3', false);
     }
 
@@ -76,6 +78,23 @@ class SupportModuleTest extends TestCase
             ->test(TicketChat::class)
             ->call('downloadPdf')
             ->assertFileDownloaded('conversacion-soporte-'.now(config('support.timezone'))->format('Y-m-d').'.pdf');
+    }
+
+    public function test_authenticated_user_can_download_the_questions_conversation_as_pdf(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-08-20 14:30:15', config('support.timezone')));
+        $user = User::factory()->create([
+            'name' => 'Marina',
+            'last_name' => 'Manrique',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(QuestionsBot::class)
+            ->call('ask', 'general', 'perfil')
+            ->call('downloadPdf')
+            ->assertFileDownloaded('conversacion-asistente-2026-08-20-143015.pdf');
+
+        Carbon::setTestNow();
     }
 
     public function test_chat_stores_the_message_with_its_authenticated_author(): void
@@ -159,6 +178,60 @@ class SupportModuleTest extends TestCase
         $component->assertSee('/storage/'.$storedFile->attachment_path, false);
     }
 
+    public function test_users_can_react_to_messages_and_change_or_remove_their_reaction(): void
+    {
+        $author = User::factory()->create();
+        $reactingUser = User::factory()->create();
+        $message = SupportChatMessage::create([
+            'user_id' => $author->id,
+            'message' => 'Mensaje para reaccionar.',
+        ]);
+
+        $component = Livewire::actingAs($reactingUser)
+            ->test(TicketChat::class)
+            ->call('toggleReaction', $message->id, 'like')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+            'reaction' => 'like',
+        ]);
+
+        $component->call('toggleReaction', $message->id, 'heart');
+
+        $this->assertDatabaseMissing('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+            'reaction' => 'like',
+        ]);
+        $this->assertDatabaseHas('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+            'reaction' => 'heart',
+        ]);
+
+        $component->call('toggleReaction', $message->id, 'dislike');
+
+        $this->assertDatabaseMissing('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+            'reaction' => 'heart',
+        ]);
+        $this->assertDatabaseHas('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+            'reaction' => 'dislike',
+        ]);
+
+        $component->call('toggleReaction', $message->id, 'dislike');
+
+        $this->assertDatabaseMissing('support_chat_message_reactions', [
+            'support_chat_message_id' => $message->id,
+            'user_id' => $reactingUser->id,
+        ]);
+    }
+
     public function test_automated_account_posts_one_greeting_per_time_period_and_stays_online(): void
     {
         $user = User::factory()->create();
@@ -180,7 +253,7 @@ class SupportModuleTest extends TestCase
             ->assertSee('Sofia Soporte (bot)')
             ->assertSee('sofia.soporte@sistema.local')
             ->assertSee('img/support/sofia-avatar.svg', false)
-            ->assertSee('05 ago. – 11 ago. 2026')
+            ->assertSee('11 ago. 2026')
             ->assertSee('Buenos días');
 
         $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'sofia.soporte@sistema.local'));
@@ -561,7 +634,7 @@ class SupportModuleTest extends TestCase
             ->assertDontSee('offline@example.test');
     }
 
-    public function test_chat_keeps_messages_for_seven_days_and_removes_older_messages(): void
+    public function test_chat_keeps_only_messages_from_the_current_day(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-08-10 12:00:00', config('support.timezone')));
 
@@ -575,11 +648,11 @@ class SupportModuleTest extends TestCase
             'updated_at' => Carbon::now(config('support.timezone'))->subDay()->utc(),
         ])->save();
 
-        $expiredMessage = SupportChatMessage::create([
+        $olderMessage = SupportChatMessage::create([
             'user_id' => $user->id,
             'message' => 'Mensaje de hace ocho días.',
         ]);
-        $expiredMessage->forceFill([
+        $olderMessage->forceFill([
             'created_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
             'updated_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
         ])->save();
@@ -591,12 +664,12 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->assertSee('Mensaje del día anterior.')
+            ->assertDontSee('Mensaje del día anterior.')
             ->assertDontSee('Mensaje de hace ocho días.')
             ->assertSee('Mensaje de hoy.');
 
-        $this->assertDatabaseHas('support_chat_messages', ['id' => $recentMessage->id]);
-        $this->assertDatabaseMissing('support_chat_messages', ['id' => $expiredMessage->id]);
+        $this->assertDatabaseMissing('support_chat_messages', ['id' => $recentMessage->id]);
+        $this->assertDatabaseMissing('support_chat_messages', ['id' => $olderMessage->id]);
 
         Carbon::setTestNow();
     }

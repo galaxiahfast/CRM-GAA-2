@@ -75,6 +75,17 @@ class TimeReportExportTest extends TestCase
             ->assertSet('to', now()->toDateString());
     }
 
+    public function test_my_productivity_defaults_to_the_users_latest_activity_date(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+        $latestActivityDate = now()->subDays(4)->toDateString();
+        TimeEntry::query()->where('user_id', $aux->id)->update(['entry_date' => $latestActivityDate]);
+
+        Livewire::actingAs($aux)->test(MyProductivity::class)
+            ->assertSet('from', $latestActivityDate)
+            ->assertSet('to', $latestActivityDate);
+    }
+
     public function test_admin_dashboard_defaults_to_current_day(): void
     {
         ['admin' => $admin] = $this->seedWithEntry();

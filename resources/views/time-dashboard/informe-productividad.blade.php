@@ -6,31 +6,31 @@
 @endphp
 
 <x-app-layout>
-    <div class="w-full bg-[#f4f4f4] min-h-screen" style="overflow-x: auto;">
+    <div class="time-dashboard-modern w-full min-h-screen bg-white text-[15px] text-zinc-700" style="overflow-x: auto;">
 
         <!-- Contenedor interno con min-width: 700px -->
         <div style="min-width: 600px; padding: 0; margin: 0;">
 
             <!-- Header Superior con Migas de Pan -->
-            <div style="padding: 40px; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
+            <div class="time-dashboard-topbar" style="padding: 50px; border-bottom: 1px solid #e4e4e7; background-color: rgba(255,255,255,.75); display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 50px;">
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
                     <span style="font-weight: 500;">Actividades</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
                     <span style="font-weight: 500;">Control de Horas</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
-                    <span style="color: #1A3A6B; font-weight: 600;">Panel de Control</span>
+                    <a href="{{ route('time.dashboard') }}" style="color: #000; font-weight: 600; text-decoration: none;">Panel de control</a>
                 </div>
 
                 <!-- Botones de acción -->
-                <div style="display: flex; align-items: center; gap: 30px; white-space: nowrap; flex-shrink: 0;">
-                    <button id="downloadPdfBtn" style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                <div style="display: flex; align-items: center; gap: 20px; white-space: nowrap; flex-shrink: 0;">
+                    <button id="downloadPdfBtn" style="display: flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #000; font-size: 15px; cursor: pointer; transition: color 0.2s; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         Descargar PDF
                     </button>
 
-                    <button id="printBtn" style="display: flex; align-items: center; gap: 15px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 15px; cursor: pointer; transition: all 0.2s; hover:color: #1A3A6B; white-space: nowrap;">
+                    <button id="printBtn" style="display: flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #000; font-size: 15px; cursor: pointer; transition: color 0.2s; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                         </svg>
@@ -40,7 +40,7 @@
             </div>
 
             <!-- Header principal -->
-            <div style="background-color: transparent; padding: 80px 80px 80px 80px; overflow: hidden; min-width: max-content;">
+            <div class="time-dashboard-intro" style="background-color: transparent; padding: 50px; overflow: hidden; min-width: max-content;">
 
                 <!-- Encabezado -->
                 <div style="border-bottom: none; min-width: max-content;">
@@ -48,10 +48,10 @@
 
                         <div style="max-width: 672px; flex-shrink: 0;">
 
-                            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 20px;">
 
-                                <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 0px; background-color: rgba(26, 58, 107, 0.1); flex-shrink: 0;">
-                                    <svg style="height: 28px; width: 28px; color: #1A3A6B; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid #e4e4e7; background-color: rgba(255,255,255,.8); flex-shrink: 0;">
+                                    <svg style="height: 28px; width: 28px; color: #000; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -59,20 +59,16 @@
                                 </div>
 
                                 <div>
-                                    <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: #111827; white-space: nowrap;">
-                                        Panel de Control
+                                    <h1 style="font-size: 20px; font-weight: 600; color: #000; white-space: nowrap;">
+                                        Panel de control
                                     </h1>
 
-                                    <p style="font-size: 15px; color: #6b7280; white-space: nowrap;">
+                                    <p style="margin-top: 5px; font-size: 15px; color: #71717a; white-space: nowrap;">
                                         Supervisión y análisis de productividad
                                     </p>
                                 </div>
 
                             </div>
-
-                            <p style="max-width: 672px; font-size: 15px; line-height: 28px; color: #6b7280;">
-                                Visualización del tiempo trabajado por día,<br>con distribución por cliente y actividad durante el período seleccionado
-                            </p>
 
                         </div>
 
@@ -80,9 +76,9 @@
                 </div>
 
                 <!-- Filtros -->
-                <div style="background-color: transparent; margin-top: 24px; min-width: max-content;">
+                <div class="time-dashboard-filters" style="background-color: rgba(255,255,255,.7); margin-top: 20px; min-width: max-content; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.05);">
 
-                    <form method="GET" action="{{ route('time.dashboard') }}" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 30px;">
+                    <form method="GET" action="{{ route('time.dashboard') }}" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 20px;">
 
                         @if ($selectedUser)
                             <input id="selected_user_id" type="hidden" name="user_id" value="{{ $selectedUser->id }}">
@@ -92,7 +88,7 @@
                             <div style="min-width: 260px; flex: 0 0 auto; position: relative;">
                                 <label
                                     for="search"
-                                    style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;"
+                                    style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;"
                                 >
                                     Colaborador
                                 </label>
@@ -114,9 +110,7 @@
                                         type="search"
                                         placeholder="Buscar por ID, nombre o correo..."
                                         autocomplete="off"
-                                        style="height: 50px; width: 260px; border-radius: 0px; border: 1px solid #d1d5db; background-color: white; padding-left: 48px; padding-right: 16px; font-size: 15px; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; outline: none; flex-shrink: 0;"
-                                        onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
-                                        onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'"
+                                        style="width: 260px; border-radius: 12px; border: 1px solid #e4e4e7; background-color: white; padding: 15px 20px 15px 48px; font-size: 15px; color: #000; box-shadow: none; outline: none; flex-shrink: 0;"
                                     >
 
                                     <!-- ✅ DROPDOWN DE COLABORADORES -->
@@ -155,7 +149,7 @@
                         <div style="flex: 0 0 auto;">
                             <label
                                 for="fecha_inicio"
-                                style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;"
+                                style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;"
                             >
                                 Fecha inicial
                             </label>
@@ -165,16 +159,14 @@
                                 name="fecha_inicio"
                                 value="{{ $start->toDateString() }}"
                                 type="date"
-                                style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
-                                onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
-                                onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'"
+                                style="width: 180px; border-radius: 12px; border: 1px solid #e4e4e7; background-color: white; padding: 15px 20px; font-size: 15px; color: #000; outline: none; flex-shrink: 0;"
                             >
                         </div>
 
                         <div style="flex: 0 0 auto;">
                             <label
                                 for="fecha_fin"
-                                style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;"
+                                style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;"
                             >
                                 Fecha final
                             </label>
@@ -184,17 +176,13 @@
                                 name="fecha_fin"
                                 value="{{ $end->toDateString() }}"
                                 type="date"
-                                style="height: 50px; width: 180px; border-radius: 0px; border: 1px solid #d1d5db; background-color: transparent; padding: 0 20px; font-size: 15px; color: #374151; transition: all 0.2s; outline: none; flex-shrink: 0;"
-                                onfocus="this.style.borderColor='#1A3A6B'; this.style.boxShadow='0 0 0 4px rgba(26,58,107,0.1)'"
-                                onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'"
+                                style="width: 180px; border-radius: 12px; border: 1px solid #e4e4e7; background-color: white; padding: 15px 20px; font-size: 15px; color: #000; outline: none; flex-shrink: 0;"
                             >
                         </div>
 
                         <button
                             type="submit"
-                            style="display: inline-flex; height: 50px; width: 180px; align-items: center; justify-content: center; gap: 8px; border-radius: 0px; background-color: #1A3A6B; padding: 0 28px; font-size: 15px; font-weight: 600; color: white; box-shadow: 0 4px 6px -1px rgba(26,58,107,0.2); border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0;"
-                            onmouseover="this.style.backgroundColor='#15305a'"
-                            onmouseout="this.style.backgroundColor='#1A3A6B'"
+                            style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; background-color: #000; padding: 15px 20px; font-size: 15px; font-weight: 400; color: white; border: none; cursor: pointer; flex-shrink: 0;"
                         >
 
                             <svg style="height: 20px; width: 20px; flex-shrink: 0;"
@@ -218,9 +206,9 @@
             <!-- ============================================================ -->
             <!-- MENÚ DE PESTAÑAS                                              -->
             <!-- ============================================================ -->
-            <div style="padding-left: 80px; padding-right: 80px; margin-bottom: 50px; background-color: transparent; overflow: hidden;">
-                <div style="display: flex; flex-wrap: nowrap; gap: 0px; padding: 0; margin: 0;">
-                    <button class="tab-button active" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #1A3A6B; border-bottom: 2px solid #1A3A6B; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-resumen">
+            <div style="padding-left: 50px; padding-right: 50px; margin-bottom: 20px; background-color: transparent; overflow: hidden;">
+                <div class="time-dashboard-tabs" style="display: flex; flex-wrap: nowrap; gap: 10px; padding: 20px; margin: 0; border: 1px solid #e4e4e7; border-radius: 12px; background: rgba(255,255,255,.7);">
+                    <button class="tab-button active" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 20px; font-size: 15px; font-weight: 500; color: white; border: 1px solid #000; border-radius: 12px; background-color: #000; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-resumen">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
@@ -239,19 +227,13 @@
                         </svg>
                         Cliente-Actividad
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-general">
-                        <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                        </svg>
-                        General
-                    </button>
                 </div>
             </div>
 
             <!-- ============================================================ -->
             <!-- CONTENEDORES DE PESTAÑAS                                     -->
             <!-- ============================================================ -->
-            <div class="space-y-6" style="padding-left: 80px; padding-right: 80px; min-width: 765px;">
+            <div class="space-y-[20px]" style="padding: 0 50px 50px; min-width: 765px;">
 
                 <!-- ==================== TAB 1: RESUMEN ==================== -->
                 <div id="tab-resumen" class="tab-content space-y-6">
@@ -443,6 +425,50 @@
         </div>
     </div>
 
+    <style>
+        .time-dashboard-modern input:focus,
+        .time-dashboard-modern select:focus,
+        .time-dashboard-modern button:focus,
+        .time-dashboard-modern button:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-color: transparent !important;
+        }
+        .time-dashboard-modern .tab-content > div {
+            box-sizing: border-box;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .78) !important;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+        }
+        .time-dashboard-modern .tab-content svg { color: #000 !important; }
+        .time-dashboard-modern select {
+            height: auto !important;
+            border-color: #e4e4e7 !important;
+            padding: 15px 20px !important;
+            font-size: 15px !important;
+            color: #000 !important;
+        }
+        .time-dashboard-modern #loadClientActivityBtn {
+            height: auto !important;
+            background: #000 !important;
+            padding: 15px 20px !important;
+            font-size: 15px !important;
+            font-weight: 400 !important;
+        }
+        .time-dashboard-modern #loadClientActivityBtn:hover { background: #27272a !important; }
+        .time-dashboard-modern #userDropdown {
+            margin-top: 10px !important;
+            border-color: #e4e4e7 !important;
+            border-radius: 12px !important;
+        }
+        .time-dashboard-modern * { scrollbar-width: thin; scrollbar-color: #000 transparent; }
+        .time-dashboard-modern *::-webkit-scrollbar { width: 6px; height: 6px; }
+        .time-dashboard-modern *::-webkit-scrollbar-track { background: transparent; }
+        .time-dashboard-modern *::-webkit-scrollbar-thumb { border-radius: 9999px; background: #000; }
+    </style>
+
     <!-- Primero cargas Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
@@ -459,8 +485,7 @@
             const contents = {
                 'tab-resumen': document.getElementById('tab-resumen'),
                 'tab-detalles': document.getElementById('tab-detalles'),
-                'tab-nueva': document.getElementById('tab-nueva'),
-                'tab-general': document.getElementById('tab-general')
+                'tab-nueva': document.getElementById('tab-nueva')
             };
 
             // Variable para guardar la pestaña activa (seleccionada por click)
@@ -468,19 +493,23 @@
 
             // Función para aplicar estilo "inactivo" (gris)
             function setInactiveStyle(btn) {
-                btn.style.color = '#6b7280';
-                btn.style.borderBottomColor = '#d1d5db';
-                btn.style.borderBottomWidth = '2px';
-                btn.style.borderBottomStyle = 'solid';
+                btn.style.color = '#000';
+                btn.style.backgroundColor = '#fff';
+                btn.style.borderColor = '#e4e4e7';
+                btn.style.borderWidth = '1px';
+                btn.style.borderStyle = 'solid';
+                btn.style.borderRadius = '12px';
                 btn.classList.remove('active');
             }
 
-            // Función para aplicar estilo "activo" (azul)
+            // Función para aplicar estilo activo monocromático
             function setActiveStyle(btn) {
-                btn.style.color = '#1A3A6B';
-                btn.style.borderBottomColor = '#1A3A6B';
-                btn.style.borderBottomWidth = '2px';
-                btn.style.borderBottomStyle = 'solid';
+                btn.style.color = '#fff';
+                btn.style.backgroundColor = '#000';
+                btn.style.borderColor = '#000';
+                btn.style.borderWidth = '1px';
+                btn.style.borderStyle = 'solid';
+                btn.style.borderRadius = '12px';
                 btn.classList.add('active');
             }
 
@@ -559,7 +588,7 @@
             // Inicializar: detectar la pestaña activa
             tabs.forEach(btn => {
                 // Buscar la que tiene la clase 'active' o estilo azul
-                if (btn.classList.contains('active') || btn.style.color === '#1A3A6B') {
+                if (btn.classList.contains('active') || btn.style.backgroundColor === 'rgb(0, 0, 0)') {
                     activeTabId = btn.dataset.tab;
                 }
             });

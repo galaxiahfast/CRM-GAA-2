@@ -4,6 +4,7 @@ namespace App\Livewire\Support;
 
 use App\Models\Role;
 use App\Models\SupportChatMessage;
+use App\Models\SupportChatMessageReaction;
 use App\Models\User;
 use App\Services\Notifications\SystemNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -72,9 +73,7 @@ class TicketChat extends Component
         $expiredMessages->forceDelete();
 
         $now = Carbon::now($this->timezone());
-        $periodStart = $now->copy()->subDays(6);
-        $this->todayLabel = $periodStart->locale('es')->translatedFormat('d M')
-            .' – '.$now->locale('es')->translatedFormat('d M Y');
+        $this->todayLabel = $now->locale('es')->translatedFormat('d M Y');
         $this->automatedUserId = (int) $this->automatedUser()->id;
         $this->canDeleteAllMessages = $this->isSupportAdministrator(auth()->user()->loadMissing('role'));
         $this->alwaysOnlineUserIds = User::query()
@@ -266,6 +265,37 @@ class TicketChat extends Component
         $this->refreshMessages();
     }
 
+    public function toggleReaction(int $messageId, string $reaction): void
+    {
+        abort_unless(in_array($reaction, ['like', 'heart', 'dislike'], true), 422);
+
+        [$start, $end] = $this->retentionBounds();
+        $message = SupportChatMessage::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->findOrFail($messageId);
+        $userId = (int) auth()->id();
+        abort_unless($userId > 0, 403);
+
+        $existing = SupportChatMessageReaction::query()
+            ->where('support_chat_message_id', $message->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($existing?->reaction === $reaction) {
+            $existing->delete();
+        } elseif ($existing) {
+            $existing->update(['reaction' => $reaction]);
+        } else {
+            SupportChatMessageReaction::create([
+                'support_chat_message_id' => $message->id,
+                'user_id' => $userId,
+                'reaction' => $reaction,
+            ]);
+        }
+
+        $this->refreshMessages();
+    }
+
     public function downloadPdf(): StreamedResponse
     {
         abort_unless(auth()->check(), 403);
@@ -294,7 +324,10 @@ class TicketChat extends Component
 
         return SupportChatMessage::query()
             ->withTrashed()
-            ->with('user:id,name,last_name,email,profile_photo_path')
+            ->with([
+                'user:id,name,last_name,email,profile_photo_path',
+                'reactions:id,support_chat_message_id,user_id,reaction',
+            ])
             ->whereBetween('created_at', [$start, $end])
             ->oldest('created_at')
             ->oldest('id')
@@ -328,6 +361,12 @@ class TicketChat extends Component
                     'is_deleted' => $message->trashed(),
                     'can_delete' => ! $message->trashed()
                         && ((int) $message->user_id === $currentUserId || $this->canDeleteAllMessages),
+                    'reactions' => [
+                        'like' => $message->reactions->where('reaction', 'like')->count(),
+                        'heart' => $message->reactions->where('reaction', 'heart')->count(),
+                        'dislike' => $message->reactions->where('reaction', 'dislike')->count(),
+                    ],
+                    'my_reaction' => $message->reactions->firstWhere('user_id', $currentUserId)?->reaction,
                 ];
             })
             ->all();
@@ -840,7 +879,7 @@ class TicketChat extends Component
         $now = Carbon::now($this->timezone());
 
         return [
-            $now->copy()->subDays(7)->timezone($this->applicationTimezone()),
+            $now->copy()->startOfDay()->timezone($this->applicationTimezone()),
             $now->copy()->endOfDay()->timezone($this->applicationTimezone()),
         ];
     }
