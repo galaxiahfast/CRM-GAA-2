@@ -11,6 +11,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -38,8 +40,9 @@ class SupportModuleTest extends TestCase
             ->assertSeeText('Descargar PDF')
             ->assertSeeText('Imprimir')
             ->assertSeeText('Buscar mensajes')
-            ->assertSee('min-w-[1300px]', false)
-            ->assertSee('grid-cols-[290px_minmax(0,1fr)]', false)
+            ->assertSee('min-w-[1200px]', false)
+            ->assertSee('grid-cols-[360px_minmax(0,1fr)]', false)
+            ->assertSee('p-[50px]', false)
             ->assertDontSee('lg:grid-cols-', false)
             ->assertDontSee('overflow-x-auto', false)
             ->assertSee('support-message-input', false);
@@ -100,6 +103,62 @@ class SupportModuleTest extends TestCase
         ]);
     }
 
+    public function test_user_can_send_an_image_and_add_an_emoji(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        RateLimiter::clear('support-chat:'.$user->id);
+        $image = UploadedFile::fake()->image('captura.png', 640, 480);
+
+        $component = Livewire::actingAs($user)
+            ->test(TicketChat::class)
+            ->call('appendEmoji', '😊')
+            ->assertSet('message', '😊')
+            ->set('image', $image)
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('captura.png');
+
+        $storedMessage = SupportChatMessage::query()
+            ->where('user_id', $user->id)
+            ->where('message', '😊')
+            ->firstOrFail();
+
+        $this->assertNotNull($storedMessage->image_path);
+        $this->assertSame('captura.png', $storedMessage->image_original_name);
+        Storage::disk('public')->assertExists($storedMessage->image_path);
+        $component->assertSee('/storage/'.$storedMessage->image_path, false);
+    }
+
+    public function test_user_can_send_an_allowed_file_and_one_of_the_available_stickers(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        RateLimiter::clear('support-chat:'.$user->id);
+        $attachment = UploadedFile::fake()->create('informe.txt', 24, 'text/plain');
+
+        $component = Livewire::actingAs($user)
+            ->test(TicketChat::class)
+            ->set('attachment', $attachment)
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('informe.txt')
+            ->call('sendSticker', 'ternura')
+            ->assertSee('img/support/stickers/ternura.jpg', false)
+            ->call('sendSticker', 'sticker-no-permitido');
+
+        $storedFile = SupportChatMessage::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('attachment_path')
+            ->firstOrFail();
+
+        Storage::disk('public')->assertExists($storedFile->attachment_path);
+        $this->assertSame('informe.txt', $storedFile->attachment_original_name);
+        $this->assertSame(1, SupportChatMessage::query()->where('sticker_key', 'ternura')->count());
+        $this->assertSame(0, SupportChatMessage::query()->where('sticker_key', 'sticker-no-permitido')->count());
+        $component->assertSee('/storage/'.$storedFile->attachment_path, false);
+    }
+
     public function test_automated_account_posts_one_greeting_per_time_period_and_stays_online(): void
     {
         $user = User::factory()->create();
@@ -121,7 +180,7 @@ class SupportModuleTest extends TestCase
             ->assertSee('Sofia Soporte (bot)')
             ->assertSee('sofia.soporte@sistema.local')
             ->assertSee('img/support/sofia-avatar.svg', false)
-            ->assertSee('martes 11 de agosto de 2026')
+            ->assertSee('05 ago. – 11 ago. 2026')
             ->assertSee('Buenos días');
 
         $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'sofia.soporte@sistema.local'));
@@ -133,7 +192,7 @@ class SupportModuleTest extends TestCase
         ]);
 
         $component->set('message', '@sof');
-        $this->assertFalse(collect($component->get('mentionSuggestions'))->contains('email', 'sofia.soporte@sistema.local'));
+        $this->assertTrue(collect($component->get('mentionSuggestions'))->contains('email', 'sofia.soporte@sistema.local'));
 
         $this->assertDatabaseHas('support_chat_messages', [
             'message' => 'Buenos días',
@@ -152,6 +211,90 @@ class SupportModuleTest extends TestCase
         $this->assertSame(3, SupportChatMessage::query()->whereNotNull('automatic_key')->count());
 
         Carbon::setTestNow();
+    }
+
+    public function test_sofia_only_answers_when_a_user_addresses_her_and_uses_local_rules(): void
+    {
+        $user = User::factory()->create(['name' => 'Marina']);
+        RateLimiter::clear('support-chat:'.$user->id);
+
+        $component = Livewire::actingAs($user)->test(TicketChat::class);
+
+        $component
+            ->set('message', 'Hola Carlos, ¿cómo estás?')
+            ->call('sendMessage')
+            ->assertHasNoErrors();
+
+        $this->assertSame(0, SupportChatMessage::query()->where('automatic_key', 'like', 'bot-reply:%')->count());
+
+        $component
+            ->set('message', 'Sofía, olvidé mi contraseña')
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('Para cambiar tu contraseña');
+
+        $question = SupportChatMessage::query()
+            ->where('user_id', $user->id)
+            ->where('message', 'Sofía, olvidé mi contraseña')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('support_chat_messages', [
+            'automatic_key' => 'bot-reply:'.$question->id,
+            'message' => 'Para cambiar tu contraseña, abre Mi cuenta, entra a Mi perfil y busca la sección Cambiar contraseña. Si olvidaste la actual, utiliza “¿Olvidaste tu contraseña?” en el inicio de sesión.',
+        ]);
+    }
+
+    public function test_sofia_mentions_and_notifies_the_help_recipient_when_someone_reports_a_problem(): void
+    {
+        $sender = User::factory()->create(['name' => 'Laura']);
+        $helpRecipient = User::factory()->create([
+            'name' => 'Dioni',
+            'last_name' => 'Colaborador',
+            'email' => 'administrador@datamid.com.mx',
+        ]);
+        RateLimiter::clear('support-chat:'.$sender->id);
+
+        Livewire::actingAs($sender)
+            ->test(TicketChat::class)
+            ->set('message', 'Sofía, necesito ayuda porque aparece un error')
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('@dioni-colaborador-'.$helpRecipient->id);
+
+        $notification = $helpRecipient->fresh()->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame('Te mencionaron en Soporte', $notification->data['title']);
+        $this->assertStringContainsString('Sofia Soporte (bot) te mencionó', $notification->data['message']);
+        $this->assertSame(route('soporte.ticket'), $notification->data['action_url']);
+
+        $helpRecipient->update([
+            'name' => 'Nuevo nombre',
+            'last_name' => 'Actualizado',
+            'email' => 'correo-nuevo@example.test',
+        ]);
+
+        Livewire::actingAs($sender)
+            ->test(TicketChat::class)
+            ->set('message', 'Sofía, el sistema no funciona y necesito soporte')
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('@nuevo-nombre-actualizado-'.$helpRecipient->id);
+
+        $this->assertTrue($helpRecipient->fresh()->is_support_help_recipient);
+        $this->assertSame(2, $helpRecipient->fresh()->notifications()->count());
+
+        $helpRecipient->delete();
+
+        Livewire::actingAs($sender)
+            ->test(TicketChat::class)
+            ->set('message', 'Sofía, necesito ayuda con otra falla')
+            ->call('sendMessage')
+            ->assertHasNoErrors()
+            ->assertSee('Cuéntame brevemente qué apartado presenta el problema');
+
+        $this->assertDatabaseMissing('users', ['id' => $helpRecipient->id]);
+        $this->assertSame(3, SupportChatMessage::query()->where('automatic_key', 'like', 'bot-reply:%')->count());
     }
 
     public function test_all_users_can_read_messages_sent_today(): void
@@ -334,7 +477,9 @@ class SupportModuleTest extends TestCase
             ->call('sendMessage')
             ->assertHasNoErrors();
 
-        $component->assertSee('@laura-mendez-'.$recipient->id);
+        $component
+            ->assertSee('@laura-mendez-'.$recipient->id)
+            ->assertSee('<span class="font-semibold text-blue-600">@laura-mendez-'.$recipient->id.'</span>', false);
 
         $notification = $recipient->fresh()->notifications()->first();
 
@@ -416,18 +561,27 @@ class SupportModuleTest extends TestCase
             ->assertDontSee('offline@example.test');
     }
 
-    public function test_opening_the_chat_removes_messages_from_previous_days(): void
+    public function test_chat_keeps_messages_for_seven_days_and_removes_older_messages(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-08-10 12:00:00', config('support.timezone')));
 
         $user = User::factory()->create();
-        $oldMessage = SupportChatMessage::create([
+        $recentMessage = SupportChatMessage::create([
             'user_id' => $user->id,
             'message' => 'Mensaje del día anterior.',
         ]);
-        $oldMessage->forceFill([
+        $recentMessage->forceFill([
             'created_at' => Carbon::now(config('support.timezone'))->subDay()->utc(),
             'updated_at' => Carbon::now(config('support.timezone'))->subDay()->utc(),
+        ])->save();
+
+        $expiredMessage = SupportChatMessage::create([
+            'user_id' => $user->id,
+            'message' => 'Mensaje de hace ocho días.',
+        ]);
+        $expiredMessage->forceFill([
+            'created_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
+            'updated_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
         ])->save();
 
         SupportChatMessage::create([
@@ -437,10 +591,12 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->assertDontSee('Mensaje del día anterior.')
+            ->assertSee('Mensaje del día anterior.')
+            ->assertDontSee('Mensaje de hace ocho días.')
             ->assertSee('Mensaje de hoy.');
 
-        $this->assertDatabaseMissing('support_chat_messages', ['id' => $oldMessage->id]);
+        $this->assertDatabaseHas('support_chat_messages', ['id' => $recentMessage->id]);
+        $this->assertDatabaseMissing('support_chat_messages', ['id' => $expiredMessage->id]);
 
         Carbon::setTestNow();
     }

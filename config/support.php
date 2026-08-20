@@ -15,6 +15,8 @@ return [
         explode(',', (string) env('SUPPORT_ALWAYS_ONLINE_EMAILS', 'administrador@datamid.com.mx'))
     ))),
 
+    'help_recipient_email' => env('SUPPORT_HELP_RECIPIENT_EMAIL', 'administrador@datamid.com.mx'),
+
     'questions' => [
         'general' => [
             'label' => 'Primeros pasos',

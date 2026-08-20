@@ -11,14 +11,28 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class TicketChat extends Component
 {
+    use WithFileUploads;
+
     public string $message = '';
+
+    public $image = null;
+
+    public $attachment = null;
+
+    private const STICKERS = [
+        'fry-sospecha' => 'img/support/stickers/fry-sospecha.jpg',
+        'avestruz-genial' => 'img/support/stickers/avestruz-genial.jpg',
+        'ternura' => 'img/support/stickers/ternura.jpg',
+    ];
 
     /** @var array<int, array<string, mixed>> */
     public array $messages = [];
@@ -42,11 +56,25 @@ class TicketChat extends Component
     {
         abort_unless(auth()->check(), 403);
 
-        [$start] = $this->dayBounds();
-        SupportChatMessage::withTrashed()->where('created_at', '<', $start)->forceDelete();
+        [$start] = $this->retentionBounds();
+        $expiredMessages = SupportChatMessage::withTrashed()->where('created_at', '<', $start);
+        $expiredImagePaths = (clone $expiredMessages)->whereNotNull('image_path')->pluck('image_path')->all();
+
+        if ($expiredImagePaths !== []) {
+            Storage::disk('public')->delete($expiredImagePaths);
+        }
+        $expiredAttachmentPaths = (clone $expiredMessages)->whereNotNull('attachment_path')->pluck('attachment_path')->all();
+
+        if ($expiredAttachmentPaths !== []) {
+            Storage::disk('public')->delete($expiredAttachmentPaths);
+        }
+
+        $expiredMessages->forceDelete();
 
         $now = Carbon::now($this->timezone());
-        $this->todayLabel = $now->locale('es')->translatedFormat('l d \d\e F \d\e Y');
+        $periodStart = $now->copy()->subDays(6);
+        $this->todayLabel = $periodStart->locale('es')->translatedFormat('d M')
+            .' – '.$now->locale('es')->translatedFormat('d M Y');
         $this->automatedUserId = (int) $this->automatedUser()->id;
         $this->canDeleteAllMessages = $this->isSupportAdministrator(auth()->user()->loadMissing('role'));
         $this->alwaysOnlineUserIds = User::query()
@@ -81,7 +109,6 @@ class TicketChat extends Component
             ->select(['id', 'name', 'last_name', 'email', 'profile_photo_path'])
             ->whereKey($userId)
             ->whereKeyNot(auth()->id())
-            ->whereKeyNot($this->automatedUserId)
             ->first();
 
         if (! $user || ! preg_match('/(?:^|\s)@[\pL\pN._-]*$/u', $this->message)) {
@@ -99,17 +126,80 @@ class TicketChat extends Component
         $this->mentionSuggestions = [];
     }
 
+    public function appendEmoji(string $emoji): void
+    {
+        $allowed = ['😀', '😂', '😊', '😍', '👍', '👏', '🙏', '🎉', '❤️', '✅', '👀', '🤝'];
+
+        if (! in_array($emoji, $allowed, true) || mb_strlen($this->message.$emoji) > 1000) {
+            return;
+        }
+
+        $this->message .= $emoji;
+        $this->updatedMessage($this->message);
+    }
+
+    public function removeImage(): void
+    {
+        $this->reset('image');
+        $this->resetValidation('image');
+    }
+
+    public function removeAttachment(): void
+    {
+        $this->reset('attachment');
+        $this->resetValidation('attachment');
+    }
+
+    public function sendSticker(string $stickerKey): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+
+        if (! array_key_exists($stickerKey, self::STICKERS)) {
+            return;
+        }
+
+        $rateKey = 'support-chat:'.$user->getAuthIdentifier();
+        if (RateLimiter::tooManyAttempts($rateKey, 12)) {
+            $this->addError('message', 'Espera unos segundos antes de enviar más mensajes.');
+
+            return;
+        }
+
+        RateLimiter::hit($rateKey, 60);
+        SupportChatMessage::create([
+            'user_id' => $user->getAuthIdentifier(),
+            'message' => '',
+            'sticker_key' => $stickerKey,
+        ]);
+
+        $this->refreshMessages();
+        $this->dispatch('support-message-sent');
+    }
+
     public function sendMessage(): void
     {
         $user = auth()->user();
         abort_unless($user, 403);
 
         $validated = $this->validate([
-            'message' => ['required', 'string', 'max:1000'],
+            'message' => ['nullable', 'string', 'max:1000'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,zip', 'max:10240'],
         ], [
-            'message.required' => 'Escribe un mensaje antes de enviarlo.',
             'message.max' => 'El mensaje no puede superar los 1000 caracteres.',
+            'image.image' => 'El archivo adjunto debe ser una imagen válida.',
+            'image.mimes' => 'La imagen debe ser JPG, PNG o WebP.',
+            'image.max' => 'La imagen no puede superar los 5 MB.',
+            'attachment.mimes' => 'El archivo debe ser PDF, Word, Excel, CSV, TXT o ZIP.',
+            'attachment.max' => 'El archivo no puede superar los 10 MB.',
         ]);
+
+        if (trim((string) ($validated['message'] ?? '')) === '' && ! $this->image && ! $this->attachment) {
+            $this->addError('message', 'Escribe un mensaje o adjunta una imagen o archivo antes de enviar.');
+
+            return;
+        }
 
         $rateKey = 'support-chat:'.$user->getAuthIdentifier();
         if (RateLimiter::tooManyAttempts($rateKey, 12)) {
@@ -120,14 +210,35 @@ class TicketChat extends Component
 
         RateLimiter::hit($rateKey, 60);
 
-        $message = SupportChatMessage::create([
-            'user_id' => $user->getAuthIdentifier(),
-            'message' => trim($validated['message']),
-        ]);
+        $imagePath = $this->image?->storePublicly('support-chat-images', 'public');
+        $attachmentPath = $this->attachment?->storePublicly('support-chat-files', 'public');
+
+        try {
+            $message = SupportChatMessage::create([
+                'user_id' => $user->getAuthIdentifier(),
+                'message' => trim((string) ($validated['message'] ?? '')),
+                'image_path' => $imagePath,
+                'image_original_name' => $this->image?->getClientOriginalName(),
+                'attachment_path' => $attachmentPath,
+                'attachment_original_name' => $this->attachment?->getClientOriginalName(),
+                'attachment_mime' => $this->attachment?->getMimeType(),
+                'attachment_size' => $this->attachment?->getSize(),
+            ]);
+        } catch (Throwable $exception) {
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            if ($attachmentPath) {
+                Storage::disk('public')->delete($attachmentPath);
+            }
+
+            throw $exception;
+        }
 
         $this->notifyMentionedUsers($message, $user);
+        $this->respondAsAutomatedUser($message, $user);
 
-        $this->reset('message');
+        $this->reset(['message', 'image', 'attachment']);
         $this->mentionSuggestions = [];
         $this->refreshMessages();
         $this->dispatch('support-message-sent');
@@ -136,7 +247,7 @@ class TicketChat extends Component
     public function refreshMessages(): void
     {
         $this->ensureCurrentGreeting();
-        $this->messages = $this->todayMessages();
+        $this->messages = $this->recentMessages();
         $this->refreshOnlineUsers();
         $this->dispatch('support-messages-refreshed');
     }
@@ -159,7 +270,7 @@ class TicketChat extends Component
     {
         abort_unless(auth()->check(), 403);
 
-        $messages = $this->todayMessages(includePdfPhotos: true);
+        $messages = $this->recentMessages(includePdfPhotos: true);
         $date = Carbon::now($this->timezone());
         $pdf = Pdf::loadView('pdf.support-ticket-conversation', [
             'messages' => $messages,
@@ -176,9 +287,9 @@ class TicketChat extends Component
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function todayMessages(bool $includePdfPhotos = false): array
+    private function recentMessages(bool $includePdfPhotos = false): array
     {
-        [$start, $end] = $this->dayBounds();
+        [$start, $end] = $this->retentionBounds();
         $currentUserId = (int) auth()->id();
 
         return SupportChatMessage::query()
@@ -188,20 +299,37 @@ class TicketChat extends Component
             ->oldest('created_at')
             ->oldest('id')
             ->get()
-            ->map(fn (SupportChatMessage $message): array => [
-                'id' => $message->id,
-                'name' => trim(($message->user?->name ?? 'Usuario').' '.($message->user?->last_name ?? '')),
-                'email' => $message->user?->email ?? 'Correo no disponible',
-                'message' => $message->trashed() ? '' : $message->message,
-                'automatic_key' => $message->automatic_key,
-                'photo_url' => $message->user ? $this->profilePhotoUrl($message->user) : null,
-                'pdf_photo_data' => $includePdfPhotos && $message->user ? $this->profilePhotoDataUri($message->user) : null,
-                'time' => $message->created_at->timezone($this->timezone())->format('H:i'),
-                'is_mine' => (int) $message->user_id === $currentUserId,
-                'is_deleted' => $message->trashed(),
-                'can_delete' => ! $message->trashed()
-                    && ((int) $message->user_id === $currentUserId || $this->canDeleteAllMessages),
-            ])
+            ->map(function (SupportChatMessage $message) use ($currentUserId, $includePdfPhotos): array {
+                $createdAt = $message->created_at->timezone($this->timezone());
+                $isToday = $createdAt->isSameDay(Carbon::now($this->timezone()));
+
+                return [
+                    'id' => $message->id,
+                    'user_id' => (int) $message->user_id,
+                    'name' => trim(($message->user?->name ?? 'Usuario').' '.($message->user?->last_name ?? '')),
+                    'email' => $message->user?->email ?? 'Correo no disponible',
+                    'message' => $message->trashed() ? '' : $message->message,
+                    'message_html' => $message->trashed() ? '' : $this->highlightMentions($message->message),
+                    'image_url' => ! $message->trashed() && $message->image_path ? $this->supportImageUrl($message->image_path) : null,
+                    'image_name' => $message->image_original_name,
+                    'attachment_url' => ! $message->trashed() && $message->attachment_path ? $this->supportImageUrl($message->attachment_path) : null,
+                    'attachment_name' => $message->attachment_original_name,
+                    'attachment_size' => $message->attachment_size,
+                    'sticker_url' => ! $message->trashed() && isset(self::STICKERS[$message->sticker_key])
+                        ? url('/'.self::STICKERS[$message->sticker_key])
+                        : null,
+                    'automatic_key' => $message->automatic_key,
+                    'photo_url' => $message->user ? $this->profilePhotoUrl($message->user) : null,
+                    'pdf_photo_data' => $includePdfPhotos && $message->user ? $this->profilePhotoDataUri($message->user) : null,
+                    'time' => $createdAt->format('H:i'),
+                    'date_key' => $createdAt->toDateString(),
+                    'date_label' => ($isToday ? 'Hoy · ' : '').$createdAt->locale('es')->translatedFormat('D d M'),
+                    'is_mine' => (int) $message->user_id === $currentUserId,
+                    'is_deleted' => $message->trashed(),
+                    'can_delete' => ! $message->trashed()
+                        && ((int) $message->user_id === $currentUserId || $this->canDeleteAllMessages),
+                ];
+            })
             ->all();
     }
 
@@ -215,7 +343,7 @@ class TicketChat extends Component
 
         $people = User::query()
             ->select(['id', 'name', 'last_name', 'email', 'profile_photo_path'])
-            ->whereNotIn('id', array_filter([(int) auth()->id(), $this->automatedUserId]))
+            ->whereKeyNot((int) auth()->id())
             ->when($searchTerm, function ($builder) use ($searchTerm): void {
                 $like = '%'.$searchTerm.'%';
                 $builder->where(function ($query) use ($like): void {
@@ -373,6 +501,26 @@ class TicketChat extends Component
         return ($slug !== '' ? $slug : 'usuario').'-'.$user->id;
     }
 
+    private function highlightMentions(string $message): string
+    {
+        $escapedMessage = e($message);
+
+        return preg_replace(
+            '/(@todos\b|@[\pL\pN._-]+-\d+\b)/ui',
+            '<span class="font-semibold text-blue-600">$1</span>',
+            $escapedMessage
+        ) ?? $escapedMessage;
+    }
+
+    private function supportImageUrl(string $path): string
+    {
+        if (config('filesystems.disks.public.driver') === 'local') {
+            return url('/storage/'.ltrim($path, '/'));
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
     private function userName(User $user): string
     {
         return trim($user->name.' '.($user->last_name ?? '')) ?: 'Usuario';
@@ -382,7 +530,7 @@ class TicketChat extends Component
     {
         return collect(preg_split('/\s+/', trim($name)))
             ->filter()
-            ->take(2)
+            ->take(1)
             ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
             ->implode('') ?: '?';
     }
@@ -448,6 +596,135 @@ class TicketChat extends Component
         }
 
         return 'Buenas noches';
+    }
+
+    private function respondAsAutomatedUser(SupportChatMessage $message, User $sender): void
+    {
+        if ((int) $sender->id === (int) $this->automatedUserId || ! $this->messageAddressesAutomatedUser($message->message)) {
+            return;
+        }
+
+        $automaticKey = 'bot-reply:'.$message->id;
+
+        $reply = $this->automatedReplyFor($message->message, $sender);
+        $helpRecipient = $this->messageNeedsHumanAttention($message->message)
+            ? $this->helpRecipient()
+            : null;
+
+        if ($helpRecipient) {
+            $reply .= "\n\n@".$this->mentionHandle($helpRecipient).' ¿puedes revisar esta solicitud de ayuda?';
+        }
+
+        SupportChatMessage::query()->insertOrIgnore([
+            'user_id' => $this->automatedUserId ?: $this->automatedUser()->id,
+            'message' => $reply,
+            'automatic_key' => $automaticKey,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $botReply = SupportChatMessage::query()->where('automatic_key', $automaticKey)->first();
+        $botUser = User::query()->find($this->automatedUserId);
+
+        if ($botReply && $botUser && $helpRecipient) {
+            $this->notifyMentionedUsers($botReply, $botUser);
+        }
+    }
+
+    private function messageNeedsHumanAttention(string $message): bool
+    {
+        $text = Str::lower(Str::ascii($message));
+
+        return Str::contains($text, [
+            'ayuda', 'soporte', 'problema', 'error', 'falla', 'no funciona',
+            'no puedo', 'urgente', 'incidente', 'reportar',
+        ]);
+    }
+
+    private function helpRecipient(): ?User
+    {
+        $recipient = User::query()
+            ->where('is_support_help_recipient', true)
+            ->oldest('id')
+            ->first();
+
+        if ($recipient) {
+            return $recipient;
+        }
+
+        $email = trim((string) config('support.help_recipient_email'));
+
+        $recipient = $email !== ''
+            ? User::query()->where('email', $email)->first()
+            : null;
+
+        if ($recipient) {
+            $recipient->forceFill(['is_support_help_recipient' => true])->saveQuietly();
+        }
+
+        return $recipient;
+    }
+
+    private function messageAddressesAutomatedUser(string $message): bool
+    {
+        $normalized = Str::lower(Str::ascii(trim($message)));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $mentionsBotById = preg_match(
+            '/@[\pL\pN._-]+-'.preg_quote((string) $this->automatedUserId, '/').'\b/ui',
+            $message
+        ) === 1;
+
+        return $mentionsBotById
+            || preg_match('/(?:^|\s)@sofia\b/u', $normalized) === 1
+            || preg_match('/^sofia(?:\s|[,.:;!?])/u', $normalized) === 1;
+    }
+
+    private function automatedReplyFor(string $message, User $sender): string
+    {
+        $text = Str::lower(Str::ascii($message));
+        $firstName = trim((string) $sender->name) ?: 'colaborador';
+
+        if (Str::contains($text, ['contrasena', 'password', 'clave', 'no puedo entrar', 'iniciar sesion'])) {
+            return 'Para cambiar tu contraseña, abre Mi cuenta, entra a Mi perfil y busca la sección Cambiar contraseña. Si olvidaste la actual, utiliza “¿Olvidaste tu contraseña?” en el inicio de sesión.';
+        }
+
+        if (Str::contains($text, ['cronometro', 'temporizador', 'actividad', 'control de horas', 'registrar tiempo'])) {
+            return 'Entra a Actividades > Control de horas > Cronómetro. Selecciona el cliente y la actividad, y después pulsa Iniciar actividad. Solo puede existir un cronómetro activo a la vez.';
+        }
+
+        if (Str::contains($text, ['reloj checador', 'entrada', 'salida', 'marcar hora', 'asistencia'])) {
+            return 'Puedes consultar tus registros en Actividades > Control de horas > Reloj checador. Ahí encontrarás entradas, salidas y el resumen del periodo seleccionado.';
+        }
+
+        if (Str::contains($text, ['perfil', 'foto', 'correo', 'nombre', 'apellido', 'cuenta'])) {
+            return 'Abre Mi cuenta y selecciona Mi perfil. Desde Editar perfil puedes actualizar nombres, apellidos, correo, descripción, fotografía y opciones de seguridad.';
+        }
+
+        if (Str::contains($text, ['ticket', 'soporte', 'problema', 'error', 'falla', 'ayuda'])) {
+            return 'Cuéntame brevemente qué apartado presenta el problema y qué estabas intentando hacer. También puedes adjuntar una imagen o un archivo para que el equipo de soporte tenga más contexto.';
+        }
+
+        if (Str::contains($text, ['archivo', 'adjuntar', 'imagen', 'documento', 'sticker', 'emoji'])) {
+            return 'Debajo del campo de mensaje encontrarás opciones para adjuntar imágenes, archivos, emojis y stickers. Selecciona el contenido y después pulsa Enviar.';
+        }
+
+        if (Str::contains($text, ['gracias', 'muchas gracias', 'te agradezco'])) {
+            return 'Con gusto, '.$firstName.'. Si necesitas otra cosa, mencióname nuevamente.';
+        }
+
+        if (Str::contains($text, ['adios', 'hasta luego', 'nos vemos'])) {
+            return 'Hasta luego, '.$firstName.'. Estaré disponible cuando vuelvas a necesitar ayuda.';
+        }
+
+        if (Str::contains($text, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'que tal'])) {
+            return 'Hola, '.$firstName.'. Puedo ayudarte con tu perfil, contraseña, control de horas, cronómetro, archivos y soporte. ¿Qué necesitas consultar?';
+        }
+
+        return 'No identifiqué con claridad la consulta. Puedo ayudarte con perfil, contraseña, control de horas, cronómetro, archivos o soporte. Escríbeme uno de esos temas para orientarte.';
     }
 
     private function ensureCurrentGreeting(): void
@@ -558,12 +835,12 @@ class TicketChat extends Component
     }
 
     /** @return array{0: Carbon, 1: Carbon} */
-    private function dayBounds(): array
+    private function retentionBounds(): array
     {
         $now = Carbon::now($this->timezone());
 
         return [
-            $now->copy()->startOfDay()->timezone($this->applicationTimezone()),
+            $now->copy()->subDays(7)->timezone($this->applicationTimezone()),
             $now->copy()->endOfDay()->timezone($this->applicationTimezone()),
         ];
     }
