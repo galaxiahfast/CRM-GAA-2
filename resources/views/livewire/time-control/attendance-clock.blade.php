@@ -1,30 +1,100 @@
-<div wire:ignore class="min-h-[calc(100dvh-90px)] w-full min-w-[800px] bg-[#f4f4f4] text-[15px]">
+<div wire:ignore class="attendance-clock-modern relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+    x-data="{ viewScale: 100, isFullscreen: false,
+        init() { const saved = Number(localStorage.getItem('attendance-clock-view-scale')); if (saved >= 70 && saved <= 100) this.viewScale = saved },
+        saveScale() { localStorage.setItem('attendance-clock-view-scale', String(this.viewScale)) },
+        async toggleFullscreen() { if (document.fullscreenElement === $root) return document.exitFullscreen(); if (document.fullscreenElement) await document.exitFullscreen(); await $root.requestFullscreen() }
+    }" @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root">
 
 <style>
     .attendance-clock-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .attendance-clock-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
-    .attendance-clock-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
-    .attendance-clock-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; }
+    .attendance-clock-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .attendance-clock-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
+    .attendance-clock-scrollbar { scrollbar-width: thin; scrollbar-color: #000 transparent; }
+    .attendance-clock-modern:fullscreen { overflow: auto; background: #fff; }
+    .attendance-clock-modern input:focus,
+    .attendance-clock-modern button:focus,
+    .attendance-clock-modern button:focus-visible { outline: none !important; box-shadow: none !important; }
+    .attendance-clock-modern #panel_resultados_checador article,
+    .attendance-clock-modern #panel_resultados_checador > section {
+        border-color: #e4e4e7 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .05) !important;
+    }
+    .attendance-clock-modern #panel_resultados_checador > section:first-child article > span:first-child { background: #000 !important; }
+    .attendance-clock-modern #panel_resultados_checador > section:first-child article header > span:first-child,
+    .attendance-clock-modern #panel_resultados_checador > section:nth-child(2) article header > span:first-child,
+    .attendance-clock-modern #panel_resultados_checador > section:nth-child(3) header > div:first-child > span:first-child {
+        border: 1px solid #e4e4e7 !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+    .attendance-clock-modern #kpi_tiempo_neto,
+    .attendance-clock-modern #kpi_horas_decimales,
+    .attendance-clock-modern #kpi_pago_base,
+    .attendance-clock-modern #kpi_bono,
+    .attendance-clock-modern #kpi_total_dia,
+    .attendance-clock-modern #promedio_tiempo_checador,
+    .attendance-clock-modern #promedio_ganancias_checador,
+    .attendance-clock-modern #total_general { color: #000 !important; }
+    .attendance-clock-modern #panel_resultados_checador article > header,
+    .attendance-clock-modern #panel_resultados_checador section > header { background: rgba(255,255,255,.65) !important; }
+    .attendance-clock-modern #checador_export_bar button {
+        border-color: #e4e4e7 !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+    .attendance-clock-modern table thead,
+    .attendance-clock-modern table tfoot { background: #fafafa !important; }
+    .attendance-clock-modern table th { color: #3f3f46 !important; }
+    .attendance-clock-modern * { scrollbar-width: thin; scrollbar-color: #000 transparent; }
+    @media (max-width: 1100px) {
+        .attendance-clock-modern .attendance-topbar { flex-wrap: wrap; padding: 30px !important; }
+        .attendance-clock-modern .attendance-heading { align-items: flex-start; flex-direction: column; }
+        .attendance-clock-modern .attendance-heading > .no-print { justify-content: flex-start; }
+    }
+    @media (max-width: 767px) {
+        .attendance-clock-modern .attendance-topbar { padding: 20px !important; overflow-x: auto; }
+        .attendance-clock-modern .attendance-heading,
+        .attendance-clock-modern .attendance-filters,
+        .attendance-clock-modern #panel_resultados_checador,
+        .attendance-clock-modern > div > div > p { margin-left: 20px !important; margin-right: 20px !important; }
+        .attendance-clock-modern .attendance-heading { margin-top: 30px !important; }
+        .attendance-clock-modern .attendance-filters > div { width: 100% !important; }
+        .attendance-clock-modern .attendance-heading > .no-print { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+    }
+    @media print {
+        .attendance-clock-modern .no-print { display: none !important; }
+    }
 </style>
 
-<div class="min-h-[calc(100dvh-90px)] w-full min-w-[800px] bg-[#f4f4f4]">
-    <div class="w-full min-w-[800px]">
-        <div class="flex items-center justify-between gap-20 whitespace-nowrap border-b-2 border-[#e5e7eb] px-10 py-10 text-[15px] text-gray-500">
+<div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+    <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño del Reloj checador">
+    <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
+    <span class="h-5 w-px bg-zinc-200"></span>
+    <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none hover:bg-zinc-100 focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+        <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
+        <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
+    </button>
+</div>
+
+<div class="relative z-10 min-h-[calc(100dvh-90px)] w-full origin-top bg-white" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
+    <div class="w-full min-w-0">
+        <div class="attendance-topbar flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px] text-[15px] text-zinc-500">
             <div class="flex items-center gap-[15px]">
                 <span class="font-medium">Actividades</span>
                 <span class="font-light text-gray-300">&gt;</span>
                 <span class="font-medium">Control de Horas</span>
                 <span class="font-light text-gray-300">&gt;</span>
-                <span class="font-semibold text-[#1A3A6B]">Reloj Checador</span>
+                <span class="font-semibold text-black">Reloj Checador</span>
             </div>
-            <div class="flex items-center gap-[30px]">
-                <button type="button" onclick="exportarChecador('pdf')" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 text-[15px] font-medium text-gray-500 transition-colors hover:text-[#1A3A6B]">
+            <div class="no-print flex items-center gap-[20px]">
+                <button type="button" onclick="exportarChecador('pdf')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     Descargar PDF
                 </button>
-                <button type="button" onclick="window.print()" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 text-[15px] font-medium text-gray-500 transition-colors hover:text-[#1A3A6B]">
+                <button type="button" onclick="window.print()" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" />
                     </svg>
@@ -33,39 +103,43 @@
             </div>
         </div>
 
-        <div class="mx-20 mt-20 flex items-start gap-[15px]">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center bg-[#1A3A6B]/10 text-[#1A3A6B]">
+        <div class="attendance-heading mx-[50px] mt-[50px] flex items-center justify-between gap-[20px]">
+            <div class="flex min-w-0 items-center gap-[20px]">
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Reloj Checador</h1>
-                <p class="mt-1 text-[15px] text-gray-500">Consulta tus marcas biométricas y el resumen acumulado del periodo.</p>
+                <h1 class="text-xl font-semibold tracking-tight text-black">Reloj Checador</h1>
+                <p class="mt-[5px] text-[15px] text-zinc-500">Consulta tus marcas biométricas y el resumen acumulado del periodo.</p>
+            </div>
+            </div>
+            <div class="no-print flex flex-wrap justify-end gap-[10px]">
+                <a href="{{ route('time.index') }}" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-black hover:bg-zinc-100">Cronómetro <span>›</span></a>
+                <a href="{{ route('time.reports') }}" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-black hover:bg-zinc-100">Productividad <span>›</span></a>
+                <a href="{{ route('time.dashboard') }}" class="inline-flex items-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-white hover:bg-zinc-800">Panel de control <span>›</span></a>
             </div>
         </div>
 
-        <p class="mx-20 mt-6 max-w-2xl text-[15px] leading-8 text-gray-500">
-            Visualiza las marcas registradas por día,<br>
-            con cálculo de tiempo y acumulados durante el periodo seleccionado.
-        </p>
+        <p class="mx-[50px] mt-[20px] max-w-2xl text-[15px] leading-6 text-zinc-500">Visualiza las marcas registradas por día, con cálculo de tiempo y acumulados durante el periodo seleccionado.</p>
 
         <input type="hidden" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}">
 
-        <div class="mx-20 mb-10 mt-10 flex flex-nowrap items-end gap-[30px]">
+        <div class="attendance-filters mx-[50px] mb-[20px] mt-[20px] flex flex-wrap items-end gap-[20px] rounded-xl border border-zinc-200 bg-white/65 p-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
             <div class="w-[180px] shrink-0">
-                <label class="mb-2 block text-[15px] font-medium text-[#1A3A6B]">Fecha Inicio</label>
+                <label class="mb-[10px] block text-[15px] font-semibold text-black">Fecha Inicio</label>
                 <input type="date" id="fecha_inicio" value="{{ date('Y-m-d', strtotime('-14 days')) }}"
-                    class="h-[50px] w-full rounded-none border border-[#d1d5db] bg-transparent px-5 text-[15px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10">
+                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black outline-none transition focus:border-zinc-400 focus:ring-0">
             </div>
             <div class="w-[180px] shrink-0">
-                <label class="mb-2 block text-[15px] font-medium text-[#1A3A6B]">Fecha Fin</label>
+                <label class="mb-[10px] block text-[15px] font-semibold text-black">Fecha Fin</label>
                 <input type="date" id="fecha_fin" value="{{ date('Y-m-d') }}"
-                    class="h-[50px] w-full rounded-none border border-[#d1d5db] bg-transparent px-5 text-[15px] text-gray-700 outline-none transition focus:border-[#1A3A6B] focus:ring-4 focus:ring-[#1A3A6B]/10">
+                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black outline-none transition focus:border-zinc-400 focus:ring-0">
             </div>
             <div class="w-[180px] shrink-0">
                 <button id="btn_revisar_horas" type="button" onclick="revisarHorasChecador()"
-                    class="inline-flex h-[50px] w-full items-center justify-center gap-2 rounded-none border-0 bg-[#1A3A6B] px-5 text-[15px] font-semibold text-white shadow-md transition-colors hover:bg-[#15305a] disabled:cursor-wait disabled:opacity-70">
+                    class="inline-flex h-[50px] w-full items-center justify-center gap-[10px] rounded-xl border-0 bg-black px-[20px] text-[15px] font-normal text-white transition-colors hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-70">
                     <svg id="icono_buscar_checador" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
                     </svg>
@@ -78,7 +152,7 @@
             </div>
         </div>
 
-        <div id="panel_resultados_checador" class="mx-20 mb-10 space-y-8 text-[15px]">
+        <div id="panel_resultados_checador" class="mx-[50px] mb-[50px] space-y-[20px] text-[15px]">
             <section aria-label="Acumulados del periodo" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
                     <span class="absolute inset-x-0 top-0 h-1 bg-[#1A3A6B]"></span>
@@ -621,7 +695,7 @@ function actualizarGraficasChecador(resumen = []) {
 
     renderizarGraficaSvgChecador('grafica_tiempo_checador', etiquetas, tiemposSegundos, {
         tipo: 'linea',
-        color: '#1A3A6B',
+        color: '#000000',
         descripcion: 'Evolución del tiempo neto por día',
         formatearEje: valor => formatearSegundosChecador(valor).replaceAll('h ', ':').replaceAll('m ', ':').replace('s', ''),
         formatearDetalle: (_valor, indice) => formatearSegundosChecador(tiemposSegundos[indice]),
@@ -629,7 +703,7 @@ function actualizarGraficasChecador(resumen = []) {
 
     renderizarGraficaSvgChecador('grafica_ganancias_checador', etiquetas, ganancias, {
         tipo: 'barras',
-        color: '#10B981',
+        color: '#000000',
         descripcion: 'Evolución de las ganancias por día',
         formatearEje: valor => formatoMoneda.format(valor),
         formatearDetalle: valor => formatoMoneda.format(valor),
