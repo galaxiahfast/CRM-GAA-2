@@ -6,19 +6,29 @@
 @endphp
 
 <x-app-layout>
-    <div class="time-dashboard-modern w-full min-h-screen bg-white text-[15px] text-zinc-700" style="overflow-x: auto;">
+    <div id="timeDashboardRoot" class="time-dashboard-modern w-full min-h-screen bg-white text-[15px] text-zinc-700" style="overflow-x: hidden;">
 
-        <!-- Contenedor interno con min-width: 700px -->
-        <div style="min-width: 600px; padding: 0; margin: 0;">
+        <div style="width: 100%; min-width: 0; padding: 0; margin: 0;">
 
             <!-- Header Superior con Migas de Pan -->
-            <div class="time-dashboard-topbar" style="padding: 50px; border-bottom: 1px solid #e4e4e7; background-color: rgba(255,255,255,.75); display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 50px;">
+            <div class="time-dashboard-topbar" style="position: relative; padding: 50px; border-bottom: 1px solid #e4e4e7; background-color: rgba(255,255,255,.75); display: flex; align-items: center; justify-content: space-between; min-width: 0; gap: 30px;">
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
                     <span style="font-weight: 500;">Actividades</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
                     <span style="font-weight: 500;">Control de Horas</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
                     <a href="{{ route('time.dashboard') }}" style="color: #000; font-weight: 600; text-decoration: none;">Panel de control</a>
+                </div>
+
+                <div class="dashboard-view-controls" role="group" aria-label="Controles de visualización">
+                    <button id="dashboardZoomOut" type="button" aria-label="Alejar panel" title="Alejar">−</button>
+                    <button id="dashboardZoomReset" type="button" class="dashboard-zoom-value" aria-label="Restablecer zoom" title="Restablecer zoom">100%</button>
+                    <button id="dashboardZoomIn" type="button" aria-label="Acercar panel" title="Acercar">+</button>
+                    <span class="dashboard-control-divider" aria-hidden="true"></span>
+                    <button id="dashboardFullscreen" type="button" aria-label="Ver en pantalla completa" title="Pantalla completa">
+                        <svg class="dashboard-expand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5m13-5h5v5M8 21H3v-5m18 0v5h-5"/></svg>
+                        <svg class="dashboard-compress-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"/></svg>
+                    </button>
                 </div>
 
                 <!-- Botones de acción -->
@@ -39,8 +49,9 @@
                 </div>
             </div>
 
+            <div class="time-dashboard-panel relative m-[50px] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
             <!-- Header principal -->
-            <div class="time-dashboard-intro" style="background-color: transparent; padding: 50px; overflow: hidden; min-width: max-content;">
+            <div class="time-dashboard-intro" style="display: grid; grid-template-columns: 380px minmax(0, 1fr); align-items: center; gap: 40px; background-color: transparent; padding: 0; margin-bottom: 20px; overflow: visible; min-width: max-content;">
 
                 <!-- Encabezado -->
                 <div style="border-bottom: none; min-width: max-content;">
@@ -58,13 +69,11 @@
                                     </svg>
                                 </div>
 
-                                <div>
-                                    <h1 style="font-size: 20px; font-weight: 600; color: #000; white-space: nowrap;">
-                                        Panel de control
-                                    </h1>
+                                <div class="time-dashboard-intro-copy min-w-0">
+                                    <h1 style="font-size: 20px; font-weight: 600; color: #000; white-space: nowrap;">Filtros de productividad</h1>
 
-                                    <p style="margin-top: 5px; font-size: 15px; color: #71717a; white-space: nowrap;">
-                                        Supervisión y análisis de productividad
+                                    <p title="Selecciona un colaborador y un periodo para consultar resultados." style="margin-top: 5px; font-size: 15px; color: #71717a; white-space: nowrap;">
+                                        Selecciona un colaborador y un periodo para consultar resultados.
                                     </p>
                                 </div>
 
@@ -76,9 +85,9 @@
                 </div>
 
                 <!-- Filtros -->
-                <div class="time-dashboard-filters" style="background-color: rgba(255,255,255,.7); margin-top: 20px; min-width: max-content; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.05);">
+                <div class="time-dashboard-filters" style="justify-self: end; background-color: transparent; margin-top: 0; min-width: max-content; border: 0; border-radius: 0; padding: 0; box-shadow: none;">
 
-                    <form method="GET" action="{{ route('time.dashboard') }}" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 20px;">
+                    <form method="GET" action="{{ route('time.dashboard') }}" style="display: flex; flex-wrap: nowrap; align-items: flex-end; justify-content: flex-end; gap: 20px;">
 
                         @if ($selectedUser)
                             <input id="selected_user_id" type="hidden" name="user_id" value="{{ $selectedUser->id }}">
@@ -206,26 +215,20 @@
             <!-- ============================================================ -->
             <!-- MENÚ DE PESTAÑAS                                              -->
             <!-- ============================================================ -->
-            <div style="padding-left: 50px; padding-right: 50px; margin-bottom: 20px; background-color: transparent; overflow: hidden;">
-                <div class="time-dashboard-tabs" style="display: flex; flex-wrap: nowrap; gap: 10px; padding: 20px; margin: 0; border: 1px solid #e4e4e7; border-radius: 12px; background: rgba(255,255,255,.7);">
-                    <button class="tab-button active" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 20px; font-size: 15px; font-weight: 500; color: white; border: 1px solid #000; border-radius: 12px; background-color: #000; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-resumen">
-                        <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        Resumen
+            <section class="-mx-[20px] grid overflow-visible border-t border-zinc-200 px-[20px] pt-[20px] xl:grid-cols-[380px_minmax(0,1fr)] xl:gap-[20px]">
+            <div class="border-b border-zinc-200 pb-[20px] xl:border-b-0 xl:pb-0 xl:pr-[20px]" style="background-color: transparent; overflow: hidden;">
+                <div class="time-dashboard-tabs" style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 0; margin: 0; border: 0; background: transparent;">
+                    <button class="tab-button active" style="display: flex; min-height: 150px; align-items: stretch; justify-content: space-between; gap: 20px; padding: 20px; font-size: 15px; color: white; border: 1px solid #000; border-radius: 12px; background-color: #000; cursor: pointer; transition: transform .2s, box-shadow .2s, background-color .2s; outline: none; text-align: left; margin: 0;" data-tab="tab-resumen">
+                        <span style="display:flex; min-width:0; flex-direction:column; justify-content:space-between; gap:20px;"><span><strong style="display:block; font-size:20px; font-weight:600;">Resumen</strong><span style="display:block; margin-top:5px; line-height:1.5; opacity:.72;">Consulta horas, promedios y distribución general.</span></span><span style="display:inline-flex; align-items:center; gap:10px; font-weight:500;">Abrir informe <span aria-hidden="true">›</span></span></span>
+                        <svg style="width:105px; height:80px; flex-shrink:0; align-self:center;" fill="none" stroke="currentColor" viewBox="0 0 120 80" aria-hidden="true"><path opacity=".2" d="M5 70h110M5 50h110M5 30h110M5 10h110"/><path stroke-width="7" stroke-linecap="round" d="M18 65V44M42 65V25M66 65V37M90 65V14"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m14 36 26-17 25 10 29-21"/></svg>
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-detalles">
-                        <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 7v6m0 0l3-3m-3 3l-3-3"/>
-                        </svg>
-                        Detalle
+                    <button class="tab-button" style="display:flex; min-height:150px; align-items:stretch; justify-content:space-between; gap:20px; padding:20px; font-size:15px; color:#000; border:1px solid #e4e4e7; border-radius:12px; background-color:#fff; cursor:pointer; transition:transform .2s, box-shadow .2s, background-color .2s; outline:none; text-align:left; margin:0;" data-tab="tab-detalles">
+                        <span style="display:flex; min-width:0; flex-direction:column; justify-content:space-between; gap:20px;"><span><strong style="display:block; font-size:20px; font-weight:600;">Detalle</strong><span style="display:block; margin-top:5px; line-height:1.5; opacity:.62;">Explora cada actividad o cliente por separado.</span></span><span style="display:inline-flex; align-items:center; gap:10px; font-weight:500;">Abrir informe <span aria-hidden="true">›</span></span></span>
+                        <svg style="width:105px; height:80px; flex-shrink:0; align-self:center;" fill="none" stroke="currentColor" viewBox="0 0 120 80" aria-hidden="true"><circle cx="42" cy="40" r="27" stroke-width="10" opacity=".18"/><path stroke-width="10" stroke-linecap="round" d="M42 13a27 27 0 0 1 23 41"/><path stroke-width="3" stroke-linecap="round" d="m64 60 18 14"/></svg>
                     </button>
-                    <button class="tab-button" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; font-size: 15px; font-weight: 500; color: #6b7280; border-bottom: 2px solid #d1d5db; background-color: transparent; cursor: pointer; transition: all 0.2s; outline: none; white-space: nowrap; flex: 1; margin: 0;" data-tab="tab-nueva">
-                        <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                        </svg>
-                        Cliente-Actividad
+                    <button class="tab-button" style="display:flex; min-height:150px; align-items:stretch; justify-content:space-between; gap:20px; padding:20px; font-size:15px; color:#000; border:1px solid #e4e4e7; border-radius:12px; background-color:#fff; cursor:pointer; transition:transform .2s, box-shadow .2s, background-color .2s; outline:none; text-align:left; margin:0;" data-tab="tab-nueva">
+                        <span style="display:flex; min-width:0; flex-direction:column; justify-content:space-between; gap:20px;"><span><strong style="display:block; font-size:20px; font-weight:600;">Cliente y actividad</strong><span style="display:block; margin-top:5px; line-height:1.5; opacity:.62;">Compara una combinación específica por día.</span></span><span style="display:inline-flex; align-items:center; gap:10px; font-weight:500;">Abrir informe <span aria-hidden="true">›</span></span></span>
+                        <svg style="width:105px; height:80px; flex-shrink:0; align-self:center;" fill="none" stroke="currentColor" viewBox="0 0 120 80" aria-hidden="true"><path opacity=".2" d="M5 70h110M5 50h110M5 30h110M5 10h110"/><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m8 62 20-21 18 9 22-31 18 17 25-28"/><circle cx="28" cy="41" r="4" fill="currentColor" stroke="none"/><circle cx="68" cy="19" r="4" fill="currentColor" stroke="none"/><circle cx="111" cy="8" r="4" fill="currentColor" stroke="none"/></svg>
                     </button>
                 </div>
             </div>
@@ -233,7 +236,7 @@
             <!-- ============================================================ -->
             <!-- CONTENEDORES DE PESTAÑAS                                     -->
             <!-- ============================================================ -->
-            <div class="space-y-[20px]" style="padding: 0 50px 50px; min-width: 765px;">
+            <div class="min-w-0 self-center space-y-[20px]" style="width: 100%; min-width: 0;">
 
                 <!-- ==================== TAB 1: RESUMEN ==================== -->
                 <div id="tab-resumen" class="tab-content space-y-6">
@@ -244,9 +247,9 @@
                             <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                             </svg>
-                            <div>
+                            <div class="dashboard-chart-copy">
                                 <p class="text-[15px] font-semibold text-black" style="margin-bottom: 8px;">Tiempo trabajado por día</p>
-                                <p class="text-[15px] text-gray-500" style="margin-bottom: 8px;">
+                                <p class="text-[15px] text-gray-500">
                                     @if ($selectedUser)
                                         Barras de horas diarias y línea de promedio del rango seleccionado.
                                     @else
@@ -254,121 +257,120 @@
                                     @endif
                                 </p>
                             </div>
+                            <button type="button" class="dashboard-chart-refresh" data-refresh-chart="worked" aria-label="Actualizar tiempo trabajado por día" title="Actualizar datos">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg><span>Actualizar</span>
+                            </button>
                         </div>
-                        <div class="h-[360px] w-full">
+                        <div class="dashboard-chart-frame">
                             <canvas id="workedTimeChart"></canvas>
                         </div>
                     </div>
 
                     <!-- Gráfica 2: Distribución por cliente -->
-                    @if ($selectedUser && !empty($clientLabels))
                         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
                             <div class="flex items-start gap-3 p-4">
                                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
-                                <div>
+                                <div class="dashboard-chart-copy">
                                     <p class="text-[15px] mb-[8px] font-semibold text-black">Distribución por cliente</p>
                                     <p class="text-[15px] text-gray-500">
                                         Porcentaje de tiempo trabajado por cada cliente en el periodo seleccionado.
                                     </p>
                                 </div>
+                                <button type="button" class="dashboard-chart-refresh" data-refresh-chart="clients" aria-label="Actualizar distribución por cliente" title="Actualizar datos">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg><span>Actualizar</span>
+                                </button>
                             </div>
-                            <div class="h-[360px] w-full">
+                            <div class="dashboard-chart-frame client-distribution-frame">
                                 <canvas id="clientPieChart"></canvas>
                             </div>
                         </div>
-                    @endif
 
                     <!-- Gráfica 3: Distribución por actividad -->
-                    @if ($selectedUser && !empty($activityLabels))
                         <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
                             <div class="flex items-start gap-3 p-4">
                                 <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
-                                <div>
+                                <div class="dashboard-chart-copy">
                                     <p class="text-[15px] mb-[8px] font-semibold text-black">Distribución por actividad</p>
                                     <p class="text-[15px] text-gray-500">
                                         Tiempo trabajado por cada actividad en el periodo seleccionado.
                                     </p>
                                 </div>
+                                <button type="button" class="dashboard-chart-refresh" data-refresh-chart="activities" aria-label="Actualizar distribución por actividad" title="Actualizar datos">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg><span>Actualizar</span>
+                                </button>
                             </div>
-                            <div class="h-[400px] w-full">
+                            <div class="dashboard-chart-frame activity-distribution-frame">
                                 <canvas id="activityChart"></canvas>
                             </div>
                         </div>
-                    @endif
                 </div>
 
                 <!-- ==================== TAB 2: DETALLES ==================== -->
                 <div id="tab-detalles" class="tab-content space-y-6 hidden">
 
                     <!-- Gráfica 4: Detalle por actividad -->
-                    @if ($selectedUser && !empty($activityLabels))
-                        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                            <div class="flex items-start gap-3 p-4">
-                                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                                </svg>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between flex-wrap gap-4">
-                                        <div>
-                                            <p class="text-[15px] mb-[8px] font-semibold text-black">Detalle por actividad</p>
-                                            <p class="text-[15px] text-gray-500">
-                                                Distribución diaria de la actividad seleccionada.
-                                            </p>
-                                        </div>
-                                        <div class="w-64">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar actividad</label>
-                                            <select id="activitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
-                                                <option value="">Selecciona una actividad...</option>
-                                                @foreach ($activityLabels as $index => $label)
-                                                    <option value="{{ $activityIds[$index] ?? $index + 1 }}">{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                        <div class="dashboard-detail-card dashboard-detail-card--activity rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                            <div class="dashboard-detail-header">
+                                <div class="dashboard-detail-heading">
+                                    <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                    </svg>
+                                    <div class="dashboard-chart-copy">
+                                        <p class="text-[15px] font-semibold text-black">Detalle por actividad</p>
+                                        <p class="mt-[5px] text-[15px] text-gray-500">Distribución diaria de la actividad seleccionada.</p>
                                     </div>
                                 </div>
+                                <div class="dashboard-detail-filter">
+                                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar actividad</label>
+                                    <select id="activitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                        <option value="">{{ empty($activityLabels) ? 'Sin actividades disponibles' : 'Selecciona una actividad...' }}</option>
+                                        @foreach ($activityLabels as $index => $label)
+                                            <option value="{{ $activityIds[$index] ?? $index + 1 }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button id="refreshActivityDetailBtn" type="button" class="dashboard-chart-refresh" aria-label="Actualizar detalle por actividad" title="Actualizar datos">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg><span>Actualizar</span>
+                                </button>
                             </div>
-                            <div class="h-[360px] w-full p-4">
+                            <div class="dashboard-chart-frame">
                                 <canvas id="activityDetailChart"></canvas>
                             </div>
                         </div>
-                    @endif
 
                     <!-- Gráfica 5: Detalle por cliente -->
-                    @if ($selectedUser && !empty($clientLabels))
-                        <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                            <div class="flex items-start gap-3 p-4">
-                                <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                                </svg>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between flex-wrap gap-4">
-                                        <div>
-                                            <p class="text-[15px] mb-[8px] font-semibold text-black">Detalle por cliente</p>
-                                            <p class="text-[15px] text-gray-500">
-                                                Distribución diaria del cliente seleccionado.
-                                            </p>
-                                        </div>
-                                        <div class="w-64">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar cliente</label>
-                                            <select id="clientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
-                                                <option value="">Selecciona un cliente...</option>
-                                                @foreach ($clientLabels as $index => $label)
-                                                    <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                        <div class="dashboard-detail-card rounded-2xl bg-[#f4f4f4] overflow-hidden">
+                            <div class="dashboard-detail-header">
+                                <div class="dashboard-detail-heading">
+                                    <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                    </svg>
+                                    <div class="dashboard-chart-copy">
+                                        <p class="text-[15px] font-semibold text-black">Detalle por cliente</p>
+                                        <p class="mt-[5px] text-[15px] text-gray-500">Distribución diaria del cliente seleccionado.</p>
                                     </div>
                                 </div>
+                                <div class="dashboard-detail-filter">
+                                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Seleccionar cliente</label>
+                                    <select id="clientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                        <option value="">{{ empty($clientLabels) ? 'Sin clientes disponibles' : 'Selecciona un cliente...' }}</option>
+                                        @foreach ($clientLabels as $index => $label)
+                                            <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button id="refreshClientDetailBtn" type="button" class="dashboard-chart-refresh" aria-label="Actualizar detalle por cliente" title="Actualizar datos">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg><span>Actualizar</span>
+                                </button>
                             </div>
-                            <div class="h-[360px] w-full p-4">
+                            <div class="dashboard-chart-frame">
                                 <canvas id="clientDetailChart"></canvas>
                             </div>
                         </div>
-                    @endif
                 </div>
 
                 <!-- ==================== TAB 3: CLIENTE + ACTIVIDAD ==================== -->
@@ -376,50 +378,55 @@
 
                     <!-- Gráfica de Cliente + Actividad -->
                     <div class="rounded-2xl bg-[#f4f4f4] overflow-hidden">
-                        <div class="flex items-start gap-3 p-4">
-                            <svg class="w-[20px] h-[20px] text-[#1A3A6B] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                            </svg>
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between flex-wrap gap-4">
-                                    <div>
-                                        <p class="text-[15px] mb-[8px] font-semibold text-black">Tiempo por cliente + actividad</p>
-                                        <p class="text-[15px] text-gray-500">
-                                            Distribución diaria de una combinación específica.
-                                        </p>
-                                    </div>
-                                    <div class="flex flex-wrap gap-3">
-                                        <div class="w-48">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Cliente</label>
-                                            <select id="clientActivityClientSelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                        <div class="grid min-w-0 items-center gap-[20px] lg:grid-cols-[minmax(240px,1fr)_minmax(0,auto)]">
+                            <div class="flex min-w-0 items-center gap-[20px]">
+                                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
+                                    </svg>
+                                </span>
+                                <div class="dashboard-chart-copy">
+                                    <p class="text-[15px] font-semibold text-black" title="Tiempo por cliente + actividad">Tiempo por cliente + actividad</p>
+                                    <p class="mt-[5px] text-[15px] text-zinc-500" title="Distribución diaria de una combinación específica.">Distribución diaria de una combinación específica.</p>
+                                </div>
+                            </div>
+                            <div class="grid min-w-0 items-end gap-[20px] sm:grid-cols-2 lg:grid-cols-[minmax(0,220px)_minmax(0,220px)_auto]">
+                                        <div class="min-w-0 w-full">
+                                            <label class="mb-[10px] block text-[15px] font-semibold text-black">Cliente</label>
+                                            <select id="clientActivityClientSelector" class="min-h-[56px] w-full truncate rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] text-black outline-none focus:border-zinc-400 focus:ring-0" title="Selecciona un cliente">
                                                 <option value="">Todos los clientes</option>
                                                 @foreach ($clientLabels as $index => $label)
                                                     <option value="{{ $clientIds[$index] ?? $index }}">{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="w-48">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">Actividad</label>
-                                            <select id="clientActivityActivitySelector" class="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm text-gray-700 focus:border-[#1A3A6B] focus:outline-none focus:ring-2 focus:ring-[#1A3A6B]/20 bg-white">
+                                        <div class="min-w-0 w-full">
+                                            <label class="mb-[10px] block text-[15px] font-semibold text-black">Actividad</label>
+                                            <select id="clientActivityActivitySelector" class="min-h-[56px] w-full truncate rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] text-black outline-none focus:border-zinc-400 focus:ring-0" title="Selecciona una actividad">
                                                 <option value="">Todas las actividades</option>
                                                 @foreach ($activityLabels as $index => $label)
                                                     <option value="{{ $activityIds[$index] ?? $index + 1 }}">{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <button id="loadClientActivityBtn" class="self-end h-11 rounded-xl bg-[#1A3A6B] px-4 text-sm font-medium text-white hover:bg-[#15305a]">
-                                            Cargar
+                                        <button id="loadClientActivityBtn" class="dashboard-chart-refresh inline-flex min-h-[56px] items-center justify-center gap-[10px] self-end rounded-xl bg-black px-[20px] py-[15px] text-[15px] font-normal leading-none text-white outline-none hover:bg-zinc-800 focus:ring-0">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5" /></svg>
+                                            Actualizar
                                         </button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
-                        <div class="h-[360px] w-full p-4">
-                            <canvas id="clientActivityChart"></canvas>
+                        <div class="dashboard-chart-frame flex flex-col overflow-hidden rounded-xl p-0">
+                            <div class="flex shrink-0 items-center justify-center gap-[10px] pb-[10px] text-[15px] text-black">
+                                <span class="h-[14px] w-[14px] shrink-0 rounded-[4px] bg-black" aria-hidden="true"></span>
+                                <span id="clientActivityLegendLabel" class="max-w-[70%] truncate">Horas trabajadas</span>
+                            </div>
+                            <div class="min-h-0 flex-1"><canvas id="clientActivityChart"></canvas></div>
                         </div>
                     </div>
                 </div>
 
+            </div>
+            </section>
             </div>
 
         </div>
@@ -434,15 +441,291 @@
             box-shadow: none !important;
             --tw-ring-color: transparent !important;
         }
+        .time-dashboard-modern button:not(.tab-button) {
+            column-gap: 10px;
+        }
+        .time-dashboard-modern .time-dashboard-intro-copy,
+        .time-dashboard-modern .dashboard-chart-copy {
+            min-width: 0;
+            max-width: 100%;
+            flex: 1 1 auto;
+            overflow: hidden;
+        }
+        .time-dashboard-modern .time-dashboard-intro > div:first-child {
+            box-sizing: border-box;
+            width: 100%;
+            min-width: 0 !important;
+            padding-right: 20px;
+            overflow: hidden;
+        }
+        .time-dashboard-modern .time-dashboard-intro > div:first-child > div,
+        .time-dashboard-modern .time-dashboard-intro > div:first-child > div > div,
+        .time-dashboard-modern .time-dashboard-intro > div:first-child > div > div > div {
+            min-width: 0;
+            max-width: 100% !important;
+        }
+        .time-dashboard-modern .time-dashboard-intro > div:first-child > div > div {
+            width: 100%;
+            flex-shrink: 1 !important;
+        }
+        .time-dashboard-modern .time-dashboard-intro > div:first-child > div > div > div:last-child {
+            flex: 1 1 auto;
+            overflow: hidden;
+        }
+        .time-dashboard-modern .time-dashboard-intro-copy > h1,
+        .time-dashboard-modern .time-dashboard-intro-copy > p,
+        .time-dashboard-modern .dashboard-chart-copy > p {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap !important;
+            text-overflow: ellipsis;
+        }
+        .time-dashboard-modern select {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .time-dashboard-modern:fullscreen {
+            overflow: auto;
+            background: #fff;
+        }
+        .dashboard-view-controls {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 20;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .06);
+            transform: translate(-50%, -50%);
+        }
+        .dashboard-view-controls button {
+            display: inline-flex;
+            width: 36px;
+            height: 36px;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #18181b;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .dashboard-view-controls button:hover { background: #f4f4f5; }
+        .dashboard-view-controls .dashboard-zoom-value {
+            width: 54px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .dashboard-view-controls svg { width: 18px; height: 18px; }
+        .dashboard-view-controls .dashboard-compress-icon { display: none; }
+        .dashboard-view-controls.is-fullscreen .dashboard-expand-icon { display: none; }
+        .dashboard-view-controls.is-fullscreen .dashboard-compress-icon { display: block; }
+        .dashboard-control-divider { width: 1px; height: 24px; margin: 0 3px; background: #e4e4e7; }
+        .dashboard-empty-chart {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            border-radius: 12px;
+            background: #fafafa;
+            color: #71717a;
+            text-align: center;
+        }
+        .time-dashboard-modern .dashboard-chart-frame {
+            box-sizing: border-box;
+            width: 100%;
+            height: 360px;
+            margin-top: 8px;
+            padding: 0;
+        }
+        .time-dashboard-modern .dashboard-chart-frame > canvas,
+        .time-dashboard-modern .dashboard-chart-frame > .min-h-0 {
+            width: 100% !important;
+            max-width: 100%;
+        }
+        .time-dashboard-modern .activity-distribution-frame { margin-top: 0; }
+        .time-dashboard-modern .client-distribution-frame { margin-top: 10px; }
+        @media (min-width: 1280px) {
+            .time-dashboard-modern .time-dashboard-panel::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 400px;
+                width: 1px;
+                background: #e4e4e7;
+                pointer-events: none;
+            }
+        }
         .time-dashboard-modern .tab-content > div {
             box-sizing: border-box;
             border: 1px solid #e4e4e7;
             border-radius: 12px;
-            background: rgba(255, 255, 255, .78) !important;
+            background: transparent !important;
             padding: 20px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
         }
+        .time-dashboard-modern .time-dashboard-tabs .tab-button {
+            width: 100%;
+        }
+        .time-dashboard-modern .time-dashboard-tabs .tab-button > svg {
+            width: 56px !important;
+            height: 52px !important;
+        }
+        .time-dashboard-modern .tab-content {
+            position: relative;
+            min-width: 0;
+            padding: 0;
+        }
+        .time-dashboard-modern .tab-content:not(.hidden) {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) 48px;
+            align-items: center;
+            column-gap: 20px;
+            row-gap: 10px;
+        }
+        .time-dashboard-modern .tab-content:not(.hidden) > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0 !important;
+        }
+        .time-dashboard-modern .tab-content > div {
+            min-width: 0;
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .time-dashboard-modern .tab-content > div > .flex.items-start {
+            align-items: center !important;
+            gap: 20px !important;
+            padding: 0 !important;
+        }
+        .time-dashboard-modern .tab-content > div > .flex.items-start > svg {
+            box-sizing: border-box;
+            width: 48px !important;
+            height: 48px !important;
+            margin: 0 !important;
+            padding: 12px;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            background: #fff;
+            color: #000 !important;
+        }
+        .time-dashboard-modern .tab-content > div > .flex.items-start p.font-semibold {
+            margin-bottom: 0 !important;
+        }
+        .time-dashboard-modern .tab-content > div > .flex.items-start p.font-semibold + p {
+            margin-top: 5px !important;
+        }
+        .time-dashboard-modern .dashboard-detail-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 256px auto;
+            align-items: end;
+            gap: 20px;
+            min-width: 0;
+        }
+        .time-dashboard-modern .dashboard-detail-heading {
+            display: flex;
+            min-width: 0;
+            align-items: center;
+            gap: 20px;
+        }
+        .time-dashboard-modern .dashboard-detail-heading > svg {
+            box-sizing: border-box;
+            width: 48px !important;
+            height: 48px !important;
+            margin: 0 !important;
+            padding: 12px;
+            flex: 0 0 auto;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            background: #fff;
+            color: #000 !important;
+        }
+        .time-dashboard-modern .dashboard-detail-filter { width: 256px; min-width: 0; }
+        .time-dashboard-modern .dashboard-detail-card .dashboard-chart-frame { margin-top: 0; }
+        .time-dashboard-modern .dashboard-detail-card--activity .dashboard-detail-header { align-items: center; }
+        .time-dashboard-modern .dashboard-chart-refresh {
+            display: inline-flex;
+            min-height: 44px;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-left: auto;
+            padding: 10px 14px;
+            border: 1px solid #000;
+            border-radius: 12px;
+            background: #000;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .time-dashboard-modern .dashboard-chart-refresh:hover { background: #27272a; }
+        .time-dashboard-modern .dashboard-chart-refresh:disabled { cursor: wait; opacity: .65; }
+        .time-dashboard-modern .dashboard-chart-refresh > svg {
+            width: 18px !important;
+            height: 18px !important;
+            color: #fff !important;
+            stroke: #fff !important;
+        }
+        .time-dashboard-modern .dashboard-chart-refresh.is-refreshing > svg { animation: dashboard-refresh-spin .8s linear infinite; }
+        @keyframes dashboard-refresh-spin { to { transform: rotate(360deg); } }
+        .time-dashboard-modern .graph-viewer-arrow {
+            z-index: 15;
+            display: inline-flex;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #000;
+            border-radius: 12px;
+            background: #000;
+            color: #fff;
+            transition: background-color .2s, color .2s, opacity .2s;
+        }
+        .time-dashboard-modern .graph-viewer-arrow--prev { grid-column: 1; grid-row: 1; }
+        .time-dashboard-modern .graph-viewer-arrow--next { grid-column: 3; grid-row: 1; }
+        .time-dashboard-modern .graph-viewer-arrow:hover:not(:disabled) { background: #27272a; }
+        .time-dashboard-modern .graph-viewer-arrow:disabled {
+            border-color: #000;
+            background: #000;
+            color: #fff;
+            cursor: not-allowed;
+            opacity: 1;
+        }
+        .time-dashboard-modern .graph-viewer-arrow svg {
+            width: 20px !important;
+            height: 20px !important;
+            color: currentColor !important;
+            stroke: currentColor !important;
+        }
+        .time-dashboard-modern .graph-viewer-counter {
+            grid-column: 2;
+            grid-row: 2;
+            margin: 0;
+            text-align: center;
+            color: #71717a;
+            font-size: 15px;
+        }
         .time-dashboard-modern .tab-content svg { color: #000 !important; }
+        .time-dashboard-modern .tab-content .graph-viewer-arrow:not(:disabled) svg {
+            color: #fff !important;
+            stroke: #fff !important;
+        }
+        .time-dashboard-modern .tab-content .graph-viewer-arrow:disabled svg {
+            color: #fff !important;
+            stroke: #fff !important;
+        }
         .time-dashboard-modern select {
             height: auto !important;
             border-color: #e4e4e7 !important;
@@ -458,15 +741,71 @@
             font-weight: 400 !important;
         }
         .time-dashboard-modern #loadClientActivityBtn:hover { background: #27272a !important; }
+        .time-dashboard-modern #loadClientActivityBtn svg {
+            color: #fff !important;
+            stroke: #fff !important;
+        }
+        .time-dashboard-modern #clientActivityChart {
+            border-radius: 12px;
+            background: #fff;
+        }
         .time-dashboard-modern #userDropdown {
             margin-top: 10px !important;
             border-color: #e4e4e7 !important;
             border-radius: 12px !important;
         }
+        .time-dashboard-modern .time-dashboard-tabs .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .10);
+        }
+        .time-dashboard-modern .time-dashboard-tabs .tab-button:active {
+            transform: translateY(0);
+        }
         .time-dashboard-modern * { scrollbar-width: thin; scrollbar-color: #000 transparent; }
         .time-dashboard-modern *::-webkit-scrollbar { width: 6px; height: 6px; }
         .time-dashboard-modern *::-webkit-scrollbar-track { background: transparent; }
         .time-dashboard-modern *::-webkit-scrollbar-thumb { border-radius: 9999px; background: #000; }
+        @media (max-width: 1180px) {
+            .dashboard-view-controls {
+                position: static;
+                order: 3;
+                flex: 0 0 auto;
+                transform: none;
+            }
+            .time-dashboard-topbar { flex-wrap: wrap; }
+        }
+        @media (max-width: 1279px) {
+            .time-dashboard-intro {
+                display: block !important;
+                min-width: 0 !important;
+            }
+            .time-dashboard-intro > div,
+            .time-dashboard-filters { min-width: 0 !important; width: 100%; }
+            .time-dashboard-filters { margin-top: 20px !important; }
+            .time-dashboard-filters form { flex-wrap: wrap !important; justify-content: flex-start !important; }
+        }
+        @media (max-width: 767px) {
+            .time-dashboard-topbar { padding: 20px !important; gap: 20px !important; }
+            .time-dashboard-topbar > div:first-child { width: 100%; overflow-x: auto; }
+            .time-dashboard-topbar > div:last-child { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
+            .dashboard-view-controls { order: 2; }
+            .time-dashboard-panel { margin: 20px !important; }
+            .time-dashboard-filters form > div,
+            .time-dashboard-filters input { width: 100% !important; min-width: 0 !important; }
+            .time-dashboard-modern .tab-content > div { padding: 15px; }
+            .time-dashboard-modern .tab-content > div > .flex.items-start,
+            .time-dashboard-modern #tab-nueva > div > div:first-child { align-items: flex-start !important; }
+            .time-dashboard-modern .tab-content > div > .flex.items-start > svg { width: 42px !important; height: 42px !important; padding: 10px; }
+            .time-dashboard-modern .dashboard-detail-header { grid-template-columns: minmax(0, 1fr); }
+            .time-dashboard-modern .dashboard-detail-filter { width: 100%; }
+            .time-dashboard-modern .dashboard-detail-heading > svg { width: 42px !important; height: 42px !important; padding: 10px; }
+            .time-dashboard-modern .dashboard-chart-refresh { margin-left: 0; }
+            .time-dashboard-modern .tab-content:not(.hidden) {
+                grid-template-columns: 42px minmax(0, 1fr) 42px;
+                column-gap: 8px;
+            }
+            .time-dashboard-modern .graph-viewer-arrow { width: 42px; height: 42px; }
+        }
     </style>
 
     <!-- Primero cargas Chart.js -->
@@ -477,6 +816,72 @@
     <!-- ============================================================ -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.time-dashboard-intro-copy > h1, .time-dashboard-intro-copy > p, .dashboard-chart-copy > p').forEach((element) => {
+                if (!element.title) element.title = element.textContent.trim();
+            });
+
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.animation = false;
+                Chart.register({
+                    id: 'dashboardShared3dBars',
+                    beforeDatasetDraw(chart, args) {
+                        if (chart.canvas.id === 'clientActivityChart') return;
+                        const dataset = chart.data.datasets[args.index];
+                        const isBarDataset = (dataset.type || chart.config.type) === 'bar';
+                        if (!isBarDataset) return;
+
+                        const horizontal = chart.options.indexAxis === 'y';
+                        const depth = 8;
+                        const { ctx } = chart;
+                        ctx.save();
+
+                        args.meta.data.forEach((bar) => {
+                            if (horizontal) {
+                                const p = bar.getProps(['x', 'y', 'base', 'height'], true);
+                                if (!Number.isFinite(p.x) || Math.abs(p.x - p.base) < 1) return;
+                                const half = p.height / 2;
+                                ctx.beginPath();
+                                ctx.moveTo(p.x, p.y - half);
+                                ctx.lineTo(p.x + depth, p.y - half - depth);
+                                ctx.lineTo(p.x + depth, p.y + half - depth);
+                                ctx.lineTo(p.x, p.y + half);
+                                ctx.closePath();
+                                ctx.fillStyle = '#3f3f46';
+                                ctx.fill();
+                                ctx.beginPath();
+                                ctx.moveTo(p.base, p.y - half);
+                                ctx.lineTo(p.base + depth, p.y - half - depth);
+                                ctx.lineTo(p.x + depth, p.y - half - depth);
+                                ctx.lineTo(p.x, p.y - half);
+                                ctx.closePath();
+                                ctx.fillStyle = '#a1a1aa';
+                                ctx.fill();
+                            } else {
+                                const p = bar.getProps(['x', 'y', 'base', 'width'], true);
+                                if (!Number.isFinite(p.y) || Math.abs(p.base - p.y) < 1) return;
+                                const half = p.width / 2;
+                                ctx.beginPath();
+                                ctx.moveTo(p.x + half, p.y);
+                                ctx.lineTo(p.x + half + depth, p.y - depth);
+                                ctx.lineTo(p.x + half + depth, p.base - depth);
+                                ctx.lineTo(p.x + half, p.base);
+                                ctx.closePath();
+                                ctx.fillStyle = '#3f3f46';
+                                ctx.fill();
+                                ctx.beginPath();
+                                ctx.moveTo(p.x - half, p.y);
+                                ctx.lineTo(p.x - half + depth, p.y - depth);
+                                ctx.lineTo(p.x + half + depth, p.y - depth);
+                                ctx.lineTo(p.x + half, p.y);
+                                ctx.closePath();
+                                ctx.fillStyle = '#a1a1aa';
+                                ctx.fill();
+                            }
+                        });
+                        ctx.restore();
+                    },
+                });
+            }
             
             // ============================================================
             // 1. LOGICA DE PESTAÑAS - CORREGIDA (HOVER TEMPORAL + CLICK PERMANENTE)
@@ -612,6 +1017,74 @@
                 updateTabs(null);
             }
 
+            async function runChartRefresh(button, task) {
+                if (!button || button.disabled) return;
+                button.disabled = true;
+                button.classList.add('is-refreshing');
+
+                try {
+                    await task();
+                } catch (error) {
+                    console.error('No fue posible actualizar la gráfica:', error);
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('is-refreshing');
+                }
+            }
+
+            // Visor por apartado: conserva una sola gráfica visible y permite recorrerlas.
+            document.querySelectorAll('.tab-content').forEach((section) => {
+                const graphCards = Array.from(section.children).filter((element) => element.tagName === 'DIV');
+                let graphIndex = 0;
+
+                const previousButton = document.createElement('button');
+                previousButton.type = 'button';
+                previousButton.className = 'graph-viewer-arrow graph-viewer-arrow--prev';
+                previousButton.setAttribute('aria-label', 'Ver gráfica anterior');
+                previousButton.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>';
+
+                const nextButton = document.createElement('button');
+                nextButton.type = 'button';
+                nextButton.className = 'graph-viewer-arrow graph-viewer-arrow--next';
+                nextButton.setAttribute('aria-label', 'Ver gráfica siguiente');
+                nextButton.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>';
+
+                const counter = document.createElement('p');
+                counter.className = 'graph-viewer-counter';
+                counter.setAttribute('aria-live', 'polite');
+
+                section.append(previousButton, nextButton, counter);
+
+                const showGraph = (nextIndex) => {
+                    if (!graphCards.length) {
+                        previousButton.disabled = true;
+                        nextButton.disabled = true;
+                        counter.textContent = 'Sin gráficas disponibles';
+                        return;
+                    }
+
+                    graphIndex = (nextIndex + graphCards.length) % graphCards.length;
+                    graphCards.forEach((card, index) => {
+                        card.style.display = index === graphIndex ? '' : 'none';
+                    });
+
+                    const hasMultipleGraphs = graphCards.length > 1;
+                    previousButton.disabled = !hasMultipleGraphs;
+                    nextButton.disabled = !hasMultipleGraphs;
+                    counter.textContent = `${graphIndex + 1} de ${graphCards.length}`;
+
+                    window.setTimeout(() => {
+                        graphCards[graphIndex].querySelectorAll('canvas').forEach((chartCanvas) => {
+                            Chart.getChart(chartCanvas)?.resize();
+                        });
+                    }, 30);
+                };
+
+                previousButton.addEventListener('click', () => showGraph(graphIndex - 1));
+                nextButton.addEventListener('click', () => showGraph(graphIndex + 1));
+                showGraph(0);
+            });
+
             // ============================================================
             // 2. GRÁFICO 1: Barras - Horas por día (CON 110% DE MÁRGEN)
             // ============================================================
@@ -642,23 +1115,23 @@
                             type: 'bar',
                             label: 'Horas trabajadas',
                             data: hoursData,
-                            backgroundColor: 'rgba(26, 58, 107, 0.78)',
-                            borderColor: 'rgba(26, 58, 107, 0)',
+                            backgroundColor: '#09090b',
+                            borderColor: 'transparent',
                             borderWidth: 0,
-                            borderRadius: 6,
+                            borderRadius: 4,
                             maxBarThickness: 42,
                             order: 2,
                         }, {
                             type: 'line',
                             label: 'Tendencia diaria',
                             data: hoursData,
-                            borderColor: 'rgb(16, 185, 129)',
-                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            borderColor: '#71717a',
+                            backgroundColor: 'rgba(113, 113, 122, .10)',
                             borderWidth: 2.5,
                             pointRadius: 4,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: 'rgb(16, 185, 129)',
-                            pointBorderColor: 'rgba(16, 185, 129, 0)',
+                            pointBackgroundColor: '#18181b',
+                            pointBorderColor: '#fff',
                             pointBorderWidth: 0,
                             tension: 0.35,
                             fill: false,
@@ -778,14 +1251,9 @@ if (pieCanvas && typeof Chart !== 'undefined') {
     // Función para generar colores
     const getColors = (count) => {
         const baseColors = [
-            'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
-            'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
-            'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
-            'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
-            'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
-            'rgba(236, 64, 122, 0.8)', 'rgba(0, 188, 212, 0.8)',
-            'rgba(255, 193, 7, 0.8)', 'rgba(76, 175, 80, 0.8)',
-            'rgba(233, 30, 99, 0.8)',
+            '#09090b', '#27272a', '#3f3f46', '#52525b', '#71717a',
+            '#a1a1aa', '#18181b', '#404040', '#737373', '#a3a3a3',
+            '#262626', '#525252', '#d4d4d4', '#171717', '#737373',
         ];
         while (baseColors.length < count) {
             const idx = baseColors.length % baseColors.length;
@@ -1038,6 +1506,36 @@ if (pieCanvas && typeof Chart !== 'undefined') {
         }
 
         window.clientPieChart = chart;
+    } else {
+        window.clientPieChart = new Chart(pieCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sin datos'],
+                datasets: [{ data: [1], backgroundColor: ['#e4e4e7'], borderColor: '#f4f4f4', borderWidth: 3 }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            },
+            plugins: [{
+                id: 'emptyClientDistribution',
+                afterDraw(chart) {
+                    if (chart.$hasLiveData) return;
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+                    ctx.save();
+                    ctx.fillStyle = '#71717a';
+                    ctx.font = '500 15px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Sin clientes registrados', (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+                    ctx.restore();
+                },
+            }],
+        });
+        window.clientPieChart.$hasLiveData = false;
     }
 }
 
@@ -1051,11 +1549,8 @@ if (pieCanvas && typeof Chart !== 'undefined') {
 
                 if (activityLabels.length > 0) {
                     const activityColors = [
-                        'rgba(26, 58, 107, 0.8)', 'rgba(16, 185, 129, 0.8)',
-                        'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)',
-                        'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
-                        'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)',
-                        'rgba(34, 197, 94, 0.8)', 'rgba(168, 85, 247, 0.8)',
+                        '#09090b', '#27272a', '#3f3f46', '#52525b', '#71717a',
+                        '#a1a1aa', '#18181b', '#404040', '#737373', '#a3a3a3',
                     ];
 
                     new Chart(activityCanvas, {
@@ -1121,12 +1616,157 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                             },
                         },
                     });
+                } else {
+                    new Chart(activityCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Sin actividades registradas'],
+                            datasets: [{ data: [0], backgroundColor: ['#d4d4d8'], borderRadius: 4 }],
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: {
+                                x: { beginAtZero: true, suggestedMax: 1, grid: { color: 'rgba(0, 0, 0, .06)' }, border: { color: 'rgba(0, 0, 0, .12)' } },
+                                y: { position: 'right', grid: { display: false }, border: { color: 'rgba(0, 0, 0, .12)' } },
+                            },
+                        },
+                    });
                 }
             }
+
+            const dashboardDataParams = new URLSearchParams({
+                user_id: '{{ $selectedUser ? $selectedUser->id : 0 }}',
+                fecha_inicio: '{{ $start->toDateString() }}',
+                fecha_fin: '{{ $end->toDateString() }}',
+            });
+
+            const fetchDashboardData = async () => {
+                const response = await fetch(`{{ route('time.dashboard-data') }}?${dashboardDataParams}`, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                return response.json();
+            };
+
+            document.querySelector('[data-refresh-chart="worked"]')?.addEventListener('click', function() {
+                runChartRefresh(this, async () => {
+                    const data = await fetchDashboardData();
+                    const chart = Chart.getChart(document.getElementById('workedTimeChart'));
+                    if (!chart) return;
+                    chart.data.labels = data.labels;
+                    chart.data.datasets[0].data = data.hours;
+                    chart.data.datasets[1].data = data.hours;
+                    chart.update('none');
+                });
+            });
+
+            document.querySelector('[data-refresh-chart="clients"]')?.addEventListener('click', function() {
+                runChartRefresh(this, async () => {
+                    const data = await fetchDashboardData();
+                    const chart = Chart.getChart(document.getElementById('clientPieChart'));
+                    if (!chart) return;
+                    const hasData = data.clientLabels.length > 0;
+                    const labels = data.clientLabels.slice(0, 7);
+                    const values = data.clientData.slice(0, 7);
+                    if (data.clientLabels.length > 7) {
+                        labels.push('Otros');
+                        values.push(data.clientData.slice(7).reduce((total, value) => total + value, 0));
+                    }
+                    chart.$hasLiveData = hasData;
+                    chart.data.labels = hasData ? labels : ['Sin datos'];
+                    chart.data.datasets[0].data = hasData ? values : [1];
+                    chart.data.datasets[0].backgroundColor = hasData
+                        ? ['#09090b', '#27272a', '#3f3f46', '#52525b', '#71717a', '#a1a1aa', '#18181b', '#d4d4d4'].slice(0, labels.length)
+                        : ['#e4e4e7'];
+                    chart.options.plugins.legend.display = hasData;
+                    chart.update('none');
+                });
+            });
+
+            document.querySelector('[data-refresh-chart="activities"]')?.addEventListener('click', function() {
+                runChartRefresh(this, async () => {
+                    const data = await fetchDashboardData();
+                    const chart = Chart.getChart(document.getElementById('activityChart'));
+                    if (!chart) return;
+                    const hasData = data.activityLabels.length > 0;
+                    chart.data.labels = hasData ? data.activityLabels : ['Sin actividades registradas'];
+                    chart.data.datasets[0].data = hasData ? data.activityData : [0];
+                    chart.data.datasets[0].backgroundColor = hasData
+                        ? ['#09090b', '#27272a', '#3f3f46', '#52525b', '#71717a', '#a1a1aa', '#18181b', '#404040'].slice(0, data.activityLabels.length)
+                        : ['#d4d4d8'];
+                    chart.update('none');
+                });
+            });
 
             // ============================================================
             // 5. GRÁFICO 4: Detalle por Actividad
             // ============================================================
+            const detailLegendSpacing = {
+                id: 'detailLegendSpacing',
+                beforeInit(chart) {
+                    const fit = chart.legend.fit;
+                    chart.legend.fit = function() {
+                        fit.call(this);
+                        this.height += 10;
+                    };
+                },
+            };
+
+            function createEmptyDetailChart(chartCanvas, message) {
+                const emptyLabels = @json($labels);
+                const labelsToShow = emptyLabels.length ? emptyLabels : ['Sin datos'];
+
+                return new Chart(chartCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsToShow,
+                        datasets: [{
+                            label: message,
+                            data: labelsToShow.map(() => 0),
+                            backgroundColor: '#d4d4d8',
+                            borderRadius: 4,
+                            maxBarThickness: 42,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, labels: { boxWidth: 14, usePointStyle: true, pointStyle: 'circle', font: { size: 15 } } },
+                            tooltip: { enabled: false },
+                        },
+                        scales: {
+                            x: { grid: { color: 'rgba(0, 0, 0, .06)' }, border: { color: 'rgba(0, 0, 0, .12)' } },
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 1,
+                                grid: { color: 'rgba(0, 0, 0, .06)' },
+                                border: { color: 'rgba(0, 0, 0, .12)' },
+                                ticks: { callback: (value) => `${value} h` },
+                            },
+                        },
+                    },
+                    plugins: [detailLegendSpacing, {
+                        id: `emptyDetailMessage-${chartCanvas.id}`,
+                        afterDraw(chart) {
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return;
+                            ctx.save();
+                            ctx.fillStyle = '#71717a';
+                            ctx.font = '500 15px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(message, (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+                            ctx.restore();
+                        },
+                    }],
+                });
+            }
+
             const detailCanvas = document.getElementById('activityDetailChart');
             let detailChart = null;
 
@@ -1139,20 +1779,13 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                     if (!activityId) {
                         if (detailChart) {
                             detailChart.destroy();
-                            detailChart = null;
                         }
-                        const ctx = detailCanvas.getContext('2d');
-                        ctx.clearRect(0, 0, detailCanvas.width, detailCanvas.height);
-                        ctx.font = '16px Arial';
-                        ctx.fillStyle = '#999';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('Selecciona una actividad para ver su detalle', detailCanvas.width / 2, detailCanvas
-                            .height / 2);
+                        detailChart = createEmptyDetailChart(detailCanvas, 'Sin actividades registradas');
                         return;
                     }
 
-                    fetch(
-                            `{{ route('time.activity-data') }}?activity_id=${activityId}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
+                    return fetch(
+                            `{{ route('time.activity-data') }}?activity_id=${activityId}&user_id={{ $selectedUser ? $selectedUser->id : 0 }}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
                         )
                         .then(response => response.json())
                         .then(data => {
@@ -1169,10 +1802,10 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                                     datasets: [{
                                         label: activityName,
                                         data: data.hours,
-                                        backgroundColor: 'rgba(26, 58, 107, 0.78)',
-                                        borderColor: 'rgba(26, 58, 107, 0)',
+                                        backgroundColor: '#09090b',
+                                        borderColor: 'transparent',
                                         borderWidth: 0,
-                                        borderRadius: 6,
+                                        borderRadius: 4,
                                         maxBarThickness: 42,
                                     }],
                                 },
@@ -1239,6 +1872,7 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                                         },
                                     },
                                 },
+                                plugins: [detailLegendSpacing],
                             });
                         })
                         .catch(error => console.error('Error cargando datos de actividad:', error));
@@ -1253,8 +1887,14 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         const defaultActivityId = activityIds[0];
                         activitySelector.value = defaultActivityId;
                         loadActivityData(defaultActivityId);
+                    } else {
+                        loadActivityData('');
                     }
                 }
+
+                document.getElementById('refreshActivityDetailBtn')?.addEventListener('click', function() {
+                    runChartRefresh(this, () => loadActivityData(activitySelector?.value || ''));
+                });
             }
 
             // ============================================================
@@ -1272,20 +1912,13 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                     if (!clientId) {
                         if (clientDetailChart) {
                             clientDetailChart.destroy();
-                            clientDetailChart = null;
                         }
-                        const ctx = clientDetailCanvas.getContext('2d');
-                        ctx.clearRect(0, 0, clientDetailCanvas.width, clientDetailCanvas.height);
-                        ctx.font = '16px Arial';
-                        ctx.fillStyle = '#999';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('Selecciona un cliente para ver su detalle', clientDetailCanvas.width / 2,
-                            clientDetailCanvas.height / 2);
+                        clientDetailChart = createEmptyDetailChart(clientDetailCanvas, 'Sin clientes registrados');
                         return;
                     }
 
-                    fetch(
-                            `{{ route('time.client-data') }}?client_id=${clientId}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
+                    return fetch(
+                            `{{ route('time.client-data') }}?client_id=${clientId}&user_id={{ $selectedUser ? $selectedUser->id : 0 }}&fecha_inicio={{ $start->toDateString() }}&fecha_fin={{ $end->toDateString() }}`
                         )
                         .then(response => response.json())
                         .then(data => {
@@ -1302,10 +1935,10 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                                     datasets: [{
                                         label: clientName,
                                         data: data.hours,
-                                        backgroundColor: 'rgba(16, 185, 129, 0.78)',
-                                        borderColor: 'rgba(16, 185, 129, 0)',
+                                        backgroundColor: '#09090b',
+                                        borderColor: 'transparent',
                                         borderWidth: 0,
-                                        borderRadius: 6,
+                                        borderRadius: 4,
                                         maxBarThickness: 42,
                                     }],
                                 },
@@ -1372,6 +2005,7 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                                         },
                                     },
                                 },
+                                plugins: [detailLegendSpacing],
                             });
                         })
                         .catch(error => console.error('Error cargando datos del cliente:', error));
@@ -1386,8 +2020,14 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         const defaultClientId = clientIds[0];
                         clientSelector.value = defaultClientId;
                         loadClientData(defaultClientId);
+                    } else {
+                        loadClientData('');
                     }
                 }
+
+                document.getElementById('refreshClientDetailBtn')?.addEventListener('click', function() {
+                    runChartRefresh(this, () => loadClientData(clientSelector?.value || ''));
+                });
             }
 
             // ============================================================
@@ -1397,6 +2037,43 @@ if (pieCanvas && typeof Chart !== 'undefined') {
             let clientActivityChart = null;
 
             if (clientActivityCanvas && typeof Chart !== 'undefined') {
+                const clientActivity3dPlugin = {
+                    id: 'clientActivity3dBars',
+                    beforeDatasetDraw(chart, args) {
+                        if (args.index !== 0) return;
+
+                        const { ctx } = chart;
+                        const depth = 10;
+                        ctx.save();
+
+                        args.meta.data.forEach((bar) => {
+                            const properties = bar.getProps(['x', 'y', 'base', 'width'], true);
+                            const halfWidth = properties.width / 2;
+                            if (!Number.isFinite(properties.x) || !Number.isFinite(properties.y)) return;
+                            if (Math.abs(properties.base - properties.y) < 1) return;
+
+                            ctx.beginPath();
+                            ctx.moveTo(properties.x + halfWidth, properties.y);
+                            ctx.lineTo(properties.x + halfWidth + depth, properties.y - depth);
+                            ctx.lineTo(properties.x + halfWidth + depth, properties.base - depth);
+                            ctx.lineTo(properties.x + halfWidth, properties.base);
+                            ctx.closePath();
+                            ctx.fillStyle = '#3f3f46';
+                            ctx.fill();
+
+                            ctx.beginPath();
+                            ctx.moveTo(properties.x - halfWidth, properties.y);
+                            ctx.lineTo(properties.x - halfWidth + depth, properties.y - depth);
+                            ctx.lineTo(properties.x + halfWidth + depth, properties.y - depth);
+                            ctx.lineTo(properties.x + halfWidth, properties.y);
+                            ctx.closePath();
+                            ctx.fillStyle = '#a1a1aa';
+                            ctx.fill();
+                        });
+
+                        ctx.restore();
+                    },
+                };
                 clientActivityChart = new Chart(clientActivityCanvas, {
                     type: 'bar',
                     data: {
@@ -1404,37 +2081,44 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         datasets: [{
                             label: 'Horas trabajadas',
                             data: [],
-                            backgroundColor: 'rgba(26, 58, 107, 0.78)',
-                            borderColor: 'rgba(26, 58, 107, 0)',
+                            backgroundColor: '#09090b',
+                            hoverBackgroundColor: '#27272a',
+                            borderColor: '#09090b',
                             borderWidth: 0,
-                            borderRadius: 6,
-                            maxBarThickness: 42,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            maxBarThickness: 46,
+                            categoryPercentage: .7,
+                            barPercentage: .72,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false,
+                        layout: { padding: 0 },
+                        interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: {
-                                display: true,
-                                labels: {
-                                    boxWidth: 14,
-                                    usePointStyle: true,
-                                    pointStyle: 'circle',
-                                    padding: 15,
-                                    font: { size: 15 },
-                                },
+                                display: false,
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                titleColor: '#1f2937',
-                                bodyColor: '#1f2937',
-                                titleFont: { size: 15 },
-                                bodyFont: { size: 15 },
-                                borderColor: 'rgba(0, 0, 0, 0.1)',
+                                backgroundColor: 'rgba(9, 9, 11, .96)',
+                                titleColor: '#fff',
+                                bodyColor: '#e4e4e7',
+                                titleFont: { size: 15, lineHeight: 1.5 },
+                                bodyFont: { size: 15, lineHeight: 1.5 },
+                                borderColor: 'rgba(255, 255, 255, .16)',
                                 borderWidth: 1,
-                                cornerRadius: 8,
-                                padding: 12,
+                                cornerRadius: 12,
+                                padding: { top: 15, right: 20, bottom: 15, left: 20 },
+                                titleMarginBottom: 10,
+                                bodySpacing: 10,
+                                boxPadding: 10,
+                                caretPadding: 10,
+                                boxWidth: 14,
+                                boxHeight: 14,
+                                usePointStyle: true,
                                 callbacks: {
                                     label(context) {
                                         const totalSegundos = Math.round(context.parsed.y * 3600);
@@ -1450,14 +2134,14 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         },
                         scales: {
                             x: {
-                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
-                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
-                                ticks: { display: true, font: { size: 15 } },
+                                grid: { display: false },
+                                border: { display: false },
+                                ticks: { display: true, color: '#52525b', font: { size: 15, weight: '500' } },
                             },
                             y: {
                                 beginAtZero: true,
-                                grid: { display: true, color: 'rgba(0, 0, 0, 0.06)' },
-                                border: { display: true, color: 'rgba(0, 0, 0, 0.12)' },
+                                grid: { display: true, color: 'rgba(0, 0, 0, .06)', drawTicks: false },
+                                border: { display: false },
                                 ticks: {
                                     font: { size: 15 },
                                     callback(value) {
@@ -1470,7 +2154,8 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                                 },
                             },
                         },
-                    }
+                    },
+                    plugins: [clientActivity3dPlugin],
                 });
             }
 
@@ -1489,11 +2174,12 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                 const params = new URLSearchParams({
                     client_id: clientId,
                     activity_id: activityId,
+                    user_id: '{{ $selectedUser ? $selectedUser->id : 0 }}',
                     fecha_inicio: '{{ $start->toDateString() }}',
                     fecha_fin: '{{ $end->toDateString() }}'
                 });
 
-                fetch('{{ route("dashboard.client-activity-data") }}?' + params)
+                return fetch('{{ route("dashboard.client-activity-data") }}?' + params)
                     .then(res => res.json())
                     .then(data => {
                         clientActivityChart.data.labels = data.labels;
@@ -1505,7 +2191,12 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         const activityName = activitySelect ? activitySelect.options[activitySelect.selectedIndex]?.text : 'Actividad';
 
                         clientActivityChart.data.datasets[0].label = `${clientName} - ${activityName}`;
-                        clientActivityChart.update();
+                        const legendLabel = document.getElementById('clientActivityLegendLabel');
+                        if (legendLabel) {
+                            legendLabel.textContent = `${clientName} - ${activityName}`;
+                            legendLabel.title = `${clientName} - ${activityName}`;
+                        }
+                        clientActivityChart.update('none');
                     })
                     .catch(error => console.error('Error cargando gráfica:', error));
             }
@@ -1537,7 +2228,7 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                         return;
                     }
 
-                    loadClientActivityChart(clientId, activityId);
+                    runChartRefresh(this, () => loadClientActivityChart(clientId, activityId));
                 });
             }
 
@@ -1670,6 +2361,58 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                     window.print();
                 });
             }
+
+            // Controles superiores de zoom y pantalla completa.
+            const dashboardRoot = document.getElementById('timeDashboardRoot');
+            const zoomValue = document.getElementById('dashboardZoomReset');
+            const zoomOut = document.getElementById('dashboardZoomOut');
+            const zoomIn = document.getElementById('dashboardZoomIn');
+            const fullscreenButton = document.getElementById('dashboardFullscreen');
+            const viewControls = document.querySelector('.dashboard-view-controls');
+            let dashboardZoom = 100;
+
+            const resizeDashboardCharts = () => {
+                window.setTimeout(() => {
+                    if (typeof Chart === 'undefined') return;
+                    document.querySelectorAll('.time-dashboard-modern canvas').forEach((chartCanvas) => {
+                        Chart.getChart(chartCanvas)?.resize();
+                    });
+                }, 80);
+            };
+
+            const setDashboardZoom = (nextZoom) => {
+                dashboardZoom = Math.min(130, Math.max(70, nextZoom));
+                if (dashboardRoot) dashboardRoot.style.zoom = `${dashboardZoom}%`;
+                if (zoomValue) zoomValue.textContent = `${dashboardZoom}%`;
+                if (zoomOut) zoomOut.disabled = dashboardZoom === 70;
+                if (zoomIn) zoomIn.disabled = dashboardZoom === 130;
+                resizeDashboardCharts();
+            };
+
+            zoomOut?.addEventListener('click', () => setDashboardZoom(dashboardZoom - 10));
+            zoomIn?.addEventListener('click', () => setDashboardZoom(dashboardZoom + 10));
+            zoomValue?.addEventListener('click', () => setDashboardZoom(100));
+
+            fullscreenButton?.addEventListener('click', async () => {
+                if (!dashboardRoot) return;
+                try {
+                    if (document.fullscreenElement === dashboardRoot) await document.exitFullscreen();
+                    else {
+                        if (document.fullscreenElement) await document.exitFullscreen();
+                        await dashboardRoot.requestFullscreen();
+                    }
+                } catch (error) {
+                    console.error('No fue posible cambiar el modo de pantalla completa:', error);
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                const isFullscreen = document.fullscreenElement === dashboardRoot;
+                viewControls?.classList.toggle('is-fullscreen', isFullscreen);
+                fullscreenButton?.setAttribute('aria-label', isFullscreen ? 'Salir de pantalla completa' : 'Ver en pantalla completa');
+                fullscreenButton?.setAttribute('title', isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa');
+                resizeDashboardCharts();
+            });
 
 
         });

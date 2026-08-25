@@ -53,17 +53,31 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function getDashboardData(Request $request): JsonResponse
+    {
+        $viewer = $request->user();
+        $user = $viewer->isAdmin() && $request->integer('user_id') > 0
+            ? User::findOrFail($request->integer('user_id'))
+            : $viewer;
+        [$start, $end] = $this->dateRangeFromRequest($request);
+
+        return response()->json($this->workedTimeByDay($user, $start, $end));
+    }
+
     /**
      * Obtiene los datos de una actividad específica para el gráfico
      */
     public function getActivityData(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $viewer = $request->user();
+        $userId = $viewer->isAdmin() && $request->integer('user_id') > 0
+            ? $request->integer('user_id')
+            : $viewer->id;
         $activityId = $request->integer('activity_id');
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        $entries = TimeEntry::where('user_id', $user->id)
+        $entries = TimeEntry::where('user_id', $userId)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->where('sub_service_id', $activityId)
             ->with('intervals')
@@ -94,12 +108,15 @@ class DashboardController extends Controller
      */
     public function getClientData(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $viewer = $request->user();
+        $userId = $viewer->isAdmin() && $request->integer('user_id') > 0
+            ? $request->integer('user_id')
+            : $viewer->id;
         $clientId = $request->integer('client_id');
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        $entries = TimeEntry::where('user_id', $user->id)
+        $entries = TimeEntry::where('user_id', $userId)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->where('customer_id', $clientId)
             ->with('intervals')
@@ -159,13 +176,16 @@ class DashboardController extends Controller
      */
     public function getClientActivityData(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $viewer = $request->user();
+        $userId = $viewer->isAdmin() && $request->integer('user_id') > 0
+            ? $request->integer('user_id')
+            : $viewer->id;
         $clientId = $request->integer('client_id');
         $activityId = $request->integer('activity_id');
         $start = Carbon::parse($request->query('fecha_inicio'));
         $end = Carbon::parse($request->query('fecha_fin'));
 
-        $entries = TimeEntry::where('user_id', $user->id)
+        $entries = TimeEntry::where('user_id', $userId)
             ->whereBetween('entry_date', [$start->toDateString(), $end->toDateString()])
             ->where('customer_id', $clientId)
             ->where('sub_service_id', $activityId)

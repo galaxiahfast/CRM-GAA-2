@@ -209,6 +209,10 @@ Route::middleware([
         ->middleware('access.permission:time-control.productivity.view')
         ->name('time.dashboard');
 
+    Route::get('/time/dashboard-data', [DashboardController::class, 'getDashboardData'])
+        ->middleware('access.permission:time-control.productivity.view')
+        ->name('time.dashboard-data');
+
     Route::get('/time/reports', MyProductivity::class)
         ->middleware('access.permission:time-control.productivity.view')
         ->name('time.reports');
