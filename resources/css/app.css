@@ -142,8 +142,13 @@ div.dataTables_filter {
 
 /* Scroll discreto del menú lateral. */
 .sidebar-menu-scrollbar {
-    scrollbar-color: #1a3a6b transparent;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
+}
+
+.sidebar-menu-scrollbar:hover {
+    scrollbar-color: #000 transparent;
 }
 
 .sidebar-menu-scrollbar::-webkit-scrollbar {
@@ -155,8 +160,12 @@ div.dataTables_filter {
 }
 
 .sidebar-menu-scrollbar::-webkit-scrollbar-thumb {
-    background: #1a3a6b;
+    background: transparent;
     border-radius: 9999px;
+}
+
+.sidebar-menu-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #000;
 }
 
 /* Scroll del directorio lateral de personas del perfil. */
