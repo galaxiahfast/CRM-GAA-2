@@ -142,17 +142,12 @@ div.dataTables_filter {
 
 /* Scroll discreto del menú lateral. */
 .sidebar-menu-scrollbar {
-    scrollbar-color: transparent transparent;
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-}
-
-.sidebar-menu-scrollbar:hover {
-    scrollbar-color: #000 transparent;
+    scrollbar-width: none;
 }
 
 .sidebar-menu-scrollbar::-webkit-scrollbar {
-    width: 3px;
+    width: 0;
+    height: 0;
 }
 
 .sidebar-menu-scrollbar::-webkit-scrollbar-track {
@@ -164,8 +159,22 @@ div.dataTables_filter {
     border-radius: 9999px;
 }
 
-.sidebar-menu-scrollbar:hover::-webkit-scrollbar-thumb {
+.sidebar-overlay-scrollbar {
+    position: absolute;
+    right: 2px;
+    top: 0;
+    z-index: 20;
+    width: 3px;
+    min-height: 32px;
+    border-radius: 9999px;
     background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+}
+
+#logo-sidebar:hover .sidebar-overlay-scrollbar {
+    opacity: 1;
 }
 
 /* Scroll del directorio lateral de personas del perfil. */

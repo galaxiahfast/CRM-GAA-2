@@ -451,6 +451,44 @@
     <!-- ============================================================ -->
     <script>
         document.addEventListener('alpine:init', () => {
+            const sidebar = document.getElementById('logo-sidebar');
+            const menuScroller = sidebar?.querySelector('.sidebar-menu-scrollbar');
+
+            if (sidebar && menuScroller && !sidebar.querySelector('.sidebar-overlay-scrollbar')) {
+                const overlayThumb = document.createElement('span');
+                overlayThumb.className = 'sidebar-overlay-scrollbar';
+                overlayThumb.setAttribute('aria-hidden', 'true');
+                sidebar.appendChild(overlayThumb);
+
+                const updateOverlayScrollbar = () => {
+                    const viewportHeight = menuScroller.clientHeight;
+                    const contentHeight = menuScroller.scrollHeight;
+
+                    if (contentHeight <= viewportHeight || viewportHeight <= 0) {
+                        overlayThumb.style.display = 'none';
+                        return;
+                    }
+
+                    const thumbHeight = Math.max(32, viewportHeight * viewportHeight / contentHeight);
+                    const availableTravel = Math.max(0, viewportHeight - thumbHeight);
+                    const scrollRange = Math.max(1, contentHeight - viewportHeight);
+                    const thumbTop = menuScroller.offsetTop + (menuScroller.scrollTop / scrollRange) * availableTravel;
+
+                    overlayThumb.style.display = 'block';
+                    overlayThumb.style.height = `${thumbHeight}px`;
+                    overlayThumb.style.transform = `translateY(${thumbTop}px)`;
+                };
+
+                menuScroller.addEventListener('scroll', updateOverlayScrollbar, { passive: true });
+                new ResizeObserver(updateOverlayScrollbar).observe(menuScroller);
+                new MutationObserver(updateOverlayScrollbar).observe(menuScroller, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                });
+                requestAnimationFrame(updateOverlayScrollbar);
+            }
+
             Alpine.effect(() => {
 
                 const sidebar = document.getElementById('logo-sidebar');
