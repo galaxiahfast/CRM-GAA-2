@@ -36,6 +36,10 @@ class AttendanceManagement extends Component
 
     public ?int $activeReportUserId = null;
 
+    public ?string $lastReportGeneratedAt = null;
+
+    public int $errorToastVersion = 0;
+
     public bool $showEmployeeIdModal = false;
 
     public ?int $editingEmployeeUserId = null;
@@ -160,6 +164,7 @@ class AttendanceManagement extends Component
         abort_unless($this->editingEmployeeUserId, 404);
 
         $this->editingEmployeeId = trim($this->editingEmployeeId);
+        $this->errorToastVersion++;
         $this->validate([
             'editingEmployeeId' => [
                 'required',
@@ -193,6 +198,7 @@ class AttendanceManagement extends Component
         AttendanceSettingsService $settingsService,
     ): void
     {
+        $this->errorToastVersion++;
         $this->validate([
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
@@ -217,6 +223,7 @@ class AttendanceManagement extends Component
 
         if ($this->selectionReportIsCurrent) {
             $this->selectReportUser($this->reportedUserIds[0], $attendanceService, $settingsService);
+            $this->lastReportGeneratedAt = now()->format('d/m/Y H:i');
         }
     }
 
@@ -251,10 +258,12 @@ class AttendanceManagement extends Component
             ->get();
 
         if ($mode === 'individual' && $users->count() !== 1) {
+            $this->errorToastVersion++;
             $this->addError('selectedReportUserIds', 'Selecciona exactamente un colaborador para descargar el informe individual.');
             abort(422);
         }
         if (in_array($mode, ['group', 'general'], true) && $users->count() < 2) {
+            $this->errorToastVersion++;
             $this->addError('selectedReportUserIds', 'Selecciona al menos dos colaboradores para descargar este informe.');
             abort(422);
         }
@@ -315,6 +324,7 @@ class AttendanceManagement extends Component
             return;
         }
 
+        $this->errorToastVersion++;
         $this->validate([
             'generalHourlyRate' => 'required|numeric|min:0',
             'generalBonusAmount' => 'required|numeric|min:0',
@@ -389,6 +399,7 @@ class AttendanceManagement extends Component
         }
 
         $this->modalChangeComment = trim($this->modalChangeComment);
+        $this->errorToastVersion++;
         $this->validate([
             'modalDailyPay' => 'required|numeric|min:0',
             'modalBonusAmount' => 'required|numeric|min:0',
