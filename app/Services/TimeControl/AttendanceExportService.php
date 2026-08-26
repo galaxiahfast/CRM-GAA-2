@@ -2,8 +2,12 @@
 
 namespace App\Services\TimeControl;
 
+use App\Models\User;
+use App\Services\Reports\ReportData;
+use App\Services\Reports\ReportSection;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceExportService
@@ -19,6 +23,109 @@ class AttendanceExportService
         'Total del Día',
         'Estado',
     ];
+
+    /**
+     * Construye los informes de selección del checador con la misma semántica
+     * que Supervisión de horas: individual, grupal (un bloque por persona) y
+     * general (consolidado de la selección).
+     *
+     * @param  Collection<int, User>  $users
+     */
+    public function selectionReport(
+        string $mode,
+        Collection $users,
+        string $from,
+        string $to,
+        AttendanceService $attendanceService,
+        AttendanceSettingsService $settingsService,
+    ): ReportData {
+        abort_unless(in_array($mode, ['individual', 'group', 'general'], true), 404);
+
+        $reports = $users->map(function (User $user) use ($from, $to, $attendanceService, $settingsService): array {
+            $profile = $user->activeOrganizationalProfile;
+            $settings = $settingsService->getSettings(
+                (string) $user->employee_id,
+                $profile ? (float) $profile->hourly_rate : null,
+                $profile ? (float) $profile->food_allowance : null,
+            );
+            $records = $attendanceService->fetchRecords((string) $user->employee_id, $from, $to);
+
+            return [
+                'user' => $user,
+                'result' => $attendanceService->processPayroll($records, $settings),
+            ];
+        });
+
+        $label = match ($mode) {
+            'individual' => 'Informe individual del Reloj checador',
+            'group' => 'Informes grupales del Reloj checador',
+            default => 'Informe general del Reloj checador',
+        };
+        $filenameMode = match ($mode) {
+            'individual' => 'individual',
+            'group' => 'grupal',
+            default => 'general',
+        };
+
+        $sections = $mode === 'general'
+            ? [$this->generalSelectionSection($reports)]
+            : $reports->map(fn (array $report) => $this->individualSelectionSection(
+                $report['user'],
+                $report['result'],
+                $mode === 'group',
+            ))->all();
+
+        return new ReportData(
+            title: $label,
+            filenameBase: 'reloj-checador-'.$filenameMode.'_'.$from.'_'.$to,
+            meta: [
+                'Periodo' => $from.' — '.$to,
+                'Colaboradores incluidos' => (string) $users->count(),
+                'Selección' => $users->map(fn (User $user) => trim($user->name.' '.$user->last_name))->join(', '),
+            ],
+            sections: $sections,
+        );
+    }
+
+    /** @param array<string, mixed> $result */
+    private function individualSelectionSection(User $user, array $result, bool $batch): ReportSection
+    {
+        $name = trim($user->name.' '.$user->last_name);
+        $rows = $this->buildRows($result);
+        $rows[] = $this->buildTotalRow($result);
+
+        return new ReportSection(
+            title: ($batch ? 'Reporte individual: ' : 'Detalle de asistencia: ').$name.' (ID '.$user->employee_id.')',
+            columns: self::COLUMNS,
+            rows: $rows,
+        );
+    }
+
+    /** @param Collection<int, array{user: User, result: array<string, mixed>}> $reports */
+    private function generalSelectionSection(Collection $reports): ReportSection
+    {
+        $rows = $reports->map(function (array $report): array {
+            /** @var User $user */
+            $user = $report['user'];
+            $totals = $report['result']['totales_pie'] ?? [];
+
+            return [
+                trim($user->name.' '.$user->last_name),
+                (string) $user->employee_id,
+                $totals['tiempo'] ?? '00h 00m 00s',
+                $totals['decimal'] ?? '0.00',
+                $totals['pago_h'] ?? '$0.00',
+                $totals['bonos'] ?? '$0.00',
+                $totals['general'] ?? '$0.00',
+            ];
+        })->all();
+
+        return new ReportSection(
+            title: 'Consolidado por colaborador',
+            columns: ['Colaborador', 'ID Checador', 'Tiempo neto', 'Horas decimales', 'Pago base', 'Bonos', 'Total'],
+            rows: $rows,
+        );
+    }
 
     /**
      * @param  array<string, mixed>  $payrollResult  Resultado de AttendanceService::processPayroll

@@ -22,12 +22,25 @@
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
     $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
     $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
+    $supportsDarkTheme = request()->routeIs('time.*', 'soporte.*');
 @endphp
+@if ($supportsDarkTheme)
+    <script>
+        document.documentElement.classList.toggle('module-dark-theme', localStorage.getItem('activities-support-theme') === 'dark');
+    </script>
+@endif
 <!-- ============================================================ -->
 <!-- CONTENEDOR PRINCIPAL CON x-data COMPARTIDO                    -->
 <!-- ============================================================ -->
 <div x-data="{ 
-    isTransitioning: false
+    isTransitioning: false,
+    darkMode: document.documentElement.classList.contains('module-dark-theme'),
+    toggleDarkMode() {
+        this.darkMode = !this.darkMode;
+        document.documentElement.classList.toggle('module-dark-theme', this.darkMode);
+        localStorage.setItem('activities-support-theme', this.darkMode ? 'dark' : 'light');
+        window.dispatchEvent(new CustomEvent('module-theme-changed', { detail: { dark: this.darkMode } }));
+    }
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
@@ -54,6 +67,15 @@
             </div>
             
             <div class="flex items-center gap-[15px]">
+                @if ($supportsDarkTheme)
+                    <button type="button" @click="toggleDarkMode()"
+                        class="inline-flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-white/60 text-white transition-colors hover:border-white/80 hover:bg-white/10 focus:outline-none focus:ring-0"
+                        :aria-label="darkMode ? 'Activar tema claro' : 'Activar tema oscuro'"
+                        :title="darkMode ? 'Tema claro' : 'Tema oscuro'">
+                        <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+                        <svg x-show="darkMode" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+                    </button>
+                @endif
                 <!-- Notificaciones en tiempo real -->
                 <livewire:notification-center />
 

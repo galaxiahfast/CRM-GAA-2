@@ -21,9 +21,8 @@
                 </div>
 
                 <div class="dashboard-view-controls" role="group" aria-label="Controles de visualización">
-                    <button id="dashboardZoomOut" type="button" aria-label="Alejar panel" title="Alejar">−</button>
-                    <button id="dashboardZoomReset" type="button" class="dashboard-zoom-value" aria-label="Restablecer zoom" title="Restablecer zoom">100%</button>
-                    <button id="dashboardZoomIn" type="button" aria-label="Acercar panel" title="Acercar">+</button>
+                    <input id="dashboardZoomRange" class="dashboard-zoom-range" type="range" min="70" max="130" step="10" value="100" aria-label="Ajustar tamaño del Panel de control">
+                    <span id="dashboardZoomValue" class="dashboard-zoom-value" aria-live="polite">100%</span>
                     <span class="dashboard-control-divider" aria-hidden="true"></span>
                     <button id="dashboardFullscreen" type="button" aria-label="Ver en pantalla completa" title="Pantalla completa">
                         <svg class="dashboard-expand-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5m13-5h5v5M8 21H3v-5m18 0v5h-5"/></svg>
@@ -497,8 +496,8 @@
             z-index: 20;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 5px;
+            gap: 10px;
+            padding: 10px 15px;
             border: 1px solid #e4e4e7;
             border-radius: 12px;
             background: #fff;
@@ -507,25 +506,31 @@
         }
         .dashboard-view-controls button {
             display: inline-flex;
-            width: 36px;
-            height: 36px;
             align-items: center;
             justify-content: center;
             border: 0;
-            border-radius: 8px;
+            padding: 5px;
             background: transparent;
             color: #18181b;
-            font-size: 20px;
             line-height: 1;
             cursor: pointer;
         }
         .dashboard-view-controls button:hover { background: #f4f4f5; }
-        .dashboard-view-controls .dashboard-zoom-value {
-            width: 54px;
-            font-size: 13px;
-            font-weight: 600;
+        .dashboard-view-controls .dashboard-zoom-range {
+            width: 130px;
+            height: 6px;
+            cursor: pointer;
+            accent-color: #000;
         }
-        .dashboard-view-controls svg { width: 18px; height: 18px; }
+        .dashboard-view-controls .dashboard-zoom-value {
+            width: 42px;
+            text-align: right;
+            font-size: 15px;
+            font-weight: 600;
+            color: #000;
+            font-variant-numeric: tabular-nums;
+        }
+        .dashboard-view-controls svg { width: 16px; height: 16px; }
         .dashboard-view-controls .dashboard-compress-icon { display: none; }
         .dashboard-view-controls.is-fullscreen .dashboard-expand-icon { display: none; }
         .dashboard-view-controls.is-fullscreen .dashboard-compress-icon { display: block; }
@@ -765,6 +770,39 @@
         .time-dashboard-modern *::-webkit-scrollbar { width: 6px; height: 6px; }
         .time-dashboard-modern *::-webkit-scrollbar-track { background: transparent; }
         .time-dashboard-modern *::-webkit-scrollbar-thumb { border-radius: 9999px; background: #000; }
+        html.module-dark-theme .time-dashboard-modern .time-dashboard-topbar {
+            border-color: #3f3f46 !important;
+            background: #18181b !important;
+        }
+        html.module-dark-theme .time-dashboard-modern .time-dashboard-topbar button,
+        html.module-dark-theme .time-dashboard-modern .time-dashboard-topbar a {
+            color: #fafafa !important;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-view-controls {
+            border-color: #52525b;
+            background: #27272a;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-view-controls button {
+            color: #fafafa;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-zoom-range {
+            accent-color: #fff;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-zoom-value {
+            color: #fafafa;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-view-controls button:hover {
+            background: #3f3f46;
+        }
+        html.module-dark-theme .time-dashboard-modern .dashboard-control-divider {
+            background: #52525b;
+        }
+        html.module-dark-theme .time-dashboard-modern * {
+            scrollbar-color: #fff transparent !important;
+        }
+        html.module-dark-theme .time-dashboard-modern *::-webkit-scrollbar-thumb {
+            background: #fff !important;
+        }
         @media (max-width: 1180px) {
             .dashboard-view-controls {
                 position: static;
@@ -2364,9 +2402,8 @@ if (pieCanvas && typeof Chart !== 'undefined') {
 
             // Controles superiores de zoom y pantalla completa.
             const dashboardRoot = document.getElementById('timeDashboardRoot');
-            const zoomValue = document.getElementById('dashboardZoomReset');
-            const zoomOut = document.getElementById('dashboardZoomOut');
-            const zoomIn = document.getElementById('dashboardZoomIn');
+            const zoomRange = document.getElementById('dashboardZoomRange');
+            const zoomValue = document.getElementById('dashboardZoomValue');
             const fullscreenButton = document.getElementById('dashboardFullscreen');
             const viewControls = document.querySelector('.dashboard-view-controls');
             let dashboardZoom = 100;
@@ -2384,14 +2421,11 @@ if (pieCanvas && typeof Chart !== 'undefined') {
                 dashboardZoom = Math.min(130, Math.max(70, nextZoom));
                 if (dashboardRoot) dashboardRoot.style.zoom = `${dashboardZoom}%`;
                 if (zoomValue) zoomValue.textContent = `${dashboardZoom}%`;
-                if (zoomOut) zoomOut.disabled = dashboardZoom === 70;
-                if (zoomIn) zoomIn.disabled = dashboardZoom === 130;
+                if (zoomRange) zoomRange.value = String(dashboardZoom);
                 resizeDashboardCharts();
             };
 
-            zoomOut?.addEventListener('click', () => setDashboardZoom(dashboardZoom - 10));
-            zoomIn?.addEventListener('click', () => setDashboardZoom(dashboardZoom + 10));
-            zoomValue?.addEventListener('click', () => setDashboardZoom(100));
+            zoomRange?.addEventListener('input', (event) => setDashboardZoom(Number(event.target.value)));
 
             fullscreenButton?.addEventListener('click', async () => {
                 if (!dashboardRoot) return;

@@ -177,6 +177,154 @@ div.dataTables_filter {
     opacity: 1;
 }
 
+/* Tema oscuro, limitado a los módulos de Actividades y Soporte. */
+html.module-dark-theme {
+    color-scheme: dark;
+}
+
+html.module-dark-theme body,
+html.module-dark-theme #main-content {
+    background: #09090b !important;
+    color: #d4d4d8 !important;
+}
+
+html.module-dark-theme #main-nav {
+    background: #09090b !important;
+    border-bottom: 1px solid #27272a;
+}
+
+html.module-dark-theme #logo-sidebar {
+    background: #111113 !important;
+    border-right: 1px solid #27272a;
+    box-shadow: none;
+}
+
+html.module-dark-theme .notification-panel {
+    border-color: #3f3f46 !important;
+    background: #18181b !important;
+    color: #d4d4d8 !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-white"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#f4f4f4]"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#F4F4F4]"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#F3F3F3]"] {
+    background-color: #18181b !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-zinc-50"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-gray-50"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-gray-100"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-zinc-100"] {
+    background-color: #27272a !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-black"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-900"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-800"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-800"] {
+    color: #fafafa !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-700"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-700"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-600"] {
+    color: #d4d4d8 !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-500"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-500"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-400"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-400"] {
+    color: #a1a1aa !important;
+}
+
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-zinc-200"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-zinc-300"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-100"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-200"],
+html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-300"] {
+    border-color: #3f3f46 !important;
+}
+
+html.module-dark-theme #main-content :is(input, select, textarea) {
+    border-color: #3f3f46 !important;
+    background-color: #18181b !important;
+    color: #fafafa !important;
+}
+
+html.module-dark-theme #main-content :is(input, textarea)::placeholder {
+    color: #71717a !important;
+}
+
+html.module-dark-theme #main-content [class*="bg-black"] {
+    border-color: #fafafa !important;
+    background-color: #fafafa !important;
+    color: #09090b !important;
+}
+
+html.module-dark-theme #main-content [class*="bg-black"] svg {
+    color: #09090b !important;
+    stroke: #09090b !important;
+}
+
+html.module-dark-theme #main-content table :is(thead, tfoot) {
+    background: #27272a !important;
+}
+
+html.module-dark-theme #main-content table tbody,
+html.module-dark-theme #main-content table tr {
+    background-color: #18181b !important;
+}
+
+html.module-dark-theme #main-content [class*="shadow-"] {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .28) !important;
+}
+
+html.module-dark-theme #main-content canvas,
+html.module-dark-theme #main-content :is(#grafica_tiempo_checador, #grafica_ganancias_checador) svg {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+html.module-dark-theme #main-content #clientActivityChart {
+    background: #e7e7e4 !important;
+}
+
+html.module-dark-theme :is(#main-content, .notification-panel) *,
+html.module-dark-theme :is(#main-content, .notification-panel) {
+    scrollbar-color: #fff transparent !important;
+}
+
+html.module-dark-theme :is(#main-content, .notification-panel) *::-webkit-scrollbar-thumb,
+html.module-dark-theme :is(#main-content, .notification-panel)::-webkit-scrollbar-thumb {
+    background: #fff !important;
+}
+
+html.module-dark-theme :is(#main-content, .notification-panel) *::-webkit-scrollbar-track,
+html.module-dark-theme :is(#main-content, .notification-panel)::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+html.module-dark-theme #main-content [class*="text-[#881337]"] {
+    color: #fb7185 !important;
+}
+
+html.module-dark-theme #main-content [class*="border-[#881337]"] {
+    border-color: rgba(251, 113, 133, .5) !important;
+}
+
+html.module-dark-theme #main-content [class*="bg-[#881337]"] {
+    background-color: rgba(251, 113, 133, .12) !important;
+}
+
+html.module-dark-theme #main-content [class*="text-[#166534]"] {
+    color: #86efac !important;
+}
+
+html.module-dark-theme .sidebar-overlay-scrollbar {
+    background: #fff;
+}
+
 /* Scroll del directorio lateral de personas del perfil. */
 .profile-people-scrollbar {
     scrollbar-color: #000 #f4f4f5;

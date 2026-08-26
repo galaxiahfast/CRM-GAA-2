@@ -38,6 +38,30 @@
     .attendance-clock-modern #total_general { color: #000 !important; }
     .attendance-clock-modern #panel_resultados_checador article > header,
     .attendance-clock-modern #panel_resultados_checador section > header { background: rgba(255,255,255,.65) !important; }
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article,
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador > section {
+        border-color: #3f3f46 !important;
+        background: #18181b !important;
+    }
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article > header,
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador section > header {
+        background: transparent !important;
+    }
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header > span:last-child,
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header h2,
+    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header p {
+        color: #d4d4d8 !important;
+    }
+    html.module-dark-theme .attendance-clock-modern #kpi_tiempo_neto,
+    html.module-dark-theme .attendance-clock-modern #kpi_horas_decimales,
+    html.module-dark-theme .attendance-clock-modern #kpi_pago_base,
+    html.module-dark-theme .attendance-clock-modern #kpi_bono,
+    html.module-dark-theme .attendance-clock-modern #kpi_total_dia,
+    html.module-dark-theme .attendance-clock-modern #promedio_tiempo_checador,
+    html.module-dark-theme .attendance-clock-modern #promedio_ganancias_checador,
+    html.module-dark-theme .attendance-clock-modern #total_general {
+        color: #fafafa !important;
+    }
     .attendance-clock-modern #checador_export_bar button {
         border-color: #e4e4e7 !important;
         background: #fff !important;
@@ -47,6 +71,21 @@
     .attendance-clock-modern table tfoot { background: #fafafa !important; }
     .attendance-clock-modern table th { color: #3f3f46 !important; }
     .attendance-clock-modern * { scrollbar-width: thin; scrollbar-color: #000 transparent; }
+    html.module-dark-theme .attendance-clock-modern:fullscreen { background: #09090b; }
+    html.module-dark-theme .attendance-clock-modern #checador_export_bar button {
+        border-color: #52525b !important;
+        background: #27272a !important;
+        color: #fafafa !important;
+    }
+    html.module-dark-theme .attendance-clock-modern table thead,
+    html.module-dark-theme .attendance-clock-modern table tfoot { background: #27272a !important; }
+    html.module-dark-theme .attendance-clock-modern table th { color: #e4e4e7 !important; }
+    html.module-dark-theme .attendance-clock-modern * {
+        scrollbar-color: #fff transparent !important;
+    }
+    html.module-dark-theme .attendance-clock-modern *::-webkit-scrollbar-thumb {
+        background: #fff !important;
+    }
     @media (max-width: 1100px) {
         .attendance-clock-modern .attendance-topbar { flex-wrap: wrap; padding: 30px !important; }
         .attendance-clock-modern .attendance-heading { align-items: flex-start; flex-direction: column; }
