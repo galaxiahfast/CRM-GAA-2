@@ -665,7 +665,7 @@
                                             <span class="rounded-full px-2 py-0.5 text-[12px] font-semibold {{ $index % 2 === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' }}">{{ $index % 2 === 0 ? 'Entrada' : 'Salida' }}</span>
                                         </div>
                                         <div class="flex gap-2">
-                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model="modalMarks.{{ $index }}" class="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model.live="modalMarks.{{ $index }}" class="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
                                             <button type="button" wire:click="removeAttendanceMark({{ $index }})" aria-label="Eliminar chequeo {{ $index + 1 }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 focus:outline-none focus:ring-0">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
                                             </button>
@@ -681,17 +681,31 @@
                         </section>
 
                         <section class="rounded-xl border border-gray-300 bg-white p-4 shadow-sm">
-                            <h4 class="text-[15px] font-semibold text-gray-900">Pago y bono del día</h4>
+                            <h4 class="text-[15px] font-semibold text-gray-900">Pago por hora y comida</h4>
+                            <p class="mt-1 text-[15px] text-gray-500">El pago base se calcula automáticamente con el tiempo neto de las marcas.</p>
                             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Pago base del día ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model="modalDailyPay" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
-                                    @error('modalDailyPay') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Pago por hora ($)</label>
+                                    <input type="number" min="0" step="0.01" wire:model.live="modalHourlyRate" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    @error('modalHourlyRate') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Bono del día ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model="modalBonusAmount" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    <label class="mb-2 block text-[15px] font-medium text-gray-700">Comida ($)</label>
+                                    <input type="number" min="0" step="0.01" wire:model.live="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                                     @error('modalBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                                    @if ($selectedDateIsWeekend)
+                                        <p class="mt-2 text-[13px] text-gray-500">Los sábados y domingos no generan bono de comida.</p>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div class="rounded-lg border border-gray-200 bg-[#F3F3F3] px-3 py-2.5">
+                                    <span class="block text-[13px] text-gray-500">Pago calculado por horas</span>
+                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedBasePay, 2) }}</strong>
+                                </div>
+                                <div class="rounded-lg border border-gray-200 bg-[#F3F3F3] px-3 py-2.5">
+                                    <span class="block text-[13px] text-gray-500">Total calculado</span>
+                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedTotal, 2) }}</strong>
                                 </div>
                             </div>
                         </section>

@@ -73,8 +73,10 @@ class AttendanceManagementTest extends TestCase
             ->call('editRow', '2026-08-07')
             ->assertSet('showAttendanceModal', true)
             ->set('modalMarks', ['09:00:00', '13:00:00', '14:00:00', '18:30:15'])
-            ->set('modalDailyPay', 850.50)
+            ->set('modalHourlyRate', 100)
             ->set('modalBonusAmount', 75.25)
+            ->assertSet('modalCalculatedBasePay', 850.0)
+            ->assertSet('modalCalculatedTotal', 925.25)
             ->call('saveDayAdjustment')
             ->assertHasErrors(['modalChangeComment' => 'required'])
             ->set('modalChangeComment', 'Se agregó la salida omitida por el dispositivo.')
@@ -92,10 +94,70 @@ class AttendanceManagementTest extends TestCase
 
         $settings = json_decode(Storage::disk('local')->get('checador_settings/EMP-100.json'), true);
         $override = $settings['day_overrides']['2026-08-07'];
-        $this->assertSame(850.5, $override['daily_pay_amount']);
+        $this->assertEquals(100.0, $override['hourly_rate']);
+        $this->assertArrayNotHasKey('daily_pay_amount', $override);
         $this->assertSame(75.25, $override['bonus_amount']);
         $this->assertSame('Se agregó la salida omitida por el dispositivo.', $override['comment']);
         $this->assertCount(1, $override['history']);
+    }
+
+    public function test_weekends_never_receive_meal_bonus_and_pay_is_calculated_from_hours(): void
+    {
+        Storage::fake('local');
+        $adminRole = Role::create(['role' => 'Administrador']);
+        $auxRole = Role::create(['role' => 'Auxiliar']);
+        $admin = User::create([
+            'name' => 'Admin', 'email' => 'admin-weekend@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $adminRole->id,
+        ]);
+        $aux = User::create([
+            'name' => 'Fin', 'last_name' => 'Semana', 'email' => 'weekend@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-WEEKEND',
+        ]);
+
+        foreach (['2026-08-08', '2026-08-09', '2026-08-10'] as $date) {
+            foreach (['09:00:00', '13:00:00'] as $index => $time) {
+                DB::table('control_de_horas')->insert([
+                    'employeeID' => $aux->employee_id,
+                    'personName' => 'Fin Semana',
+                    'authDateTime' => $date.' '.$time,
+                    'authDate' => $date,
+                    'authTime' => $time,
+                    'direction' => $index === 0 ? 'IN' : 'OUT',
+                    'deviceName' => 'Prueba',
+                ]);
+            }
+        }
+
+        $component = Livewire::actingAs($admin)->test(AttendanceManagement::class)
+            ->set('userId', $aux->id)
+            ->set('from', '2026-08-08')
+            ->set('to', '2026-08-10')
+            ->call('searchAttendance');
+
+        $rows = collect($component->get('payrollRows'))->keyBy('fecha');
+        $this->assertSame('$0.00', $rows['2026-08-08']['bono']);
+        $this->assertSame('$0.00', $rows['2026-08-09']['bono']);
+        $this->assertSame('$50.00', $rows['2026-08-10']['bono']);
+
+        $component
+            ->call('editRow', '2026-08-08')
+            ->assertSet('selectedDateIsWeekend', true)
+            ->set('modalHourlyRate', 125)
+            ->set('modalBonusAmount', 99)
+            ->set('modalChangeComment', 'Ajuste de tarifa por hora del sábado.')
+            ->call('saveDayAdjustment')
+            ->assertHasNoErrors();
+
+        $rows = collect($component->get('payrollRows'))->keyBy('fecha');
+        $this->assertSame('$500.00', $rows['2026-08-08']['pago_horas']);
+        $this->assertSame('$0.00', $rows['2026-08-08']['bono']);
+        $this->assertSame('$500.00', $rows['2026-08-08']['total']);
+
+        $override = json_decode(Storage::disk('local')->get('checador_settings/EMP-WEEKEND.json'), true)['day_overrides']['2026-08-08'];
+        $this->assertEquals(125.0, $override['hourly_rate']);
+        $this->assertEquals(0.0, $override['bonus_amount']);
+        $this->assertArrayNotHasKey('daily_pay_amount', $override);
     }
 
     public function test_selection_loads_one_person_and_allows_switching_in_group_reports(): void

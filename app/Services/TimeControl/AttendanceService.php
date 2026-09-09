@@ -73,7 +73,8 @@ class AttendanceService
 
             $rates = $this->settingsService->resolveForDay($settings, $fechaStr, $esCorrecto);
             $hourlyRate = $rates['hourly_rate'];
-            $bonoDia = $rates['bonus_amount'];
+            $esFinDeSemana = Carbon::parse($fechaStr)->isWeekend();
+            $bonoDia = $esFinDeSemana ? 0.0 : $rates['bonus_amount'];
 
             $pagoBase = $esCorrecto
                 ? ($rates['daily_pay_amount'] !== null
@@ -97,6 +98,7 @@ class AttendanceService
                 'modified_individual' => $rates['modified_individual'],
                 'correction_comment' => $rates['comment'],
                 'hourly_rate' => $hourlyRate,
+                'is_weekend' => $esFinDeSemana,
                 'detalles_marcas' => implode(', ', $marcasImprimir),
                 'tiempo_segundos' => $tiempoNeto,
                 'pago_base_raw' => $pagoBase,

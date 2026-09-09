@@ -136,7 +136,9 @@ class TimeEntryController extends Controller
     }
 
     /**
-     * Guarda ajuste individual por día (prioridad sobre valores generales).
+     * Guarda tarifa por hora y bono individuales para un día.
+     * El campo `pago` se conserva en la API por compatibilidad, pero representa
+     * la tarifa por hora; el total se calcula posteriormente con las horas reales.
      */
     public function guardarAjusteDia(Request $request): JsonResponse
     {

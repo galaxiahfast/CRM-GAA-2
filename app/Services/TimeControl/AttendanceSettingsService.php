@@ -2,6 +2,7 @@
 
 namespace App\Services\TimeControl;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -47,11 +48,17 @@ class AttendanceSettingsService
         ]);
     }
 
-    /** @param list<string> $marksBefore @param list<string> $marksAfter */
+    /**
+     * Guarda una tarifa por hora y bono de comida específicos para el día.
+     * Los ajustes antiguos con daily_pay_amount siguen siendo legibles en resolveForDay().
+     *
+     * @param  list<string>  $marksBefore
+     * @param  list<string>  $marksAfter
+     */
     public function saveDayOverride(
         string $employeeId,
         string $date,
-        float $dailyPayAmount,
+        float $hourlyRate,
         float $bonusAmount,
         string $comment,
         ?int $adminId = null,
@@ -59,6 +66,10 @@ class AttendanceSettingsService
         array $marksAfter = [],
     ): void
     {
+        // La regla de fin de semana se aplica también aquí para cubrir cualquier
+        // entrada alternativa (API, Livewire o futuros consumidores del servicio).
+        $bonusAmount = Carbon::parse($date)->isWeekend() ? 0.0 : $bonusAmount;
+
         $stored = $this->readFile($employeeId);
 
         $dayOverrides = $stored['day_overrides'] ?? [];
@@ -70,15 +81,14 @@ class AttendanceSettingsService
             'changed_at' => now()->toIso8601String(),
             'marks_before' => array_values($marksBefore),
             'marks_after' => array_values($marksAfter),
-            'daily_pay_before' => $previous['daily_pay_amount'] ?? null,
-            'daily_pay_after' => round($dailyPayAmount, 2),
+            'hourly_rate_before' => $previous['hourly_rate'] ?? $stored['hourly_rate'] ?? self::DEFAULT_HOURLY_RATE,
+            'hourly_rate_after' => round($hourlyRate, 2),
             'bonus_before' => $previous['bonus_amount'] ?? null,
             'bonus_after' => round($bonusAmount, 2),
         ];
 
         $dayOverrides[$date] = [
-            'hourly_rate' => (float) ($previous['hourly_rate'] ?? $stored['hourly_rate'] ?? self::DEFAULT_HOURLY_RATE),
-            'daily_pay_amount' => round($dailyPayAmount, 2),
+            'hourly_rate' => round($hourlyRate, 2),
             'bonus_amount' => round($bonusAmount, 2),
             'modified_individual' => true,
             'comment' => $comment,

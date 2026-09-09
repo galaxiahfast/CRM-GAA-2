@@ -62,9 +62,15 @@ class AttendanceManagement extends Component
 
     public $selectedEmployeeName = '';
 
-    public $modalDailyPay = 0.00;
+    public $modalHourlyRate = 0.00;
 
     public $modalBonusAmount = 50.00;
+
+    public bool $selectedDateIsWeekend = false;
+
+    public float $modalCalculatedBasePay = 0.0;
+
+    public float $modalCalculatedTotal = 0.0;
 
     /** @var list<string> */
     public array $modalMarks = [];
@@ -351,8 +357,11 @@ class AttendanceManagement extends Component
         }
 
         $this->selectedDate = $fecha;
-        $this->modalDailyPay = (float) ($row['pago_base_raw'] ?? 0);
-        $this->modalBonusAmount = (float) ($row['bono_raw'] ?? $this->generalBonusAmount);
+        $this->selectedDateIsWeekend = Carbon::parse($fecha)->isWeekend();
+        $this->modalHourlyRate = (float) ($row['hourly_rate'] ?? $this->generalHourlyRate);
+        $this->modalBonusAmount = $this->selectedDateIsWeekend
+            ? 0.0
+            : (float) ($row['bono_raw'] ?? $this->generalBonusAmount);
         $this->modalMarks = DB::table('control_de_horas')
             ->where('employeeID', $this->employeeId)
             ->where('authDate', $fecha)
@@ -364,12 +373,14 @@ class AttendanceManagement extends Component
         $this->originalModalMarks = $this->modalMarks;
         $this->modalChangeComment = '';
         $this->resetValidation();
+        $this->recalculateModalAmounts();
         $this->showAttendanceModal = true;
     }
 
     public function addAttendanceMark(): void
     {
         $this->modalMarks[] = '';
+        $this->recalculateModalAmounts();
     }
 
     public function removeAttendanceMark(int $index): void
@@ -381,12 +392,31 @@ class AttendanceManagement extends Component
         unset($this->modalMarks[$index]);
         $this->modalMarks = array_values($this->modalMarks);
         $this->resetValidation('modalMarks.'.$index);
+        $this->recalculateModalAmounts();
+    }
+
+    public function updatedModalMarks(): void
+    {
+        $this->recalculateModalAmounts();
+    }
+
+    public function updatedModalHourlyRate(): void
+    {
+        $this->recalculateModalAmounts();
+    }
+
+    public function updatedModalBonusAmount(): void
+    {
+        $this->recalculateModalAmounts();
     }
 
     public function closeModal(): void
     {
         $this->showAttendanceModal = false;
-        $this->reset(['selectedDate', 'modalMarks', 'originalModalMarks', 'modalChangeComment']);
+        $this->reset([
+            'selectedDate', 'modalMarks', 'originalModalMarks', 'modalChangeComment',
+            'selectedDateIsWeekend', 'modalCalculatedBasePay', 'modalCalculatedTotal',
+        ]);
         $this->resetValidation();
     }
 
@@ -401,20 +431,23 @@ class AttendanceManagement extends Component
         $this->modalChangeComment = trim($this->modalChangeComment);
         $this->errorToastVersion++;
         $this->validate([
-            'modalDailyPay' => 'required|numeric|min:0',
+            'modalHourlyRate' => 'required|numeric|min:0',
             'modalBonusAmount' => 'required|numeric|min:0',
             'modalMarks' => ['required', 'array', 'min:1'],
             'modalMarks.*' => ['required', 'date_format:H:i:s', 'distinct'],
             'modalChangeComment' => ['required', 'string', 'min:5', 'max:500'],
         ], [], [
-            'modalDailyPay' => 'pago del día',
-            'modalBonusAmount' => 'bono del día',
+            'modalHourlyRate' => 'pago por hora',
+            'modalBonusAmount' => 'bono de comida',
             'modalMarks' => 'marcas o chequeos',
             'modalMarks.*' => 'marca o chequeo',
             'modalChangeComment' => 'comentario del cambio',
         ]);
 
         $marks = collect($this->modalMarks)->sort()->values()->all();
+        $bonusAmount = Carbon::parse($this->selectedDate)->isWeekend()
+            ? 0.0
+            : (float) $this->modalBonusAmount;
         $existing = DB::table('control_de_horas')
             ->where('employeeID', $this->employeeId)
             ->where('authDate', $this->selectedDate)
@@ -422,7 +455,7 @@ class AttendanceManagement extends Component
             ->get();
         $template = $existing->first();
 
-        DB::transaction(function () use ($settingsService, $marks, $template): void {
+        DB::transaction(function () use ($settingsService, $marks, $template, $bonusAmount): void {
             DB::table('control_de_horas')
                 ->where('employeeID', $this->employeeId)
                 ->where('authDate', $this->selectedDate)
@@ -443,8 +476,8 @@ class AttendanceManagement extends Component
             $settingsService->saveDayOverride(
                 $this->employeeId,
                 $this->selectedDate,
-                (float) $this->modalDailyPay,
-                (float) $this->modalBonusAmount,
+                (float) $this->modalHourlyRate,
+                $bonusAmount,
                 $this->modalChangeComment,
                 auth()->id(),
                 $this->originalModalMarks,
@@ -457,6 +490,42 @@ class AttendanceManagement extends Component
             ? 'Jornada corregida y recalculada correctamente.'
             : 'Jornada modificada; aún requiere revisión porque conserva un número impar de marcas.');
         $this->searchAttendance(app(AttendanceService::class), $settingsService);
+    }
+
+    private function recalculateModalAmounts(): void
+    {
+        $marks = collect($this->modalMarks)
+            ->filter(fn ($mark) => is_string($mark) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $mark))
+            ->sort()
+            ->values();
+
+        if ($marks->isEmpty() || $marks->count() % 2 !== 0) {
+            $this->modalCalculatedBasePay = 0.0;
+            $this->modalCalculatedTotal = 0.0;
+
+            return;
+        }
+
+        $seconds = 0;
+        for ($index = 0; $index < $marks->count(); $index += 2) {
+            try {
+                $start = Carbon::createFromFormat('H:i:s', $marks[$index]);
+                $end = Carbon::createFromFormat('H:i:s', $marks[$index + 1]);
+            } catch (\Throwable) {
+                $this->modalCalculatedBasePay = 0.0;
+                $this->modalCalculatedTotal = 0.0;
+
+                return;
+            }
+            if ($end->greaterThan($start)) {
+                $seconds += $start->diffInSeconds($end);
+            }
+        }
+
+        $decimalHours = round($seconds / 3600, 2);
+        $this->modalCalculatedBasePay = round($decimalHours * max(0, (float) $this->modalHourlyRate), 2);
+        $mealBonus = $this->selectedDateIsWeekend ? 0.0 : max(0, (float) $this->modalBonusAmount);
+        $this->modalCalculatedTotal = round($this->modalCalculatedBasePay + $mealBonus, 2);
     }
 
     public function export(
