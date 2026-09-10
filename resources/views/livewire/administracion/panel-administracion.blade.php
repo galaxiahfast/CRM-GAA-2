@@ -19,7 +19,7 @@
     $orgChartTree = $orgChartTree ?? [];
 @endphp
 
-<div class="w-full min-w-0 space-y-4" style="font-size: 15px; background-color: #F3F3F3;">
+<div class="w-full min-w-0 space-y-[20px] p-[50px]" style="font-size: 15px; background-color: #F3F3F3;">
     <style>
         .unassigned-users-scrollbar {
             scrollbar-width: thin;
@@ -151,45 +151,158 @@
             font-size: 15px;
             text-align: center;
         }
+        .organization-module-card {
+            transition: none;
+        }
     </style>
 
-    <!-- Accesos rápidos -->
-    <div class="overflow-hidden rounded-2xl shadow-lg" style="background-color: #F3F3F3;">
-        <div class="border-b p-4">
-            <h2 class="text-[15px] font-semibold text-gray-700">Secciones principales</h2>
+    <!-- Centro de gestión siempre visible -->
+    <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6">
+        <div class="flex flex-col gap-5">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex min-w-0 items-start gap-4">
+                    <span class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-[#142d5c] text-white shadow-md">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h1 class="text-[24px] font-bold tracking-tight text-gray-950">Centro de organización</h1>
+                            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
+                        </div>
+                        <p class="mt-2 max-w-3xl text-[15px] leading-7 text-gray-500">Administra colaboradores, roles, permisos y dependencias operativas desde un mismo espacio.</p>
+                    </div>
+                </div>
+                <a href="#organigrama-principal" class="inline-flex min-h-[50px] items-center justify-center gap-3 rounded-xl bg-[#142d5c] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#1A3A6B] focus:outline-none focus:ring-0">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 12l3-3 3 3 4-4M4 4h16v13H4zM8 21l4-4 4 4" /></svg>
+                    Ver organigrama interactivo
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5 border-t border-gray-100 pt-5 lg:grid-cols-4">
+                <div><span class="block text-[11px] font-semibold uppercase tracking-[.08em] text-gray-400">Colaboradores</span><strong class="mt-1 block text-[17px] text-gray-900">{{ $totalUsers ?? 0 }} registrados</strong></div>
+                <div><span class="block text-[11px] font-semibold uppercase tracking-[.08em] text-gray-400">Estructura</span><strong class="mt-1 block text-[17px] text-gray-900">{{ $physicalAreas->count() }} áreas activas</strong></div>
+                <div><span class="block text-[11px] font-semibold uppercase tracking-[.08em] text-gray-400">Seguridad</span><strong class="mt-1 block text-[17px] text-emerald-600">{{ $totalRoles ?? 0 }} roles</strong></div>
+                <div><span class="block text-[11px] font-semibold uppercase tracking-[.08em] text-gray-400">Jerarquía</span><strong class="mt-1 block text-[17px] text-gray-900">{{ $orgChartStats['relations'] ?? 0 }} relaciones</strong></div>
+            </div>
         </div>
-        <div class="grid grid-cols-6 justify-items-center gap-6 p-4">
+    </section>
+
+    <section data-organization-sortable role="menu" aria-label="Opciones de administración" class="grid gap-5 overflow-x-auto pb-1" style="grid-template-columns: repeat(auto-fit, 440px); justify-content: start;">
             @if ($canManageUsers)
-                <a href="{{ route('administracion.section') }}" class="block">
-                    <x-access-icon color="blue" icon="feathericon-users" text="Usuarios" />
-                </a>
+                <article data-organization-module="users" class="organization-module-card flex h-[440px] w-[440px] min-w-[440px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_12px_32px_rgba(26,58,107,0.16)] active:cursor-grabbing">
+                    <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[20px] bg-[#1A3A6B] px-[24px]">
+                            <div class="flex min-w-0 items-center gap-[15px]">
+                                <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><x-feathericon-users class="h-6 w-6" /></span>
+                                <div class="min-w-0">
+                                    <h2 class="truncate text-[21px] font-bold leading-none text-white">Usuarios</h2>
+                                    <p class="mt-[8px] whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Accesos y aprovisionamiento</p>
+                                </div>
+                            </div>
+                            <span class="whitespace-nowrap rounded-lg border border-emerald-300/40 bg-emerald-500/20 px-3 py-1.5 text-[12px] font-semibold text-emerald-100"><span class="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-400"></span>{{ $onlineUserCount }} en línea</span>
+                    </header>
+
+                    <div class="flex min-h-0 flex-1 flex-col gap-[20px] p-[24px]">
+                        <p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Crea colaboradores y administra sus accesos, cuentas y perfiles laborales en tiempo real.</p>
+
+                        <div class="flex flex-col gap-[20px]">
+                            <div class="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-[15px]">
+                                <div class="flex shrink-0 -space-x-2">
+                                    @foreach ($recentOrganizationUsers as $recentUser)
+                                        @php
+                                            $recentNameParts = array_values(array_filter(preg_split('/\s+/', trim($recentUser->name.' '.$recentUser->last_name))));
+                                            $recentInitials = collect(array_slice($recentNameParts, 0, 2))->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+                                        @endphp
+                                        <span class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#1A3A6B] text-[11px] font-bold text-white" title="{{ trim($recentUser->name.' '.$recentUser->last_name) }}">{{ $recentInitials ?: '?' }}</span>
+                                    @endforeach
+                                    @if (($totalUsers ?? 0) > $recentOrganizationUsers->count())
+                                        <span class="flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-white bg-[#DCEAFF] px-1 text-[11px] font-bold text-[#1A3A6B]">+{{ ($totalUsers ?? 0) - $recentOrganizationUsers->count() }}</span>
+                                    @endif
+                                </div>
+                                <div class="min-w-0"><strong class="block truncate text-[14px] text-[#102A52]">{{ $totalRoles ?? 0 }} roles configurados</strong><span class="mt-[5px] block truncate text-[12px] font-medium text-[#55749D]">Última alta {{ $lastOrganizationUserCreatedAt ? $lastOrganizationUserCreatedAt->locale('es')->diffForHumans() : 'sin registro' }}</span></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-[8px]">
+                                @forelse ($organizationAreaUserCounts as $areaUserCount)
+                                    <span class="truncate rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[10px] py-[9px] text-center text-[11px] font-medium text-[#1F4D86]" title="{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}">{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}</span>
+                                @empty
+                                    <span class="col-span-3 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[10px] py-[9px] text-center text-[11px] font-medium text-[#1F4D86]">Sin áreas asignadas</span>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] px-[10px] py-[10px]">
+                        <button type="button" wire:click="openUserManagement('crear')" class="inline-flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[10px] text-[13px] font-semibold text-white focus:outline-none focus:ring-0">
+                            <svg class="h-[17px] w-[17px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14M5 12h14" /></svg>
+                            <span>Crear</span>
+                        </button>
+                        <button type="button" wire:click="openUserManagement('editar')" class="inline-flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[10px] text-[13px] font-semibold text-white focus:outline-none focus:ring-0">
+                            <svg class="h-[16px] w-[16px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
+                            <span>Editar</span>
+                        </button>
+                        <button type="button" wire:click="openUserManagement('eliminar')" class="inline-flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[10px] text-[13px] font-semibold text-white focus:outline-none focus:ring-0">
+                            <svg class="h-[16px] w-[16px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
+                            <span>Eliminar</span>
+                        </button>
+                    </footer>
+                </article>
             @endif
+
             @if ($canManageRoles)
-                <a href="{{ route('administracion.role') }}" class="block">
-                    <x-access-icon color="red" icon="feathericon-lock" text="Roles" />
-                </a>
+                <article data-organization-module="roles" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing">
+                    <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-700"><x-feathericon-lock class="h-5 w-5" /></span><span class="rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-1 text-[12px] font-medium text-purple-700">{{ $totalRoles ?? 0 }} perfiles</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Roles</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Define responsabilidades, alcances jerárquicos y niveles de acceso.</p><div class="mt-3 flex flex-wrap gap-1.5">@foreach ($roles->take(2) as $listedRole)<span class="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-600">{{ $listedRole->role }}</span>@endforeach @if ($roles->count() > 2)<span class="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-600">+{{ $roles->count() - 2 }} más</span>@endif</div></div>
+                    <div class="mt-6 flex items-center gap-4 border-t border-gray-100 pt-5"><a href="{{ route('administracion.role.create') }}" class="rounded-lg bg-[#202020] px-4 py-2 text-[13px] font-semibold text-white hover:bg-black">+ Crear</a><a href="{{ route('administracion.role') }}" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#142d5c]">Administrar <span>→</span></a></div>
+                </article>
             @endif
+
+            <article data-organization-module="positions" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing">
+                <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg></span><span class="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[12px] text-blue-700">{{ $jobPositions->count() }} definidos</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Puestos</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Crea, edita o elimina los puestos operativos de la organización.</p></div>
+                <div class="mt-6 border-t border-gray-100 pt-5"><button type="button" role="menuitem" wire:click="openJobPositionModal" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#142d5c] focus:outline-none"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100">+</span>Agregar Puesto Operativo</button></div>
+            </article>
+
+            <article data-organization-module="areas" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing">
+                <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 20V8l8-4 8 4v12M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg></span><span class="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[12px] text-emerald-700">{{ $physicalAreas->count() }} divisiones</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Áreas</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Organiza departamentos y unidades especializadas.</p><div class="mt-3 flex flex-wrap gap-1.5">@foreach ($physicalAreas->take(3) as $listedArea)<span class="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-600">{{ $listedArea->name }}</span>@endforeach</div></div>
+                <div class="mt-6 border-t border-gray-100 pt-5"><button type="button" role="menuitem" wire:click="openPhysicalAreaModal" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#142d5c] focus:outline-none"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100">+</span>Agregar &Aacute;rea</button></div>
+            </article>
+
             @if ($canManagePermissions)
-                <a href="{{ route('administracion.permissions') }}" class="block">
-                    <x-access-icon color="green" icon="feathericon-shield" text="Permisos" />
-                </a>
+                <article data-organization-module="permissions" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing">
+                    <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><x-feathericon-shield class="h-5 w-5" /></span><span class="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[12px] text-amber-700">Seguridad activa</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Permisos</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Consulta y gestiona las matrices de acceso para cada perfil.</p><p class="mt-3 flex items-center gap-2 text-[12px] text-gray-500"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Control por rol habilitado</p></div>
+                    <div class="mt-6 border-t border-gray-100 pt-5"><button type="button" wire:click="openPermissionsModal" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#142d5c] focus:outline-none">Administrar aquí <span>→</span></button></div>
+                </article>
             @endif
+
             @if ($canManageAssignments)
-                <a href="{{ route('administracion.interns') }}" class="block">
-                    <x-access-icon color="purple" icon="feathericon-user" text="Auxiliares" />
-                </a>
-                <a href="{{ route('administracion.relationships') }}" class="block">
-                    <x-access-icon color="orange" icon="feathericon-git-merge" text="Relaciones" />
-                </a>
+                <article data-organization-module="assignments" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing">
+                    <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><x-feathericon-git-merge class="h-5 w-5" /></span><span class="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[12px] text-indigo-700">Vinculado</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Asignaciones</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Relaciona responsables, auxiliares y equipos de trabajo.</p></div>
+                    <div class="mt-6 flex items-center gap-4 border-t border-gray-100 pt-5"><a href="{{ route('administracion.relationships') }}" class="text-[13px] font-semibold text-[#142d5c]">Relaciones</a><span class="text-gray-300">•</span><a href="{{ route('administracion.interns') }}" class="text-[13px] font-semibold text-gray-600">Auxiliares</a></div>
+                </article>
             @endif
-        </div>
-    </div>
+
+            @if (auth()->user()->isAdmin())
+                <article data-organization-module="catalogs" class="organization-module-card group flex min-h-[285px] cursor-grab flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm active:cursor-grabbing" x-data="{ open: true }">
+                    <div><div class="flex items-center justify-between gap-4"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg></span><span class="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-[12px] text-sky-700">Maestros</span></div><h2 class="mt-5 text-[18px] font-bold text-gray-950">Catálogos</h2><p class="mt-2 text-[15px] leading-7 text-gray-500">Mantén disponibles clientes y actividades corporativas.</p></div>
+                    <div class="mt-6 border-t border-gray-100 pt-3 [&>div>button]:py-2">
+                        <livewire:customer.catalog-manager />
+                        <livewire:time-control.activity-catalog-manager />
+                    </div>
+                </article>
+            @endif
+    </section>
 
     {{-- La información jerárquica solamente se entrega a administradores. --}}
     @if ($canManageOrganization)
 
+    @if ($showUserManagementModal)
+        <livewire:administracion.users.form
+            :embedded="true"
+            :initial-tab="$userManagementInitialTab"
+            :key="'organization-user-management-'.$userManagementInitialTab"
+        />
+    @endif
+
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div class="overflow-hidden rounded-2xl shadow-lg" style="padding: 80px; background-color: #F3F3F3;">
+    <div id="organigrama-principal" class="scroll-mt-5 overflow-hidden rounded-2xl border border-gray-200 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" style="padding: 20px; background-color: #F3F3F3;">
 
         <!-- Encabezado -->
         <div style="padding: 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
@@ -230,70 +343,7 @@
             </div>
         </div>
 
-        <!-- Grupo 4: Acciones centralizadas -->
-        <div style="margin-top: 35px; padding: 0 0 80px 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-            <div class="relative" x-data="{ open: false }" @click.away="open = false" @keydown.escape.window="open = false">
-                <button
-                    type="button"
-                    @click="open = !open"
-                    :aria-expanded="open.toString()"
-                    aria-haspopup="menu"
-                    class="inline-flex h-[50px] min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#1A3A6B] px-5 text-[15px] font-medium text-white shadow-sm transition hover:bg-[#142e55] focus:outline-none focus:ring-0"
-                >
-                    Agregar...
-                    <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                    </svg>
-                </button>
-                
-                <div
-                    x-cloak
-                    x-show="open"
-                    x-transition.origin.top.left
-                    role="menu"
-                    class="absolute left-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 shadow-lg"
-                    style="font-size: 15px;"
-                >
-                    <a href="{{ route('administracion.create.users') }}" role="menuitem"
-                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B]">
-                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9a3 3 0 1 0-6 0 3 3 0 0 0 6 0ZM6 21a6 6 0 0 1 12 0M6 21H3m3 0h3m12 0h-3m3 0h-3M9 9a3 3 0 1 0-6 0 3 3 0 0 0 6 0Zm-6 12a6 6 0 0 1 6-6" />
-                        </svg>
-                        Agregar Usuario
-                    </a>
-                    <a href="{{ route('administracion.role.create') }}" role="menuitem"
-                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B]">
-                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15.5 7.5 18l1.2-5L5 9.8l5.1-.4L12 4.7l1.9 4.7 5.1.4-3.7 3.2 1.2 5L12 15.5Z" />
-                        </svg>
-                        Agregar Rol
-                    </a>
-                    <button type="button" role="menuitem" wire:click="openJobPositionModal" @click="open = false"
-                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
-                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01" />
-                        </svg>
-                        Agregar Puesto Operativo
-                    </button>
-                    <button type="button" role="menuitem" wire:click="openPhysicalAreaModal" @click="open = false"
-                        class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-[15px] font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#1A3A6B] focus:outline-none focus:ring-0">
-                        <svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13v4l2.5 2.5" />
-                        </svg>
-                        Agregar &Aacute;rea
-                    </button>
-                    @if (auth()->user()->isAdmin())
-                        <livewire:customer.catalog-manager />
-                        <livewire:time-control.activity-catalog-manager />
-                    @endif
-                </div>
-            </div>
-
-            <button type="button" wire:click="openPermissionsModal"
-                class="inline-flex h-[50px] min-w-[180px] items-center justify-center rounded-xl bg-[#1A3A6B] px-5 text-[15px] font-medium text-white shadow-sm transition hover:bg-[#142e55] focus:outline-none focus:ring-0">
-                Gestionar Permisos
-            </button>
-        </div>
+        <div class="h-[35px]" aria-hidden="true"></div>
 
         <!-- Grid con ancho mínimo para evitar deformación -->
         <div class="grid min-w-0 grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="padding: 0;">

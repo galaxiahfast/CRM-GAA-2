@@ -2,6 +2,7 @@ import './bootstrap';
 import 'flowbite';
 import './auth-particle-network';
 import './activity-sortable';
+import './organization-sortable';
 import './clock-particle-network';
 
 // Este plugin debe registrarse después de que Livewire 3 expone window.Livewire.

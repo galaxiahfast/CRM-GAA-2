@@ -54,6 +54,8 @@ class Form extends Component
 
     public string $deleteConfirmationName = '';
 
+    public bool $embedded = false;
+
     protected $messages = [
         'name.required' => 'El nombre es obligatorio.',
         'name.string' => 'El nombre debe ser una cadena de texto.',
@@ -79,8 +81,10 @@ class Form extends Component
         'food_allowance.min' => 'El apoyo de comida no puede ser menor a 0.',
     ];
 
-    public function mount($user = null, $isAuxiliar = false)
+    public function mount($user = null, $isAuxiliar = false, bool $embedded = false, string $initialTab = 'crear')
     {
+        $this->embedded = $embedded;
+        $this->managementTab = in_array($initialTab, ['crear', 'editar', 'eliminar'], true) ? $initialTab : 'crear';
         $authUser = auth()->user();
         $canManageUsers = app(\App\Services\Authorization\PermissionAccessService::class)
             ->allows($authUser, 'administration.users.manage');
@@ -127,7 +131,13 @@ class Form extends Component
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
 
         if ($tab === 'crear' && $this->mode === 'edit') {
-            return redirect()->route('administracion.create.users');
+            if (! $this->embedded) {
+                return redirect()->route('administracion.create.users');
+            }
+        }
+
+        if ($this->embedded && $this->mode === 'edit') {
+            $this->resetEmbeddedEditor();
         }
 
         $this->managementTab = $tab;
@@ -141,6 +151,25 @@ class Form extends Component
         $data = $this->validate([
             'managementUserId' => ['required', 'integer', 'exists:users,id'],
         ]);
+
+        if ($this->embedded) {
+            $user = User::with('activeOrganizationalProfile')->findOrFail($data['managementUserId']);
+            $this->user = $user;
+            $this->name = $user->name;
+            $this->last_name = $user->last_name;
+            $this->email = $user->email;
+            $this->role_id = $user->role_id;
+            $this->employee_id = $user->employee_id;
+            $this->mode = 'edit';
+            $profile = $user->activeOrganizationalProfile;
+            $this->hourly_rate = $profile?->hourly_rate ?? 0;
+            $this->food_allowance = $profile?->food_allowance ?? 0;
+            $this->job_position_id = $profile?->job_position_id ?? '';
+            $this->physical_area_id = $profile?->physical_area_id ?? '';
+            $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
+
+            return;
+        }
 
         return redirect()->route('administracion.edit.users', $data['managementUserId']);
     }
@@ -172,6 +201,12 @@ class Form extends Component
         });
 
         session()->flash('success', 'Usuario eliminado correctamente.');
+
+        if ($this->embedded) {
+            $this->dispatch('user-management-closed');
+
+            return;
+        }
 
         return redirect()->route('administracion.create.users');
     }
@@ -267,6 +302,12 @@ class Form extends Component
 
             session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
 
+            if ($this->embedded) {
+                $this->dispatch('user-management-closed');
+
+                return;
+            }
+
             return redirect()->to('/administracion/'.($this->isAuxiliar ? 'interns' : 'users'));
 
         } catch (\Exception $e) {
@@ -279,6 +320,12 @@ class Form extends Component
 
     public function cancel()
     {
+        if ($this->embedded) {
+            $this->dispatch('user-management-closed');
+
+            return;
+        }
+
         return redirect()->route('administracion.index');
     }
 
@@ -313,5 +360,23 @@ class Form extends Component
             ->whereKey((int) $positionId)
             ->where('payment_type', JobPosition::PAYMENT_HOURLY)
             ->exists();
+    }
+
+    private function resetEmbeddedEditor(): void
+    {
+        $this->user = null;
+        $this->mode = 'create';
+        $this->name = '';
+        $this->last_name = '';
+        $this->email = '';
+        $this->password = '';
+        $this->password_confirmation = '';
+        $this->role_id = '';
+        $this->employee_id = '';
+        $this->hourly_rate = 25.00;
+        $this->food_allowance = 50.00;
+        $this->job_position_id = '';
+        $this->physical_area_id = '';
+        $this->isHourlyPosition = false;
     }
 }

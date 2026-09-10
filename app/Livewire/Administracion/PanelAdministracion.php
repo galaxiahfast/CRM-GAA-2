@@ -15,6 +15,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class PanelAdministracion extends Component
 {
@@ -43,6 +44,10 @@ class PanelAdministracion extends Component
     public string $deleteConfirmationName = '';
 
     public string $activeTab = 'datos';
+
+    public bool $showUserManagementModal = false;
+
+    public string $userManagementInitialTab = 'crear';
 
     public bool $showPermissionsModal = false;
 
@@ -73,6 +78,22 @@ class PanelAdministracion extends Component
     public function setActiveTab(string $tab): void
     {
         $this->activeTab = $tab;
+    }
+
+    public function openUserManagement(string $tab): void
+    {
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.users.manage'), 403);
+
+        $this->userManagementInitialTab = $tab;
+        $this->showUserManagementModal = true;
+    }
+
+    #[On('user-management-closed')]
+    public function closeUserManagement(): void
+    {
+        $this->showUserManagementModal = false;
     }
 
     public function mount(OrganizationChartService $chartService): void
@@ -671,8 +692,33 @@ class PanelAdministracion extends Component
         $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds, $hierarchyRelations);
         $references = app(ReferenceDataCache::class);
         $administrationReferences = $references->administration();
+        $onlineUserIds = DB::table((string) config('session.table', 'sessions'))
+            ->whereNotNull('user_id')
+            ->where('last_activity', '>=', now()->subMinutes(2)->timestamp)
+            ->distinct()
+            ->pluck('user_id')
+            ->map(static fn ($userId): int => (int) $userId)
+            ->push((int) auth()->id())
+            ->filter()
+            ->unique();
+        $recentOrganizationUsers = User::query()
+            ->latest('created_at')
+            ->limit(4)
+            ->get(['id', 'name', 'last_name', 'created_at']);
+        $organizationAreaUserCounts = DB::table('user_organizational_profiles as profiles')
+            ->join('physical_areas as areas', 'areas.id', '=', 'profiles.physical_area_id')
+            ->where('profiles.is_active', true)
+            ->select('areas.name', DB::raw('COUNT(DISTINCT profiles.user_id) as users_count'))
+            ->groupBy('areas.id', 'areas.name')
+            ->orderByDesc('users_count')
+            ->limit(3)
+            ->get();
 
         return view('livewire.administracion.panel-administracion', [
+            'onlineUserCount' => $onlineUserIds->count(),
+            'recentOrganizationUsers' => $recentOrganizationUsers,
+            'lastOrganizationUserCreatedAt' => $recentOrganizationUsers->first()?->created_at,
+            'organizationAreaUserCounts' => $organizationAreaUserCounts,
             'physicalAreas' => $administrationReferences['physicalAreas'],
             'jobPositions' => $administrationReferences['jobPositions'],
             'roles' => $administrationReferences['roles'],
