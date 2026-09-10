@@ -55,7 +55,9 @@
             <div class="mb-4 w-full rounded-2xl border border-gray-200 bg-white p-4 shadow">
                 <div class="flex items-center justify-between">
                     <h2 class="text-2xl font-bold text-gray-800">Auxiliares</h2>
-                    <x-a-button href="{{ route('administracion.interns') }}">Ver</x-a-button>
+                    @unless ($embedded)
+                        <x-a-button href="{{ route('administracion.interns') }}">Ver</x-a-button>
+                    @endunless
                 </div>
                 <p class="text-sm text-gray-500">Lista de tus auxiliares registrados</p>
             </div>

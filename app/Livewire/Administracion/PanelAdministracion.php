@@ -49,6 +49,14 @@ class PanelAdministracion extends Component
 
     public string $userManagementInitialTab = 'crear';
 
+    public bool $showRoleManagementModal = false;
+
+    public string $roleManagementInitialTab = 'crear';
+
+    public bool $showAssignmentModal = false;
+
+    public string $assignmentModalTab = 'relationships';
+
     public bool $showPermissionsModal = false;
 
     public bool $showJobPositionModal = false;
@@ -96,6 +104,44 @@ class PanelAdministracion extends Component
         $this->showUserManagementModal = false;
     }
 
+    public function openRoleManagement(string $tab): void
+    {
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.roles.manage'), 403);
+
+        $this->roleManagementInitialTab = $tab;
+        $this->showRoleManagementModal = true;
+    }
+
+    #[On('role-management-closed')]
+    #[On('role-form-closed')]
+    #[On('role-form-saved')]
+    public function closeRoleManagement(): void
+    {
+        $this->showRoleManagementModal = false;
+    }
+
+    public function openAssignmentModal(string $tab = 'relationships'): void
+    {
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.assignments.manage'), 403);
+        abort_unless(in_array($tab, ['relationships', 'interns'], true), 404);
+        $this->assignmentModalTab = $tab;
+        $this->showAssignmentModal = true;
+    }
+
+    public function setAssignmentModalTab(string $tab): void
+    {
+        abort_unless(in_array($tab, ['relationships', 'interns'], true), 404);
+        $this->assignmentModalTab = $tab;
+    }
+
+    public function closeAssignmentModal(): void
+    {
+        $this->showAssignmentModal = false;
+    }
+
     public function mount(OrganizationChartService $chartService): void
     {
         $this->totalUsers = User::count();
@@ -118,14 +164,15 @@ class PanelAdministracion extends Component
         $this->showPermissionsModal = false;
     }
 
-    public function openJobPositionModal(): void
+    public function openJobPositionModal(string $tab = 'crear'): void
     {
         $this->ensureOrganizationAdministrator();
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         $this->showPhysicalAreaModal = false;
         $this->showPermissionsModal = false;
         $this->newJobPositionName = '';
         $this->newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
-        $this->jobPositionModalTab = 'crear';
+        $this->jobPositionModalTab = $tab;
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
@@ -252,13 +299,14 @@ class PanelAdministracion extends Component
         session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
     }
 
-    public function openPhysicalAreaModal(): void
+    public function openPhysicalAreaModal(string $tab = 'crear'): void
     {
         $this->ensureOrganizationAdministrator();
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         $this->showJobPositionModal = false;
         $this->showPermissionsModal = false;
         $this->newPhysicalAreaName = '';
-        $this->physicalAreaModalTab = 'crear';
+        $this->physicalAreaModalTab = $tab;
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
         $this->resetValidation('newPhysicalAreaName');
@@ -713,12 +761,50 @@ class PanelAdministracion extends Component
             ->orderByDesc('users_count')
             ->limit(3)
             ->get();
+        $organizationRoleUserCounts = Role::query()
+            ->withCount('users')
+            ->orderByDesc('users_count')
+            ->orderBy('role')
+            ->limit(4)
+            ->get(['id', 'role']);
+        $organizationPositionUserCounts = DB::table('job_positions as positions')
+            ->leftJoin('user_organizational_profiles as profiles', function ($join): void {
+                $join->on('profiles.job_position_id', '=', 'positions.id')
+                    ->where('profiles.is_active', true);
+            })
+            ->select('positions.id', 'positions.name', DB::raw('COUNT(DISTINCT profiles.user_id) as users_count'))
+            ->groupBy('positions.id', 'positions.name')
+            ->orderByDesc('users_count')
+            ->orderBy('positions.name')
+            ->limit(4)
+            ->get();
+        $organizationCustomers = DB::table('customers')
+            ->whereNull('deleted_at')
+            ->latest('created_at')
+            ->limit(4)
+            ->get(['id', 'name', 'last_name']);
+        $organizationActivities = DB::table('sub_services')
+            ->orderBy('sub_service')
+            ->limit(4)
+            ->get(['id', 'sub_service']);
+        $organizationCustomerCount = DB::table('customers')->whereNull('deleted_at')->count();
+        $organizationActivityCount = DB::table('sub_services')->count();
 
         return view('livewire.administracion.panel-administracion', [
             'onlineUserCount' => $onlineUserIds->count(),
             'recentOrganizationUsers' => $recentOrganizationUsers,
             'lastOrganizationUserCreatedAt' => $recentOrganizationUsers->first()?->created_at,
             'organizationAreaUserCounts' => $organizationAreaUserCounts,
+            'organizationRoleUserCounts' => $organizationRoleUserCounts,
+            'organizationPositionUserCounts' => $organizationPositionUserCounts,
+            'organizationCustomers' => $organizationCustomers,
+            'organizationCustomerCount' => $organizationCustomerCount,
+            'organizationActivities' => $organizationActivities,
+            'organizationActivityCount' => $organizationActivityCount,
+            'organizationAssignmentCounts' => [
+                'relations' => UserHierarchyRelation::query()->count(),
+                'interns' => UserInterns::query()->count(),
+            ],
             'physicalAreas' => $administrationReferences['physicalAreas'],
             'jobPositions' => $administrationReferences['jobPositions'],
             'roles' => $administrationReferences['roles'],

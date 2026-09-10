@@ -7,8 +7,11 @@ use App\Models\User;
 
 class GestionAuxiliares extends GestionUsuarios
 {
-    public function mount()
+    public bool $embedded = false;
+
+    public function mount(bool $embedded = false)
     {
+        $this->embedded = $embedded;
         parent::mount();
         $authUserId = auth()->id();
         $this->users = User::with(['interns', 'role'])->where('role_id', 4)

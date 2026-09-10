@@ -109,7 +109,8 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showJobPositionModal', true)
             ->assertSet('showPhysicalAreaModal', false)
             ->assertSeeHtml('data-administration-modal="job-position-form"')
-            ->assertSeeHtml('@click.outside="$wire.closeJobPositionModal()"')
+            ->assertSeeHtml('wire:click.self="closeJobPositionModal"')
+            ->assertSeeHtml('@keydown.escape.window="$wire.closeJobPositionModal()"')
             ->set('newJobPositionName', '  Auditor   de Calidad  ')
             ->set('newJobPositionPaymentType', JobPosition::PAYMENT_HOURLY)
             ->call('saveJobPosition')
@@ -127,7 +128,8 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showPhysicalAreaModal', true)
             ->assertSet('showJobPositionModal', false)
             ->assertSeeHtml('data-administration-modal="physical-area-form"')
-            ->assertSeeHtml('@click.outside="$wire.closePhysicalAreaModal()"')
+            ->assertSeeHtml('wire:click.self="closePhysicalAreaModal"')
+            ->assertSeeHtml('@keydown.escape.window="$wire.closePhysicalAreaModal()"')
             ->set('newPhysicalAreaName', '  Control   Interno  ')
             ->call('savePhysicalArea')
             ->assertHasNoErrors()
@@ -485,6 +487,47 @@ class AdministrationModalFormsTest extends TestCase
             ->get(route('administracion.permissions'))
             ->assertOk()
             ->assertSee('data-administration-modal="permissions"', false);
+    }
+
+    public function test_organization_role_actions_open_and_close_without_redirecting(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        Role::create(['role' => 'Auxiliar']);
+        $administrator = $this->createUser($administratorRole, 'admin-inline-roles@test.mx');
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->assertSeeHtml('wire:click="openRoleManagement(\'crear\')"')
+            ->assertDontSeeHtml(route('administracion.role.create'))
+            ->call('openRoleManagement', 'crear')
+            ->assertSet('showRoleManagementModal', true)
+            ->assertSeeHtml('data-administration-modal="role-form"')
+            ->dispatch('role-management-closed')
+            ->assertSet('showRoleManagementModal', false)
+            ->call('openRoleManagement', 'eliminar')
+            ->assertSeeHtml('data-administration-modal="roles-management"')
+            ->dispatch('role-management-closed')
+            ->assertSet('showRoleManagementModal', false);
+    }
+
+    public function test_organization_assignment_actions_use_an_inline_modal(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        Role::create(['role' => 'Auxiliar']);
+        $administrator = $this->createUser($administratorRole, 'admin-inline-assignments@test.mx');
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->assertSeeHtml('wire:click="openAssignmentModal(\'relationships\')"')
+            ->assertDontSeeHtml('href="'.route('administracion.relationships').'"')
+            ->call('openAssignmentModal', 'relationships')
+            ->assertSet('showAssignmentModal', true)
+            ->assertSet('assignmentModalTab', 'relationships')
+            ->assertSeeHtml('data-administration-modal="assignment-management"')
+            ->call('setAssignmentModalTab', 'interns')
+            ->assertSet('assignmentModalTab', 'interns')
+            ->call('closeAssignmentModal')
+            ->assertSet('showAssignmentModal', false);
     }
 
     private function createUser(Role $role, string $email): User

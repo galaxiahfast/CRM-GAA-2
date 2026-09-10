@@ -77,7 +77,7 @@
             </header>
 
             @if (isset($navigation))
-                <nav class="flex flex-shrink-0 border-b border-gray-300 bg-[#F3F3F3] px-5" aria-label="Secciones del formulario">
+                <nav @class(['flex flex-shrink-0 border-b border-gray-300 bg-[#F3F3F3] px-5', 'hidden' => $modalId === 'role-form']) aria-label="Secciones del formulario">
                     {{ $navigation }}
                 </nav>
             @endif

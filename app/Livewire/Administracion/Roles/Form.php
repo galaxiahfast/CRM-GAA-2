@@ -24,8 +24,11 @@ class Form extends Component
 
     public string $permissionProfile = Role::PROFILE_CUSTOM;
 
-    public function mount($role = null)
+    public bool $embedded = false;
+
+    public function mount($role = null, bool $embedded = false)
     {
+        $this->embedded = $embedded;
         if ($role && $role->exists) {
             $this->roles = $role;
             $this->role = $role->role;
@@ -101,6 +104,12 @@ class Form extends Component
 
             session()->flash('success', 'Rol guardado exitosamente.');
 
+            if ($this->embedded) {
+                $this->dispatch('role-form-saved');
+
+                return;
+            }
+
             return redirect()->to('/administracion/roles');
         } catch (Throwable $e) {
             report($e);
@@ -112,6 +121,12 @@ class Form extends Component
 
     public function cancel()
     {
+        if ($this->embedded) {
+            $this->dispatch('role-form-closed');
+
+            return;
+        }
+
         return redirect()->route('administracion.index');
     }
 

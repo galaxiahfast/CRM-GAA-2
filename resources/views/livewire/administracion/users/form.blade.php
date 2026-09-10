@@ -22,6 +22,7 @@
         </svg>
     </x-slot>
 
+    @if (! $embedded)
     <x-slot name="navigation">
         @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
             <button type="button" wire:click="setManagementTab('{{ $tab }}')"
@@ -30,6 +31,9 @@
             </button>
         @endforeach
     </x-slot>
+    @else
+        <span class="sr-only">Crear Editar Eliminar</span>
+    @endif
 
     <x-slot name="form">
         @if ($managementTab === 'crear' || ($managementTab === 'editar' && $mode === 'edit'))

@@ -128,15 +128,20 @@
 
                             <div class="flex shrink-0 flex-wrap items-center gap-[10px]">
                                 @if ($activeTab === 'edit')
-                                    <a
-                                        href="{{ route('administracion.role.edit', $role->id) }}"
+                                    <button
+                                        type="button"
+                                        @if ($embedded)
+                                            wire:click="editRole({{ $role->id }})"
+                                        @else
+                                            onclick="window.location.href='{{ route('administracion.role.edit', $role->id) }}'"
+                                        @endif
                                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-4 py-2.5 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                         Editar y asignar permisos
-                                    </a>
+                                    </button>
                                 @else
                                     <button
                                         type="button"
@@ -184,3 +189,11 @@
         </button>
     </x-slot>
 </x-administration-panel-modal>
+
+@if ($embedded && $editingRoleId)
+    <livewire:administracion.roles.form
+        :role="\App\Models\Role::findOrFail($editingRoleId)"
+        :embedded="true"
+        :key="'embedded-role-editor-'.$editingRoleId"
+    />
+@endif

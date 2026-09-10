@@ -26,7 +26,15 @@
     $selectedAccountantSearchLabel = $accountantSearchOptions->firstWhere('id', (int) $principalAccountantId)['label'] ?? '';
 @endphp
 
-<div>
+<div @class(['col-span-3 grid h-full grid-cols-3' => $cardActions])>
+    @if ($cardActions)
+        @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
+            <button type="button" wire:click="openModal('{{ $tab }}')" wire:loading.attr="disabled" wire:target="openModal" class="inline-flex items-center justify-center gap-[9px] rounded-lg px-2 text-[13px] font-semibold text-white focus:outline-none focus:ring-0 disabled:cursor-wait">
+                @if ($tab === 'crear')<span class="text-[18px] font-normal">+</span>@elseif ($tab === 'editar')<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>@else<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>@endif
+                <span>{{ $label }}</span>
+            </button>
+        @endforeach
+    @else
     <button
         type="button"
         role="menuitem"
@@ -41,6 +49,7 @@
         </svg>
         <span>Agregar Cliente</span>
     </button>
+    @endif
 
     @if ($showModal)
         @teleport('body')
@@ -58,6 +67,7 @@
                         </svg>
                     </x-slot>
 
+                    @if (! $cardActions)
                     <x-slot name="navigation">
                         @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
                             <button
@@ -69,6 +79,9 @@
                             </button>
                         @endforeach
                     </x-slot>
+                    @else
+                        <span class="sr-only">Crear Editar Eliminar</span>
+                    @endif
 
                     <x-slot name="form">
                         <div class="space-y-5">

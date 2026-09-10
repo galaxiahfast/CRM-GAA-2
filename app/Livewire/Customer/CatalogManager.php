@@ -13,6 +13,8 @@ use Throwable;
 
 class CatalogManager extends Component
 {
+    public bool $cardActions = false;
+
     public bool $showModal = false;
 
     public string $activeTab = 'crear';
@@ -46,10 +48,11 @@ class CatalogManager extends Component
         $this->ensureCanManageCustomers();
     }
 
-    public function openModal(): void
+    public function openModal(string $tab = 'crear'): void
     {
         $this->ensureCanManageCustomers();
-        $this->activeTab = 'crear';
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        $this->activeTab = $tab;
         $this->resetManagementState();
         $this->showModal = true;
     }

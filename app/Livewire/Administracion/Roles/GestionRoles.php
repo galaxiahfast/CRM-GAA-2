@@ -4,6 +4,7 @@ namespace App\Livewire\Administracion\Roles;
 
 use App\Models\Role;
 use Livewire\Attributes\Url;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class GestionRoles extends Component
@@ -15,8 +16,16 @@ class GestionRoles extends Component
     #[Url(as: 'tab')]
     public string $activeTab = 'edit';
 
-    public function mount()
+    public bool $embedded = false;
+
+    public ?int $editingRoleId = null;
+
+    public function mount(bool $embedded = false, string $initialTab = 'edit')
     {
+        $this->embedded = $embedded;
+        if ($embedded) {
+            $this->activeTab = $initialTab === 'eliminar' ? 'delete' : 'edit';
+        }
         if (! in_array($this->activeTab, ['edit', 'delete'], true)) {
             $this->activeTab = 'edit';
         }
@@ -48,7 +57,11 @@ class GestionRoles extends Component
             $role_id->delete();
             session()->flash('success', 'Rol eliminado exitosamente.');
 
-            return redirect()->route('administracion.role', ['tab' => 'delete']);
+            $this->loadRoles();
+
+            if (! $this->embedded) {
+                return redirect()->route('administracion.role', ['tab' => 'delete']);
+            }
         } catch (\Exception $e) {
             report($e);
             session()->flash('error', 'Ocurrió un error al eliminar el rol: '.$e->getMessage());
@@ -59,7 +72,27 @@ class GestionRoles extends Component
 
     public function cancel()
     {
+        if ($this->embedded) {
+            $this->dispatch('role-management-closed');
+
+            return;
+        }
+
         return redirect()->route('administracion.index');
+    }
+
+    public function editRole(int $roleId): void
+    {
+        abort_unless(Role::whereKey($roleId)->exists(), 404);
+        $this->editingRoleId = $roleId;
+    }
+
+    #[On('role-form-closed')]
+    #[On('role-form-saved')]
+    public function closeRoleEditor(): void
+    {
+        $this->editingRoleId = null;
+        $this->loadRoles();
     }
 
     public function render()

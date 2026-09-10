@@ -16,10 +16,12 @@ class GestionRelacionesJerarquicas extends Component
     public $selectedCustomer = false;
     public $assignedInterns = [];
     public $customersWithInterns = [];
+    public bool $embedded = false;
     protected $paginationTheme = 'tailwind';
 
-    public function mount()
+    public function mount(bool $embedded = false)
     {
+        $this->embedded = $embedded;
         $this->interns = collect();
         $this->assignedInterns = collect();
         $this->loadCustomersWithInterns();

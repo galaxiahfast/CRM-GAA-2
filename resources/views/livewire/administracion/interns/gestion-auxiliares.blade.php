@@ -7,9 +7,10 @@
         <div class="mt-4">
             <input type="text" wire:model.live.debounce.250ms="search"
                 placeholder="Buscar auxiliar..." class="rounded-md border px-2 py-1">
-            <x-a-button href="{{ route('administracion.create.users', ['Intern' => true]) }}"
-                color="blue">Agregar
-                auxiliar</x-a-button>
+            @unless ($embedded)
+                <x-a-button href="{{ route('administracion.create.users', ['Intern' => true]) }}"
+                    color="blue">Agregar auxiliar</x-a-button>
+            @endunless
         </div>
     </div>
     <x-table-structure>
@@ -36,8 +37,10 @@
                     <td class="px-6 py-4">{{ Str::limit($user['created_at'], 10) }}</td>
                     <td class="px-6 py-4">{{ Str::limit($user['updated_at'], 10) }}</td>
                     <td class="px-6 py-4">
-                        <x-a-button href="{{ route('administracion.edit.users', $user) }}"
-                            color="blue">Editar</x-a-button>
+                        @unless ($embedded)
+                            <x-a-button href="{{ route('administracion.edit.users', $user) }}"
+                                color="blue">Editar</x-a-button>
+                        @endunless
                         <x-danger-button wire:click="delete({{ $user->id }})"
                             wire:confirm="¿Estás seguro de que deseas eliminar este usuario?"
                             color="red">Eliminar</x-danger-button>

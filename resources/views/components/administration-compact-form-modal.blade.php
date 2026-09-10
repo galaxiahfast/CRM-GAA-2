@@ -7,6 +7,10 @@
 ])
 
 <div
+    {{ $attributes }}
+    x-data
+    wire:click.self="{{ $closeAction }}"
+    @keydown.escape.window="$wire.{{ $closeAction }}()"
     class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
     role="dialog"
     aria-modal="true"
@@ -14,9 +18,6 @@
     data-administration-modal="{{ $modalId }}"
 >
     <div
-        x-data
-        @click.outside="$wire.{{ $closeAction }}()"
-        @keydown.escape.window="$wire.{{ $closeAction }}()"
         class="relative w-full max-w-xl overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl"
         style="font-size: 15px;"
     >
