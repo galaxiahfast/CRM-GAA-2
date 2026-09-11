@@ -152,11 +152,17 @@
             text-align: center;
         }
         .organization-module-card {
-            transition: none;
-            flex: 1 1 350px;
+            opacity: var(--carousel-opacity, 1);
+            transform: translate3d(var(--carousel-edge-shift, 0px), 0, var(--carousel-depth, 0px)) scale(var(--carousel-scale, 1)) rotateY(var(--carousel-rotation, 0deg));
+            transform-origin: center center;
+            transform-style: preserve-3d;
+            transition: transform 90ms linear, opacity 90ms linear;
+            flex: 0 0 390px;
+            width: 390px;
+            min-width: 390px !important;
             max-width: 390px;
             border-radius: 10px !important;
-            box-shadow: 0 10px 28px rgba(26, 58, 107, 0.18);
+            box-shadow: none;
             background-color: rgba(255, 255, 255, 0.48) !important;
             background-image:
                 linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.24) 48%, rgba(255, 255, 255, 0.50)),
@@ -165,41 +171,61 @@
             background-position: 0 0;
             backdrop-filter: blur(14px) saturate(135%);
             -webkit-backdrop-filter: blur(14px) saturate(135%);
+            scroll-snap-align: center;
+        }
+        .organization-carousel-frame {
+            container-type: inline-size;
+            justify-content: stretch;
+            min-width: 777px;
+        }
+        .organization-card-carousel {
+            flex: 1 1 auto;
+            width: 100%;
+            max-width: none;
+            padding-inline: max(0px, calc((100% - 390px) / 2));
+            scrollbar-width: none;
+            scroll-behavior: auto;
+            scroll-snap-type: none;
+            perspective: 1400px;
+            perspective-origin: center center;
+        }
+        .organization-card-carousel::-webkit-scrollbar {
+            display: none;
         }
     </style>
 
     <!-- Centro de gestión siempre visible -->
     <section class="m-0 min-h-[calc(100vh-190px)] w-full bg-[#F3F3F3] pt-0">
         <div class="m-0 w-full bg-[#F3F3F3] pt-0">
-            <div class="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-                <div class="flex min-w-0 items-center gap-5">
-                    <span class="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#1A3A6B] text-white shadow-[0_8px_18px_rgba(26,58,107,0.18)]">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-[8px]">
-                            <h1 class="text-[26px] font-bold tracking-tight text-[#102A52]">Centro de organización</h1>
-                            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-[12px] font-semibold text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
-                        </div>
-                        <p class="mt-2 max-w-3xl text-[15px] leading-7 text-[#55749D]">Administra colaboradores, roles, permisos y dependencias operativas desde un mismo espacio.</p>
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div class="min-w-0">
+                    <div class="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#1A3A6B]"><span class="h-[2px] w-7 bg-[#1A3A6B]"></span>Administración organizacional</div>
+                    <div class="flex flex-wrap items-center gap-[10px]">
+                        <h1 class="text-[26px] font-bold tracking-tight text-[#102A52]">Centro de organización</h1>
+                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
                     </div>
+                    <p class="mt-2 max-w-3xl text-[13px] leading-6 text-[#55749D]">Administra colaboradores, roles, permisos y dependencias operativas desde un mismo espacio.</p>
                 </div>
-                <a href="#organigrama-principal" class="inline-flex min-h-[50px] items-center justify-center gap-3 rounded-xl bg-[#1A3A6B] px-5 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(26,58,107,0.18)] focus:outline-none focus:ring-0">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 12l3-3 3 3 4-4M4 4h16v13H4zM8 21l4-4 4 4" /></svg>
+                <a href="#organigrama-principal" class="inline-flex h-11 shrink-0 items-center justify-center gap-3 rounded-lg bg-[#102A52] px-5 text-[13px] font-semibold text-white focus:outline-none focus:ring-0">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v12H4zM8 21l4-4 4 4M8 9h8m-4-4v12" /></svg>
                     Ver organigrama
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
                 </a>
             </div>
 
-            <div class="mt-6 grid grid-cols-2 gap-[15px] xl:grid-cols-4">
-                <div class="rounded-xl border border-[#CAD7E7] bg-[#E7EDF5] px-5 py-4 text-center"><span class="block text-[11px] font-semibold uppercase tracking-[.1em] text-[#55749D]">Colaboradores</span><strong class="mt-1.5 block text-[18px] text-[#102A52]">{{ $totalUsers ?? 0 }} registrados</strong></div>
-                <div class="rounded-xl border border-[#CAD7E7] bg-[#E7EDF5] px-5 py-4 text-center"><span class="block text-[11px] font-semibold uppercase tracking-[.1em] text-[#55749D]">Estructura</span><strong class="mt-1.5 block text-[18px] text-[#102A52]">{{ $physicalAreas->count() }} áreas activas</strong></div>
-                <div class="rounded-xl border border-[#CAD7E7] bg-[#E7EDF5] px-5 py-4 text-center"><span class="block text-[11px] font-semibold uppercase tracking-[.1em] text-[#55749D]">Seguridad</span><strong class="mt-1.5 block text-[18px] text-[#102A52]">{{ $totalRoles ?? 0 }} roles</strong></div>
-                <div class="rounded-xl border border-[#CAD7E7] bg-[#E7EDF5] px-5 py-4 text-center"><span class="block text-[11px] font-semibold uppercase tracking-[.1em] text-[#55749D]">Jerarquía</span><strong class="mt-1.5 block text-[18px] text-[#102A52]">{{ $orgChartStats['relations'] ?? 0 }} relaciones</strong></div>
+            <div class="mt-[50px] grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#1A3A6B]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Colaboradores</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">En línea: {{ $onlineUserCount }}</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $totalUsers ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">registrados</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Equipo</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[72%] bg-[#1A3A6B]"></span></div></div>
+                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#1A3A6B]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Estructura</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">Activa</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $physicalAreas->count() }}</strong><span class="text-[11px] text-[#55749D]">áreas activas</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Operación</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-full bg-[#1A3A6B]"></span></div></div>
+                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-emerald-500"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Seguridad</span><span class="rounded-full border border-emerald-200 bg-emerald-50/80 px-2 py-1 text-[9px] font-semibold text-emerald-700">RBAC activo</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $totalRoles ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">roles</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-emerald-700">Protegido</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[82%] bg-emerald-500"></span></div></div>
+                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#102A52]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Jerarquía</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">Auditada</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $orgChartStats['relations'] ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">relaciones</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Conectada</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[68%] bg-[#102A52]"></span></div></div>
             </div>
         </div>
 
-        <div data-organization-sortable role="menu" aria-label="Opciones de administración" class="flex w-full flex-wrap justify-center gap-5 overflow-x-auto py-[30px]" style="align-items: flex-start;">
+        <div class="organization-carousel-frame relative mt-[50px] flex w-full items-center" x-data="{ move(direction) { window.organizationCarouselMove($refs.track, direction) } }">
+            <button type="button" @click="move(-1)" class="absolute left-0 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[#1A3A6B] text-white focus:outline-none focus:ring-0" aria-label="Ver tarjetas anteriores">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <div x-ref="track" data-organization-sortable role="menu" aria-label="Opciones de administración" class="organization-card-carousel flex min-w-0 flex-1 flex-nowrap gap-5 overflow-x-auto" style="align-items: flex-start;">
             @if ($canManageUsers)
                 <article data-organization-module="users" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                     <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[20px] bg-[#1A3A6B] px-[24px]">
@@ -347,6 +373,14 @@
                     <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:time-control.activity-catalog-manager :card-actions="true" /></footer>
                 </article>
             @endif
+            </div>
+            <button type="button" @click="move(1)" class="absolute right-0 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[#1A3A6B] text-white focus:outline-none focus:ring-0" aria-label="Ver tarjetas siguientes">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
+            </button>
+        </div>
+        <div class="mt-[50px] flex flex-wrap items-center justify-between gap-3 p-0 text-[10px] font-medium text-[#55749D]">
+            <div class="flex flex-wrap items-center gap-4"><span class="inline-flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Centro organizacional activo</span><span class="text-[#A8BAD2]">•</span><span>Sincronización en tiempo real</span><span class="text-[#A8BAD2]">•</span><span>Última validación RBAC: {{ now()->format('H:i') }}</span></div>
+            <span class="font-semibold text-[#102A52]">Protocolo de seguridad: RBAC</span>
         </div>
     </section>
 
@@ -726,12 +760,14 @@
                     <div class="space-y-[15px]">
                         <div>
                             <label for="edit-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
-                            <select id="edit-job-position-id" wire:model.live="selectedJobPositionId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
-                                <option value="">Seleccione un puesto</option>
-                                @foreach ($jobPositions as $position)
-                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-administration-search-picker
+                                input-id="edit-job-position-id"
+                                model="selectedJobPositionId"
+                                :selected="$selectedJobPositionId"
+                                :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
+                                placeholder="Buscar puesto..."
+                                empty-message="No se encontraron puestos."
+                            />
                             <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
                         </div>
                         @if ($selectedJobPositionId)
@@ -759,12 +795,15 @@
                         <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El puesto se eliminará y los usuarios que lo tengan quedarán sin puesto asignado.</p>
                         <div>
                             <label for="delete-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
-                            <select id="delete-job-position-id" wire:model.live="selectedJobPositionId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-red-500 focus:outline-none focus:ring-0">
-                                <option value="">Seleccione un puesto</option>
-                                @foreach ($jobPositions as $position)
-                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-administration-search-picker
+                                input-id="delete-job-position-id"
+                                model="selectedJobPositionId"
+                                :selected="$selectedJobPositionId"
+                                :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
+                                placeholder="Buscar puesto..."
+                                empty-message="No se encontraron puestos."
+                                :danger="true"
+                            />
                             <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
                         </div>
                     </div>
@@ -845,12 +884,14 @@
                     <div class="space-y-[15px]">
                         <div>
                             <label for="edit-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
-                            <select id="edit-physical-area-id" wire:model.live="selectedPhysicalAreaManagementId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
-                                <option value="">Seleccione un área</option>
-                                @foreach ($physicalAreas as $area)
-                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-administration-search-picker
+                                input-id="edit-physical-area-id"
+                                model="selectedPhysicalAreaManagementId"
+                                :selected="$selectedPhysicalAreaManagementId"
+                                :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
+                                placeholder="Buscar área o departamento..."
+                                empty-message="No se encontraron áreas."
+                            />
                             <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
                         </div>
                         @if ($selectedPhysicalAreaManagementId)
@@ -866,12 +907,15 @@
                         <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El área se eliminará y los usuarios que la tengan quedarán sin área asignada.</p>
                         <div>
                             <label for="delete-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
-                            <select id="delete-physical-area-id" wire:model.live="selectedPhysicalAreaManagementId" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-red-500 focus:outline-none focus:ring-0">
-                                <option value="">Seleccione un área</option>
-                                @foreach ($physicalAreas as $area)
-                                    <option value="{{ $area->id }}">{{ $area->name }}</option>
-                                @endforeach
-                            </select>
+                            <x-administration-search-picker
+                                input-id="delete-physical-area-id"
+                                model="selectedPhysicalAreaManagementId"
+                                :selected="$selectedPhysicalAreaManagementId"
+                                :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
+                                placeholder="Buscar área o departamento..."
+                                empty-message="No se encontraron áreas."
+                                :danger="true"
+                            />
                             <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
                         </div>
                     </div>
@@ -1126,10 +1170,10 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div><x-label for="edit-role" value="Rol" class="text-[15px] mb-2.5 block" /><select id="edit-role" wire:model.live="userForm.role_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un rol</option>@foreach ($roles as $availableRole)<option value="{{ $availableRole->id }}">{{ $availableRole->role }}</option>@endforeach</select><x-input-error for="userForm.role_id" /></div>
-                            <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><select id="edit-position" wire:model.live="userForm.job_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un puesto</option>@foreach ($jobPositions as $position)<option value="{{ $position->id }}">{{ $position->name }} — {{ $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo' }}</option>@endforeach</select><x-input-error for="userForm.job_position_id" /></div>
+                            <div><x-label for="edit-role" value="Rol" class="text-[15px] mb-2.5 block" /><x-administration-search-picker input-id="edit-role" model="userForm.role_id" :selected="$userForm['role_id'] ?? null" :items="$roles->map(fn ($availableRole) => ['id' => $availableRole->id, 'label' => $availableRole->role])" placeholder="Buscar rol..." empty-message="No se encontraron roles." /><x-input-error for="userForm.role_id" /></div>
+                            <div><x-label for="edit-position" value="Puesto" class="text-[15px] mb-2.5 block" /><x-administration-search-picker input-id="edit-position" model="userForm.job_position_id" :selected="$userForm['job_position_id'] ?? null" :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])" placeholder="Buscar puesto..." empty-message="No se encontraron puestos." /><x-input-error for="userForm.job_position_id" /></div>
                         </div>
-                        <div><x-label for="edit-area" value="Área / departamento" class="text-[15px] mb-2.5 block" /><select id="edit-area" wire:model="userForm.physical_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-[15px]"><option value="">Seleccione un área</option>@foreach ($physicalAreas as $area)<option value="{{ $area->id }}">{{ $area->name }}</option>@endforeach</select><x-input-error for="userForm.physical_area_id" /></div>
+                        <div><x-label for="edit-area" value="Área / departamento" class="text-[15px] mb-2.5 block" /><x-administration-search-picker input-id="edit-area" model="userForm.physical_area_id" :selected="$userForm['physical_area_id'] ?? null" :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])" placeholder="Buscar área o departamento..." empty-message="No se encontraron áreas." /><x-input-error for="userForm.physical_area_id" /></div>
                         <div class="grid grid-cols-1 gap-4">
                             <div class="hierarchy-selection-card">
                                 <div class="mb-2.5 flex items-start justify-between gap-3">

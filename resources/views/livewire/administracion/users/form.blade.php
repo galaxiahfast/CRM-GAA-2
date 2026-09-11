@@ -88,34 +88,25 @@
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
                         <label for="role_id" class="block text-[15px] font-medium text-gray-700">Rol</label>
-                        <select id="role_id" name="role_id" wire:model.live="role_id" class="{{ $inputClasses }}">
-                            <option disabled value="">Seleccione un rol</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->id }}">{{ $role->role }}</option>
-                            @endforeach
-                        </select>
+                        <x-administration-search-picker input-id="role_id" model="role_id" :selected="$role_id"
+                            :items="$roles->map(fn ($role) => ['id' => $role->id, 'label' => $role->role])"
+                            placeholder="Buscar rol..." empty-message="No se encontraron roles." />
                         <x-input-error for="role_id" class="mt-2 text-[15px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="job_position_id" class="block text-[15px] font-medium text-gray-700">Puesto de trabajo</label>
-                        <select id="job_position_id" wire:model.live="job_position_id" class="{{ $inputClasses }}">
-                            <option value="">Seleccione un puesto</option>
-                            @foreach ($jobPositions as $position)
-                                <option value="{{ $position->id }}">{{ $position->name }} — {{ $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo' }}</option>
-                            @endforeach
-                        </select>
+                        <x-administration-search-picker input-id="job_position_id" model="job_position_id" :selected="$job_position_id"
+                            :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
+                            placeholder="Buscar puesto..." empty-message="No se encontraron puestos." />
                         <x-input-error for="job_position_id" class="mt-2 text-[15px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="physical_area_id" class="block text-[15px] font-medium text-gray-700">Área / Departamento</label>
-                        <select id="physical_area_id" wire:model="physical_area_id" class="{{ $inputClasses }}">
-                            <option value="">Seleccione un área</option>
-                            @foreach ($physicalAreas as $area)
-                                <option value="{{ $area->id }}">{{ $area->name }}</option>
-                            @endforeach
-                        </select>
+                        <x-administration-search-picker input-id="physical_area_id" model="physical_area_id" :selected="$physical_area_id"
+                            :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
+                            placeholder="Buscar área o departamento..." empty-message="No se encontraron áreas." />
                         <x-input-error for="physical_area_id" class="mt-2 text-[15px]" />
                     </div>
                 </div>
@@ -228,12 +219,9 @@
                 <h2 class="text-[15px] font-semibold text-gray-900">Selecciona el usuario a editar</h2>
                 <p class="mt-1 text-[15px] text-gray-500">Abrirá el mismo formulario con los datos actuales del usuario.</p>
                 <label for="management-edit-user" class="mt-[15px] block text-[15px] font-medium text-gray-700">Usuario</label>
-                <select id="management-edit-user" wire:model="managementUserId" class="{{ $inputClasses }}">
-                    <option value="">Seleccione un usuario</option>
-                    @foreach ($manageableUsers as $manageableUser)
-                        <option value="{{ $manageableUser->id }}">{{ trim($manageableUser->name.' '.$manageableUser->last_name) }} — {{ $manageableUser->email }}</option>
-                    @endforeach
-                </select>
+                <x-administration-search-picker input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
+                    :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
+                    placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
                 <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
             </section>
         @else
@@ -241,12 +229,9 @@
                 <h2 class="text-[15px] font-semibold text-red-800">Eliminar usuario</h2>
                 <p class="mt-1 text-[15px] text-red-700">Esta acción es irreversible. Las relaciones jerárquicas del usuario se desvincularán antes de eliminarlo.</p>
                 <label for="management-delete-user" class="mt-[15px] block text-[15px] font-medium text-gray-700">Usuario</label>
-                <select id="management-delete-user" wire:model.live="managementUserId" class="{{ $inputClasses }}">
-                    <option value="">Seleccione un usuario</option>
-                    @foreach ($manageableUsers as $manageableUser)
-                        <option value="{{ $manageableUser->id }}">{{ trim($manageableUser->name.' '.$manageableUser->last_name) }} — {{ $manageableUser->email }}</option>
-                    @endforeach
-                </select>
+                <x-administration-search-picker input-id="management-delete-user" model="managementUserId" :selected="$managementUserId"
+                    :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
+                    placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." :danger="true" />
                 <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
                 @if ($managementUserId)
                     @php($selectedManagedUser = $manageableUsers->firstWhere('id', $managementUserId))
