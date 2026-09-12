@@ -1,6 +1,6 @@
 @php
-    $inputClasses = 'mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0';
-    $textareaClasses = 'mt-2 block w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 py-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0';
+    $inputClasses = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]';
+    $textareaClasses = 'mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-[#E8EBF0]';
 
     $customerSearchOptions = $customers->map(static function ($customer): array {
         $name = trim($customer->name.' '.$customer->last_name.' '.$customer->maternal_last_name);
@@ -24,6 +24,12 @@
 
     $selectedCustomerSearchLabel = $customerSearchOptions->firstWhere('id', (int) $selectedCustomerId)['label'] ?? '';
     $selectedAccountantSearchLabel = $accountantSearchOptions->firstWhere('id', (int) $principalAccountantId)['label'] ?? '';
+    $customerFieldsDisabled = in_array($activeTab, ['editar', 'eliminar'], true) && ! filled($selectedCustomerId);
+    $customerModalTitle = match ($activeTab) {
+        'editar' => 'Editar cliente',
+        'eliminar' => 'Eliminar cliente',
+        default => 'Crear cliente',
+    };
 @endphp
 
 <div @class(['col-span-3 grid h-full grid-cols-3' => $cardActions])>
@@ -32,6 +38,7 @@
             <button type="button" wire:click="openModal('{{ $tab }}')" wire:loading.attr="disabled" wire:target="openModal" class="inline-flex items-center justify-center gap-[9px] rounded-lg px-2 text-[13px] font-semibold text-white focus:outline-none focus:ring-0 disabled:cursor-wait">
                 @if ($tab === 'crear')<span class="text-[18px] font-normal">+</span>@elseif ($tab === 'editar')<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>@else<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>@endif
                 <span>{{ $label }}</span>
+                @if ($tab === 'crear')<span class="sr-only">Agregar Cliente</span>@endif
             </button>
         @endforeach
     @else
@@ -58,8 +65,9 @@
                     submit="save"
                     cancel-action="closeModal"
                     modal-id="customer-catalog-management"
-                    title="Gestión de clientes"
+                    :title="$customerModalTitle"
                     subtitle="Crea, edita o elimina clientes sin afectar su historial."
+                    :carousel-style="true"
                 >
                     <x-slot name="icon">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -98,7 +106,8 @@
                             @enderror
 
                             @if (in_array($activeTab, ['editar', 'eliminar'], true))
-                                <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5 shadow-sm">
+                                <section class="rounded-xl border border-[#CAD7E7] p-5">
+                                    <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar cliente</h2>
                                     <label for="managed-customer-id" class="block text-[15px] font-medium text-gray-700">
                                         Cliente
                                     </label>
@@ -150,7 +159,7 @@
                                             @input="query = $event.target.value; open = true"
                                             @keydown.escape.stop="open = false; query = ''; $event.target.blur()"
                                             @keydown.enter.prevent="if (filteredOptions.length) selectOption(filteredOptions[0])"
-                                            class="{{ $inputClasses }} !mt-0 pr-12 {{ $activeTab === 'eliminar' ? 'focus:border-red-500' : '' }}"
+                                            class="{{ $inputClasses }} !mt-0 pr-12"
                                             placeholder="Buscar cliente por nombre o RFC"
                                             role="combobox"
                                             aria-autocomplete="list"
@@ -200,14 +209,13 @@
                                 </section>
                             @endif
 
-                            @if ($activeTab === 'crear' || ($activeTab === 'editar' && $selectedCustomerId))
-                                <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5 shadow-sm">
-                                    <div class="mb-5">
-                                        <h3 class="text-[15px] font-semibold text-gray-900">Datos del cliente</h3>
-                                        <p class="mt-2 text-[15px] text-gray-500">Información fiscal y de contacto del registro.</p>
+                            @if (in_array($activeTab, ['crear', 'editar'], true))
+                                <section class="rounded-xl border p-5 transition-colors {{ $customerFieldsDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                                    <div class="mb-[10px]">
+                                        <h3 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $customerFieldsDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Datos del cliente</h3>
                                     </div>
 
-                                    <div class="grid gap-5 md:grid-cols-2">
+                                    <fieldset class="grid gap-5 md:grid-cols-2" @disabled($customerFieldsDisabled)>
                                         <div>
                                             <label for="customer-name" class="block text-[15px] font-medium text-gray-700">Nombre o razón social</label>
                                             <input id="customer-name" type="text" maxlength="255" wire:model.defer="name" class="{{ $inputClasses }}" autocomplete="off">
@@ -235,12 +243,12 @@
                                         </div>
                                         <div>
                                             <label for="customer-phone" class="block text-[15px] font-medium text-gray-700">Teléfono</label>
-                                            <div class="mt-2 grid grid-cols-[90px_minmax(0,1fr)] gap-2">
+                                            <div class="mt-[10px] grid grid-cols-[90px_minmax(0,1fr)] gap-2">
                                                 <div class="relative">
                                                     <span data-customer-phone-prefix class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[15px] text-gray-500" aria-hidden="true">+</span>
-                                                    <input id="customer-code-phone" type="text" inputmode="numeric" maxlength="4" wire:model.defer="codePhone" class="block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] pl-7 pr-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Código de país">
+                                                    <input id="customer-code-phone" type="text" inputmode="numeric" maxlength="4" wire:model.defer="codePhone" class="block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent pl-7 pr-3 text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" aria-label="Código de país">
                                                 </div>
-                                                <input id="customer-phone" type="text" maxlength="15" wire:model.defer="phone" class="block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0" autocomplete="off">
+                                                <input id="customer-phone" type="text" maxlength="15" wire:model.defer="phone" class="block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" autocomplete="off">
                                             </div>
                                             <x-input-error for="codePhone" class="mt-2 text-[15px]" />
                                             <x-input-error for="phone" class="mt-2 text-[15px]" />
@@ -255,108 +263,24 @@
                                             <textarea id="customer-observation" rows="3" maxlength="225" wire:model.defer="observation" class="{{ $textareaClasses }}"></textarea>
                                             <x-input-error for="observation" class="mt-2 text-[15px]" />
                                         </div>
-                                    </div>
+                                    </fieldset>
                                 </section>
 
                                 @if ($activeTab === 'crear')
-                                    <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5 shadow-sm">
-                                        <h3 class="text-[15px] font-semibold text-gray-900">Asignación inicial</h3>
-                                        <p class="mt-2 text-[15px] text-gray-500">Todo cliente debe conservar un contador principal.</p>
+                                    <section class="relative z-20 overflow-visible rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+                                        <h3 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Asignación inicial</h3>
 
-                                        <label for="customer-principal-accountant" class="mt-5 block text-[15px] font-medium text-gray-700">Contador principal</label>
-                                        <div
-                                            class="relative mt-2"
-                                            x-data="{
-                                                open: false,
-                                                query: '',
-                                                options: @js($accountantSearchOptions),
-                                                selectedId: @js($principalAccountantId),
-                                                selectedLabel: @js($selectedAccountantSearchLabel),
-                                                normalize(value) {
-                                                    return String(value ?? '')
-                                                        .normalize('NFD')
-                                                        .replace(/[\u0300-\u036f]/g, '')
-                                                        .toLowerCase();
-                                                },
-                                                openList() {
-                                                    this.query = '';
-                                                    this.open = true;
-                                                },
-                                                selectOption(option) {
-                                                    this.selectedId = option.id;
-                                                    this.selectedLabel = option.label;
-                                                    this.query = '';
-                                                    this.open = false;
-                                                    $wire.set('principalAccountantId', option.id);
-                                                },
-                                                get filteredOptions() {
-                                                    const term = this.normalize(this.query);
-
-                                                    return term === ''
-                                                        ? this.options
-                                                        : this.options.filter(option => this.normalize(option.label).includes(term));
-                                                },
-                                            }"
-                                            @click.outside="open = false; query = ''"
-                                            @customer-catalog-updated.window="if ($event.detail.action === 'created') { selectedId = null; selectedLabel = ''; query = ''; open = false; }"
-                                        >
-                                            <input
-                                                id="customer-principal-accountant"
-                                                x-ref="accountantSearchInput"
-                                                data-catalog-search="accountant"
-                                                type="text"
-                                                autocomplete="off"
-                                                :value="open ? query : selectedLabel"
-                                                @focus="openList()"
-                                                @click="openList()"
-                                                @input="query = $event.target.value; open = true"
-                                                @keydown.escape.stop="open = false; query = ''; $event.target.blur()"
-                                                @keydown.enter.prevent="if (filteredOptions.length) selectOption(filteredOptions[0])"
-                                                class="{{ $inputClasses }} !mt-0 pr-12"
-                                                placeholder="Buscar contador por nombre o correo"
-                                                role="combobox"
-                                                aria-autocomplete="list"
-                                                aria-controls="customer-principal-accountant-options"
-                                                :aria-expanded="open"
-                                            >
-
-                                            <button
-                                                type="button"
-                                                class="absolute right-0 top-0 flex h-11 w-12 items-center justify-center text-gray-500 hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
-                                                @click="open ? (open = false, query = '') : openList(); if (open) $nextTick(() => $refs.accountantSearchInput.focus())"
-                                                aria-label="Mostrar contadores"
-                                            >
-                                                <svg class="h-4 w-4" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-
-                                            <div
-                                                id="customer-principal-accountant-options"
-                                                wire:ignore
-                                                x-cloak
-                                                x-show="open"
-                                                class="administration-form-scrollbar absolute z-[70] mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg"
-                                                role="listbox"
-                                                aria-label="Contadores disponibles"
-                                            >
-                                                <template x-for="option in filteredOptions" :key="option.id">
-                                                    <button
-                                                        type="button"
-                                                        @click="selectOption(option)"
-                                                        :class="String(selectedId) === String(option.id) ? 'bg-blue-50 font-semibold text-[#1A3A6B]' : 'text-gray-700 hover:bg-gray-50'"
-                                                        class="block w-full rounded-lg px-4 py-3 text-left text-[15px] focus:bg-blue-50 focus:outline-none focus:ring-0"
-                                                        role="option"
-                                                        :aria-selected="String(selectedId) === String(option.id)"
-                                                    >
-                                                        <span class="block truncate" x-text="option.label"></span>
-                                                    </button>
-                                                </template>
-
-                                                <p x-show="filteredOptions.length === 0" class="px-4 py-3 text-[15px] text-gray-500">
-                                                    No se encontraron contadores.
-                                                </p>
-                                            </div>
+                                        <label for="customer-principal-accountant" class="mt-[10px] block text-[15px] font-medium text-gray-700">Contador principal</label>
+                                        <div data-catalog-search="accountant">
+                                            <x-administration-search-picker
+                                                input-id="customer-principal-accountant"
+                                                model="principalAccountantId"
+                                                :selected="$principalAccountantId"
+                                                :items="$accountantSearchOptions"
+                                                placeholder="Buscar contador por nombre o correo..."
+                                                empty-message="No se encontraron contadores."
+                                                placement="bottom"
+                                            />
                                         </div>
                                         <x-input-error for="principalAccountantId" class="mt-2 text-[15px]" />
 
@@ -366,7 +290,7 @@
                                             </p>
                                         @endif
                                     </section>
-                                @else
+                                @elseif ($selectedCustomerId)
                                     <section class="rounded-xl border border-blue-100 bg-blue-50 p-5 text-[15px] text-blue-900">
                                         <p>Las asignaciones, servicios y documentos existentes se conservarán sin cambios.</p>
                                         <a href="{{ route('customers.edit', $selectedCustomerId) }}" class="mt-3 inline-flex font-medium text-[#1A3A6B] underline underline-offset-4">
@@ -374,10 +298,6 @@
                                         </a>
                                     </section>
                                 @endif
-                            @elseif ($activeTab === 'editar')
-                                <div class="rounded-xl border border-blue-100 bg-blue-50 p-5 text-[15px] text-blue-900">
-                                    Selecciona el cliente cuyos datos deseas modificar.
-                                </div>
                             @endif
 
                             @if ($activeTab === 'eliminar')
@@ -396,14 +316,15 @@
                     </x-slot>
 
                     <x-slot name="actions">
-                        <button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        <button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
                             wire:target="save"
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg px-5 py-3 text-[15px] font-medium text-white transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#1A3A6B] hover:bg-[#15305a]' }}"
+                            @disabled(in_array($activeTab, ['editar', 'eliminar'], true) && ! $selectedCustomerId)
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg px-5 py-3 text-[15px] font-semibold transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white text-[#1A3A6B] hover:bg-[#E7F0FB]' }}"
                         >
                             <span wire:loading.remove wire:target="save">
                                 {{ $activeTab === 'crear' ? 'Guardar' : ($activeTab === 'editar' ? 'Guardar cambios' : 'Eliminar') }}

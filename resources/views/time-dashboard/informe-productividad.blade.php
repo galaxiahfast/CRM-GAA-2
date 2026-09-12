@@ -88,9 +88,7 @@
 
                     <form method="GET" action="{{ route('time.dashboard') }}" style="display: flex; flex-wrap: nowrap; align-items: flex-end; justify-content: flex-end; gap: 20px;">
 
-                        @if ($selectedUser)
-                            <input id="selected_user_id" type="hidden" name="user_id" value="{{ $selectedUser->id }}">
-                        @endif
+                        <input id="selected_user_id" type="hidden" name="user_id" value="{{ $selectedUser?->id ?? '' }}">
 
                         @if ($isAdmin)
                             <div style="min-width: 260px; flex: 0 0 auto; position: relative;">
@@ -117,16 +115,21 @@
                                         value="{{ $search }}"
                                         type="search"
                                         placeholder="Buscar por ID, nombre o correo..."
-                                        autocomplete="off"
+                                        autocomplete="one-time-code"
+                                        spellcheck="false"
+                                        aria-autocomplete="list"
+                                        aria-controls="userDropdown"
+                                        aria-expanded="false"
                                         style="width: 260px; border-radius: 12px; border: 1px solid #e4e4e7; background-color: white; padding: 15px 20px 15px 48px; font-size: 15px; color: #000; box-shadow: none; outline: none; flex-shrink: 0;"
                                     >
 
                                     <!-- ✅ DROPDOWN DE COLABORADORES -->
                                     <div id="userDropdown" style="position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; z-index: 1000; display: none;">
                                         @foreach ($users as $user)
-                                            <a href="{{ route('time.dashboard', ['user_id' => $user->id, 'search' => $search, 'fecha_inicio' => $start->toDateString(), 'fecha_fin' => $end->toDateString()]) }}" 
+                                            <button type="button"
                                             class="user-item flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0"
-                                            style="text-decoration: none; color: inherit;"
+                                            style="width: 100%; border-left: 0; border-right: 0; border-top: 0; background: white; text-align: left; color: inherit; cursor: pointer;"
+                                            data-label="{{ trim($user->name . ' ' . ($user->last_name ?? '')) }}"
                                             data-name="{{ strtolower($user->name . ' ' . ($user->last_name ?? '')) }}"
                                             data-id="{{ $user->id }}"
                                             data-email="{{ strtolower($user->email) }}">
@@ -141,7 +144,7 @@
                                                         ID {{ $user->id }} • {{ $user->email }}
                                                     </p>
                                                 </div>
-                                            </a>
+                                            </button>
                                         @endforeach
                                         
                                         @if ($users->isEmpty())
@@ -2456,6 +2459,7 @@ if (pieCanvas && typeof Chart !== 'undefined') {
         // ============================================================
         function filterUsers(searchTerm) {
             const dropdown = document.getElementById('userDropdown');
+            const searchInput = document.getElementById('search');
             if (!dropdown) return;
             
             const items = dropdown.querySelectorAll('.user-item');
@@ -2483,8 +2487,10 @@ if (pieCanvas && typeof Chart !== 'undefined') {
             // ✅ Siempre mostrar el dropdown si hay usuarios
             if (items.length > 0) {
                 dropdown.style.display = 'block';
+                searchInput?.setAttribute('aria-expanded', 'true');
             } else {
                 dropdown.style.display = 'none';
+                searchInput?.setAttribute('aria-expanded', 'false');
             }
             
             // Mostrar mensaje si no hay resultados
@@ -2515,11 +2521,34 @@ if (pieCanvas && typeof Chart !== 'undefined') {
             const noResults = dropdown.querySelector('.no-results');
             if (noResults) noResults.remove();
             dropdown.style.display = 'block';
+            this.setAttribute('aria-expanded', 'true');
         });
 
         // ✅ Al escribir en el input, filtrar
         document.getElementById('search')?.addEventListener('input', function() {
+            const selectedUserId = document.getElementById('selected_user_id');
+            if (selectedUserId) selectedUserId.value = '';
             filterUsers(this.value);
+        });
+
+        // Elegir una sugerencia sólo prepara el filtro. La consulta se ejecuta
+        // exclusivamente cuando el usuario pulsa el botón Buscar del formulario.
+        document.querySelectorAll('#userDropdown .user-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const searchInput = document.getElementById('search');
+                const selectedUserId = document.getElementById('selected_user_id');
+                const dropdown = document.getElementById('userDropdown');
+
+                if (searchInput) {
+                    searchInput.value = this.dataset.label || '';
+                    searchInput.setAttribute('aria-expanded', 'false');
+                }
+                if (selectedUserId) selectedUserId.value = this.dataset.id || '';
+                if (dropdown) dropdown.style.display = 'none';
+            });
         });
 
         // ✅ Ocultar el dropdown al hacer clic fuera
@@ -2529,23 +2558,7 @@ if (pieCanvas && typeof Chart !== 'undefined') {
             if (searchInput && dropdown) {
                 if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
                     dropdown.style.display = 'none';
-                }
-            }
-        });
-
-        // ✅ Inicializar: mostrar el dropdown al cargar la página (solo si hay usuarios)
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdown = document.getElementById('userDropdown');
-            const searchInput = document.getElementById('search');
-            
-            if (dropdown && searchInput) {
-                const items = dropdown.querySelectorAll('.user-item');
-                // Si hay usuarios, mostrar el dropdown
-                if (items.length > 0) {
-                    // Asegurar que todos los items estén visibles
-                    items.forEach(item => item.style.display = '');
-                    // Mostrar el dropdown
-                    dropdown.style.display = 'block';
+                    searchInput.setAttribute('aria-expanded', 'false');
                 }
             }
         });

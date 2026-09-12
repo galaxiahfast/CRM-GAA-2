@@ -6,6 +6,7 @@ use App\Models\AccessPermission;
 use App\Models\Customer;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
+use App\Models\PermissionGroup;
 use App\Models\Role;
 use App\Models\SubService;
 use App\Models\User;
@@ -46,9 +47,15 @@ class AppServiceProvider extends ServiceProvider
         UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
 
         $forgetAdministrationReferences = fn () => app(ReferenceDataCache::class)->forgetAdministration();
-        foreach ([AccessPermission::class, JobPosition::class, PhysicalArea::class, Role::class] as $model) {
+        foreach ([JobPosition::class, PhysicalArea::class, Role::class] as $model) {
             $model::saved($forgetAdministrationReferences);
             $model::deleted($forgetAdministrationReferences);
+        }
+
+        $forgetPermissionReferences = fn () => app(ReferenceDataCache::class)->forgetPermissionCatalog();
+        foreach ([AccessPermission::class, PermissionGroup::class] as $model) {
+            $model::saved($forgetPermissionReferences);
+            $model::deleted($forgetPermissionReferences);
         }
 
         $forgetTimeControlReferences = fn () => app(ReferenceDataCache::class)->forgetTimeControl();

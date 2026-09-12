@@ -3,11 +3,15 @@
 namespace Tests\Feature;
 
 use App\Livewire\Administracion\PanelAdministracion;
+use App\Livewire\Administracion\Permissions\CatalogManager as PermissionCatalogManager;
+use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\Form as RoleForm;
 use App\Livewire\Administracion\Roles\GestionRoles;
 use App\Livewire\Administracion\Users\Form as UserForm;
 use App\Models\AccessPermission;
+use App\Models\Customer;
 use App\Models\JobPosition;
+use App\Models\PermissionGroup;
 use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\User;
@@ -110,7 +114,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showPhysicalAreaModal', false)
             ->assertSeeHtml('data-administration-modal="job-position-form"')
             ->assertSeeHtml('wire:click.self="closeJobPositionModal"')
-            ->assertSeeHtml('@keydown.escape.window="$wire.closeJobPositionModal()"')
+            ->assertSeeHtml('@keydown.escape.window="visible = false; $wire.closeJobPositionModal()"')
             ->set('newJobPositionName', '  Auditor   de Calidad  ')
             ->set('newJobPositionPaymentType', JobPosition::PAYMENT_HOURLY)
             ->call('saveJobPosition')
@@ -129,7 +133,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showJobPositionModal', false)
             ->assertSeeHtml('data-administration-modal="physical-area-form"')
             ->assertSeeHtml('wire:click.self="closePhysicalAreaModal"')
-            ->assertSeeHtml('@keydown.escape.window="$wire.closePhysicalAreaModal()"')
+            ->assertSeeHtml('@keydown.escape.window="visible = false; $wire.closePhysicalAreaModal()"')
             ->set('newPhysicalAreaName', '  Control   Interno  ')
             ->call('savePhysicalArea')
             ->assertHasNoErrors()
@@ -235,6 +239,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertHasNoErrors()
             ->call('setJobPositionModalTab', 'eliminar')
             ->set('selectedJobPositionId', $position->id)
+            ->set('deleteJobPositionConfirmation', 'Analista de Operaciones')
             ->call('deleteJobPosition')
             ->assertHasNoErrors();
 
@@ -254,6 +259,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertHasNoErrors()
             ->call('setPhysicalAreaModalTab', 'eliminar')
             ->set('selectedPhysicalAreaManagementId', $area->id)
+            ->set('deletePhysicalAreaConfirmation', 'Control Operativo')
             ->call('deletePhysicalArea')
             ->assertHasNoErrors();
 
@@ -332,6 +338,11 @@ class AdministrationModalFormsTest extends TestCase
             'name' => 'Permiso de prueba',
             'module' => 'Administración',
         ]);
+        $permissionGroup = PermissionGroup::create([
+            'name' => 'Supervisión administrativa',
+            'description' => 'Accesos para supervisores.',
+        ]);
+        $permissionGroup->permissions()->sync([$permission->id]);
 
         Livewire::actingAs($administrator)
             ->test(RoleForm::class)
@@ -342,7 +353,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSee('Eliminar Roles')
             ->set('role', 'Supervisor')
             ->set('description', 'Supervisa la operación')
-            ->set('permissionIds', [$permission->id])
+            ->call('selectPermissionGroup', $permissionGroup->id)
             ->call('save')
             ->assertHasNoErrors()
             ->assertRedirect('/administracion/roles');
@@ -352,6 +363,10 @@ class AdministrationModalFormsTest extends TestCase
             'role_id' => $role->id,
             'access_permission_id' => $permission->id,
         ]);
+        $this->assertDatabaseHas('roles', [
+            'id' => $role->id,
+            'permission_group_id' => $permissionGroup->id,
+        ]);
 
         Livewire::actingAs($administrator)
             ->test(RoleForm::class, ['role' => $role])
@@ -359,8 +374,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('permissionIds', [$permission->id])
             ->set('role', 'Supervisor operativo')
             ->set('description', 'Supervisa la operación diaria')
-            ->set('permissionProfile', Role::PROFILE_AUXILIARY)
-            ->set('permissionIds', [])
+            ->call('selectPermissionGroup', $permissionGroup->id)
             ->call('save')
             ->assertHasNoErrors()
             ->assertRedirect('/administracion/roles');
@@ -369,17 +383,15 @@ class AdministrationModalFormsTest extends TestCase
             'id' => $role->id,
             'role' => 'Supervisor operativo',
             'description' => 'Supervisa la operación diaria',
-            'permission_profile' => Role::PROFILE_AUXILIARY,
-        ]);
-        $this->assertDatabaseMissing('role_access_permission', [
-            'role_id' => $role->id,
-            'access_permission_id' => $permission->id,
+            'permission_profile' => Role::PROFILE_CUSTOM,
+            'permission_group_id' => $permissionGroup->id,
         ]);
 
         Livewire::actingAs($administrator)
             ->test(RoleForm::class, ['role' => $administratorRole])
             ->set('role', 'Administrador renombrado')
             ->set('description', 'Descripción actualizada sin cambiar el identificador')
+            ->call('selectPermissionGroup', $permissionGroup->id)
             ->call('save')
             ->assertHasNoErrors();
 
@@ -427,10 +439,17 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('activeTab', 'delete')
             ->assertSeeHtml('data-administration-modal="roles-management"')
             ->assertSeeHtml('wire:click.self="cancel"')
-            ->assertSee('Crear Rol')
-            ->assertSee('Editar Rol')
-            ->assertSee('Eliminar Roles')
-            ->assertSee('Perfil de acceso vigente')
+            ->assertSee('Seleccionar rol')
+            ->assertSee('Verificación')
+            ->call('selectRole', $assignedRole->id)
+            ->assertSet('editingRoleId', null)
+            ->call('selectRole', $temporaryRole->id)
+            ->call('deleteRole', $temporaryRole->id)
+            ->assertHasErrors(['deleteConfirmationName'])
+            ->set('deleteConfirmationName', mb_strtoupper($temporaryRole->role))
+            ->call('deleteRole', $temporaryRole->id)
+            ->assertHasErrors(['deleteConfirmationWord'])
+            ->set('deleteConfirmationWord', 'ELIMINAR')
             ->call('deleteRole', $temporaryRole->id)
             ->assertRedirect(route('administracion.role', ['tab' => 'delete']));
 
@@ -440,8 +459,11 @@ class AdministrationModalFormsTest extends TestCase
             ->withQueryParams(['tab' => 'edit'])
             ->test(GestionRoles::class)
             ->assertSet('activeTab', 'edit')
-            ->assertSeeHtml(route('administracion.role.edit', $assignedRole))
-            ->assertDontSeeHtml('wire:click="deleteRole('.$assignedRole->id.')"');
+            ->assertSee('Buscar rol por nombre')
+            ->assertSee('Vista previa de accesos')
+            ->call('selectRole', $assignedRole->id)
+            ->assertSet('editingRoleId', $assignedRole->id)
+            ->assertSet('editingRoleName', 'Rol con usuario');
 
         Livewire::actingAs($administrator)
             ->withQueryParams(['tab' => 'invalid'])
@@ -452,6 +474,46 @@ class AdministrationModalFormsTest extends TestCase
             ->test(GestionRoles::class)
             ->call('cancel')
             ->assertRedirect(route('administracion.index'));
+    }
+
+    public function test_embedded_role_editor_updates_the_selected_role_without_mounting_a_second_livewire_form(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $targetRole = Role::create(['role' => 'Supervisor']);
+        $administrator = $this->createUser($administratorRole, 'admin-inline-role-editor@test.mx');
+        $permission = AccessPermission::create([
+            'key' => 'customers.inline.manage',
+            'name' => 'Administrar clientes en línea',
+            'module' => 'Clientes',
+        ]);
+        $group = PermissionGroup::create([
+            'name' => 'Supervisión de clientes',
+            'description' => 'Permisos de supervisión.',
+        ]);
+        $group->permissions()->sync([$permission->id]);
+
+        Livewire::actingAs($administrator)
+            ->test(GestionRoles::class, ['embedded' => true, 'initialTab' => 'editar'])
+            ->assertSet('editingRoleId', null)
+            ->assertDontSeeHtml('embedded-role-editor-')
+            ->call('selectRole', $targetRole->id)
+            ->assertSet('editingRoleId', $targetRole->id)
+            ->assertSet('editingRoleName', 'Supervisor')
+            ->call('selectPermissionGroup', $group->id)
+            ->assertSet('permissionIds', [$permission->id])
+            ->set('editingRoleDescription', 'Supervisa el directorio de clientes')
+            ->call('saveEditedRole')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('roles', [
+            'id' => $targetRole->id,
+            'description' => 'Supervisa el directorio de clientes',
+            'permission_group_id' => $group->id,
+        ]);
+        $this->assertDatabaseHas('role_access_permission', [
+            'role_id' => $targetRole->id,
+            'access_permission_id' => $permission->id,
+        ]);
     }
 
     public function test_permissions_modal_only_presents_administrator_and_auxiliar_profiles(): void
@@ -528,6 +590,80 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('assignmentModalTab', 'interns')
             ->call('closeAssignmentModal')
             ->assertSet('showAssignmentModal', false);
+    }
+
+    public function test_permission_catalog_can_reopen_and_manage_groups_without_opening_roles(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $catalogPermission = AccessPermission::firstOrCreate(['key' => 'administration.permissions.manage'], [
+            'name' => 'Gestión de permisos',
+            'module' => 'Administración',
+            'is_active' => true,
+        ]);
+        $administrator = $this->createUser($administratorRole, 'admin-permission-catalog@test.mx');
+
+        $component = Livewire::actingAs($administrator)
+            ->test(PermissionCatalogManager::class, ['cardActions' => true])
+            ->call('openModal', 'crear')
+            ->assertSet('showModal', true)
+            ->set('name', 'Auditoría avanzada')
+            ->set('description', 'Permite consultar eventos de seguridad.')
+            ->set('permissionIds', [$catalogPermission->id])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $group = PermissionGroup::where('name', 'Auditoría avanzada')->firstOrFail();
+
+        $component->call('closeModal')
+            ->call('openModal', 'editar')
+            ->set('selectedGroupId', $group->id)
+            ->assertSet('name', 'Auditoría avanzada')
+            ->set('name', 'Auditoría corporativa')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $component->call('closeModal')
+            ->call('openModal', 'eliminar')
+            ->set('selectedGroupId', $group->id)
+            ->set('deleteConfirmation', 'Auditoría corporativa')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('showModal', true);
+
+        $this->assertDatabaseMissing('permission_groups', ['id' => $group->id]);
+    }
+
+    public function test_assignment_form_saves_once_and_reopens_in_each_mode(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $accountantRole = Role::create(['role' => 'Contador']);
+        $auxiliaryRole = Role::create(['role' => 'Auxiliar']);
+        $administrator = $this->createUser($administratorRole, 'admin-assignment-form@test.mx');
+        $accountant = $this->createUser($accountantRole, 'accountant-assignment-form@test.mx');
+        $intern = $this->createUser($auxiliaryRole, 'intern-assignment-form@test.mx');
+        $customer = Customer::create(['name' => 'Cliente Demo', 'rfc' => 'DEMO010101AA1']);
+
+        $component = Livewire::actingAs($administrator)
+            ->test(GestionRelacionesJerarquicas::class, ['cardActions' => true])
+            ->call('openModal', 'crear')
+            ->set('selectedCustomer', $customer->id)
+            ->set('selectedAccountantId', $accountant->id)
+            ->set('assignedInterns', [$intern->id])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('customer_accountants', ['customer_id' => $customer->id, 'accountant_id' => $accountant->id, 'status' => true]);
+        $this->assertDatabaseHas('customer_interns', ['customer_id' => $customer->id, 'intern_id' => $intern->id]);
+
+        $component->call('closeModal')->call('openModal', 'editar')->set('selectedCustomer', $customer->id)
+            ->assertSet('selectedAccountantId', $accountant->id)
+            ->assertSet('assignedInterns', [$intern->id])
+            ->set('assignedInterns', [])->call('save')->assertHasNoErrors();
+        $this->assertDatabaseMissing('customer_interns', ['customer_id' => $customer->id, 'intern_id' => $intern->id]);
+
+        $component->call('closeModal')->call('openModal', 'eliminar')->set('selectedCustomer', $customer->id)
+            ->set('deleteConfirmation', 'Cliente Demo')->call('save')->assertHasNoErrors();
+        $this->assertDatabaseHas('customer_accountants', ['customer_id' => $customer->id, 'accountant_id' => $accountant->id, 'status' => false]);
     }
 
     private function createUser(Role $role, string $email): User

@@ -31,6 +31,8 @@ class SessionContinuityTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('session.keep-alive'))
-            ->assertNoContent();
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'max-age=0, must-revalidate, no-cache, no-store, private')
+            ->assertJsonStructure(['csrf_token']);
     }
 }

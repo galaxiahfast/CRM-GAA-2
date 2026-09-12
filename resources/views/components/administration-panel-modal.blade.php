@@ -3,12 +3,16 @@
     'subtitle' => null,
     'modalId' => 'administration-panel',
     'cancelAction' => 'cancel',
+    'carouselStyle' => false,
 ])
 
 <div
-    x-data
+    x-data="{ visible: true }"
+    x-show="visible"
     wire:click.self="{{ $cancelAction }}"
-    @keydown.escape.window="$wire.{{ $cancelAction }}()"
+    @click.self="visible = false"
+    @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($cancelAction)) visible = false"
+    @keydown.escape.window="visible = false; $wire.{{ $cancelAction }}()"
     class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
     role="dialog"
     aria-modal="true"
@@ -38,24 +42,36 @@
         .administration-panel-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #15305a;
         }
+
+        .organization-card-surface {
+            background-color: rgba(255, 255, 255, 0.48);
+            background-image:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.24) 48%, rgba(255, 255, 255, 0.5)),
+                radial-gradient(circle, rgba(26, 58, 107, 0.13) 0.7px, transparent 0.8px);
+            background-size: 100% 100%, 11px 11px;
+        }
     </style>
 
     <div
-        class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl"
+        @class([
+            'relative flex w-full max-w-3xl flex-col overflow-hidden border shadow-2xl',
+            'rounded-[22px] border-[#1A3A6B] bg-[#F7FAFE]' => $carouselStyle,
+            'rounded-2xl border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle,
+        ])
         style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;"
     >
-        <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">
+        <header @class(['flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-5', 'border-white/10 bg-[#1A3A6B]' => $carouselStyle, 'border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle])>
             <div class="flex min-w-0 items-center gap-[15px]">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white shadow-sm">
+                <div @class(['flex h-12 w-12 shrink-0 items-center justify-center text-white', 'rounded-2xl border border-white/15 bg-white/10' => $carouselStyle, 'rounded-full bg-[#1A3A6B] shadow-sm' => ! $carouselStyle])>
                     {{ $icon }}
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-[10px]">
-                    <h1 id="{{ $modalId }}-title" class="truncate text-[15px] font-semibold leading-none text-gray-900" style="margin: 0;">
+                    <h1 id="{{ $modalId }}-title" @class(['truncate text-[15px] font-semibold leading-none', 'text-white' => $carouselStyle, 'text-gray-900' => ! $carouselStyle]) style="margin: 0;">
                         {{ $title }}
                     </h1>
                     @if ($subtitle)
-                        <p class="truncate text-[15px] leading-none text-gray-500" style="margin: 0;">{{ $subtitle }}</p>
+                        <p @class(['truncate text-[15px] leading-none', 'text-[#C9E1FF]' => $carouselStyle, 'text-gray-500' => ! $carouselStyle]) style="margin: 0;">{{ $subtitle }}</p>
                     @endif
                 </div>
             </div>
@@ -63,8 +79,7 @@
             <button
                 type="button"
                 wire:click="{{ $cancelAction }}"
-                wire:loading.attr="disabled"
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50"
+                @class(['flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-xl leading-none transition focus:outline-none focus:ring-0', 'border-white/20 bg-white/10 text-white hover:bg-white/20' => $carouselStyle, 'border-gray-300 bg-white text-gray-500 hover:border-[#1A3A6B] hover:text-[#1A3A6B]' => ! $carouselStyle])
                 aria-label="Cerrar"
             >
                 &times;
@@ -72,19 +87,19 @@
         </header>
 
         @if (isset($navigation))
-            <nav @class(['flex flex-shrink-0 border-b border-gray-300 bg-[#F3F3F3] px-5', 'hidden' => $modalId === 'roles-management']) aria-label="Secciones del formulario">
+            <nav @class(['flex flex-shrink-0 border-b px-5', 'border-[#CAD7E7] bg-white/65' => $carouselStyle, 'border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle, 'hidden' => $modalId === 'roles-management']) aria-label="Secciones del formulario">
                 {{ $navigation }}
             </nav>
         @endif
 
-        <div class="administration-panel-scrollbar min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
-            <div class="m-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 text-[15px] shadow-sm">
+        <div @class(['administration-panel-scrollbar min-h-0 flex-1 overflow-y-auto', 'organization-card-surface' => $carouselStyle]) style="overscroll-behavior: contain;">
+            <div @class(['text-[15px]', 'm-0 p-6' => $carouselStyle, 'm-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 shadow-sm' => ! $carouselStyle])>
                 {{ $content }}
             </div>
         </div>
 
         @if (isset($actions))
-            <footer class="flex flex-shrink-0 justify-end gap-[15px] border-t border-gray-300 bg-[#F3F3F3] p-5">
+            <footer @class(['flex flex-shrink-0 justify-end gap-[15px] border-t p-5', 'border-white/10 bg-[#1A3A6B]' => $carouselStyle, 'border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle])>
                 {{ $actions }}
             </footer>
         @endif

@@ -18,55 +18,70 @@ if (window.Livewire) {
 // Además de mantener la sesión, este pulso permite reflejar presencia real:
 // mientras el navegador autenticado siga abierto actualizará last_activity.
 const SESSION_KEEP_ALIVE_INTERVAL = 30 * 1000;
-const SESSION_RECOVERY_KEY = 'session-recovery-in-progress';
 let keepAliveRequest = null;
 let keepAliveController = null;
+let keepAliveTask = null;
 let sessionIsClosing = false;
+let sessionReady = false;
+let queuedInitialAction = null;
+let lastLivewireAction = null;
+let retryingLivewireAction = false;
 
-const recoverExpiredSession = () => {
+const goToLogin = () => {
     const loginUrl = document.body?.dataset.loginUrl || '/login';
-
-    // Evita un ciclo infinito si la recarga tampoco logra renovar el token.
-    if (sessionStorage.getItem(SESSION_RECOVERY_KEY) === '1') {
-        sessionStorage.removeItem(SESSION_RECOVERY_KEY);
-        window.location.assign(loginUrl);
-        return;
-    }
-
-    sessionStorage.setItem(SESSION_RECOVERY_KEY, '1');
-    window.location.reload();
+    window.location.assign(loginUrl);
 };
 
-const keepSessionAlive = async () => {
+const keepSessionAlive = () => {
     const url = document.body?.dataset.sessionKeepAliveUrl;
 
-    if (!url || !navigator.onLine || sessionIsClosing || keepAliveRequest) {
-        return;
+    if (!url || !navigator.onLine || sessionIsClosing) {
+        return Promise.resolve(false);
     }
 
-    keepAliveController = new AbortController();
-    keepAliveRequest = fetch(url, {
-        method: 'GET',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        signal: keepAliveController.signal,
-        headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    });
+    if (keepAliveTask) return keepAliveTask;
 
-    try {
-        const response = await keepAliveRequest;
-        if (response.status === 401 || response.status === 419) {
-            recoverExpiredSession();
+    keepAliveTask = (async () => {
+        keepAliveController = new AbortController();
+        keepAliveRequest = fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            signal: keepAliveController.signal,
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        try {
+            const response = await keepAliveRequest;
+            if (response.status === 401 || response.status === 419) {
+                goToLogin();
+                return false;
+            }
+
+            if (!response.ok) return false;
+
+            const data = await response.json();
+            const csrfToken = data?.csrf_token;
+            if (csrfToken) {
+                document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', csrfToken);
+                window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+            }
+
+            return true;
+        } catch {
+            // Una caída de red no debe bloquear la interfaz ni el cronómetro.
+            return false;
+        } finally {
+            keepAliveRequest = null;
+            keepAliveController = null;
+            keepAliveTask = null;
         }
-    } catch {
-        // Una caída de red no debe bloquear la interfaz ni el cronómetro.
-    } finally {
-        keepAliveRequest = null;
-        keepAliveController = null;
-    }
+    })();
+
+    return keepAliveTask;
 };
 
 document.addEventListener('submit', (event) => {
@@ -78,23 +93,60 @@ document.addEventListener('submit', (event) => {
     keepAliveController?.abort();
 }, { capture: true });
 
+// Una pestaña restaurada por el navegador puede conservar HTML con un token
+// anterior aunque la cookie ya pertenezca a una sesión nueva. Sincronizarlo
+// antes del primer wire:click evita que Livewire reciba un 419 y recargue la
+// página justo al abrir Crear, Editar o Eliminar.
+const initialSessionSync = keepSessionAlive().finally(() => {
+    sessionReady = true;
+    const action = queuedInitialAction;
+    queuedInitialAction = null;
+    if (action?.isConnected) action.click();
+});
+
+document.addEventListener('click', (event) => {
+    const action = event.target.closest?.('button[wire\\:click], a[wire\\:click]');
+    if (!action) return;
+
+    lastLivewireAction = action;
+    if (sessionReady) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    queuedInitialAction = action;
+    void initialSessionSync;
+}, { capture: true });
+
 document.addEventListener('livewire:init', () => {
-    window.Livewire.hook('request', ({ fail }) => {
+    window.Livewire.hook('request', ({ succeed, fail }) => {
+        succeed(() => {
+            lastLivewireAction = null;
+            retryingLivewireAction = false;
+        });
+
         fail(({ status, preventDefault }) => {
             if (status !== 419) {
                 return;
             }
 
             preventDefault();
-            recoverExpiredSession();
+            const action = lastLivewireAction;
+            if (retryingLivewireAction) {
+                goToLogin();
+                return;
+            }
+
+            retryingLivewireAction = true;
+            keepSessionAlive().then((renewed) => {
+                if (renewed && action?.isConnected) {
+                    action.click();
+                    return;
+                }
+
+                retryingLivewireAction = false;
+            });
         });
     });
-
-    // Conserva brevemente la marca para impedir un ciclo si la primera
-    // petición posterior a la recarga vuelve a responder 419.
-    window.setTimeout(() => {
-        sessionStorage.removeItem(SESSION_RECOVERY_KEY);
-    }, 15_000);
 }, { once: true });
 
 window.setInterval(keepSessionAlive, SESSION_KEEP_ALIVE_INTERVAL);

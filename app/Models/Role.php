@@ -16,6 +16,7 @@ class Role extends Model
         'role',
         'description',
         'permission_profile',
+        'permission_group_id',
     ];
 
     public static function permissionProfiles(): array
@@ -41,5 +42,10 @@ class Role extends Model
     {
         return $this->belongsToMany(AccessPermission::class, 'role_access_permission')
             ->withTimestamps();
+    }
+
+    public function permissionGroup()
+    {
+        return $this->belongsTo(PermissionGroup::class);
     }
 }

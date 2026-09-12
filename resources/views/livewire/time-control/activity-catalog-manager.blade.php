@@ -1,6 +1,12 @@
 @php
-    $inputClasses = 'mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0';
-    $textareaClasses = 'mt-2 block w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 py-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0';
+    $inputClasses = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]';
+    $textareaClasses = 'mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0';
+    $activityModalTitle = match ($activeTab) {
+        'editar' => 'Editar actividad',
+        'eliminar' => 'Eliminar actividad',
+        default => 'Crear actividad',
+    };
+    $activityFieldsDisabled = $activeTab === 'editar' && ! filled($selectedActivityId);
 @endphp
 
 <div @class(['col-span-3 grid h-full grid-cols-3' => $cardActions])>
@@ -9,6 +15,7 @@
             <button type="button" wire:click="openModal('{{ $tab }}')" wire:loading.attr="disabled" wire:target="openModal" class="inline-flex items-center justify-center gap-[9px] rounded-lg px-2 text-[13px] font-semibold text-white focus:outline-none focus:ring-0 disabled:cursor-wait">
                 @if ($tab === 'crear')<span class="text-[18px] font-normal">+</span>@elseif ($tab === 'editar')<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>@else<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>@endif
                 <span>{{ $label }}</span>
+                @if ($tab === 'crear')<span class="sr-only">Agregar Actividad</span>@endif
             </button>
         @endforeach
     @else
@@ -35,8 +42,9 @@
                     submit="save"
                     cancel-action="closeModal"
                     modal-id="activity-catalog-management"
-                    title="Actividades del reloj checador"
+                    :title="$activityModalTitle"
                     subtitle="Administra el catálogo operativo disponible en Control de Horas."
+                    :carousel-style="true"
                 >
                     <x-slot name="icon">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -74,12 +82,9 @@
                                 </div>
                             @enderror
 
-                            <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-[15px] text-blue-900">
-                                Estas actividades son un catálogo global: también pueden estar vinculadas con servicios y documentos de clientes.
-                            </div>
-
                             @if (in_array($activeTab, ['editar', 'eliminar'], true))
-                                <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5 shadow-sm">
+                                <section class="rounded-xl border border-[#CAD7E7] p-5">
+                                    <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar actividad</h2>
                                     <label for="managed-activity-id" class="block text-[15px] font-medium text-gray-700">Actividad</label>
                                     @php
                                         $activityOptions = $activities->map(function ($activity) {
@@ -99,7 +104,7 @@
                                     <div
                                         wire:key="activity-catalog-picker-{{ $activeTab }}"
                                         data-catalog-search="activity"
-                                        class="relative mt-2"
+                                        class="relative mt-[10px]"
                                         x-data="{
                                             open: false,
                                             query: '',
@@ -147,7 +152,7 @@
                                             type="text"
                                             autocomplete="off"
                                             placeholder="Buscar por actividad o categoría..."
-                                            class="block h-11 w-full rounded-lg border bg-[#F3F3F3] px-3 pr-12 text-[15px] text-gray-800 shadow-none focus:outline-none focus:ring-0 {{ $activeTab === 'eliminar' ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-[#1A3A6B]' }}"
+                                            class="block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 pr-12 text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0"
                                             x-bind:value="open ? query : selectedLabel"
                                             @focus="openList()"
                                             @click="openList()"
@@ -210,14 +215,13 @@
                                 </section>
                             @endif
 
-                            @if ($activeTab === 'crear' || ($activeTab === 'editar' && $selectedActivityId))
-                                <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5 shadow-sm">
-                                    <div class="mb-5">
-                                        <h3 class="text-[15px] font-semibold text-gray-900">Información de la actividad</h3>
-                                        <p class="mt-2 text-[15px] text-gray-500">Define cómo aparecerá en el selector del reloj checador.</p>
+                            @if (in_array($activeTab, ['crear', 'editar'], true))
+                                <section class="rounded-xl border p-5 transition-colors {{ $activityFieldsDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                                    <div class="mb-[10px]">
+                                        <h3 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $activityFieldsDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Información de la actividad</h3>
                                     </div>
 
-                                    <div class="space-y-5">
+                                    <fieldset class="space-y-5" @disabled($activityFieldsDisabled)>
                                         <div>
                                             <label for="activity-name" class="block text-[15px] font-medium text-gray-700">Nombre</label>
                                             <input id="activity-name" type="text" maxlength="255" wire:model.defer="name" class="{{ $inputClasses }}" autocomplete="off" placeholder="Ej. Revisión de declaraciones">
@@ -232,12 +236,12 @@
                                                     'label' => (string) $service->service,
                                                 ])->values();
                                                 $selectedServiceLabel = $services->firstWhere('id', $serviceId)?->service ?? '';
-                                                $serviceSelectionDisabled = $activeTab === 'editar' && $selectedActivity?->isProtectedCatalogEntry();
+                                                $serviceSelectionDisabled = $activityFieldsDisabled || ($activeTab === 'editar' && $selectedActivity?->isProtectedCatalogEntry());
                                             @endphp
                                             <div
                                                 wire:key="activity-service-picker-{{ $activeTab }}-{{ $selectedActivityId ?? 'new' }}"
                                                 data-catalog-search="service"
-                                                class="relative mt-2"
+                                                class="relative mt-[10px]"
                                                 x-data="{
                                                     open: false,
                                                     query: '',
@@ -354,12 +358,8 @@
                                             <textarea id="activity-description" rows="4" maxlength="255" wire:model.defer="description" class="{{ $textareaClasses }}" placeholder="Describe brevemente el alcance de la actividad."></textarea>
                                             <x-input-error for="description" class="mt-2 text-[15px]" />
                                         </div>
-                                    </div>
+                                    </fieldset>
                                 </section>
-                            @elseif ($activeTab === 'editar')
-                                <div class="rounded-xl border border-blue-100 bg-blue-50 p-5 text-[15px] text-blue-900">
-                                    Selecciona la actividad que deseas modificar.
-                                </div>
                             @endif
 
                             @if ($activeTab === 'eliminar')
@@ -378,15 +378,15 @@
                     </x-slot>
 
                     <x-slot name="actions">
-                        <button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        <button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
                             wire:target="save"
-                            @disabled($activeTab === 'eliminar' && $selectedActivity?->isProtectedCatalogEntry())
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg px-5 py-3 text-[15px] font-medium text-white transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#1A3A6B] hover:bg-[#15305a]' }}"
+                            @disabled(($activeTab === 'editar' && ! $selectedActivityId) || ($activeTab === 'eliminar' && (! $selectedActivityId || $selectedActivity?->isProtectedCatalogEntry())))
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg px-5 py-3 text-[15px] font-semibold transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white text-[#1A3A6B] hover:bg-[#E7F0FB]' }}"
                         >
                             <span wire:loading.remove wire:target="save">
                                 {{ $activeTab === 'crear' ? 'Guardar' : ($activeTab === 'editar' ? 'Guardar cambios' : 'Eliminar') }}

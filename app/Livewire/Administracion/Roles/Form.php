@@ -2,9 +2,10 @@
 
 namespace App\Livewire\Administracion\Roles;
 
-use App\Models\AccessPermission;
+use App\Models\PermissionGroup;
 use App\Models\Role;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -24,21 +25,34 @@ class Form extends Component
 
     public string $permissionProfile = Role::PROFILE_CUSTOM;
 
+    public ?int $permissionGroupId = null;
+
     public bool $embedded = false;
 
-    public function mount($role = null, bool $embedded = false)
+    public bool $returnToManager = false;
+
+    public function mount($role = null, bool $embedded = false, bool $returnToManager = false)
     {
         $this->embedded = $embedded;
+        $this->returnToManager = $returnToManager;
         if ($role && $role->exists) {
             $this->roles = $role;
             $this->role = $role->role;
             $this->description = $role->description;
             $this->mode = 'edit';
             $this->permissionProfile = $role->permission_profile ?: Role::PROFILE_CUSTOM;
+            $this->permissionGroupId = $role->permission_group_id ? (int) $role->permission_group_id : null;
             $this->permissionIds = $role->accessPermissions()
                 ->pluck('access_permissions.id')
                 ->map(fn ($permissionId) => (int) $permissionId)
                 ->all();
+            if ($this->permissionProfile === Role::PROFILE_CUSTOM && $this->permissionIds === []) {
+                $this->permissionProfile = match ($role->role) {
+                    'Administrador' => Role::PROFILE_ADMINISTRATOR,
+                    'Auxiliar' => Role::PROFILE_AUXILIARY,
+                    default => Role::PROFILE_CUSTOM,
+                };
+            }
         }
     }
 
@@ -51,12 +65,6 @@ class Form extends Component
             $this->role = $this->roles->role;
         }
 
-        if ($this->mode === 'edit' && $this->roles?->role === 'Administrador') {
-            $this->permissionProfile = Role::PROFILE_ADMINISTRATOR;
-        } elseif ($this->mode === 'edit' && $this->roles?->role === 'Auxiliar') {
-            $this->permissionProfile = Role::PROFILE_AUXILIARY;
-        }
-
         $rules = [
             'role' => [
                 'required',
@@ -65,16 +73,7 @@ class Form extends Component
                 Rule::unique('roles', 'role')->ignore($this->roles ? $this->roles->id : null),
             ],
             'description' => 'nullable|string|max:255',
-            'permissionProfile' => ['required', Rule::in(Role::permissionProfiles())],
-            'permissionIds' => [
-                'array',
-                Rule::requiredIf(fn (): bool => $this->permissionProfile === Role::PROFILE_CUSTOM),
-                Rule::when($this->permissionProfile === Role::PROFILE_CUSTOM, ['min:1']),
-            ],
-            'permissionIds.*' => [
-                'integer',
-                Rule::exists('access_permissions', 'id')->where('is_active', true),
-            ],
+            'permissionGroupId' => ['required', 'integer', 'exists:permission_groups,id'],
         ];
 
         $data = $this->validate($rules);
@@ -95,17 +94,16 @@ class Form extends Component
                     throw new \RuntimeException('Modo inválido o rol no encontrado.');
                 }
 
-                $permissions->syncRoleAccess(
-                    $savedRole,
-                    $data['permissionProfile'],
-                    $data['permissionIds'] ?? []
-                );
+                $permissions->syncRolePermissionGroup($savedRole, (int) $data['permissionGroupId']);
             });
 
+            $references = app(ReferenceDataCache::class);
+            $references->forgetAdministration();
+            $references->forgetOrganizationDashboard();
             session()->flash('success', 'Rol guardado exitosamente.');
 
             if ($this->embedded) {
-                $this->dispatch('role-form-saved');
+                $this->dispatch($this->returnToManager ? 'role-editor-saved' : 'role-form-saved');
 
                 return;
             }
@@ -122,7 +120,7 @@ class Form extends Component
     public function cancel()
     {
         if ($this->embedded) {
-            $this->dispatch('role-form-closed');
+            $this->dispatch($this->returnToManager ? 'role-editor-closed' : 'role-form-closed');
 
             return;
         }
@@ -130,16 +128,24 @@ class Form extends Component
         return redirect()->route('administracion.index');
     }
 
+    public function selectPermissionGroup(?int $groupId): void
+    {
+        $this->permissionGroupId = $groupId;
+        $this->permissionProfile = Role::PROFILE_CUSTOM;
+        $this->permissionIds = $groupId
+            ? PermissionGroup::query()->findOrFail($groupId)->permissions()->active()->pluck('access_permissions.id')->map(fn ($id) => (int) $id)->all()
+            : $this->permissionIds;
+        $this->resetValidation(['permissionGroupId', 'permissionIds']);
+    }
+
     public function render()
     {
+        $permissionCatalog = app(ReferenceDataCache::class)->permissionCatalog();
+
         return view('livewire.administracion.roles.form', [
             'permissionProfiles' => config('access-permissions.profiles', []),
-            'availablePermissions' => AccessPermission::query()
-                ->active()
-                ->orderBy('module')
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->get(['id', 'key', 'name', 'module', 'description']),
+            'availablePermissions' => $permissionCatalog['permissions'],
+            'permissionGroups' => $permissionCatalog['groups'],
         ]);
     }
 }

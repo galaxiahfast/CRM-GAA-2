@@ -6,6 +6,8 @@ const CARD_GAP = 20;
 const CAROUSEL_SAFE_INSET = 98;
 const CAROUSEL_REAR_INSET = 64;
 const carouselAnimations = new WeakMap();
+const carouselSettleFrames = new WeakMap();
+const carouselMemory = window.organizationCarouselMemory ||= { order: [], centeredModule: '' };
 
 const domCards = (container) => [...container.querySelectorAll(`:scope > ${CARD_SELECTOR}`)];
 
@@ -22,6 +24,64 @@ const applyOrder = (orderedCards) => {
     orderedCards.forEach((card, index) => {
         card.style.order = String(index);
     });
+    const container = orderedCards[0]?.parentElement;
+    if (container?.matches(CONTAINER_SELECTOR)) {
+        const order = orderedCards.map((card) => card.dataset.organizationModule);
+        container.dataset.carouselOrder = JSON.stringify(order);
+        carouselMemory.order = order;
+    }
+};
+
+const restoreCarouselOrder = (container) => {
+    const availableCards = new Map(
+        domCards(container).map((card) => [card.dataset.organizationModule, card]),
+    );
+    let storedOrder = [];
+    try {
+        storedOrder = JSON.parse(container.dataset.carouselOrder || JSON.stringify(carouselMemory.order));
+    } catch {
+        storedOrder = [];
+    }
+    const orderedCards = storedOrder.map((module) => availableCards.get(module)).filter(Boolean);
+    const restoredCards = new Set(orderedCards);
+    domCards(container).forEach((card) => {
+        if (!restoredCards.has(card)) orderedCards.push(card);
+    });
+    applyOrder(orderedCards);
+    return orderedCards;
+};
+
+const settleCarouselAfterMorph = (container) => {
+    const runningAnimation = carouselAnimations.get(container);
+    if (runningAnimation) cancelAnimationFrame(runningAnimation);
+    carouselAnimations.delete(container);
+    container.dataset.carouselMoving = 'false';
+    container.dataset.carouselQueue = '0';
+
+    const orderedCards = restoreCarouselOrder(container);
+    const activeModule = container.dataset.carouselCenteredModule || carouselMemory.centeredModule;
+    const current = orderedCards.find((card) => card.dataset.organizationModule === activeModule)
+        || orderedCards[0];
+    if (!current) return;
+
+    orderedCards.forEach((card) => { card.style.transition = 'none'; });
+    balanceCardsAround(container, current);
+    centerOnCard(container, current, 'auto');
+    updateCarouselVisibility(container);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (!container.isConnected) return;
+        domCards(container).forEach((card) => { card.style.transition = ''; });
+        updateCarouselVisibility(container);
+    }));
+};
+
+const scheduleCarouselSettle = (container) => {
+    const pendingFrame = carouselSettleFrames.get(container);
+    if (pendingFrame) cancelAnimationFrame(pendingFrame);
+    carouselSettleFrames.set(container, requestAnimationFrame(() => {
+        carouselSettleFrames.delete(container);
+        if (container.isConnected) settleCarouselAfterMorph(container);
+    }));
 };
 
 const frontCardCount = (container) => Math.max(
@@ -142,6 +202,7 @@ const moveCyclicCarousel = (container, direction, automatic = false, fast = fals
     container.dataset.carouselMoving = 'true';
     container.dataset.carouselNextAt = String(performance.now() + CAROUSEL_INTERVAL);
     container.dataset.carouselCenteredModule = target.dataset.organizationModule;
+    carouselMemory.centeredModule = target.dataset.organizationModule;
     centerOnCard(container, target, 'smooth', fast ? 300 : 720, fast);
     window.setTimeout(() => {
         if (!container.isConnected) return;
@@ -224,7 +285,10 @@ const updateCarouselVisibility = (container) => {
         card.style.setProperty('--carousel-rotation', `${rotation}deg`);
         card.style.setProperty('--carousel-edge-shift', `${Math.round(edgeShift)}px`);
         card.style.zIndex = String(zIndex);
-        const interactive = isFrontCard && progress > 0.995;
+        // Una tarjeta marcada al frente debe ser interactiva completa. Exigir
+        // que estuviera centrada al 99.5 % anulaba clics legítimos cerca de
+        // los laterales o justo después de terminar una transición.
+        const interactive = isFrontCard && progress > 0;
         card.style.pointerEvents = interactive ? '' : 'none';
         card.setAttribute('aria-hidden', interactive ? 'false' : 'true');
     });
@@ -257,8 +321,15 @@ const initializeAutoCarousel = (container) => {
     container.dataset.carouselNextAt = String(performance.now() + CAROUSEL_INTERVAL);
 
     requestAnimationFrame(() => {
-        const initialCard = cards(container)[0];
+        if (!container.dataset.carouselOrder && carouselMemory.order.length) {
+            container.dataset.carouselOrder = JSON.stringify(carouselMemory.order);
+            restoreCarouselOrder(container);
+        }
+        const initialCard = cards(container).find(
+            (card) => card.dataset.organizationModule === carouselMemory.centeredModule,
+        ) || cards(container)[0];
         container.dataset.carouselCenteredModule = initialCard?.dataset.organizationModule || '';
+        carouselMemory.centeredModule = container.dataset.carouselCenteredModule;
         centerOnCard(container, initialCard, 'auto');
         balanceCardsAround(container, initialCard);
         centerOnCard(container, initialCard, 'auto');
@@ -284,11 +355,7 @@ const initializeAutoCarousel = (container) => {
             wasModalOpen = true;
             container.dataset.carouselNextAt = String(now + CAROUSEL_INTERVAL);
         } else if (wasModalOpen) {
-            const current = centeredCard(container);
-            container.dataset.carouselCenteredModule = current?.dataset.organizationModule || '';
-            balanceCardsAround(container, current);
-            centerOnCard(container, current, 'auto');
-            updateCarouselVisibility(container);
+            settleCarouselAfterMorph(container);
             container.dataset.carouselNextAt = String(now + CAROUSEL_INTERVAL);
             wasModalOpen = false;
         } else if (!document.hidden && now >= Number(container.dataset.carouselNextAt || 0)) {
@@ -465,7 +532,7 @@ const initializeOrganizationSortable = (container) => {
     initializeCarouselVisibility(container);
     initializeAutoCarousel(container);
     if (container.dataset.organizationSortableReady === 'true') {
-        updateCarouselVisibility(container);
+        scheduleCarouselSettle(container);
         return;
     }
     container.dataset.organizationSortableReady = 'true';
@@ -478,6 +545,10 @@ const initializeOrganizationSortable = (container) => {
             event.stopPropagation();
         }
     }, true);
+
+    // El carrusel se navega únicamente con las flechas o el avance automático.
+    // No registrar gestos de arrastre evita movimientos accidentales sobre las tarjetas.
+    return;
 
     container.addEventListener('pointerdown', (event) => {
         if (event.button !== 0 || event.target.closest('button, a, input, select, textarea, [role="button"]')) return;
@@ -630,6 +701,8 @@ const initializeOrganizationSortable = (container) => {
 
 const initializeOrganizationSortables = (root = document) => {
     if (root.matches?.(CONTAINER_SELECTOR)) initializeOrganizationSortable(root);
+    const parentContainer = root.closest?.(CONTAINER_SELECTOR);
+    if (parentContainer) initializeOrganizationSortable(parentContainer);
     root.querySelectorAll?.(CONTAINER_SELECTOR).forEach(initializeOrganizationSortable);
 };
 

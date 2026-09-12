@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\AccessPermission;
+use App\Models\PermissionGroup;
 use App\Models\Role;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -45,9 +47,26 @@ class AccessPermissionSeeder extends Seeder
 
             $access = app(PermissionAccessService::class);
 
-            Role::query()
-                ->whereIn('permission_profile', [Role::PROFILE_ADMINISTRATOR, Role::PROFILE_AUXILIARY])
-                ->each(fn (Role $role) => $access->syncRoleAccess($role, $role->permission_profile));
+            foreach ([
+                Role::PROFILE_ADMINISTRATOR => ['name' => 'Administración completa', 'description' => 'Acceso integral a la administración y operación del sistema.'],
+                Role::PROFILE_AUXILIARY => ['name' => 'Operación auxiliar', 'description' => 'Acceso operativo a clientes, actividades, reloj y productividad personal.'],
+            ] as $profile => $groupData) {
+                $group = PermissionGroup::query()->updateOrCreate(
+                    ['name' => $groupData['name']],
+                    $groupData + ['is_system' => true],
+                );
+                $group->permissions()->sync(
+                    AccessPermission::query()->active()->whereIn('key', $access->permissionKeysForProfile($profile))->pluck('id')->all()
+                );
+                Role::query()
+                    ->where('permission_profile', $profile)
+                    ->each(fn (Role $role) => $access->syncRolePermissionGroup($role, $group->id));
+            }
         });
+
+        // Los permisos retirados se desactivan mediante una actualización
+        // masiva (sin eventos Eloquent), por lo que la invalidación explícita
+        // garantiza que el panel refleje inmediatamente el catálogo desplegado.
+        app(ReferenceDataCache::class)->forgetPermissionCatalog();
     }
 }

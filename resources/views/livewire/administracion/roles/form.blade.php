@@ -2,13 +2,7 @@
     $isProtectedSystemRole = $mode === 'edit'
         && in_array($role, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
     $modalTitle = $mode === 'edit' ? 'Editar rol' : 'Crear nuevo rol';
-    $modalSubtitle = $mode === 'edit'
-        ? ($isProtectedSystemRole
-            ? 'Actualiza la descripción sin alterar el identificador de seguridad.'
-            : 'Actualiza el nombre y la descripción del rol.')
-        : 'Define un nombre y una descripción clara para el rol.';
-
-    $inputClasses = 'mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0';
+    $inputClasses = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0';
 @endphp
 
 <x-administration-form-modal
@@ -16,7 +10,7 @@
     cancel-action="cancel"
     modal-id="role-form"
     :title="$modalTitle"
-    :subtitle="$modalSubtitle"
+    :carousel-style="true"
 >
     <x-slot name="icon">
         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -24,6 +18,7 @@
         </svg>
     </x-slot>
 
+    @unless ($embedded)
     <x-slot name="navigation">
         <a
             href="{{ route('administracion.role.create') }}"
@@ -65,12 +60,12 @@
             Eliminar Roles
         </a>
     </x-slot>
+    @endunless
 
     <x-slot name="form">
-        <section class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5">
-            <div class="mb-[15px]">
-                <h2 class="text-[15px] font-semibold text-gray-900">Información del rol</h2>
-                <p class="mt-1 text-[15px] text-gray-500">Define la identidad del rol y conserva intactas las reglas de acceso vigentes.</p>
+        <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+            <div class="mb-[10px]">
+                <h2 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Información del rol</h2>
             </div>
 
             <div class="grid grid-cols-1 gap-[15px]">
@@ -85,16 +80,11 @@
                         @readonly($isProtectedSystemRole)
                     >
                     <x-input-error for="role" class="mt-2 text-[15px]" />
-                    @if ($isProtectedSystemRole)
-                        <p class="mt-2 text-[15px] leading-6 text-amber-700">
-                            El nombre de este rol forma parte de las reglas de acceso del sistema. Puedes actualizar su descripción sin renombrarlo.
-                        </p>
-                    @endif
                 </div>
 
                 <div class="min-w-0">
                     <label for="description" class="block text-[15px] font-medium text-gray-700">Descripción</label>
-                    <textarea id="description" maxlength="255" rows="4" wire:model.defer="description" class="mt-2 block w-full resize-none rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 py-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0"></textarea>
+                    <textarea id="description" maxlength="255" rows="4" wire:model.defer="description" class="mt-[10px] block w-full resize-none rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0"></textarea>
                     <div class="mt-2 flex items-start justify-between gap-4">
                         <x-input-error for="description" class="text-[15px]" />
                         <span class="ml-auto shrink-0 text-[15px] text-gray-400">Máximo 255 caracteres</span>
@@ -103,79 +93,44 @@
             </div>
         </section>
 
-        <section class="mt-5 rounded-xl border border-gray-200 bg-[#F3F3F3] p-5">
+        <section class="mt-5 rounded-xl border border-[#CAD7E7] bg-transparent p-5">
             <div class="min-w-0">
-                <h2 class="text-[15px] font-semibold text-gray-900">Permisos del rol</h2>
-                <p class="mt-1 text-[15px] leading-6 text-gray-500">
-                    Elige un perfil base o configura individualmente los apartados disponibles.
-                </p>
+                <h2 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Permisos del rol</h2>
             </div>
 
-            <div class="mt-[15px] grid grid-cols-1 gap-[10px] md:grid-cols-3">
-                @foreach ($permissionProfiles as $profileKey => $profile)
-                    <label wire:key="permission-profile-{{ $profileKey }}" class="flex cursor-pointer items-start gap-[10px] rounded-xl border border-gray-200 bg-white p-4 transition hover:border-[#1A3A6B]">
-                        <input
-                            type="radio"
-                            value="{{ $profileKey }}"
-                            wire:model.live="permissionProfile"
-                            @disabled($isProtectedSystemRole && (($role === 'Administrador' && $profileKey !== 'administrator') || ($role === 'Auxiliar' && $profileKey !== 'auxiliary')))
-                            class="mt-0.5 h-4 w-4 shrink-0 border-gray-300 text-[#1A3A6B] focus:ring-0"
-                        >
-                        <span class="min-w-0">
-                            <span class="block text-[15px] font-semibold text-gray-800">{{ $profile['label'] }}</span>
-                            <span class="mt-1 block text-[13px] leading-5 text-gray-500">{{ $profile['description'] }}</span>
+            <div class="mt-[15px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
+                @foreach ($permissionGroups as $group)
+                    <button type="button" wire:key="role-permission-group-{{ $group->id }}" wire:click="selectPermissionGroup({{ $group->id }})" class="min-w-0 rounded-xl border p-4 text-left transition focus:outline-none focus:ring-0 {{ (int) $permissionGroupId === (int) $group->id ? 'border-[#1A3A6B] bg-[#EAF2FC]' : 'border-[#CAD7E7] bg-white/55 hover:border-[#1A3A6B]' }}">
+                        <span class="flex items-center justify-between gap-3"><strong class="truncate text-[15px] text-[#102A52]">{{ mb_strtoupper($group->name) }}</strong><span class="shrink-0 rounded-full bg-[#DCE9F8] px-2.5 py-1 text-[11px] font-semibold text-[#1A3A6B]">{{ $group->permissions_count }} apartados</span></span>
+                        <span class="mt-3 flex flex-wrap gap-1.5">
+                            @foreach ($group->permissions->take(3) as $groupPermission)
+                                <span class="max-w-full truncate rounded-md border border-[#CAD7E7] bg-white/70 px-2 py-1 text-[10px] font-semibold uppercase text-[#1F4D86]">{{ $groupPermission->name }}</span>
+                            @endforeach
+                            @if ($group->permissions_count > 3)<span class="px-1 py-1 text-[10px] font-semibold text-[#55749D]">+{{ $group->permissions_count - 3 }}</span>@endif
                         </span>
-                    </label>
+                    </button>
                 @endforeach
-            </div>
-            <x-input-error for="permissionProfile" class="mt-2 text-[15px]" />
 
-            @if ($permissionProfile === 'custom')
-            <div class="administration-form-scrollbar mt-[15px] max-h-72 overflow-y-auto pr-1">
+            </div>
+            <x-input-error for="permissionGroupId" class="mt-2 text-[15px]" />
+
+            <div class="mt-[15px]">
                 @forelse ($availablePermissions->groupBy(fn ($permission) => $permission->module ?: 'General') as $module => $modulePermissions)
                     <fieldset class="mb-[15px] rounded-xl border border-gray-200 bg-white p-4 last:mb-0">
                         <legend class="px-2 text-[15px] font-semibold text-[#1A3A6B]">{{ $module }}</legend>
 
                         <div class="grid grid-cols-1 gap-[10px] md:grid-cols-2">
                             @foreach ($modulePermissions as $permission)
-                                <label
-                                    wire:key="role-permission-{{ $permission->id }}"
-                                    class="flex min-w-0 cursor-pointer items-start gap-[10px] rounded-lg border border-gray-200 bg-[#F3F3F3] p-3 transition hover:bg-gray-200"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        value="{{ $permission->id }}"
-                                        wire:model.defer="permissionIds"
-                                        class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0"
-                                    >
-                                    <span class="min-w-0">
-                                        <span class="block truncate text-[15px] font-medium text-gray-800" title="{{ $permission->name }}">
-                                            {{ $permission->name }}
-                                        </span>
-                                        <span class="mt-1 block truncate text-[15px] text-gray-500" title="{{ $permission->description ?: $permission->key }}">
-                                            {{ $permission->description ?: $permission->key }}
-                                        </span>
-                                    </span>
-                                </label>
+                                <x-permission-access-card wire:key="role-permission-{{ $permission->id }}" :permission="$permission" :selected="in_array((int) $permission->id, $permissionIds, true)" />
                             @endforeach
                         </div>
                     </fieldset>
                 @empty
                     <div class="rounded-xl border border-gray-200 bg-white p-5 text-center">
                         <p class="text-[15px] font-medium text-gray-700">No hay permisos activos en el catálogo.</p>
-                        <p class="mt-2 text-[15px] text-gray-500">El rol se guardará sin accesos dinámicos asociados.</p>
                     </div>
                 @endforelse
             </div>
-
-            <x-input-error for="permissionIds" class="mt-2 text-[15px]" />
-            <x-input-error for="permissionIds.*" class="mt-2 text-[15px]" />
-            @else
-                <div class="mt-[15px] rounded-xl border border-blue-200 bg-blue-50 p-4 text-[15px] leading-6 text-[#1A3A6B]">
-                    Los permisos se sincronizarán con el perfil
-                    <strong>{{ $permissionProfiles[$permissionProfile]['label'] ?? $permissionProfile }}</strong>.
-                </div>
-            @endif
         </section>
     </x-slot>
 
@@ -183,8 +138,7 @@
         <button
             type="button"
             wire:click="cancel"
-            wire:loading.attr="disabled"
-            class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50"
+            class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
         >
             Cancelar
         </button>
@@ -193,7 +147,7 @@
             type="submit"
             wire:loading.attr="disabled"
             wire:target="save"
-            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
+            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
         >
             <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

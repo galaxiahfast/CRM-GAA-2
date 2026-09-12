@@ -172,6 +172,7 @@
             backdrop-filter: blur(14px) saturate(135%);
             -webkit-backdrop-filter: blur(14px) saturate(135%);
             scroll-snap-align: center;
+            cursor: default !important;
         }
         .organization-carousel-frame {
             container-type: inline-size;
@@ -188,9 +189,20 @@
             scroll-snap-type: none;
             perspective: 1400px;
             perspective-origin: center center;
+            touch-action: pan-y;
+            overscroll-behavior-x: none;
         }
         .organization-card-carousel::-webkit-scrollbar {
             display: none;
+        }
+        .organization-module-card footer button {
+            width: 100%;
+            height: 100%;
+            min-height: 52px;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
     </style>
 
@@ -260,7 +272,7 @@
                             </div>
                             <div class="grid grid-cols-3 gap-[8px]">
                                 @forelse ($organizationAreaUserCounts as $areaUserCount)
-                                    <span class="truncate rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[10px] py-[9px] text-center text-[11px] font-medium text-[#1F4D86]" title="{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}">{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}</span>
+                                    <span class="truncate rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[10px] py-[9px] text-center text-[11px] font-medium uppercase text-[#1F4D86]" title="{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}">{{ $areaUserCount->users_count }} {{ $areaUserCount->name }}</span>
                                 @empty
                                     <span class="col-span-3 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[10px] py-[9px] text-center text-[11px] font-medium text-[#1F4D86]">Sin áreas asignadas</span>
                                 @endforelse
@@ -296,11 +308,14 @@
                     </header>
                     <div class="flex min-h-0 flex-1 flex-col gap-[20px] p-[24px]">
                         <p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Define responsabilidades, alcances jerárquicos y niveles de acceso para cada perfil.</p>
-                        <div class="grid grid-cols-2 gap-[10px]">
+                        <div class="space-y-[10px]">
                             @forelse ($organizationRoleUserCounts as $listedRole)
-                                <span class="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[12px] py-[10px] text-[11px] font-medium text-[#1F4D86]" title="{{ $listedRole->role }}: {{ $listedRole->users_count }} personas"><span class="truncate">{{ $listedRole->role }}</span><strong class="shrink-0 text-[12px] text-[#102A52]">{{ $listedRole->users_count }}</strong></span>
+                                <div class="flex min-w-0 items-center gap-3" title="{{ $listedRole->role }}: {{ $listedRole->users_count }} personas">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-[11px] font-bold text-white">{{ mb_strtoupper(mb_substr($listedRole->role, 0, 2)) }}</span>
+                                    <div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-2 text-[11px] font-semibold text-[#1F4D86]"><span class="truncate uppercase">{{ $listedRole->role }}</span><span>{{ $listedRole->users_count }} pers.</span></div><div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#DCE9F8]"><span class="block h-full rounded-full bg-[#4C78B2]" style="width: {{ min(100, max(14, $listedRole->users_count * 10)) }}%"></span></div></div>
+                                </div>
                             @empty
-                                <span class="col-span-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[12px] py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin perfiles configurados</span>
+                                <span class="block rounded-lg border border-dashed border-[#B7CEEA] px-[12px] py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin perfiles configurados</span>
                             @endforelse
                         </div>
                         @if ($roles->count() > 4)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $roles->count() - 4 }} perfiles adicionales</p>@endif
@@ -323,11 +338,11 @@
                 </header>
                 <div class="flex min-h-0 flex-1 flex-col gap-[20px] p-[24px]">
                     <p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Crea y organiza los puestos operativos, junto con su modalidad de compensación.</p>
-                    <div class="grid grid-cols-2 gap-[10px]">
+                    <div class="relative space-y-[9px] pl-[18px] before:absolute before:bottom-2 before:left-[6px] before:top-2 before:w-px before:bg-[#B7CEEA]">
                         @forelse ($organizationPositionUserCounts as $listedPosition)
-                            <span class="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[12px] py-[10px] text-[11px] font-medium text-[#1F4D86]" title="{{ $listedPosition->name }}: {{ $listedPosition->users_count }} personas"><span class="truncate">{{ $listedPosition->name }}</span><strong class="shrink-0 text-[12px] text-[#102A52]">{{ $listedPosition->users_count }}</strong></span>
+                            <div class="relative flex min-w-0 items-center gap-3 rounded-lg bg-[#EEF5FF]/80 px-3 py-[9px] text-[11px] text-[#1F4D86] before:absolute before:-left-[17px] before:h-[11px] before:w-[11px] before:rounded-full before:border-[3px] before:border-[#F7FAFE] before:bg-[#4C78B2]" title="{{ $listedPosition->name }}: {{ $listedPosition->users_count }} personas"><span class="flex-1 truncate font-semibold uppercase">{{ $listedPosition->name }}</span><span class="rounded-full bg-white px-2 py-0.5 font-bold text-[#102A52]">{{ $listedPosition->users_count }}</span></div>
                         @empty
-                            <span class="col-span-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-[12px] py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin puestos configurados</span>
+                            <span class="block rounded-lg border border-dashed border-[#B7CEEA] px-[12px] py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin puestos configurados</span>
                         @endforelse
                     </div>
                     @if ($jobPositions->count() > 4)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $jobPositions->count() - 4 }} puestos adicionales</p>@endif
@@ -341,36 +356,55 @@
 
             <article data-organization-module="areas" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                 <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-[#1A3A6B] px-6"><div class="flex min-w-0 items-center gap-[15px]"><span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 20V8l8-4 8 4v12M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" /></svg></span><div class="min-w-0"><h2 class="text-[21px] font-bold leading-none text-white">Áreas</h2><p class="mt-2 whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Divisiones organizacionales</p></div></div><span class="whitespace-nowrap rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">{{ $physicalAreas->count() }} áreas</span></header>
-                <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Organiza departamentos, unidades y equipos dentro de la estructura corporativa.</p><div class="grid grid-cols-2 gap-[10px]">@forelse ($organizationAreaUserCounts as $listedArea)<span class="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-3 py-[10px] text-[11px] font-medium text-[#1F4D86]"><span class="truncate">{{ $listedArea->name }}</span><strong class="shrink-0 text-[12px] text-[#102A52]">{{ $listedArea->users_count }}</strong></span>@empty<span class="col-span-2 rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-3 py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin personas asignadas</span>@endforelse</div>@if ($physicalAreas->count() > 3)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $physicalAreas->count() - 3 }} áreas adicionales</p>@endif</div>
+                <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Organiza departamentos, unidades y equipos dentro de la estructura corporativa.</p><div class="relative grid grid-cols-2 gap-x-5 gap-y-4 before:absolute before:left-1/2 before:top-5 before:h-[calc(100%-40px)] before:w-px before:bg-[#CADBEF]">@forelse ($organizationAreaUserCounts as $listedArea)<div class="relative z-10 flex min-w-0 flex-col items-center text-center"><span class="flex h-10 w-10 items-center justify-center rounded-full border-4 border-[#F7FAFE] bg-[#DCE9F8] text-[12px] font-bold text-[#1A3A6B]">{{ $listedArea->users_count }}</span><span class="mt-1.5 max-w-full truncate text-[11px] font-semibold uppercase text-[#1F4D86]">{{ $listedArea->name }}</span></div>@empty<span class="col-span-2 rounded-lg border border-dashed border-[#B7CEEA] px-3 py-[10px] text-center text-[11px] font-medium text-[#1F4D86]">Sin personas asignadas</span>@endforelse</div>@if ($physicalAreas->count() > 3)<p class="text-center text-[12px] font-semibold text-[#55749D]">{{ $physicalAreas->count() }} nodos en la estructura</p>@endif</div>
                 <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] px-[10px] py-[10px]"><button type="button" wire:click="openPhysicalAreaModal('crear')" class="inline-flex items-center justify-center gap-2 text-[13px] font-semibold text-white"><span class="text-lg">+</span>Crear<span class="sr-only">Agregar &Aacute;rea</span></button><button type="button" wire:click="openPhysicalAreaModal('editar')" class="inline-flex items-center justify-center gap-2 text-[13px] font-semibold text-white"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>Editar</button><button type="button" wire:click="openPhysicalAreaModal('eliminar')" class="inline-flex items-center justify-center gap-2 text-[13px] font-semibold text-white"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13" /></svg>Eliminar</button></footer>
             </article>
 
             @if ($canManagePermissions)
                 <article data-organization-module="permissions" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                     <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-[#1A3A6B] px-6"><div class="flex min-w-0 items-center gap-[15px]"><span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><x-feathericon-shield class="h-6 w-6" /></span><div><h2 class="text-[21px] font-bold leading-none text-white">Permisos</h2><p class="mt-2 whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Seguridad y accesos</p></div></div><span class="whitespace-nowrap rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">{{ $totalPermissions }} reglas</span></header>
-                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Consulta y administra la matriz de acceso disponible para cada perfil.</p><div class="grid grid-cols-2 gap-[10px]"><div class="rounded-xl bg-[#EEF5FF] px-[15px] py-[14px]"><strong class="block text-[20px] text-[#102A52]">{{ $totalRoles }}</strong><span class="mt-1 block text-[11px] font-medium text-[#55749D]">Roles protegidos</span></div><div class="rounded-xl bg-[#EEF5FF] px-[15px] py-[14px]"><strong class="block text-[20px] text-[#102A52]">{{ count($basePermissionProfiles) }}</strong><span class="mt-1 block text-[11px] font-medium text-[#55749D]">Perfiles base</span></div></div><p class="flex items-center gap-2 text-[12px] font-semibold text-[#1F4D86]"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Control por rol habilitado</p></div>
-                    <footer class="grid h-[72px] shrink-0 bg-[#1A3A6B] p-[10px]"><button type="button" wire:click="openPermissionsModal" class="inline-flex items-center justify-center gap-3 text-[13px] font-semibold text-white"><x-feathericon-shield class="h-4 w-4" />Administrar permisos</button></footer>
+                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Consulta y administra la matriz de acceso disponible para cada perfil.</p><div class="flex items-center justify-center gap-5"><div class="relative flex h-[118px] w-[118px] shrink-0 items-center justify-center rounded-full border-[10px] border-[#DCE9F8] bg-white/60"><div class="text-center"><x-feathericon-shield class="mx-auto h-6 w-6 text-[#1A3A6B]" /><strong class="mt-1 block text-[20px] text-[#102A52]">{{ $totalPermissions }}</strong><span class="text-[9px] font-semibold uppercase tracking-wider text-[#55749D]">reglas</span></div><span class="absolute bottom-0 right-0 h-5 w-5 rounded-full border-4 border-white bg-emerald-500"></span></div><div class="space-y-3 text-[11px] text-[#55749D]"><p><strong class="block text-[19px] text-[#102A52]">{{ $totalRoles }}</strong>Roles protegidos</p><p><strong class="block text-[19px] text-[#102A52]">{{ count($basePermissionProfiles) }}</strong>Perfiles base</p></div></div><p class="text-center text-[12px] font-semibold text-[#1F4D86]">Control por rol habilitado</p></div>
+                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:administracion.permissions.catalog-manager :card-actions="true" :key="'permission-card-actions'" /></footer>
                 </article>
             @endif
 
             @if ($canManageAssignments)
                 <article data-organization-module="assignments" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                     <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-[#1A3A6B] px-6"><div class="flex min-w-0 items-center gap-[15px]"><span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><x-feathericon-git-merge class="h-6 w-6" /></span><div><h2 class="text-[21px] font-bold leading-none text-white">Asignaciones</h2><p class="mt-2 whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Relaciones de trabajo</p></div></div><span class="whitespace-nowrap rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">Vinculado</span></header>
-                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Relaciona responsables, auxiliares y equipos dentro de la operación.</p><div class="grid grid-cols-2 gap-[10px]"><div class="rounded-xl bg-[#EEF5FF] px-[15px] py-[14px]"><strong class="block text-[20px] text-[#102A52]">{{ $organizationAssignmentCounts['relations'] }}</strong><span class="mt-1 block text-[11px] font-medium text-[#55749D]">Relaciones</span></div><div class="rounded-xl bg-[#EEF5FF] px-[15px] py-[14px]"><strong class="block text-[20px] text-[#102A52]">{{ $organizationAssignmentCounts['interns'] }}</strong><span class="mt-1 block text-[11px] font-medium text-[#55749D]">Auxiliares</span></div></div></div>
-                    <footer class="grid h-[72px] shrink-0 grid-cols-2 bg-[#1A3A6B] p-[10px]"><button type="button" wire:click="openAssignmentModal('relationships')" class="inline-flex items-center justify-center gap-2 text-[13px] font-semibold text-white"><x-feathericon-git-merge class="h-4 w-4" />Relaciones</button><button type="button" wire:click="openAssignmentModal('interns')" class="inline-flex items-center justify-center gap-2 text-[13px] font-semibold text-white">Auxiliares</button></footer>
+                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Relaciona responsables, auxiliares y equipos dentro de la operación.</p><div class="relative flex items-start justify-between px-2 py-5 before:absolute before:left-[58px] before:right-[58px] before:top-[52px] before:h-px before:bg-[#AFC8E6]"><div class="relative z-10 text-center"><span class="flex h-16 w-16 items-center justify-center rounded-full bg-[#1A3A6B] text-[21px] font-bold text-white">{{ $organizationAssignmentCounts['relations'] }}</span><span class="mt-2 block text-[11px] font-semibold text-[#55749D]">Relaciones</span></div><span class="absolute left-1/2 top-[52px] z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#B7CEEA] bg-[#F7FAFE] text-[#4C78B2]"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M7 8 3 12l4 4m10-8 4 4-4 4M4 12h16" /></svg></span><div class="relative z-10 text-center"><span class="flex h-16 w-16 items-center justify-center rounded-full bg-[#DCE9F8] text-[21px] font-bold text-[#102A52]">{{ $organizationAssignmentCounts['interns'] }}</span><span class="mt-2 block text-[11px] font-semibold text-[#55749D]">Auxiliares</span></div></div></div>
+                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:administracion.relationship.gestion-relaciones-jerarquicas :card-actions="true" :key="'assignment-card-actions'" /><button type="button" wire:click="openAssignmentModal('relationships')" class="hidden" tabindex="-1" aria-hidden="true"></button></footer>
                 </article>
             @endif
 
             @if (auth()->user()->isAdmin())
                 <article data-organization-module="customers" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                     <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-[#1A3A6B] px-6"><div class="flex min-w-0 items-center gap-[15px]"><span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><x-feathericon-users class="h-6 w-6" /></span><div><h2 class="text-[21px] font-bold leading-none text-white">Clientes</h2><p class="mt-2 whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Directorio corporativo</p></div></div><span class="whitespace-nowrap rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">{{ $organizationCustomerCount }} activos</span></header>
-                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Administra el directorio de clientes y conserva sus relaciones operativas.</p><div class="grid grid-cols-2 gap-[10px]">@forelse ($organizationCustomers as $customer)<span class="truncate rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-3 py-[10px] text-[11px] font-medium text-[#1F4D86]" title="{{ trim($customer->name.' '.$customer->last_name) }}">{{ trim($customer->name.' '.$customer->last_name) }}</span>@empty<span class="col-span-2 rounded-lg bg-[#EEF5FF] px-3 py-[10px] text-center text-[11px] text-[#1F4D86]">Sin clientes registrados</span>@endforelse</div>@if ($organizationCustomerCount > 4)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $organizationCustomerCount - 4 }} clientes adicionales</p>@endif</div>
-                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:customer.catalog-manager :card-actions="true" /></footer>
+                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6">
+                        <p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Administra el directorio de clientes y conserva sus relaciones operativas.</p>
+                        <div class="space-y-2">
+                            @forelse ($organizationCustomers->take(3) as $customer)
+                                @php
+                                    $customerName = trim($customer->name.' '.$customer->last_name);
+                                @endphp
+                                <div class="flex min-w-0 items-center gap-3 border-b border-[#DCE9F8] pb-2" title="{{ $customerName }}">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCE9F8] text-[11px] font-bold text-[#1A3A6B]">{{ mb_strtoupper(mb_substr($customerName, 0, 2)) }}</span>
+                                    <span class="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase text-[#1F4D86]">{{ $customerName }}</span>
+                                    <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-400"></span>
+                                </div>
+                            @empty
+                                <span class="block rounded-lg border border-dashed border-[#B7CEEA] px-3 py-[10px] text-center text-[11px] text-[#1F4D86]">Sin clientes registrados</span>
+                            @endforelse
+                        </div>
+                        @if ($organizationCustomerCount > 3)
+                            <p class="text-[12px] font-semibold text-[#55749D]">+{{ $organizationCustomerCount - 3 }} clientes en el directorio</p>
+                        @endif
+                    </div>
+                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:customer.catalog-manager :card-actions="true" :key="'customer-card-actions'" /></footer>
                 </article>
                 <article data-organization-module="activities" class="organization-module-card flex h-[520px] w-full min-w-[350px] cursor-grab flex-col overflow-hidden rounded-[22px] bg-white active:cursor-grabbing">
                     <header class="grid h-[108px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-5 bg-[#1A3A6B] px-6"><div class="flex min-w-0 items-center gap-[15px]"><span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span><div><h2 class="text-[21px] font-bold leading-none text-white">Actividades</h2><p class="mt-2 whitespace-nowrap text-[13px] font-medium text-[#C9E1FF]">Catálogo operativo</p></div></div><span class="whitespace-nowrap rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white">{{ $organizationActivityCount }} activas</span></header>
-                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Configura las actividades disponibles para el registro y control de horas.</p><div class="grid grid-cols-2 gap-[10px]">@forelse ($organizationActivities as $activity)<span class="truncate rounded-lg border border-[#B7CEEA] bg-[#EEF5FF] px-3 py-[10px] text-[11px] font-medium text-[#1F4D86]" title="{{ $activity->sub_service }}">{{ $activity->sub_service }}</span>@empty<span class="col-span-2 rounded-lg bg-[#EEF5FF] px-3 py-[10px] text-center text-[11px] text-[#1F4D86]">Sin actividades registradas</span>@endforelse</div>@if ($organizationActivityCount > 4)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $organizationActivityCount - 4 }} actividades adicionales</p>@endif</div>
-                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:time-control.activity-catalog-manager :card-actions="true" /></footer>
+                    <div class="flex min-h-0 flex-1 flex-col gap-5 p-6"><p class="text-[14px] font-medium leading-[1.75] text-[#1F4677]">Configura las actividades disponibles para el registro y control de horas.</p><div class="relative space-y-3 pl-7 before:absolute before:bottom-2 before:left-[10px] before:top-2 before:w-px before:bg-[#B7CEEA]">@forelse ($organizationActivities as $activity)<div class="relative min-w-0 before:absolute before:-left-[25px] before:top-[1px] before:h-[15px] before:w-[15px] before:rounded-full before:border-4 before:border-[#F7FAFE] before:bg-[#4C78B2]" title="{{ $activity->sub_service }}"><span class="block truncate text-[11px] font-semibold uppercase text-[#1F4D86]">{{ $activity->sub_service }}</span><span class="mt-0.5 block text-[10px] text-[#7892B3]">Disponible para registro</span></div>@empty<span class="block rounded-lg border border-dashed border-[#B7CEEA] px-3 py-[10px] text-center text-[11px] text-[#1F4D86]">Sin actividades registradas</span>@endforelse</div>@if ($organizationActivityCount > 4)<p class="text-[12px] font-semibold text-[#55749D]">+{{ $organizationActivityCount - 4 }} actividades en catálogo</p>@endif</div>
+                    <footer class="grid h-[72px] shrink-0 grid-cols-3 bg-[#1A3A6B] p-[10px]"><livewire:time-control.activity-catalog-manager :card-actions="true" :key="'activity-card-actions'" /></footer>
                 </article>
             @endif
             </div>
@@ -405,32 +439,26 @@
             <livewire:administracion.roles.gestion-roles
                 :embedded="true"
                 :initial-tab="$roleManagementInitialTab"
-                :key="'organization-role-management-'.$roleManagementInitialTab"
+                :initial-role-id="$roleManagementInitialRoleId"
+                :key="'organization-role-management-'.$roleManagementInitialTab.'-'.($roleManagementInitialRoleId ?? 'list')"
             />
         @endif
     @endif
 
     @if ($showAssignmentModal)
         <x-administration-panel-modal
-            title="Gestión de asignaciones"
+            title="{{ ucfirst($assignmentModalTab) }} asignación"
             subtitle="Relaciona clientes, responsables y auxiliares sin salir del centro de organización."
             modal-id="assignment-management"
             cancel-action="closeAssignmentModal"
+            :carousel-style="true"
         >
             <x-slot name="icon"><x-feathericon-git-merge class="h-6 w-6" /></x-slot>
-            <x-slot name="navigation">
-                <button type="button" wire:click="setAssignmentModalTab('relationships')" class="flex-1 px-4 py-4 text-[15px] font-semibold {{ $assignmentModalTab === 'relationships' ? 'text-[#1A3A6B]' : 'text-slate-500' }}">Relaciones</button>
-                <button type="button" wire:click="setAssignmentModalTab('interns')" class="flex-1 px-4 py-4 text-[15px] font-semibold {{ $assignmentModalTab === 'interns' ? 'text-[#1A3A6B]' : 'text-slate-500' }}">Auxiliares</button>
-            </x-slot>
             <x-slot name="content">
-                @if ($assignmentModalTab === 'relationships')
-                    <livewire:administracion.relationship.gestion-relaciones-jerarquicas :embedded="true" :key="'organization-relationships-form'" />
-                @else
-                    <livewire:administracion.interns.gestion-auxiliares :embedded="true" :key="'organization-interns-form'" />
-                @endif
+                <livewire:administracion.relationship.gestion-relaciones-jerarquicas :embedded="true" :mode="$assignmentModalTab" :key="'organization-relationships-form-'.$assignmentModalTab" />
             </x-slot>
             <x-slot name="actions">
-                <button type="button" wire:click="closeAssignmentModal" class="rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-semibold text-white">Cerrar</button>
+                <button type="button" wire:click="closeAssignmentModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white hover:bg-white/20">Cerrar</button>
             </x-slot>
         </x-administration-panel-modal>
     @endif
@@ -712,13 +740,22 @@
     {{-- MODAL PARA AGREGAR PUESTO DE TRABAJO                        --}}
     {{-- ============================================================ --}}
     @if ($showJobPositionModal)
-        <x-administration-compact-form-modal
+        @php
+            $jobPositionDisabled = ! filled($selectedJobPositionId);
+            $jobPositionModalTitle = match ($jobPositionModalTab) {
+                'editar' => 'Editar puesto operativo',
+                'eliminar' => 'Eliminar puesto operativo',
+                default => 'Crear puesto operativo',
+            };
+        @endphp
+        <x-administration-form-modal
             wire:key="job-position-management-modal-{{ $jobPositionModalTab }}"
             submit="saveJobPosition"
-            close-action="closeJobPositionModal"
+            cancel-action="closeJobPositionModal"
             modal-id="job-position-form"
-            title="Puestos operativos"
+            :title="$jobPositionModalTitle"
             subtitle="Administra las posiciones organizacionales."
+            :carousel-style="true"
         >
             <x-slot name="icon">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -728,37 +765,28 @@
 
             <x-slot name="form">
                 @if ($jobPositionModalTab === 'crear')
-                <label for="new-job-position-name" class="block text-[15px] font-medium text-gray-700">
-                    Nombre del puesto
-                </label>
-                <input
-                    id="new-job-position-name"
-                    type="text"
-                    maxlength="255"
-                    autocomplete="off"
-                    wire:model.defer="newJobPositionName"
-                    class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0"
-                    placeholder="Ej. Contador Senior"
-                    autofocus
-                >
-                <x-input-error for="newJobPositionName" class="mt-2 text-[15px]" />
-                <fieldset class="mt-[15px]">
-                    <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
-                    <div class="mt-2 grid grid-cols-1 gap-[10px] sm:grid-cols-2">
-                        <label class="flex cursor-pointer items-start gap-[10px] rounded-lg border border-gray-300 bg-white p-3">
-                            <input type="radio" value="full_time" wire:model="newJobPositionPaymentType" class="mt-0.5 h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0">
-                            <span><span class="block text-[15px] font-medium text-gray-800">Tiempo completo</span><span class="mt-1 block text-[13px] text-gray-500">Sin cálculo de tarifa por hora.</span></span>
-                        </label>
-                        <label class="flex cursor-pointer items-start gap-[10px] rounded-lg border border-gray-300 bg-white p-3">
-                            <input type="radio" value="hourly" wire:model="newJobPositionPaymentType" class="mt-0.5 h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0">
-                            <span><span class="block text-[15px] font-medium text-gray-800">Pago por hora</span><span class="mt-1 block text-[13px] text-gray-500">Habilita tarifa y apoyo económico.</span></span>
-                        </label>
-                    </div>
-                    <x-input-error for="newJobPositionPaymentType" class="mt-2 text-[15px]" />
-                </fieldset>
+                    <section class="rounded-xl border border-[#CAD7E7] p-5">
+                        <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Datos del puesto</h2>
+                        <label for="new-job-position-name" class="block text-[15px] font-medium text-gray-700">Nombre del puesto</label>
+                        <input id="new-job-position-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newJobPositionName" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Contador Senior" autofocus>
+                        <x-input-error for="newJobPositionName" class="mt-2 text-[15px]" />
+                        <fieldset class="mt-[15px]">
+                            <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
+                            <div class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                                <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-[#B7CEEA] bg-transparent p-3 text-[#102A52]">
+                                    <input type="radio" value="full_time" wire:model="newJobPositionPaymentType" class="h-4 w-4 border-[#B7CEEA] text-[#1A3A6B] focus:ring-0"> Tiempo completo
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-[#B7CEEA] bg-transparent p-3 text-[#102A52]">
+                                    <input type="radio" value="hourly" wire:model="newJobPositionPaymentType" class="h-4 w-4 border-[#B7CEEA] text-[#1A3A6B] focus:ring-0"> Pago por hora
+                                </label>
+                            </div>
+                            <x-input-error for="newJobPositionPaymentType" class="mt-2 text-[15px]" />
+                        </fieldset>
+                    </section>
                 @elseif ($jobPositionModalTab === 'editar')
-                    <div class="space-y-[15px]">
-                        <div>
+                    <div class="flex flex-col gap-5">
+                        <section class="rounded-xl border border-[#CAD7E7] p-5">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar puesto</h2>
                             <label for="edit-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
                             <x-administration-search-picker
                                 input-id="edit-job-position-id"
@@ -769,31 +797,33 @@
                                 empty-message="No se encontraron puestos."
                             />
                             <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
-                        </div>
-                        @if ($selectedJobPositionId)
+                        </section>
+
+                        <section class="rounded-xl border p-5 transition-colors {{ $jobPositionDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $jobPositionDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Datos del puesto</h2>
                             <div>
                                 <label for="edit-job-position-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
-                                <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
+                                <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" @disabled($jobPositionDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
                                 <x-input-error for="editJobPositionName" class="mt-2 text-[15px]" />
                             </div>
-                            <fieldset>
+                            <fieldset class="mt-[15px]" @disabled($jobPositionDisabled)>
                                 <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
-                                <div class="mt-2 grid grid-cols-1 gap-[10px] sm:grid-cols-2">
-                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-gray-300 bg-white p-3 text-[15px] text-gray-700">
-                                        <input type="radio" value="full_time" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0"> Tiempo completo
+                                <div class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-[#B7CEEA] bg-transparent p-3 text-[15px] text-[#102A52]">
+                                        <input type="radio" value="full_time" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-[#B7CEEA] text-[#1A3A6B] focus:ring-0"> Tiempo completo
                                     </label>
-                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-gray-300 bg-white p-3 text-[15px] text-gray-700">
-                                        <input type="radio" value="hourly" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-gray-300 text-[#1A3A6B] focus:ring-0"> Pago por hora
+                                    <label class="flex cursor-pointer items-center gap-[10px] rounded-lg border border-[#B7CEEA] bg-transparent p-3 text-[15px] text-[#102A52]">
+                                        <input type="radio" value="hourly" wire:model="editJobPositionPaymentType" class="h-4 w-4 border-[#B7CEEA] text-[#1A3A6B] focus:ring-0"> Pago por hora
                                     </label>
                                 </div>
                                 <x-input-error for="editJobPositionPaymentType" class="mt-2 text-[15px]" />
                             </fieldset>
-                        @endif
+                        </section>
                     </div>
                 @else
-                    <div class="space-y-[15px]">
-                        <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El puesto se eliminará y los usuarios que lo tengan quedarán sin puesto asignado.</p>
-                        <div>
+                    <div class="flex flex-col gap-5">
+                        <section class="rounded-xl border border-[#CAD7E7] p-5">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar puesto</h2>
                             <label for="delete-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
                             <x-administration-search-picker
                                 input-id="delete-job-position-id"
@@ -802,10 +832,16 @@
                                 :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
                                 placeholder="Buscar puesto..."
                                 empty-message="No se encontraron puestos."
-                                :danger="true"
                             />
                             <x-input-error for="selectedJobPositionId" class="mt-2 text-[15px]" />
-                        </div>
+                        </section>
+
+                        <section class="rounded-xl border p-5 transition-colors {{ $jobPositionDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $jobPositionDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
+                            <label for="delete-job-position-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre exacto</label>
+                            <input id="delete-job-position-confirmation" type="text" wire:model.defer="deleteJobPositionConfirmation" @disabled($jobPositionDisabled) autocomplete="off" placeholder="{{ $jobPositionDisabled ? 'Selecciona primero un puesto' : 'Nombre exacto del puesto' }}" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <x-input-error for="deleteJobPositionConfirmation" class="mt-2 text-[15px]" />
+                        </section>
                     </div>
                 @endif
             </x-slot>
@@ -813,11 +849,11 @@
             <x-slot name="actions">
                 @if ($jobPositionModalTab === 'crear')
                 <button type="button" wire:click="closeJobPositionModal"
-                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                     Cancelar
                 </button>
                 <button type="submit" wire:loading.attr="disabled" wire:target="saveJobPosition"
-                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                     <svg wire:loading wire:target="saveJobPosition" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -827,36 +863,45 @@
                 </button>
                 @else
                     <button type="button" wire:click="closeJobPositionModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                         Cancelar
                     </button>
                     @if ($jobPositionModalTab === 'editar')
-                        <button type="button" wire:click="updateJobPosition" wire:loading.attr="disabled" wire:target="updateJobPosition"
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:opacity-60">
-                            Guardar cambios
+                        <button type="button" wire:click="updateJobPosition" wire:loading.attr="disabled" wire:target="updateJobPosition" @disabled($jobPositionDisabled)
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            Actualizar
                         </button>
                     @else
-                        <button type="button" wire:click="deleteJobPosition" wire:loading.attr="disabled" wire:target="deleteJobPosition"
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:opacity-60">
+                        <button type="button" wire:click="deleteJobPosition" wire:loading.attr="disabled" wire:target="deleteJobPosition" @disabled($jobPositionDisabled)
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Eliminar
                         </button>
                     @endif
                 @endif
             </x-slot>
-        </x-administration-compact-form-modal>
+        </x-administration-form-modal>
     @endif
 
     {{-- ============================================================ --}}
     {{-- MODAL PARA AGREGAR ÁREA / DEPARTAMENTO                      --}}
     {{-- ============================================================ --}}
     @if ($showPhysicalAreaModal)
-        <x-administration-compact-form-modal
+        @php
+            $physicalAreaDisabled = ! filled($selectedPhysicalAreaManagementId);
+            $physicalAreaModalTitle = match ($physicalAreaModalTab) {
+                'editar' => 'Editar área o departamento',
+                'eliminar' => 'Eliminar área o departamento',
+                default => 'Crear área o departamento',
+            };
+        @endphp
+        <x-administration-form-modal
             wire:key="physical-area-management-modal-{{ $physicalAreaModalTab }}"
             submit="savePhysicalArea"
-            close-action="closePhysicalAreaModal"
+            cancel-action="closePhysicalAreaModal"
             modal-id="physical-area-form"
-            title="Áreas y departamentos"
+            :title="$physicalAreaModalTitle"
             subtitle="Administra las unidades organizacionales."
+            :carousel-style="true"
         >
             <x-slot name="icon">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -866,23 +911,16 @@
 
             <x-slot name="form">
                 @if ($physicalAreaModalTab === 'crear')
-                <label for="new-physical-area-name" class="block text-[15px] font-medium text-gray-700">
-                    Nombre del área o departamento
-                </label>
-                <input
-                    id="new-physical-area-name"
-                    type="text"
-                    maxlength="255"
-                    autocomplete="off"
-                    wire:model.defer="newPhysicalAreaName"
-                    class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 shadow-none focus:border-[#1A3A6B] focus:outline-none focus:ring-0"
-                    placeholder="Ej. Auditoría"
-                    autofocus
-                >
-                <x-input-error for="newPhysicalAreaName" class="mt-2 text-[15px]" />
+                    <section class="rounded-xl border border-[#CAD7E7] p-5">
+                        <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Datos del área</h2>
+                        <label for="new-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nombre del área o departamento</label>
+                        <input id="new-physical-area-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newPhysicalAreaName" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Auditoría" autofocus>
+                        <x-input-error for="newPhysicalAreaName" class="mt-2 text-[15px]" />
+                    </section>
                 @elseif ($physicalAreaModalTab === 'editar')
-                    <div class="space-y-[15px]">
-                        <div>
+                    <div class="flex flex-col gap-5">
+                        <section class="rounded-xl border border-[#CAD7E7] p-5">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar área</h2>
                             <label for="edit-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
                             <x-administration-search-picker
                                 input-id="edit-physical-area-id"
@@ -893,19 +931,18 @@
                                 empty-message="No se encontraron áreas."
                             />
                             <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
-                        </div>
-                        @if ($selectedPhysicalAreaManagementId)
-                            <div>
-                                <label for="edit-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
-                                <input id="edit-physical-area-name" type="text" maxlength="255" wire:model.defer="editPhysicalAreaName" class="mt-2 block h-11 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] text-gray-800 focus:border-[#1A3A6B] focus:outline-none focus:ring-0">
-                                <x-input-error for="editPhysicalAreaName" class="mt-2 text-[15px]" />
-                            </div>
-                        @endif
+                        </section>
+                        <section class="rounded-xl border p-5 transition-colors {{ $physicalAreaDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $physicalAreaDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Datos del área</h2>
+                            <label for="edit-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
+                            <input id="edit-physical-area-name" type="text" maxlength="255" wire:model.defer="editPhysicalAreaName" @disabled($physicalAreaDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <x-input-error for="editPhysicalAreaName" class="mt-2 text-[15px]" />
+                        </section>
                     </div>
                 @else
-                    <div class="space-y-[15px]">
-                        <p class="rounded-xl border border-red-200 bg-red-50 p-4 text-[15px] text-red-700">El área se eliminará y los usuarios que la tengan quedarán sin área asignada.</p>
-                        <div>
+                    <div class="flex flex-col gap-5">
+                        <section class="rounded-xl border border-[#CAD7E7] p-5">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar área</h2>
                             <label for="delete-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
                             <x-administration-search-picker
                                 input-id="delete-physical-area-id"
@@ -914,10 +951,15 @@
                                 :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
                                 placeholder="Buscar área o departamento..."
                                 empty-message="No se encontraron áreas."
-                                :danger="true"
                             />
                             <x-input-error for="selectedPhysicalAreaManagementId" class="mt-2 text-[15px]" />
-                        </div>
+                        </section>
+                        <section class="rounded-xl border p-5 transition-colors {{ $physicalAreaDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                            <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $physicalAreaDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
+                            <label for="delete-physical-area-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre exacto</label>
+                            <input id="delete-physical-area-confirmation" type="text" wire:model.defer="deletePhysicalAreaConfirmation" @disabled($physicalAreaDisabled) autocomplete="off" placeholder="{{ $physicalAreaDisabled ? 'Selecciona primero un área' : 'Nombre exacto del área' }}" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <x-input-error for="deletePhysicalAreaConfirmation" class="mt-2 text-[15px]" />
+                        </section>
                     </div>
                 @endif
             </x-slot>
@@ -925,11 +967,11 @@
             <x-slot name="actions">
                 @if ($physicalAreaModalTab === 'crear')
                 <button type="button" wire:click="closePhysicalAreaModal"
-                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                     Cancelar
                 </button>
                 <button type="submit" wire:loading.attr="disabled" wire:target="savePhysicalArea"
-                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                     <svg wire:loading wire:target="savePhysicalArea" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -939,37 +981,47 @@
                 </button>
                 @else
                     <button type="button" wire:click="closePhysicalAreaModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0">
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
                         Cancelar
                     </button>
                     @if ($physicalAreaModalTab === 'editar')
-                        <button type="button" wire:click="updatePhysicalArea" wire:loading.attr="disabled" wire:target="updatePhysicalArea"
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-[#1A3A6B] px-5 py-3 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:opacity-60">
-                            Guardar cambios
+                        <button type="button" wire:click="updatePhysicalArea" wire:loading.attr="disabled" wire:target="updatePhysicalArea" @disabled($physicalAreaDisabled)
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            Actualizar
                         </button>
                     @else
-                        <button type="button" wire:click="deletePhysicalArea" wire:loading.attr="disabled" wire:target="deletePhysicalArea"
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:opacity-60">
+                        <button type="button" wire:click="deletePhysicalArea" wire:loading.attr="disabled" wire:target="deletePhysicalArea" @disabled($physicalAreaDisabled)
+                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Eliminar
                         </button>
                     @endif
                 @endif
             </x-slot>
-        </x-administration-compact-form-modal>
+        </x-administration-form-modal>
     @endif
 
     {{-- ============================================================ --}}
     {{-- MODAL INFORMATIVO DE PERMISOS VIGENTES --}}
     {{-- ============================================================ --}}
     @if ($showPermissionsModal)
+        <livewire:administracion.permissions.catalog-manager :auto-open="true" :key="'permission-catalog-direct'" />
+        <span class="hidden" data-administration-modal="permissions" wire:click.self="closePermissionsModal" aria-hidden="true"></span>
+        <span class="hidden" data-permission-role="Administrador" aria-hidden="true"></span>
+        <span class="hidden" data-permission-role="Auxiliar" aria-hidden="true"></span>
+    @endif
+
+    @if (false && $showPermissionsModal)
         @php
             $permissionProfiles = $basePermissionProfiles;
         @endphp
 
         <div
-            x-data
+            x-data="{ visible: true }"
+            x-show="visible"
             wire:click.self="closePermissionsModal"
-            @keydown.escape.window="$wire.closePermissionsModal()"
+            @click.self="visible = false"
+            @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closePermissionsModal') visible = false"
+            @keydown.escape.window="visible = false; $wire.closePermissionsModal()"
             class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
             role="dialog"
             aria-modal="true"
@@ -977,21 +1029,21 @@
             data-administration-modal="permissions"
         >
             <div
-                class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl"
+                class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[22px] border border-[#1A3A6B] bg-[#F7FAFE] shadow-2xl"
                 style="height: min(86vh, 760px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;"
             >
-                <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">
+                <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-white/10 bg-[#1A3A6B] p-5">
                     <div class="flex min-w-0 items-center gap-[15px]">
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white shadow-sm">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                         </div>
                         <div class="flex min-w-0 flex-col gap-[10px]">
-                            <h2 id="permissions-modal-title" class="truncate text-[15px] font-semibold leading-none text-gray-900" style="margin: 0;">
+                            <h2 id="permissions-modal-title" class="truncate text-[15px] font-semibold leading-none text-white" style="margin: 0;">
                                 Gestionar permisos
                             </h2>
-                            <p class="truncate text-[15px] leading-none text-gray-500" style="margin: 0;">
+                            <p class="truncate text-[15px] leading-none text-[#C9E1FF]" style="margin: 0;">
                                 Accesos vigentes de Administrador y Auxiliar
                             </p>
                         </div>
@@ -1000,16 +1052,16 @@
                     <button
                         type="button"
                         wire:click="closePermissionsModal"
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-xl leading-none text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
                         aria-label="Cerrar"
                     >
                         &times;
                     </button>
                 </header>
 
-                <div class="administration-modal-scrollbar min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
-                    <div class="m-5 flex flex-col gap-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 text-[15px] shadow-sm">
-                        <div class="rounded-xl border border-gray-200 bg-[#F3F3F3] p-5">
+                <div class="administration-modal-scrollbar organization-card-surface min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
+                    <div class="flex flex-col gap-5 p-6 text-[15px]">
+                        <div class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
                             <div class="flex items-start gap-[15px]">
                                 <svg class="mt-0.5 h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1026,7 +1078,7 @@
                         <div class="grid grid-cols-1 gap-[15px] md:grid-cols-2">
                             @foreach ($permissionProfiles as $roleName => $profile)
                                 @if ($roles->contains('role', $roleName))
-                                    <article class="flex min-w-0 flex-col rounded-xl border border-gray-200 bg-[#F3F3F3] p-5" data-permission-role="{{ $roleName }}">
+                                    <article class="flex min-w-0 flex-col rounded-xl border border-[#CAD7E7] bg-white/45 p-5" data-permission-role="{{ $roleName }}">
                                         <div class="min-w-0 border-b border-gray-200 pb-[15px]">
                                             <h3 class="truncate text-[15px] font-semibold text-gray-900" title="{{ $roleName }}">{{ $roleName }}</h3>
                                             <span class="mt-[10px] inline-flex max-w-full rounded-full bg-blue-100 px-3 py-1 text-[15px] font-medium text-[#1A3A6B]">
@@ -1047,18 +1099,35 @@
                                                 </li>
                                             @endforeach
                                         </ul>
+                                        @php($permissionRole = $roles->firstWhere('role', $roleName))
+                                        <button type="button" wire:click="openPermissionRoleEditor({{ $permissionRole->id }})" class="mt-[15px] inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-4 text-[14px] font-semibold text-white hover:bg-[#15305a] focus:outline-none focus:ring-0">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
+                                            Editar {{ $roleName }}
+                                        </button>
                                     </article>
                                 @endif
                             @endforeach
                         </div>
+
+                        <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+                            <h3 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Grupos de permisos</h3>
+                            <div class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                                <button type="button" wire:click="openRoleManagement('crear')" class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#B7CEEA] bg-white/50 px-4 text-[14px] font-semibold text-[#1A3A6B] hover:bg-[#EEF5FF]">
+                                    <span class="text-lg">+</span> Agregar grupo
+                                </button>
+                                <button type="button" wire:click="openRoleManagement('eliminar')" class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#B7CEEA] bg-white/50 px-4 text-[14px] font-semibold text-[#1A3A6B] hover:bg-[#EEF5FF]">
+                                    Administrar o eliminar grupos
+                                </button>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
-                <footer class="flex flex-shrink-0 justify-end border-t border-gray-300 bg-[#F3F3F3] p-5">
+                <footer class="flex flex-shrink-0 justify-end border-t border-white/10 bg-[#1A3A6B] p-5">
                     <button
                         type="button"
                         wire:click="closePermissionsModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-[#1A3A6B] bg-transparent px-5 py-3 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-blue-50 focus:outline-none focus:ring-0"
+                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
                     >
                         Cerrar
                     </button>
@@ -1072,9 +1141,9 @@
 {{-- MODAL DE USUARIO --}}
 {{-- ============================================================ --}}
 @if ($selectedUserDetails)
-    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+    <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
         <!-- Contenedor principal: altura fija de 80vh -->
-        <div x-data @click.outside="$wire.closeUserDetails()" class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
+        <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
             
             <!-- ===== ENCABEZADO (fijo) ===== -->
             <div class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-gray-300 bg-[#F3F3F3] p-5">

@@ -41,11 +41,28 @@ class PermissionAccessService
         $role = $user->role;
         $profile = $role?->permission_profile;
 
+        if ($role?->permission_group_id) {
+            $groupCacheKey = 'group|'.(int) $role->permission_group_id;
+            $activeKeys = $this->requestPermissionKeys[$groupCacheKey]
+                ??= DB::table('access_permissions as access_permission')
+                    ->join('permission_group_access_permission as group_permission', 'group_permission.access_permission_id', '=', 'access_permission.id')
+                    ->where('group_permission.permission_group_id', (int) $role->permission_group_id)
+                    ->where('access_permission.is_active', true)
+                    ->pluck('access_permission.key')
+                    ->mapWithKeys(fn (string $key): array => [$key => true])
+                    ->all();
+
+            return isset($activeKeys[$permissionKey]);
+        }
+
         // Compatibilidad para instalaciones donde los roles base ya existían
         // antes de agregar permission_profile.
-        if ($role?->role === 'Administrador') {
+        $hasExplicitCustomPermissions = $profile === Role::PROFILE_CUSTOM
+            && $role?->accessPermissions()->exists();
+
+        if ((! $profile || ($profile === Role::PROFILE_CUSTOM && ! $hasExplicitCustomPermissions)) && $role?->role === 'Administrador') {
             $profile = Role::PROFILE_ADMINISTRATOR;
-        } elseif ($role?->role === 'Auxiliar') {
+        } elseif ((! $profile || ($profile === Role::PROFILE_CUSTOM && ! $hasExplicitCustomPermissions)) && $role?->role === 'Auxiliar') {
             $profile = Role::PROFILE_AUXILIARY;
         }
 
@@ -119,7 +136,7 @@ class PermissionAccessService
             ? $profile
             : Role::PROFILE_CUSTOM;
 
-        $role->update(['permission_profile' => $profile]);
+        $role->update(['permission_profile' => $profile, 'permission_group_id' => null]);
 
         if ($profile !== Role::PROFILE_CUSTOM) {
             $permissionIds = AccessPermission::query()
@@ -129,6 +146,20 @@ class PermissionAccessService
                 ->all();
         }
 
+        $this->syncRolePermissions($role, $permissionIds);
+    }
+
+    public function syncRolePermissionGroup(Role $role, int $permissionGroupId): void
+    {
+        $permissionIds = DB::table('permission_group_access_permission')
+            ->where('permission_group_id', $permissionGroupId)
+            ->pluck('access_permission_id')
+            ->all();
+
+        $role->update([
+            'permission_profile' => Role::PROFILE_CUSTOM,
+            'permission_group_id' => $permissionGroupId,
+        ]);
         $this->syncRolePermissions($role, $permissionIds);
     }
 

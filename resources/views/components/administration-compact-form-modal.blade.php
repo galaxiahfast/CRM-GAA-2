@@ -8,9 +8,13 @@
 
 <div
     {{ $attributes }}
-    x-data
+    x-data="{ visible: true }"
+    x-show="visible"
     wire:click.self="{{ $closeAction }}"
+    @click.self="visible = false"
+    @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($closeAction)) visible = false"
     @keydown.escape.window="$wire.{{ $closeAction }}()"
+    @keyup.escape.window="visible = false"
     class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
     role="dialog"
     aria-modal="true"
@@ -41,8 +45,7 @@
                 <button
                     type="button"
                     wire:click="{{ $closeAction }}"
-                    wire:loading.attr="disabled"
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
                     aria-label="Cerrar"
                 >
                     &times;

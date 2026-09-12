@@ -2,9 +2,9 @@
 
 namespace App\Livewire\TimeControl;
 
-use App\Models\Service;
 use App\Models\SubService;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -107,6 +107,7 @@ class ActivityCatalogManager extends Component
             return;
         }
 
+        app(ReferenceDataCache::class)->forgetActivityCatalog();
         $this->resetManagementState();
         $this->notice = 'Actividad creada correctamente.';
         $this->dispatch('activity-catalog-updated', activityId: $activity->id, action: 'created');
@@ -153,6 +154,7 @@ class ActivityCatalogManager extends Component
             return;
         }
 
+        app(ReferenceDataCache::class)->forgetActivityCatalog();
         $this->notice = 'Actividad actualizada correctamente.';
         $this->dispatch('activity-catalog-updated', activityId: (int) $data['selectedActivityId'], action: 'updated');
     }
@@ -200,6 +202,7 @@ class ActivityCatalogManager extends Component
         }
 
         $deletedActivityId = (int) $data['selectedActivityId'];
+        app(ReferenceDataCache::class)->forgetActivityCatalog();
         $this->resetManagementState();
         $this->notice = 'Actividad eliminada correctamente.';
         $this->dispatch('activity-catalog-updated', activityId: $deletedActivityId, action: 'deleted');
@@ -208,15 +211,12 @@ class ActivityCatalogManager extends Component
     public function render()
     {
         $this->ensureCanManageActivities();
-
-        $activities = SubService::query()
-            ->with('service:id,service')
-            ->orderBy('sub_service')
-            ->get();
+        $catalog = app(ReferenceDataCache::class)->activityCatalog();
+        $activities = $catalog['activities'];
 
         return view('livewire.time-control.activity-catalog-manager', [
             'activities' => $activities,
-            'services' => Service::query()->orderBy('service')->get(['id', 'service']),
+            'services' => $catalog['services'],
             'selectedActivity' => $this->selectedActivityId
                 ? $activities->firstWhere('id', $this->selectedActivityId)
                 : null,

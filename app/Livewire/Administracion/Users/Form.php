@@ -9,8 +9,10 @@ use App\Models\User;
 use App\Models\UserInterns;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Form extends Component
@@ -54,6 +56,10 @@ class Form extends Component
 
     public string $deleteConfirmationName = '';
 
+    public string $deleteConfirmationEmail = '';
+
+    public string $deleteConfirmationPhrase = '';
+
     public bool $embedded = false;
 
     protected $messages = [
@@ -79,6 +85,10 @@ class Form extends Component
         'hourly_rate.min' => 'El precio por hora no puede ser menor a 0.',
         'food_allowance.numeric' => 'El apoyo de comida debe ser un número válido.',
         'food_allowance.min' => 'El apoyo de comida no puede ser menor a 0.',
+        'deleteConfirmationName.required' => 'Confirma el nombre completo del usuario.',
+        'deleteConfirmationEmail.required' => 'Confirma el correo electrónico del usuario.',
+        'deleteConfirmationEmail.email' => 'Escribe un correo electrónico válido.',
+        'deleteConfirmationPhrase.required' => 'Escribe ELIMINAR para continuar.',
     ];
 
     public function mount($user = null, $isAuxiliar = false, bool $embedded = false, string $initialTab = 'crear')
@@ -98,6 +108,7 @@ class Form extends Component
             $this->employee_id = $user->employee_id; // 👈 Carga el ID de Hikvision
             $this->mode = 'edit';
             $this->managementTab = 'editar';
+            $this->managementUserId = (int) $user->id;
 
             // 👈 Carga los valores monetarios actuales del perfil activo
             $profile = $user->activeOrganizationalProfile;
@@ -109,7 +120,7 @@ class Form extends Component
             }
         }
 
-        $this->roles = Role::all();
+        $this->roles = app(ReferenceDataCache::class)->administration()['roles'];
 
         $this->isAuxiliar = $isAuxiliar;
         if ($isAuxiliar) {
@@ -124,6 +135,17 @@ class Form extends Component
         }
 
         $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
+        if ($this->mode === 'create') {
+            $this->email = '';
+            $this->generateRandomPassword();
+        }
+    }
+
+    public function generateRandomPassword(): void
+    {
+        $this->password = Str::password(14, true, true, true, false);
+        $this->password_confirmation = '';
+        $this->resetValidation(['password', 'password_confirmation']);
     }
 
     public function setManagementTab(string $tab)
@@ -136,14 +158,21 @@ class Form extends Component
             }
         }
 
-        if ($this->embedded && $this->mode === 'edit') {
+        if ($this->embedded) {
             $this->resetEmbeddedEditor();
         }
 
         $this->managementTab = $tab;
         $this->managementUserId = null;
         $this->deleteConfirmationName = '';
-        $this->resetValidation(['managementUserId', 'deleteConfirmationName']);
+        $this->deleteConfirmationEmail = '';
+        $this->deleteConfirmationPhrase = '';
+        $this->resetValidation([
+            'managementUserId',
+            'deleteConfirmationName',
+            'deleteConfirmationEmail',
+            'deleteConfirmationPhrase',
+        ]);
     }
 
     public function editManagedUser()
@@ -174,6 +203,42 @@ class Form extends Component
         return redirect()->route('administracion.edit.users', $data['managementUserId']);
     }
 
+    public function updatedManagementUserId($userId): void
+    {
+        $this->deleteConfirmationName = '';
+        $this->deleteConfirmationEmail = '';
+        $this->deleteConfirmationPhrase = '';
+
+        if ($this->managementTab !== 'editar' || ! filled($userId)) {
+            return;
+        }
+
+        $user = User::query()->with('activeOrganizationalProfile')->find((int) $userId);
+        if ($user) {
+            $this->fillFromManagedUser($user);
+        }
+    }
+
+    private function fillFromManagedUser(User $user): void
+    {
+        $this->user = $user;
+        $this->name = $user->name;
+        $this->last_name = $user->last_name;
+        $this->email = $user->email;
+        $this->password = '';
+        $this->password_confirmation = '';
+        $this->role_id = $user->role_id;
+        $this->employee_id = $user->employee_id;
+        $this->mode = 'edit';
+        $profile = $user->activeOrganizationalProfile;
+        $this->hourly_rate = $profile?->hourly_rate ?? 0;
+        $this->food_allowance = $profile?->food_allowance ?? 0;
+        $this->job_position_id = $profile?->job_position_id ?? '';
+        $this->physical_area_id = $profile?->physical_area_id ?? '';
+        $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
+        $this->resetValidation();
+    }
+
     public function deleteManagedUser(OrganizationChartService $chartService)
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
@@ -181,6 +246,8 @@ class Form extends Component
         $data = $this->validate([
             'managementUserId' => ['required', 'integer', 'exists:users,id'],
             'deleteConfirmationName' => ['required', 'string'],
+            'deleteConfirmationEmail' => ['required', 'email'],
+            'deleteConfirmationPhrase' => ['required', 'string'],
         ]);
 
         $user = User::findOrFail($data['managementUserId']);
@@ -188,6 +255,18 @@ class Form extends Component
 
         if (mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $data['deleteConfirmationName']))) !== mb_strtolower($fullName)) {
             $this->addError('deleteConfirmationName', 'Debes escribir el nombre completo exacto del usuario para eliminarlo.');
+
+            return;
+        }
+
+        if (mb_strtolower(trim($data['deleteConfirmationEmail'])) !== mb_strtolower(trim((string) $user->email))) {
+            $this->addError('deleteConfirmationEmail', 'El correo no coincide exactamente con el usuario seleccionado.');
+
+            return;
+        }
+
+        if (mb_strtoupper(trim($data['deleteConfirmationPhrase'])) !== 'ELIMINAR') {
+            $this->addError('deleteConfirmationPhrase', 'Escribe ELIMINAR para confirmar la eliminación definitiva.');
 
             return;
         }
@@ -201,6 +280,9 @@ class Form extends Component
         });
 
         session()->flash('success', 'Usuario eliminado correctamente.');
+        $references = app(ReferenceDataCache::class);
+        $references->forgetManageableUsers();
+        $references->forgetOrganizationDashboard();
 
         if ($this->embedded) {
             $this->dispatch('user-management-closed');
@@ -301,6 +383,9 @@ class Form extends Component
             });
 
             session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
+            $references = app(ReferenceDataCache::class);
+            $references->forgetManageableUsers();
+            $references->forgetOrganizationDashboard();
 
             if ($this->embedded) {
                 $this->dispatch('user-management-closed');
@@ -331,21 +416,17 @@ class Form extends Component
 
     public function render()
     {
+        $references = app(ReferenceDataCache::class);
+        $administration = $references->administration();
+        $editingForm = in_array($this->managementTab, ['crear', 'editar'], true);
+        $selectingUser = in_array($this->managementTab, ['editar', 'eliminar'], true);
+        $manageableUsers = $selectingUser ? $references->manageableUsers() : collect();
+
         return view('livewire.administracion.users.form', [
-            'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name', 'payment_type']),
-            'physicalAreas' => PhysicalArea::orderBy('name')->get(['id', 'name']),
-            'employeeIdSuggestions' => DB::table('control_de_horas')
-                ->select('employeeID')
-                ->selectRaw('MAX(personName) as personName')
-                ->whereNotNull('employeeID')
-                ->where('employeeID', '<>', '')
-                ->groupBy('employeeID')
-                ->orderBy('employeeID')
-                ->get(),
-            'manageableUsers' => User::query()
-                ->orderBy('name')
-                ->orderBy('last_name')
-                ->get(['id', 'name', 'last_name', 'email']),
+            'jobPositions' => $editingForm ? $administration['jobPositions'] : collect(),
+            'physicalAreas' => $editingForm ? $administration['physicalAreas'] : collect(),
+            'employeeIdSuggestions' => $editingForm ? $references->employeeSuggestions() : collect(),
+            'manageableUsers' => $manageableUsers,
         ]);
     }
 
@@ -369,7 +450,7 @@ class Form extends Component
         $this->name = '';
         $this->last_name = '';
         $this->email = '';
-        $this->password = '';
+        $this->password = Str::password(14, true, true, true, false);
         $this->password_confirmation = '';
         $this->role_id = '';
         $this->employee_id = '';
@@ -378,5 +459,8 @@ class Form extends Component
         $this->job_position_id = '';
         $this->physical_area_id = '';
         $this->isHourlyPosition = false;
+        $this->deleteConfirmationName = '';
+        $this->deleteConfirmationEmail = '';
+        $this->deleteConfirmationPhrase = '';
     }
 }

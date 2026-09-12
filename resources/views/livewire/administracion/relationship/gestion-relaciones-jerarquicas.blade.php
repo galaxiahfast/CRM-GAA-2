@@ -1,98 +1,28 @@
-<div class="h-auto rounded-2xl border border-gray-200 bg-gray-50 p-8">
-    <div class="flex items-start justify-between gap-6">
+@php($assignmentDisabled = ! $selectedCustomer)
 
-        {{-- Panel de Clientes --}}
-        <div class="w-1/2">
-            <p class="mb-2 text-sm text-gray-500">{{ auth()->user()->email }}</p>
-            <h2 class="text-2xl font-bold text-gray-800">Clientes</h2>
-            <p class="mb-6 text-sm text-gray-500">Lista de tus clientes asignados</p>
+<div @class(['col-span-3 grid h-full grid-cols-3' => $cardActions])>
+    @if ($cardActions)
+        @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
+            <button type="button" wire:click="openModal('{{ $tab }}')" wire:loading.attr="disabled" wire:target="openModal" class="inline-flex items-center justify-center gap-2 rounded-lg px-2 text-[13px] font-semibold text-white focus:outline-none disabled:opacity-60">
+                @if ($tab === 'crear')<span class="text-lg">+</span>@elseif ($tab === 'editar')<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>@else<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13" /></svg>@endif
+                {{ $label }}
+            </button>
+        @endforeach
+    @endif
 
-            <div class="space-y-3">
-                {{-- Cliente individual --}}
-                @if ($customers)
-                    @foreach ($customers as $customer)
-                        @php
-                            $hasInterns = in_array($customer->id, $customersWithInterns);
-                            $isSelected = $selectedCustomer === $customer->id;
-                        @endphp
-                        <a wire:click='selectCustomer({{ $customer->id }})'
-                            class="{{ $isSelected
-                                ? 'border-blue-500 ring-blue-300 bg-blue-50'
-                                : ($hasInterns
-                                    ? 'border-green-500 bg-green-100'
-                                    : 'border-gray-300 bg-white') }} flex cursor-pointer flex-col rounded-xl border p-3 transition hover:shadow">
-                            <div class="flex flex-col">
-                                <span
-                                    class="{{ $isSelected ? 'bg-blue-400 text-gray-800' : 'bg-green-400 text-gray-900' }} rounded-lg px-3 py-1 text-sm font-semibold">
-                                    {{ $customer->name }}
-                                </span>
-                                <span
-                                    class="{{ $isSelected ? 'text-blue-600' : ($hasInterns ? 'text-green-600' : 'text-gray-600') }} mt-1 text-xs">
-                                    {{ $customer->rfc }}
-                                </span>
-                                <span
-                                    class="{{ $isSelected ? 'text-blue-600' : ($hasInterns ? 'text-green-600' : 'text-gray-600') }} mt-1 text-xs">
-                                    Porcentage actual: {{ $customer->percentage_period }}
-                                </span>
-                            </div>
-                        </a>
-                    @endforeach
-                    <div class="mt-4 flex justify-center text-sm">
-                        <div class="scale-90">
-                            {{ $customers->links() }} </div>
-                    </div>
-                @else
-                    <span>
-                        Sin clientes asignados
-                    </span>
-                @endif
-            </div>
+    @if ($embedded)
+        @include('livewire.administracion.relationship._assignment-fields')
+    @endif
+
+    @if ($showModal)
+        @teleport('body')
+        <div>
+            <x-administration-form-modal submit="save" cancel-action="closeModal" modal-id="assignment-management" :title="match ($mode) { 'editar' => 'Editar asignación', 'eliminar' => 'Eliminar asignación', default => 'Crear asignación' }" subtitle="Relaciona clientes, responsables y auxiliares." :carousel-style="true">
+                <x-slot name="icon"><x-feathericon-git-merge class="h-6 w-6" /></x-slot>
+                <x-slot name="form">@include('livewire.administracion.relationship._assignment-fields')</x-slot>
+                <x-slot name="actions"><button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-white">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" @disabled($assignmentDisabled) class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 font-semibold text-[#1A3A6B] disabled:opacity-50">{{ $mode === 'eliminar' ? 'Eliminar' : ($mode === 'editar' ? 'Actualizar' : 'Guardar') }}</button></x-slot>
+            </x-administration-form-modal>
         </div>
-
-
-        {{-- Panel de Auxiliares --}}
-        <div class="flex h-full w-1/2 flex-col">
-            <div class="mb-4 w-full rounded-2xl border border-gray-200 bg-white p-4 shadow">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-bold text-gray-800">Auxiliares</h2>
-                    @unless ($embedded)
-                        <x-a-button href="{{ route('administracion.interns') }}">Ver</x-a-button>
-                    @endunless
-                </div>
-                <p class="text-sm text-gray-500">Lista de tus auxiliares registrados</p>
-            </div>
-
-            @if ($selectedCustomer)
-                <div
-                    class="space-y-3 rounded-lg border bg-white-full p-4 transition-all duration-300">
-                    @forelse ($this->interns as $intern)
-                        @php
-                            $isAssigned = in_array($intern->id, $assignedInterns);
-                        @endphp
-
-                        <label
-                            class="{{ $isAssigned ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white' }} flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all duration-200 hover:shadow-md">
-                            <div>
-                                <p
-                                    class="{{ $isAssigned ? 'text-blue-800' : 'text-gray-800' }} font-semibold">
-                                    {{ $intern->name }} {{ $intern->last_name }}
-                                </p>
-                                <p
-                                    class="{{ $isAssigned ? 'text-blue-600' : 'text-gray-500' }} text-sm">
-                                    {{ $intern->email }}
-                                </p>
-                            </div>
-                            <input type="checkbox"
-                                class="peer hidden h-4 w-4 rounded-sm border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                                wire:click='registerInternToCustomer({{ $intern->id }})' />
-                        </label>
-                    @empty
-                        <div class="p-4 text-center text-sm italic text-gray-500">
-                            Sin auxiliares creados
-                        </div>
-                    @endforelse
-                </div>
-            @endif
-        </div>
-    </div>
+        @endteleport
+    @endif
 </div>

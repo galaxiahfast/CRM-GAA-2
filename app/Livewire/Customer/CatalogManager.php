@@ -3,8 +3,8 @@
 namespace App\Livewire\Customer;
 
 use App\Models\Customer;
-use App\Models\User;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -142,6 +142,7 @@ class CatalogManager extends Component
             return;
         }
 
+        app(ReferenceDataCache::class)->forgetCustomerCatalog();
         $this->resetManagementState();
         $this->notice = 'Cliente creado correctamente.';
         $this->dispatch('customer-catalog-updated', customerId: $customer->id, action: 'created');
@@ -172,6 +173,7 @@ class CatalogManager extends Component
             return;
         }
 
+        app(ReferenceDataCache::class)->forgetCustomerCatalog();
         $this->notice = 'Cliente actualizado correctamente.';
         $this->dispatch('customer-catalog-updated', customerId: (int) $data['selectedCustomerId'], action: 'updated');
     }
@@ -200,6 +202,7 @@ class CatalogManager extends Component
         }
 
         $deletedCustomerId = (int) $data['selectedCustomerId'];
+        app(ReferenceDataCache::class)->forgetCustomerCatalog();
         $this->resetManagementState();
         $this->notice = 'Cliente eliminado. Su historial y relaciones se conservaron.';
         $this->dispatch('customer-catalog-updated', customerId: $deletedCustomerId, action: 'deleted');
@@ -208,17 +211,12 @@ class CatalogManager extends Component
     public function render()
     {
         $this->ensureCanManageCustomers();
-
-        $customers = Customer::query()
-            ->whereNull('deleted_at')
-            ->with(['accountants:id,name,last_name'])
-            ->orderBy('name')
-            ->orderBy('last_name')
-            ->get();
+        $catalog = app(ReferenceDataCache::class)->customerCatalog();
+        $customers = $catalog['customers'];
 
         return view('livewire.customer.catalog-manager', [
             'customers' => $customers,
-            'availableAccountants' => $this->availableAccountants(),
+            'availableAccountants' => $catalog['accountants'],
             'selectedCustomer' => $this->selectedCustomerId
                 ? $customers->firstWhere('id', $this->selectedCustomerId)
                 : null,
@@ -297,11 +295,7 @@ class CatalogManager extends Component
 
     private function availableAccountants()
     {
-        return User::query()
-            ->whereHas('role', fn ($query) => $query->whereIn('role', ['Coordinador', 'Contador']))
-            ->orderBy('name')
-            ->orderBy('last_name')
-            ->get(['id', 'name', 'last_name', 'email']);
+        return app(ReferenceDataCache::class)->customerCatalog()['accountants'];
     }
 
     private function normalizeFields(): void

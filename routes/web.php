@@ -70,7 +70,9 @@ Route::middleware([
     // Mantiene vigente la sesión durante la jornada sin tocar el estado del
     // cronómetro. La fuente de verdad del tiempo permanece en la base de datos.
     Route::get('/session/keep-alive', function () {
-        return response()->noContent();
+        return response()
+            ->json(['csrf_token' => csrf_token()])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     })->name('session.keep-alive');
 
     // Pantalla ligera posterior al login. El dashboard conserva su ruta y su

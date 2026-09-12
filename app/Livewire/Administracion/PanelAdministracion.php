@@ -53,9 +53,11 @@ class PanelAdministracion extends Component
 
     public string $roleManagementInitialTab = 'crear';
 
+    public ?int $roleManagementInitialRoleId = null;
+
     public bool $showAssignmentModal = false;
 
-    public string $assignmentModalTab = 'relationships';
+    public string $assignmentModalTab = 'crear';
 
     public bool $showPermissionsModal = false;
 
@@ -77,11 +79,15 @@ class PanelAdministracion extends Component
 
     public string $editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
 
+    public string $deleteJobPositionConfirmation = '';
+
     public string $physicalAreaModalTab = 'crear';
 
     public ?int $selectedPhysicalAreaManagementId = null;
 
     public string $editPhysicalAreaName = '';
+
+    public string $deletePhysicalAreaConfirmation = '';
 
     public function setActiveTab(string $tab): void
     {
@@ -111,6 +117,20 @@ class PanelAdministracion extends Component
             ->allows(auth()->user(), 'administration.roles.manage'), 403);
 
         $this->roleManagementInitialTab = $tab;
+        $this->roleManagementInitialRoleId = null;
+        $this->showPermissionsModal = false;
+        $this->showRoleManagementModal = true;
+    }
+
+    public function openPermissionRoleEditor(int $roleId): void
+    {
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.roles.manage'), 403);
+        abort_unless(Role::whereKey($roleId)->exists(), 404);
+
+        $this->showPermissionsModal = false;
+        $this->roleManagementInitialTab = 'editar';
+        $this->roleManagementInitialRoleId = $roleId;
         $this->showRoleManagementModal = true;
     }
 
@@ -122,18 +142,18 @@ class PanelAdministracion extends Component
         $this->showRoleManagementModal = false;
     }
 
-    public function openAssignmentModal(string $tab = 'relationships'): void
+    public function openAssignmentModal(string $tab = 'crear'): void
     {
         abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
             ->allows(auth()->user(), 'administration.assignments.manage'), 403);
-        abort_unless(in_array($tab, ['relationships', 'interns'], true), 404);
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar', 'relationships', 'interns'], true), 404);
         $this->assignmentModalTab = $tab;
         $this->showAssignmentModal = true;
     }
 
     public function setAssignmentModalTab(string $tab): void
     {
-        abort_unless(in_array($tab, ['relationships', 'interns'], true), 404);
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar', 'relationships', 'interns'], true), 404);
         $this->assignmentModalTab = $tab;
     }
 
@@ -176,7 +196,8 @@ class PanelAdministracion extends Component
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
-        $this->resetValidation('newJobPositionName');
+        $this->deleteJobPositionConfirmation = '';
+        $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
         $this->showJobPositionModal = true;
     }
 
@@ -188,7 +209,8 @@ class PanelAdministracion extends Component
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
-        $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName']);
+        $this->deleteJobPositionConfirmation = '';
+        $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
     }
 
     public function saveJobPosition(): void
@@ -213,6 +235,7 @@ class PanelAdministracion extends Component
         });
 
         $this->closeJobPositionModal();
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Puesto de trabajo agregado correctamente.');
     }
 
@@ -225,7 +248,8 @@ class PanelAdministracion extends Component
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
-        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
+        $this->deleteJobPositionConfirmation = '';
+        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
     }
 
     public function updatedSelectedJobPositionId($positionId): void
@@ -238,7 +262,8 @@ class PanelAdministracion extends Component
             : null;
         $this->editJobPositionName = (string) ($position?->name ?? '');
         $this->editJobPositionPaymentType = (string) ($position?->payment_type ?? JobPosition::PAYMENT_FULL_TIME);
-        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName']);
+        $this->deleteJobPositionConfirmation = '';
+        $this->resetValidation(['selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
     }
 
     public function updateJobPosition(OrganizationChartService $chartService): void
@@ -267,6 +292,7 @@ class PanelAdministracion extends Component
         });
 
         $this->loadOrgChart($chartService);
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Puesto de trabajo actualizado correctamente.');
     }
 
@@ -276,9 +302,19 @@ class PanelAdministracion extends Component
 
         $data = $this->validate([
             'selectedJobPositionId' => ['required', 'integer', 'exists:job_positions,id'],
+            'deleteJobPositionConfirmation' => ['required', 'string'],
+        ], [
+            'deleteJobPositionConfirmation.required' => 'Escribe manualmente el nombre exacto del puesto.',
         ]);
 
         $positionId = $data['selectedJobPositionId'];
+        $position = JobPosition::findOrFail($positionId);
+
+        if (mb_strtolower($this->normalizeCatalogName($data['deleteJobPositionConfirmation'])) !== mb_strtolower($this->normalizeCatalogName($position->name))) {
+            $this->addError('deleteJobPositionConfirmation', 'El nombre escrito no coincide exactamente con el puesto seleccionado.');
+
+            return;
+        }
 
         if (DB::table('time_entries')->where('job_position_id_snapshot', $positionId)->exists()) {
             $this->addError('selectedJobPositionId', 'No se puede eliminar este puesto porque forma parte del historial de horas.');
@@ -295,7 +331,9 @@ class PanelAdministracion extends Component
         $this->selectedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
+        $this->deleteJobPositionConfirmation = '';
         $this->loadOrgChart($chartService);
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
     }
 
@@ -309,6 +347,7 @@ class PanelAdministracion extends Component
         $this->physicalAreaModalTab = $tab;
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
+        $this->deletePhysicalAreaConfirmation = '';
         $this->resetValidation('newPhysicalAreaName');
         $this->showPhysicalAreaModal = true;
     }
@@ -319,7 +358,8 @@ class PanelAdministracion extends Component
         $this->newPhysicalAreaName = '';
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
-        $this->resetValidation(['newPhysicalAreaName', 'selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+        $this->deletePhysicalAreaConfirmation = '';
+        $this->resetValidation(['newPhysicalAreaName', 'selectedPhysicalAreaManagementId', 'editPhysicalAreaName', 'deletePhysicalAreaConfirmation']);
     }
 
     public function savePhysicalArea(): void
@@ -340,6 +380,7 @@ class PanelAdministracion extends Component
         });
 
         $this->closePhysicalAreaModal();
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Área o departamento agregado correctamente.');
     }
 
@@ -351,7 +392,8 @@ class PanelAdministracion extends Component
         $this->physicalAreaModalTab = $tab;
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
-        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+        $this->deletePhysicalAreaConfirmation = '';
+        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName', 'deletePhysicalAreaConfirmation']);
     }
 
     public function updatedSelectedPhysicalAreaManagementId($areaId): void
@@ -362,7 +404,8 @@ class PanelAdministracion extends Component
         $this->editPhysicalAreaName = $this->selectedPhysicalAreaManagementId
             ? (string) PhysicalArea::findOrFail($this->selectedPhysicalAreaManagementId)->name
             : '';
-        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName']);
+        $this->deletePhysicalAreaConfirmation = '';
+        $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName', 'deletePhysicalAreaConfirmation']);
     }
 
     public function updatePhysicalArea(OrganizationChartService $chartService): void
@@ -378,6 +421,7 @@ class PanelAdministracion extends Component
         PhysicalArea::findOrFail($data['selectedPhysicalAreaManagementId'])->update(['name' => $data['editPhysicalAreaName']]);
 
         $this->loadOrgChart($chartService);
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Área o departamento actualizado correctamente.');
     }
 
@@ -387,9 +431,18 @@ class PanelAdministracion extends Component
 
         $data = $this->validate([
             'selectedPhysicalAreaManagementId' => ['required', 'integer', 'exists:physical_areas,id'],
+            'deletePhysicalAreaConfirmation' => ['required', 'string'],
+        ], [
+            'deletePhysicalAreaConfirmation.required' => 'Escribe manualmente el nombre exacto del área.',
         ]);
 
         $areaId = $data['selectedPhysicalAreaManagementId'];
+        $area = PhysicalArea::findOrFail($areaId);
+        if (mb_strtolower(trim($data['deletePhysicalAreaConfirmation'])) !== mb_strtolower(trim((string) $area->name))) {
+            $this->addError('deletePhysicalAreaConfirmation', 'El nombre escrito no coincide con el área seleccionada.');
+
+            return;
+        }
 
         if (DB::table('time_entries')->where('physical_area_id_snapshot', $areaId)->exists()) {
             $this->addError('selectedPhysicalAreaManagementId', 'No se puede eliminar esta área porque forma parte del historial de horas.');
@@ -405,7 +458,9 @@ class PanelAdministracion extends Component
 
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
+        $this->deletePhysicalAreaConfirmation = '';
         $this->loadOrgChart($chartService);
+        $this->forgetOrganizationReferenceData();
         session()->flash('success', 'Área eliminada. Los usuarios relacionados quedaron sin área asignada.');
     }
 
@@ -673,6 +728,9 @@ class PanelAdministracion extends Component
         $this->loadOrgChart($chartService);
         $this->selectUser($user->id);
         $this->isEditingUser = false;
+        $references = app(ReferenceDataCache::class);
+        $references->forgetManageableUsers();
+        $references->forgetOrganizationDashboard();
         session()->flash('success', 'Información del usuario actualizada.');
     }
 
@@ -713,6 +771,9 @@ class PanelAdministracion extends Component
 
         $this->closeUserDetails();
         $this->loadOrgChart($chartService);
+        $references = app(ReferenceDataCache::class);
+        $references->forgetManageableUsers();
+        $references->forgetOrganizationDashboard();
         session()->flash('success', 'Usuario eliminado. Sus subordinados directos quedaron sin jefe asignado.');
     }
 
@@ -732,101 +793,76 @@ class PanelAdministracion extends Component
         return trim((string) preg_replace('/\s+/u', ' ', $name));
     }
 
+    private function forgetOrganizationReferenceData(): void
+    {
+        $references = app(ReferenceDataCache::class);
+        $references->forgetAdministration();
+        $references->forgetOrganizationDashboard();
+    }
+
     public function render()
     {
         $selectedSuperiorIds = $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []);
         $selectedSubordinateIds = $this->normalizeHierarchyUserIds($this->userForm['subordinate_ids'] ?? []);
-        $hierarchyRelations = UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id']);
+        $needsHierarchyCandidates = $this->selectedUserDetails !== null || $this->selectedUserId !== null;
+        $hierarchyRelations = $needsHierarchyCandidates
+            ? UserHierarchyRelation::query()->get(['subordinate_id', 'superior_id'])
+            : collect();
         $excludedSubordinateIds = $this->superiorLineageIds($selectedSuperiorIds, $hierarchyRelations);
         $references = app(ReferenceDataCache::class);
         $administrationReferences = $references->administration();
-        $onlineUserIds = DB::table((string) config('session.table', 'sessions'))
-            ->whereNotNull('user_id')
-            ->where('last_activity', '>=', now()->subMinutes(2)->timestamp)
-            ->distinct()
-            ->pluck('user_id')
-            ->map(static fn ($userId): int => (int) $userId)
+        $dashboard = $references->organizationDashboard();
+        // Calienta el selector de usuarios durante la carga inicial para que
+        // abrir Editar o Eliminar no dispare otra consulta remota.
+        $references->manageableUsers();
+        $onlineUserIds = $dashboard['onlineUserIds']
             ->push((int) auth()->id())
             ->filter()
             ->unique();
-        $recentOrganizationUsers = User::query()
-            ->latest('created_at')
-            ->limit(4)
-            ->get(['id', 'name', 'last_name', 'created_at']);
-        $organizationAreaUserCounts = DB::table('user_organizational_profiles as profiles')
-            ->join('physical_areas as areas', 'areas.id', '=', 'profiles.physical_area_id')
-            ->where('profiles.is_active', true)
-            ->select('areas.name', DB::raw('COUNT(DISTINCT profiles.user_id) as users_count'))
-            ->groupBy('areas.id', 'areas.name')
-            ->orderByDesc('users_count')
-            ->limit(3)
-            ->get();
-        $organizationRoleUserCounts = Role::query()
-            ->withCount('users')
-            ->orderByDesc('users_count')
-            ->orderBy('role')
-            ->limit(4)
-            ->get(['id', 'role']);
-        $organizationPositionUserCounts = DB::table('job_positions as positions')
-            ->leftJoin('user_organizational_profiles as profiles', function ($join): void {
-                $join->on('profiles.job_position_id', '=', 'positions.id')
-                    ->where('profiles.is_active', true);
-            })
-            ->select('positions.id', 'positions.name', DB::raw('COUNT(DISTINCT profiles.user_id) as users_count'))
-            ->groupBy('positions.id', 'positions.name')
-            ->orderByDesc('users_count')
-            ->orderBy('positions.name')
-            ->limit(4)
-            ->get();
-        $organizationCustomers = DB::table('customers')
-            ->whereNull('deleted_at')
-            ->latest('created_at')
-            ->limit(4)
-            ->get(['id', 'name', 'last_name']);
-        $organizationActivities = DB::table('sub_services')
-            ->orderBy('sub_service')
-            ->limit(4)
-            ->get(['id', 'sub_service']);
-        $organizationCustomerCount = DB::table('customers')->whereNull('deleted_at')->count();
-        $organizationActivityCount = DB::table('sub_services')->count();
 
-        return view('livewire.administracion.panel-administracion', [
-            'onlineUserCount' => $onlineUserIds->count(),
-            'recentOrganizationUsers' => $recentOrganizationUsers,
-            'lastOrganizationUserCreatedAt' => $recentOrganizationUsers->first()?->created_at,
-            'organizationAreaUserCounts' => $organizationAreaUserCounts,
-            'organizationRoleUserCounts' => $organizationRoleUserCounts,
-            'organizationPositionUserCounts' => $organizationPositionUserCounts,
-            'organizationCustomers' => $organizationCustomers,
-            'organizationCustomerCount' => $organizationCustomerCount,
-            'organizationActivities' => $organizationActivities,
-            'organizationActivityCount' => $organizationActivityCount,
-            'organizationAssignmentCounts' => [
-                'relations' => UserHierarchyRelation::query()->count(),
-                'interns' => UserInterns::query()->count(),
-            ],
-            'physicalAreas' => $administrationReferences['physicalAreas'],
-            'jobPositions' => $administrationReferences['jobPositions'],
-            'roles' => $administrationReferences['roles'],
-            'basePermissionProfiles' => $administrationReferences['basePermissionProfiles'],
-            'employeeIdSuggestions' => $references->employeeSuggestions(),
-            // Un jefe debe pertenecer ya al organigrama (tener alguna relación).
-            'superiorCandidates' => User::query()
+        $superiorCandidates = $needsHierarchyCandidates
+            ? User::query()
                 ->whereKeyNot($this->selectedUserId ?: 0)
                 ->whereIn('id', $this->hierarchyCandidateIds($hierarchyRelations))
                 ->when($selectedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $selectedSubordinateIds))
                 ->orderBy('name')
-                ->get(['id', 'name', 'last_name', 'email']),
-            // Un subordinado puede provenir de la lista general, excepto los
-            // jefes seleccionados y todos los superiores de su línea de mando.
-            'subordinateCandidates' => User::query()
+                ->get(['id', 'name', 'last_name', 'email'])
+            : collect();
+        $subordinateCandidates = $needsHierarchyCandidates
+            ? User::query()
                 ->whereKeyNot($this->selectedUserId ?: 0)
                 ->when($excludedSubordinateIds !== [], fn ($query) => $query->whereNotIn('id', $excludedSubordinateIds))
                 ->whereDoesntHave('hierarchyRelationsAsSubordinate', function ($query): void {
                     $query->where('superior_id', '<>', $this->selectedUserId ?: 0);
                 })
                 ->orderBy('name')
-                ->get(['id', 'name', 'last_name', 'email']),
+                ->get(['id', 'name', 'last_name', 'email'])
+            : collect();
+
+        return view('livewire.administracion.panel-administracion', [
+            'onlineUserCount' => $onlineUserIds->count(),
+            'recentOrganizationUsers' => $dashboard['recentUsers'],
+            'lastOrganizationUserCreatedAt' => $dashboard['recentUsers']->first()?->created_at,
+            'organizationAreaUserCounts' => $dashboard['areaUserCounts'],
+            'organizationRoleUserCounts' => $dashboard['roleUserCounts'],
+            'organizationPositionUserCounts' => $dashboard['positionUserCounts'],
+            'organizationCustomers' => $dashboard['customers'],
+            'organizationCustomerCount' => $dashboard['customerCount'],
+            'organizationActivities' => $dashboard['activities'],
+            'organizationActivityCount' => $dashboard['activityCount'],
+            'organizationAssignmentCounts' => $dashboard['assignmentCounts'],
+            'physicalAreas' => $administrationReferences['physicalAreas'],
+            'jobPositions' => $administrationReferences['jobPositions'],
+            'roles' => $administrationReferences['roles'],
+            'basePermissionProfiles' => $administrationReferences['basePermissionProfiles'],
+            // Se precarga con la página para que abrir el formulario no tenga
+            // que esperar la agregación del reloj checador.
+            'employeeIdSuggestions' => $references->employeeSuggestions(),
+            // Un jefe debe pertenecer ya al organigrama (tener alguna relación).
+            'superiorCandidates' => $superiorCandidates,
+            // Un subordinado puede provenir de la lista general, excepto los
+            // jefes seleccionados y todos los superiores de su línea de mando.
+            'subordinateCandidates' => $subordinateCandidates,
         ])->layout('layouts.app');
     }
 

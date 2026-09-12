@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AccessPermission;
+use App\Models\PermissionGroup;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
 use App\Models\Role;
@@ -198,6 +199,28 @@ class RolePermissionLifecycleTest extends TestCase
             'role_id' => $role->id,
             'access_permission_id' => $permission->id,
         ]);
+    }
+
+    public function test_role_inherits_current_permissions_from_its_assigned_group(): void
+    {
+        $viewCustomers = AccessPermission::where('key', 'customers.view')->firstOrFail();
+        $manageCustomers = AccessPermission::where('key', 'customers.manage')->firstOrFail();
+        $group = PermissionGroup::create(['name' => 'Atención a clientes']);
+        $group->permissions()->sync([$viewCustomers->id]);
+        $role = Role::create([
+            'role' => 'Ejecutivo de cuenta',
+            'permission_profile' => Role::PROFILE_CUSTOM,
+            'permission_group_id' => $group->id,
+        ]);
+        $user = $this->createUser($role, 'permission-group@test.mx');
+
+        $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'customers.view'));
+        $this->assertFalse(app(PermissionAccessService::class)->allows($user, 'customers.manage'));
+
+        $group->permissions()->sync([$manageCustomers->id]);
+
+        $this->assertFalse((new PermissionAccessService())->allows($user->fresh(), 'customers.view'));
+        $this->assertTrue((new PermissionAccessService())->allows($user->fresh(), 'customers.manage'));
     }
 
     private function createUser(Role $role, string $email): User
