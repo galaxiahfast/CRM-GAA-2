@@ -48,6 +48,10 @@ class AttendanceManagement extends Component
 
     public string $editingEmployeeId = '';
 
+    public $editingHourlyRate = 20.00;
+
+    public $editingFoodAllowance = 50.00;
+
     // Tarifas generales editables por el admin
     public $generalHourlyRate = 20.00;
 
@@ -142,16 +146,29 @@ class AttendanceManagement extends Component
         $this->selectionReportIsCurrent = false;
     }
 
-    public function openEmployeeIdModal(int $userId): void
+    public function openEmployeeIdModal(int $userId, AttendanceSettingsService $settingsService): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
 
-        $user = User::query()->findOrFail($userId, ['id', 'name', 'last_name', 'employee_id']);
+        $user = User::query()->with('activeOrganizationalProfile')->findOrFail($userId);
 
         $this->editingEmployeeUserId = $user->id;
         $this->editingEmployeeName = trim($user->name.' '.$user->last_name);
         $this->editingEmployeeId = (string) $user->employee_id;
-        $this->resetErrorBag('editingEmployeeId');
+        $profile = $user->activeOrganizationalProfile;
+        $settings = filled($user->employee_id)
+            ? $settingsService->getSettings(
+                (string) $user->employee_id,
+                $profile ? (float) $profile->hourly_rate : null,
+                $profile ? (float) $profile->food_allowance : null,
+            )
+            : [
+                'hourly_rate' => $profile ? (float) $profile->hourly_rate : AttendanceSettingsService::DEFAULT_HOURLY_RATE,
+                'bonus_amount' => $profile ? (float) $profile->food_allowance : AttendanceSettingsService::DEFAULT_BONUS_AMOUNT,
+            ];
+        $this->editingHourlyRate = $settings['hourly_rate'];
+        $this->editingFoodAllowance = $settings['bonus_amount'];
+        $this->resetErrorBag(['editingEmployeeId', 'editingHourlyRate', 'editingFoodAllowance']);
         $this->showEmployeeIdModal = true;
     }
 
@@ -159,7 +176,9 @@ class AttendanceManagement extends Component
     {
         $this->showEmployeeIdModal = false;
         $this->reset(['editingEmployeeUserId', 'editingEmployeeName', 'editingEmployeeId']);
-        $this->resetErrorBag('editingEmployeeId');
+        $this->editingHourlyRate = AttendanceSettingsService::DEFAULT_HOURLY_RATE;
+        $this->editingFoodAllowance = AttendanceSettingsService::DEFAULT_BONUS_AMOUNT;
+        $this->resetErrorBag(['editingEmployeeId', 'editingHourlyRate', 'editingFoodAllowance']);
     }
 
     public function saveEmployeeId(
@@ -179,14 +198,34 @@ class AttendanceManagement extends Component
                 Rule::exists('control_de_horas', 'employeeID'),
                 Rule::unique('users', 'employee_id')->ignore($this->editingEmployeeUserId),
             ],
+            'editingHourlyRate' => ['required', 'numeric', 'min:0'],
+            'editingFoodAllowance' => ['required', 'numeric', 'min:0'],
         ], [
             'editingEmployeeId.required' => 'Selecciona o escribe el ID del checador.',
             'editingEmployeeId.exists' => 'El ID indicado no existe en los registros del checador.',
             'editingEmployeeId.unique' => 'Este ID de checador ya está relacionado con otra persona.',
+            'editingHourlyRate.required' => 'Indica el pago por hora.',
+            'editingHourlyRate.numeric' => 'El pago por hora debe ser un número válido.',
+            'editingHourlyRate.min' => 'El pago por hora no puede ser menor a 0.',
+            'editingFoodAllowance.required' => 'Indica el pago de comida.',
+            'editingFoodAllowance.numeric' => 'El pago de comida debe ser un número válido.',
+            'editingFoodAllowance.min' => 'El pago de comida no puede ser menor a 0.',
         ]);
 
         $user = User::query()->findOrFail($this->editingEmployeeUserId);
-        $user->update(['employee_id' => $this->editingEmployeeId]);
+        DB::transaction(function () use ($user): void {
+            $user->update(['employee_id' => $this->editingEmployeeId]);
+            $user->activeOrganizationalProfile()->update([
+                'hourly_rate' => (float) $this->editingHourlyRate,
+                'food_allowance' => (float) $this->editingFoodAllowance,
+            ]);
+        });
+        $settingsService->saveGeneral(
+            $this->editingEmployeeId,
+            (float) $this->editingHourlyRate,
+            (float) $this->editingFoodAllowance,
+            preserveDayOverrides: true,
+        );
 
         $editedUserId = $user->id;
         $this->closeEmployeeIdModal();
@@ -196,7 +235,7 @@ class AttendanceManagement extends Component
             $this->searchAttendance($attendanceService, $settingsService);
         }
 
-        session()->flash('message', 'El ID del checador se actualizó y quedó sincronizado correctamente.');
+        session()->flash('message', 'El ID, pago por hora y comida quedaron sincronizados correctamente.');
     }
 
     public function generateSelectionReport(
@@ -341,6 +380,12 @@ class AttendanceManagement extends Component
             (float) $this->generalHourlyRate,
             (float) $this->generalBonusAmount,
         );
+
+        $user = User::query()->with('activeOrganizationalProfile')->find($this->userId);
+        $user?->activeOrganizationalProfile?->update([
+            'hourly_rate' => (float) $this->generalHourlyRate,
+            'food_allowance' => (float) $this->generalBonusAmount,
+        ]);
 
         session()->flash('message', 'Tarifas generales aplicadas. Los ajustes individuales previos fueron reemplazados.');
         $this->searchAttendance(app(AttendanceService::class), $settingsService);

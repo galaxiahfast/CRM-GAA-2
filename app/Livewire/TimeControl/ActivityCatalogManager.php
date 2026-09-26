@@ -8,6 +8,7 @@ use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Throwable;
 
@@ -41,6 +42,13 @@ class ActivityCatalogManager extends Component
         $this->activeTab = $tab;
         $this->resetManagementState();
         $this->showModal = true;
+    }
+
+    #[On('open-activity-catalog-from-directory')]
+    public function openFromDirectory(string $tab, int $recordId): void
+    {
+        $this->openModal($tab);
+        $this->updatedSelectedActivityId($recordId);
     }
 
     public function closeModal(): void

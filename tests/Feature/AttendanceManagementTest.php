@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Livewire\TimeControl\Admin\AttendanceManagement;
+use App\Models\JobPosition;
+use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserOrganizationalProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -52,7 +55,6 @@ class AttendanceManagementTest extends TestCase
             'name' => 'Aux', 'last_name' => 'Uno', 'email' => 'aux-attendance@test.mx',
             'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-100',
         ]);
-
         foreach (['09:00:00', '13:00:00', '14:00:00'] as $index => $time) {
             DB::table('control_de_horas')->insert([
                 'employeeID' => $aux->employee_id,
@@ -235,6 +237,17 @@ class AttendanceManagementTest extends TestCase
             'name' => 'Clara', 'last_name' => 'Ríos', 'email' => 'clara-id@test.mx',
             'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-OLD',
         ]);
+        $hourlyPosition = JobPosition::create(['name' => 'Auxiliar sincronizado', 'payment_type' => JobPosition::PAYMENT_HOURLY]);
+        $area = PhysicalArea::create(['name' => 'Operaciones sincronizadas']);
+        UserOrganizationalProfile::create([
+            'user_id' => $aux->id,
+            'job_position_id' => $hourlyPosition->id,
+            'physical_area_id' => $area->id,
+            'hourly_rate' => 25,
+            'food_allowance' => 50,
+            'valid_from' => now()->toDateString(),
+            'is_active' => true,
+        ]);
         $other = User::create([
             'name' => 'Mario', 'last_name' => 'Luna', 'email' => 'mario-id@test.mx',
             'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-TAKEN',
@@ -274,6 +287,8 @@ class AttendanceManagementTest extends TestCase
             ->call('saveEmployeeId')
             ->assertHasErrors(['editingEmployeeId' => 'unique'])
             ->set('editingEmployeeId', 'EMP-NEW')
+            ->set('editingHourlyRate', 37.50)
+            ->set('editingFoodAllowance', 62.25)
             ->call('saveEmployeeId')
             ->assertHasNoErrors()
             ->assertSet('showEmployeeIdModal', false)
@@ -282,6 +297,11 @@ class AttendanceManagementTest extends TestCase
 
         $aux->refresh();
         $this->assertSame('EMP-NEW', $aux->employee_id);
+        $this->assertSame('37.50', $aux->activeOrganizationalProfile->hourly_rate);
+        $this->assertSame('62.25', $aux->activeOrganizationalProfile->food_allowance);
+        $settings = json_decode(Storage::disk('local')->get('checador_settings/EMP-NEW.json'), true);
+        $this->assertEquals(37.50, $settings['hourly_rate']);
+        $this->assertEquals(62.25, $settings['bonus_amount']);
         $this->assertSame('Clara', $aux->name);
         $this->assertSame('Ríos', $aux->last_name);
         $this->assertSame('clara-id@test.mx', $aux->email);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Administracion\PanelAdministracion;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
 use App\Models\Role;
@@ -9,10 +10,10 @@ use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
-use App\Livewire\Administracion\PanelAdministracion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -247,7 +248,13 @@ class OrganizationChartTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/administracion')
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('Carrusel')
+            ->assertSee('Organigrama')
+            ->assertSee('Listado general')
+            ->assertSee('Directorio de colaboradores y su perfil organizacional.')
+            ->assertSee('ADMIN')
+            ->assertDontSee('Auditada');
     }
 
     public function test_user_edit_modal_lists_existing_attendance_ids_with_their_names(): void
@@ -269,6 +276,31 @@ class OrganizationChartTest extends TestCase
             ->call('beginEditingUser')
             ->assertSee('BIO-77')
             ->assertSee('Persona del Checador');
+    }
+
+    public function test_organization_payment_values_are_synchronized_with_attendance_settings(): void
+    {
+        Storage::fake('local');
+        ['adminRole' => $adminRole, 'auxRole' => $auxRole] = $this->seedRoles();
+        $position = JobPosition::create(['name' => 'Auxiliar por hora', 'payment_type' => JobPosition::PAYMENT_HOURLY]);
+        $area = PhysicalArea::create(['name' => 'Operaciones']);
+        $administrator = $this->createUser($adminRole, 'admin-sync@test.mx', 'Administrador');
+        $subject = $this->createUser($auxRole, 'subject-sync@test.mx', 'Persona Sincronizada');
+        $subject->update(['employee_id' => 'BIO-SYNC']);
+        $this->assignProfile($subject, $position, $area);
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->call('selectUser', $subject->id)
+            ->call('beginEditingUser')
+            ->set('userForm.hourly_rate', 44.75)
+            ->set('userForm.food_allowance', 58.50)
+            ->call('saveSelectedUser')
+            ->assertHasNoErrors();
+
+        $settings = json_decode(Storage::disk('local')->get('checador_settings/BIO-SYNC.json'), true);
+        $this->assertEquals(44.75, $settings['hourly_rate']);
+        $this->assertEquals(58.50, $settings['bonus_amount']);
     }
 
     public function test_editing_hierarchy_lists_exclude_the_same_person_from_the_opposite_relation(): void

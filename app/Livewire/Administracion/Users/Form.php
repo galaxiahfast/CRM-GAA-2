@@ -10,6 +10,7 @@ use App\Models\UserInterns;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
 use App\Services\ReferenceDataCache;
+use App\Services\TimeControl\AttendanceSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -91,7 +92,7 @@ class Form extends Component
         'deleteConfirmationPhrase.required' => 'Escribe ELIMINAR para continuar.',
     ];
 
-    public function mount($user = null, $isAuxiliar = false, bool $embedded = false, string $initialTab = 'crear')
+    public function mount($user = null, $isAuxiliar = false, bool $embedded = false, string $initialTab = 'crear', ?int $initialUserId = null)
     {
         $this->embedded = $embedded;
         $this->managementTab = in_array($initialTab, ['crear', 'editar', 'eliminar'], true) ? $initialTab : 'crear';
@@ -131,6 +132,14 @@ class Form extends Component
         } else {
             if (! $canManageUsers) {
                 abort(403, 'No tienes permisos para crear usuarios.');
+            }
+        }
+
+        if ($initialUserId !== null && $this->managementTab !== 'crear') {
+            $managedUser = User::query()->with('activeOrganizationalProfile')->findOrFail($initialUserId);
+            $this->managementUserId = (int) $managedUser->id;
+            if ($this->managementTab === 'editar') {
+                $this->fillFromManagedUser($managedUser);
             }
         }
 
@@ -381,6 +390,15 @@ class Form extends Component
                     );
                 }
             });
+
+            if (filled($data['employee_id'] ?? null)) {
+                app(AttendanceSettingsService::class)->saveGeneral(
+                    (string) $data['employee_id'],
+                    (float) $hourlyRate,
+                    (float) $foodAllowance,
+                    preserveDayOverrides: true,
+                );
+            }
 
             session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
             $references = app(ReferenceDataCache::class);

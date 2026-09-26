@@ -19,7 +19,21 @@
     $orgChartTree = $orgChartTree ?? [];
 @endphp
 
-<div class="w-full min-w-0 space-y-[20px] p-[50px]" style="font-size: 15px; background-color: #F3F3F3;">
+<div
+    x-data="{
+        administrationView: 'carousel',
+        selectAdministrationView(view) {
+            this.administrationView = view;
+            if (view === 'organization' || view === 'carousel') {
+                this.$nextTick(() => window.dispatchEvent(new CustomEvent(
+                    view === 'organization' ? 'organization-chart-shown' : 'organization-carousel-shown',
+                )));
+            }
+        },
+    }"
+    class="w-full min-w-0 space-y-[20px] p-[50px]"
+    style="font-size: 15px; background-color: #F3F3F3;"
+>
     <style hidden>
         .unassigned-users-scrollbar {
             scrollbar-width: thin;
@@ -207,7 +221,7 @@
     </style>
 
     <!-- Centro de gestión siempre visible -->
-    <section class="m-0 min-h-[calc(100vh-190px)] w-full bg-[#F3F3F3] pt-0">
+    <section class="m-0 w-full bg-[#F3F3F3] pt-0">
         <div class="m-0 w-full bg-[#F3F3F3] pt-0">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
@@ -218,22 +232,25 @@
                     </div>
                     <p class="mt-2 max-w-3xl text-[13px] leading-6 text-[#55749D]">Administra colaboradores, roles, permisos y dependencias operativas desde un mismo espacio.</p>
                 </div>
-                <a href="#organigrama-principal" class="inline-flex h-11 shrink-0 items-center justify-center gap-3 rounded-lg bg-[#102A52] px-5 text-[13px] font-semibold text-white focus:outline-none focus:ring-0">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v12H4zM8 21l4-4 4 4M8 9h8m-4-4v12" /></svg>
-                    Ver organigrama
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
-                </a>
             </div>
 
-            <div class="mt-[50px] grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#1A3A6B]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Colaboradores</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">En línea: {{ $onlineUserCount }}</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $totalUsers ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">registrados</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Equipo</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[72%] bg-[#1A3A6B]"></span></div></div>
-                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#1A3A6B]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Estructura</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">Activa</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $physicalAreas->count() }}</strong><span class="text-[11px] text-[#55749D]">áreas activas</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Operación</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-full bg-[#1A3A6B]"></span></div></div>
-                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-emerald-500"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Seguridad</span><span class="rounded-full border border-emerald-200 bg-emerald-50/80 px-2 py-1 text-[9px] font-semibold text-emerald-700">RBAC activo</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $totalRoles ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">roles</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-emerald-700">Protegido</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[82%] bg-emerald-500"></span></div></div>
-                <div class="relative overflow-hidden rounded-[10px] border border-[#CAD7E7] bg-white/45 px-4 py-[14px] backdrop-blur-sm"><span class="absolute inset-y-0 left-0 w-[3px] bg-[#102A52]"></span><div class="flex items-center justify-between gap-3"><span class="text-[10px] font-bold uppercase tracking-[.14em] text-[#55749D]">Jerarquía</span><span class="rounded-full border border-[#DCEAFF] bg-[#EEF5FF]/80 px-2 py-1 text-[9px] font-semibold text-[#1A3A6B]">Auditada</span></div><div class="mt-3 flex items-end justify-between gap-3"><div class="flex items-baseline gap-2"><strong class="text-[24px] leading-none text-[#102A52]">{{ $orgChartStats['relations'] ?? 0 }}</strong><span class="text-[11px] text-[#55749D]">relaciones</span></div><span class="text-[9px] font-bold uppercase tracking-[.12em] text-[#7B96B9]">Conectada</span></div><div class="mt-3 h-[2px] overflow-hidden bg-[#DCEAFF]"><span class="block h-full w-[68%] bg-[#102A52]"></span></div></div>
-            </div>
+            <nav class="mt-[50px] grid grid-cols-3 overflow-hidden rounded-xl border border-[#CAD7E7] bg-white/55 p-1.5" aria-label="Vistas del centro de organización">
+                <button type="button" @click="selectAdministrationView('carousel')" :class="administrationView === 'carousel' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'carousel' ? 'page' : null">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h13v12H4zM17 9h3v6h-3M7 9h7m-7 3h7m-7 3h4" /></svg>
+                    <span>Carrusel</span>
+                </button>
+                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
+                    <span>Organigrama</span>
+                </button>
+                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+                    <span>Listado general</span>
+                </button>
+            </nav>
         </div>
 
-        <div class="organization-carousel-frame relative mt-[50px] flex w-full items-center" x-data="{ move(direction) { window.organizationCarouselMove($refs.track, direction) } }">
+        <div x-show="administrationView === 'carousel'" class="organization-carousel-frame relative mt-[36px] flex w-full items-center" x-data="{ move(direction) { window.organizationCarouselMove($refs.track, direction) } }">
             <button type="button" @click="move(-1)" class="absolute left-0 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[#1A3A6B] text-white focus:outline-none focus:ring-0" aria-label="Ver tarjetas anteriores">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" /></svg>
             </button>
@@ -412,7 +429,7 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" /></svg>
             </button>
         </div>
-        <div class="mt-[50px] flex flex-wrap items-center justify-between gap-3 p-0 text-[10px] font-medium text-[#55749D]">
+        <div x-show="administrationView === 'carousel'" class="mt-[50px] flex flex-wrap items-center justify-between gap-3 p-0 text-[10px] font-medium text-[#55749D]">
             <div class="flex flex-wrap items-center gap-4"><span class="inline-flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Centro organizacional activo</span><span class="text-[#A8BAD2]">•</span><span>Sincronización en tiempo real</span><span class="text-[#A8BAD2]">•</span><span>Última validación RBAC: {{ now()->format('H:i') }}</span></div>
             <span class="font-semibold text-[#102A52]">Protocolo de seguridad: RBAC</span>
         </div>
@@ -425,7 +442,8 @@
         <livewire:administracion.users.form
             :embedded="true"
             :initial-tab="$userManagementInitialTab"
-            :key="'organization-user-management-'.$userManagementInitialTab"
+            :initial-user-id="$userManagementInitialUserId"
+            :key="'organization-user-management-'.$userManagementInitialTab.'-'.($userManagementInitialUserId ?? 'list')"
         />
     @endif
 
@@ -464,7 +482,7 @@
     @endif
 
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" class="scroll-mt-5 overflow-hidden rounded-2xl border border-gray-200 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" style="padding: 20px; background-color: #F3F3F3;">
+    <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[36px] scroll-mt-5 overflow-hidden rounded-2xl border border-gray-200 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" style="padding: 20px; background-color: #F3F3F3;">
 
         <!-- Encabezado -->
         <div style="padding: 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
@@ -735,6 +753,8 @@
 
         </div>
     </div>
+
+    @include('livewire.administracion.partials.organization-directory')
 
     {{-- ============================================================ --}}
     {{-- MODAL PARA AGREGAR PUESTO DE TRABAJO                        --}}
@@ -1735,6 +1755,14 @@
 
         document.addEventListener('livewire:navigated', function() {
             setTimeout(() => { allNodes = []; loadAllNodes(); }, 300);
+        });
+
+        window.addEventListener('organization-chart-shown', function() {
+            requestAnimationFrame(() => {
+                allNodes = [];
+                loadAllNodes();
+                updateTransform();
+            });
         });
 
         setTimeout(() => { allNodes = []; loadAllNodes(); }, 500);

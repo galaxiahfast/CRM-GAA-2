@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\MOISES INFORMATICA\\Desktop\\Reporte de Respaldos.docx",
+  "fonts_by_char_count": {
+    "Courier New": 1430
+  },
+  "direct_run_formatting_runs": 158,
+  "direct_paragraph_formatting_paragraphs": 35,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "192.168.2.178 \u2013 IFACTURE",
+      "style": "Normal"
+    },
+    {
+      "para_index": 3,
+      "text": "Comprobantes33",
+      "style": "Normal"
+    },
+    {
+      "para_index": 6,
+      "text": "ComprobantesPagos",
+      "style": "Normal"
+    },
+    {
+      "para_index": 9,
+      "text": "        Data",
+      "style": "Normal"
+    },
+    {
+      "para_index": 13,
+      "text": "192.168.2.203 \u2013 AUDICTAMEN",
+      "style": "Normal"
+    },
+    {
+      "para_index": 15,
+      "text": "Audictamen",
+      "style": "Normal"
+    },
+    {
+      "para_index": 18,
+      "text": "datafiscal  ",
+      "style": "Normal"
+    },
+    {
+      "para_index": 21,
+      "text": "datahub",
+      "style": "Normal"
+    },
+    {
+      "para_index": 24,
+      "text": "MSSQL",
+      "style": "Normal"
+    },
+    {
+      "para_index": 28,
+      "text": "192.168.1.2 \u2013 Compaqi (Tulum)",
+      "style": "Normal"
+    },
+    {
+      "para_index": 30,
+      "text": "Compac",
+      "style": "Normal"
+    },
+    {
+      "para_index": 33,
+      "text": "Data",
+      "style": "Normal"
+    },
+    {
+      "para_index": 37,
+      "text": "192.168.2.210 \u2013 Compaqi (M\u00e9rida)",
+      "style": "Normal"
+    },
+    {
+      "para_index": 39,
+      "text": "base_contabilidad",
+      "style": "Normal"
+    },
+    {
+      "para_index": 43,
+      "text": "base_nominas",
+      "style": "Normal"
+    },
+    {
+      "para_index": 47,
+      "text": "Carpeta_Contpaq",
+      "style": "Normal"
+    },
+    {
+      "para_index": 50,
+      "text": "\tCompac",
+      "style": "Normal"
+    },
+    {
+      "para_index": 54,
+      "text": "192.168.2.252 \u2013 Compaqi (Auditor\u00eda)",
+      "style": "Normal"
+    },
+    {
+      "para_index": 56,
+      "text": "        Compac",
+      "style": "Normal"
+    },
+    {
+      "para_index": 59,
+      "text": "        Data",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "192.168.2.178 \u2013 IFACTURE",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Perfiles: ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Comprobantes33",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "run_text": "            \u00daltimo respaldo: ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "run_text": "0",
+        "style": "Normal"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 2,
+        "text": "Perfiles: ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "Comprobantes33",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "Estado: Todo realizado.",
+        "style": "Normal"
+      },
+      {
+        "para_index": 6,
+        "text": "ComprobantesPagos",
+        "style": "Normal"
+      },
+      {
+        "para_index": 7,
+        "text": "\u00daltimo respaldo: 05/09/2026 \u2013 09:47 a. m.",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

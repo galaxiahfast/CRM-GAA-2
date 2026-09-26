@@ -5,9 +5,27 @@ const CARD_WIDTH = 390;
 const CARD_GAP = 20;
 const CAROUSEL_SAFE_INSET = 98;
 const CAROUSEL_REAR_INSET = 64;
+const CAROUSEL_MOVE_DURATION = 520;
+const CAROUSEL_BURST_DURATION = 210;
+const CAROUSEL_MAX_QUEUED_STEPS = 3;
+const CAROUSEL_SETTLE_BUFFER = 24;
 const carouselAnimations = new WeakMap();
+const carouselMoveTimers = new WeakMap();
 const carouselSettleFrames = new WeakMap();
 const carouselMemory = window.organizationCarouselMemory ||= { order: [], centeredModule: '' };
+
+const stopCarouselMotion = (container, clearQueue = true) => {
+    const runningAnimation = carouselAnimations.get(container);
+    if (runningAnimation) cancelAnimationFrame(runningAnimation);
+    carouselAnimations.delete(container);
+
+    const moveTimer = carouselMoveTimers.get(container);
+    if (moveTimer) window.clearTimeout(moveTimer);
+    carouselMoveTimers.delete(container);
+
+    container.dataset.carouselMoving = 'false';
+    if (clearQueue) container.dataset.carouselQueue = '0';
+};
 
 const domCards = (container) => [...container.querySelectorAll(`:scope > ${CARD_SELECTOR}`)];
 
@@ -52,11 +70,7 @@ const restoreCarouselOrder = (container) => {
 };
 
 const settleCarouselAfterMorph = (container) => {
-    const runningAnimation = carouselAnimations.get(container);
-    if (runningAnimation) cancelAnimationFrame(runningAnimation);
-    carouselAnimations.delete(container);
-    container.dataset.carouselMoving = 'false';
-    container.dataset.carouselQueue = '0';
+    stopCarouselMotion(container);
 
     const orderedCards = restoreCarouselOrder(container);
     const activeModule = container.dataset.carouselCenteredModule || carouselMemory.centeredModule;
@@ -100,7 +114,7 @@ const centeredCard = (container, orderedCards = cards(container)) => {
     }, null)?.card;
 };
 
-const centerOnCard = (container, card, behavior = 'smooth', duration = 720, continuous = false) => {
+const centerOnCard = (container, card, behavior = 'smooth', duration = CAROUSEL_MOVE_DURATION, continuous = false) => {
     if (!card) return;
     const visibleCount = frontCardCount(container);
     const groupWidth = visibleCount * CARD_WIDTH + Math.max(0, visibleCount - 1) * CARD_GAP;
@@ -120,7 +134,11 @@ const centerOnCard = (container, card, behavior = 'smooth', duration = 720, cont
     const animate = (time) => {
         if (!container.isConnected) return;
         const progress = Math.min(1, (time - startedAt) / duration);
-        const eased = continuous ? progress : 1 - Math.pow(1 - progress, 4);
+        const eased = continuous
+            ? progress * progress * (3 - 2 * progress)
+            : progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
         container.scrollLeft = origin + distance * eased;
         updateCarouselVisibility(container);
         if (progress < 1) {
@@ -166,7 +184,12 @@ const moveCyclicCarousel = (container, direction, automatic = false, fast = fals
     if (container.dataset.carouselMoving === 'true') {
         if (!automatic) {
             const queued = Number(container.dataset.carouselQueue || 0);
-            container.dataset.carouselQueue = String(Math.max(-12, Math.min(12, queued + direction)));
+            const pending = queued + Math.sign(direction);
+            container.dataset.carouselQueue = String(Math.max(
+                -CAROUSEL_MAX_QUEUED_STEPS,
+                Math.min(CAROUSEL_MAX_QUEUED_STEPS, pending),
+            ));
+            container.dataset.carouselNextAt = String(performance.now() + CAROUSEL_INTERVAL);
         }
         return;
     }
@@ -203,8 +226,13 @@ const moveCyclicCarousel = (container, direction, automatic = false, fast = fals
     container.dataset.carouselNextAt = String(performance.now() + CAROUSEL_INTERVAL);
     container.dataset.carouselCenteredModule = target.dataset.organizationModule;
     carouselMemory.centeredModule = target.dataset.organizationModule;
-    centerOnCard(container, target, 'smooth', fast ? 300 : 720, fast);
-    window.setTimeout(() => {
+    const duration = fast ? CAROUSEL_BURST_DURATION : CAROUSEL_MOVE_DURATION;
+    centerOnCard(container, target, 'smooth', duration, fast);
+
+    const previousTimer = carouselMoveTimers.get(container);
+    if (previousTimer) window.clearTimeout(previousTimer);
+    const moveTimer = window.setTimeout(() => {
+        carouselMoveTimers.delete(container);
         if (!container.isConnected) return;
         container.dataset.carouselMoving = 'false';
         const queued = Number(container.dataset.carouselQueue || 0);
@@ -213,7 +241,8 @@ const moveCyclicCarousel = (container, direction, automatic = false, fast = fals
             container.dataset.carouselQueue = String(queued - queuedDirection);
             moveCyclicCarousel(container, queuedDirection, false, true);
         }
-    }, fast ? 320 : 760);
+    }, duration + CAROUSEL_SETTLE_BUFFER);
+    carouselMoveTimers.set(container, moveTimer);
 };
 
 window.organizationCarouselMove = (track, direction) => moveCyclicCarousel(track, direction, false);
@@ -344,14 +373,14 @@ const initializeAutoCarousel = (container) => {
             return;
         }
         const now = performance.now();
+        const carouselVisible = container.getClientRects().length > 0 && container.clientWidth > 0;
         const modalOpen = [...document.querySelectorAll('[data-administration-modal], [role="dialog"][aria-modal="true"]')]
             .some((modal) => modal.getClientRects().length > 0);
-        if (modalOpen) {
-            const runningAnimation = carouselAnimations.get(container);
-            if (runningAnimation) cancelAnimationFrame(runningAnimation);
-            carouselAnimations.delete(container);
-            container.dataset.carouselMoving = 'false';
-            container.dataset.carouselQueue = '0';
+        if (!carouselVisible) {
+            if (container.dataset.carouselMoving === 'true') stopCarouselMotion(container);
+            container.dataset.carouselNextAt = String(now + CAROUSEL_INTERVAL);
+        } else if (modalOpen) {
+            stopCarouselMotion(container);
             wasModalOpen = true;
             container.dataset.carouselNextAt = String(now + CAROUSEL_INTERVAL);
         } else if (wasModalOpen) {
@@ -373,10 +402,7 @@ const initializeAutoCarousel = (container) => {
     container.addEventListener('focusin', postpone);
     let resizeTimer = null;
     const refreshResponsiveLayout = () => {
-        const runningAnimation = carouselAnimations.get(container);
-        if (runningAnimation) cancelAnimationFrame(runningAnimation);
-        carouselAnimations.delete(container);
-        container.dataset.carouselMoving = 'false';
+        stopCarouselMotion(container);
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
             if (!container.isConnected) return;
@@ -400,6 +426,9 @@ const initializeAutoCarousel = (container) => {
     responsiveObserver.observe(container);
     if (container.parentElement) responsiveObserver.observe(container.parentElement);
     window.addEventListener('resize', refreshResponsiveLayout, { passive: true, signal: responsiveAbortController.signal });
+    window.addEventListener('organization-carousel-shown', () => {
+        requestAnimationFrame(() => settleCarouselAfterMorph(container));
+    }, { signal: responsiveAbortController.signal });
     schedule();
 };
 

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class GestionRelacionesJerarquicas extends Component
@@ -37,6 +38,13 @@ class GestionRelacionesJerarquicas extends Component
         $this->mode = $mode;
         $this->resetAssignmentState();
         $this->showModal = true;
+    }
+
+    #[On('open-assignment-catalog-from-directory')]
+    public function openFromDirectory(string $mode, int $recordId): void
+    {
+        $this->openModal($mode);
+        $this->updatedSelectedCustomer($recordId);
     }
 
     public function closeModal(): void

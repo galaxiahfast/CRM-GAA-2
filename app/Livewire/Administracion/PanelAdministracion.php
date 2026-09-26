@@ -11,11 +11,12 @@ use App\Models\UserInterns;
 use App\Models\UserOrganizationalProfile;
 use App\Services\Administracion\OrganizationChartService;
 use App\Services\ReferenceDataCache;
+use App\Services\TimeControl\AttendanceSettingsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class PanelAdministracion extends Component
 {
@@ -48,6 +49,8 @@ class PanelAdministracion extends Component
     public bool $showUserManagementModal = false;
 
     public string $userManagementInitialTab = 'crear';
+
+    public ?int $userManagementInitialUserId = null;
 
     public bool $showRoleManagementModal = false;
 
@@ -94,13 +97,17 @@ class PanelAdministracion extends Component
         $this->activeTab = $tab;
     }
 
-    public function openUserManagement(string $tab): void
+    public function openUserManagement(string $tab, ?int $userId = null): void
     {
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
             ->allows(auth()->user(), 'administration.users.manage'), 403);
+        if ($userId !== null) {
+            abort_unless($tab !== 'crear' && User::whereKey($userId)->exists(), 404);
+        }
 
         $this->userManagementInitialTab = $tab;
+        $this->userManagementInitialUserId = $userId;
         $this->showUserManagementModal = true;
     }
 
@@ -108,16 +115,20 @@ class PanelAdministracion extends Component
     public function closeUserManagement(): void
     {
         $this->showUserManagementModal = false;
+        $this->userManagementInitialUserId = null;
     }
 
-    public function openRoleManagement(string $tab): void
+    public function openRoleManagement(string $tab, ?int $roleId = null): void
     {
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
             ->allows(auth()->user(), 'administration.roles.manage'), 403);
+        if ($roleId !== null) {
+            abort_unless($tab !== 'crear' && Role::whereKey($roleId)->exists(), 404);
+        }
 
         $this->roleManagementInitialTab = $tab;
-        $this->roleManagementInitialRoleId = null;
+        $this->roleManagementInitialRoleId = $roleId;
         $this->showPermissionsModal = false;
         $this->showRoleManagementModal = true;
     }
@@ -162,6 +173,16 @@ class PanelAdministracion extends Component
         $this->showAssignmentModal = false;
     }
 
+    #[On('customer-catalog-updated')]
+    #[On('activity-catalog-updated')]
+    #[On('permission-catalog-updated')]
+    #[On('assignments-updated')]
+    public function refreshOrganizationDirectory(): void
+    {
+        // El render siguiente obtiene el directorio recién invalidado sin
+        // desmontar los formularios reutilizados por las tarjetas.
+    }
+
     public function mount(OrganizationChartService $chartService): void
     {
         $this->totalUsers = User::count();
@@ -184,7 +205,7 @@ class PanelAdministracion extends Component
         $this->showPermissionsModal = false;
     }
 
-    public function openJobPositionModal(string $tab = 'crear'): void
+    public function openJobPositionModal(string $tab = 'crear', ?int $positionId = null): void
     {
         $this->ensureOrganizationAdministrator();
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
@@ -198,6 +219,10 @@ class PanelAdministracion extends Component
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->deleteJobPositionConfirmation = '';
         $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
+        if ($positionId !== null) {
+            abort_unless($tab !== 'crear' && JobPosition::whereKey($positionId)->exists(), 404);
+            $this->updatedSelectedJobPositionId($positionId);
+        }
         $this->showJobPositionModal = true;
     }
 
@@ -337,7 +362,7 @@ class PanelAdministracion extends Component
         session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
     }
 
-    public function openPhysicalAreaModal(string $tab = 'crear'): void
+    public function openPhysicalAreaModal(string $tab = 'crear', ?int $areaId = null): void
     {
         $this->ensureOrganizationAdministrator();
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
@@ -349,6 +374,10 @@ class PanelAdministracion extends Component
         $this->editPhysicalAreaName = '';
         $this->deletePhysicalAreaConfirmation = '';
         $this->resetValidation('newPhysicalAreaName');
+        if ($areaId !== null) {
+            abort_unless($tab !== 'crear' && PhysicalArea::whereKey($areaId)->exists(), 404);
+            $this->updatedSelectedPhysicalAreaManagementId($areaId);
+        }
         $this->showPhysicalAreaModal = true;
     }
 
@@ -635,7 +664,10 @@ class PanelAdministracion extends Component
         ));
     }
 
-    public function saveSelectedUser(OrganizationChartService $chartService): void
+    public function saveSelectedUser(
+        OrganizationChartService $chartService,
+        AttendanceSettingsService $settingsService,
+    ): void
     {
         $this->ensureOrganizationAdministrator();
         abort_unless($this->selectedUserId, 404);
@@ -724,6 +756,15 @@ class PanelAdministracion extends Component
                 $chartService
             );
         });
+
+        if (filled($data['employee_id'] ?? null)) {
+            $settingsService->saveGeneral(
+                (string) $data['employee_id'],
+                (float) ($isHourlyPosition ? $data['hourly_rate'] : 0),
+                (float) ($isHourlyPosition ? $data['food_allowance'] : 0),
+                preserveDayOverrides: true,
+            );
+        }
 
         $this->loadOrgChart($chartService);
         $this->selectUser($user->id);
@@ -819,6 +860,23 @@ class PanelAdministracion extends Component
             ->push((int) auth()->id())
             ->filter()
             ->unique();
+        $permissionAccess = app(\App\Services\Authorization\PermissionAccessService::class);
+        $currentUser = auth()->user();
+        $isAdministrator = $currentUser?->isAdmin() ?? false;
+        $directoryAccess = array_filter([
+            'users' => $permissionAccess->allows($currentUser, 'administration.users.manage'),
+            'roles' => $permissionAccess->allows($currentUser, 'administration.roles.manage'),
+            'positions' => $permissionAccess->allows($currentUser, 'administration.organization.manage'),
+            'areas' => $permissionAccess->allows($currentUser, 'administration.organization.manage'),
+            'permissions' => $permissionAccess->allows($currentUser, 'administration.permissions.manage'),
+            'customers' => $isAdministrator && $permissionAccess->allows($currentUser, 'administration.organization.manage'),
+            'assignments' => $permissionAccess->allows($currentUser, 'administration.assignments.manage'),
+            'activities' => $isAdministrator && $permissionAccess->allows($currentUser, 'administration.organization.manage'),
+        ]);
+        $organizationDirectory = array_intersect_key(
+            $references->organizationDirectory(),
+            $directoryAccess,
+        );
 
         $superiorCandidates = $needsHierarchyCandidates
             ? User::query()
@@ -851,6 +909,7 @@ class PanelAdministracion extends Component
             'organizationActivities' => $dashboard['activities'],
             'organizationActivityCount' => $dashboard['activityCount'],
             'organizationAssignmentCounts' => $dashboard['assignmentCounts'],
+            'organizationDirectory' => $organizationDirectory,
             'physicalAreas' => $administrationReferences['physicalAreas'],
             'jobPositions' => $administrationReferences['jobPositions'],
             'roles' => $administrationReferences['roles'],

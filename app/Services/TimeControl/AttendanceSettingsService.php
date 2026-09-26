@@ -24,12 +24,12 @@ class AttendanceSettingsService
     {
         $stored = $this->readFile($employeeId);
 
-        $hourly = $stored['hourly_rate']
-            ?? $profileHourly
+        $hourly = $profileHourly
+            ?? $stored['hourly_rate']
             ?? self::DEFAULT_HOURLY_RATE;
 
-        $bonus = $stored['bonus_amount']
-            ?? $profileBonus
+        $bonus = $profileBonus
+            ?? $stored['bonus_amount']
             ?? self::DEFAULT_BONUS_AMOUNT;
 
         return [
@@ -39,12 +39,19 @@ class AttendanceSettingsService
         ];
     }
 
-    public function saveGeneral(string $employeeId, float $hourlyRate, float $bonusAmount): void
+    public function saveGeneral(
+        string $employeeId,
+        float $hourlyRate,
+        float $bonusAmount,
+        bool $preserveDayOverrides = false,
+    ): void
     {
+        $stored = $preserveDayOverrides ? $this->readFile($employeeId) : [];
+
         $this->writeFile($employeeId, [
             'hourly_rate' => round($hourlyRate, 2),
             'bonus_amount' => round($bonusAmount, 2),
-            'day_overrides' => [],
+            'day_overrides' => $stored['day_overrides'] ?? [],
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CatalogManager extends Component
@@ -37,6 +38,13 @@ class CatalogManager extends Component
         $this->activeTab = $tab;
         $this->resetFormState();
         $this->showModal = true;
+    }
+
+    #[On('open-permission-catalog-from-directory')]
+    public function openFromDirectory(string $tab, int $recordId): void
+    {
+        $this->openModal($tab);
+        $this->updatedSelectedGroupId($recordId);
     }
 
     public function closeModal(): void

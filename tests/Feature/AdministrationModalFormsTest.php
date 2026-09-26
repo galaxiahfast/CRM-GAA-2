@@ -8,6 +8,7 @@ use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\Form as RoleForm;
 use App\Livewire\Administracion\Roles\GestionRoles;
 use App\Livewire\Administracion\Users\Form as UserForm;
+use App\Livewire\Customer\CatalogManager as CustomerCatalogManager;
 use App\Models\AccessPermission;
 use App\Models\Customer;
 use App\Models\JobPosition;
@@ -141,6 +142,67 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('newPhysicalAreaName', '');
 
         $this->assertDatabaseHas('physical_areas', ['name' => 'Control Interno']);
+    }
+
+    public function test_directory_actions_reuse_management_forms_with_the_record_selected(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $editableRole = Role::create(['role' => 'Supervisor de cartera']);
+        $administrator = $this->createUser($administratorRole, 'admin-directory-actions@test.mx');
+        $collaborator = $this->createUser($editableRole, 'collaborator-directory-actions@test.mx');
+        $position = JobPosition::create(['name' => 'Supervisor operativo']);
+        $area = PhysicalArea::create(['name' => 'Operaciones']);
+        $permissionGroup = PermissionGroup::create(['name' => 'Cartera operativa']);
+        $customer = Customer::create([
+            'name' => 'Cliente',
+            'last_name' => 'Directorio',
+            'rfc' => 'DIRE010101AA1',
+        ]);
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar', $collaborator->id)
+            ->assertSet('userManagementInitialTab', 'editar')
+            ->assertSet('userManagementInitialUserId', $collaborator->id)
+            ->call('closeUserManagement')
+            ->call('openRoleManagement', 'editar', $editableRole->id)
+            ->assertSet('roleManagementInitialRoleId', $editableRole->id)
+            ->call('closeRoleManagement')
+            ->call('openJobPositionModal', 'editar', $position->id)
+            ->assertSet('selectedJobPositionId', $position->id)
+            ->assertSet('editJobPositionName', 'Supervisor operativo')
+            ->call('closeJobPositionModal')
+            ->call('openPhysicalAreaModal', 'eliminar', $area->id)
+            ->assertSet('selectedPhysicalAreaManagementId', $area->id);
+
+        Livewire::actingAs($administrator)
+            ->test(UserForm::class, [
+                'embedded' => true,
+                'initialTab' => 'editar',
+                'initialUserId' => $collaborator->id,
+            ])
+            ->assertSet('managementUserId', $collaborator->id)
+            ->assertSet('name', $collaborator->name);
+
+        Livewire::actingAs($administrator)
+            ->test(PermissionCatalogManager::class, ['cardActions' => true])
+            ->call('openFromDirectory', 'editar', $permissionGroup->id)
+            ->assertSet('showModal', true)
+            ->assertSet('selectedGroupId', $permissionGroup->id)
+            ->assertSet('name', 'Cartera operativa');
+
+        Livewire::actingAs($administrator)
+            ->test(CustomerCatalogManager::class, ['cardActions' => true])
+            ->call('openFromDirectory', 'editar', $customer->id)
+            ->assertSet('showModal', true)
+            ->assertSet('selectedCustomerId', $customer->id)
+            ->assertSet('name', 'Cliente');
+
+        Livewire::actingAs($administrator)
+            ->test(GestionRelacionesJerarquicas::class, ['cardActions' => true])
+            ->call('openFromDirectory', 'editar', $customer->id)
+            ->assertSet('showModal', true)
+            ->assertSet('selectedCustomer', $customer->id);
     }
 
     public function test_hourly_compensation_depends_on_position_instead_of_role(): void

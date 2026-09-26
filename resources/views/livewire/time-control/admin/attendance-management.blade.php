@@ -612,10 +612,27 @@
                         <p class="mt-[8px] text-zinc-500">Solo aparecen IDs registrados que aún no están relacionados con otra persona.</p>
                     </div>
 
+                    <div class="mt-[15px] rounded-xl border border-zinc-200 bg-white p-[20px]">
+                        <h4 class="font-medium text-black">Pago general</h4>
+                        <p class="mt-[3px] text-zinc-500">Estos valores también se guardarán en el Centro de organización.</p>
+                        <div class="mt-[15px] grid grid-cols-1 gap-[15px] sm:grid-cols-2">
+                            <div>
+                                <label for="attendance-edit-hourly-rate" class="mb-[8px] block font-medium text-black">Pago por hora ($)</label>
+                                <input id="attendance-edit-hourly-rate" type="number" min="0" step="0.01" wire:model="editingHourlyRate" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-zinc-50 px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                @error('editingHourlyRate') <p class="mt-[6px] text-[13px] text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="attendance-edit-food-allowance" class="mb-[8px] block font-medium text-black">Pago por comida ($)</label>
+                                <input id="attendance-edit-food-allowance" type="number" min="0" step="0.01" wire:model="editingFoodAllowance" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-zinc-50 px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                @error('editingFoodAllowance') <p class="mt-[6px] text-[13px] text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-[15px] flex justify-end gap-[10px]">
                         <button type="button" wire:click="closeEmployeeIdModal" class="inline-flex h-[42px] items-center justify-center rounded-lg border border-zinc-300 bg-white px-[18px] text-black transition hover:bg-zinc-200">Cancelar</button>
                         <button type="submit" wire:loading.attr="disabled" wire:target="saveEmployeeId" class="inline-flex h-[42px] items-center justify-center rounded-lg bg-black px-[18px] text-white transition hover:bg-zinc-800 disabled:cursor-wait">
-                            <span wire:loading.remove wire:target="saveEmployeeId">Guardar ID</span>
+                            <span wire:loading.remove wire:target="saveEmployeeId">Guardar y sincronizar</span>
                             <span wire:loading wire:target="saveEmployeeId">Guardando...</span>
                         </button>
                     </div>
