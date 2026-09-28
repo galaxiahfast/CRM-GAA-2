@@ -50,6 +50,14 @@ class AttendanceService
         foreach ($diasDict as $fechaStr => $items) {
             usort($items, fn ($a, $b) => $a['objeto']->timestamp <=> $b['objeto']->timestamp);
 
+            $correctedMarks = $this->settingsService->correctedMarksForDay($settings, $fechaStr);
+            if ($correctedMarks !== null) {
+                $items = array_map(fn (string $time) => [
+                    'objeto' => Carbon::parse($fechaStr.' '.$time),
+                    'hora_txt' => $time,
+                ], $correctedMarks);
+            }
+
             $marcasImprimir = array_column($items, 'hora_txt');
             $marcaciones = array_column($items, 'objeto');
             $cantidadMarcaciones = count($marcaciones);
@@ -100,6 +108,7 @@ class AttendanceService
                 'hourly_rate' => $hourlyRate,
                 'is_weekend' => $esFinDeSemana,
                 'detalles_marcas' => implode(', ', $marcasImprimir),
+                'marks' => $marcasImprimir,
                 'tiempo_segundos' => $tiempoNeto,
                 'pago_base_raw' => $pagoBase,
                 'bono_raw' => $bonoDia,

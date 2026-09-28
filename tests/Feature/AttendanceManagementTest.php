@@ -87,12 +87,9 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('showAttendanceModal', false)
             ->assertSet('payrollRows.0.estado', 'Corregido');
 
-        $this->assertSame(4, DB::table('control_de_horas')->where('employeeID', 'EMP-100')->where('authDate', '2026-08-07')->count());
-        $this->assertDatabaseHas('control_de_horas', [
-            'employeeID' => 'EMP-100',
-            'authDateTime' => '2026-08-07 18:30:15',
-            'direction' => 'OUT',
-        ]);
+        // La tabla conserva el espejo crudo del biométrico; el ajuste se aplica
+        // como una capa administrativa persistente sobre el informe.
+        $this->assertSame(3, DB::table('control_de_horas')->where('employeeID', 'EMP-100')->where('authDate', '2026-08-07')->count());
 
         $settings = json_decode(Storage::disk('local')->get('checador_settings/EMP-100.json'), true);
         $override = $settings['day_overrides']['2026-08-07'];
@@ -100,7 +97,20 @@ class AttendanceManagementTest extends TestCase
         $this->assertArrayNotHasKey('daily_pay_amount', $override);
         $this->assertSame(75.25, $override['bonus_amount']);
         $this->assertSame('Se agregó la salida omitida por el dispositivo.', $override['comment']);
+        $this->assertSame(['09:00:00', '13:00:00', '14:00:00', '18:30:15'], $override['marks']);
         $this->assertCount(1, $override['history']);
+
+        // Simula otra sincronización del reloj: aunque los datos crudos sigan
+        // incompletos, al volver a abrir el informe se conserva la corrección.
+        Livewire::actingAs($admin)->test(AttendanceManagement::class)
+            ->set('userId', $aux->id)
+            ->set('from', '2026-08-07')
+            ->set('to', '2026-08-07')
+            ->call('searchAttendance')
+            ->assertSet('payrollRows.0.estado', 'Corregido')
+            ->assertSet('payrollRows.0.neto', '08h 30m 15s')
+            ->call('editRow', '2026-08-07')
+            ->assertSet('modalMarks', ['09:00:00', '13:00:00', '14:00:00', '18:30:15']);
     }
 
     public function test_weekends_never_receive_meal_bonus_and_pay_is_calculated_from_hours(): void

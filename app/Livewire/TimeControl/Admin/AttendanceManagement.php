@@ -241,8 +241,7 @@ class AttendanceManagement extends Component
     public function generateSelectionReport(
         AttendanceService $attendanceService,
         AttendanceSettingsService $settingsService,
-    ): void
-    {
+    ): void {
         $this->errorToastVersion++;
         $this->validate([
             'from' => ['required', 'date'],
@@ -407,14 +406,7 @@ class AttendanceManagement extends Component
         $this->modalBonusAmount = $this->selectedDateIsWeekend
             ? 0.0
             : (float) ($row['bono_raw'] ?? $this->generalBonusAmount);
-        $this->modalMarks = DB::table('control_de_horas')
-            ->where('employeeID', $this->employeeId)
-            ->where('authDate', $fecha)
-            ->orderBy('authDateTime')
-            ->pluck('authDateTime')
-            ->map(fn ($dateTime) => Carbon::parse($dateTime)->format('H:i:s'))
-            ->values()
-            ->all();
+        $this->modalMarks = array_values($row['marks'] ?? []);
         $this->originalModalMarks = $this->modalMarks;
         $this->modalChangeComment = '';
         $this->resetValidation();
@@ -493,42 +485,16 @@ class AttendanceManagement extends Component
         $bonusAmount = Carbon::parse($this->selectedDate)->isWeekend()
             ? 0.0
             : (float) $this->modalBonusAmount;
-        $existing = DB::table('control_de_horas')
-            ->where('employeeID', $this->employeeId)
-            ->where('authDate', $this->selectedDate)
-            ->orderBy('authDateTime')
-            ->get();
-        $template = $existing->first();
-
-        DB::transaction(function () use ($settingsService, $marks, $template, $bonusAmount): void {
-            DB::table('control_de_horas')
-                ->where('employeeID', $this->employeeId)
-                ->where('authDate', $this->selectedDate)
-                ->delete();
-
-            foreach ($marks as $index => $time) {
-                DB::table('control_de_horas')->insert([
-                    'employeeID' => $this->employeeId,
-                    'personName' => $template?->personName ?? $this->selectedEmployeeName,
-                    'authDateTime' => $this->selectedDate.' '.$time,
-                    'authDate' => $this->selectedDate,
-                    'authTime' => $time,
-                    'direction' => $index % 2 === 0 ? 'IN' : 'OUT',
-                    'deviceName' => $template?->deviceName ?? 'Ajuste administrativo',
-                ]);
-            }
-
-            $settingsService->saveDayOverride(
-                $this->employeeId,
-                $this->selectedDate,
-                (float) $this->modalHourlyRate,
-                $bonusAmount,
-                $this->modalChangeComment,
-                auth()->id(),
-                $this->originalModalMarks,
-                $marks,
-            );
-        });
+        $settingsService->saveDayOverride(
+            $this->employeeId,
+            $this->selectedDate,
+            (float) $this->modalHourlyRate,
+            $bonusAmount,
+            $this->modalChangeComment,
+            auth()->id(),
+            $this->originalModalMarks,
+            $marks,
+        );
 
         $this->closeModal();
         session()->flash('message', count($marks) % 2 === 0

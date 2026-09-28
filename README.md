@@ -139,19 +139,43 @@ php artisan schedule:work
 
 ## Compilación para producción
 
-Para generar los recursos optimizados del frontend:
+En el servidor, confirma primero que el archivo `.env` contenga:
 
-```powershell
-npm run build
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
 ```
 
-Después de actualizar el código en el servidor, limpia y reconstruye las cachés necesarias:
+No copies a producción los archivos PHP generados dentro de `bootstrap/cache`
+en otro equipo. Laravel puede seguir usando una configuración anterior aunque
+el `.env` ya se haya corregido.
+
+Después de actualizar el código, ejecuta desde la raíz del proyecto:
 
 ```powershell
 php artisan optimize:clear
+composer install --no-dev --optimize-autoloader
 php artisan migrate --force
+npm ci
 npm run build
+php artisan optimize
 ```
+
+Verifica la configuración que Laravel está usando realmente, no sólo el
+contenido visible del `.env`:
+
+```powershell
+php artisan about --only=environment
+```
+
+La salida del servidor debe indicar `Environment: production` y
+`Debug Mode: OFF`. El comando `php artisan optimize` genera las cachés de
+configuración, eventos, rutas y vistas; debe ejecutarse otra vez después de
+cambiar el `.env` o archivos de configuración.
+
+Para producción utiliza Apache, Nginx o IIS con OPcache habilitado. No dejes la
+aplicación atendida por `php artisan serve`, porque es un servidor de desarrollo
+y procesa peor la concurrencia.
 
 ## Actualización de Browserslist
 

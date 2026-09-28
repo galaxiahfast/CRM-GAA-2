@@ -44,8 +44,7 @@ class AttendanceSettingsService
         float $hourlyRate,
         float $bonusAmount,
         bool $preserveDayOverrides = false,
-    ): void
-    {
+    ): void {
         $stored = $preserveDayOverrides ? $this->readFile($employeeId) : [];
 
         $this->writeFile($employeeId, [
@@ -71,8 +70,7 @@ class AttendanceSettingsService
         ?int $adminId = null,
         array $marksBefore = [],
         array $marksAfter = [],
-    ): void
-    {
+    ): void {
         // La regla de fin de semana se aplica también aquí para cubrir cualquier
         // entrada alternativa (API, Livewire o futuros consumidores del servicio).
         $bonusAmount = Carbon::parse($date)->isWeekend() ? 0.0 : $bonusAmount;
@@ -97,6 +95,10 @@ class AttendanceSettingsService
         $dayOverrides[$date] = [
             'hourly_rate' => round($hourlyRate, 2),
             'bonus_amount' => round($bonusAmount, 2),
+            // Las marcas corregidas son una capa administrativa sobre el espejo
+            // del biométrico. Guardarlas aquí evita que la sincronización vuelva a
+            // mostrar las marcas originales del dispositivo.
+            'marks' => array_values($marksAfter),
             'modified_individual' => true,
             'comment' => $comment,
             'modified_by' => $adminId,
@@ -109,6 +111,35 @@ class AttendanceSettingsService
             'bonus_amount' => $stored['bonus_amount'] ?? self::DEFAULT_BONUS_AMOUNT,
             'day_overrides' => $dayOverrides,
         ]);
+    }
+
+    /**
+     * Devuelve las marcas administrativas del día cuando existe una corrección.
+     *
+     * @return list<string>|null
+     */
+    public function correctedMarksForDay(array $settings, string $date): ?array
+    {
+        $override = $settings['day_overrides'][$date] ?? null;
+        $marks = is_array($override) ? ($override['marks'] ?? null) : null;
+
+        // Compatibilidad con correcciones hechas antes de que las marcas se
+        // guardaran como valor principal: el historial ya contenía el resultado.
+        if (! is_array($marks) && is_array($override['history'] ?? null)) {
+            $history = $override['history'];
+            $lastChange = end($history);
+            $marks = is_array($lastChange) ? ($lastChange['marks_after'] ?? null) : null;
+        }
+
+        if (! is_array($marks)) {
+            return null;
+        }
+
+        return collect($marks)
+            ->filter(fn ($mark) => is_string($mark) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $mark))
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**
