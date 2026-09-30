@@ -16,7 +16,8 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.0",
-        "spatie/laravel-permission": "^6.18"
+        "spatie/laravel-permission": "^6.18",
+        "thiagoalessio/tesseract_ocr": "^2.13"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

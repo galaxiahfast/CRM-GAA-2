@@ -461,6 +461,18 @@
                                     <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Preguntas</span>
                                 </a>
                             </li>
+                            @can('manage-delivery-notes')
+                                <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('soporte.hoja-entrega') }}"
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" />
+                                        </svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Hoja de entrega</span>
+                                    </a>
+                                </li>
+                            @endcan
                         </ul>
                     </div>
                 </li>

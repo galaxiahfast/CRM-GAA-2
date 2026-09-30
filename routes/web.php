@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\TimeEntryController;
 // Modelos
@@ -18,6 +19,7 @@ use App\Livewire\Customer\GestionClientes;
 use App\Livewire\CustomerReport;
 use App\Livewire\Profile\ProfileDirectory;
 use App\Livewire\Profile\UpdateProfileInformationForm;
+use App\Livewire\Support\EquipmentDeliveryNotes;
 use App\Livewire\Support\QuestionsBot;
 use App\Livewire\Support\TicketChat;
 use App\Livewire\TimeControl\Admin\ActiveTimers;
@@ -240,5 +242,12 @@ Route::middleware([
     Route::prefix('soporte')->name('soporte.')->group(function () {
         Route::get('/ticket', TicketChat::class)->name('ticket');
         Route::get('/preguntas', QuestionsBot::class)->name('preguntas');
+        Route::middleware('can:manage-delivery-notes')->group(function () {
+            Route::get('/hoja-entrega', EquipmentDeliveryNotes::class)->name('hoja-entrega');
+            Route::get('/hoja-entrega/{report}/pdf', [EquipmentDeliveryDocumentController::class, 'pdf'])
+                ->name('hoja-entrega.pdf');
+            Route::get('/hoja-entrega/{report}/foto', [EquipmentDeliveryDocumentController::class, 'photo'])
+                ->name('hoja-entrega.photo');
+        });
     });
 });

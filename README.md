@@ -201,6 +201,78 @@ Para validar la compilación del frontend:
 npm run build
 ```
 
+## Importación de hojas de entrega anteriores
+
+El módulo **Soporte > Centro de ayuda > Hoja de entrega** reemplaza la
+aplicación local de Python. Para trasladar su historial SQLite sin modificar el
+archivo original, ejecuta una sola vez:
+
+```powershell
+php artisan delivery-notes:import-legacy "C:\Users\MOISES INFORMATICA\Desktop\Hoja de Entrega\instance\datamid.sqlite3" --uploads="C:\Users\MOISES INFORMATICA\Desktop\Hoja de Entrega\instance\uploads"
+```
+
+El importador puede repetirse con seguridad: los folios que ya existen se
+omiten y las fotografías se copian al almacenamiento privado del CRM.
+
+## Autocompletado gratuito de hojas de entrega
+
+El módulo puede leer etiquetas de equipos y proponer marca, modelo, número de
+serie, tipo de equipo y accesorios. Por seguridad y costo, la configuración
+predeterminada usa **Tesseract local**: la fotografía no sale del servidor y no
+existe cuota ni suscripción.
+
+Instala el ejecutable y los idiomas en el servidor Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-spa
+tesseract --version
+composer install --no-dev --optimize-autoloader
+```
+
+Configura el `.env` de producción:
+
+```dotenv
+EQUIPMENT_OCR_DRIVER=tesseract
+TESSERACT_BINARY=/usr/bin/tesseract
+TESSERACT_LANGUAGES=eng+spa
+TESSERACT_TIMEOUT=25
+
+# Catálogo UPCitemdb: opcional, sin registro, 100 consultas diarias.
+EQUIPMENT_CATALOG_ENABLED=false
+EQUIPMENT_CATALOG_TEXT_SEARCH=false
+UPCITEMDB_TIMEOUT=8
+UPCITEMDB_CACHE_HOURS=168
+```
+
+En Windows instala Tesseract 5, agrega su carpeta al `PATH` o define, por
+ejemplo, `TESSERACT_BINARY=C:\Program Files\Tesseract-OCR\tesseract.exe`.
+
+Como alternativa opcional, OCR.space ofrece una clave gratuita. Esta opción
+envía la fotografía a un servicio externo; actívala únicamente si la política
+de privacidad de DataMID lo permite:
+
+```dotenv
+EQUIPMENT_OCR_DRIVER=ocr_space
+OCR_SPACE_API_KEY=clave_gratuita
+OCR_SPACE_TIMEOUT=25
+```
+
+La clave se obtiene en `https://ocr.space/ocrapi`. UPCitemdb no necesita clave
+en su plan de prueba; se habilita con `EQUIPMENT_CATALOG_ENABLED=true`. La
+búsqueda por texto consume una cuota más limitada, por eso permanece separada
+en `EQUIPMENT_CATALOG_TEXT_SEARCH`.
+
+Después de modificar el `.env`, aplica la configuración:
+
+```bash
+php artisan optimize:clear
+php artisan optimize
+```
+
+Si Tesseract no está disponible o una API gratuita alcanza su límite, la foto
+se conserva y el formulario continúa permitiendo captura y corrección manual.
+
 ## Solución rápida de problemas
 
 ### Los cambios visuales no aparecen

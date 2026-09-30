@@ -5,8 +5,8 @@ namespace App\Providers;
 use App\Models\AccessPermission;
 use App\Models\Customer;
 use App\Models\JobPosition;
-use App\Models\PhysicalArea;
 use App\Models\PermissionGroup;
+use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\SubService;
 use App\Models\User;
@@ -103,6 +103,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('correct-time-tracking', fn (User $user): bool => app(PermissionAccessService::class)
             ->allows($user, 'time-control.supervision.view'));
+
+        Gate::define('manage-delivery-notes', fn (User $user): bool => $user->isAdmin());
     }
 
     private function registerSystemNotificationListeners(): void
