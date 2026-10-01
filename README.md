@@ -214,6 +214,31 @@ php artisan delivery-notes:import-legacy "C:\Users\MOISES INFORMATICA\Desktop\Ho
 El importador puede repetirse con seguridad: los folios que ya existen se
 omiten y las fotografías se copian al almacenamiento privado del CRM.
 
+## Publicación única del historial de órdenes de servicio
+
+Git publica el código, pero no copia los registros de la base de datos local.
+Para trasladar una sola vez el historial actual —incluidas sus evidencias— crea
+la instantánea versionable en el equipo local:
+
+```powershell
+php artisan delivery-notes:export-history
+git add database/seeders/data/historial_ordenes.json
+git commit -m "Export historial de órdenes de servicio"
+git push
+```
+
+Después del despliegue, impórtala una sola vez en producción:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --class=HistorialOrdenesServicioSeeder --force
+```
+
+El seeder busca cada orden por folio y cada movimiento por tipo y fecha, por lo
+que puede repetirse sin duplicar información. No está registrado en
+`DatabaseSeeder` y, por tanto, no se ejecuta automáticamente durante los
+despliegues posteriores.
+
 ## Autocompletado gratuito de hojas de entrega
 
 El módulo puede leer etiquetas de equipos y proponer marca, modelo, número de

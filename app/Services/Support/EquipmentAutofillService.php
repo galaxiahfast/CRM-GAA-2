@@ -37,9 +37,13 @@ class EquipmentAutofillService
     ) {}
 
     /** @return array{fields: array<string, string>, recognized_text: string, catalog_used: bool} */
-    public function fromImage(string $imagePath): array
+    public function fromImage(string $imagePath, string $preprocessing = 'default'): array
     {
-        return $this->fromText($this->ocr->extract($imagePath));
+        $text = $preprocessing === 'default'
+            ? $this->ocr->extract($imagePath)
+            : $this->ocr->extract($imagePath, $preprocessing);
+
+        return $this->fromText($text);
     }
 
     /** @return array{fields: array<string, string>, recognized_text: string, catalog_used: bool} */

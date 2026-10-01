@@ -1,6 +1,6 @@
 {
     "schema_version": 1,
-    "exported_at": "2026-10-01T15:56:34.689985Z",
+    "exported_at": "2026-10-01T16:29:38.113591Z",
     "orders": [
         {
             "folio": "DM-20260922-0001",
@@ -34,6 +34,7 @@
             "forma_pago": null,
             "garantia": null,
             "foto_path": "delivery-notes/legacy-bb67422c81d328d8db434fade55d15cada0f57e7.jpg",
+            "ocr_raw_text": null,
             "creado_por": null,
             "creado_por_email": null,
             "legacy_report_id": 1,
@@ -88,6 +89,7 @@
             "forma_pago": null,
             "garantia": null,
             "foto_path": null,
+            "ocr_raw_text": null,
             "creado_por": null,
             "creado_por_email": null,
             "legacy_report_id": 2,
@@ -140,6 +142,7 @@
             "forma_pago": null,
             "garantia": null,
             "foto_path": null,
+            "ocr_raw_text": null,
             "creado_por": null,
             "creado_por_email": null,
             "legacy_report_id": 3,
@@ -192,6 +195,7 @@
             "forma_pago": null,
             "garantia": null,
             "foto_path": null,
+            "ocr_raw_text": null,
             "creado_por": null,
             "creado_por_email": null,
             "legacy_report_id": 4,

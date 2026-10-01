@@ -9,16 +9,24 @@ use Throwable;
 
 class EquipmentOcrService
 {
-    public function extract(string $imagePath): string
+    public function extract(string $imagePath, string $preprocessing = 'default'): string
     {
         if (! is_file($imagePath) || ! is_readable($imagePath)) {
             throw new RuntimeException('No fue posible leer la fotografía temporal.');
         }
 
-        return match (config('equipment-autofill.ocr.driver', 'tesseract')) {
-            'ocr_space' => $this->extractWithOcrSpace($imagePath),
-            default => $this->extractWithTesseract($imagePath),
-        };
+        $prepared = $this->preprocess($imagePath, $preprocessing);
+
+        try {
+            return match (config('equipment-autofill.ocr.driver', 'tesseract')) {
+                'ocr_space' => $this->extractWithOcrSpace($prepared),
+                default => $this->extractWithTesseract($prepared),
+            };
+        } finally {
+            if ($prepared !== $imagePath) {
+                @unlink($prepared);
+            }
+        }
     }
 
     private function extractWithTesseract(string $imagePath): string
@@ -92,6 +100,45 @@ class EquipmentOcrService
             report($exception);
 
             throw new RuntimeException('No fue posible consultar OCR.space en este momento.', previous: $exception);
+        }
+    }
+
+    private function preprocess(string $imagePath, string $mode): string
+    {
+        if ($mode === 'default') {
+            return $imagePath;
+        }
+        if (! in_array($mode, ['grayscale', 'contrast', 'rotate'], true)) {
+            throw new RuntimeException('El modo de preprocesamiento OCR no es válido.');
+        }
+
+        $source = @imagecreatefromstring((string) file_get_contents($imagePath));
+        if (! $source) {
+            throw new RuntimeException('No fue posible preparar la fotografía para un nuevo intento.');
+        }
+
+        try {
+            if ($mode === 'grayscale') {
+                imagefilter($source, IMG_FILTER_GRAYSCALE);
+            } elseif ($mode === 'contrast') {
+                imagefilter($source, IMG_FILTER_GRAYSCALE);
+                imagefilter($source, IMG_FILTER_CONTRAST, -35);
+            } else {
+                $rotated = imagerotate($source, 90, 255);
+                if ($rotated instanceof \GdImage) {
+                    imagedestroy($source);
+                    $source = $rotated;
+                }
+            }
+
+            $temporary = tempnam(sys_get_temp_dir(), 'equipment-ocr-');
+            if (! $temporary || ! imagejpeg($source, $temporary, 92)) {
+                throw new RuntimeException('No fue posible crear la imagen temporal para OCR.');
+            }
+
+            return $temporary;
+        } finally {
+            imagedestroy($source);
         }
     }
 }

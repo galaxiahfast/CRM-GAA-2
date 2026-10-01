@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Hoja de entrega {{ $report->folio }}</title>
+    <title>{{ $documentType }} {{ $report->folio }}</title>
     <style>
         @page { size: letter; margin: 0; }
         * { box-sizing: border-box; }
@@ -37,13 +37,38 @@
     </style>
 </head>
 <body>
+    @php
+        $titles = [
+            'recepcion' => 'ACTA DE RECEPCIÓN DE EQUIPO',
+            'entrega' => 'ACTA DE ENTREGA Y CONFORMIDAD',
+            'prestamo' => 'ACTA DE PRÉSTAMO DE EQUIPO',
+            'devolucion' => 'ACTA DE DEVOLUCIÓN DE EQUIPO',
+            'compra' => 'REMISIÓN / ACTA DE ENTREGA POR COMPRA',
+        ];
+        $documentDate = match ($documentType) {
+            'recepcion' => $report->fecha_recepcion,
+            'entrega', 'compra' => $report->fecha_entrega_real,
+            'devolucion' => $report->fecha_devolucion,
+            default => $report->created_at,
+        };
+        $documentStatus = match ($documentType) {
+            'recepcion' => 'Recibido',
+            'entrega' => 'Entregado',
+            'prestamo' => 'Prestado',
+            'devolucion' => 'Devuelto',
+            'compra' => 'Vendido',
+        };
+        $datamidSignature = in_array($documentType, ['recepcion', 'devolucion'], true)
+            ? 'FIRMA DATAMID QUE RECIBE'
+            : 'FIRMA DATAMID QUE ENTREGA';
+    @endphp
     @foreach ($copies as $copy)
         <section class="page">
             @if ($headerDecoration)<img class="header-decoration" src="{{ $headerDecoration }}" alt="">@endif
             @if ($logo)<img class="brand-logo" src="{{ $logo }}" alt="DataMID">@endif
             @if ($footerDecoration)<img class="footer-decoration" src="{{ $footerDecoration }}" alt="">@endif
 
-            <h1 class="document-title">HOJA DE ENTREGA Y RECEPCIÓN</h1>
+            <h1 class="document-title">{{ $titles[$documentType] }}</h1>
             <div class="title-rule"></div>
             <div class="folio">Folio: {{ $report->folio }}</div>
             <div class="copy-badge">{{ $copy === 'datamid' ? 'COPIA DATAMID' : 'COPIA CLIENTE' }}</div>
@@ -55,9 +80,9 @@
                         <td style="width: 33%"><div class="field"><div class="label">Contacto</div><div class="value">{{ $report->customer_contact ?: '—' }}</div></div></td>
                     </tr>
                     <tr>
-                        <td style="width: 33.33%"><div class="field"><div class="label">Movimiento</div><div class="value">{{ $report->movementLabel() }}</div></div></td>
+                        <td style="width: 33.33%"><div class="field"><div class="label">Estado en este movimiento</div><div class="value">{{ $documentStatus }}</div></div></td>
                         <td style="width: 33.33%"><div class="field"><div class="label">Tipo de equipo</div><div class="value">{{ $report->equipment_type }}</div></div></td>
-                        <td style="width: 33.33%"><div class="field"><div class="label">Fecha</div><div class="value">{{ $report->created_at->timezone(config('support.timezone'))->format('d/m/Y H:i') }}</div></div></td>
+                        <td style="width: 33.33%"><div class="field"><div class="label">Fecha</div><div class="value">{{ ($documentDate ?: $report->created_at)->timezone(config('support.timezone'))->format('d/m/Y H:i') }}</div></div></td>
                     </tr>
                     <tr>
                         <td><div class="field"><div class="label">Marca</div><div class="value">{{ $report->brand ?: '—' }}</div></div></td>
@@ -65,20 +90,28 @@
                         <td><div class="field"><div class="label">Número de serie</div><div class="value">{{ $report->serial_number ?: 'SIN SERIE' }}</div></div></td>
                     </tr>
                     <tr>
-                        <td colspan="3"><div class="field tall"><div class="label">Accesorios recibidos / entregados</div><div class="value">{{ $report->accessories ?: '—' }}</div></div></td>
+                        <td colspan="3"><div class="field tall"><div class="label">{{ in_array($documentType, ['recepcion', 'prestamo'], true) ? 'Accesorios recibidos' : 'Accesorios devueltos / entregados' }}</div><div class="value">{{ $report->accessories ?: '—' }}</div></div></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="width: 63%"><div class="field condition"><div class="label">Estado físico</div><div class="value">{{ $report->conditionLabel() }}</div></div></td>
                         <td style="width: 37%"><div class="photo-field"><div class="label">Fotografía</div>@if ($photo)<img class="photo" src="{{ $photo }}" alt="Fotografía del equipo">@else<div class="no-photo">Sin fotografía</div>@endif</div></td>
                     </tr>
-                    <tr>
-                        <td colspan="3"><div class="field observations"><div class="label">Observaciones</div><div class="value">{{ $report->observations ?: '—' }}</div></div></td>
-                    </tr>
+                    @if ($documentType === 'recepcion')
+                        <tr><td colspan="3"><div class="field observations"><div class="label">Falla reportada por el cliente</div><div class="value">{{ $report->falla_reportada ?: '—' }}</div></div></td></tr>
+                    @elseif ($documentType === 'entrega')
+                        <tr><td colspan="2"><div class="field observations"><div class="label">Diagnóstico</div><div class="value">{{ $report->diagnostico ?: '—' }}</div></div></td><td><div class="field observations"><div class="label">Reparación realizada</div><div class="value">{{ $report->reparacion_realizada ?: '—' }}</div></div></td></tr>
+                    @elseif ($documentType === 'prestamo')
+                        <tr><td colspan="3"><div class="field observations"><div class="label">Fecha límite de devolución</div><div class="value">{{ $report->fecha_limite_devolucion?->timezone(config('support.timezone'))->format('d/m/Y H:i') ?: '—' }}</div></div></td></tr>
+                    @elseif ($documentType === 'compra')
+                        <tr><td><div class="field observations"><div class="label">Precio</div><div class="value">${{ number_format((float) $report->precio, 2) }}</div></div></td><td><div class="field observations"><div class="label">Forma de pago</div><div class="value">{{ $report->forma_pago ?: '—' }}</div></div></td><td><div class="field observations"><div class="label">Garantía</div><div class="value">{{ $report->garantia ?: '—' }}</div></div></td></tr>
+                    @else
+                        <tr><td colspan="3"><div class="field observations"><div class="label">Condición al devolver</div><div class="value">{{ $report->observations ?: '—' }}</div></div></td></tr>
+                    @endif
                 </table>
-                <p class="confirmation">Las partes confirman que los datos y el estado descritos corresponden al equipo al momento de esta operación.</p>
+                <p class="confirmation">Las partes confirman que los datos, condiciones y accesorios descritos corresponden al equipo al momento de esta operación.</p>
             </div>
 
-            <div class="signatures"><span class="signature">FIRMA DATAMID</span><span class="signature right">FIRMA DEL CLIENTE</span></div>
+            <div class="signatures"><span class="signature">{{ $datamidSignature }} · {{ $report->quien_entrega }}</span><span class="signature right">{{ in_array($documentType, ['recepcion', 'prestamo'], true) ? 'FIRMA DEL CLIENTE QUE ENTREGA' : 'FIRMA DEL CLIENTE QUE RECIBE' }}</span></div>
             <div class="created-by">Registro generado por {{ trim(($report->creator?->name ?? '').' '.($report->creator?->last_name ?? '')) ?: 'Administración DataMID' }}</div>
         </section>
     @endforeach

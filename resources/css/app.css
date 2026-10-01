@@ -87,9 +87,18 @@ div.dataTables_filter {
     --tw-ring-color: rgba(0, 0, 0, .12) !important;
 }
 
-.support-monochrome :is(input, textarea):focus {
-    border-color: #000 !important;
-    --tw-ring-color: rgba(0, 0, 0, .10) !important;
+.support-monochrome :is(input, select, textarea):focus,
+.support-monochrome [role="combobox"]:focus {
+    border-color: #d4d4d8 !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    --tw-ring-color: transparent !important;
+}
+
+.support-monochrome :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible,
+.support-monochrome [role="combobox"]:focus-visible {
+    border-color: #d4d4d8 !important;
+    box-shadow: none !important;
 }
 
 .support-monochrome :is([class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[12px]"], [class*="text-[13px]"], [class*="text-sm"], [class*="text-base"], [class*="text-lg"]) {
@@ -372,4 +381,78 @@ html.module-dark-theme .sidebar-overlay-scrollbar {
 
 .profile-page-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #27272a;
+}
+
+/* Foco uniforme y discreto para controles de toda la aplicación. */
+:is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+:is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible,
+[role="combobox"]:focus,
+[role="combobox"]:focus-visible {
+    outline: none !important;
+    border-color: #6a62a8 !important;
+    box-shadow: 0 0 0 3px rgba(62, 58, 143, .14) !important;
+    --tw-ring-color: transparent !important;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+/* Scroll global delgado, incluido en tablas, dropdowns y áreas de texto. */
+html,
+body,
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #1a3a6b #eef3f8;
+}
+
+*::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #eef3f8;
+}
+
+*::-webkit-scrollbar-thumb {
+    min-height: 28px;
+    border: 2px solid #eef3f8;
+    border-radius: 9999px;
+    background: #1a3a6b;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #15305a;
+}
+
+html.module-dark-theme *,
+html.module-dark-theme {
+    scrollbar-color: #a9a4cf #24222f !important;
+}
+
+html.module-dark-theme *::-webkit-scrollbar-track,
+html.module-dark-theme::-webkit-scrollbar-track {
+    background: #24222f !important;
+}
+
+html.module-dark-theme *::-webkit-scrollbar-thumb,
+html.module-dark-theme::-webkit-scrollbar-thumb {
+    border-color: #24222f !important;
+    background: #a9a4cf !important;
+}
+
+/* Hoja de entrega: acordeón, estado persistente y campos sugeridos por OCR. */
+.service-order-step {
+    overflow: visible;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.service-order-step:focus-within {
+    border-color: #d4d4d8;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .07);
+}
+
+.equipment-autofilled {
+    border-color: #f0b429 !important;
+    background-color: #fffbeb !important;
+    box-shadow: inset 3px 0 0 #f0b429 !important;
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
