@@ -105,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
             ->allows($user, 'time-control.supervision.view'));
 
         Gate::define('manage-delivery-notes', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manage-backup-reports', fn (User $user): bool => $user->isAdmin());
     }
 
     private function registerSystemNotificationListeners(): void

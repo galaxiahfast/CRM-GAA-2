@@ -49,6 +49,17 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        'backup_reports' => [
+            'transport' => 'smtp',
+            'scheme' => env('BACKUP_MAIL_SCHEME', 'smtps'),
+            'host' => env('BACKUP_MAIL_HOST', 'mail.datamid.com.mx'),
+            'port' => env('BACKUP_MAIL_PORT', 465),
+            'username' => env('BACKUP_MAIL_USERNAME', 'emiliano.ortiz@datamid.com.mx'),
+            'password' => env('BACKUP_MAIL_PASSWORD'),
+            'timeout' => 30,
+            'local_domain' => env('BACKUP_MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

@@ -21,6 +21,7 @@ use App\Livewire\Profile\ProfileDirectory;
 use App\Livewire\Profile\UpdateProfileInformationForm;
 use App\Livewire\Support\EquipmentDeliveryNotes;
 use App\Livewire\Support\QuestionsBot;
+use App\Livewire\Support\ServerBackupReports;
 use App\Livewire\Support\TicketChat;
 use App\Livewire\TimeControl\Admin\ActiveTimers;
 use App\Livewire\TimeControl\Admin\AttendanceManagement;
@@ -249,5 +250,8 @@ Route::middleware([
             Route::get('/hoja-entrega/{report}/foto', [EquipmentDeliveryDocumentController::class, 'photo'])
                 ->name('hoja-entrega.photo');
         });
+        Route::get('/reportes-respaldos', ServerBackupReports::class)
+            ->middleware('can:manage-backup-reports')
+            ->name('reportes-respaldos');
     });
 });
