@@ -321,7 +321,7 @@
             </div>
         </div>
 
-        <div class="grid min-h-[360px] grid-cols-[300px_minmax(0,1fr)]">
+        <div class="grid h-[520px] min-h-0 grid-cols-[300px_minmax(0,1fr)] overflow-hidden">
             <form wire:submit="generateSelectionReport" class="flex flex-col gap-[20px] border-r border-zinc-200 bg-white p-[20px]">
                 <div>
                     <h3 class="font-semibold text-black">Periodo del informe</h3>
