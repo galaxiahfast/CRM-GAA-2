@@ -1,4 +1,4 @@
-<div class="support-monochrome attendance-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+<div class="support-monochrome attendance-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700" style="background-color: #ffffff !important;"
      x-data="{
         viewScale: 100,
         isFullscreen: false,
@@ -96,8 +96,25 @@
         .attendance-scrollbar::-webkit-scrollbar-track { background: #fff; }
         .attendance-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
         .attendance-scrollbar { scrollbar-width: thin; scrollbar-color: #000 #fff; }
+        html:has(.attendance-monochrome),
+        body:has(.attendance-monochrome),
+        body:has(.attendance-monochrome) > .min-h-screen,
+        body:has(.attendance-monochrome) #main-content,
+        body:has(.attendance-monochrome) #main-content > div,
+        .attendance-monochrome { background: #fff !important; }
+        .attendance-monochrome .attendance-page-body,
+        .attendance-monochrome .attendance-page-heading { background-color: #fff !important; }
         .attendance-monochrome:fullscreen { overflow: auto; background: #fff; }
-        .attendance-monochrome .admin-attendance-topbar { background: rgba(255,255,255,.75); }
+        .attendance-monochrome .admin-attendance-topbar {
+            background: #fff;
+            color: #000;
+            font-family: inherit;
+            font-weight: 400;
+        }
+        .attendance-monochrome .admin-attendance-topbar * { font-family: inherit; font-weight: 400 !important; }
+        .attendance-monochrome .admin-attendance-topbar .attendance-header-emphasis { font-weight: 600 !important; }
+        .attendance-monochrome .admin-attendance-topbar .attendance-header-emphasis:disabled { font-weight: 400 !important; }
+        .attendance-monochrome table thead tr { background: #fff !important; }
         .attendance-monochrome :is(input, textarea, button):focus,
         .attendance-monochrome :is(input, textarea, button):focus-visible { outline: none !important; box-shadow: none !important; }
         .attendance-monochrome .attendance-report-search:focus,
@@ -206,7 +223,7 @@
         }
     </style>
 
-    <div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
         <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño del Reloj checador administrativo">
         <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
         <span class="h-5 w-px bg-zinc-200"></span>
@@ -216,7 +233,7 @@
         </button>
     </div>
 
-    <div class="relative z-10 min-h-[calc(100dvh-90px)] min-w-[1000px] origin-top bg-white"
+    <div class="attendance-page-body relative z-10 min-h-[calc(100dvh-90px)] min-w-[1000px] origin-top bg-[#FFFFFF]" style="background: #ffffff !important;"
          :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
 
     @if (session()->has('message'))
@@ -253,28 +270,28 @@
     @endif
 
     {{-- Encabezado y migas de pan --}}
-    <div class="admin-attendance-topbar flex flex-wrap items-center justify-between gap-12 whitespace-nowrap border-b border-zinc-200 p-[50px]">
-        <div class="flex items-center gap-[15px] text-[15px] text-gray-500">
-            <span class="font-medium">Actividades</span>
+    <div class="admin-attendance-topbar flex flex-wrap items-center justify-between gap-12 whitespace-nowrap border-b border-zinc-200 bg-white p-[50px]">
+        <div class="flex items-center gap-[15px] text-[15px] font-normal text-gray-500">
+            <span>Actividades</span>
             <span class="font-light text-gray-300">&gt;</span>
-            <span class="font-medium">Control de Horas</span>
+            <span>Control de Horas</span>
             <span class="font-light text-gray-300">&gt;</span>
-            <span class="font-semibold text-black">Reloj Checador</span>
+            <span class="attendance-header-emphasis text-black">Reloj Checador</span>
         </div>
         <div class="flex flex-wrap items-center gap-[30px]">
             <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" @disabled(! $searched)
-                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-40">
+                    class="attendance-header-emphasis inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] text-black transition-colors hover:text-gray-500 disabled:cursor-not-allowed disabled:text-gray-500 disabled:opacity-100">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
                 Descargar PDF
             </button>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
+            <button type="button" disabled aria-disabled="true" class="inline-flex cursor-not-allowed items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-normal text-gray-500 opacity-100">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10ZM9 7V3h6v4"/></svg>
                 Imprimir
             </button>
         </div>
     </div>
 
-    <div class="admin-attendance-content mx-[50px] mt-[50px] flex items-center gap-[20px]">
+    <div class="admin-attendance-content attendance-page-heading mx-[50px] mt-[50px] flex items-center gap-[20px] bg-[#FFFFFF]" style="background: #ffffff !important;">
         <div class="flex min-w-0 items-center gap-[20px]">
             <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,15 +306,31 @@
     </div>
 
     {{-- Informes individual, grupal y general --}}
-    <section class="admin-attendance-content relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
-        <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-zinc-50 px-[20px] py-[15px]">
+    <section
+        x-data="{
+            selectedIds: @js(array_values(array_map('intval', $selectedReportUserIds))),
+            allUserIds: @js($reportUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()),
+            syncSelection() {
+                $wire.set('selectedReportUserIds', [...this.selectedIds], false);
+            },
+            selectAllUsers() {
+                this.selectedIds = [...this.allUserIds];
+                this.syncSelection();
+            },
+            clearAllUsers() {
+                this.selectedIds = [];
+                this.syncSelection();
+            }
+        }"
+        class="admin-attendance-content relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
+    >
+        <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
                 <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
             </div>
             <div class="flex flex-wrap items-center gap-[30px] text-[15px] font-medium text-black">
-                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>{{ count($selectedReportUserIds) }} seleccionados</span>
-                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>Actualización automática</span>
+                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span>
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M9 14h.01M9 18h.01M15 10h.01M15 14h.01M15 18h.01"/></svg>{{ $selectedAreaCount }} {{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span>
             </div>
         </header>
@@ -316,8 +349,8 @@
                 </button>
             </div>
             <div class="flex items-center gap-[20px] whitespace-nowrap">
-                <button type="button" wire:click="selectAllReportUsers" class="inline-flex items-center gap-[8px] p-0 font-semibold text-black hover:text-zinc-600"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
-                <button type="button" wire:click="clearReportSelection" class="inline-flex items-center gap-[8px] p-0 text-zinc-500 hover:text-black"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
+                <button type="button" @click="selectAllUsers()" class="inline-flex items-center gap-[8px] p-0 font-semibold text-black hover:text-zinc-600"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
+                <button type="button" @click="clearAllUsers()" class="inline-flex items-center gap-[8px] p-0 text-zinc-500 hover:text-black"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
             </div>
         </div>
 
@@ -364,7 +397,7 @@
 
             </form>
 
-            <div class="flex min-h-0 min-w-0 flex-col bg-zinc-50">
+            <div class="flex min-h-0 min-w-0 flex-col bg-white">
                 <div class="attendance-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                     @forelse ($reportUsers->groupBy(fn ($user) => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada') as $areaName => $areaUsers)
                         <div class="mb-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
@@ -374,9 +407,14 @@
                                     @php
                                         $reportUserSearch = strtolower(trim($reportUser->name.' '.$reportUser->last_name).' '.$reportUser->employee_id.' '.$areaName);
                                     @endphp
-                                    <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-zinc-50 p-[10px] transition hover:bg-zinc-100">
+                                    <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white p-[10px] transition hover:bg-zinc-100">
                                         <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-[15px] p-[5px]">
-                                            <input type="checkbox" wire:model.live="selectedReportUserIds" value="{{ $reportUser->id }}" class="h-4 w-4 rounded border-zinc-300 text-black focus:ring-0">
+                                            <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                                                <input type="checkbox" x-model.number="selectedIds" @change="syncSelection()" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-black checked:bg-black focus:outline-none focus:ring-0">
+                                                <svg class="pointer-events-none absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true">
+                                                    <path d="m4 10 4 4 8-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" />
+                                                </svg>
+                                            </span>
                                             <span class="min-w-0 flex-1"><span class="block truncate font-medium text-black">{{ trim($reportUser->name.' '.$reportUser->last_name) }}</span><span class="mt-[3px] block truncate text-zinc-500">ID Checador: {{ $reportUser->employee_id }}</span></span>
                                         </label>
                                         <button type="button" wire:click.stop="openEmployeeIdModal({{ $reportUser->id }})" title="Editar ID del checador" aria-label="Editar ID del checador de {{ trim($reportUser->name.' '.$reportUser->last_name) }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0">
@@ -400,7 +438,7 @@
                 'general' => ['label' => 'Reporte general', 'description' => 'Consolidado del periodo', 'enabled' => count($reportedUserIds) > 1],
             ];
         @endphp
-        <footer class="grid grid-cols-3 border-t border-zinc-200 bg-zinc-50 px-[20px] py-[15px]">
+        <footer class="grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
             @foreach ($attendanceReportActions as $mode => $action)
                 <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
                         @disabled(! $selectionReportIsCurrent || ! $action['enabled'])
@@ -418,7 +456,7 @@
     @if ($selectionReportIsCurrent)
     <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
         <div>
-            <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 bg-zinc-50 px-[20px] py-[15px]">
+            <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
                 <div>
                     <h2 class="font-semibold text-black">Informe de asistencia</h2>
                     <p class="mt-[3px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
@@ -513,7 +551,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="bg-zinc-50 px-[20px] py-[40px] text-center text-zinc-500">
+                                <td colspan="9" class="bg-white px-[20px] py-[40px] text-center text-zinc-500">
                                     Esta persona no tiene jornadas registradas en el periodo seleccionado.
                                 </td>
                             </tr>
@@ -537,7 +575,7 @@
                 </table>
             </div>
             @if ($searched)
-                <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-zinc-50 p-[20px] text-zinc-500">
+                <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-white p-[20px] text-zinc-500">
                     <span class="font-semibold text-black">Referencia de estados</span>
                     <div class="flex flex-wrap items-center gap-[25px]">
                         <span class="inline-flex items-center gap-[10px]"><span class="h-3 w-3 rounded-full border border-zinc-400 bg-white"></span>Día correcto</span>
@@ -592,12 +630,12 @@
                         <label for="attendance-employee-id" class="mb-[8px] block font-medium text-black">ID relacionado</label>
                         <div class="relative" x-data="{ open: false, search: @js($editingEmployeeId) }" @click.outside="open = false">
                             <div class="relative">
-                                <input id="attendance-employee-id" type="text" maxlength="50" autocomplete="off" wire:model="editingEmployeeId" x-model="search" @focus="open = true" @click="open = true" @input="open = true" @keydown.escape="open = false" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-zinc-50 px-[15px] pr-12 text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Busca un ID disponible" aria-autocomplete="list" aria-controls="attendance-employee-id-options" x-bind:aria-expanded="open">
+                                <input id="attendance-employee-id" type="text" maxlength="50" autocomplete="off" wire:model="editingEmployeeId" x-model="search" @focus="open = true" @click="open = true" @input="open = true" @keydown.escape="open = false" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-white px-[15px] pr-12 text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Busca un ID disponible" aria-autocomplete="list" aria-controls="attendance-employee-id-options" x-bind:aria-expanded="open">
                                 <button type="button" @click="open = !open" aria-label="Mostrar IDs disponibles" class="absolute right-0 top-0 flex h-[46px] w-12 items-center justify-center text-zinc-500 hover:text-black focus:outline-none focus:ring-0">
                                     <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                                 </button>
                             </div>
-                            <div id="attendance-employee-id-options" x-cloak x-show="open" x-transition class="attendance-id-scrollbar absolute left-0 top-full z-[100] mt-[8px] max-h-[293px] w-full space-y-[5px] overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 p-[10px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]" role="listbox">
+                            <div id="attendance-employee-id-options" x-cloak x-show="open" x-transition class="attendance-id-scrollbar absolute left-0 top-full z-[100] mt-[8px] max-h-[293px] w-full space-y-[5px] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[10px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]" role="listbox">
                                 @forelse ($employeeIdSuggestions as $employeeIdSuggestion)
                                     @php($suggestedPersonName = trim((string) ($employeeIdSuggestion->personName ?: 'Nombre no disponible')))
                                     <button type="button" data-employee-id="{{ $employeeIdSuggestion->employeeID }}" data-person-name="{{ $suggestedPersonName }}" x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())" @click="search = $el.dataset.employeeId; $wire.set('editingEmployeeId', $el.dataset.employeeId); open = false" class="flex h-[64px] w-full min-w-0 items-center gap-[12px] rounded-lg border border-zinc-200 bg-white px-[20px] py-[15px] text-left transition hover:bg-zinc-100 focus:border-zinc-200 focus:bg-zinc-100 focus:outline-none focus:ring-0" role="option">
@@ -618,12 +656,12 @@
                         <div class="mt-[15px] grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                             <div>
                                 <label for="attendance-edit-hourly-rate" class="mb-[8px] block font-medium text-black">Pago por hora ($)</label>
-                                <input id="attendance-edit-hourly-rate" type="number" min="0" step="0.01" wire:model="editingHourlyRate" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-zinc-50 px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                <input id="attendance-edit-hourly-rate" type="number" min="0" step="0.01" wire:model="editingHourlyRate" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-white px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
                                 @error('editingHourlyRate') <p class="mt-[6px] text-[13px] text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="attendance-edit-food-allowance" class="mb-[8px] block font-medium text-black">Pago por comida ($)</label>
-                                <input id="attendance-edit-food-allowance" type="number" min="0" step="0.01" wire:model="editingFoodAllowance" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-zinc-50 px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                <input id="attendance-edit-food-allowance" type="number" min="0" step="0.01" wire:model="editingFoodAllowance" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-white px-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
                                 @error('editingFoodAllowance') <p class="mt-[6px] text-[13px] text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>

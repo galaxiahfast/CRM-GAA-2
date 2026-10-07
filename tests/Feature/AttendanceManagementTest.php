@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserOrganizationalProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -18,6 +19,60 @@ use Tests\TestCase;
 class AttendanceManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_employee_id_suggestions_are_loaded_only_when_the_editor_opens_and_then_cached(): void
+    {
+        Storage::fake('local');
+        Cache::flush();
+
+        $adminRole = Role::create(['role' => 'Administrador']);
+        $admin = User::create([
+            'name' => 'Admin', 'email' => 'admin-suggestions@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $adminRole->id,
+        ]);
+        $collaborator = User::create([
+            'name' => 'Ana', 'last_name' => 'Rápida', 'email' => 'ana-fast@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $adminRole->id, 'employee_id' => 'EMP-OLD',
+        ]);
+        DB::table('control_de_horas')->insert([
+            'employeeID' => 'EMP-AVAILABLE', 'personName' => 'Persona Disponible',
+            'authDateTime' => '2026-08-07 09:00:00', 'authDate' => '2026-08-07',
+            'authTime' => '09:00:00', 'direction' => 'IN', 'deviceName' => 'Prueba',
+        ]);
+
+        DB::enableQueryLog();
+        $component = Livewire::actingAs($admin)->test(AttendanceManagement::class);
+        $initialSuggestionQueries = collect(DB::getQueryLog())->pluck('query')->filter(
+            fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
+                && str_contains(strtolower($query), 'max(')
+        );
+        $this->assertCount(0, $initialSuggestionQueries);
+        $component->assertDontSeeHtml('wire:model.live="selectedReportUserIds"');
+        $component->assertDontSee('Actualización automática');
+        $component->assertDontSeeHtml('wire:click="selectAllReportUsers"');
+        $component->assertSeeHtml('@click="selectAllUsers()"');
+        $component->assertSeeHtml('@click="clearAllUsers()"');
+        $component->assertSeeHtml('@change="syncSelection()"');
+
+        DB::flushQueryLog();
+        $component->call('openEmployeeIdModal', $collaborator->id)
+            ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->pluck('employeeID')->contains('EMP-AVAILABLE'));
+        $firstOpenQueries = collect(DB::getQueryLog())->pluck('query')->filter(
+            fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
+                && str_contains(strtolower($query), 'max(')
+        );
+        $this->assertCount(1, $firstOpenQueries);
+
+        DB::flushQueryLog();
+        $component->call('closeEmployeeIdModal')->call('openEmployeeIdModal', $collaborator->id);
+        $cachedOpenQueries = collect(DB::getQueryLog())->pluck('query')->filter(
+            fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
+                && str_contains(strtolower($query), 'max(')
+        );
+        DB::disableQueryLog();
+
+        $this->assertCount(0, $cachedOpenQueries);
+    }
 
     public function test_attendance_management_waits_for_the_report_selection(): void
     {
