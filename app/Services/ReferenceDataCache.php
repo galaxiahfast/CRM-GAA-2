@@ -428,6 +428,11 @@ class ReferenceDataCache
         Cache::forget(self::ACTIVITY_CATALOG_KEY);
     }
 
+    public function forgetEmployeeSuggestions(): void
+    {
+        Cache::forget(self::EMPLOYEE_SUGGESTIONS_KEY);
+    }
+
     public function forgetOrganizationDashboard(): void
     {
         Cache::forget(self::ORGANIZATION_DASHBOARD_KEY);

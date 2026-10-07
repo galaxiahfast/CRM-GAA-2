@@ -419,8 +419,8 @@
                                     <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white p-[10px] transition hover:bg-zinc-100">
                                         <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-[15px] p-[5px]">
                                             <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                                                <input type="checkbox" x-model.number="selectedIds" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-black checked:bg-black focus:outline-none focus:ring-0">
-                                                <svg class="pointer-events-none absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true">
+                                                <input type="checkbox" x-model.number="selectedIds" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-zinc-300 checked:bg-white focus:outline-none focus:ring-0">
+                                                <svg class="pointer-events-none absolute h-3.5 w-3.5 text-black opacity-0 peer-checked:opacity-100" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true">
                                                     <path d="m4 10 4 4 8-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" />
                                                 </svg>
                                             </span>
@@ -637,23 +637,36 @@
                 <form wire:submit="saveEmployeeId" class="p-[20px]">
                     <div class="rounded-xl border border-zinc-200 bg-white p-[20px]">
                         <label for="attendance-employee-id" class="mb-[8px] block font-medium text-black">ID relacionado</label>
-                        <div class="relative" x-data="{ open: false, search: @js($editingEmployeeId) }" @click.outside="open = false">
+                        <div class="relative" x-data="{
+                            open: false,
+                            search: @js($editingEmployeeId),
+                            suggestionsRequested: @js($employeeIdSuggestionsRequested),
+                            loadSuggestions() {
+                                this.open = true;
+                                if (this.suggestionsRequested) return;
+                                this.suggestionsRequested = true;
+                                this.$wire.loadEmployeeIdSuggestions();
+                            }
+                        }" @click.outside="open = false">
                             <div class="relative">
-                                <input id="attendance-employee-id" type="text" maxlength="50" autocomplete="off" wire:model="editingEmployeeId" x-model="search" @focus="open = true" @click="open = true" @input="open = true" @keydown.escape="open = false" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-white px-[15px] pr-12 text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Busca un ID disponible" aria-autocomplete="list" aria-controls="attendance-employee-id-options" x-bind:aria-expanded="open">
-                                <button type="button" @click="open = !open" aria-label="Mostrar IDs disponibles" class="absolute right-0 top-0 flex h-[46px] w-12 items-center justify-center text-zinc-500 hover:text-black focus:outline-none focus:ring-0">
+                                <input id="attendance-employee-id" type="text" maxlength="50" autocomplete="off" wire:model="editingEmployeeId" x-model="search" @focus="loadSuggestions()" @click="loadSuggestions()" @input="loadSuggestions()" @keydown.escape="open = false" class="attendance-employee-id-input h-[46px] w-full rounded-xl border border-zinc-300 bg-white px-[15px] pr-12 text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Busca un ID disponible" aria-autocomplete="list" aria-controls="attendance-employee-id-options" x-bind:aria-expanded="open">
+                                <button type="button" @click="open ? open = false : loadSuggestions()" aria-label="Mostrar IDs disponibles" class="absolute right-0 top-0 flex h-[46px] w-12 items-center justify-center text-zinc-500 hover:text-black focus:outline-none focus:ring-0">
                                     <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                                 </button>
                             </div>
                             <div id="attendance-employee-id-options" x-cloak x-show="open" x-transition class="attendance-id-scrollbar absolute left-0 top-full z-[100] mt-[8px] max-h-[293px] w-full space-y-[5px] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[10px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]" role="listbox">
-                                @forelse ($employeeIdSuggestions as $employeeIdSuggestion)
-                                    @php($suggestedPersonName = trim((string) ($employeeIdSuggestion->personName ?: 'Nombre no disponible')))
-                                    <button type="button" data-employee-id="{{ $employeeIdSuggestion->employeeID }}" data-person-name="{{ $suggestedPersonName }}" x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())" @click="search = $el.dataset.employeeId; $wire.set('editingEmployeeId', $el.dataset.employeeId); open = false" class="flex h-[64px] w-full min-w-0 items-center gap-[12px] rounded-lg border border-zinc-200 bg-white px-[20px] py-[15px] text-left transition hover:bg-zinc-100 focus:border-zinc-200 focus:bg-zinc-100 focus:outline-none focus:ring-0" role="option">
-                                        <span class="inline-flex w-[72px] shrink-0 items-center justify-center truncate rounded-md bg-black px-[8px] py-[5px] font-semibold text-white" title="{{ $employeeIdSuggestion->employeeID }}">{{ $employeeIdSuggestion->employeeID }}</span>
-                                        <span class="min-w-0 flex-1 truncate text-zinc-500">{{ $suggestedPersonName }}</span>
-                                    </button>
-                                @empty
-                                    <p class="px-[12px] py-[10px] text-zinc-500">No hay IDs disponibles para asignar.</p>
-                                @endforelse
+                                <p wire:loading wire:target="loadEmployeeIdSuggestions" class="px-[12px] py-[10px] text-zinc-500">Cargando IDs disponibles...</p>
+                                <div wire:loading.remove wire:target="loadEmployeeIdSuggestions" class="space-y-[5px]">
+                                    @forelse ($employeeIdSuggestions as $employeeIdSuggestion)
+                                        @php($suggestedPersonName = trim((string) ($employeeIdSuggestion->personName ?: 'Nombre no disponible')))
+                                        <button type="button" data-employee-id="{{ $employeeIdSuggestion->employeeID }}" data-person-name="{{ $suggestedPersonName }}" x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())" @click="search = $el.dataset.employeeId; $wire.set('editingEmployeeId', $el.dataset.employeeId, false); open = false" class="flex h-[64px] w-full min-w-0 items-center gap-[12px] rounded-lg border border-zinc-200 bg-white px-[20px] py-[15px] text-left transition hover:bg-zinc-100 focus:border-zinc-200 focus:bg-zinc-100 focus:outline-none focus:ring-0" role="option">
+                                            <span class="inline-flex w-[72px] shrink-0 items-center justify-center truncate rounded-md bg-black px-[8px] py-[5px] font-semibold text-white" title="{{ $employeeIdSuggestion->employeeID }}">{{ $employeeIdSuggestion->employeeID }}</span>
+                                            <span class="min-w-0 flex-1 truncate text-zinc-500">{{ $suggestedPersonName }}</span>
+                                        </button>
+                                    @empty
+                                        <p class="px-[12px] py-[10px] text-zinc-500">No hay IDs disponibles para asignar.</p>
+                                    @endforelse
+                                </div>
                             </div>
                         </div>
                         <p class="mt-[8px] text-zinc-500">Solo aparecen IDs registrados que aún no están relacionados con otra persona.</p>
@@ -729,7 +742,7 @@
                                             <span class="rounded-full px-2 py-0.5 text-[12px] font-semibold {{ $index % 2 === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' }}">{{ $index % 2 === 0 ? 'Entrada' : 'Salida' }}</span>
                                         </div>
                                         <div class="flex gap-2">
-                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model.live="modalMarks.{{ $index }}" class="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model="modalMarks.{{ $index }}" class="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
                                             <button type="button" wire:click="removeAttendanceMark({{ $index }})" aria-label="Eliminar chequeo {{ $index + 1 }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 focus:outline-none focus:ring-0">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
                                             </button>
@@ -750,12 +763,12 @@
                             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-gray-700">Pago por hora ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model.live="modalHourlyRate" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    <input type="number" min="0" step="0.01" wire:model="modalHourlyRate" class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0">
                                     @error('modalHourlyRate') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-gray-700">Comida ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model.live="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                                    <input type="number" min="0" step="0.01" wire:model="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-gray-300 bg-[#F3F3F3] px-3 text-[15px] shadow-none focus:border-[#1A3A6B] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                                     @error('modalBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                     @if ($selectedDateIsWeekend)
                                         <p class="mt-2 text-[13px] text-gray-500">Los sábados y domingos no generan bono de comida.</p>

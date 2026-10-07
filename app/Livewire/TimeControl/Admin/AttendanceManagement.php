@@ -3,6 +3,7 @@
 namespace App\Livewire\TimeControl\Admin;
 
 use App\Models\User;
+use App\Services\ReferenceDataCache;
 use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\AttendanceExportService;
 use App\Services\TimeControl\AttendanceService;
@@ -41,6 +42,8 @@ class AttendanceManagement extends Component
     public int $errorToastVersion = 0;
 
     public bool $showEmployeeIdModal = false;
+
+    public bool $employeeIdSuggestionsRequested = false;
 
     public ?int $editingEmployeeUserId = null;
 
@@ -95,6 +98,7 @@ class AttendanceManagement extends Component
         abort_unless(Gate::allows('view-time-admin'), 403);
         $this->from = Carbon::now()->subDays(14)->toDateString();
         $this->to = Carbon::now()->toDateString();
+        $this->lastReportGeneratedAt = Carbon::now()->subDay()->format('d/m/Y H:i');
 
     }
 
@@ -168,13 +172,24 @@ class AttendanceManagement extends Component
             ];
         $this->editingHourlyRate = $settings['hourly_rate'];
         $this->editingFoodAllowance = $settings['bonus_amount'];
+        $this->employeeIdSuggestionsRequested = false;
         $this->resetErrorBag(['editingEmployeeId', 'editingHourlyRate', 'editingFoodAllowance']);
         $this->showEmployeeIdModal = true;
+    }
+
+    public function loadEmployeeIdSuggestions(): void
+    {
+        abort_unless(Gate::allows('view-time-admin'), 403);
+
+        if ($this->showEmployeeIdModal) {
+            $this->employeeIdSuggestionsRequested = true;
+        }
     }
 
     public function closeEmployeeIdModal(): void
     {
         $this->showEmployeeIdModal = false;
+        $this->employeeIdSuggestionsRequested = false;
         $this->reset(['editingEmployeeUserId', 'editingEmployeeName', 'editingEmployeeId']);
         $this->editingHourlyRate = AttendanceSettingsService::DEFAULT_HOURLY_RATE;
         $this->editingFoodAllowance = AttendanceSettingsService::DEFAULT_BONUS_AMOUNT;
@@ -571,7 +586,7 @@ class AttendanceManagement extends Component
         return $exportService->download($format, $result, $meta);
     }
 
-    public function render()
+    public function render(ReferenceDataCache $references)
     {
         $reportUsers = User::query()
             ->select('id', 'name', 'last_name', 'employee_id')
@@ -591,19 +606,22 @@ class AttendanceManagement extends Component
             ->unique()
             ->count();
 
-        $employeeIdSuggestions = DB::table('control_de_horas')
-            ->select('employeeID')
-            ->selectRaw('MAX(personName) as personName')
-            ->whereNotNull('employeeID')
-            ->where('employeeID', '<>', '')
-            ->whereNotIn('employeeID', User::query()
-                ->select('employee_id')
-                ->whereNotNull('employee_id')
-                ->where('employee_id', '<>', '')
-                ->when($this->editingEmployeeUserId, fn ($query) => $query->where('id', '<>', $this->editingEmployeeUserId)))
-            ->groupBy('employeeID')
-            ->orderBy('employeeID')
-            ->get();
+        // La lista del biométrico no cambia al seleccionar colaboradores. Evita
+        // agrupar toda control_de_horas en cada render y cárgala únicamente
+        // cuando el editor realmente está abierto.
+        $employeeIdSuggestions = collect();
+        if ($this->showEmployeeIdModal && $this->employeeIdSuggestionsRequested) {
+            $assignedEmployeeIds = $reportUsers
+                ->reject(fn (User $user): bool => $user->id === $this->editingEmployeeUserId)
+                ->pluck('employee_id')
+                ->filter()
+                ->map(fn ($employeeId): string => (string) $employeeId)
+                ->flip();
+
+            $employeeIdSuggestions = $references->employeeSuggestions()
+                ->reject(fn ($suggestion): bool => $assignedEmployeeIds->has((string) $suggestion->employeeID))
+                ->values();
+        }
 
         return view('livewire.time-control.admin.attendance-management', [
             'reportUsers' => $reportUsers,

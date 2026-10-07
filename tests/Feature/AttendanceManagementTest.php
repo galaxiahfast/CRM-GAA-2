@@ -40,6 +40,7 @@ class AttendanceManagementTest extends TestCase
             'authTime' => '09:00:00', 'direction' => 'IN', 'deviceName' => 'Prueba',
         ]);
 
+        $fallbackReportDate = now()->subDay()->format('d/m/Y H:i');
         DB::enableQueryLog();
         $component = Livewire::actingAs($admin)->test(AttendanceManagement::class);
         $initialSuggestionQueries = collect(DB::getQueryLog())->pluck('query')->filter(
@@ -54,18 +55,35 @@ class AttendanceManagementTest extends TestCase
         $component->assertSeeHtml('@click="clearAllUsers()"');
         $component->assertDontSeeHtml('@change="syncSelection()"');
         $component->assertSeeHtml('@submit.prevent="syncSelection(); $wire.generateSelectionReport()"');
+        $component->assertSet('lastReportGeneratedAt', $fallbackReportDate);
+        $component->assertDontSeeHtml('wire:model.live="modalMarks');
+        $component->assertDontSeeHtml('wire:model.live="modalHourlyRate"');
+        $component->assertDontSeeHtml('wire:model.live="modalBonusAmount"');
 
         DB::flushQueryLog();
         $component->call('openEmployeeIdModal', $collaborator->id)
-            ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->pluck('employeeID')->contains('EMP-AVAILABLE'));
+            ->assertSet('employeeIdSuggestionsRequested', false)
+            ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->isEmpty());
         $firstOpenQueries = collect(DB::getQueryLog())->pluck('query')->filter(
             fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
                 && str_contains(strtolower($query), 'max(')
         );
-        $this->assertCount(1, $firstOpenQueries);
+        $this->assertCount(0, $firstOpenQueries);
 
         DB::flushQueryLog();
-        $component->call('closeEmployeeIdModal')->call('openEmployeeIdModal', $collaborator->id);
+        $component->call('loadEmployeeIdSuggestions')
+            ->assertSet('employeeIdSuggestionsRequested', true)
+            ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->pluck('employeeID')->contains('EMP-AVAILABLE'));
+        $firstSuggestionQueries = collect(DB::getQueryLog())->pluck('query')->filter(
+            fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
+                && str_contains(strtolower($query), 'max(')
+        );
+        $this->assertCount(1, $firstSuggestionQueries);
+
+        DB::flushQueryLog();
+        $component->call('closeEmployeeIdModal')
+            ->call('openEmployeeIdModal', $collaborator->id)
+            ->call('loadEmployeeIdSuggestions');
         $cachedOpenQueries = collect(DB::getQueryLog())->pluck('query')->filter(
             fn (string $query): bool => str_contains(strtolower($query), 'control_de_horas')
                 && str_contains(strtolower($query), 'max(')
@@ -344,6 +362,7 @@ class AttendanceManagementTest extends TestCase
             ->call('openEmployeeIdModal', $aux->id)
             ->assertSet('showEmployeeIdModal', true)
             ->assertSet('editingEmployeeId', 'EMP-OLD')
+            ->call('loadEmployeeIdSuggestions')
             ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->pluck('employeeID')->contains('EMP-NEW')
                 && ! $suggestions->pluck('employeeID')->contains('EMP-TAKEN'))
             ->set('editingEmployeeId', 'EMP-NOT-REGISTERED')

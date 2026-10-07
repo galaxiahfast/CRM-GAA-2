@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\ReferenceDataCache;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +61,10 @@ class SyncBiometricData extends Command
 
         // Disparar sincronizador
         [$nuevos, $borrados] = $this->sincronizar($inicioBusqueda, $finBusqueda, $ejecutarLimpieza);
+
+        if ($nuevos > 0 || $borrados > 0) {
+            app(ReferenceDataCache::class)->forgetEmployeeSuggestions();
+        }
 
         $this->info("\n[PROCESO TERMINADO]");
         $this->comment(">> Registros nuevos agregados: {$nuevos}");
