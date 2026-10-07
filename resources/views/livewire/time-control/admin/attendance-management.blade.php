@@ -109,6 +109,15 @@
         .attendance-monochrome .attendance-report-container { background-color: #fff !important; }
         .attendance-monochrome .attendance-page-icon,
         .attendance-monochrome .attendance-report-container { box-shadow: none !important; }
+        .attendance-monochrome .attendance-report-container {
+            border-width: 2px !important;
+            border-radius: 1rem !important;
+            background-clip: padding-box;
+        }
+        .attendance-monochrome .attendance-report-divider-bottom { border-bottom-width: 2px !important; }
+        .attendance-monochrome .attendance-report-divider-right { border-right-width: 2px !important; }
+        .attendance-monochrome .attendance-report-divider-top { border-top-width: 2px !important; }
+        .attendance-monochrome .attendance-area-card { border-width: 2px !important; }
         .attendance-monochrome .attendance-page-icon {
             background: #fff !important;
             border: 1px solid #e4e4e7 !important;
@@ -330,10 +339,10 @@
                 this.selectedIds = [];
             }
         }"
-        class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-none"
+        class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-2xl border-2 border-zinc-200 bg-[#FFFFFF] shadow-none"
         style="background: #ffffff !important; box-shadow: none !important;"
     >
-        <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+        <header class="attendance-report-divider-bottom flex flex-wrap items-center justify-between gap-[20px] rounded-t-[14px] border-b-2 border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
                 <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
@@ -344,7 +353,7 @@
             </div>
         </header>
 
-        <div class="flex flex-wrap items-center gap-[20px] border-b border-zinc-200 bg-white p-[20px]">
+        <div class="attendance-report-divider-bottom flex flex-wrap items-center gap-[20px] border-b-2 border-zinc-200 bg-white p-[20px]">
             <div class="relative min-w-[320px] flex-1">
                 <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
                 <input type="search" x-model="reportSearch" autocomplete="off"
@@ -364,7 +373,7 @@
         </div>
 
         <div class="grid h-[520px] min-h-0 grid-cols-[300px_minmax(0,1fr)] overflow-hidden">
-            <form @submit.prevent="syncSelection(); $wire.generateSelectionReport()" class="flex flex-col gap-[20px] border-r border-zinc-200 bg-white p-[20px]">
+            <form @submit.prevent="syncSelection(); $wire.generateSelectionReport()" class="attendance-report-divider-right flex flex-col gap-[20px] border-r-2 border-zinc-200 bg-white p-[20px]">
                 <div>
                     <h3 class="font-semibold text-black">Periodo del informe</h3>
                     <p class="mt-[3px] text-[13px] text-zinc-500">Define las fechas que deseas.</p>
@@ -409,8 +418,8 @@
             <div class="flex min-h-0 min-w-0 flex-col bg-white">
                 <div class="attendance-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                     @forelse ($reportUsers->groupBy(fn ($user) => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada') as $areaName => $areaUsers)
-                        <div class="mb-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
-                            <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-100 px-[20px] py-[10px]"><span class="font-semibold text-black">{{ $areaName }}</span><span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span></div>
+                        <div class="attendance-area-card mb-[20px] overflow-hidden rounded-xl border-2 border-zinc-200 bg-white last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
+                            <div class="attendance-report-divider-bottom flex items-center justify-between border-b-2 border-zinc-200 bg-zinc-100 px-[20px] py-[10px]"><span class="font-semibold text-black">{{ $areaName }}</span><span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span></div>
                             <div class="grid gap-[15px] p-[20px] sm:grid-cols-2 xl:grid-cols-3">
                                 @foreach ($areaUsers as $reportUser)
                                     @php
@@ -447,7 +456,7 @@
                 'general' => ['label' => 'Reporte general', 'description' => 'Consolidado del periodo', 'enabled' => count($reportedUserIds) > 1],
             ];
         @endphp
-        <footer class="grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
+        <footer class="attendance-report-divider-top grid grid-cols-3 rounded-b-[14px] border-t-2 border-zinc-200 bg-white px-[20px] py-[15px]">
             @foreach ($attendanceReportActions as $mode => $action)
                 <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
                         @disabled(! $selectionReportIsCurrent || ! $action['enabled'])
