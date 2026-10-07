@@ -102,6 +102,7 @@
         body:has(.attendance-monochrome) #main-content,
         body:has(.attendance-monochrome) #main-content > div,
         .attendance-monochrome { background: #fff !important; }
+        .attendance-monochrome [class~="bg-white"] { background-color: #fff !important; }
         .attendance-monochrome .attendance-page-body,
         .attendance-monochrome .attendance-page-heading,
         .attendance-monochrome .attendance-page-icon,
@@ -109,8 +110,9 @@
         .attendance-monochrome .attendance-page-icon,
         .attendance-monochrome .attendance-report-container { box-shadow: none !important; }
         .attendance-monochrome .attendance-page-icon {
-            background: transparent !important;
-            border: 0 !important;
+            background: #fff !important;
+            border: 1px solid #e4e4e7 !important;
+            box-shadow: none !important;
         }
         .attendance-monochrome:fullscreen { overflow: auto; background: #fff; }
         .attendance-monochrome .admin-attendance-topbar {
@@ -301,7 +303,7 @@
 
     <div class="admin-attendance-content attendance-page-heading mx-[50px] mt-[50px] flex items-center gap-[20px] bg-[#FFFFFF]" style="background: #ffffff !important;">
         <div class="flex min-w-0 items-center gap-[20px]">
-            <div class="attendance-page-icon flex h-14 w-14 shrink-0 items-center justify-center bg-transparent text-black shadow-none" style="background: transparent !important; box-shadow: none !important;">
+            <div class="attendance-page-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black shadow-none" style="background: #ffffff !important; box-shadow: none !important;">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
