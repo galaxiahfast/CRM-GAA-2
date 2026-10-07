@@ -106,6 +106,12 @@
         .attendance-monochrome .attendance-page-heading,
         .attendance-monochrome .attendance-page-icon,
         .attendance-monochrome .attendance-report-container { background-color: #fff !important; }
+        .attendance-monochrome .attendance-page-icon,
+        .attendance-monochrome .attendance-report-container { box-shadow: none !important; }
+        .attendance-monochrome .attendance-page-icon {
+            background: transparent !important;
+            border: 0 !important;
+        }
         .attendance-monochrome:fullscreen { overflow: auto; background: #fff; }
         .attendance-monochrome .admin-attendance-topbar {
             background: #fff;
@@ -295,7 +301,7 @@
 
     <div class="admin-attendance-content attendance-page-heading mx-[50px] mt-[50px] flex items-center gap-[20px] bg-[#FFFFFF]" style="background: #ffffff !important;">
         <div class="flex min-w-0 items-center gap-[20px]">
-            <div class="attendance-page-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-[#FFFFFF] text-black" style="background: #ffffff !important;">
+            <div class="attendance-page-icon flex h-14 w-14 shrink-0 items-center justify-center bg-transparent text-black shadow-none" style="background: transparent !important; box-shadow: none !important;">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -322,8 +328,8 @@
                 this.selectedIds = [];
             }
         }"
-        class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
-        style="background: #ffffff !important;"
+        class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-none"
+        style="background: #ffffff !important; box-shadow: none !important;"
     >
         <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
