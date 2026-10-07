@@ -103,7 +103,9 @@
         body:has(.attendance-monochrome) #main-content > div,
         .attendance-monochrome { background: #fff !important; }
         .attendance-monochrome .attendance-page-body,
-        .attendance-monochrome .attendance-page-heading { background-color: #fff !important; }
+        .attendance-monochrome .attendance-page-heading,
+        .attendance-monochrome .attendance-page-icon,
+        .attendance-monochrome .attendance-report-container { background-color: #fff !important; }
         .attendance-monochrome:fullscreen { overflow: auto; background: #fff; }
         .attendance-monochrome .admin-attendance-topbar {
             background: #fff;
@@ -293,7 +295,7 @@
 
     <div class="admin-attendance-content attendance-page-heading mx-[50px] mt-[50px] flex items-center gap-[20px] bg-[#FFFFFF]" style="background: #ffffff !important;">
         <div class="flex min-w-0 items-center gap-[20px]">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+            <div class="attendance-page-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-[#FFFFFF] text-black" style="background: #ffffff !important;">
                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -315,14 +317,13 @@
             },
             selectAllUsers() {
                 this.selectedIds = [...this.allUserIds];
-                this.syncSelection();
             },
             clearAllUsers() {
                 this.selectedIds = [];
-                this.syncSelection();
             }
         }"
-        class="admin-attendance-content relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
+        class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
+        style="background: #ffffff !important;"
     >
         <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
@@ -355,7 +356,7 @@
         </div>
 
         <div class="grid h-[520px] min-h-0 grid-cols-[300px_minmax(0,1fr)] overflow-hidden">
-            <form wire:submit="generateSelectionReport" class="flex flex-col gap-[20px] border-r border-zinc-200 bg-white p-[20px]">
+            <form @submit.prevent="syncSelection(); $wire.generateSelectionReport()" class="flex flex-col gap-[20px] border-r border-zinc-200 bg-white p-[20px]">
                 <div>
                     <h3 class="font-semibold text-black">Periodo del informe</h3>
                     <p class="mt-[3px] text-[13px] text-zinc-500">Define las fechas que deseas.</p>
@@ -410,7 +411,7 @@
                                     <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white p-[10px] transition hover:bg-zinc-100">
                                         <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-[15px] p-[5px]">
                                             <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                                                <input type="checkbox" x-model.number="selectedIds" @change="syncSelection()" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-black checked:bg-black focus:outline-none focus:ring-0">
+                                                <input type="checkbox" x-model.number="selectedIds" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-black checked:bg-black focus:outline-none focus:ring-0">
                                                 <svg class="pointer-events-none absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true">
                                                     <path d="m4 10 4 4 8-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" />
                                                 </svg>

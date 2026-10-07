@@ -52,7 +52,8 @@ class AttendanceManagementTest extends TestCase
         $component->assertDontSeeHtml('wire:click="selectAllReportUsers"');
         $component->assertSeeHtml('@click="selectAllUsers()"');
         $component->assertSeeHtml('@click="clearAllUsers()"');
-        $component->assertSeeHtml('@change="syncSelection()"');
+        $component->assertDontSeeHtml('@change="syncSelection()"');
+        $component->assertSeeHtml('@submit.prevent="syncSelection(); $wire.generateSelectionReport()"');
 
         DB::flushQueryLog();
         $component->call('openEmployeeIdModal', $collaborator->id)
