@@ -111,7 +111,9 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('userId', null)
             ->assertSet('selectedReportUserIds', [])
             ->assertSet('activeReportUserId', null)
+            ->assertSet('reportSection', 'prepare')
             ->assertSet('searched', false)
+            ->assertDontSee('Reporte individual')
             ->assertSee('Ana Asistencia');
     }
 
@@ -284,16 +286,26 @@ class AttendanceManagementTest extends TestCase
             ->set('selectedReportUserIds', [$ana->id])
             ->call('generateSelectionReport')
             ->assertSet('selectionReportIsCurrent', true)
+            ->assertSet('reportSection', 'results')
             ->assertSet('activeReportUserId', $ana->id)
             ->assertSet('employeeId', 'EMP-R01')
             ->assertSet('selectedEmployeeName', 'Ana Uno')
-            ->assertSet('payrollRows.0.neto', '09h 00m 00s');
+            ->assertSet('payrollRows.0.neto', '09h 00m 00s')
+            ->assertSee('Reporte individual')
+            ->assertDontSee('Configura y genera los resultados fácilmente.')
+            ->call('showPreparationSection')
+            ->assertSet('reportSection', 'prepare')
+            ->assertSee('Configura y genera los resultados fácilmente.')
+            ->assertDontSee('Reporte individual')
+            ->call('showResultsSection')
+            ->assertSet('reportSection', 'results');
 
         $groupComponent = Livewire::actingAs($admin)->test(AttendanceManagement::class)
             ->set('from', '2026-08-07')
             ->set('to', '2026-08-07')
             ->set('selectedReportUserIds', [$ana->id, $beto->id])
             ->call('generateSelectionReport')
+            ->assertSet('reportSection', 'results')
             ->assertSet('reportedUserIds', [$ana->id, $beto->id])
             ->assertSet('activeReportUserId', $ana->id)
             ->call('selectReportUser', $beto->id)

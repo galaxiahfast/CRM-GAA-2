@@ -323,6 +323,7 @@
     </div>
 
     {{-- Informes individual, grupal y general --}}
+    @if ($reportSection === 'prepare')
     <section
         x-data="{
             selectedIds: @js(array_values(array_map('intval', $selectedReportUserIds))),
@@ -348,6 +349,12 @@
             <div class="flex flex-wrap items-center gap-[30px] text-[15px] font-medium text-black">
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span>
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M9 14h.01M9 18h.01M15 10h.01M15 14h.01M15 18h.01"/></svg>{{ $selectedAreaCount }} {{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span>
+                @if ($selectionReportIsCurrent)
+                    <button type="button" wire:click="showResultsSection" class="inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-semibold text-black hover:text-zinc-500">
+                        Ver resultados
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                @endif
             </div>
         </header>
 
@@ -447,29 +454,10 @@
             </div>
         </div>
 
-        @php
-            $attendanceReportActions = [
-                'individual' => ['label' => 'Reporte individual', 'description' => 'Información de una persona', 'enabled' => count($reportedUserIds) === 1],
-                'group' => ['label' => 'Reporte grupal', 'description' => 'Información de seleccionados', 'enabled' => count($reportedUserIds) > 1],
-                'general' => ['label' => 'Reporte general', 'description' => 'Consolidado del periodo', 'enabled' => count($reportedUserIds) > 1],
-            ];
-        @endphp
-        <footer class="attendance-report-footer grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
-            @foreach ($attendanceReportActions as $mode => $action)
-                <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
-                        @disabled(! $selectionReportIsCurrent || ! $action['enabled'])
-                        class="attendance-report-download inline-flex w-full min-w-0 items-center justify-center gap-[10px] whitespace-nowrap border-0 bg-transparent px-[20px] py-0 text-left text-black transition-colors disabled:cursor-not-allowed">
-                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
-                    <span class="min-w-0">
-                        <span class="block truncate font-semibold text-black">{{ $action['label'] }}</span>
-                        <span class="mt-[3px] block truncate font-normal text-zinc-500">{{ $action['description'] }}</span>
-                    </span>
-                </button>
-            @endforeach
-        </footer>
     </section>
+    @endif
 
-    @if ($selectionReportIsCurrent)
+    @if ($selectionReportIsCurrent && $reportSection === 'results')
     <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
         <div>
             <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
@@ -478,6 +466,10 @@
                     <p class="mt-[3px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-[25px] font-medium text-black">
+                    <button type="button" wire:click="showPreparationSection" class="inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-semibold text-black hover:text-zinc-500">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg>
+                        Preparar informe
+                    </button>
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {{ $reportedUsers->count() }} {{ $reportedUsers->count() === 1 ? 'seleccionado' : 'seleccionados' }}
@@ -485,6 +477,26 @@
                     <span class="inline-flex items-center gap-[8px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>{{ $from }} — {{ $to }}</span>
                     <span class="inline-flex items-center gap-[8px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m0 14h16M8 15l3-3 3 2 5-6"/></svg>{{ count($payrollRows) }} jornadas</span>
                 </div>
+            </div>
+            @php
+                $attendanceReportActions = [
+                    'individual' => ['label' => 'Reporte individual', 'description' => 'Información de una persona', 'enabled' => count($reportedUserIds) === 1],
+                    'group' => ['label' => 'Reporte grupal', 'description' => 'Información de seleccionados', 'enabled' => count($reportedUserIds) > 1],
+                    'general' => ['label' => 'Reporte general', 'description' => 'Consolidado del periodo', 'enabled' => count($reportedUserIds) > 1],
+                ];
+            @endphp
+            <div class="grid grid-cols-3 border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+                @foreach ($attendanceReportActions as $mode => $action)
+                    <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
+                            @disabled(! $action['enabled'])
+                            class="attendance-report-download inline-flex w-full min-w-0 items-center justify-center gap-[10px] whitespace-nowrap border-0 bg-transparent px-[20px] py-0 text-left text-black transition-colors disabled:cursor-not-allowed">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                        <span class="min-w-0">
+                            <span class="block truncate font-semibold text-black">{{ $action['label'] }}</span>
+                            <span class="mt-[3px] block truncate font-normal text-zinc-500">{{ $action['description'] }}</span>
+                        </span>
+                    </button>
+                @endforeach
             </div>
             <nav class="attendance-scrollbar flex gap-[20px] overflow-x-auto p-[20px]" aria-label="Colaboradores incluidos en el informe">
                 @foreach ($reportedUsers as $reportedUser)

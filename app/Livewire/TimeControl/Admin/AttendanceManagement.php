@@ -35,6 +35,8 @@ class AttendanceManagement extends Component
 
     public bool $selectionReportIsCurrent = false;
 
+    public string $reportSection = 'prepare';
+
     public ?int $activeReportUserId = null;
 
     public ?string $lastReportGeneratedAt = null;
@@ -283,6 +285,19 @@ class AttendanceManagement extends Component
         if ($this->selectionReportIsCurrent) {
             $this->selectReportUser($this->reportedUserIds[0], $attendanceService, $settingsService);
             $this->lastReportGeneratedAt = now()->format('d/m/Y H:i');
+            $this->reportSection = 'results';
+        }
+    }
+
+    public function showPreparationSection(): void
+    {
+        $this->reportSection = 'prepare';
+    }
+
+    public function showResultsSection(): void
+    {
+        if ($this->selectionReportIsCurrent) {
+            $this->reportSection = 'results';
         }
     }
 
