@@ -886,7 +886,7 @@
                                 </div>
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-black">Comida ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                                    <input type="number" min="0" step="0.01" wire:model.live.debounce.250ms="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                                     @error('modalBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                     @if ($selectedDateIsWeekend)
                                         <p class="mt-2 text-[13px] text-gray-500">Los sábados y domingos no generan bono de comida.</p>
@@ -895,8 +895,8 @@
                             </div>
                             <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-                                    <span class="block text-[13px] text-zinc-500">Pago calculado por horas</span>
-                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedBasePay, 2) }}</strong>
+                                    <span class="block text-[13px] text-zinc-500">Bono agregado</span>
+                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($selectedDateIsWeekend ? 0 : max(0, (float) $modalBonusAmount), 2) }}</strong>
                                 </div>
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
                                     <span class="block text-[13px] text-zinc-500">Total calculado</span>
@@ -907,7 +907,7 @@
 
                         <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <label for="attendance-change-comment" class="mb-2 block text-[15px] font-medium text-black">Comentario o motivo del cambio <span class="text-red-600">*</span></label>
-                            <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
+                            <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
                             @error('modalChangeComment') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                         </section>
                     </div>
