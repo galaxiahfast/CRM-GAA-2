@@ -647,7 +647,7 @@
                 </div>
                 <span class="inline-flex items-center gap-[10px] text-[15px] font-medium text-black">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
-                    {{ count($changeHistory) }} {{ count($changeHistory) === 1 ? 'cambio registrado' : 'cambios registrados' }}
+                    {{ $changeHistoryIsExample ? 'Vista de ejemplo' : count($changeHistory).' '.(count($changeHistory) === 1 ? 'cambio registrado' : 'cambios registrados') }}
                 </span>
             </header>
 
@@ -655,7 +655,12 @@
                 @forelse ($changeHistory as $change)
                     <article class="grid gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
                         <div class="min-w-0">
-                            <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
+                            <div class="flex min-w-0 items-center gap-[10px]">
+                                <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
+                                @if ($change['is_example'] ?? false)
+                                    <span class="shrink-0 rounded border border-zinc-200 bg-white px-[7px] py-[2px] text-[11px] font-medium text-zinc-500">Ejemplo</span>
+                                @endif
+                            </div>
                             <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
                             <p class="mt-[8px] inline-flex items-center gap-[8px] text-black">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
@@ -815,8 +820,8 @@
              }"
              class="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden bg-black/45 p-[16px]"
              wire:keydown.escape.window="closeModal">
-            <div @click.away="$wire.closeModal()" class="flex w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none" style="max-height: min(720px, calc(100dvh - 48px));">
-                <div class="flex shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white px-[15px] py-[12px]">
+            <div @click.away="$wire.closeModal()" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none" style="max-height: min(680px, calc(100dvh - 48px));">
+                <div class="flex shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-black">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
@@ -832,8 +837,8 @@
                 </div>
 
                 <form wire:submit="saveDayAdjustment" class="flex min-h-0 flex-1 flex-col">
-                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[10px] overflow-y-auto overscroll-contain bg-white p-[15px] text-[15px]" style="overscroll-behavior: contain;">
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
+                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[15px] overflow-y-auto overscroll-contain bg-white p-[20px] text-[15px]" style="overscroll-behavior: contain;">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <h4 class="text-[15px] font-semibold text-black">Marcas / Chequeos</h4>
@@ -867,7 +872,7 @@
                             </p>
                         </section>
 
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <h4 class="text-[15px] font-semibold text-black">Pago por hora y comida</h4>
                             <p class="mt-[3px] text-[15px] text-zinc-500">El pago se calcula con el tiempo neto.</p>
                             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -897,15 +902,15 @@
                             </div>
                         </section>
 
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <label for="attendance-change-comment" class="mb-2 block text-[15px] font-medium text-black">Comentario o motivo del cambio <span class="text-red-600">*</span></label>
-                            <textarea id="attendance-change-comment" rows="2" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
+                            <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
                             @error('modalChangeComment') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                             <p class="mt-2 text-[15px] text-gray-500">El comentario quedará registrado en el historial del día.</p>
                         </section>
                     </div>
 
-                    <div class="flex shrink-0 justify-end gap-3 border-t border-zinc-200 bg-white px-[15px] py-[12px]">
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
                         <button type="button" wire:click="closeModal" class="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 text-[15px] font-medium text-black focus:outline-none focus:ring-0">Cancelar</button>
                         <button type="submit" wire:loading.attr="disabled" wire:target="saveDayAdjustment" class="inline-flex h-10 items-center justify-center rounded-lg bg-black px-5 text-[15px] font-medium text-white focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                             <span wire:loading.remove wire:target="saveDayAdjustment">Guardar cambios</span>

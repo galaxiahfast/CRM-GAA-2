@@ -132,7 +132,13 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('selectionReportIsCurrent', true)
             ->assertSet('reportSection', 'results')
             ->assertSet('activeReportUserId', $collaborator->id)
-            ->assertSee('Reporte individual');
+            ->assertSee('Reporte individual')
+            ->call('showHistorySection')
+            ->assertSet('reportSection', 'history')
+            ->assertSet('changeHistoryIsExample', true)
+            ->assertCount('changeHistory', 8)
+            ->assertSee('Vista de ejemplo')
+            ->assertSeeHtml('max-h-[560px]');
     }
 
     public function test_admin_can_correct_daily_marks_pay_and_bonus_with_comment(): void
@@ -168,8 +174,8 @@ class AttendanceManagementTest extends TestCase
             ->call('searchAttendance')
             ->call('editRow', '2026-08-07')
             ->assertSet('showAttendanceModal', true)
-            ->assertSeeHtml('max-w-[640px]')
-            ->assertSeeHtml('max-height: min(720px, calc(100dvh - 48px));')
+            ->assertSeeHtml('max-w-[620px]')
+            ->assertSeeHtml('max-height: min(680px, calc(100dvh - 48px));')
             ->assertSeeHtml('overscroll-contain')
             ->assertSeeHtml("document.documentElement.style.overflow = 'hidden'")
             ->assertSeeHtml("document.body.style.overflow = 'hidden'")
@@ -191,6 +197,7 @@ class AttendanceManagementTest extends TestCase
             ->call('showHistorySection')
             ->assertSet('reportSection', 'history')
             ->assertSet('changeHistoryLoaded', true)
+            ->assertSet('changeHistoryIsExample', false)
             ->assertSee('Aux Uno')
             ->assertSee('Se agregó la salida omitida por el dispositivo.')
             ->assertSee('09:00:00 · 13:00:00 · 14:00:00 · 18:30:15');

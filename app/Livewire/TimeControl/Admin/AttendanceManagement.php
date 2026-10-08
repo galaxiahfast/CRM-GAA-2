@@ -42,6 +42,8 @@ class AttendanceManagement extends Component
 
     public bool $changeHistoryLoaded = false;
 
+    public bool $changeHistoryIsExample = false;
+
     public ?int $activeReportUserId = null;
 
     public ?string $lastReportGeneratedAt = null;
@@ -364,6 +366,7 @@ class AttendanceManagement extends Component
                         : 'Día no disponible';
 
                     return [
+                        'is_example' => false,
                         'employee_name' => (string) ($change['employee_name'] ?? 'Colaborador'),
                         'employee_id' => (string) ($change['employee_id'] ?? ''),
                         'date' => $date,
@@ -379,6 +382,13 @@ class AttendanceManagement extends Component
                     ];
                 })
                 ->all();
+
+            if ($this->changeHistory === []) {
+                $this->changeHistory = $this->exampleChangeHistory($employees);
+                $this->changeHistoryIsExample = true;
+            } else {
+                $this->changeHistoryIsExample = false;
+            }
 
             $this->changeHistoryLoaded = true;
         }
@@ -613,6 +623,7 @@ class AttendanceManagement extends Component
 
         $this->changeHistory = [];
         $this->changeHistoryLoaded = false;
+        $this->changeHistoryIsExample = false;
 
         $this->closeModal();
         session()->flash('message', count($marks) % 2 === 0
@@ -655,6 +666,47 @@ class AttendanceManagement extends Component
         $this->modalCalculatedBasePay = round($decimalHours * max(0, (float) $this->modalHourlyRate), 2);
         $mealBonus = $this->selectedDateIsWeekend ? 0.0 : max(0, (float) $this->modalBonusAmount);
         $this->modalCalculatedTotal = round($this->modalCalculatedBasePay + $mealBonus, 2);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function exampleChangeHistory($employees): array
+    {
+        $people = $employees->values();
+        $comments = [
+            'Se agregó una salida que no registró el dispositivo.',
+            'Se corrigió la hora de entrada de la jornada.',
+            'Se ajustó el pago por hora autorizado.',
+            'Se eliminó una marca duplicada del checador.',
+            'Se completaron las marcas de entrada y salida.',
+            'Se corrigió el bono de comida del día.',
+            'Se ordenaron los chequeos registrados.',
+            'Se validó la corrección solicitada por el área.',
+        ];
+
+        return collect($comments)->map(function (string $comment, int $index) use ($people): array {
+            $employee = $people->isNotEmpty() ? $people[$index % $people->count()] : null;
+            $date = now()->subDays($index + 1);
+            $marksBefore = $index % 2 === 0
+                ? ['09:02:11', '14:03:20', '16:11:04']
+                : ['08:55:18', '13:58:42', '14:43:10', '16:06:35'];
+            $marksAfter = ['09:02:11', '14:03:20', '14:42:16', '16:11:04'];
+
+            return [
+                'is_example' => true,
+                'employee_name' => $employee ? trim($employee->name.' '.$employee->last_name) : 'Jorge Armando Puc Dzib',
+                'employee_id' => (string) ($employee?->employee_id ?? 'BT003'),
+                'date' => $date->format('d/m/Y'),
+                'changed_at' => $date->setTime(16 - ($index % 5), 10 + $index)->format('d/m/Y H:i'),
+                'admin_name' => 'Administrador de ejemplo',
+                'comment' => $comment,
+                'marks_before' => $marksBefore,
+                'marks_after' => $marksAfter,
+                'hourly_rate_before' => 25.0,
+                'hourly_rate_after' => $index % 3 === 0 ? 30.0 : 25.0,
+                'bonus_before' => 50.0,
+                'bonus_after' => $index % 3 === 1 ? 55.0 : 50.0,
+            ];
+        })->all();
     }
 
     public function export(
