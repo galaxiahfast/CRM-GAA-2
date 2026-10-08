@@ -109,6 +109,13 @@
         .attendance-monochrome .attendance-report-container { background-color: #fff !important; }
         .attendance-monochrome .attendance-page-icon,
         .attendance-monochrome .attendance-report-container { box-shadow: none !important; }
+        .attendance-monochrome .attendance-report-container {
+            border-radius: .75rem !important;
+            background-clip: padding-box;
+            isolation: isolate;
+        }
+        .attendance-monochrome .attendance-report-header { border-radius: .6875rem .6875rem 0 0; }
+        .attendance-monochrome .attendance-report-footer { border-radius: 0 0 .6875rem .6875rem; }
         .attendance-monochrome .attendance-page-icon {
             background: #fff !important;
             border: 1px solid #e4e4e7 !important;
@@ -333,7 +340,7 @@
         class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-none"
         style="background: #ffffff !important; box-shadow: none !important;"
     >
-        <header class="flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+        <header class="attendance-report-header flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
                 <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
@@ -447,7 +454,7 @@
                 'general' => ['label' => 'Reporte general', 'description' => 'Consolidado del periodo', 'enabled' => count($reportedUserIds) > 1],
             ];
         @endphp
-        <footer class="grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
+        <footer class="attendance-report-footer grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
             @foreach ($attendanceReportActions as $mode => $action)
                 <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
                         @disabled(! $selectionReportIsCurrent || ! $action['enabled'])
