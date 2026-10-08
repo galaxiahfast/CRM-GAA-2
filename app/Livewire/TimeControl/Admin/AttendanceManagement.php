@@ -98,7 +98,7 @@ class AttendanceManagement extends Component
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
-        $this->from = Carbon::now()->subDays(14)->toDateString();
+        $this->from = Carbon::now()->subDays(15)->toDateString();
         $this->to = Carbon::now()->toDateString();
         $this->lastReportGeneratedAt = Carbon::now()->subDay()->format('d/m/Y H:i');
         $defaultReportUserId = User::query()

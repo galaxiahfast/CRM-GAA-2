@@ -19,6 +19,17 @@
         clearAllUsers() {
             this.selectedIds = [];
         },
+        areAllAreaUsersSelected(areaUserIds) {
+            return areaUserIds.length > 0 && areaUserIds.every(id => this.selectedIds.includes(Number(id)));
+        },
+        toggleAreaUsers(areaUserIds) {
+            const ids = areaUserIds.map(Number);
+            if (this.areAllAreaUsersSelected(ids)) {
+                this.selectedIds = this.selectedIds.filter(id => !ids.includes(Number(id)));
+                return;
+            }
+            this.selectedIds = [...new Set([...this.selectedIds.map(Number), ...ids])];
+        },
 
         datePicker(model) {
             return {
@@ -333,7 +344,7 @@
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Administración de marcas biométricas, ajustes por día y exportación.</p>
             </div>
         </div>
-        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-[5px] border border-zinc-200 bg-white" aria-label="Secciones del informe">
+        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-none border border-zinc-200 bg-white" aria-label="Secciones del informe">
             <button type="button" wire:click="showPreparationSection"
                     @if ($reportSection === 'prepare') aria-current="page" @endif
                     class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'prepare' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
@@ -430,7 +441,19 @@
                 <div class="attendance-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                     @forelse ($reportUsers->groupBy(fn ($user) => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada') as $areaName => $areaUsers)
                         <div class="mb-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
-                            <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-100 px-[20px] py-[10px]"><span class="font-semibold text-black">{{ $areaName }}</span><span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span></div>
+                            <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-100 px-[20px] py-[10px]">
+                                <div class="flex min-w-0 items-center gap-[10px]">
+                                    <button type="button"
+                                            @click="toggleAreaUsers(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))"
+                                            :aria-checked="areAllAreaUsersSelected(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))"
+                                            role="checkbox" class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-zinc-300 bg-white focus:outline-none focus:ring-0"
+                                            aria-label="Seleccionar a todos los colaboradores de {{ $areaName }}">
+                                        <svg x-show="areAllAreaUsersSelected(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))" class="h-3.5 w-3.5 text-black" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 10 4 4 8-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" /></svg>
+                                    </button>
+                                    <span class="truncate font-semibold text-black">{{ $areaName }}</span>
+                                </div>
+                                <span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span>
+                            </div>
                             <div class="grid gap-[15px] p-[20px] sm:grid-cols-2 xl:grid-cols-3">
                                 @foreach ($areaUsers as $reportUser)
                                     @php
@@ -502,8 +525,8 @@
             </div>
         </div>
     {{-- Tabla de resultados --}}
-        <div class="grid border-t border-zinc-200 bg-white lg:grid-cols-[280px_minmax(0,1fr)]">
-            <aside class="border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r" aria-label="Colaboradores incluidos en el informe">
+        <div class="grid border-t border-zinc-200 bg-white lg:h-[600px] lg:grid-cols-[280px_minmax(0,1fr)]">
+            <aside class="flex min-h-0 flex-col border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r" aria-label="Colaboradores incluidos en el informe">
                 <div class="border-b border-zinc-200 p-[15px]">
                     <div class="mb-[10px] flex items-center justify-between gap-[10px]">
                         <h3 class="font-semibold text-black">Colaboradores</h3>
@@ -516,7 +539,7 @@
                                class="h-[40px] w-full rounded-md border border-zinc-200 bg-white pl-[36px] pr-[12px] text-[13px] text-black outline-none focus:border-zinc-300 focus:ring-0">
                     </label>
                 </div>
-                <nav class="attendance-scrollbar h-[300px] space-y-[6px] overflow-y-auto p-[10px]" aria-label="Cambiar colaborador">
+                <nav class="attendance-scrollbar h-[300px] space-y-[6px] overflow-y-auto p-[10px] lg:h-auto lg:min-h-0 lg:flex-1" aria-label="Cambiar colaborador">
                     @foreach ($reportedUsers as $reportedUser)
                         @php
                             $reportedUserSearch = strtolower(trim($reportedUser->name.' '.$reportedUser->last_name).' '.$reportedUser->employee_id);
@@ -524,8 +547,8 @@
                         <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
                                 x-show="resultUserSearch === '' || @js($reportedUserSearch).includes(resultUserSearch.toLowerCase())"
                                 wire:key="report-result-user-{{ $reportedUser->id }}"
-                                class="flex w-full items-center gap-[10px] rounded-md border px-[10px] py-[9px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-black bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
+                                class="flex w-full items-center gap-[10px] rounded-md border px-[10px] py-[9px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-transparent bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-zinc-200 bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
                                 {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
                             </span>
                             <span class="min-w-0 flex-1">
@@ -540,7 +563,7 @@
                 </nav>
             </aside>
 
-            <div class="min-w-0 bg-white">
+            <div class="min-h-0 min-w-0 overflow-y-auto bg-white">
             <div class="attendance-scrollbar overflow-x-auto px-[20px]">
                 <table class="attendance-results-table border-separate border-spacing-0 text-left text-[15px]">
                     <thead>
