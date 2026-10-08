@@ -209,7 +209,7 @@
         }
         .attendance-results-table {
             display: block;
-            width: 1686px;
+            width: 1680px;
         }
         .attendance-results-table :is(thead, tfoot) {
             display: block;
@@ -217,17 +217,17 @@
         }
         .attendance-results-table tbody {
             display: block;
-            width: 1686px;
+            width: 1680px;
             max-height: 430px;
             overflow-x: hidden;
             overflow-y: auto;
             overscroll-behavior: contain;
             scrollbar-width: thin;
-            scrollbar-color: #000 transparent;
+            scrollbar-color: #000 #fff !important;
         }
         .attendance-results-table tbody::-webkit-scrollbar { width: 6px; }
-        .attendance-results-table tbody::-webkit-scrollbar-track { background: transparent; }
-        .attendance-results-table tbody::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
+        .attendance-results-table tbody::-webkit-scrollbar-track { background: #fff !important; }
+        .attendance-results-table tbody::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 9999px; }
         .attendance-results-table tr {
             display: grid;
             width: 1680px;
@@ -531,12 +531,11 @@
             </div>
         </div>
     {{-- Tabla de resultados --}}
-        <div class="grid border-t border-zinc-200 bg-white lg:h-[600px] lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div class="grid border-t border-zinc-200 bg-white lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside class="flex min-h-0 flex-col border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r" aria-label="Colaboradores incluidos en el informe">
                 <div class="border-b border-zinc-200 p-[15px]">
-                    <div class="mb-[10px] flex items-center justify-between gap-[10px]">
+                    <div class="mb-[10px]">
                         <h3 class="font-semibold text-black">Colaboradores</h3>
-                        <span class="text-[13px] tabular-nums text-zinc-500">{{ $reportedUsers->count() }}</span>
                     </div>
                     <label class="relative block">
                         <span class="sr-only">Buscar colaborador en el informe</span>
@@ -569,8 +568,8 @@
                 </nav>
             </aside>
 
-            <div class="min-h-0 min-w-0 overflow-y-auto bg-white">
-            <div class="attendance-scrollbar overflow-x-auto px-[20px]">
+            <div class="min-h-0 min-w-0 bg-white">
+            <div class="attendance-scrollbar overflow-x-auto">
                 <table class="attendance-results-table border-separate border-spacing-0 text-left text-[15px]">
                     <thead>
                         <tr class="font-semibold text-zinc-700">
