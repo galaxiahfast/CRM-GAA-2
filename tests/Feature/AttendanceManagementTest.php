@@ -93,7 +93,7 @@ class AttendanceManagementTest extends TestCase
         $this->assertCount(0, $cachedOpenQueries);
     }
 
-    public function test_attendance_management_waits_for_the_report_selection(): void
+    public function test_attendance_management_preselects_an_intern_and_starts_in_preparation(): void
     {
         Storage::fake('local');
         $adminRole = Role::create(['role' => 'Administrador']);
@@ -101,20 +101,27 @@ class AttendanceManagementTest extends TestCase
             'name' => 'Admin', 'email' => 'admin-default@test.mx',
             'password' => Hash::make('secret'), 'role_id' => $adminRole->id,
         ]);
+        $auxRole = Role::create(['role' => 'Auxiliar']);
         $collaborator = User::create([
-            'name' => 'Ana', 'last_name' => 'Asistencia', 'email' => 'ana@test.mx',
-            'password' => Hash::make('secret'), 'role_id' => $adminRole->id, 'employee_id' => 'EMP-DEFAULT',
+            'name' => 'Armando', 'last_name' => 'Becario', 'email' => 'armando@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-DEFAULT',
+        ]);
+        User::create([
+            'name' => 'Beatriz', 'last_name' => 'Becaria', 'email' => 'beatriz@test.mx',
+            'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-SECONDARY',
         ]);
 
         Livewire::actingAs($admin)
             ->test(AttendanceManagement::class)
             ->assertSet('userId', null)
-            ->assertSet('selectedReportUserIds', [])
+            ->assertSet('selectedReportUserIds', [$collaborator->id])
             ->assertSet('activeReportUserId', null)
             ->assertSet('reportSection', 'prepare')
             ->assertSet('searched', false)
             ->assertDontSee('Reporte individual')
-            ->assertSee('Ana Asistencia');
+            ->assertSee('Generar informe')
+            ->assertSee('Ver resultados')
+            ->assertSee('Armando Becario');
     }
 
     public function test_admin_can_correct_daily_marks_pay_and_bonus_with_comment(): void

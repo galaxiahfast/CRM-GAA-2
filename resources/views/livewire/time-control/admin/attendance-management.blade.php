@@ -342,19 +342,24 @@
         style="background: #ffffff !important; box-shadow: none !important;"
     >
         <header class="attendance-report-header flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
-            <div class="min-w-0">
-                <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
-                <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
+            <div class="flex min-w-0 flex-wrap items-center gap-x-[30px] gap-y-[12px]">
+                <div class="min-w-0">
+                    <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
+                    <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
+                </div>
+                <nav class="inline-flex items-center gap-[5px] rounded-lg border border-zinc-200 bg-white p-[4px]" aria-label="Secciones del informe">
+                    <button type="button" wire:click="showPreparationSection" aria-current="page" class="rounded-md bg-black px-[12px] py-[7px] text-[13px] font-medium text-white">
+                        Generar informe
+                    </button>
+                    <button type="button" wire:click="showResultsSection" @disabled(! $selectionReportIsCurrent)
+                            class="rounded-md px-[12px] py-[7px] text-[13px] font-medium text-zinc-500 transition hover:text-black disabled:cursor-not-allowed disabled:opacity-40">
+                        Ver resultados
+                    </button>
+                </nav>
             </div>
             <div class="flex flex-wrap items-center gap-[30px] text-[15px] font-medium text-black">
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span>
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M9 14h.01M9 18h.01M15 10h.01M15 14h.01M15 18h.01"/></svg>{{ $selectedAreaCount }} {{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span>
-                @if ($selectionReportIsCurrent)
-                    <button type="button" wire:click="showResultsSection" class="inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-semibold text-black hover:text-zinc-500">
-                        Ver resultados
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                @endif
             </div>
         </header>
 
@@ -461,15 +466,21 @@
     <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
         <div>
             <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
-                <div>
-                    <h2 class="font-semibold text-black">Informe de asistencia</h2>
-                    <p class="mt-[3px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
+                <div class="flex min-w-0 flex-wrap items-center gap-x-[30px] gap-y-[12px]">
+                    <div>
+                        <h2 class="font-semibold text-black">Informe de asistencia</h2>
+                        <p class="mt-[3px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
+                    </div>
+                    <nav class="inline-flex items-center gap-[5px] rounded-lg border border-zinc-200 bg-white p-[4px]" aria-label="Secciones del informe">
+                        <button type="button" wire:click="showPreparationSection" class="rounded-md px-[12px] py-[7px] text-[13px] font-medium text-zinc-500 transition hover:text-black">
+                            Generar informe
+                        </button>
+                        <button type="button" wire:click="showResultsSection" aria-current="page" class="rounded-md bg-black px-[12px] py-[7px] text-[13px] font-medium text-white">
+                            Ver resultados
+                        </button>
+                    </nav>
                 </div>
                 <div class="flex flex-wrap items-center gap-[25px] font-medium text-black">
-                    <button type="button" wire:click="showPreparationSection" class="inline-flex items-center gap-[8px] border-0 bg-transparent p-0 font-semibold text-black hover:text-zinc-500">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg>
-                        Preparar informe
-                    </button>
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {{ $reportedUsers->count() }} {{ $reportedUsers->count() === 1 ? 'seleccionado' : 'seleccionados' }}

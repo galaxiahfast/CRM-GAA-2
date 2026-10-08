@@ -101,7 +101,22 @@ class AttendanceManagement extends Component
         $this->from = Carbon::now()->subDays(14)->toDateString();
         $this->to = Carbon::now()->toDateString();
         $this->lastReportGeneratedAt = Carbon::now()->subDay()->format('d/m/Y H:i');
+        $defaultReportUserId = User::query()
+            ->select('users.id')
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->whereNotNull('users.employee_id')
+            ->where('users.employee_id', '!=', '')
+            ->whereIn(DB::raw('LOWER(roles.role)'), ['auxiliar', 'becario'])
+            ->orderByRaw(
+                "CASE WHEN LOWER(COALESCE(users.name, '')) LIKE ? OR LOWER(COALESCE(users.last_name, '')) LIKE ? THEN 0 ELSE 1 END",
+                ['%armando%', '%armando%']
+            )
+            ->inRandomOrder()
+            ->value('users.id');
 
+        if ($defaultReportUserId !== null) {
+            $this->selectedReportUserIds = [(int) $defaultReportUserId];
+        }
     }
 
     public function clearCollaborator(): void
