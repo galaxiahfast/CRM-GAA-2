@@ -309,11 +309,18 @@ class AttendanceManagement extends Component
         $this->reportSection = 'prepare';
     }
 
-    public function showResultsSection(): void
+    public function showResultsSection(
+        AttendanceService $attendanceService,
+        AttendanceSettingsService $settingsService,
+    ): void
     {
-        if ($this->selectionReportIsCurrent) {
-            $this->reportSection = 'results';
+        if (! $this->selectionReportIsCurrent) {
+            $this->generateSelectionReport($attendanceService, $settingsService);
+
+            return;
         }
+
+        $this->reportSection = 'results';
     }
 
     public function selectReportUser(

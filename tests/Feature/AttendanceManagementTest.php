@@ -103,7 +103,7 @@ class AttendanceManagementTest extends TestCase
         ]);
         $auxRole = Role::create(['role' => 'Auxiliar']);
         $collaborator = User::create([
-            'name' => 'Armando', 'last_name' => 'Becario', 'email' => 'armando@test.mx',
+            'name' => 'Jorge Armando', 'last_name' => 'Puc Dzib', 'email' => 'armando@test.mx',
             'password' => Hash::make('secret'), 'role_id' => $auxRole->id, 'employee_id' => 'EMP-DEFAULT',
         ]);
         User::create([
@@ -121,7 +121,12 @@ class AttendanceManagementTest extends TestCase
             ->assertDontSee('Reporte individual')
             ->assertSee('Generar informe')
             ->assertSee('Ver resultados')
-            ->assertSee('Armando Becario');
+            ->assertSee('Jorge Armando Puc Dzib')
+            ->call('showResultsSection')
+            ->assertSet('selectionReportIsCurrent', true)
+            ->assertSet('reportSection', 'results')
+            ->assertSet('activeReportUserId', $collaborator->id)
+            ->assertSee('Reporte individual');
     }
 
     public function test_admin_can_correct_daily_marks_pay_and_bonus_with_comment(): void
