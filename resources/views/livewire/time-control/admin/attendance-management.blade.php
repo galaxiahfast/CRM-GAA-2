@@ -545,7 +545,7 @@
                                     $rowClass = 'bg-red-50/70 hover:bg-red-100/80 shadow-[inset_4px_0_0_#fca5a5]';
                                 }
                                 $attendanceMarks = array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas']))));
-                                $visibleAttendanceMarks = count($attendanceMarks) > 4 ? array_slice($attendanceMarks, 0, 3) : $attendanceMarks;
+                                $visibleAttendanceMarks = array_slice($attendanceMarks, 0, 4);
                             @endphp
                             <div class="attendance-results-row h-[80px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
                                 <div class="attendance-results-cell px-[15px]" role="cell">
@@ -557,7 +557,7 @@
                                 </div>
                                 <div class="attendance-results-cell whitespace-nowrap px-[15px] font-semibold tabular-nums text-black" role="cell">{{ $row['fecha'] }}</div>
                                 <div class="attendance-results-cell px-[15px] text-zinc-500" title="{{ $row['detalles_marcas'] }}" role="cell">
-                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[6px] text-center tabular-nums">
+                                    <div class="flex flex-nowrap items-center justify-center gap-[10px] whitespace-nowrap text-[13px] tabular-nums">
                                         @foreach ($visibleAttendanceMarks as $attendanceMark)
                                             <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
@@ -653,14 +653,13 @@
 
             <div class="attendance-scrollbar max-h-[560px] overflow-y-auto overscroll-contain bg-white" style="overscroll-behavior: contain;">
                 @forelse ($changeHistory as $change)
-                    <article class="grid gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
+                    @php
+                        $historyMarksBefore = array_values(array_slice($change['marks_before'], 0, 4));
+                        $historyMarksAfter = array_values(array_slice($change['marks_after'], 0, 4));
+                    @endphp
+                    <article class="grid items-center gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
                         <div class="min-w-0">
-                            <div class="flex min-w-0 items-center gap-[10px]">
-                                <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
-                                @if ($change['is_example'] ?? false)
-                                    <span class="shrink-0 rounded border border-zinc-200 bg-white px-[7px] py-[2px] text-[11px] font-medium text-zinc-500">Ejemplo</span>
-                                @endif
-                            </div>
+                            <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
                             <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
                             <p class="mt-[8px] inline-flex items-center gap-[8px] text-black">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
@@ -671,8 +670,8 @@
                         <div class="min-w-0 border-zinc-200 lg:border-x lg:px-[20px]">
                             <p class="font-medium text-black">{{ $change['comment'] }}</p>
                             <div class="mt-[10px] grid gap-[10px] text-[13px] text-zinc-500 sm:grid-cols-2">
-                                <p><span class="font-medium text-black">Marcas anteriores:</span> {{ $change['marks_before'] === [] ? 'Sin marcas' : implode(' · ', $change['marks_before']) }}</p>
-                                <p><span class="font-medium text-black">Marcas nuevas:</span> {{ $change['marks_after'] === [] ? 'Sin marcas' : implode(' · ', $change['marks_after']) }}</p>
+                                <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas anteriores:</span> {{ $historyMarksBefore === [] ? 'Sin marcas' : implode(' · ', $historyMarksBefore) }}@if (count($change['marks_before']) > 4) · ...@endif</p>
+                                <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
                                 <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
                                 <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
                             </div>

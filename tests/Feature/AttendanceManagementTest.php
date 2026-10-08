@@ -138,6 +138,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('changeHistoryIsExample', true)
             ->assertCount('changeHistory', 8)
             ->assertSee('Vista de ejemplo')
+            ->assertDontSeeHtml('>Ejemplo</span>')
             ->assertSeeHtml('max-h-[560px]');
     }
 
@@ -355,7 +356,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSeeHtml('x-ref="attendanceTableBody"')
             ->assertSeeHtml('h-[480px]')
             ->assertSeeHtml('syncAttendanceTableHorizontal($event)')
-            ->assertSeeHtml('grid-cols-[72px_72px]')
+            ->assertSeeHtml('flex flex-nowrap items-center justify-center gap-[10px]')
             ->assertSeeHtml('role="columnheader">Acciones</div>')
             ->assertSeeHtml('role="columnheader">Fecha</div>')
             ->assertSeeHtml('role="columnheader">Marcas / Chequeos</div>')
