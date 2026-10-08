@@ -4,6 +4,7 @@
         isFullscreen: false,
         reportSearch: '',
         reportSearchOpened: false,
+        resultUserSearch: '',
         voiceListening: false,
         voiceRecognition: null,
         selectedIds: @js(array_values(array_map('intval', $selectedReportUserIds))),
@@ -332,7 +333,7 @@
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Administración de marcas biométricas, ajustes por día y exportación.</p>
             </div>
         </div>
-        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white" aria-label="Secciones del informe">
+        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-[5px] border border-zinc-200 bg-white" aria-label="Secciones del informe">
             <button type="button" wire:click="showPreparationSection"
                     @if ($reportSection === 'prepare') aria-current="page" @endif
                     class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'prepare' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
@@ -499,23 +500,47 @@
                     </button>
                 @endforeach
             </div>
-            <nav class="attendance-scrollbar flex gap-[20px] overflow-x-auto p-[20px]" aria-label="Colaboradores incluidos en el informe">
-                @foreach ($reportedUsers as $reportedUser)
-                    <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
-                            class="flex min-w-[240px] flex-1 items-center gap-[12px] rounded-xl border px-[15px] py-[12px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-black hover:bg-zinc-100' }}">
-                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {{ $activeReportUserId === $reportedUser->id ? 'bg-white text-black' : 'bg-zinc-100 text-black' }} font-semibold">
-                            {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
-                        </span>
-                        <span class="min-w-0 flex-1">
-                            <span class="block truncate font-medium">{{ trim($reportedUser->name.' '.$reportedUser->last_name) }}</span>
-                            <span class="mt-[3px] block truncate text-[13px] {{ $activeReportUserId === $reportedUser->id ? 'text-zinc-300' : 'text-zinc-500' }}">ID {{ $reportedUser->employee_id }}</span>
-                        </span>
-                    </button>
-                @endforeach
-            </nav>
         </div>
     {{-- Tabla de resultados --}}
-        <div class="border-t border-zinc-200">
+        <div class="grid border-t border-zinc-200 bg-white lg:grid-cols-[280px_minmax(0,1fr)]">
+            <aside class="border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r" aria-label="Colaboradores incluidos en el informe">
+                <div class="border-b border-zinc-200 p-[15px]">
+                    <div class="mb-[10px] flex items-center justify-between gap-[10px]">
+                        <h3 class="font-semibold text-black">Colaboradores</h3>
+                        <span class="text-[13px] tabular-nums text-zinc-500">{{ $reportedUsers->count() }}</span>
+                    </div>
+                    <label class="relative block">
+                        <span class="sr-only">Buscar colaborador en el informe</span>
+                        <svg class="pointer-events-none absolute left-[12px] top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                        <input type="search" x-model="resultUserSearch" autocomplete="off" placeholder="Buscar por nombre o ID"
+                               class="h-[40px] w-full rounded-md border border-zinc-200 bg-white pl-[36px] pr-[12px] text-[13px] text-black outline-none focus:border-zinc-300 focus:ring-0">
+                    </label>
+                </div>
+                <nav class="attendance-scrollbar h-[300px] space-y-[6px] overflow-y-auto p-[10px]" aria-label="Cambiar colaborador">
+                    @foreach ($reportedUsers as $reportedUser)
+                        @php
+                            $reportedUserSearch = strtolower(trim($reportedUser->name.' '.$reportedUser->last_name).' '.$reportedUser->employee_id);
+                        @endphp
+                        <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
+                                x-show="resultUserSearch === '' || @js($reportedUserSearch).includes(resultUserSearch.toLowerCase())"
+                                wire:key="report-result-user-{{ $reportedUser->id }}"
+                                class="flex w-full items-center gap-[10px] rounded-md border px-[10px] py-[9px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-black bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
+                                {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
+                            </span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate text-[13px] font-medium">{{ trim($reportedUser->name.' '.$reportedUser->last_name) }}</span>
+                                <span class="mt-[2px] block truncate text-[12px] text-zinc-500">ID {{ $reportedUser->employee_id }}</span>
+                            </span>
+                            @if ($activeReportUserId === $reportedUser->id)
+                                <svg class="h-4 w-4 shrink-0 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 7"/></svg>
+                            @endif
+                        </button>
+                    @endforeach
+                </nav>
+            </aside>
+
+            <div class="min-w-0 bg-white">
             <div class="attendance-scrollbar overflow-x-auto px-[20px]">
                 <table class="attendance-results-table border-separate border-spacing-0 text-left text-[15px]">
                     <thead>
@@ -613,6 +638,7 @@
                     </div>
                 </footer>
             @endif
+            </div>
         </div>
     </section>
     @endif
