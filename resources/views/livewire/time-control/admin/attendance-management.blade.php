@@ -344,15 +344,17 @@
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Administración de marcas biométricas, ajustes por día y exportación.</p>
             </div>
         </div>
-        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-none border border-zinc-200 bg-white" aria-label="Secciones del informe">
+        <nav class="flex flex-wrap items-center gap-[30px]" aria-label="Secciones del informe">
             <button type="button" wire:click="showPreparationSection"
                     @if ($reportSection === 'prepare') aria-current="page" @endif
-                    class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'prepare' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'prepare' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
                 Generar informe
             </button>
             <button type="button" @click="syncSelection(); $wire.showResultsSection()"
                     @if ($reportSection === 'results') aria-current="page" @endif
-                    class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'results' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'results' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
                 Ver resultados
             </button>
         </nav>
@@ -443,6 +445,7 @@
                         <div class="mb-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
                             <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-100 px-[20px] py-[10px]">
                                 <div class="flex min-w-0 items-center gap-[10px]">
+                                    <span class="truncate font-semibold text-black">{{ $areaName }}</span>
                                     <button type="button"
                                             @click="toggleAreaUsers(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))"
                                             :aria-checked="areAllAreaUsersSelected(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))"
@@ -450,7 +453,6 @@
                                             aria-label="Seleccionar a todos los colaboradores de {{ $areaName }}">
                                         <svg x-show="areAllAreaUsersSelected(@js($areaUsers->pluck('id')->map(fn ($id) => (int) $id)->values()->all()))" class="h-3.5 w-3.5 text-black" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 10 4 4 8-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" /></svg>
                                     </button>
-                                    <span class="truncate font-semibold text-black">{{ $areaName }}</span>
                                 </div>
                                 <span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span>
                             </div>
