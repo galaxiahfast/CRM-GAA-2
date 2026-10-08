@@ -123,6 +123,7 @@ class AttendanceManagementTest extends TestCase
             ->assertDontSee('Reporte individual')
             ->assertSee('Generar informe')
             ->assertSee('Ver resultados')
+            ->assertSee(now()->subDays(15)->format('d/m/Y').' — '.now()->format('d/m/Y'))
             ->assertSeeHtml('role="checkbox"')
             ->assertSeeHtml('toggleAreaUsers(')
             ->assertSee('Jorge Armando Puc Dzib')
