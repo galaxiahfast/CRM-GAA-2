@@ -670,13 +670,13 @@
                         </div>
 
                         <div class="flex min-w-0 flex-col justify-center border-zinc-200 text-left lg:border-x lg:px-[20px]">
-                            <p class="font-medium text-black">{{ $change['comment'] }}</p>
-                            <div class="mt-[10px] grid items-center gap-[20px] text-[13px] text-zinc-500 sm:grid-cols-2">
-                                <div class="flex h-full min-w-0 flex-col items-start justify-center gap-[10px] text-left">
+                            <div class="grid items-stretch gap-[20px] text-[13px] text-zinc-500 sm:grid-cols-2">
+                                <div class="grid h-full min-w-0 grid-rows-3 items-center gap-[10px] text-left">
+                                    <p class="font-medium text-black">{{ $change['comment'] }}</p>
                                     <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas anteriores:</span> {{ $historyMarksBefore === [] ? 'Sin marcas' : implode(' · ', $historyMarksBefore) }}@if (count($change['marks_before']) > 4) · ...@endif</p>
                                     <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
                                 </div>
-                                <div class="flex h-full min-w-0 flex-col items-start justify-center gap-[10px] text-left">
+                                <div class="grid h-full min-w-0 grid-rows-3 items-center gap-[10px] text-left">
                                     <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
                                     <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
                                     <p><span class="font-medium text-black">Bono:</span> ${{ number_format($change['extra_bonus_before'], 2) }} → ${{ number_format($change['extra_bonus_after'], 2) }}</p>
@@ -901,15 +901,9 @@
                                     @error('modalExtraBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
-                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-                                    <span class="block text-[13px] text-zinc-500">Bono agregado</span>
-                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format(max(0, (float) $modalExtraBonusAmount), 2) }}</strong>
-                                </div>
-                                <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-                                    <span class="block text-[13px] text-zinc-500">Total calculado</span>
-                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedTotal, 2) }}</strong>
-                                </div>
+                            <div class="mt-4 rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+                                <span class="block text-[13px] text-zinc-500">Total calculado</span>
+                                <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedTotal, 2) }}</strong>
                             </div>
                         </section>
 

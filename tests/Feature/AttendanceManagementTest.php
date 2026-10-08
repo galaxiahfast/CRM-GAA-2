@@ -186,7 +186,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSee('Agrega, ordena o elimina marcas.')
             ->assertSee('Las marcas impares requieren revisión.')
             ->assertSee('El pago se calcula con el tiempo neto.')
-            ->assertSee('Bono agregado')
+            ->assertDontSee('Bono agregado')
             ->assertDontSee('Pago calculado por horas')
             ->assertSeeHtml('wire:model.live.debounce.250ms="modalExtraBonusAmount"')
             ->assertSeeHtml('resize-none')
@@ -206,6 +206,12 @@ class AttendanceManagementTest extends TestCase
             ->assertHasNoErrors()
             ->assertSet('showAttendanceModal', false)
             ->assertSet('payrollRows.0.estado', 'Corregido')
+            ->assertSet('payrollRows.0.comida', '$75.25')
+            ->assertSet('payrollRows.0.bono', '$25.00')
+            ->assertSet('payrollRows.0.total', '$950.25')
+            ->assertSet('totalsFooter.comida', '$75.25')
+            ->assertSet('totalsFooter.bonos', '$25.00')
+            ->assertSet('totalsFooter.general', '$950.25')
             ->call('showHistorySection')
             ->assertSet('reportSection', 'history')
             ->assertSet('changeHistoryLoaded', true)
@@ -238,6 +244,9 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('payrollRows.0.estado', 'Corregido')
             ->assertSet('payrollRows.0.neto', '08h 30m 15s')
             ->call('editRow', '2026-08-07')
+            ->assertSet('modalBonusAmount', 75.25)
+            ->assertSet('modalExtraBonusAmount', 25)
+            ->assertSet('modalCalculatedTotal', 950.25)
             ->assertSet('modalMarks', ['09:00:00', '13:00:00', '14:00:00', '18:30:15']);
     }
 
