@@ -523,22 +523,26 @@
             </aside>
 
             <div class="min-h-0 min-w-0 bg-white" x-data="{
-                syncAttendanceTableScroll(event) {
-                    this.$refs.attendanceTableHeader.scrollLeft = event.target.scrollLeft;
-                    if (this.$refs.attendanceTableTotal) this.$refs.attendanceTableTotal.scrollLeft = event.target.scrollLeft;
+                syncAttendanceTableHorizontal(event) {
+                    const left = event.target.scrollLeft;
+                    this.$refs.attendanceTableHeader.scrollLeft = left;
+                    this.$refs.attendanceTableBody.scrollLeft = left;
+                    if (this.$refs.attendanceTableTotal) this.$refs.attendanceTableTotal.scrollLeft = left;
                 }
             }">
                 <div x-ref="attendanceTableHeader" class="overflow-hidden bg-zinc-100">
+                    <div class="w-[1686px]">
                     <div class="attendance-results-row attendance-results-header h-[64px] font-semibold text-zinc-700" role="row">
                         @foreach (['Acciones', 'Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Bono', 'Total del día', 'Estado'] as $heading)
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="columnheader">{{ $heading }}</div>
                         @endforeach
                     </div>
+                    </div>
                 </div>
 
-                <div x-ref="attendanceTableBody" @scroll="syncAttendanceTableScroll($event)"
-                     class="attendance-results-body-scroll h-[356px] overflow-x-scroll overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
-                    <div class="min-h-[350px] w-[1680px]" role="rowgroup">
+                <div x-ref="attendanceTableBody"
+                     class="attendance-results-body-scroll h-[400px] overflow-x-hidden overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
+                    <div class="min-h-[400px] w-[1680px]" role="rowgroup">
                         @forelse ($payrollRows as $row)
                             @php
                                 $rowClass = 'bg-white hover:bg-zinc-50';
@@ -548,8 +552,9 @@
                                     $rowClass = 'bg-red-50/70 hover:bg-red-100/80 shadow-[inset_4px_0_0_#fca5a5]';
                                 }
                                 $attendanceMarks = array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas']))));
+                                $visibleAttendanceMarks = count($attendanceMarks) > 4 ? array_slice($attendanceMarks, 0, 3) : $attendanceMarks;
                             @endphp
-                            <div class="attendance-results-row h-[70px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
+                            <div class="attendance-results-row h-[80px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
                                 <div class="attendance-results-cell px-[15px]" role="cell">
                                     <div class="flex items-center justify-center gap-[4px]">
                                         <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg></button>
@@ -559,10 +564,13 @@
                                 </div>
                                 <div class="attendance-results-cell whitespace-nowrap px-[15px] font-semibold tabular-nums text-black" role="cell">{{ $row['fecha'] }}</div>
                                 <div class="attendance-results-cell px-[15px] text-zinc-500" title="{{ $row['detalles_marcas'] }}" role="cell">
-                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[2px] text-center tabular-nums">
-                                        @foreach ($attendanceMarks as $attendanceMark)
+                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[6px] text-center tabular-nums">
+                                        @foreach ($visibleAttendanceMarks as $attendanceMark)
                                             <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
+                                        @if (count($attendanceMarks) > 4)
+                                            <span class="whitespace-nowrap" title="Hay {{ count($attendanceMarks) - 3 }} marcas adicionales">...</span>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="attendance-results-cell px-[15px] tabular-nums text-zinc-600" role="cell">{{ $row['neto'] }}</div>
@@ -581,7 +589,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="flex h-[350px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
+                            <div class="flex h-[400px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
                                 Esta persona no tiene jornadas registradas en el periodo seleccionado.
                             </div>
                         @endforelse
@@ -590,6 +598,7 @@
 
                 @if ($searched && count($payrollRows) > 0)
                     <div x-ref="attendanceTableTotal" class="overflow-hidden bg-zinc-100">
+                        <div class="w-[1686px]">
                         <div class="attendance-results-row attendance-results-total h-[64px] font-bold text-black" role="row">
                             <div class="attendance-results-cell" role="cell"></div>
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="cell">TOTAL</div>
@@ -601,8 +610,13 @@
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['general'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell" role="cell"></div>
                         </div>
+                        </div>
                     </div>
                 @endif
+                <div class="attendance-scrollbar overflow-x-scroll overflow-y-hidden bg-white"
+                     @scroll="syncAttendanceTableHorizontal($event)" aria-label="Desplazar columnas del informe">
+                    <div class="h-px w-[1686px]"></div>
+                </div>
             @if ($searched)
                 <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-white p-[20px] text-zinc-500">
                     <span class="font-semibold text-black">Referencia de estados</span>

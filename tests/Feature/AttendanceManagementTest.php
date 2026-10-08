@@ -284,14 +284,17 @@ class AttendanceManagementTest extends TestCase
         ]);
 
         foreach ([$ana, $beto] as $user) {
-            foreach (['09:00:00', '18:00:00'] as $index => $time) {
+            $times = $user->is($ana)
+                ? ['09:00:00', '12:00:00', '12:00:01', '15:00:01', '15:00:02', '18:00:02']
+                : ['09:00:00', '18:00:00'];
+            foreach ($times as $index => $time) {
                 DB::table('control_de_horas')->insert([
                     'employeeID' => $user->employee_id,
                     'personName' => trim($user->name.' '.$user->last_name),
                     'authDateTime' => '2026-08-07 '.$time,
                     'authDate' => '2026-08-07',
                     'authTime' => $time,
-                    'direction' => $index === 0 ? 'IN' : 'OUT',
+                    'direction' => $index % 2 === 0 ? 'IN' : 'OUT',
                     'deviceName' => 'Prueba',
                 ]);
             }
@@ -308,6 +311,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('employeeId', 'EMP-R01')
             ->assertSet('selectedEmployeeName', 'Ana Uno')
             ->assertSet('payrollRows.0.neto', '09h 00m 00s')
+            ->assertSeeHtml('title="Hay 3 marcas adicionales">...</span>')
             ->assertSee('Reporte individual')
             ->assertDontSee('Configura y genera los resultados fácilmente.')
             ->call('showPreparationSection')
@@ -327,7 +331,8 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('activeReportUserId', $ana->id)
             ->assertSeeHtml('x-model="resultUserSearch"')
             ->assertSeeHtml('x-ref="attendanceTableBody"')
-            ->assertSeeHtml('h-[356px]')
+            ->assertSeeHtml('h-[400px]')
+            ->assertSeeHtml('syncAttendanceTableHorizontal($event)')
             ->assertSeeHtml('grid-cols-[72px_72px]')
             ->assertSeeHtml('role="columnheader">Acciones</div>')
             ->assertSeeHtml('role="columnheader">Fecha</div>')
