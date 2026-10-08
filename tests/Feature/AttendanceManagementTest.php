@@ -331,7 +331,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('activeReportUserId', $ana->id)
             ->assertSeeHtml('x-model="resultUserSearch"')
             ->assertSeeHtml('x-ref="attendanceTableBody"')
-            ->assertSeeHtml('h-[540px]')
+            ->assertSeeHtml('h-[480px]')
             ->assertSeeHtml('syncAttendanceTableHorizontal($event)')
             ->assertSeeHtml('grid-cols-[72px_72px]')
             ->assertSeeHtml('role="columnheader">Acciones</div>')

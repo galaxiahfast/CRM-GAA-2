@@ -528,8 +528,8 @@
                 </div>
 
                 <div x-ref="attendanceTableBody"
-                     class="attendance-results-body-scroll h-[540px] overflow-x-hidden overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
-                    <div class="min-h-[540px] w-[1680px]" role="rowgroup">
+                     class="attendance-results-body-scroll h-[480px] overflow-x-hidden overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
+                    <div class="min-h-[480px] w-[1680px]" role="rowgroup">
                         @forelse ($payrollRows as $row)
                             @php
                                 $rowClass = 'bg-white hover:bg-zinc-50';
@@ -541,7 +541,7 @@
                                 $attendanceMarks = array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas']))));
                                 $visibleAttendanceMarks = count($attendanceMarks) > 4 ? array_slice($attendanceMarks, 0, 3) : $attendanceMarks;
                             @endphp
-                            <div class="attendance-results-row h-[90px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
+                            <div class="attendance-results-row h-[80px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
                                 <div class="attendance-results-cell px-[15px]" role="cell">
                                     <div class="flex items-center justify-center gap-[4px]">
                                         <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg></button>
@@ -551,7 +551,7 @@
                                 </div>
                                 <div class="attendance-results-cell whitespace-nowrap px-[15px] font-semibold tabular-nums text-black" role="cell">{{ $row['fecha'] }}</div>
                                 <div class="attendance-results-cell px-[15px] text-zinc-500" title="{{ $row['detalles_marcas'] }}" role="cell">
-                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[10px] text-center tabular-nums">
+                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[6px] text-center tabular-nums">
                                         @foreach ($visibleAttendanceMarks as $attendanceMark)
                                             <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
@@ -576,7 +576,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="flex h-[540px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
+                            <div class="flex h-[480px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
                                 Esta persona no tiene jornadas registradas en el periodo seleccionado.
                             </div>
                         @endforelse
