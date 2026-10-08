@@ -332,15 +332,15 @@
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Administración de marcas biométricas, ajustes por día y exportación.</p>
             </div>
         </div>
-        <nav class="inline-flex items-center gap-[5px] rounded-lg border border-zinc-200 bg-white p-[4px]" aria-label="Secciones del informe">
+        <nav class="inline-flex items-stretch divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white" aria-label="Secciones del informe">
             <button type="button" wire:click="showPreparationSection"
                     @if ($reportSection === 'prepare') aria-current="page" @endif
-                    class="rounded-md px-[14px] py-[8px] text-[13px] font-medium transition {{ $reportSection === 'prepare' ? 'bg-black text-white' : 'text-zinc-500 hover:text-black' }}">
+                    class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'prepare' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
                 Generar informe
             </button>
             <button type="button" @click="syncSelection(); $wire.showResultsSection()"
                     @if ($reportSection === 'results') aria-current="page" @endif
-                    class="rounded-md px-[14px] py-[8px] text-[13px] font-medium transition {{ $reportSection === 'results' ? 'bg-black text-white' : 'text-zinc-500 hover:text-black' }}">
+                    class="px-[16px] py-[10px] text-[13px] font-medium transition {{ $reportSection === 'results' ? 'bg-black text-white' : 'bg-white text-zinc-500 hover:text-black' }}">
                 Ver resultados
             </button>
         </nav>
@@ -352,7 +352,7 @@
         class="admin-attendance-content attendance-report-container relative z-20 mx-[50px] mb-[50px] mt-[20px] overflow-visible rounded-xl border border-zinc-200 bg-[#FFFFFF] shadow-none"
         style="background: #ffffff !important; box-shadow: none !important;"
     >
-        <header class="attendance-report-header flex flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+        <header class="attendance-report-header flex min-h-[76px] flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
             <div class="min-w-0">
                 <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
@@ -465,10 +465,10 @@
     @if ($selectionReportIsCurrent && $reportSection === 'results')
     <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
         <div>
-            <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+            <div class="flex min-h-[76px] items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
                 <div>
-                    <h2 class="font-semibold text-black">Informe de asistencia</h2>
-                    <p class="mt-[3px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
+                    <h2 class="text-[15px] font-semibold text-black">Informe de asistencia</h2>
+                    <p class="mt-[5px] text-[15px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-[25px] font-medium text-black">
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
