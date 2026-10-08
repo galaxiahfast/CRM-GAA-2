@@ -9,8 +9,8 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\UserOrganizationalProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -123,6 +123,7 @@ class AttendanceManagementTest extends TestCase
             ->assertDontSee('Reporte individual')
             ->assertSee('Generar informe')
             ->assertSee('Ver resultados')
+            ->assertSee('Historial de cambios')
             ->assertSee(now()->subDays(15)->format('d/m/Y').' — '.now()->format('d/m/Y'))
             ->assertSeeHtml('role="checkbox"')
             ->assertSeeHtml('toggleAreaUsers(')
@@ -167,10 +168,14 @@ class AttendanceManagementTest extends TestCase
             ->call('searchAttendance')
             ->call('editRow', '2026-08-07')
             ->assertSet('showAttendanceModal', true)
-            ->assertSeeHtml('max-h-[calc(100dvh-32px)]')
+            ->assertSeeHtml('max-w-[640px]')
+            ->assertSeeHtml('max-height: min(720px, calc(100dvh - 48px));')
             ->assertSeeHtml('overscroll-contain')
             ->assertSeeHtml("document.documentElement.style.overflow = 'hidden'")
             ->assertSeeHtml("document.body.style.overflow = 'hidden'")
+            ->assertSee('Agrega, ordena o elimina marcas.')
+            ->assertSee('Las marcas impares requieren revisión.')
+            ->assertSee('El pago se calcula con el tiempo neto.')
             ->set('modalMarks', ['09:00:00', '13:00:00', '14:00:00', '18:30:15'])
             ->set('modalHourlyRate', 100)
             ->set('modalBonusAmount', 75.25)
@@ -182,7 +187,13 @@ class AttendanceManagementTest extends TestCase
             ->call('saveDayAdjustment')
             ->assertHasNoErrors()
             ->assertSet('showAttendanceModal', false)
-            ->assertSet('payrollRows.0.estado', 'Corregido');
+            ->assertSet('payrollRows.0.estado', 'Corregido')
+            ->call('showHistorySection')
+            ->assertSet('reportSection', 'history')
+            ->assertSet('changeHistoryLoaded', true)
+            ->assertSee('Aux Uno')
+            ->assertSee('Se agregó la salida omitida por el dispositivo.')
+            ->assertSee('09:00:00 · 13:00:00 · 14:00:00 · 18:30:15');
 
         // La tabla conserva el espejo crudo del biométrico; el ajuste se aplica
         // como una capa administrativa persistente sobre el informe.

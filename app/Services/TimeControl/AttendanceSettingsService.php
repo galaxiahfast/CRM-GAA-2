@@ -143,6 +143,36 @@ class AttendanceSettingsService
     }
 
     /**
+     * Devuelve el historial persistido de correcciones de un colaborador.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function changeHistoryForEmployee(string $employeeId): array
+    {
+        $dayOverrides = $this->readFile($employeeId)['day_overrides'] ?? [];
+        $changes = [];
+
+        foreach ($dayOverrides as $date => $override) {
+            if (! is_array($override)) {
+                continue;
+            }
+
+            foreach (($override['history'] ?? []) as $change) {
+                if (! is_array($change)) {
+                    continue;
+                }
+
+                $changes[] = array_merge($change, [
+                    'date' => (string) $date,
+                    'employee_id' => $employeeId,
+                ]);
+            }
+        }
+
+        return $changes;
+    }
+
+    /**
      * Resuelve tarifa y bono para un día concreto según jerarquía de modificaciones.
      *
      * @param  array{hourly_rate: float, bonus_amount: float, day_overrides: array<string, array{hourly_rate: float, bonus_amount: float, modified_individual: bool}>}  $settings

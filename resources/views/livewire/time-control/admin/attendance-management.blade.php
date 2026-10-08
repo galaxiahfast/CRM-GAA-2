@@ -311,6 +311,12 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
                 Ver resultados
             </button>
+            <button type="button" wire:click="showHistorySection"
+                    @if ($reportSection === 'history') aria-current="page" @endif
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'history' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                Historial de cambios
+            </button>
         </nav>
     </div>
 
@@ -632,6 +638,59 @@
     </section>
     @endif
 
+    @if ($reportSection === 'history')
+        <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
+            <header class="flex min-h-[76px] flex-wrap items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+                <div>
+                    <h2 class="text-[15px] font-semibold text-black">Historial de cambios</h2>
+                    <p class="mt-[5px] text-[15px] text-zinc-500">Consulta las correcciones realizadas en las jornadas.</p>
+                </div>
+                <span class="inline-flex items-center gap-[10px] text-[15px] font-medium text-black">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                    {{ count($changeHistory) }} {{ count($changeHistory) === 1 ? 'cambio registrado' : 'cambios registrados' }}
+                </span>
+            </header>
+
+            <div class="attendance-scrollbar max-h-[560px] overflow-y-auto overscroll-contain bg-white" style="overscroll-behavior: contain;">
+                @forelse ($changeHistory as $change)
+                    <article class="grid gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
+                        <div class="min-w-0">
+                            <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
+                            <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
+                            <p class="mt-[8px] inline-flex items-center gap-[8px] text-black">
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
+                                Jornada del {{ $change['date'] }}
+                            </p>
+                        </div>
+
+                        <div class="min-w-0 border-zinc-200 lg:border-x lg:px-[20px]">
+                            <p class="font-medium text-black">{{ $change['comment'] }}</p>
+                            <div class="mt-[10px] grid gap-[10px] text-[13px] text-zinc-500 sm:grid-cols-2">
+                                <p><span class="font-medium text-black">Marcas anteriores:</span> {{ $change['marks_before'] === [] ? 'Sin marcas' : implode(' · ', $change['marks_before']) }}</p>
+                                <p><span class="font-medium text-black">Marcas nuevas:</span> {{ $change['marks_after'] === [] ? 'Sin marcas' : implode(' · ', $change['marks_after']) }}</p>
+                                <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
+                                <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="min-w-0 text-zinc-500 lg:text-right">
+                            <p class="font-medium text-black">{{ $change['admin_name'] }}</p>
+                            <p class="mt-[3px]">{{ $change['changed_at'] }}</p>
+                        </div>
+                    </article>
+                @empty
+                    <div class="flex min-h-[300px] flex-col items-center justify-center gap-[10px] px-[20px] text-center">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-lg border border-zinc-200 bg-white text-black">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                        </span>
+                        <h3 class="font-semibold text-black">Aún no hay cambios registrados</h3>
+                        <p class="text-zinc-500">Las correcciones de jornadas aparecerán aquí.</p>
+                    </div>
+                @endforelse
+            </div>
+        </section>
+    @endif
+
     {{-- Modal exclusivo para cambiar la vinculación con el checador --}}
     @if($showEmployeeIdModal)
         @teleport('body')
@@ -756,8 +815,8 @@
              }"
              class="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden bg-black/45 p-[16px]"
              wire:keydown.escape.window="closeModal">
-            <div @click.away="$wire.closeModal()" class="flex max-h-[calc(100dvh-32px)] w-full max-w-[760px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
-                <div class="flex shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
+            <div @click.away="$wire.closeModal()" class="flex w-full max-w-[640px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none" style="max-height: min(720px, calc(100dvh - 48px));">
+                <div class="flex shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white px-[15px] py-[12px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-black">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
@@ -773,12 +832,12 @@
                 </div>
 
                 <form wire:submit="saveDayAdjustment" class="flex min-h-0 flex-1 flex-col">
-                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[15px] overflow-y-auto overscroll-contain bg-white p-[20px] text-[15px]" style="overscroll-behavior: contain;">
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
+                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[10px] overflow-y-auto overscroll-contain bg-white p-[15px] text-[15px]" style="overscroll-behavior: contain;">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <h4 class="text-[15px] font-semibold text-black">Marcas / Chequeos</h4>
-                                    <p class="mt-[3px] text-[15px] text-zinc-500">Ordena la jornada agregando o eliminando marcas con precisión de segundos.</p>
+                                    <p class="mt-[3px] text-[15px] text-zinc-500">Agrega, ordena o elimina marcas.</p>
                                 </div>
                                 <button type="button" wire:click="addAttendanceMark" class="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 text-[15px] font-medium text-black focus:outline-none focus:ring-0">
                                     <span class="text-lg leading-none">+</span> Agregar marca
@@ -804,13 +863,13 @@
                             </div>
                             @error('modalMarks') <p class="mt-3 text-[15px] text-red-600">{{ $message }}</p> @enderror
                             <p class="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[15px] text-zinc-600">
-                                {{ count($modalMarks) % 2 === 0 ? 'La jornada tiene marcas pares y quedará como corregida.' : 'La jornada conserva marcas impares y seguirá requiriendo revisión.' }}
+                                {{ count($modalMarks) % 2 === 0 ? 'Marcas completas; la jornada quedará corregida.' : 'Las marcas impares requieren revisión.' }}
                             </p>
                         </section>
 
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
                             <h4 class="text-[15px] font-semibold text-black">Pago por hora y comida</h4>
-                            <p class="mt-[3px] text-[15px] text-zinc-500">El pago base se calcula automáticamente con el tiempo neto de las marcas.</p>
+                            <p class="mt-[3px] text-[15px] text-zinc-500">El pago se calcula con el tiempo neto.</p>
                             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-black">Pago por hora ($)</label>
@@ -838,15 +897,15 @@
                             </div>
                         </section>
 
-                        <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
+                        <section class="rounded-lg border border-zinc-200 bg-white p-[12px] shadow-none">
                             <label for="attendance-change-comment" class="mb-2 block text-[15px] font-medium text-black">Comentario o motivo del cambio <span class="text-red-600">*</span></label>
-                            <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
+                            <textarea id="attendance-change-comment" rows="2" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
                             @error('modalChangeComment') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                             <p class="mt-2 text-[15px] text-gray-500">El comentario quedará registrado en el historial del día.</p>
                         </section>
                     </div>
 
-                    <div class="flex shrink-0 justify-end gap-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-zinc-200 bg-white px-[15px] py-[12px]">
                         <button type="button" wire:click="closeModal" class="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 text-[15px] font-medium text-black focus:outline-none focus:ring-0">Cancelar</button>
                         <button type="submit" wire:loading.attr="disabled" wire:target="saveDayAdjustment" class="inline-flex h-10 items-center justify-center rounded-lg bg-black px-5 text-[15px] font-medium text-white focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                             <span wire:loading.remove wire:target="saveDayAdjustment">Guardar cambios</span>

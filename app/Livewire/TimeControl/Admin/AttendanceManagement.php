@@ -37,6 +37,11 @@ class AttendanceManagement extends Component
 
     public string $reportSection = 'prepare';
 
+    /** @var array<int, array<string, mixed>> */
+    public array $changeHistory = [];
+
+    public bool $changeHistoryLoaded = false;
+
     public ?int $activeReportUserId = null;
 
     public ?string $lastReportGeneratedAt = null;
@@ -312,8 +317,7 @@ class AttendanceManagement extends Component
     public function showResultsSection(
         AttendanceService $attendanceService,
         AttendanceSettingsService $settingsService,
-    ): void
-    {
+    ): void {
         if (! $this->selectionReportIsCurrent) {
             $this->generateSelectionReport($attendanceService, $settingsService);
 
@@ -321,6 +325,65 @@ class AttendanceManagement extends Component
         }
 
         $this->reportSection = 'results';
+    }
+
+    public function showHistorySection(AttendanceSettingsService $settingsService): void
+    {
+        abort_unless(Gate::allows('view-time-admin'), 403);
+
+        if (! $this->changeHistoryLoaded) {
+            $employees = User::query()
+                ->select('id', 'name', 'last_name', 'employee_id')
+                ->whereNotNull('employee_id')
+                ->where('employee_id', '!=', '')
+                ->get();
+
+            $changes = $employees->flatMap(function (User $user) use ($settingsService) {
+                return collect($settingsService->changeHistoryForEmployee((string) $user->employee_id))
+                    ->map(fn (array $change): array => array_merge($change, [
+                        'employee_name' => trim($user->name.' '.$user->last_name),
+                    ]));
+            });
+
+            $adminNames = User::query()
+                ->whereIn('id', $changes->pluck('admin_id')->filter()->unique()->all())
+                ->get(['id', 'name', 'last_name'])
+                ->mapWithKeys(fn (User $user): array => [
+                    $user->id => trim($user->name.' '.$user->last_name),
+                ]);
+
+            $this->changeHistory = $changes
+                ->sortByDesc('changed_at')
+                ->values()
+                ->map(function (array $change) use ($adminNames): array {
+                    $changedAt = filled($change['changed_at'] ?? null)
+                        ? Carbon::parse($change['changed_at'])->format('d/m/Y H:i')
+                        : 'Fecha no disponible';
+                    $date = filled($change['date'] ?? null)
+                        ? Carbon::parse($change['date'])->format('d/m/Y')
+                        : 'Día no disponible';
+
+                    return [
+                        'employee_name' => (string) ($change['employee_name'] ?? 'Colaborador'),
+                        'employee_id' => (string) ($change['employee_id'] ?? ''),
+                        'date' => $date,
+                        'changed_at' => $changedAt,
+                        'admin_name' => $adminNames->get($change['admin_id'] ?? null, 'Administrador'),
+                        'comment' => (string) ($change['comment'] ?? 'Sin comentario'),
+                        'marks_before' => array_values($change['marks_before'] ?? []),
+                        'marks_after' => array_values($change['marks_after'] ?? []),
+                        'hourly_rate_before' => (float) ($change['hourly_rate_before'] ?? 0),
+                        'hourly_rate_after' => (float) ($change['hourly_rate_after'] ?? 0),
+                        'bonus_before' => isset($change['bonus_before']) ? (float) $change['bonus_before'] : null,
+                        'bonus_after' => (float) ($change['bonus_after'] ?? 0),
+                    ];
+                })
+                ->all();
+
+            $this->changeHistoryLoaded = true;
+        }
+
+        $this->reportSection = 'history';
     }
 
     public function selectReportUser(
@@ -547,6 +610,9 @@ class AttendanceManagement extends Component
             $this->originalModalMarks,
             $marks,
         );
+
+        $this->changeHistory = [];
+        $this->changeHistoryLoaded = false;
 
         $this->closeModal();
         session()->flash('message', count($marks) % 2 === 0
