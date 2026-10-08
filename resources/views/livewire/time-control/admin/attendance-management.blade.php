@@ -176,7 +176,7 @@
         .attendance-results-row {
             display: grid;
             width: 1680px;
-            grid-template-columns: 160px 280px 190px 200px 170px 140px 190px 190px 160px;
+            grid-template-columns: 140px 160px 280px 190px 200px 170px 140px 190px 210px;
         }
         .attendance-results-cell {
             position: relative;
@@ -506,7 +506,7 @@
                         <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
                                 x-show="resultUserSearch === '' || @js($reportedUserSearch).includes(resultUserSearch.toLowerCase())"
                                 wire:key="report-result-user-{{ $reportedUser->id }}"
-                                class="flex min-h-[70px] w-full items-center gap-[10px] rounded-md border px-[20px] py-[12px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-transparent bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
+                                class="flex min-h-[70px] w-full items-center gap-[10px] rounded-md border border-transparent px-[20px] py-[12px] text-left {{ $activeReportUserId === $reportedUser->id ? 'bg-zinc-100 text-black' : 'bg-white text-black' }}">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-zinc-200 bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
                                 {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
                             </span>
@@ -530,7 +530,7 @@
             }">
                 <div x-ref="attendanceTableHeader" class="overflow-hidden bg-zinc-100">
                     <div class="attendance-results-row attendance-results-header h-[64px] font-semibold text-zinc-700" role="row">
-                        @foreach (['Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Bono', 'Total del día', 'Estado', 'Acciones'] as $heading)
+                        @foreach (['Acciones', 'Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Bono', 'Total del día', 'Estado'] as $heading)
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="columnheader">{{ $heading }}</div>
                         @endforeach
                     </div>
@@ -543,16 +543,23 @@
                             @php
                                 $rowClass = 'bg-white hover:bg-zinc-50';
                                 if ($row['modified_individual'] ?? false) {
-                                    $rowClass = 'bg-blue-50 hover:bg-blue-100/80 border-l-4 border-l-blue-400';
+                                    $rowClass = 'bg-blue-50 hover:bg-blue-100/80 shadow-[inset_4px_0_0_#60a5fa]';
                                 } elseif ($row['requiere_revision'] ?? false) {
-                                    $rowClass = 'bg-red-50/70 hover:bg-red-100/80 border-l-4 border-l-red-300';
+                                    $rowClass = 'bg-red-50/70 hover:bg-red-100/80 shadow-[inset_4px_0_0_#fca5a5]';
                                 }
                                 $attendanceMarks = array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas']))));
                             @endphp
                             <div class="attendance-results-row h-[70px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
+                                <div class="attendance-results-cell px-[15px]" role="cell">
+                                    <div class="flex items-center justify-center gap-[4px]">
+                                        <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg></button>
+                                        <button type="button" title="Copiar (próximamente)" aria-label="Copiar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg></button>
+                                        <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" title="Editar jornada" aria-label="Editar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg></button>
+                                    </div>
+                                </div>
                                 <div class="attendance-results-cell whitespace-nowrap px-[15px] font-semibold tabular-nums text-black" role="cell">{{ $row['fecha'] }}</div>
                                 <div class="attendance-results-cell px-[15px] text-zinc-500" title="{{ $row['detalles_marcas'] }}" role="cell">
-                                    <div class="grid w-full grid-cols-2 gap-x-[12px] gap-y-[2px] text-center tabular-nums">
+                                    <div class="grid grid-cols-[72px_72px] justify-center gap-x-[20px] gap-y-[2px] text-center tabular-nums">
                                         @foreach ($attendanceMarks as $attendanceMark)
                                             <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
@@ -572,13 +579,6 @@
                                         <span class="inline-flex items-center gap-[6px] rounded-full border border-zinc-200 bg-white px-[10px] py-1 text-[13px] font-semibold text-black"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>Correcto</span>
                                     @endif
                                 </div>
-                                <div class="attendance-results-cell px-[15px]" role="cell">
-                                    <div class="flex items-center justify-center gap-[4px]">
-                                        <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg></button>
-                                        <button type="button" title="Copiar (próximamente)" aria-label="Copiar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg></button>
-                                        <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" title="Editar jornada" aria-label="Editar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg></button>
-                                    </div>
-                                </div>
                             </div>
                         @empty
                             <div class="flex h-[350px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
@@ -591,6 +591,7 @@
                 @if ($searched && count($payrollRows) > 0)
                     <div x-ref="attendanceTableTotal" class="overflow-hidden bg-zinc-100">
                         <div class="attendance-results-row attendance-results-total h-[64px] font-bold text-black" role="row">
+                            <div class="attendance-results-cell" role="cell"></div>
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="cell">TOTAL</div>
                             <div class="attendance-results-cell" role="cell"></div>
                             <div class="attendance-results-cell whitespace-nowrap px-[20px] tabular-nums" role="cell">{{ $totalsFooter['tiempo'] ?? '00h 00m 00s' }}</div>
@@ -598,7 +599,6 @@
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['pago_h'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['bonos'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['general'] ?? '$0.00' }}</div>
-                            <div class="attendance-results-cell" role="cell"></div>
                             <div class="attendance-results-cell" role="cell"></div>
                         </div>
                     </div>
