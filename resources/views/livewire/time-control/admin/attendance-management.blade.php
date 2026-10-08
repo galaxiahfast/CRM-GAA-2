@@ -659,8 +659,8 @@
                         $historyMarksBefore = array_values(array_slice($change['marks_before'], 0, 4));
                         $historyMarksAfter = array_values(array_slice($change['marks_after'], 0, 4));
                     @endphp
-                    <article class="grid items-center gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
-                        <div class="min-w-0">
+                    <article class="grid items-stretch gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
+                        <div class="flex min-w-0 flex-col justify-center text-left">
                             <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
                             <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
                             <p class="mt-[8px] inline-flex items-center gap-[8px] text-black">
@@ -669,14 +669,14 @@
                             </p>
                         </div>
 
-                        <div class="min-w-0 border-zinc-200 lg:border-x lg:px-[20px]">
+                        <div class="flex min-w-0 flex-col justify-center border-zinc-200 text-left lg:border-x lg:px-[20px]">
                             <p class="font-medium text-black">{{ $change['comment'] }}</p>
                             <div class="mt-[10px] grid items-center gap-[20px] text-[13px] text-zinc-500 sm:grid-cols-2">
-                                <div class="flex h-full min-w-0 flex-col justify-center gap-[10px]">
+                                <div class="flex h-full min-w-0 flex-col items-start justify-center gap-[10px] text-left">
                                     <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas anteriores:</span> {{ $historyMarksBefore === [] ? 'Sin marcas' : implode(' · ', $historyMarksBefore) }}@if (count($change['marks_before']) > 4) · ...@endif</p>
                                     <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
                                 </div>
-                                <div class="flex h-full min-w-0 flex-col justify-center gap-[10px] sm:items-center sm:text-center">
+                                <div class="flex h-full min-w-0 flex-col items-start justify-center gap-[10px] text-left">
                                     <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
                                     <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
                                     <p><span class="font-medium text-black">Bono:</span> ${{ number_format($change['extra_bonus_before'], 2) }} → ${{ number_format($change['extra_bonus_after'], 2) }}</p>
@@ -684,7 +684,7 @@
                             </div>
                         </div>
 
-                        <div class="min-w-0 text-zinc-500 lg:text-right">
+                        <div class="flex min-w-0 flex-col justify-center text-left text-zinc-500">
                             <p class="font-medium text-black">{{ $change['admin_name'] }}</p>
                             <p class="mt-[3px]">{{ $change['changed_at'] }}</p>
                         </div>
