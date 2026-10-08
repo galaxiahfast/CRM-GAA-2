@@ -669,11 +669,15 @@
 
                         <div class="min-w-0 border-zinc-200 lg:border-x lg:px-[20px]">
                             <p class="font-medium text-black">{{ $change['comment'] }}</p>
-                            <div class="mt-[10px] grid gap-[10px] text-[13px] text-zinc-500 sm:grid-cols-2">
-                                <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas anteriores:</span> {{ $historyMarksBefore === [] ? 'Sin marcas' : implode(' · ', $historyMarksBefore) }}@if (count($change['marks_before']) > 4) · ...@endif</p>
-                                <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
-                                <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
-                                <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
+                            <div class="mt-[10px] grid items-center gap-[20px] text-[13px] text-zinc-500 sm:grid-cols-2">
+                                <div class="flex h-full min-w-0 flex-col justify-center gap-[10px]">
+                                    <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas anteriores:</span> {{ $historyMarksBefore === [] ? 'Sin marcas' : implode(' · ', $historyMarksBefore) }}@if (count($change['marks_before']) > 4) · ...@endif</p>
+                                    <p><span class="font-medium text-black">Pago por hora:</span> ${{ number_format($change['hourly_rate_before'], 2) }} → ${{ number_format($change['hourly_rate_after'], 2) }}</p>
+                                </div>
+                                <div class="flex h-full min-w-0 flex-col justify-center gap-[10px] sm:items-center sm:text-center">
+                                    <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
+                                    <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -866,9 +870,9 @@
                                 @endforeach
                             </div>
                             @error('modalMarks') <p class="mt-3 text-[15px] text-red-600">{{ $message }}</p> @enderror
-                            <p class="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[15px] text-zinc-600">
-                                {{ count($modalMarks) % 2 === 0 ? 'Marcas completas; la jornada quedará corregida.' : 'Las marcas impares requieren revisión.' }}
-                            </p>
+                            @if (count($modalMarks) % 2 !== 0)
+                                <p class="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[15px] text-zinc-600">Las marcas impares requieren revisión.</p>
+                            @endif
                         </section>
 
                         <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
@@ -905,7 +909,6 @@
                             <label for="attendance-change-comment" class="mb-2 block text-[15px] font-medium text-black">Comentario o motivo del cambio <span class="text-red-600">*</span></label>
                             <textarea id="attendance-change-comment" rows="3" maxlength="500" required wire:model="modalChangeComment" placeholder="Describe por qué se corrigió o modificó esta jornada..." class="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0"></textarea>
                             @error('modalChangeComment') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
-                            <p class="mt-2 text-[15px] text-gray-500">El comentario quedará registrado en el historial del día.</p>
                         </section>
                     </div>
 
