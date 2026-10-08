@@ -44,7 +44,8 @@ class AttendanceService
         $totalSegundosPeriodo = 0;
         $totalDecimalPeriodo = 0.0;
         $totalPagoBasePeriodo = 0.0;
-        $totalBonosPeriodo = 0.0;
+        $totalComidaPeriodo = 0.0;
+        $totalBonosExtraPeriodo = 0.0;
         $totalGeneralPeriodo = 0.0;
 
         foreach ($diasDict as $fechaStr => $items) {
@@ -83,13 +84,14 @@ class AttendanceService
             $hourlyRate = $rates['hourly_rate'];
             $esFinDeSemana = Carbon::parse($fechaStr)->isWeekend();
             $bonoDia = $esFinDeSemana ? 0.0 : $rates['bonus_amount'];
+            $bonoExtraDia = $esCorrecto ? max(0, (float) $rates['extra_bonus_amount']) : 0.0;
 
             $pagoBase = $esCorrecto
                 ? ($rates['daily_pay_amount'] !== null
                     ? round($rates['daily_pay_amount'], 2)
                     : round($horasDecimal * $hourlyRate, 2))
                 : 0.0;
-            $totalDia = $esCorrecto ? round($pagoBase + $bonoDia, 2) : 0.0;
+            $totalDia = $esCorrecto ? round($pagoBase + $bonoDia + $bonoExtraDia, 2) : 0.0;
             $estado = $tieneImpares
                 ? ($rates['modified_individual'] ? 'Modificado / Revisar' : 'Impar / Revisar')
                 : ($rates['modified_individual'] ? 'Corregido' : 'Correcto');
@@ -99,7 +101,8 @@ class AttendanceService
                 'neto' => $this->formatearSegundos($tiempoNeto),
                 'horas_decimal' => number_format($horasDecimal, 2, '.', ''),
                 'pago_horas' => '$'.number_format($pagoBase, 2, '.', ','),
-                'bono' => '$'.number_format($bonoDia, 2, '.', ','),
+                'comida' => '$'.number_format($bonoDia, 2, '.', ','),
+                'bono' => '$'.number_format($bonoExtraDia, 2, '.', ','),
                 'total' => '$'.number_format($totalDia, 2, '.', ','),
                 'requiere_revision' => $tieneImpares,
                 'estado' => $estado,
@@ -111,7 +114,8 @@ class AttendanceService
                 'marks' => $marcasImprimir,
                 'tiempo_segundos' => $tiempoNeto,
                 'pago_base_raw' => $pagoBase,
-                'bono_raw' => $bonoDia,
+                'comida_raw' => $bonoDia,
+                'bono_raw' => $bonoExtraDia,
                 'total_raw' => $totalDia,
             ];
 
@@ -119,7 +123,8 @@ class AttendanceService
                 $totalSegundosPeriodo += $tiempoNeto;
                 $totalDecimalPeriodo += $horasDecimal;
                 $totalPagoBasePeriodo += $pagoBase;
-                $totalBonosPeriodo += $bonoDia;
+                $totalComidaPeriodo += $bonoDia;
+                $totalBonosExtraPeriodo += $bonoExtraDia;
                 $totalGeneralPeriodo += $totalDia;
             }
         }
@@ -135,7 +140,8 @@ class AttendanceService
                 'tiempo' => $this->formatearSegundos($totalSegundosPeriodo),
                 'decimal' => number_format($totalDecimalPeriodo, 2, '.', ''),
                 'pago_h' => '$'.number_format($totalPagoBasePeriodo, 2, '.', ','),
-                'bonos' => '$'.number_format($totalBonosPeriodo, 2, '.', ','),
+                'comida' => '$'.number_format($totalComidaPeriodo, 2, '.', ','),
+                'bonos' => '$'.number_format($totalBonosExtraPeriodo, 2, '.', ','),
                 'general' => '$'.number_format($totalGeneralPeriodo, 2, '.', ','),
             ],
             'total_general' => '$'.number_format($totalGeneralPeriodo, 2, '.', ','),

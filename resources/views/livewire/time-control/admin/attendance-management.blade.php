@@ -175,8 +175,8 @@
         .attendance-monochrome .attendance-report-download:not(:disabled):hover { color: #52525b !important; }
         .attendance-results-row {
             display: grid;
-            width: 1680px;
-            grid-template-columns: 140px 160px 280px 190px 200px 170px 140px 190px 210px;
+            width: 1820px;
+            grid-template-columns: 140px 160px 280px 190px 200px 170px 140px 140px 190px 210px;
         }
         .attendance-results-cell {
             position: relative;
@@ -524,9 +524,9 @@
                 }
             }">
                 <div x-ref="attendanceTableHeader" class="overflow-hidden bg-zinc-100">
-                    <div class="w-[1686px]">
+                    <div class="w-[1826px]">
                     <div class="attendance-results-row attendance-results-header h-[64px] font-semibold text-zinc-700" role="row">
-                        @foreach (['Acciones', 'Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Bono', 'Total del día', 'Estado'] as $heading)
+                        @foreach (['Acciones', 'Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Comida', 'Bono', 'Total del día', 'Estado'] as $heading)
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="columnheader">{{ $heading }}</div>
                         @endforeach
                     </div>
@@ -535,7 +535,7 @@
 
                 <div x-ref="attendanceTableBody"
                      class="attendance-results-body-scroll h-[480px] overflow-x-hidden overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
-                    <div class="min-h-[480px] w-[1680px]" role="rowgroup">
+                    <div class="min-h-[480px] w-[1820px]" role="rowgroup">
                         @forelse ($payrollRows as $row)
                             @php
                                 $rowClass = 'bg-white hover:bg-zinc-50';
@@ -562,13 +562,14 @@
                                             <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
                                         @if (count($attendanceMarks) > 4)
-                                            <span class="whitespace-nowrap" title="Hay {{ count($attendanceMarks) - 3 }} marcas adicionales">...</span>
+                                            <span class="whitespace-nowrap" title="Hay {{ count($attendanceMarks) - 4 }} marcas adicionales">...</span>
                                         @endif
                                     </div>
                                 </div>
                                 <div class="attendance-results-cell px-[15px] tabular-nums text-zinc-600" role="cell">{{ $row['neto'] }}</div>
                                 <div class="attendance-results-cell px-[15px] tabular-nums" role="cell">{{ $row['horas_decimal'] }}</div>
                                 <div class="attendance-results-cell px-[15px] tabular-nums" role="cell">{{ $row['pago_horas'] }}</div>
+                                <div class="attendance-results-cell px-[15px] tabular-nums" role="cell">{{ $row['comida'] }}</div>
                                 <div class="attendance-results-cell px-[15px] tabular-nums text-black" role="cell">{{ $row['bono'] }}</div>
                                 <div class="attendance-results-cell px-[15px] font-bold tabular-nums text-black" role="cell">{{ $row['total'] }}</div>
                                 <div class="attendance-results-cell px-[15px]" role="cell">
@@ -591,7 +592,7 @@
 
                 @if ($searched && count($payrollRows) > 0)
                     <div x-ref="attendanceTableTotal" class="overflow-hidden bg-zinc-100">
-                        <div class="w-[1686px]">
+                        <div class="w-[1826px]">
                         <div class="attendance-results-row attendance-results-total h-[64px] font-bold text-black" role="row">
                             <div class="attendance-results-cell" role="cell"></div>
                             <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="cell">TOTAL</div>
@@ -599,6 +600,7 @@
                             <div class="attendance-results-cell whitespace-nowrap px-[20px] tabular-nums" role="cell">{{ $totalsFooter['tiempo'] ?? '00h 00m 00s' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['decimal'] ?? '0.00' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['pago_h'] ?? '$0.00' }}</div>
+                            <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['comida'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['bonos'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['general'] ?? '$0.00' }}</div>
                             <div class="attendance-results-cell" role="cell"></div>
@@ -608,7 +610,7 @@
                 @endif
                 <div class="attendance-scrollbar overflow-x-scroll overflow-y-hidden bg-white"
                      @scroll="syncAttendanceTableHorizontal($event)" aria-label="Desplazar columnas del informe">
-                    <div class="h-px w-[1686px]"></div>
+                    <div class="h-px w-[1826px]"></div>
                 </div>
             @if ($searched)
                 <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-white p-[20px] text-zinc-500">
@@ -677,6 +679,7 @@
                                 <div class="flex h-full min-w-0 flex-col justify-center gap-[10px] sm:items-center sm:text-center">
                                     <p class="whitespace-nowrap"><span class="font-medium text-black">Marcas nuevas:</span> {{ $historyMarksAfter === [] ? 'Sin marcas' : implode(' · ', $historyMarksAfter) }}@if (count($change['marks_after']) > 4) · ...@endif</p>
                                     <p><span class="font-medium text-black">Comida:</span> {{ $change['bonus_before'] === null ? 'Sin valor' : '$'.number_format($change['bonus_before'], 2) }} → ${{ number_format($change['bonus_after'], 2) }}</p>
+                                    <p><span class="font-medium text-black">Bono:</span> ${{ number_format($change['extra_bonus_before'], 2) }} → ${{ number_format($change['extra_bonus_after'], 2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -878,7 +881,7 @@
                         <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <h4 class="text-[15px] font-semibold text-black">Pago por hora y comida</h4>
                             <p class="mt-[3px] text-[15px] text-zinc-500">El pago se calcula con el tiempo neto.</p>
-                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-black">Pago por hora ($)</label>
                                     <input type="number" min="0" step="0.01" wire:model="modalHourlyRate" class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0">
@@ -886,17 +889,22 @@
                                 </div>
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-black">Comida ($)</label>
-                                    <input type="number" min="0" step="0.01" wire:model.live.debounce.250ms="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                                    <input type="number" min="0" step="0.01" wire:model="modalBonusAmount" @disabled($selectedDateIsWeekend) class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                                     @error('modalBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                     @if ($selectedDateIsWeekend)
                                         <p class="mt-2 text-[13px] text-gray-500">Los sábados y domingos no generan bono de comida.</p>
                                     @endif
                                 </div>
+                                <div>
+                                    <label class="mb-2 block text-[15px] font-medium text-black">Bono del día ($)</label>
+                                    <input type="number" min="0" step="0.01" wire:model.live.debounce.250ms="modalExtraBonusAmount" class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0">
+                                    @error('modalExtraBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
+                                </div>
                             </div>
                             <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
                                     <span class="block text-[13px] text-zinc-500">Bono agregado</span>
-                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format($selectedDateIsWeekend ? 0 : max(0, (float) $modalBonusAmount), 2) }}</strong>
+                                    <strong class="mt-1 block text-[15px] text-black">${{ number_format(max(0, (float) $modalExtraBonusAmount), 2) }}</strong>
                                 </div>
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
                                     <span class="block text-[13px] text-zinc-500">Total calculado</span>

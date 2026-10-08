@@ -19,6 +19,7 @@ class AttendanceExportService
         'Tiempo Neto',
         'Hrs Decimales',
         'Pago Base',
+        'Comida',
         'Bono',
         'Total del Día',
         'Estado',
@@ -115,6 +116,7 @@ class AttendanceExportService
                 $totals['tiempo'] ?? '00h 00m 00s',
                 $totals['decimal'] ?? '0.00',
                 $totals['pago_h'] ?? '$0.00',
+                $totals['comida'] ?? '$0.00',
                 $totals['bonos'] ?? '$0.00',
                 $totals['general'] ?? '$0.00',
             ];
@@ -122,7 +124,7 @@ class AttendanceExportService
 
         return new ReportSection(
             title: 'Consolidado por colaborador',
-            columns: ['Colaborador', 'ID Checador', 'Tiempo neto', 'Horas decimales', 'Pago base', 'Bonos', 'Total'],
+            columns: ['Colaborador', 'ID Checador', 'Tiempo neto', 'Horas decimales', 'Pago base', 'Comida', 'Bonos', 'Total'],
             rows: $rows,
         );
     }
@@ -247,6 +249,7 @@ class AttendanceExportService
                 $item['neto'],
                 $item['horas_decimal'],
                 $item['pago_horas'],
+                $item['comida'],
                 $item['bono'],
                 $item['total'],
                 $item['estado'],
@@ -270,6 +273,7 @@ class AttendanceExportService
                     $item['neto'],
                     $item['horas_decimal'],
                     $item['pago_horas'],
+                    $item['comida'],
                     $item['bono'],
                     $item['total'],
                     $item['estado'],
@@ -294,6 +298,7 @@ class AttendanceExportService
             $totales['tiempo'] ?? '00h 00m 00s',
             $totales['decimal'] ?? '0.00',
             $totales['pago_h'] ?? '$0.00',
+            $totales['comida'] ?? '$0.00',
             $totales['bonos'] ?? '$0.00',
             $totales['general'] ?? '$0.00',
             '',

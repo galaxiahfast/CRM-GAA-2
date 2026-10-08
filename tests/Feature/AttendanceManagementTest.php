@@ -59,6 +59,7 @@ class AttendanceManagementTest extends TestCase
         $component->assertDontSeeHtml('wire:model.live="modalMarks');
         $component->assertDontSeeHtml('wire:model.live="modalHourlyRate"');
         $component->assertDontSeeHtml('wire:model.live="modalBonusAmount"');
+        $component->assertDontSeeHtml('wire:model.live="modalExtraBonusAmount"');
 
         DB::flushQueryLog();
         $component->call('openEmployeeIdModal', $collaborator->id)
@@ -185,7 +186,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSee('El pago se calcula con el tiempo neto.')
             ->assertSee('Bono agregado')
             ->assertDontSee('Pago calculado por horas')
-            ->assertSeeHtml('wire:model.live.debounce.250ms="modalBonusAmount"')
+            ->assertSeeHtml('wire:model.live.debounce.250ms="modalExtraBonusAmount"')
             ->assertSeeHtml('resize-none')
             ->assertDontSee('El comentario quedará registrado en el historial del día.')
             ->set('modalMarks', ['09:00:00', '13:00:00', '14:00:00', '18:30:15'])
@@ -194,6 +195,8 @@ class AttendanceManagementTest extends TestCase
             ->set('modalBonusAmount', 75.25)
             ->assertSet('modalCalculatedBasePay', 850.0)
             ->assertSet('modalCalculatedTotal', 925.25)
+            ->set('modalExtraBonusAmount', 25)
+            ->assertSet('modalCalculatedTotal', 950.25)
             ->call('saveDayAdjustment')
             ->assertHasErrors(['modalChangeComment' => 'required'])
             ->set('modalChangeComment', 'Se agregó la salida omitida por el dispositivo.')
@@ -218,6 +221,7 @@ class AttendanceManagementTest extends TestCase
         $this->assertEquals(100.0, $override['hourly_rate']);
         $this->assertArrayNotHasKey('daily_pay_amount', $override);
         $this->assertSame(75.25, $override['bonus_amount']);
+        $this->assertEquals(25.0, $override['extra_bonus_amount']);
         $this->assertSame('Se agregó la salida omitida por el dispositivo.', $override['comment']);
         $this->assertSame(['09:00:00', '13:00:00', '14:00:00', '18:30:15'], $override['marks']);
         $this->assertCount(1, $override['history']);
@@ -270,27 +274,33 @@ class AttendanceManagementTest extends TestCase
             ->call('searchAttendance');
 
         $rows = collect($component->get('payrollRows'))->keyBy('fecha');
+        $this->assertSame('$0.00', $rows['2026-08-08']['comida']);
+        $this->assertSame('$0.00', $rows['2026-08-09']['comida']);
+        $this->assertSame('$50.00', $rows['2026-08-10']['comida']);
         $this->assertSame('$0.00', $rows['2026-08-08']['bono']);
         $this->assertSame('$0.00', $rows['2026-08-09']['bono']);
-        $this->assertSame('$50.00', $rows['2026-08-10']['bono']);
+        $this->assertSame('$0.00', $rows['2026-08-10']['bono']);
 
         $component
             ->call('editRow', '2026-08-08')
             ->assertSet('selectedDateIsWeekend', true)
             ->set('modalHourlyRate', 125)
             ->set('modalBonusAmount', 99)
+            ->set('modalExtraBonusAmount', 40)
             ->set('modalChangeComment', 'Ajuste de tarifa por hora del sábado.')
             ->call('saveDayAdjustment')
             ->assertHasNoErrors();
 
         $rows = collect($component->get('payrollRows'))->keyBy('fecha');
         $this->assertSame('$500.00', $rows['2026-08-08']['pago_horas']);
-        $this->assertSame('$0.00', $rows['2026-08-08']['bono']);
-        $this->assertSame('$500.00', $rows['2026-08-08']['total']);
+        $this->assertSame('$0.00', $rows['2026-08-08']['comida']);
+        $this->assertSame('$40.00', $rows['2026-08-08']['bono']);
+        $this->assertSame('$540.00', $rows['2026-08-08']['total']);
 
         $override = json_decode(Storage::disk('local')->get('checador_settings/EMP-WEEKEND.json'), true)['day_overrides']['2026-08-08'];
         $this->assertEquals(125.0, $override['hourly_rate']);
         $this->assertEquals(0.0, $override['bonus_amount']);
+        $this->assertEquals(40.0, $override['extra_bonus_amount']);
         $this->assertArrayNotHasKey('daily_pay_amount', $override);
     }
 
@@ -340,7 +350,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('employeeId', 'EMP-R01')
             ->assertSet('selectedEmployeeName', 'Ana Uno')
             ->assertSet('payrollRows.0.neto', '09h 00m 00s')
-            ->assertSeeHtml('title="Hay 3 marcas adicionales">...</span>')
+            ->assertSeeHtml('title="Hay 2 marcas adicionales">...</span>')
             ->assertSee('Reporte individual')
             ->assertDontSee('Configura y genera los resultados fácilmente.')
             ->call('showPreparationSection')

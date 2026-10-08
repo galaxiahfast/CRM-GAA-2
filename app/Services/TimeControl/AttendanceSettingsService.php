@@ -70,6 +70,7 @@ class AttendanceSettingsService
         ?int $adminId = null,
         array $marksBefore = [],
         array $marksAfter = [],
+        float $extraBonusAmount = 0.0,
     ): void {
         // La regla de fin de semana se aplica también aquí para cubrir cualquier
         // entrada alternativa (API, Livewire o futuros consumidores del servicio).
@@ -90,11 +91,14 @@ class AttendanceSettingsService
             'hourly_rate_after' => round($hourlyRate, 2),
             'bonus_before' => $previous['bonus_amount'] ?? null,
             'bonus_after' => round($bonusAmount, 2),
+            'extra_bonus_before' => $previous['extra_bonus_amount'] ?? 0.0,
+            'extra_bonus_after' => round(max(0, $extraBonusAmount), 2),
         ];
 
         $dayOverrides[$date] = [
             'hourly_rate' => round($hourlyRate, 2),
             'bonus_amount' => round($bonusAmount, 2),
+            'extra_bonus_amount' => round(max(0, $extraBonusAmount), 2),
             // Las marcas corregidas son una capa administrativa sobre el espejo
             // del biométrico. Guardarlas aquí evita que la sincronización vuelva a
             // mostrar las marcas originales del dispositivo.
@@ -176,7 +180,7 @@ class AttendanceSettingsService
      * Resuelve tarifa y bono para un día concreto según jerarquía de modificaciones.
      *
      * @param  array{hourly_rate: float, bonus_amount: float, day_overrides: array<string, array{hourly_rate: float, bonus_amount: float, modified_individual: bool}>}  $settings
-     * @return array{hourly_rate: float, bonus_amount: float, daily_pay_amount: ?float, modified_individual: bool, comment: ?string}
+     * @return array{hourly_rate: float, bonus_amount: float, extra_bonus_amount: float, daily_pay_amount: ?float, modified_individual: bool, comment: ?string}
      */
     public function resolveForDay(array $settings, string $date, bool $isCorrecto): array
     {
@@ -190,6 +194,7 @@ class AttendanceSettingsService
         return [
             'hourly_rate' => (float) $hourlyRate,
             'bonus_amount' => (float) $bonusAmount,
+            'extra_bonus_amount' => (float) ($override['extra_bonus_amount'] ?? 0.0),
             'daily_pay_amount' => array_key_exists('daily_pay_amount', (array) $override)
                 ? (float) $override['daily_pay_amount']
                 : null,

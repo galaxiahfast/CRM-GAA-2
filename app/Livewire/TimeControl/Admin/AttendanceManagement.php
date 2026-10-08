@@ -82,6 +82,8 @@ class AttendanceManagement extends Component
 
     public $modalBonusAmount = 50.00;
 
+    public $modalExtraBonusAmount = 0.00;
+
     public bool $selectedDateIsWeekend = false;
 
     public float $modalCalculatedBasePay = 0.0;
@@ -379,6 +381,8 @@ class AttendanceManagement extends Component
                         'hourly_rate_after' => (float) ($change['hourly_rate_after'] ?? 0),
                         'bonus_before' => isset($change['bonus_before']) ? (float) $change['bonus_before'] : null,
                         'bonus_after' => (float) ($change['bonus_after'] ?? 0),
+                        'extra_bonus_before' => (float) ($change['extra_bonus_before'] ?? 0),
+                        'extra_bonus_after' => (float) ($change['extra_bonus_after'] ?? 0),
                     ];
                 })
                 ->all();
@@ -530,7 +534,8 @@ class AttendanceManagement extends Component
         $this->modalHourlyRate = (float) ($row['hourly_rate'] ?? $this->generalHourlyRate);
         $this->modalBonusAmount = $this->selectedDateIsWeekend
             ? 0.0
-            : (float) ($row['bono_raw'] ?? $this->generalBonusAmount);
+            : (float) ($row['comida_raw'] ?? $this->generalBonusAmount);
+        $this->modalExtraBonusAmount = (float) ($row['bono_raw'] ?? 0.0);
         $this->modalMarks = array_values($row['marks'] ?? []);
         $this->originalModalMarks = $this->modalMarks;
         $this->modalChangeComment = '';
@@ -572,12 +577,17 @@ class AttendanceManagement extends Component
         $this->recalculateModalAmounts();
     }
 
+    public function updatedModalExtraBonusAmount(): void
+    {
+        $this->recalculateModalAmounts();
+    }
+
     public function closeModal(): void
     {
         $this->showAttendanceModal = false;
         $this->reset([
             'selectedDate', 'modalMarks', 'originalModalMarks', 'modalChangeComment',
-            'selectedDateIsWeekend', 'modalCalculatedBasePay', 'modalCalculatedTotal',
+            'selectedDateIsWeekend', 'modalCalculatedBasePay', 'modalCalculatedTotal', 'modalExtraBonusAmount',
         ]);
         $this->resetValidation();
     }
@@ -595,12 +605,14 @@ class AttendanceManagement extends Component
         $this->validate([
             'modalHourlyRate' => 'required|numeric|min:0',
             'modalBonusAmount' => 'required|numeric|min:0',
+            'modalExtraBonusAmount' => 'required|numeric|min:0',
             'modalMarks' => ['required', 'array', 'min:1'],
             'modalMarks.*' => ['required', 'date_format:H:i:s', 'distinct'],
             'modalChangeComment' => ['required', 'string', 'min:5', 'max:500'],
         ], [], [
             'modalHourlyRate' => 'pago por hora',
             'modalBonusAmount' => 'bono de comida',
+            'modalExtraBonusAmount' => 'bono adicional',
             'modalMarks' => 'marcas o chequeos',
             'modalMarks.*' => 'marca o chequeo',
             'modalChangeComment' => 'comentario del cambio',
@@ -619,6 +631,7 @@ class AttendanceManagement extends Component
             auth()->id(),
             $this->originalModalMarks,
             $marks,
+            extraBonusAmount: (float) $this->modalExtraBonusAmount,
         );
 
         $this->changeHistory = [];
@@ -665,7 +678,8 @@ class AttendanceManagement extends Component
         $decimalHours = round($seconds / 3600, 2);
         $this->modalCalculatedBasePay = round($decimalHours * max(0, (float) $this->modalHourlyRate), 2);
         $mealBonus = $this->selectedDateIsWeekend ? 0.0 : max(0, (float) $this->modalBonusAmount);
-        $this->modalCalculatedTotal = round($this->modalCalculatedBasePay + $mealBonus, 2);
+        $extraBonus = max(0, (float) $this->modalExtraBonusAmount);
+        $this->modalCalculatedTotal = round($this->modalCalculatedBasePay + $mealBonus + $extraBonus, 2);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -705,6 +719,8 @@ class AttendanceManagement extends Component
                 'hourly_rate_after' => $index % 3 === 0 ? 30.0 : 25.0,
                 'bonus_before' => 50.0,
                 'bonus_after' => $index % 3 === 1 ? 55.0 : 50.0,
+                'extra_bonus_before' => 0.0,
+                'extra_bonus_after' => $index % 3 === 2 ? 100.0 : 0.0,
             ];
         })->all();
     }
