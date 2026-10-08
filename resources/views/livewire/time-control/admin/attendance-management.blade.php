@@ -173,67 +173,12 @@
         }
         .attendance-monochrome .attendance-report-download svg { color: #000 !important; }
         .attendance-monochrome .attendance-report-download:not(:disabled):hover { color: #52525b !important; }
-        .attendance-results-table thead th {
-            position: relative;
-            background: #f4f4f5;
-            box-shadow: inset 0 -1px 0 #d4d4d8;
-            text-align: center !important;
-            vertical-align: middle;
-        }
-        .attendance-results-table thead th:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            width: 1px;
-            height: 30px;
-            background: #d4d4d8;
-            transform: translateY(-50%);
-        }
-        .attendance-results-table tfoot td {
-            position: relative;
-            background: #f4f4f5;
-            box-shadow: none;
-            text-align: center !important;
-            vertical-align: middle;
-        }
-        .attendance-results-table tfoot td:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            width: 1px;
-            height: 30px;
-            background: #d4d4d8;
-            transform: translateY(-50%);
-        }
-        .attendance-results-table {
-            display: block;
-            width: 1680px;
-        }
-        .attendance-results-table :is(thead, tfoot) {
-            display: block;
-            width: 1680px;
-        }
-        .attendance-results-table tbody {
-            display: block;
-            width: 1680px;
-            max-height: 430px;
-            overflow-x: hidden;
-            overflow-y: auto;
-            overscroll-behavior: contain;
-            scrollbar-width: thin;
-            scrollbar-color: #000 #fff !important;
-        }
-        .attendance-results-table tbody::-webkit-scrollbar { width: 6px; }
-        .attendance-results-table tbody::-webkit-scrollbar-track { background: #fff !important; }
-        .attendance-results-table tbody::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 9999px; }
-        .attendance-results-table tr {
+        .attendance-results-row {
             display: grid;
             width: 1680px;
             grid-template-columns: 160px 280px 190px 200px 170px 140px 190px 190px 160px;
         }
-        .attendance-results-table tbody td {
+        .attendance-results-cell {
             position: relative;
             display: flex;
             align-items: center;
@@ -241,7 +186,7 @@
             min-width: 0;
             text-align: center !important;
         }
-        .attendance-results-table tbody td:not(:last-child)::after {
+        .attendance-results-cell:not(:last-child)::after {
             content: '';
             position: absolute;
             right: 0;
@@ -251,7 +196,16 @@
             background: #e4e4e7;
             transform: translateY(-50%);
         }
-        .attendance-results-table tbody td[colspan] { grid-column: 1 / -1; }
+        .attendance-results-header .attendance-results-cell::after,
+        .attendance-results-total .attendance-results-cell::after { background: #d4d4d8; }
+        .attendance-results-body-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #000 #fff !important;
+            overscroll-behavior: contain;
+        }
+        .attendance-results-body-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .attendance-results-body-scroll::-webkit-scrollbar-track { background: #fff !important; }
+        .attendance-results-body-scroll::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 9999px; }
         html.module-dark-theme .attendance-monochrome:fullscreen { background: #09090b; }
         html.module-dark-theme .attendance-monochrome .attendance-scrollbar { scrollbar-color: #fff transparent; }
         html.module-dark-theme .attendance-monochrome .attendance-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -568,23 +522,23 @@
                 </nav>
             </aside>
 
-            <div class="min-h-0 min-w-0 bg-white">
-            <div class="attendance-scrollbar overflow-x-auto">
-                <table class="attendance-results-table border-separate border-spacing-0 text-left text-[15px]">
-                    <thead>
-                        <tr class="font-semibold text-zinc-700">
-                            <th class="whitespace-nowrap px-[50px] py-[20px]">Fecha</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px]">Marcas / Chequeos</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Tiempo neto</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Hrs. decimales</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Pago base</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Bono</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-right">Total del día</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Estado</th>
-                            <th class="whitespace-nowrap px-[50px] py-[20px] text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-200 font-medium text-zinc-700">
+            <div class="min-h-0 min-w-0 bg-white" x-data="{
+                syncAttendanceTableScroll(event) {
+                    this.$refs.attendanceTableHeader.scrollLeft = event.target.scrollLeft;
+                    if (this.$refs.attendanceTableTotal) this.$refs.attendanceTableTotal.scrollLeft = event.target.scrollLeft;
+                }
+            }">
+                <div x-ref="attendanceTableHeader" class="overflow-hidden bg-zinc-100">
+                    <div class="attendance-results-row attendance-results-header h-[64px] font-semibold text-zinc-700" role="row">
+                        @foreach (['Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Bono', 'Total del día', 'Estado', 'Acciones'] as $heading)
+                            <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="columnheader">{{ $heading }}</div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div x-ref="attendanceTableBody" @scroll="syncAttendanceTableScroll($event)"
+                     class="attendance-results-body-scroll h-[356px] overflow-x-scroll overflow-y-scroll bg-white text-[15px] font-medium text-zinc-700">
+                    <div class="min-h-[350px] w-[1680px]" role="rowgroup">
                         @forelse ($payrollRows as $row)
                             @php
                                 $rowClass = 'bg-white hover:bg-zinc-50';
@@ -593,22 +547,23 @@
                                 } elseif ($row['requiere_revision'] ?? false) {
                                     $rowClass = 'bg-red-50/70 hover:bg-red-100/80 border-l-4 border-l-red-300';
                                 }
+                                $attendanceMarks = array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas']))));
                             @endphp
-                            <tr class="{{ $rowClass }} transition-colors">
-                                <td class="whitespace-nowrap p-[15px] font-semibold tabular-nums text-black">{{ $row['fecha'] }}</td>
-                                <td class="p-[15px] tabular-nums text-zinc-500" title="{{ $row['detalles_marcas'] }}">
-                                    <div class="space-y-[3px]">
-                                        @foreach (array_chunk(array_values(array_filter(array_map('trim', explode(',', (string) $row['detalles_marcas'])))), 2) as $attendanceMarkPair)
-                                            <span class="block whitespace-nowrap">{{ implode(', ', $attendanceMarkPair) }}</span>
+                            <div class="attendance-results-row h-[70px] border-b border-zinc-200 {{ $rowClass }} transition-colors" role="row">
+                                <div class="attendance-results-cell whitespace-nowrap px-[15px] font-semibold tabular-nums text-black" role="cell">{{ $row['fecha'] }}</div>
+                                <div class="attendance-results-cell px-[15px] text-zinc-500" title="{{ $row['detalles_marcas'] }}" role="cell">
+                                    <div class="grid w-full grid-cols-2 gap-x-[12px] gap-y-[2px] text-center tabular-nums">
+                                        @foreach ($attendanceMarks as $attendanceMark)
+                                            <span class="whitespace-nowrap">{{ $attendanceMark }}</span>
                                         @endforeach
                                     </div>
-                                </td>
-                                <td class="p-[15px] text-center tabular-nums text-zinc-600">{{ $row['neto'] }}</td>
-                                <td class="p-[15px] text-center tabular-nums">{{ $row['horas_decimal'] }}</td>
-                                <td class="p-[15px] text-center tabular-nums">{{ $row['pago_horas'] }}</td>
-                                <td class="p-[15px] text-center tabular-nums text-black">{{ $row['bono'] }}</td>
-                                <td class="p-[15px] text-right font-bold tabular-nums text-black">{{ $row['total'] }}</td>
-                                <td class="p-[15px] text-center">
+                                </div>
+                                <div class="attendance-results-cell px-[15px] tabular-nums text-zinc-600" role="cell">{{ $row['neto'] }}</div>
+                                <div class="attendance-results-cell px-[15px] tabular-nums" role="cell">{{ $row['horas_decimal'] }}</div>
+                                <div class="attendance-results-cell px-[15px] tabular-nums" role="cell">{{ $row['pago_horas'] }}</div>
+                                <div class="attendance-results-cell px-[15px] tabular-nums text-black" role="cell">{{ $row['bono'] }}</div>
+                                <div class="attendance-results-cell px-[15px] font-bold tabular-nums text-black" role="cell">{{ $row['total'] }}</div>
+                                <div class="attendance-results-cell px-[15px]" role="cell">
                                     @if (($row['estado'] ?? '') === 'Corregido')
                                         <span class="inline-flex items-center gap-[6px] rounded-full border border-zinc-300 bg-zinc-200 px-[10px] py-1 text-[13px] font-semibold text-black"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4Z"/></svg>Corregido</span>
                                     @elseif ($row['requiere_revision'])
@@ -616,46 +571,38 @@
                                     @else
                                         <span class="inline-flex items-center gap-[6px] rounded-full border border-zinc-200 bg-white px-[10px] py-1 text-[13px] font-semibold text-black"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>Correcto</span>
                                     @endif
-                                </td>
-                                <td class="p-[15px] text-center">
+                                </div>
+                                <div class="attendance-results-cell px-[15px]" role="cell">
                                     <div class="flex items-center justify-center gap-[4px]">
-                                        <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
-                                        </button>
-                                        <button type="button" title="Copiar (próximamente)" aria-label="Copiar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg>
-                                        </button>
-                                        <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" title="Editar jornada" aria-label="Editar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
-                                        </button>
+                                        <button type="button" title="Eliminar (próximamente)" aria-label="Eliminar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg></button>
+                                        <button type="button" title="Copiar (próximamente)" aria-label="Copiar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg></button>
+                                        <button type="button" wire:click="editRow('{{ $row['fecha'] }}')" title="Editar jornada" aria-label="Editar jornada" class="inline-flex h-7 w-7 items-center justify-center text-black transition hover:text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg></button>
                                     </div>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
                         @empty
-                            <tr>
-                                <td colspan="9" class="bg-white px-[20px] py-[40px] text-center text-zinc-500">
-                                    Esta persona no tiene jornadas registradas en el periodo seleccionado.
-                                </td>
-                            </tr>
+                            <div class="flex h-[350px] w-full items-center justify-center px-[20px] text-center text-zinc-500">
+                                Esta persona no tiene jornadas registradas en el periodo seleccionado.
+                            </div>
                         @endforelse
-                    </tbody>
-                    @if ($searched && count($payrollRows) > 0)
-                        <tfoot class="font-bold text-black">
-                            <tr>
-                                <td class="whitespace-nowrap px-[50px] py-[20px]">TOTAL</td>
-                                <td class="px-[50px] py-[20px]"></td>
-                                <td class="whitespace-nowrap px-[50px] py-[20px] tabular-nums">{{ $totalsFooter['tiempo'] ?? '00h 00m 00s' }}</td>
-                                <td class="px-[50px] py-[20px] tabular-nums">{{ $totalsFooter['decimal'] ?? '0.00' }}</td>
-                                <td class="px-[50px] py-[20px] tabular-nums">{{ $totalsFooter['pago_h'] ?? '$0.00' }}</td>
-                                <td class="px-[50px] py-[20px] tabular-nums">{{ $totalsFooter['bonos'] ?? '$0.00' }}</td>
-                                <td class="px-[50px] py-[20px] tabular-nums">{{ $totalsFooter['general'] ?? '$0.00' }}</td>
-                                <td class="px-[50px] py-[20px]"></td>
-                                <td class="px-[50px] py-[20px]"></td>
-                            </tr>
-                        </tfoot>
-                    @endif
-                </table>
-            </div>
+                    </div>
+                </div>
+
+                @if ($searched && count($payrollRows) > 0)
+                    <div x-ref="attendanceTableTotal" class="overflow-hidden bg-zinc-100">
+                        <div class="attendance-results-row attendance-results-total h-[64px] font-bold text-black" role="row">
+                            <div class="attendance-results-cell whitespace-nowrap px-[20px]" role="cell">TOTAL</div>
+                            <div class="attendance-results-cell" role="cell"></div>
+                            <div class="attendance-results-cell whitespace-nowrap px-[20px] tabular-nums" role="cell">{{ $totalsFooter['tiempo'] ?? '00h 00m 00s' }}</div>
+                            <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['decimal'] ?? '0.00' }}</div>
+                            <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['pago_h'] ?? '$0.00' }}</div>
+                            <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['bonos'] ?? '$0.00' }}</div>
+                            <div class="attendance-results-cell px-[20px] tabular-nums" role="cell">{{ $totalsFooter['general'] ?? '$0.00' }}</div>
+                            <div class="attendance-results-cell" role="cell"></div>
+                            <div class="attendance-results-cell" role="cell"></div>
+                        </div>
+                    </div>
+                @endif
             @if ($searched)
                 <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-white p-[20px] text-zinc-500">
                     <span class="font-semibold text-black">Referencia de estados</span>
