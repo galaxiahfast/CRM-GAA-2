@@ -498,7 +498,7 @@
                                class="h-[40px] w-full rounded-md border border-zinc-200 bg-white pl-[36px] pr-[12px] text-[13px] text-black outline-none focus:border-zinc-300 focus:ring-0">
                     </label>
                 </div>
-                <nav class="attendance-scrollbar h-[300px] space-y-[6px] overflow-y-auto p-[10px] lg:h-auto lg:min-h-0 lg:flex-1" aria-label="Cambiar colaborador">
+                <nav class="attendance-scrollbar h-[350px] overflow-y-auto p-0 lg:h-auto lg:min-h-0 lg:flex-1" aria-label="Cambiar colaborador">
                     @foreach ($reportedUsers as $reportedUser)
                         @php
                             $reportedUserSearch = strtolower(trim($reportedUser->name.' '.$reportedUser->last_name).' '.$reportedUser->employee_id);
@@ -506,7 +506,7 @@
                         <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
                                 x-show="resultUserSearch === '' || @js($reportedUserSearch).includes(resultUserSearch.toLowerCase())"
                                 wire:key="report-result-user-{{ $reportedUser->id }}"
-                                class="flex w-full items-center gap-[10px] rounded-md border px-[10px] py-[9px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-transparent bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
+                                class="flex min-h-[70px] w-full items-center gap-[10px] rounded-md border px-[20px] py-[12px] text-left transition {{ $activeReportUserId === $reportedUser->id ? 'border-transparent bg-zinc-100 text-black' : 'border-transparent bg-white text-black hover:border-zinc-200 hover:bg-zinc-50' }}">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-zinc-200 bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
                                 {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
                             </span>
