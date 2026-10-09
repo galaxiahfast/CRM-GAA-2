@@ -172,14 +172,14 @@
                     <div data-area-group style="border: 1px solid #e5e7eb; margin-top:20px; margin-bottom: {{ $loop->last ? '20px' : '0px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
                         <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
-                            <label style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1; cursor: pointer;">
-                                <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
-                                <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
+                            <label style="display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;">
+                                <span data-area-name class="min-w-0 truncate">{{ $areaName }}</span>
+                                <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius:4px;border:1px solid #d1d5db;accent-color:#000;width:16px;height:16px;flex-shrink:0;outline:none;box-shadow:none;" />
                             </label>
                             <span style="color: #9ca3af; font-weight: 400;">{{ $areaUsers->count() }} colaboradores</span>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
+                        <div class="grid gap-[20px] bg-white p-[20px] sm:grid-cols-2 xl:grid-cols-3">
                             @foreach ($areaUsers as $user)
                                 <div data-user-search="{{ mb_strtolower($user['name'].' '.($user['employee_id'] ?? '').' '.($user['position_name'] ?? '').' '.($areaName ?? '')) }}" style="display:flex;min-width:0;align-items:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:15px 15px 15px 20px;">
                                     <label style="display:flex;min-width:0;flex:1;align-items:center;gap:15px;color:#000;cursor:pointer;">
