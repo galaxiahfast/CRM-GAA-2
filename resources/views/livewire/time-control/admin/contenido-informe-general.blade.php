@@ -292,7 +292,7 @@
 
                     <div style="min-width:0;background:#fff;">
                         <div style="display:flex;min-height:70px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;padding:15px 20px;">
-                            <div><h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3><p style="margin:5px 0 0;color:#71717a;">{{ $activeResultUser['name'] ?? 'Colaborador' }}</p></div>
+                            <div><div style="display:flex;align-items:center;gap:10px;"><h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3>@if ($resultIsExample)<span style="border:1px solid #e4e4e7;border-radius:6px;padding:3px 8px;color:#71717a;font-size:13px;font-weight:500;">Vista de ejemplo · Contabilidad</span>@endif</div><p style="margin:5px 0 0;color:#71717a;">{{ $activeResultUser['name'] ?? 'Colaborador' }}</p></div>
                             <div style="display:flex;align-items:center;gap:20px;color:#000;"><span>Tiempo efectivo: <strong style="font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</strong></span><span>Cierres automáticos: {{ $activeResultData['autoClosedCount'] ?? 0 }}</span></div>
                         </div>
                         <div class="group-scrollbar" style="max-height:520px;overflow:auto;">
@@ -317,7 +317,7 @@
                                                     <td style="padding:15px 20px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</td>
                                                 @endforeach
                                                 <td style="padding:15px 20px;text-align:center;vertical-align:middle;">
-                                                    <button type="button" wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" aria-label="Editar actividad" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;">
+                                                    <button type="button" @if (! $resultIsExample) wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" @endif @disabled($resultIsExample) aria-label="{{ $resultIsExample ? 'Edición deshabilitada en la vista de ejemplo' : 'Editar actividad' }}" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;{{ $resultIsExample ? 'opacity:.35;cursor:not-allowed;' : '' }}">
                                                         <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15.2 5.2 3.6 3.6M4 20l4.2-1 10.6-10.6a2.55 2.55 0 0 0-3.6-3.6L4.6 15.4 4 20Z"/></svg>
                                                     </button>
                                                 </td>

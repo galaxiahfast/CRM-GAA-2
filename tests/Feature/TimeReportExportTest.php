@@ -96,6 +96,7 @@ class TimeReportExportTest extends TestCase
             ->assertSet('reportSection', 'prepare')
             ->assertSet('selectedCollaboratorIds', [$aux->id])
             ->assertSet('reportedCollaboratorIds', [$aux->id])
+            ->assertSet('showResultExamples', true)
             ->assertSet('groupReportIsCurrent', true)
             ->assertSee('Supervisión de Horas')
             ->assertSee('supervision-monochrome', false)
@@ -115,6 +116,22 @@ class TimeReportExportTest extends TestCase
             ->assertSee('supervision-hours-scale', false)
             ->assertDontSee('Jefe directo...')
             ->assertDontSee('Filtrar por:');
+    }
+
+    public function test_admin_results_show_accounting_examples_until_a_real_report_is_generated(): void
+    {
+        ['admin' => $admin] = $this->seedWithEntry();
+        TimeEntry::query()->delete();
+
+        Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
+            ->call('showResultsSection')
+            ->assertSee('Vista de ejemplo · Contabilidad')
+            ->assertSee('Conciliación bancaria')
+            ->assertSee('Registro de pólizas')
+            ->assertSee('Cierre contable mensual')
+            ->call('generateGroupReport')
+            ->assertSet('showResultExamples', false)
+            ->assertDontSee('Vista de ejemplo · Contabilidad');
     }
 
     public function test_user_report_matches_screen_total(): void

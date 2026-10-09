@@ -43,6 +43,8 @@ class InformeGeneralHoras extends Component
 
     public ?int $activeResultUserId = null;
 
+    public bool $showResultExamples = true;
+
     /**
      * Directorio liviano para el selector grupal. Se hidrata una vez al montar
      * el componente y se usa en memoria durante los cambios de casillas.
@@ -94,15 +96,24 @@ class InformeGeneralHoras extends Component
             ])->values()->all(),
         ])->all();
 
-        $defaultCollaborator = collect($this->groupCollaboratorDirectory)->first(
-            fn (array $user) => str_contains(mb_strtolower($user['name']), 'armando')
-        ) ?? collect($this->groupCollaboratorDirectory)->first();
+        $directory = collect($this->groupCollaboratorDirectory);
+        $defaultCollaborators = $directory
+            ->filter(fn (array $user) => mb_strtolower((string) $user['area_name']) === 'contabilidad')
+            ->take(3)
+            ->values();
 
-        if ($defaultCollaborator !== null) {
-            $defaultId = (int) $defaultCollaborator['id'];
-            $this->selectedCollaboratorIds = [$defaultId];
-            $this->reportedCollaboratorIds = [$defaultId];
-            $this->activeResultUserId = $defaultId;
+        if ($defaultCollaborators->isEmpty()) {
+            $defaultCollaborator = $directory->first(
+                fn (array $user) => str_contains(mb_strtolower($user['name']), 'armando')
+            ) ?? $directory->first();
+            $defaultCollaborators = $defaultCollaborator === null ? collect() : collect([$defaultCollaborator]);
+        }
+
+        if ($defaultCollaborators->isNotEmpty()) {
+            $defaultIds = $defaultCollaborators->pluck('id')->map(fn ($id) => (int) $id)->all();
+            $this->selectedCollaboratorIds = $defaultIds;
+            $this->reportedCollaboratorIds = $defaultIds;
+            $this->activeResultUserId = $defaultIds[0];
             $this->groupReportIsCurrent = true;
             $this->groupReportVersion = 1;
             $this->lastReportGeneratedAt = Carbon::now($this->moduleTimezone())->format('d/m/Y H:i');
@@ -202,6 +213,7 @@ class InformeGeneralHoras extends Component
 
         $this->groupReportVersion++;
         $this->groupReportIsCurrent = true;
+        $this->showResultExamples = false;
         $this->activeResultUserId = in_array((int) $this->activeResultUserId, $this->reportedCollaboratorIds, true)
             ? $this->activeResultUserId
             : ($this->reportedCollaboratorIds[0] ?? null);
@@ -500,6 +512,16 @@ class InformeGeneralHoras extends Component
         $activeResultActivityDetail = $activeResultUser
             ? $reports->activityDetailByDay($activeResultData['entries'], false, true)
             : ['columns' => [], 'groups' => []];
+        $resultIsExample = $this->showResultExamples
+            && $activeResultUser
+            && mb_strtolower((string) ($activeResultUser['area_name'] ?? '')) === 'contabilidad'
+            && $activeResultActivityDetail['groups'] === [];
+
+        if ($resultIsExample) {
+            $activeResultActivityDetail = $this->accountingActivityExamples();
+            $activeResultData['total'] = 47700;
+            $activeResultData['autoClosedCount'] = 0;
+        }
 
         return view('livewire.time-control.admin.informe-general-horas', [
             'exportFormats' => $exporter->formats(),
@@ -510,7 +532,40 @@ class InformeGeneralHoras extends Component
             'activeResultUser' => $activeResultUser,
             'activeResultData' => $activeResultData,
             'activeResultActivityDetail' => $activeResultActivityDetail,
+            'resultIsExample' => $resultIsExample,
         ])->layout('layouts.app');
+    }
+
+    /** @return array{columns:list<string>, groups:list<array<string, mixed>>} */
+    private function accountingActivityExamples(): array
+    {
+        $today = Carbon::now($this->moduleTimezone());
+
+        return [
+            'columns' => ['Intervalos', 'Actividad', 'Cliente', 'Tiempo efectivo', 'Puesto profesional', 'Área física', 'Observaciones'],
+            'groups' => [
+                [
+                    'date' => $today->format('d/m/Y'),
+                    'entry_ids' => [0, 0, 0],
+                    'total_effective' => '06h 30m 00s',
+                    'rows' => [
+                        ['09:00:00 – 11:15:00', 'Conciliación bancaria', 'Cliente Norte', '02:15:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                        ['11:30:00 – 13:00:00', 'Registro de pólizas', 'Cliente Centro', '01:30:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                        ['14:00:00 – 16:45:00', 'Revisión de facturas', 'Cliente Norte', '02:45:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                    ],
+                ],
+                [
+                    'date' => $today->copy()->subDay()->format('d/m/Y'),
+                    'entry_ids' => [0, 0, 0],
+                    'total_effective' => '06h 45m 00s',
+                    'rows' => [
+                        ['08:55:00 – 10:55:00', 'Cálculo de impuestos', 'Cliente Sur', '02:00:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                        ['11:10:00 – 13:25:00', 'Cuentas por pagar', 'Cliente Centro', '02:15:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                        ['14:10:00 – 16:40:00', 'Cierre contable mensual', 'Cliente Sur', '02:30:00', 'Auxiliar contable', 'Contabilidad', '—'],
+                    ],
+                ],
+            ],
+        ];
     }
 
     /** @return Collection<int, User> */
