@@ -14,14 +14,14 @@ class AttendanceExportService
 {
     /** @var list<string> */
     private const COLUMNS = [
-        'Fecha Jornada',
-        'Marcas / Chequeos',
-        'Tiempo Neto',
-        'Hrs Decimales',
-        'Pago Base',
+        'Fecha jornada',
+        'Marcas / chequeos',
+        'Tiempo neto',
+        'Hrs. decimales',
+        'Pago base',
         'Comida',
         'Bono',
-        'Total del Día',
+        'Total del día',
         'Estado',
     ];
 
@@ -82,7 +82,7 @@ class AttendanceExportService
             meta: [
                 'Periodo' => $from.' — '.$to,
                 'Colaboradores incluidos' => (string) $users->count(),
-                'Selección' => $users->map(fn (User $user) => trim($user->name.' '.$user->last_name))->join(', '),
+                'Selección' => $users->map(fn (User $user) => mb_strtoupper(trim($user->name.' '.$user->last_name)))->join(', '),
             ],
             sections: $sections,
         );
@@ -91,7 +91,7 @@ class AttendanceExportService
     /** @param array<string, mixed> $result */
     private function individualSelectionSection(User $user, array $result, bool $batch): ReportSection
     {
-        $name = trim($user->name.' '.$user->last_name);
+        $name = mb_strtoupper(trim($user->name.' '.$user->last_name));
         $rows = $this->buildRows($result);
         $rows[] = $this->buildTotalRow($result);
 
@@ -111,7 +111,7 @@ class AttendanceExportService
             $totals = $report['result']['totales_pie'] ?? [];
 
             return [
-                trim($user->name.' '.$user->last_name),
+                mb_strtoupper(trim($user->name.' '.$user->last_name)),
                 (string) $user->employee_id,
                 $totals['tiempo'] ?? '00h 00m 00s',
                 $totals['decimal'] ?? '0.00',
@@ -293,7 +293,7 @@ class AttendanceExportService
         $totales = $payrollResult['totales_pie'] ?? [];
 
         return [
-            'TOTAL ACUMULADO',
+            'Total acumulado',
             '',
             $totales['tiempo'] ?? '00h 00m 00s',
             $totales['decimal'] ?? '0.00',

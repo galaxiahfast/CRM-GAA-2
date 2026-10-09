@@ -27,7 +27,7 @@ class PdfExporter implements ReportExporter
     {
         $html = $this->renderHtml($data);
         $isAttendanceReport = $this->isAttendanceReport($data);
-        $cacheKey = 'report-pdf:v4:'.hash('sha256', serialize([
+        $cacheKey = 'report-pdf:v5:'.hash('sha256', serialize([
             $data->title,
             $data->filenameBase,
             $data->meta,
@@ -64,25 +64,31 @@ class PdfExporter implements ReportExporter
                 ? '@page{size:A4 landscape;margin:12mm}'
                     .'body.attendance-print{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px;line-height:1.35;color:#111827;margin:0}'
                     .'body.attendance-print h1,body.attendance-print h2,body.attendance-print h3,body.attendance-print .generated,body.attendance-print .meta,body.attendance-print .section,body.attendance-print .empty,body.attendance-print .day-total{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px}'
-                    .'body.attendance-print h1{margin:0 0 5px;font-weight:bold}'
-                    .'body.attendance-print h2{margin:14px 0 6px;padding-bottom:4px}'
+                    .'body.attendance-print .report-header{border:1px solid #d1d5db;background:#f9fafb;padding:10px 12px;margin-bottom:18px}'
+                    .'body.attendance-print h1{margin:0 0 5px;font-weight:normal}'
+                    .'body.attendance-print h2{margin:14px 0 6px;padding:6px 8px;border:1px solid #d1d5db;background:#f3f4f6;font-weight:normal}'
                     .'body.attendance-print .generated{margin-bottom:10px}'
                     .'body.attendance-print .meta{margin-bottom:12px}'
                     .'body.attendance-print .meta td{padding:2px 5px}'
                     .'body.attendance-print .meta .label{width:180px}'
                     .'body.attendance-print .section{table-layout:auto}'
-                    .'body.attendance-print .section th,body.attendance-print .section td{padding:5px 6px;vertical-align:middle}'
-                    .'body.attendance-print .section th{font-weight:bold;text-align:center}'
+                    .'body.attendance-print .section th,body.attendance-print .section td{padding:5px 6px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
+                    .'body.attendance-print .section th,body.attendance-print .section th.num{text-align:center!important}'
+                    .'body.attendance-print .section td,body.attendance-print .section td.num{text-align:left!important}'
                     .'body.attendance-print .section tr{page-break-inside:avoid}'
                     .'body.attendance-print .section td{white-space:nowrap}'
                     .'body.attendance-print .section th:nth-child(2),body.attendance-print .section td:nth-child(2){white-space:normal}'
                     .'body.attendance-print .section tr.late-arrival{background:#fff1f2}'
-                    .'body.attendance-print .section tr.late-arrival td:first-child{color:#b91c1c;font-weight:bold}'
+                    .'body.attendance-print .section tr.late-arrival td:first-child{color:#b91c1c;font-weight:normal}'
                 : '')
             .'</style></head><body>';
 
         if ($isAttendanceReport) {
             $html = str_replace('<body>', '<body class="attendance-print">', $html);
+        }
+
+        if ($isAttendanceReport) {
+            $html .= '<div class="report-header">';
         }
 
         $html .= '<h1>'.$this->escape($data->title).'</h1>';
@@ -94,6 +100,10 @@ class PdfExporter implements ReportExporter
                 $html .= '<tr><td class="label">'.$this->escape((string) $label).'</td><td>'.$this->escape((string) $value).'</td></tr>';
             }
             $html .= '</table>';
+        }
+
+        if ($isAttendanceReport) {
+            $html .= '</div>';
         }
 
         foreach ($data->sections as $sectionIndex => $section) {
@@ -158,8 +168,8 @@ class PdfExporter implements ReportExporter
     /** @param list<string> $columns @param list<string|int> $row */
     private function isLateAttendanceRow(array $columns, array $row): bool
     {
-        $dateIndex = array_search('Fecha Jornada', $columns, true);
-        $marksIndex = array_search('Marcas / Chequeos', $columns, true);
+        $dateIndex = array_search('Fecha jornada', $columns, true);
+        $marksIndex = array_search('Marcas / chequeos', $columns, true);
 
         if ($dateIndex === false || $marksIndex === false || empty($row[$dateIndex])) {
             return false;

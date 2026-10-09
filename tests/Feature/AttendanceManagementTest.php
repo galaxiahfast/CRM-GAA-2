@@ -418,6 +418,19 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('employeeId', 'EMP-R02')
             ->assertSet('selectedEmployeeName', 'Beto Dos');
 
+        $groupReport = app(\App\Services\TimeControl\AttendanceExportService::class)->selectionReport(
+            'group',
+            collect([$ana, $beto]),
+            '2026-08-07',
+            '2026-08-07',
+            app(\App\Services\TimeControl\AttendanceService::class),
+            app(\App\Services\TimeControl\AttendanceSettingsService::class),
+        );
+        $this->assertSame('ANA UNO, BETO DOS', $groupReport->meta['Selección']);
+        $this->assertStringContainsString('ANA UNO', $groupReport->sections[0]->title);
+        $this->assertSame('Fecha jornada', $groupReport->sections[0]->columns[0]);
+        $this->assertSame('Total acumulado', $groupReport->sections[0]->rows[array_key_last($groupReport->sections[0]->rows)][0]);
+
         foreach (['group' => 'grupal', 'general' => 'general'] as $mode => $filenameMode) {
             $groupComponent
                 ->call('exportSelectionReport', $mode)
