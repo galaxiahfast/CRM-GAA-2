@@ -522,6 +522,8 @@ class InformeGeneralHoras extends Component
             $activeResultData['total'] = 47700;
             $activeResultData['autoClosedCount'] = 0;
         }
+        $activeResultActivityCount = collect($activeResultActivityDetail['groups'])
+            ->sum(fn (array $group) => count($group['rows'] ?? []));
 
         return view('livewire.time-control.admin.informe-general-horas', [
             'exportFormats' => $exporter->formats(),
@@ -532,6 +534,7 @@ class InformeGeneralHoras extends Component
             'activeResultUser' => $activeResultUser,
             'activeResultData' => $activeResultData,
             'activeResultActivityDetail' => $activeResultActivityDetail,
+            'activeResultActivityCount' => $activeResultActivityCount,
             'resultIsExample' => $resultIsExample,
         ])->layout('layouts.app');
     }

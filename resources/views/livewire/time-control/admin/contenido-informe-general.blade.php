@@ -271,13 +271,13 @@
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:280px minmax(0,1fr);min-height:520px;border-bottom:1px solid #e4e4e7;">
+                <div style="display:grid;grid-template-columns:280px minmax(0,1fr);height:590px;border-bottom:1px solid #d4d4d8;">
                     <aside style="display:flex;min-height:0;flex-direction:column;border-right:1px solid #e4e4e7;background:#fff;">
-                        <div style="border-bottom:1px solid #e4e4e7;padding:15px 20px;">
+                        <div style="display:flex;height:70px;box-sizing:border-box;flex:none;flex-direction:column;justify-content:center;border-bottom:1px solid #d4d4d8;padding:10px 20px;">
                             <h3 style="margin:0;font-weight:600;color:#000;">Colaboradores</h3>
                             <p style="margin:5px 0 0;color:#71717a;">Selecciona una persona.</p>
                         </div>
-                        <nav class="group-scrollbar" style="max-height:520px;overflow-y:auto;padding:0;" aria-label="Colaboradores incluidos en el reporte">
+                        <nav class="group-scrollbar" style="min-height:0;flex:1;overflow-y:auto;padding:0;" aria-label="Colaboradores incluidos en el reporte">
                             @foreach ($reportedGroupUsers as $reportedUser)
                                 <button type="button" wire:click="selectResultUser({{ $reportedUser['id'] }})" style="display:flex;min-height:70px;width:100%;align-items:center;gap:10px;border:0;border-bottom:1px solid #f4f4f5;background:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#f4f4f5' : '#fff' }};padding:15px 20px;text-align:left;color:#000;">
                                     <span style="display:flex;width:32px;height:32px;flex:none;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:6px;background:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#000' : '#fff' }};color:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#fff' : '#000' }};font-weight:600;">{{ mb_strtoupper(mb_substr($reportedUser['name'], 0, 1)) }}</span>
@@ -290,44 +290,58 @@
                         </nav>
                     </aside>
 
-                    <div style="min-width:0;background:#fff;">
-                        <div style="display:flex;min-height:70px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;padding:15px 20px;">
-                            <div><div style="display:flex;align-items:center;gap:10px;"><h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3>@if ($resultIsExample)<span style="border:1px solid #e4e4e7;border-radius:6px;padding:3px 8px;color:#71717a;font-size:13px;font-weight:500;">Vista de ejemplo · Contabilidad</span>@endif</div><p style="margin:5px 0 0;color:#71717a;">{{ $activeResultUser['name'] ?? 'Colaborador' }}</p></div>
+                    <div style="display:flex;min-width:0;min-height:0;flex-direction:column;background:#fff;">
+                        <div style="display:flex;height:70px;box-sizing:border-box;flex:none;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #d4d4d8;padding:10px 20px;">
+                            <h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3>
                             <div style="display:flex;align-items:center;gap:20px;color:#000;"><span>Tiempo efectivo: <strong style="font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</strong></span><span>Cierres automáticos: {{ $activeResultData['autoClosedCount'] ?? 0 }}</span></div>
                         </div>
-                        <div class="group-scrollbar" style="max-height:520px;overflow:auto;">
-                            <table style="width:100%;min-width:1100px;border-collapse:collapse;table-layout:fixed;">
-                                <thead style="position:sticky;top:0;z-index:2;background:#f4f4f5;">
-                                    <tr>
-                                        <th style="padding:15px 20px;text-align:left;border-bottom:1px solid #e4e4e7;">Fecha</th>
+                        <div class="group-scrollbar" style="min-height:0;flex:1;overflow-x:auto;overflow-y:hidden;">
+                            <div role="table" aria-label="Detalle de actividades por colaborador" style="display:flex;height:100%;min-width:1360px;flex-direction:column;--activity-columns:160px 210px 210px 180px 180px 210px 160px 90px;">
+                                <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
+                                    <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:76px;align-items:center;border-bottom:1px solid #d4d4d8;">
+                                        <div role="columnheader" style="padding:15px 20px;font-weight:600;">Fecha</div>
                                         @foreach ($activeResultActivityDetail['columns'] as $column)
                                             @continue($column === 'Observaciones')
-                                            <th style="padding:15px 20px;text-align:left;border-bottom:1px solid #e4e4e7;">{{ $column }}</th>
+                                            <div role="columnheader" style="padding:15px 20px;font-weight:600;">{{ $column }}</div>
                                         @endforeach
-                                        <th style="padding:15px 20px;text-align:center;border-bottom:1px solid #e4e4e7;">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                        <div role="columnheader" style="padding:15px 20px;text-align:center;font-weight:600;">Acciones</div>
+                                    </div>
+                                </div>
+
+                                <div role="rowgroup" class="group-scrollbar" style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;background:#fff;">
                                     @forelse ($activeResultActivityDetail['groups'] as $dayGroup)
                                         @foreach ($dayGroup['rows'] as $rowIndex => $row)
-                                            <tr style="border-bottom:1px solid #e4e4e7;background:#fff;">
-                                                <td style="padding:15px 20px;vertical-align:middle;">{{ $loop->first ? $dayGroup['date'] : '' }}</td>
+                                            <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:70px;align-items:center;border-bottom:1px solid #e4e4e7;background:#fff;">
+                                                <div role="cell" style="padding:15px 20px;">{{ $loop->first ? $dayGroup['date'] : '' }}</div>
                                                 @foreach ($activeResultActivityDetail['columns'] as $columnIndex => $column)
                                                     @continue($column === 'Observaciones')
-                                                    <td style="padding:15px 20px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</td>
+                                                    <div role="cell" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:15px 20px;" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</div>
                                                 @endforeach
-                                                <td style="padding:15px 20px;text-align:center;vertical-align:middle;">
+                                                <div role="cell" style="padding:15px 20px;text-align:center;">
                                                     <button type="button" @if (! $resultIsExample) wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" @endif @disabled($resultIsExample) aria-label="{{ $resultIsExample ? 'Edición deshabilitada en la vista de ejemplo' : 'Editar actividad' }}" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;{{ $resultIsExample ? 'opacity:.35;cursor:not-allowed;' : '' }}">
                                                         <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15.2 5.2 3.6 3.6M4 20l4.2-1 10.6-10.6a2.55 2.55 0 0 0-3.6-3.6L4.6 15.4 4 20Z"/></svg>
                                                     </button>
-                                                </td>
-                                            </tr>
+                                                </div>
+                                            </div>
                                         @endforeach
                                     @empty
-                                        <tr><td colspan="9" style="padding:40px 20px;text-align:center;color:#71717a;">Sin registros en el periodo.</td></tr>
+                                        <div role="row" style="display:flex;min-height:160px;align-items:center;justify-content:center;color:#71717a;">Sin registros en el periodo.</div>
                                     @endforelse
-                                </tbody>
-                            </table>
+                                </div>
+
+                                <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
+                                    <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:64px;align-items:center;border-top:1px solid #d4d4d8;font-weight:600;color:#000;">
+                                        <div role="cell" style="padding:15px 20px;">TOTAL</div>
+                                        <div role="cell" style="padding:15px 20px;"></div>
+                                        <div role="cell" style="padding:15px 20px;">{{ $activeResultActivityCount }} {{ $activeResultActivityCount === 1 ? 'actividad' : 'actividades' }}</div>
+                                        <div role="cell" style="padding:15px 20px;"></div>
+                                        <div role="cell" style="padding:15px 20px;font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</div>
+                                        <div role="cell" style="padding:15px 20px;"></div>
+                                        <div role="cell" style="padding:15px 20px;">{{ $activeResultUser['area_name'] ?? '' }}</div>
+                                        <div role="cell" style="padding:15px 20px;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

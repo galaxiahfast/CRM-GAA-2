@@ -125,10 +125,12 @@ class TimeReportExportTest extends TestCase
 
         Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->call('showResultsSection')
-            ->assertSee('Vista de ejemplo · Contabilidad')
+            ->assertDontSee('Vista de ejemplo · Contabilidad')
             ->assertSee('Conciliación bancaria')
             ->assertSee('Registro de pólizas')
             ->assertSee('Cierre contable mensual')
+            ->assertSee('6 actividades')
+            ->assertSee('TOTAL')
             ->call('generateGroupReport')
             ->assertSet('showResultExamples', false)
             ->assertDontSee('Vista de ejemplo · Contabilidad');
