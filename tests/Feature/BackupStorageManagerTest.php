@@ -39,11 +39,14 @@ class BackupStorageManagerTest extends TestCase
         $admin = $this->user('Administrador', 'admin-storage@datamid.test');
         $accountant = $this->user('Contador', 'contador-storage@datamid.test');
         $auxiliary = $this->user('Auxiliar', 'aux-storage@datamid.test');
+        config()->set('backup-storage.sites.cancun', 'Cancún');
 
         $this->actingAs($admin)->get(route('activity-backups.index'))
             ->assertOk()
-            ->assertSee('Respaldos Mérida')
-            ->assertSee('Respaldos Tulum')
+            ->assertSee('Respaldos')
+            ->assertSee('Mérida')
+            ->assertSee('Tulum')
+            ->assertSee('Cancún')
             ->assertSee('Historial de registros')
             ->assertSee('Seleccionar ZIP')
             ->assertDontSee('Selecciona un cliente')

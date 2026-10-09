@@ -10,7 +10,10 @@ use Livewire\Component;
 class BackupStorageManager extends Component
 {
     #[Url(as: 'tab')]
-    public string $activeTab = 'merida';
+    public string $activeTab = 'backups';
+
+    #[Url(as: 'site')]
+    public string $selectedSite = 'merida';
 
     #[Url(as: 'q')]
     public string $search = '';
@@ -18,22 +21,40 @@ class BackupStorageManager extends Component
     public function mount(): void
     {
         Gate::authorize('manage-system-backups');
-        if (! in_array($this->activeTab, ['merida', 'tulum', 'history'], true)) {
-            $this->activeTab = 'merida';
+        $sites = array_keys(config('backup-storage.sites', []));
+        abort_if($sites === [], 500, 'No hay sedes configuradas para respaldos.');
+
+        // Mantiene compatibles los enlaces anteriores que usaban ?tab=merida o ?tab=tulum.
+        if (in_array($this->activeTab, $sites, true)) {
+            $this->selectedSite = $this->activeTab;
+            $this->activeTab = 'backups';
+        }
+        if (! in_array($this->activeTab, ['backups', 'history'], true)) {
+            $this->activeTab = 'backups';
+        }
+        if (! in_array($this->selectedSite, $sites, true)) {
+            $this->selectedSite = $sites[0];
         }
     }
 
     public function selectTab(string $tab): void
     {
-        abort_unless(in_array($tab, ['merida', 'tulum', 'history'], true), 404);
+        abort_unless(in_array($tab, ['backups', 'history'], true), 404);
         $this->activeTab = $tab;
+    }
+
+    public function selectSite(string $site): void
+    {
+        abort_unless(array_key_exists($site, config('backup-storage.sites', [])), 404);
+        $this->selectedSite = $site;
+        $this->activeTab = 'backups';
     }
 
     public function render()
     {
         Gate::authorize('manage-system-backups');
 
-        $site = in_array($this->activeTab, ['merida', 'tulum'], true) ? $this->activeTab : 'merida';
+        $site = $this->selectedSite;
         $completed = BackupUpload::query()
             ->where('site', $site)
             ->where('status', BackupUpload::STATUS_COMPLETED)

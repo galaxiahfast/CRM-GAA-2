@@ -49,16 +49,22 @@
                     <div><h1 class="text-xl font-semibold text-black">Gestión de Respaldos</h1><p class="mt-[5px] text-zinc-500">Sube un ZIP por sede y consulta automáticamente su contenido.</p></div>
                 </div>
                 <nav class="flex items-center gap-[20px]" aria-label="Secciones de respaldos">
-                    @foreach (['merida' => 'Respaldos Mérida', 'tulum' => 'Respaldos Tulum', 'history' => 'Historial de registros'] as $tab => $label)
-                        <button type="button" wire:click="selectTab('{{ $tab }}')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === $tab ? 'font-semibold text-black' : 'text-zinc-500' }} focus:outline-none">
-                            @if ($tab === 'history')
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
-                            @else
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7h7l2 2h9v11H3V7Z"/></svg>
-                            @endif
-                            {{ $label }}
-                        </button>
-                    @endforeach
+                    <button type="button" wire:click="selectTab('backups')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === 'backups' ? 'font-semibold text-black' : 'text-zinc-500' }} focus:outline-none">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7h7l2 2h9v11H3V7Z"/></svg>
+                        Respaldos
+                    </button>
+                    <label class="inline-flex items-center gap-[10px] text-zinc-500">
+                        <span>Sede</span>
+                        <select wire:change="selectSite($event.target.value)" class="h-[42px] min-w-[140px] rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:ring-0">
+                            @foreach ($sites as $siteKey => $siteName)
+                                <option value="{{ $siteKey }}" @selected($site === $siteKey)>{{ $siteName }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <button type="button" wire:click="selectTab('history')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === 'history' ? 'font-semibold text-black' : 'text-zinc-500' }} focus:outline-none">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                        Historial de registros
+                    </button>
                 </nav>
             </section>
 

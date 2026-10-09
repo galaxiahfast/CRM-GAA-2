@@ -12,6 +12,8 @@ Cliente 1/
 
 También se admite una carpeta contenedora adicional antes de los clientes. El worker detecta automáticamente cada cliente, guarda los archivos privados en `storage/app/private/backups` y genera el árbol que aparece en pantalla. El ZIP original queda en `storage/app/private/backup-archives` para auditoría. Las cargas parciales permanecen en `storage/app/private/backup-chunks` hasta que el worker termina de ensamblarlas.
 
+Las sedes no tienen pantallas ni lógica duplicada. Para agregar otra, basta con incorporarla al arreglo `sites` de `config/backup-storage.php`; aparecerá automáticamente en el selector y utilizará el mismo flujo de carga, historial y descarga.
+
 ## Puesta en marcha
 
 ```bash
