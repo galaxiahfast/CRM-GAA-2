@@ -86,20 +86,31 @@ class TimeReportExportTest extends TestCase
             ->assertSet('to', $latestActivityDate);
     }
 
-    public function test_admin_dashboard_defaults_to_current_day(): void
+    public function test_admin_dashboard_preloads_a_collaborator_and_the_last_fifteen_days(): void
     {
-        ['admin' => $admin] = $this->seedWithEntry();
+        ['admin' => $admin, 'aux' => $aux] = $this->seedWithEntry();
 
         Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
-            ->assertSet('from', now()->toDateString())
+            ->assertSet('from', now()->subDays(15)->toDateString())
             ->assertSet('to', now()->toDateString())
             ->assertSet('reportSection', 'prepare')
+            ->assertSet('selectedCollaboratorIds', [$aux->id])
+            ->assertSet('reportedCollaboratorIds', [$aux->id])
+            ->assertSet('groupReportIsCurrent', true)
             ->assertSee('Supervisión de Horas')
             ->assertSee('supervision-monochrome', false)
             ->assertSee('Informe general')
             ->assertSee('Actividad en línea')
             ->assertSee('Resultado del reporte')
-            ->assertSeeInOrder(['Periodo del informe', 'Desde', 'Hasta', 'Generar informe']);
+            ->assertSeeInOrder(['Periodo del informe', 'Desde', 'Hasta', 'Generar informe'])
+            ->assertSee('Último reporte realizado:')
+            ->assertSee('Descargar PDF')
+            ->assertSee('Imprimir')
+            ->assertSee('Buscar colaborador, ID o área...')
+            ->assertSee('data-voice-search', false)
+            ->assertSee('supervision-hours-scale', false)
+            ->assertDontSee('Jefe directo...')
+            ->assertDontSee('Filtrar por:');
     }
 
     public function test_user_report_matches_screen_total(): void

@@ -5,6 +5,7 @@
     $areaOptions = $usersByArea->map(fn ($users, $name) => ['id' => $users->first()['area_id'], 'name' => $name, 'count' => $users->count(), 'user_ids' => $users->pluck('id')->map(fn ($id) => (int) $id)->values()->all()])->filter(fn ($area) => $area['id'])->values();
     $superiorOptions = $superiors->map(fn ($superior) => ['id' => $superior['id'], 'name' => $superior['name'], 'user_ids' => $groupUsers->filter(fn (array $user) => collect($user['superiors'])->contains('id', $superior['id']))->pluck('id')->map(fn ($id) => (int) $id)->values()->all()])->values();
     $userOptions = $groupUsers->map(fn ($user) => ['id' => $user['id'], 'name' => $user['name']])->values();
+    $selectedAreaCount = $selectedGroupUsers->pluck('area_id')->filter()->unique()->count();
 @endphp
 
 <style>
@@ -43,10 +44,47 @@
     data-report-current="{{ $groupReportIsCurrent ? 'true' : 'false' }}"
     class="supervision-monochrome w-full bg-white"
     style="overflow-x: auto; padding: 0 50px 50px;"
+    x-data="{
+        viewScale: Number(localStorage.getItem('supervision-hours-scale') || 100),
+        isFullscreen: false,
+        saveScale() { localStorage.setItem('supervision-hours-scale', this.viewScale); },
+        zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale(); },
+        zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.saveScale(); },
+        async toggleFullscreen() {
+            if (!document.fullscreenElement) await this.$root.requestFullscreen();
+            else await document.exitFullscreen();
+        }
+    }"
+    x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
 >
 
+    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+        <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
+        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Supervisión de Horas">
+        <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
+        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
+        <span class="h-5 w-px bg-zinc-200"></span>
+        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
+        </button>
+    </div>
+
     <!-- Contenedor interno con min-width -->
-    <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
+    <div style="min-width:1000px;padding:0;margin:0;transform-origin:top center;" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
+
+        <div style="margin:0 -50px;padding:50px;border-bottom:1px solid #e4e4e7;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:80px;white-space:nowrap;">
+            <div style="display:flex;align-items:center;gap:15px;color:#71717a;font-size:15px;">
+                <span>Actividades</span><span style="color:#d4d4d8">&gt;</span><span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span><span style="font-weight:600;color:#000">Supervisión de Horas</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:30px;font-size:15px;">
+                <button type="button" wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent) style="display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:0;color:#000;font-weight:600;disabled:opacity-40;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Descargar PDF
+                </button>
+                <button type="button" onclick="window.print()" style="display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:0;color:#71717a;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>Imprimir
+                </button>
+            </div>
+        </div>
 
         <!-- Header principal -->
         <div style="background-color: #fff; padding: 50px 0 0; overflow: hidden; min-width: max-content;">
@@ -94,30 +132,44 @@
         </div>
 
         @if ($reportSection === 'prepare')
-        <section style="display:grid;grid-template-columns:300px minmax(0,1fr);height:600px;margin-top:20px;overflow:hidden;border:1px solid #e4e4e7;border-radius:12px;background:#fff;">
+        <section style="display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);height:680px;margin-top:20px;overflow:hidden;border:1px solid #e4e4e7;border-radius:12px;background:#fff;">
+
+        <header style="grid-column:1/-1;display:flex;min-height:80px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;padding:15px 20px;background:#fff;">
+            <div>
+                <h2 style="margin:0;font-size:15px;font-weight:600;color:#000;">Preparar informe</h2>
+                <p style="margin:5px 0 0;font-size:15px;color:#71717a;">Configura y genera los resultados fácilmente.</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:20px;color:#000;font-size:15px;font-weight:500;white-space:nowrap;">
+                <span style="display:inline-flex;align-items:center;gap:10px;"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg><span data-selected-count>{{ $selectedGroupUsers->count() }}</span> seleccionados</span>
+                <span style="display:inline-flex;align-items:center;gap:10px;"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>{{ \Carbon\Carbon::parse($from)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($to)->format('d/m/Y') }}</span>
+                <span style="display:inline-flex;align-items:center;gap:10px;"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M15 10h.01"/></svg><span data-selected-area-count>{{ $selectedAreaCount }}</span> <span data-selected-area-label>{{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span></span>
+            </div>
+        </header>
+
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:20px;border-bottom:1px solid #e4e4e7;padding:20px;background:#fff;">
+            <label style="position:relative;display:block;min-width:320px;flex:1;">
+                <span class="sr-only">Buscar colaborador</span>
+                <svg style="position:absolute;left:15px;top:50%;width:20px;height:20px;transform:translateY(-50%);color:#a1a1aa;pointer-events:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                <input data-general-search type="search" autocomplete="off" placeholder="Buscar colaborador, ID o área..." style="height:50px;width:100%;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:0 50px 0 45px;color:#000;outline:none;">
+                <button data-voice-search type="button" title="Buscar por voz" aria-label="Buscar por voz" style="position:absolute;right:10px;top:50%;display:inline-flex;width:34px;height:34px;transform:translateY(-50%);align-items:center;justify-content:center;border:0;background:transparent;color:#000;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Zm-7 9v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8"/></svg>
+                </button>
+            </label>
+            <button type="button" data-select-all style="display:inline-flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:#000;font-size:15px;font-weight:600;white-space:nowrap;"><span>✓</span>Seleccionar todos</button>
+            <button type="button" data-clear-selection style="display:inline-flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:#71717a;font-size:15px;white-space:nowrap;"><span>×</span>Deseleccionar todos</button>
+        </div>
 
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div wire:ignore data-selection-list class="group-scrollbar" style="position:relative;grid-column:2;grid-row:1;overflow:hidden;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid #e4e4e7;background:#fff;">
-
-            <!-- Barra superior con filtros de búsqueda -->
-            <div style="position: sticky; top: 0; z-index: 10; display: inline-flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15); border-radius: 0 0 12px 0; width: auto;">
-
-                <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap;">Filtrar por:</span>
-                
-                <x-group-search-filter label="Área..." :options="$areaOptions" count-key="count" empty-message="No se encontraron áreas" />
-                <x-group-search-filter label="Usuario / Colaborador..." :options="$userOptions" empty-message="No se encontraron colaboradores" />
-                <x-group-search-filter label="Jefe directo..." :options="$superiorOptions" empty-message="No se encontraron jefes" />
-
-            </div>
+        <div wire:ignore data-selection-list class="group-scrollbar" style="position:relative;grid-column:2;grid-row:3;overflow:hidden;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid #e4e4e7;background:#fff;">
 
             <!-- Contenido con padding -->
             <div style="padding: 0px 20px 0px 20px;">
 
                 @forelse ($usersByArea as $areaName => $areaUsers)
                     @php($areaUserIds = $areaUsers->pluck('id')->map(fn ($id) => (int) $id)->all())
-                    <div style="border: 1px solid #e5e7eb; margin-bottom: {{ $loop->last ? '0px' : '20px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
+                    <div data-area-group style="border: 1px solid #e5e7eb; margin-top:20px; margin-bottom: {{ $loop->last ? '20px' : '0px' }}; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
 
                         <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
                             <label style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1; cursor: pointer;">
@@ -129,13 +181,13 @@
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
                             @foreach ($areaUsers as $user)
-                                <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
+                                <label data-user-search="{{ mb_strtolower($user['name'].' '.($user['employee_id'] ?? '').' '.($user['position_name'] ?? '').' '.($areaName ?? '')) }}" style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
                                     onmouseover="this.style.backgroundColor='#f3f4f6';"
                                     onmouseout="this.style.backgroundColor='#fafafa';">
-                                    <input data-area-collaborator data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
+                                    <input data-area-collaborator data-area-id="{{ $user['area_id'] ?? '' }}" data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
                                     <span class="min-w-0 flex-1">
                                         <span class="block truncate">{{ $user['name'] }}</span>
-                                        <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
+                                        <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ filled($user['employee_id'] ?? null) ? 'ID Checador: '.$user['employee_id'] : $user['position_name'] }}</small>
                                     </span>
                                 </label>
                             @endforeach
@@ -156,32 +208,12 @@
 
             </div>
 
-            <!-- Botones fijos abajo a la derecha -->
-            <div style="position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; padding: 20px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-top: 1px solid rgba(229, 231, 235, 0.1); width: fit-content; margin-left: auto; border-radius: 12px 0 0 0;">
-                <div style="display: flex; gap: 24px; background-color: transparent;">
-                    <button type="button" data-select-all
-                        style="display: inline-flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #000; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                        <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Seleccionar todos
-                    </button>
-                    <button type="button" data-clear-selection
-                        style="display: inline-flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #71717a; font-size: 15px; font-weight: 400; cursor: pointer; white-space: nowrap;">
-                        <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Deseleccionar todos
-                    </button>
-                </div>
-            </div>
-
         </div>
 
         <!-- ============================================================ -->
         <!-- BOTONES DE EXPORTACIÓN Y REPORTE                             -->
         <!-- ============================================================ -->
-        <form data-report-form style="grid-column:1;grid-row:1;display:flex;min-width:0;flex-direction:column;align-items:stretch;gap:20px;padding:20px;background:#fff;border:0;border-radius:0;box-shadow:none;">
+        <form data-report-form style="grid-column:1;grid-row:3;display:flex;min-width:0;flex-direction:column;align-items:stretch;gap:20px;padding:20px;background:#fff;border:0;border-radius:0;box-shadow:none;">
             <div>
                 <h2 style="margin:0;font-size:15px;font-weight:600;color:#000;">Periodo del informe</h2>
                 <p style="margin:5px 0 0;font-size:13px;color:#71717a;">Define las fechas que deseas consultar.</p>
@@ -194,12 +226,12 @@
                 <label for="to" style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">Hasta</label>
                 <input id="to" type="date" wire:model.defer="to" style="height:50px;width:100%;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:0 20px;font-size:15px;color:#000;outline:none;">
             </div>
-            <div style="margin-top:auto;display:grid;gap:10px;">
-                <div style="display:flex;align-items:center;gap:10px;color:#000;font-size:15px;font-weight:600;">
-                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
-                    <span data-selected-count>{{ $selectedGroupUsers->count() }}</span> seleccionados
-                </div>
+            <div style="display:grid;gap:15px;">
                 <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:#18181b;padding:15px 20px;font-size:15px;font-weight:600;color:#fff;border:0;cursor:pointer;box-shadow:none;">Generar informe</button>
+                <p style="display:flex;align-items:flex-start;gap:10px;margin:0;color:#71717a;font-size:13px;line-height:1.5;">
+                    <svg style="width:16px;height:16px;flex:none;margin-top:2px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                    <span>Último reporte realizado:<br>{{ $lastReportGeneratedAt ?? 'Sin reportes previos' }}</span>
+                </p>
             </div>
         </form>
         </section>
@@ -419,6 +451,8 @@
 
             selectionList.dataset.selectionInitialised = 'true';
             const count = root.querySelector('[data-selected-count]');
+            const areaCount = root.querySelector('[data-selected-area-count]');
+            const areaLabel = root.querySelector('[data-selected-area-label]');
             const selectedIds = new Set(JSON.parse(root.dataset.selectedIds || '[]').map(Number));
             const reportedIds = new Set(JSON.parse(root.dataset.reportedIds || '[]').map(Number));
             const reportIsCurrent = root.dataset.reportCurrent === 'true';
@@ -438,6 +472,11 @@
                 });
 
                 if (count) count.textContent = selectedIds.size;
+                const selectedAreas = new Set(collaboratorCheckboxes()
+                    .filter((checkbox) => selectedIds.has(Number(checkbox.dataset.collaboratorId)) && checkbox.dataset.areaId)
+                    .map((checkbox) => checkbox.dataset.areaId));
+                if (areaCount) areaCount.textContent = selectedAreas.size;
+                if (areaLabel) areaLabel.textContent = selectedAreas.size === 1 ? 'área participa' : 'áreas participan';
 
                 const selectionMatchesReport = selectedIds.size === reportedIds.size
                     && [...selectedIds].every((id) => reportedIds.has(id));
@@ -486,6 +525,44 @@
 
             root.querySelector('[data-clear-selection]')?.addEventListener('click', () => {
                 setUsers(collaboratorCheckboxes().map((checkbox) => Number(checkbox.dataset.collaboratorId)), false);
+            });
+
+            const generalSearch = root.querySelector('[data-general-search]');
+            const normaliseSearch = (value) => String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLocaleLowerCase()
+                .trim();
+            const filterCollaborators = () => {
+                const term = normaliseSearch(generalSearch?.value);
+                selectionList.querySelectorAll('[data-area-group]').forEach((area) => {
+                    let visibleUsers = 0;
+                    area.querySelectorAll('[data-user-search]').forEach((user) => {
+                        const visible = term === '' || normaliseSearch(user.dataset.userSearch).includes(term);
+                        user.style.display = visible ? 'flex' : 'none';
+                        if (visible) visibleUsers++;
+                    });
+                    area.style.display = visibleUsers > 0 ? 'block' : 'none';
+                });
+            };
+            generalSearch?.addEventListener('input', filterCollaborators);
+
+            root.querySelector('[data-voice-search]')?.addEventListener('click', () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition || !generalSearch) {
+                    generalSearch?.focus();
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'es-MX';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.addEventListener('result', (event) => {
+                    generalSearch.value = event.results[0][0].transcript;
+                    filterCollaborators();
+                });
+                recognition.start();
             });
 
             root.addEventListener('group-selection', (event) => setUsers(event.detail.userIds || [], true));
@@ -587,9 +664,7 @@
         document.addEventListener('livewire:navigated', initialise);
 
         document.addEventListener('livewire:init', () => {
-            window.Livewire?.hook('morph.updated', ({ el }) => {
-                if (el.matches?.('[data-group-selection-root]')) initialiseGroupReport(el);
-            });
+            window.Livewire?.hook('morph.updated', initialise);
         }, { once: true });
     })();
 </script>

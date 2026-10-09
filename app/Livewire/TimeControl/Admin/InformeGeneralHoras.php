@@ -39,6 +39,8 @@ class InformeGeneralHoras extends Component
 
     public int $groupReportVersion = 0;
 
+    public ?string $lastReportGeneratedAt = null;
+
     /**
      * Directorio liviano para el selector grupal. Se hidrata una vez al montar
      * el componente y se usa en memoria durante los cambios de casillas.
@@ -72,13 +74,14 @@ class InformeGeneralHoras extends Component
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
         // Rango predeterminado de fechas
-        $this->from = $this->localToday();
+        $this->from = Carbon::now($this->moduleTimezone())->subDays(15)->toDateString();
         $this->to = $this->localToday();
         $this->activeReportTab = 'group';
         $this->reportSection = request()->query('section') === 'results' ? 'results' : 'prepare';
         $this->groupCollaboratorDirectory = $this->groupCollaborators()->map(fn (User $user) => [
             'id' => $user->id,
             'name' => trim($user->name.' '.($user->last_name ?? '')),
+            'employee_id' => $user->employee_id,
             'area_id' => $user->activeOrganizationalProfile?->physical_area_id,
             'area_name' => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada',
             'position_id' => $user->activeOrganizationalProfile?->job_position_id,
@@ -88,6 +91,19 @@ class InformeGeneralHoras extends Component
                 'name' => trim($superior->name.' '.($superior->last_name ?? '')),
             ])->values()->all(),
         ])->all();
+
+        $defaultCollaborator = collect($this->groupCollaboratorDirectory)->first(
+            fn (array $user) => str_contains(mb_strtolower($user['name']), 'armando')
+        ) ?? collect($this->groupCollaboratorDirectory)->first();
+
+        if ($defaultCollaborator !== null) {
+            $defaultId = (int) $defaultCollaborator['id'];
+            $this->selectedCollaboratorIds = [$defaultId];
+            $this->reportedCollaboratorIds = [$defaultId];
+            $this->groupReportIsCurrent = true;
+            $this->groupReportVersion = 1;
+            $this->lastReportGeneratedAt = Carbon::now($this->moduleTimezone())->format('d/m/Y H:i');
+        }
     }
 
     public function selectCollaborator(int $id, string $fullName): void
@@ -176,6 +192,7 @@ class InformeGeneralHoras extends Component
 
         $this->groupReportVersion++;
         $this->groupReportIsCurrent = true;
+        $this->lastReportGeneratedAt = Carbon::now($this->moduleTimezone())->format('d/m/Y H:i');
         $this->reportSection = 'results';
     }
 
@@ -410,7 +427,7 @@ class InformeGeneralHoras extends Component
                 'activeOrganizationalProfile.physicalArea:id,name',
             ])
             ->orderBy('name')
-            ->get(['id', 'name', 'last_name']);
+            ->get(['id', 'name', 'last_name', 'employee_id']);
         if (! $this->groupReportIsCurrent || $users->isEmpty()) {
             $this->addError('selectedCollaboratorIds', 'Selecciona al menos un colaborador para descargar el informe grupal.');
             abort(422);
