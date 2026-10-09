@@ -131,6 +131,9 @@ class TimeReportExportTest extends TestCase
             ->assertSee('Cierre contable mensual')
             ->assertSee('6 actividades')
             ->assertSee('TOTAL')
+            ->assertSee('Referencia de estados')
+            ->assertSee('Ajuste individual')
+            ->assertSee('data-results-status-reference', false)
             ->call('generateGroupReport')
             ->assertSet('showResultExamples', false)
             ->assertDontSee('Vista de ejemplo · Contabilidad');

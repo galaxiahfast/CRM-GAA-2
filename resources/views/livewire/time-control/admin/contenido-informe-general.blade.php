@@ -359,6 +359,15 @@
                     </div>
                 </div>
 
+                <div data-results-status-reference style="display:flex;min-height:70px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;background:#fff;padding:15px 20px;color:#71717a;">
+                    <span style="font-weight:600;color:#000;">Referencia de estados</span>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;">
+                        <span style="display:inline-flex;align-items:center;gap:10px;"><span style="width:12px;height:12px;border:1px solid #a1a1aa;border-radius:9999px;background:#fff;"></span>Día correcto</span>
+                        <span style="display:inline-flex;align-items:center;gap:10px;"><span style="width:12px;height:12px;border-radius:9999px;background:#000;"></span>Impar / Revisar</span>
+                        <span style="display:inline-flex;align-items:center;gap:10px;"><span style="width:12px;height:12px;border:1px solid #a1a1aa;border-radius:9999px;background:#d4d4d8;"></span>Ajuste individual</span>
+                    </div>
+                </div>
+
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));">
                     <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:flex;min-height:82px;align-items:center;justify-content:center;gap:10px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
                         <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
