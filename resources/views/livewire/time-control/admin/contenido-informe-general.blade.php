@@ -181,15 +181,18 @@
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; background-color: #ffffff;">
                             @foreach ($areaUsers as $user)
-                                <label data-user-search="{{ mb_strtolower($user['name'].' '.($user['employee_id'] ?? '').' '.($user['position_name'] ?? '').' '.($areaName ?? '')) }}" style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
-                                    onmouseover="this.style.backgroundColor='#f3f4f6';"
-                                    onmouseout="this.style.backgroundColor='#fafafa';">
-                                    <input data-area-collaborator data-area-id="{{ $user['area_id'] ?? '' }}" data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block truncate">{{ $user['name'] }}</span>
-                                        <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ filled($user['employee_id'] ?? null) ? 'ID Checador: '.$user['employee_id'] : $user['position_name'] }}</small>
-                                    </span>
-                                </label>
+                                <div data-user-search="{{ mb_strtolower($user['name'].' '.($user['employee_id'] ?? '').' '.($user['position_name'] ?? '').' '.($areaName ?? '')) }}" style="display:flex;min-width:0;align-items:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:15px 15px 15px 20px;">
+                                    <label style="display:flex;min-width:0;flex:1;align-items:center;gap:15px;color:#000;cursor:pointer;">
+                                        <input data-area-collaborator data-area-id="{{ $user['area_id'] ?? '' }}" data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius:4px;border:1px solid #d1d5db;accent-color:#000;width:16px;height:16px;flex-shrink:0;outline:none;box-shadow:none;" />
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate" style="font-size:14px;font-weight:500;">{{ $user['name'] }}</span>
+                                            <small class="block truncate" style="font-size:12px;color:#71717a;margin-top:5px;">{{ filled($user['employee_id'] ?? null) ? 'ID Checador: '.$user['employee_id'] : $user['position_name'] }}</small>
+                                        </span>
+                                    </label>
+                                    <button data-edit-collaborator-placeholder type="button" disabled aria-disabled="true" title="Edición disponible próximamente" style="display:inline-flex;width:40px;height:40px;flex:none;align-items:center;justify-content:center;border:0;border-radius:10px;background:#18181b;color:#fff;cursor:not-allowed;opacity:1;">
+                                        <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15.2 5.2 3.6 3.6M4 20l4.2-1 10.6-10.6a2.55 2.55 0 0 0-3.6-3.6L4.6 15.4 4 20Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.8 6.2 17.8 10.2"/></svg>
+                                    </button>
+                                </div>
                             @endforeach
                         </div>
 

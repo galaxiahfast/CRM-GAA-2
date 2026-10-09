@@ -108,6 +108,8 @@ class TimeReportExportTest extends TestCase
             ->assertSee('Imprimir')
             ->assertSee('Buscar colaborador, ID o área...')
             ->assertSee('data-voice-search', false)
+            ->assertSee('data-edit-collaborator-placeholder', false)
+            ->assertSee('Edición disponible próximamente')
             ->assertSee('supervision-hours-scale', false)
             ->assertDontSee('Jefe directo...')
             ->assertDontSee('Filtrar por:');
