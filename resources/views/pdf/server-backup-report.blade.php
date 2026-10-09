@@ -95,7 +95,7 @@
                     $bad = collect($server['profiles'])->filter(fn ($profile) => $profile['available'] && ($profile['failed'] || $profile['errors'] !== [] || $profile['issues'] !== []))->count();
                     $pending = collect($server['profiles'])->where('available', false)->count();
                 @endphp
-                <tr><td class="name">{{ preg_replace('/^Compaqi \(|\)$/u', '', $server['name']) }}</td><td class="bar-cell"><div class="bar"><span class="ok-bar" style="width:{{ $correct / $maxProfiles * 100 }}%"></span><span class="bad-bar" style="width:{{ $bad / $maxProfiles * 100 }}%"></span><span class="pending-bar" style="width:{{ $pending / $maxProfiles * 100 }}%"></span></div></td><td>{{ $correct }} correctos / {{ $bad }} error / {{ $pending }} sin datos</td></tr>
+                <tr><td class="name">{{ mb_strtoupper(preg_replace('/^COMPAQI \(|\)$/iu', '', $server['name'])) }}</td><td class="bar-cell"><div class="bar"><span class="ok-bar" style="width:{{ $correct / $maxProfiles * 100 }}%"></span><span class="bad-bar" style="width:{{ $bad / $maxProfiles * 100 }}%"></span><span class="pending-bar" style="width:{{ $pending / $maxProfiles * 100 }}%"></span></div></td><td>{{ $correct }} correctos / {{ $bad }} error / {{ $pending }} sin datos</td></tr>
             @endforeach
         </table>
         <div class="legend"><span><i class="swatch"></i>Correcto</span><span><i class="swatch bad"></i>Con error</span><span><i class="swatch pending"></i>Sin datos / pendiente</span></div>

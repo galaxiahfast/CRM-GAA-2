@@ -30,7 +30,7 @@ class ServerBackupReportsTest extends TestCase
         $this->flushSession();
         $this->actingAs($admin)->get(route('soporte.reportes-respaldos'))
             ->assertOk()
-            ->assertSeeText('Informe técnico de respaldos')
+            ->assertSeeText('Informe Técnico de Respaldos')
             ->assertSeeText('Actualizar registros');
     }
 
@@ -40,10 +40,25 @@ class ServerBackupReportsTest extends TestCase
 
         Livewire::actingAs($admin)->test(ServerBackupReports::class)
             ->assertSet('totalProfiles', 15)
+            ->assertSet('reading', false)
+            ->assertSet('initialScanStarted', false)
+            ->assertSet('scanAuthorized', false)
             ->assertCount('servers', 5)
+            ->assertDontSeeText('Agregar servidor')
             ->assertSet('servers.0.share', '\\\\SRVIFAC\\log')
-            ->assertSeeText('Compaqi (Mérida)')
-            ->assertSeeText('Compaqi (Auditoría)');
+            ->assertSeeText('COMPAQI (MÉRIDA)')
+            ->assertSeeText('COMPAQI (AUDITORÍA)');
+    }
+
+    public function test_server_creation_is_not_available(): void
+    {
+        $admin = $this->userWithRole('Administrador', 'admin-no-create-server@datamid.test');
+
+        Livewire::actingAs($admin)->test(ServerBackupReports::class)
+            ->set('serverForm', ['name' => 'Nuevo', 'ip' => '192.168.2.250', 'share' => '\\\\NUEVO\\log'])
+            ->call('saveServer')
+            ->assertCount('servers', 5)
+            ->assertSet('showServerEditor', false);
     }
 
     public function test_incremental_reading_advances_without_restarting_the_scan(): void
@@ -75,7 +90,7 @@ class ServerBackupReportsTest extends TestCase
             ->assertCount('pendingProfiles', 14);
     }
 
-    public function test_completed_scan_keeps_the_automatic_start_guard_enabled(): void
+    public function test_completed_scan_keeps_a_single_automatic_start_per_page(): void
     {
         $admin = $this->userWithRole('Administrador', 'admin-scan-guard@datamid.test');
         $reader = \Mockery::mock(BackupLogReaderService::class);
@@ -95,7 +110,9 @@ class ServerBackupReportsTest extends TestCase
             ->assertSet('reading', false)
             ->assertSet('processedProfiles', 1)
             ->assertSet('initialScanStarted', true)
-            ->assertSee('initialized: true', false);
+            ->assertSet('scanAuthorized', false)
+            ->assertSee('autoScanStarted: false', false)
+            ->assertSee('$wire.startReading()', false);
     }
 
     public function test_log_reader_extracts_latest_execution_and_failed_company(): void
@@ -107,7 +124,10 @@ class ServerBackupReportsTest extends TestCase
 <h2 id="cs_99">14/09/2026 08:00 a. m.</h2><p>Anterior</p>
 <h2 id="cs_100">15/09/2026 08:00 a. m.</h2>
 <p>Create Synchronicity v6.0.0.0<br>Izquierda: C:\Compac\<br>Derecha: D:\Contpaq\<br>Hecho: 8/9<br>Tiempo Transcurrido: 00:02:10</p>
-<table><tr><td>Falló</td><td>a</td><td>b</td><td>c</td><td>\ctBERTA_LORET_DE_MOLA_VADILLO.mdf</td></tr></table>
+<table>
+<tr><td>Falló</td><td>a</td><td>b</td><td>c</td><td>\ctBERTA_LORET_DE_MOLA_VADILLO.mdf</td></tr>
+<tr><td>Falló</td><td>a</td><td>b</td><td>c</td><td>\ctBERTA_LORET_DE_MOLA_VADILLO_log.ldf</td></tr>
+</table>
 </body></html>
 HTML);
 
@@ -117,6 +137,10 @@ HTML);
             $this->assertSame('15/09/2026 08:00 a. m.', $result['date']);
             $this->assertSame('8/9', $result['processed']);
             $this->assertSame(['BERTA_LORET_DE_MOLA_VADILLO'], $result['errors']);
+            $this->assertSame([
+                ['path' => '\\ctBERTA_LORET_DE_MOLA_VADILLO.mdf', 'company' => 'BERTA_LORET_DE_MOLA_VADILLO'],
+                ['path' => '\\ctBERTA_LORET_DE_MOLA_VADILLO_log.ldf', 'company' => 'BERTA_LORET_DE_MOLA_VADILLO'],
+            ], $result['failedFiles']);
             $this->assertSame('D:\\Contpaq\\', $result['destination']);
         } finally {
             @unlink($path);
@@ -129,7 +153,7 @@ HTML);
         $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
 
         $deliveryPosition = strpos($html, '>Hoja de entrega<');
-        $backupPosition = strpos($html, '>Reportes de respaldos<');
+        $backupPosition = strpos($html, '>Reporte de Respaldos<');
         $this->assertNotFalse($deliveryPosition);
         $this->assertNotFalse($backupPosition);
         $this->assertGreaterThan($deliveryPosition, $backupPosition);
@@ -156,6 +180,16 @@ HTML);
 
         $this->assertStringStartsWith('%PDF-', $pdf);
         $this->assertGreaterThan(5000, strlen($pdf));
+    }
+
+    public function test_pdf_cannot_be_downloaded_before_the_review_finishes(): void
+    {
+        $admin = $this->userWithRole('Administrador', 'admin-pdf-pending@datamid.test');
+
+        Livewire::actingAs($admin)->test(ServerBackupReports::class)
+            ->assertSeeHtml('disabled')
+            ->call('downloadPdf')
+            ->assertSet('statusMessage', 'Espera a que termine la revisión antes de guardar el PDF.');
     }
 
     public function test_administrator_can_email_the_pdf_to_the_configured_recipients(): void
@@ -191,7 +225,7 @@ HTML);
         $admin = $this->userWithRole('Administrador', 'admin-email-self@datamid.test');
 
         Livewire::actingAs($admin)->test(ServerBackupReports::class)
-            ->assertSeeText('Destinatarios (3)')
+            ->assertSeeText('Enviar reporte por correo')
             ->assertSeeText('Enviarme una copia')
             ->assertSeeText('Enviar reporte')
             ->set('emailRecipients', ['emiliano.ortiz@datamid.com.mx'])

@@ -9,7 +9,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Renderless;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,6 +27,8 @@ class ServerBackupReports extends Component
     public bool $stopped = false;
 
     public bool $initialScanStarted = false;
+
+    public bool $scanAuthorized = false;
 
     public int $processedProfiles = 0;
 
@@ -79,6 +80,7 @@ class ServerBackupReports extends Component
         $this->emailStatus = '';
         $this->emailSent = false;
         $this->resetReport();
+        $this->scanAuthorized = true;
         $this->reading = true;
         $this->stopped = false;
         $this->statusMessage = 'Consultando perfiles por separado. Puedes detener la lectura cuando termine el perfil actual.';
@@ -89,6 +91,14 @@ class ServerBackupReports extends Component
     public function readNext(BackupLogReaderService $reader): void
     {
         Gate::authorize('manage-backup-reports');
+        if (! $this->scanAuthorized) {
+            $this->reading = false;
+            $this->statusMessage = 'Listo para consultar los registros.';
+            $this->dispatchScanProgress();
+
+            return;
+        }
+
         if (! $this->reading || $this->pendingProfiles === []) {
             $this->finishReading();
 
@@ -135,6 +145,7 @@ class ServerBackupReports extends Component
     public function stopReading(): void
     {
         $this->reading = false;
+        $this->scanAuthorized = false;
         $this->stopped = true;
         $this->pendingProfiles = [];
         $this->statusMessage = 'Lectura detenida. Se conservaron los resultados disponibles.';
@@ -230,14 +241,16 @@ class ServerBackupReports extends Component
         $this->showProfileEditor = false;
     }
 
-    public function openServer(?int $serverIndex = null): void
+    public function openServer(int $serverIndex): void
     {
+        $server = $this->servers[$serverIndex] ?? null;
+        abort_unless(is_array($server), 404);
+
         $this->editingServer = $serverIndex;
-        $server = $serverIndex === null ? null : ($this->servers[$serverIndex] ?? null);
         $this->serverForm = [
-            'name' => (string) ($server['name'] ?? ''),
-            'ip' => (string) ($server['ip'] ?? ''),
-            'share' => (string) ($server['share'] ?? ''),
+            'name' => (string) $server['name'],
+            'ip' => (string) $server['ip'],
+            'share' => (string) $server['share'],
         ];
         $this->showServerEditor = true;
     }
@@ -250,18 +263,14 @@ class ServerBackupReports extends Component
             'serverForm.share' => ['nullable', 'string', 'max:500'],
         ]);
 
-        if ($this->editingServer === null) {
-            $this->servers[] = [
-                'key' => 'manual-'.Str::uuid(),
-                'name' => trim($this->serverForm['name']),
-                'ip' => trim($this->serverForm['ip']),
-                'share' => trim($this->serverForm['share']),
-                'profiles' => [],
-            ];
-        } else {
-            foreach (['name', 'ip', 'share'] as $field) {
-                $this->servers[$this->editingServer][$field] = trim($this->serverForm[$field]);
-            }
+        if ($this->editingServer === null || ! isset($this->servers[$this->editingServer])) {
+            $this->showServerEditor = false;
+
+            return;
+        }
+
+        foreach (['name', 'ip', 'share'] as $field) {
+            $this->servers[$this->editingServer][$field] = trim($this->serverForm[$field]);
         }
         $this->showServerEditor = false;
     }
@@ -279,9 +288,16 @@ class ServerBackupReports extends Component
         $this->showServerEditor = false;
     }
 
-    public function downloadPdf(BackupReportPdfService $pdfService): StreamedResponse
+    public function downloadPdf(BackupReportPdfService $pdfService): ?StreamedResponse
     {
         Gate::authorize('manage-backup-reports');
+
+        if ($this->reading || $this->totalProfiles === 0 || $this->processedProfiles < $this->totalProfiles) {
+            $this->statusMessage = 'Espera a que termine la revisión antes de guardar el PDF.';
+
+            return null;
+        }
+
         $generatedAt = now(config('app.timezone'));
         $filename = 'Reporte_de_Respaldos_'.$generatedAt->format('d-m-Y').'_'.random_int(100000, 999999).'.pdf';
         $contents = $pdfService->generate($this->servers, $generatedAt, $filename, $this->responsible);
@@ -353,7 +369,7 @@ class ServerBackupReports extends Component
         return $this->emailActionResult();
     }
 
-    /** @return array{servers: int, profiles: int, errors: int, companies: int, pending: int} */
+    /** @return array{servers: int, profiles: int, correct: int, errors: int, companies: int, pending: int} */
     public function summary(): array
     {
         $profiles = collect($this->servers)->flatMap(fn (array $server) => $server['profiles']);
@@ -363,6 +379,7 @@ class ServerBackupReports extends Component
         return [
             'servers' => collect($this->servers)->filter(fn (array $server): bool => collect($server['profiles'])->contains('available', true))->count(),
             'profiles' => $available->count(),
+            'correct' => $available->count() - $bad->count(),
             'errors' => $bad->count(),
             'companies' => $bad->flatMap(fn (array $profile) => $profile['errors'])->map(fn ($value) => mb_strtolower((string) $value))->unique()->count(),
             'pending' => $profiles->filter(fn (array $profile): bool => ! $profile['available'])->count(),
@@ -405,6 +422,7 @@ class ServerBackupReports extends Component
         $this->totalProfiles = count($this->pendingProfiles);
         $this->processedProfiles = 0;
         $this->reading = false;
+        $this->scanAuthorized = false;
         $this->stopped = false;
         $this->generatedAt = now(config('app.timezone'))->toIso8601String();
     }
@@ -425,6 +443,7 @@ class ServerBackupReports extends Component
     private function finishReading(): void
     {
         $this->reading = false;
+        $this->scanAuthorized = false;
         if (! $this->stopped) {
             $this->statusMessage = 'Lectura terminada. Puedes revisar, editar y descargar el informe.';
         }
@@ -433,12 +452,20 @@ class ServerBackupReports extends Component
 
     private function dispatchScanProgress(): void
     {
+        $next = $this->pendingProfiles[0] ?? null;
+        $nextServer = is_array($next) ? ($this->servers[$next['server']] ?? null) : null;
+        $nextProfile = is_array($nextServer) && is_array($next)
+            ? ($nextServer['profiles'][$next['profile']] ?? null)
+            : null;
+
         $this->dispatch(
             'backup-scan-progress',
             processed: $this->processedProfiles,
             total: $this->totalProfiles,
             reading: $this->reading,
             message: $this->statusMessage,
+            server: $this->reading && is_array($nextServer) ? (string) $nextServer['name'] : '',
+            profile: $this->reading && is_array($nextProfile) ? (string) $nextProfile['name'] : '',
         );
     }
 

@@ -27,7 +27,7 @@ class PdfExporter implements ReportExporter
     {
         $html = $this->renderHtml($data);
         $isAttendanceReport = $this->isAttendanceReport($data);
-        $cacheKey = 'report-pdf:v8:'.hash('sha256', serialize([
+        $cacheKey = 'report-pdf:v7:'.hash('sha256', serialize([
             $data->title,
             $data->filenameBase,
             $data->meta,
@@ -71,13 +71,11 @@ class PdfExporter implements ReportExporter
                     .'body.attendance-print .meta{margin-bottom:0}'
                     .'body.attendance-print .meta td{padding:2px 0}'
                     .'body.attendance-print .meta .label{width:180px}'
-                    .'body.attendance-print .section{table-layout:fixed}'
+                    .'body.attendance-print .section{table-layout:auto}'
                     .'body.attendance-print .section th,body.attendance-print .section td{border:1px solid #9ca3af;padding:8px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
                     .'body.attendance-print .section th{background:#fff}'
                     .'body.attendance-print .section th,body.attendance-print .section th.num{text-align:center!important}'
                     .'body.attendance-print .section td,body.attendance-print .section td.num{text-align:left!important}'
-                    .'body.attendance-print .section td{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}'
-                    .'body.attendance-print .section td.attendance-number{text-align:right!important;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}'
                     .'body.attendance-print .section th.section-heading-cell{text-align:left!important;border-bottom:1px solid #9ca3af}'
                     .'body.attendance-print .section.report-start{page-break-before:always}'
                     .'body.attendance-print .section tr{page-break-inside:avoid}'
@@ -159,17 +157,7 @@ class PdfExporter implements ReportExporter
         bool $startsReport = false,
     ): string
     {
-        $columnCount = count($columns);
-        $html = '<table class="section columns-'.$columnCount.($startsReport ? ' report-start' : '').'">';
-
-        if ($attendanceReport && $columnCount === 9) {
-            $html .= '<colgroup>'
-                .'<col style="width:12%"><col style="width:22%"><col style="width:10%"><col style="width:10%">'
-                .'<col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:10%">'
-                .'</colgroup>';
-        }
-
-        $html .= '<thead>';
+        $html = '<table class="section'.($startsReport ? ' report-start' : '').'"><thead>';
 
         if ($sectionTitle !== null) {
             $html .= '<tr class="section-heading"><th class="section-heading-cell" colspan="'.count($columns).'">'.$this->escape($sectionTitle).'</th></tr>';
@@ -177,7 +165,9 @@ class PdfExporter implements ReportExporter
 
         $html .= '<tr>';
         foreach ($columns as $index => $column) {
-            $numeric = $this->isNumericColumn($column, $index, $timeColumns, $attendanceReport);
+            $numeric = $timeColumns
+                ? in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true)
+                : $index > 0;
             $html .= '<th'.($numeric ? ' class="num"' : '').'>'.$this->escape((string) $column).'</th>';
         }
         $html .= '</tr></thead><tbody>';
@@ -187,34 +177,15 @@ class PdfExporter implements ReportExporter
             $html .= '<tr'.($lateArrival ? ' class="late-arrival"' : '').'>';
             foreach (array_values($row) as $index => $cell) {
                 $column = $columns[$index] ?? '';
-                $numeric = $this->isNumericColumn($column, $index, $timeColumns, $attendanceReport);
-                $html .= '<td'.($numeric ? ' class="num'.($attendanceReport ? ' attendance-number' : '').'"' : '').'>'.$this->escape((string) $cell).'</td>';
+                $numeric = $timeColumns
+                    ? in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true)
+                    : $index > 0;
+                $html .= '<td'.($numeric ? ' class="num"' : '').'>'.$this->escape((string) $cell).'</td>';
             }
             $html .= '</tr>';
         }
 
         return $html.'</tbody></table>';
-    }
-
-    private function isNumericColumn(string $column, int $index, bool $timeColumns, bool $attendanceReport): bool
-    {
-        if ($attendanceReport) {
-            return in_array($column, [
-                'Tiempo neto',
-                'Hrs. decimales',
-                'Horas decimales',
-                'Pago base',
-                'Comida',
-                'Bono',
-                'Bonos',
-                'Total del día',
-                'Total',
-            ], true);
-        }
-
-        return $timeColumns
-            ? in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true)
-            : $index > 0;
     }
 
     private function isAttendanceReport(ReportData $data): bool

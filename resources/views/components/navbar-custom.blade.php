@@ -488,7 +488,7 @@
                             <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" />
                             </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reportes de respaldos</span>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
                         </a>
                     </li>
                 @endcan

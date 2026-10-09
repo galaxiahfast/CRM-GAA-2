@@ -105,7 +105,9 @@ class PerformanceOptimizationTest extends TestCase
 
         DB::disableQueryLog();
 
-        $this->assertCount(2, $openedNotificationQueries);
+        // La lista abierta requiere una consulta; el agregado se reutiliza
+        // desde caché en lugar de repetirse durante el mismo intervalo.
+        $this->assertCount(1, $openedNotificationQueries);
     }
 
     public function test_high_frequency_queries_have_composite_indexes(): void

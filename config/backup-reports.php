@@ -50,7 +50,7 @@ return [
             ],
         ],
         [
-            'name' => 'Compaqi (Tulum)',
+            'name' => 'COMPAQI (TULUM)',
             'ip' => '192.168.1.2',
             'share' => '\\\\192.168.1.2\\log',
             'profiles' => [
@@ -59,7 +59,7 @@ return [
             ],
         ],
         [
-            'name' => 'Compaqi (Mérida)',
+            'name' => 'COMPAQI (MÉRIDA)',
             'ip' => '192.168.2.210',
             'share' => '\\\\SRVCONTPAQ\\log',
             'profiles' => [
@@ -70,7 +70,7 @@ return [
             ],
         ],
         [
-            'name' => 'Compaqi (Auditoría)',
+            'name' => 'COMPAQI (AUDITORÍA)',
             'ip' => '192.168.2.252',
             'share' => '\\\\SRVCONTA2\\log',
             'profiles' => [

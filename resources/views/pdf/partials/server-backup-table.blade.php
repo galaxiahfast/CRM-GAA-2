@@ -1,5 +1,5 @@
 <section class="server">
-    <table class="server-head"><tr><td><h2>{{ \Illuminate\Support\Str::title(mb_strtolower($server['name'])) }}</h2></td><td>{{ $server['ip'] }}</td></tr></table>
+    <table class="server-head"><tr><td><h2>{{ mb_strtoupper($server['name']) }}</h2></td><td>{{ $server['ip'] }}</td></tr></table>
     <table class="detail">
         <thead><tr><th class="profile">Perfil</th><th class="date">Última ejecución</th><th class="done">Hecho</th><th class="result">Resultado</th></tr></thead>
         @foreach ($server['profiles'] as $profile)

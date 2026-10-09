@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -37,6 +38,7 @@ class NotificationCenter extends Component
 
         if ($notification && ! $notification->read_at) {
             $notification->markAsRead();
+            $this->forgetNotificationCounts();
         }
     }
 
@@ -44,6 +46,7 @@ class NotificationCenter extends Component
     {
         $this->loadNotifications();
         auth()->user()?->unreadNotifications()->update(['read_at' => now()]);
+        $this->forgetNotificationCounts();
     }
 
     public function acceptFriendRequest(string $notificationId): void
@@ -63,6 +66,7 @@ class NotificationCenter extends Component
         });
 
         $notification->markAsRead();
+        $this->forgetNotificationCounts();
         $this->dispatch('friendship-updated');
     }
 
@@ -82,6 +86,7 @@ class NotificationCenter extends Component
         });
 
         $notification->markAsRead();
+        $this->forgetNotificationCounts();
         $this->dispatch('friendship-updated');
     }
 
@@ -134,6 +139,7 @@ class NotificationCenter extends Component
     {
         $this->loadNotifications();
         $this->ownedNotification($notificationId)?->delete();
+        $this->forgetNotificationCounts();
         $this->selected = array_values(array_diff($this->selected, [$notificationId]));
     }
 
@@ -160,6 +166,7 @@ class NotificationCenter extends Component
 
         if (! $notification->read_at) {
             $notification->markAsRead();
+            $this->forgetNotificationCounts();
         }
 
         return $this->redirectRoute('soporte.ticket', navigate: true);
@@ -176,6 +183,7 @@ class NotificationCenter extends Component
         auth()->user()?->notifications()
             ->whereIn('id', array_values(array_unique($this->selected)))
             ->delete();
+        $this->forgetNotificationCounts();
 
         $this->selected = [];
         $this->selectionMode = false;
@@ -210,22 +218,39 @@ class NotificationCenter extends Component
 
             return $friendship ? [(string) $notification->id => $friendship->id] : [];
         });
-        $counts = auth()->user()?->notifications()
-            // The Notifications relationship is ordered by newest first. MySQL
-            // rejects that ORDER BY when this query only contains aggregates.
-            ->reorder()
-            ->toBase()
-            ->selectRaw('COUNT(*) as total_count')
-            ->selectRaw('SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread_count')
-            ->first();
+        $counts = Cache::remember($this->notificationCountsCacheKey(), now()->addSeconds(15), function (): array {
+            $counts = auth()->user()?->notifications()
+                // The Notifications relationship is ordered by newest first. MySQL
+                // rejects that ORDER BY when this query only contains aggregates.
+                ->reorder()
+                ->toBase()
+                ->selectRaw('COUNT(*) as total_count')
+                ->selectRaw('SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread_count')
+                ->first();
+
+            return [
+                'total' => (int) ($counts->total_count ?? 0),
+                'unread' => (int) ($counts->unread_count ?? 0),
+            ];
+        });
 
         return view('livewire.notification-center', [
             'notifications' => $notifications,
-            'unreadCount' => (int) ($counts->unread_count ?? 0),
-            'totalCount' => (int) ($counts->total_count ?? 0),
+            'unreadCount' => $counts['unread'],
+            'totalCount' => $counts['total'],
             'allVisibleSelected' => $visibleIds !== [] && count($selectedVisible) === count($visibleIds),
             'pendingFriendRequests' => $pendingFriendRequests,
         ]);
+    }
+
+    private function notificationCountsCacheKey(): string
+    {
+        return 'notification-counts:user:'.(int) auth()->id();
+    }
+
+    private function forgetNotificationCounts(): void
+    {
+        Cache::forget($this->notificationCountsCacheKey());
     }
 
     private function ownedNotification(string $notificationId): ?DatabaseNotification
