@@ -144,7 +144,7 @@ class AttendanceManagementTest extends TestCase
             ->assertCount('changeHistory', 8)
             ->assertSee('Vista de ejemplo')
             ->assertDontSeeHtml('>Ejemplo</span>')
-            ->assertSeeHtml('flex min-w-0 flex-col justify-center text-left')
+            ->assertSeeHtml('grid min-w-0 grid-rows-3 items-center gap-[10px] text-left')
             ->assertDontSeeHtml('sm:items-center sm:text-center')
             ->assertSeeHtml('max-h-[560px]');
     }

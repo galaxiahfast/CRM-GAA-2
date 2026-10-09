@@ -730,10 +730,10 @@
                         $historyMarksAfter = array_values(array_slice($change['marks_after'], 0, 4));
                     @endphp
                     <article class="grid items-stretch gap-[20px] border-b border-zinc-200 bg-white p-[20px] last:border-b-0 lg:grid-cols-[220px_minmax(0,1fr)_220px]">
-                        <div class="flex min-w-0 flex-col justify-center text-left">
+                        <div class="grid min-w-0 grid-rows-3 items-center gap-[10px] text-left">
                             <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
-                            <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
-                            <p class="mt-[10px] inline-flex items-center gap-[10px] text-black">
+                            <p class="truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
+                            <p class="inline-flex items-center gap-[10px] text-black">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
                                 Jornada del {{ $change['date'] }}
                             </p>
@@ -754,9 +754,10 @@
                             </div>
                         </div>
 
-                        <div class="flex min-w-0 flex-col justify-center text-left text-zinc-500">
+                        <div class="grid min-w-0 grid-rows-3 items-center gap-[10px] text-left text-zinc-500">
                             <p class="font-medium text-black">{{ $change['admin_name'] }}</p>
-                            <p class="mt-[3px]">{{ $change['changed_at'] }}</p>
+                            <p>{{ $change['changed_at'] }}</p>
+                            <span aria-hidden="true"></span>
                         </div>
                     </article>
                 @empty
