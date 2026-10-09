@@ -198,6 +198,8 @@ class AttendanceManagementTest extends TestCase
             ->assertSeeHtml('rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px]')
             ->assertSeeHtml('h-[52px] w-[52px]')
             ->assertSeeHtml("timePicker(\$wire.entangle('modalMarks.0').live)")
+            ->assertSeeHtml('attendance-edit-modal flex w-full')
+            ->assertSeeHtml('whitespace-nowrap tabular-nums')
             ->assertSeeHtml('absolute left-0 top-full z-[110]')
             ->assertSeeHtml('@click="syncFromValue(); open = !open"')
             ->assertSeeHtml('Agrega, ordena o elimina marcas.')

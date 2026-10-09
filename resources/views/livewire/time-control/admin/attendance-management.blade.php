@@ -194,6 +194,14 @@
         .attendance-monochrome table thead tr { background: #fff !important; }
         .attendance-monochrome :is(input, textarea, button):focus,
         .attendance-monochrome :is(input, textarea, button):focus-visible { outline: none !important; box-shadow: none !important; }
+        .attendance-edit-modal :is(input, textarea, select, button):focus,
+        .attendance-edit-modal :is(input, textarea, select, button):focus-visible {
+            outline: none !important;
+            border-color: #d4d4d8 !important;
+            box-shadow: none !important;
+            --tw-ring-color: transparent !important;
+            --tw-ring-offset-width: 0px !important;
+        }
         .attendance-monochrome .attendance-report-search:focus,
         .attendance-monochrome .attendance-report-search:focus-visible {
             border-color: #e4e4e7 !important;
@@ -862,7 +870,7 @@
              }"
              class="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden bg-black/45 p-[16px]"
              wire:keydown.escape.window="closeModal">
-            <div @click.away="$wire.closeModal()" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none" style="max-height: min(680px, calc(100dvh - 48px));">
+            <div @click.away="$wire.closeModal()" class="attendance-edit-modal flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none" style="max-height: min(680px, calc(100dvh - 48px));">
                 <div class="flex shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-black">
@@ -900,11 +908,8 @@
                                         </div>
                                         <div class="flex gap-[20px]">
                                             <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)" @click.outside="open = false">
-                                                <button id="attendance-mark-{{ $index }}" type="button" @click="syncFromValue(); open = !open" class="flex w-full items-center justify-between gap-[10px] rounded-xl border border-zinc-300 bg-white py-[7px] pl-[20px] pr-[7px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
-                                                    <span class="tabular-nums" x-text="displayValue"></span>
-                                                    <span class="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-black">
-                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                                                    </span>
+                                                <button id="attendance-mark-{{ $index }}" type="button" @click="syncFromValue(); open = !open" class="flex w-full items-center rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
+                                                    <span class="whitespace-nowrap tabular-nums" x-text="displayValue"></span>
                                                 </button>
                                                 <div x-cloak x-show="open" x-transition class="absolute left-0 top-full z-[110] mt-[10px] w-[360px] max-w-[calc(100vw-80px)] rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
                                                     <div class="grid grid-cols-3 gap-[20px]">
