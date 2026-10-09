@@ -93,10 +93,13 @@ class TimeReportExportTest extends TestCase
         Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->assertSet('from', now()->toDateString())
             ->assertSet('to', now()->toDateString())
+            ->assertSet('reportSection', 'prepare')
             ->assertSee('Supervisión de Horas')
             ->assertSee('supervision-monochrome', false)
             ->assertSee('Informe general')
-            ->assertSee('Actividad en línea');
+            ->assertSee('Actividad en línea')
+            ->assertSee('Resultado del reporte')
+            ->assertSeeInOrder(['Periodo del informe', 'Desde', 'Hasta', 'Generar informe']);
     }
 
     public function test_user_report_matches_screen_total(): void
@@ -266,7 +269,11 @@ class TimeReportExportTest extends TestCase
             ->set('selectedCollaboratorIds', [$aux->id])
             ->set('from', $today)
             ->set('to', $today)
-            ->call('generateGroupReport');
+            ->call('generateGroupReport')
+            ->assertSet('reportSection', 'results')
+            ->assertSee('Reporte individual')
+            ->assertSee('Reporte grupal')
+            ->assertSee('Reporte general');
 
         $component->call('exportSelectedIndividualReport')
             ->assertFileDownloaded("supervision-horas_usuario-{$aux->id}_{$today}_{$today}.pdf");

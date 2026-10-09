@@ -26,6 +26,9 @@ class InformeGeneralHoras extends Component
     /** Estado aislado del nuevo informe consolidado. */
     public string $activeReportTab = 'group';
 
+    /** Sección visible del flujo de supervisión. */
+    public string $reportSection = 'prepare';
+
     /** @var list<int> */
     public array $selectedCollaboratorIds = [];
 
@@ -72,6 +75,7 @@ class InformeGeneralHoras extends Component
         $this->from = $this->localToday();
         $this->to = $this->localToday();
         $this->activeReportTab = 'group';
+        $this->reportSection = request()->query('section') === 'results' ? 'results' : 'prepare';
         $this->groupCollaboratorDirectory = $this->groupCollaborators()->map(fn (User $user) => [
             'id' => $user->id,
             'name' => trim($user->name.' '.($user->last_name ?? '')),
@@ -105,6 +109,16 @@ class InformeGeneralHoras extends Component
     public function showGroupReport(): void
     {
         $this->activeReportTab = 'group';
+    }
+
+    public function showPreparationSection(): void
+    {
+        $this->reportSection = 'prepare';
+    }
+
+    public function showResultsSection(): void
+    {
+        $this->reportSection = 'results';
     }
 
     public function selectAllCollaborators(): void
@@ -162,6 +176,7 @@ class InformeGeneralHoras extends Component
 
         $this->groupReportVersion++;
         $this->groupReportIsCurrent = true;
+        $this->reportSection = 'results';
     }
 
     public function selectCollaboratorsByArea(int|string $areaId): void

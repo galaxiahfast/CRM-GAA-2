@@ -48,31 +48,12 @@
     <!-- Contenedor interno con min-width -->
     <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
 
-        <!-- Encabezado y migas de pan -->
-        <div style="margin: 0 -50px; padding: 50px; border-bottom: 1px solid #e4e4e7; background: #fff; display: flex; align-items: center; justify-content: space-between; min-width: max-content; gap: 80px;">
-            <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #71717a; white-space: nowrap;">
-                <span>Actividades</span><span style="color:#d4d4d8">&gt;</span>
-                <span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span>
-                <span style="color:#000; font-weight:600">Supervisión de Horas</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:30px; color:#000; font-size:15px;">
-                <span style="display:inline-flex; align-items:center; gap:10px; white-space:nowrap;">
-                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
-                    Informe general
-                </span>
-                <a href="{{ route('time.admin.online') }}" style="display:inline-flex; align-items:center; gap:10px; color:#71717a; text-decoration:none; white-space:nowrap;">
-                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>
-                    Actividad en línea
-                </a>
-            </div>
-        </div>
-
         <!-- Header principal -->
         <div style="background-color: #fff; padding: 50px 0 0; overflow: hidden; min-width: max-content;">
 
             <!-- Encabezado -->
             <div style="border-bottom: none; min-width: max-content;">
-                <div style="display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px;">
+                <div style="display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 32px;">
 
                     <div style="max-width: 672px; flex-shrink: 0;">
 
@@ -100,13 +81,11 @@
 
                     </div>
 
-                    <!-- Contador de seleccionados -->
-                    <div style="flex-shrink: 0; margin-top: 16px;">
-                        <span style="display: inline-flex; align-items: center; gap:10px; padding: 15px 20px; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">
-                            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
-                            <span data-selected-count>{{ $selectedGroupUsers->count() }}</span> seleccionados
-                        </span>
-                    </div>
+                    <nav style="display:flex;align-items:center;gap:20px;flex-shrink:0" aria-label="Secciones de Supervisión de Horas">
+                        <button type="button" wire:click="showPreparationSection" style="display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:0;color:{{ $reportSection === 'prepare' ? '#000' : '#71717a' }};font-weight:{{ $reportSection === 'prepare' ? '600' : '400' }};white-space:nowrap"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>Informe general</button>
+                        <a href="{{ route('time.admin.online') }}" style="display:inline-flex;align-items:center;gap:10px;color:#71717a;text-decoration:none;white-space:nowrap"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>Actividad en línea</a>
+                        <button type="button" wire:click="showResultsSection" style="display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:0;color:{{ $reportSection === 'results' ? '#000' : '#71717a' }};font-weight:{{ $reportSection === 'results' ? '600' : '400' }};white-space:nowrap"><svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19h16M6 16l4-4 3 2 5-7"/></svg>Resultado del reporte</button>
+                    </nav>
 
                 </div>
             </div>
@@ -114,10 +93,13 @@
             <!-- Filtros de fechas -->
         </div>
 
+        @if ($reportSection === 'prepare')
+        <section style="display:grid;grid-template-columns:300px minmax(0,1fr);height:600px;margin-top:20px;overflow:hidden;border:1px solid #e4e4e7;border-radius:12px;background:#fff;">
+
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div wire:ignore data-selection-list class="group-scrollbar" style="position: relative; margin-top: 20px; margin-bottom: 20px; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff;">
+        <div wire:ignore data-selection-list class="group-scrollbar" style="position:relative;grid-column:2;grid-row:1;overflow:hidden;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid #e4e4e7;background:#fff;">
 
             <!-- Barra superior con filtros de búsqueda -->
             <div style="position: sticky; top: 0; z-index: 10; display: inline-flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15); border-radius: 0 0 12px 0; width: auto;">
@@ -199,35 +181,55 @@
         <!-- ============================================================ -->
         <!-- BOTONES DE EXPORTACIÓN Y REPORTE                             -->
         <!-- ============================================================ -->
-        <form data-report-form style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 20px; min-width: max-content; padding: 20px; background: #fff; border: 1px solid #e4e4e7; border-radius: 12px; box-shadow: none;">
+        <form data-report-form style="grid-column:1;grid-row:1;display:flex;min-width:0;flex-direction:column;align-items:stretch;gap:20px;padding:20px;background:#fff;border:0;border-radius:0;box-shadow:none;">
+            <div>
+                <h2 style="margin:0;font-size:15px;font-weight:600;color:#000;">Periodo del informe</h2>
+                <p style="margin:5px 0 0;font-size:13px;color:#71717a;">Define las fechas que deseas consultar.</p>
+            </div>
             <div style="flex: 0 0 auto;">
                 <label for="from" style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">Desde</label>
-                <input id="from" type="date" wire:model.defer="from" style="height: 50px; width: 190px; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff; padding: 0 20px; font-size: 15px; color: #000; outline: none;">
+                <input id="from" type="date" wire:model.defer="from" style="height:50px;width:100%;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:0 20px;font-size:15px;color:#000;outline:none;">
             </div>
             <div style="flex: 0 0 auto;">
                 <label for="to" style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">Hasta</label>
-                <input id="to" type="date" wire:model.defer="to" style="height: 50px; width: 190px; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff; padding: 0 20px; font-size: 15px; color: #000; outline: none;">
+                <input id="to" type="date" wire:model.defer="to" style="height:50px;width:100%;border:1px solid #e4e4e7;border-radius:12px;background:#fff;padding:0 20px;font-size:15px;color:#000;outline:none;">
             </div>
-            <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; background:#18181b; padding: 15px 20px; font-size: 15px; font-weight: 600; color: white; border: none; cursor: pointer; box-shadow:none;">Generar informe</button>
+            <div style="margin-top:auto;display:grid;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;color:#000;font-size:15px;font-weight:600;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                    <span data-selected-count>{{ $selectedGroupUsers->count() }}</span> seleccionados
+                </div>
+                <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:#18181b;padding:15px 20px;font-size:15px;font-weight:600;color:#fff;border:0;cursor:pointer;box-shadow:none;">Generar informe</button>
+            </div>
         </form>
+        </section>
+        @endif
 
-        <div wire:loading.flex wire:target="generateGroupReport" style="display: none; min-height: 220px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; color: #000; box-shadow:none;">
+        <div wire:loading.flex wire:target="generateGroupReport" style="display: none; min-height: 220px; margin-top:20px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; color: #000; box-shadow:none;">
             <span style="width: 32px; height: 32px; border: 3px solid #e4e4e7; border-top-color: #000; border-radius: 9999px; animation: group-report-spin .7s linear infinite;"></span>
             <span style="font-size: 14px; font-weight: 600;">Calculando métricas y procesando datos...</span>
         </div>
 
+        @if ($reportSection === 'results')
         <div wire:loading.remove wire:target="generateGroupReport" wire:key="group-report-results-{{ $groupReportVersion }}">
+
+            @if (! $groupReportIsCurrent)
+                <div style="margin-top:20px;border:1px solid #e4e4e7;border-radius:12px;padding:40px 20px;text-align:center;background:#fff;color:#71717a;">
+                    Genera un informe para consultar sus resultados y opciones de descarga.
+                </div>
+            @else
 
             <!-- Contenedor con borde punteado que envuelve botones de exportación, métricas y distribuciones -->
             <div style="margin-top: 20px; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; background-color: #fff; font-size: 15px;">
 
-                <!-- Botones de exportación (dentro del borde punteado) -->
-                <div style="padding: 0 0 20px 0; background-color: transparent; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 2px solid #e5e7eb;">
-                    <div style="font-size: 14px; color: #6b7280;">Las selecciones se aplican sólo al generar el informe.</div>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#000;padding:15px 20px;font-size:15px;font-weight:500;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar individual</button>
-                        <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #18181b;border-radius:12px;background:#18181b;color:#fff;padding:15px 20px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar grupal</button>
-                        <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#000;padding:15px 20px;font-size:15px;font-weight:500;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar general</button>
+                <div style="padding:0 0 20px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+                    <div>
+                        <h2 style="margin:0;font-size:15px;font-weight:600;color:#000;">Resultado del reporte</h2>
+                        <p style="margin:5px 0 0;font-size:15px;color:#71717a;">Consolidado de horas del periodo seleccionado.</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:20px;color:#000;font-size:15px;font-weight:500;">
+                        <span>{{ $reportedGroupUsers->count() }} {{ $reportedGroupUsers->count() === 1 ? 'seleccionado' : 'seleccionados' }}</span>
+                        <span>{{ \Carbon\Carbon::parse($from)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($to)->format('d/m/Y') }}</span>
                     </div>
                 </div>
 
@@ -309,9 +311,26 @@
                     </div>
                 </div>
 
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px;border-top:1px solid #e4e4e7;">
+                    <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;border-right:1px solid #e4e4e7;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                        <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                        <span><strong style="display:block;font-size:15px;">Reporte individual</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Información de una persona</small></span>
+                    </button>
+                    <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;border-right:1px solid #e4e4e7;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                        <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                        <span><strong style="display:block;font-size:15px;">Reporte grupal</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Información de seleccionados</small></span>
+                    </button>
+                    <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                        <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                        <span><strong style="display:block;font-size:15px;">Reporte general</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Consolidado del periodo</small></span>
+                    </button>
+                </div>
+
             </div> <!-- Fin del contenedor con borde punteado -->
 
+            @endif
         </div>
+        @endif
 
     </div>
 </div>
@@ -395,11 +414,10 @@
 <script>
     (() => {
         const initialiseGroupReport = (root) => {
-            if (!root || root.dataset.selectionInitialised === 'true') return;
-
-            root.dataset.selectionInitialised = 'true';
-
             const selectionList = root.querySelector('[data-selection-list]');
+            if (!root || !selectionList || selectionList.dataset.selectionInitialised === 'true') return;
+
+            selectionList.dataset.selectionInitialised = 'true';
             const count = root.querySelector('[data-selected-count]');
             const selectedIds = new Set(JSON.parse(root.dataset.selectedIds || '[]').map(Number));
             const reportedIds = new Set(JSON.parse(root.dataset.reportedIds || '[]').map(Number));
@@ -425,9 +443,12 @@
                     && [...selectedIds].every((id) => reportedIds.has(id));
                 const canExport = reportIsCurrent && selectionMatchesReport && selectedIds.size > 0;
 
-                root.querySelector('[data-export-individual]').disabled = !canExport || selectedIds.size !== 1;
-                root.querySelector('[data-export-group]').disabled = !canExport;
-                root.querySelector('[data-export-general]').disabled = !canExport;
+                const individualExport = root.querySelector('[data-export-individual]');
+                const groupExport = root.querySelector('[data-export-group]');
+                const generalExport = root.querySelector('[data-export-general]');
+                if (individualExport) individualExport.disabled = !canExport || selectedIds.size !== 1;
+                if (groupExport) groupExport.disabled = !canExport;
+                if (generalExport) generalExport.disabled = !canExport;
             };
 
             const setCollaborator = (id, selected, notifyLivewire = true) => {

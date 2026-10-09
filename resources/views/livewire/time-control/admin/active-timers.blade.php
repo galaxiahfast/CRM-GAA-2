@@ -1,42 +1,20 @@
 <div class="min-h-[calc(100dvh-90px)] min-w-[1300px] bg-white text-[15px] text-zinc-700">
-    <x-time-admin-tabs active="online" />
-
-    <header class="flex items-center justify-between gap-20 whitespace-nowrap border-b border-zinc-200 bg-white px-[50px] py-[50px]">
-        <div class="flex items-center gap-[15px] text-gray-500">
-            <span class="font-medium">Actividades</span>
-            <span class="text-gray-300">&gt;</span>
-            <span class="font-medium">Control de Horas</span>
-            <span class="text-gray-300">&gt;</span>
-            <span class="font-medium">Supervisión de Horas</span>
-            <span class="text-gray-300">&gt;</span>
-            <span class="font-semibold text-black">Actividad en línea</span>
-        </div>
-
-        <span class="inline-flex items-center gap-[10px] text-[12px] font-medium text-gray-500">
-            <span class="relative flex h-3 w-3 items-center justify-center">
-                <span class="absolute h-3 w-3 animate-ping rounded-full bg-black/10"></span>
-                <span class="relative h-1.5 w-1.5 rounded-full bg-black"></span>
-            </span>
-            Actualización automática
-        </span>
-    </header>
-
     <main class="mx-auto w-full max-w-[1500px] space-y-[20px] px-[50px] py-[50px]" wire:poll.3s.visible="refreshActiveTimers">
-        <section class="flex items-end justify-between gap-[25px]">
-            <div class="flex items-start gap-[15px]">
+        <section class="flex items-center justify-between gap-[20px]">
+            <div class="flex items-center gap-[20px]">
                 <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                     <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 100-16 8 8 0 000 16z" /></svg>
                 </span>
                 <div>
-                    <h1 class="text-xl font-semibold tracking-tight text-black">Actividad en línea</h1>
-                    <p class="mt-1 text-gray-500">Consulta quién está trabajando, su actividad y contexto organizacional.</p>
+                    <h1 class="text-xl font-semibold tracking-tight text-black">Supervisión de Horas</h1>
+                    <p class="mt-[5px] text-zinc-500">Consulta, compara y exporta las horas registradas por los colaboradores.</p>
                 </div>
             </div>
-
-            <div class="text-right">
-                <p class="text-[24px] font-semibold leading-none text-black">{{ count($activeTimers) }}</p>
-                <p class="mt-[10px] text-[12px] font-medium text-gray-500">{{ count($activeTimers) === 1 ? 'cronómetro activo' : 'cronómetros activos' }}</p>
-            </div>
+            <nav class="flex items-center gap-[20px]" aria-label="Secciones de Supervisión de Horas">
+                <a href="{{ route('time.admin.dashboard') }}" class="inline-flex items-center gap-[10px] text-[15px] font-normal text-zinc-500"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>Informe general</a>
+                <span class="inline-flex items-center gap-[10px] text-[15px] font-semibold text-black"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>Actividad en línea</span>
+                <a href="{{ route('time.admin.dashboard', ['section' => 'results']) }}" class="inline-flex items-center gap-[10px] text-[15px] font-normal text-zinc-500"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19h16M6 16l4-4 3 2 5-7"/></svg>Resultado del reporte</a>
+            </nav>
         </section>
 
         <section class="grid h-[640px] min-h-0 grid-cols-[290px_minmax(0,1fr)] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
