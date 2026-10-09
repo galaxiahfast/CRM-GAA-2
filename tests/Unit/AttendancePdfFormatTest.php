@@ -43,6 +43,7 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringContainsString('.meta td{padding:2px 0}', $html);
         $this->assertStringContainsString('.meta{margin-bottom:0}', $html);
         $this->assertStringContainsString('border:1px solid #9ca3af;padding:8px', $html);
+        $this->assertStringContainsString('font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1', $html);
         $this->assertStringNotContainsString('background:#fff1f2', $html);
         $this->assertStringContainsString('Total acumulado', $html);
         $this->assertSame(1, substr_count($html, 'class="late-arrival"'));
@@ -51,6 +52,23 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $pdf);
         $this->assertSame(1, preg_match('/\/MediaBox\s*\[\s*0(?:\.0+)?\s+0(?:\.0+)?\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdf, $mediaBox));
         $this->assertGreaterThan((float) $mediaBox[2], (float) $mediaBox[1]);
+    }
+
+    public function test_nine_column_attendance_table_uses_stable_numeric_widths(): void
+    {
+        $columns = ['Fecha jornada', 'Marcas / chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Comida', 'Bono', 'Total del día', 'Estado'];
+        $report = new ReportData(
+            title: 'Informe del Reloj checador',
+            filenameBase: 'reloj-checador-individual_2026-10-01_2026-10-15',
+            sections: [new ReportSection('Detalle', $columns, [['2026-10-01', '09:00:00', '01h 00m 00s', '1.00', '$100.00', '$50.00', '$0.00', '$150.00', 'Correcto']])],
+        );
+
+        $exporter = app(PdfExporter::class);
+        $method = new ReflectionMethod($exporter, 'renderHtml');
+        $html = $method->invoke($exporter, $report);
+
+        $this->assertStringContainsString('<table class="section columns-9">', $html);
+        $this->assertStringContainsString('<col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%">', $html);
     }
 
     public function test_long_attendance_selection_is_shortened_without_wrapping_the_header(): void
