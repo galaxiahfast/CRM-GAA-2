@@ -47,6 +47,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Mérida')
             ->assertSee('Tulum')
             ->assertSee('Cancún')
+            ->assertSeeInOrder(['Subir respaldo', 'Selecciona la sede y el archivo ZIP', 'Sede del respaldo', 'Seleccionar ZIP'])
+            ->assertDontSee('Destino')
             ->assertSee('Historial de registros')
             ->assertSee('Seleccionar ZIP')
             ->assertDontSee('Selecciona un cliente')

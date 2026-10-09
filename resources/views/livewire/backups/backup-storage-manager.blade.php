@@ -53,14 +53,6 @@
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7h7l2 2h9v11H3V7Z"/></svg>
                         Respaldos
                     </button>
-                    <label class="inline-flex items-center gap-[10px] text-zinc-500">
-                        <span>Sede</span>
-                        <select wire:change="selectSite($event.target.value)" class="h-[42px] min-w-[140px] rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:ring-0">
-                            @foreach ($sites as $siteKey => $siteName)
-                                <option value="{{ $siteKey }}" @selected($site === $siteKey)>{{ $siteName }}</option>
-                            @endforeach
-                        </select>
-                    </label>
                     <button type="button" wire:click="selectTab('history')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === 'history' ? 'font-semibold text-black' : 'text-zinc-500' }} focus:outline-none">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
                         Historial de registros
@@ -88,13 +80,17 @@
                     <div class="grid min-h-[590px] grid-cols-[340px_minmax(0,1fr)]">
                         <aside x-ref="uploader" wire:key="backup-uploader-{{ $site }}" class="border-r border-zinc-200 p-[20px]">
                             <h3 class="font-semibold text-black">Subir respaldo</h3>
-                            <p class="mt-[5px] text-zinc-500">Selecciona un ZIP. La sede se toma de la pestaña actual y las carpetas de clientes se detectan solas.</p>
+                            <p class="mt-[5px] text-zinc-500">Selecciona la sede y el archivo ZIP. Las carpetas de clientes se detectan automáticamente.</p>
 
                             <div class="mt-[20px] space-y-[20px]">
-                                <div class="rounded-xl border border-zinc-200 p-[20px]">
-                                    <span class="block font-medium text-black">Destino</span>
-                                    <span class="mt-[5px] block text-zinc-500">{{ $sites[$site] ?? ucfirst($site) }}</span>
-                                </div>
+                                <label class="block">
+                                    <span class="mb-[10px] block font-semibold text-black">Sede del respaldo</span>
+                                    <select wire:change="selectSite($event.target.value)" class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:ring-0">
+                                        @foreach ($sites as $siteKey => $siteName)
+                                            <option value="{{ $siteKey }}" @selected($site === $siteKey)>{{ $siteName }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
                                 <input x-ref="fallbackFile" type="file" class="hidden" accept=".zip,application/zip" @change="receiveFallback($event)">
                                 <button type="button" @click="chooseFile()" :disabled="busy" class="inline-flex min-h-[50px] w-full items-center justify-center gap-[10px] rounded-xl border-0 bg-zinc-900 px-[20px] py-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"/></svg>
@@ -105,9 +101,9 @@
                             <div x-show="fileName || message" x-cloak class="mt-[20px] rounded-xl border border-zinc-200 p-[20px]">
                                 <div class="flex items-start justify-between gap-[15px]"><div class="min-w-0"><strong class="block truncate text-black" x-text="fileName || 'Carga pendiente'"></strong><span class="mt-[4px] block text-zinc-500" x-text="message"></span></div><span class="font-semibold tabular-nums text-black" x-text="progress + '%'">0%</span></div>
                                 <div class="mt-[15px] h-2 overflow-hidden rounded-full bg-zinc-100"><div class="h-full rounded-full bg-black transition-all" :style="`width:${progress}%`"></div></div>
-                                <div class="mt-[12px] flex items-center justify-between gap-[10px] text-[13px] text-zinc-500"><span x-text="speed"></span><span x-text="eta"></span></div>
+                                <div class="mt-[12px] flex items-center justify-between gap-[10px] text-zinc-500"><span x-text="speed"></span><span x-text="eta"></span></div>
                             </div>
-                            <p class="mt-[20px] text-[13px] leading-5 text-zinc-500">Estructura esperada: <strong class="text-black">Cliente/Index/*.index</strong> y <strong class="text-black">Cliente/Bak/*.bak</strong>. La carga se reanuda si se interrumpe.</p>
+                            <p class="mt-[20px] leading-6 text-zinc-500">Estructura esperada: <strong class="text-black">Cliente/Index/*.index</strong> y <strong class="text-black">Cliente/Bak/*.bak</strong>. La carga se reanuda si se interrumpe.</p>
                         </aside>
 
                         <div class="min-w-0">
