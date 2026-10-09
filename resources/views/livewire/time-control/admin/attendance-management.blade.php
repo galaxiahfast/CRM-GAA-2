@@ -82,6 +82,42 @@
             };
         },
 
+        timePicker(model) {
+            return {
+                open: false,
+                value: model,
+                hour: '12',
+                minute: '00',
+                second: '00',
+                period: 'a. m.',
+                init() { this.syncFromValue(); },
+                syncFromValue() {
+                    const parts = String(this.value || '00:00:00').split(':').map(Number);
+                    const hour24 = Number.isFinite(parts[0]) ? parts[0] : 0;
+                    this.hour = String((hour24 % 12) || 12).padStart(2, '0');
+                    this.minute = String(Number.isFinite(parts[1]) ? parts[1] : 0).padStart(2, '0');
+                    this.second = String(Number.isFinite(parts[2]) ? parts[2] : 0).padStart(2, '0');
+                    this.period = hour24 >= 12 ? 'p. m.' : 'a. m.';
+                },
+                normalize(value, min, max) {
+                    const number = Math.min(max, Math.max(min, Number.parseInt(String(value).replace(/\D/g, ''), 10) || min));
+                    return String(number).padStart(2, '0');
+                },
+                apply() {
+                    this.hour = this.normalize(this.hour, 1, 12);
+                    this.minute = this.normalize(this.minute, 0, 59);
+                    this.second = this.normalize(this.second, 0, 59);
+                    let hour24 = Number(this.hour) % 12;
+                    if (this.period === 'p. m.') hour24 += 12;
+                    this.value = `${String(hour24).padStart(2, '0')}:${this.minute}:${this.second}`;
+                    this.open = false;
+                },
+                get displayValue() {
+                    return `${this.hour}:${this.minute}:${this.second} ${this.period}`;
+                }
+            };
+        },
+
         init() {
             const savedScale = Number(localStorage.getItem('admin-attendance-view-scale'));
             if (savedScale >= 70 && savedScale <= 100) this.viewScale = savedScale;
@@ -860,10 +896,38 @@
                                     <div class="rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px]" wire:key="attendance-mark-{{ $selectedDate }}-{{ $index }}">
                                         <div class="mb-[10px] flex items-center justify-between gap-[20px]">
                                             <label for="attendance-mark-{{ $index }}" class="text-[15px] font-medium text-black">Chequeo {{ $index + 1 }}</label>
-                                            <span class="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[12px] font-medium text-zinc-600">{{ $index % 2 === 0 ? 'Entrada' : 'Salida' }}</span>
+                                            <span class="text-[13px] italic text-zinc-500">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
                                         </div>
                                         <div class="flex gap-[20px]">
-                                            <input id="attendance-mark-{{ $index }}" type="time" step="1" wire:model="modalMarks.{{ $index }}" class="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-[15px] shadow-none focus:border-zinc-300 focus:ring-0">
+                                            <div class="min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)" @click.outside="open = false">
+                                                <button id="attendance-mark-{{ $index }}" type="button" @click="syncFromValue(); open = !open" class="flex w-full items-center justify-between gap-[10px] rounded-xl border border-zinc-300 bg-white py-[7px] pl-[20px] pr-[7px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
+                                                    <span class="tabular-nums" x-text="displayValue"></span>
+                                                    <span class="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-black">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                                                    </span>
+                                                </button>
+                                                <div x-cloak x-show="open" x-transition class="mt-[10px] rounded-xl border border-zinc-200 bg-white p-[20px]">
+                                                    <div class="grid grid-cols-3 gap-[20px]">
+                                                        @foreach (['hour' => 'Hora', 'minute' => 'Min.', 'second' => 'Seg.'] as $timePart => $timeLabel)
+                                                            <label class="grid gap-[10px] text-[13px] text-zinc-500">
+                                                                <span>{{ $timeLabel }}</span>
+                                                                <input type="text" inputmode="numeric" maxlength="2" x-model="{{ $timePart }}" class="w-full rounded-xl border border-zinc-300 bg-white px-[10px] py-[10px] text-center text-[15px] tabular-nums text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                    <div class="mt-[20px] flex items-center justify-between gap-[20px]">
+                                                        <div class="grid flex-1 grid-cols-2 overflow-hidden rounded-xl border border-zinc-300 bg-white">
+                                                            @foreach (['a. m.', 'p. m.'] as $timePeriod)
+                                                                <button type="button" @click="period = @js($timePeriod)" class="px-[10px] py-[10px] text-[13px] focus:outline-none focus:ring-0" :class="period === @js($timePeriod) ? 'bg-black text-white' : 'bg-white text-black'">{{ $timePeriod }}</button>
+                                                            @endforeach
+                                                        </div>
+                                                        <button type="button" @click="apply()" class="inline-flex items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-[15px] text-white focus:outline-none focus:ring-0">
+                                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12 4 4L19 6"/></svg>
+                                                            Aplicar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <button type="button" wire:click="removeAttendanceMark({{ $index }})" aria-label="Eliminar chequeo {{ $index + 1 }}" class="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-black focus:outline-none focus:ring-0">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
                                             </button>
