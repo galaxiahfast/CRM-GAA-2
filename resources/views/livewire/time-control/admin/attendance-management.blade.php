@@ -725,7 +725,7 @@
             </style>
             <div x-data @click.away="$wire.closeEmployeeIdModal()" class="w-full max-w-lg overflow-visible rounded-xl border border-zinc-200 bg-zinc-100 shadow-2xl">
                 <div class="flex items-center justify-between gap-[15px] border-b border-zinc-300 px-[20px] py-[15px]">
-                    <div class="flex min-w-0 items-center gap-[15px]">
+                    <div class="flex min-w-0 items-center gap-[10px]">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
                         </span>
@@ -843,19 +843,19 @@
                 </div>
 
                 <form wire:submit="saveDayAdjustment" class="flex min-h-0 flex-1 flex-col">
-                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[15px] overflow-y-auto overscroll-contain bg-white p-[20px] text-[15px]" style="overscroll-behavior: contain;">
+                    <div class="attendance-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto overscroll-contain bg-white p-[20px] text-[15px]" style="overscroll-behavior: contain;">
                         <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
-                            <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-start justify-between gap-[20px]">
                                 <div>
                                     <h4 class="text-[15px] font-semibold text-black">Marcas / Chequeos</h4>
                                     <p class="mt-[3px] text-[15px] text-zinc-500">Agrega, ordena o elimina marcas.</p>
                                 </div>
-                                <button type="button" wire:click="addAttendanceMark" class="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 text-[15px] font-medium text-black focus:outline-none focus:ring-0">
+                                <button type="button" wire:click="addAttendanceMark" class="inline-flex shrink-0 items-center justify-center gap-[10px] rounded-lg border border-zinc-300 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black focus:outline-none focus:ring-0">
                                     <span class="text-lg leading-none">+</span> Agregar marca
                                 </button>
                             </div>
 
-                            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                 @foreach ($modalMarks as $index => $mark)
                                     <div class="rounded-lg border border-zinc-200 bg-white p-2.5" wire:key="attendance-mark-{{ $selectedDate }}-{{ $index }}">
                                         <div class="mb-2 flex items-center justify-between gap-3">
@@ -881,7 +881,7 @@
                         <section class="rounded-lg border border-zinc-200 bg-white p-[15px] shadow-none">
                             <h4 class="text-[15px] font-semibold text-black">Pago por hora y comida</h4>
                             <p class="mt-[3px] text-[15px] text-zinc-500">El pago se calcula con el tiempo neto.</p>
-                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-3">
                                 <div>
                                     <label class="mb-2 block text-[15px] font-medium text-black">Pago por hora ($)</label>
                                     <input type="number" min="0" step="0.01" wire:model="modalHourlyRate" class="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-[15px] shadow-none focus:border-zinc-300 focus:ring-0">
@@ -901,7 +901,7 @@
                                     @error('modalExtraBonusAmount') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
-                            <div class="mt-4 rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+                            <div class="mt-[20px] rounded-lg border border-zinc-200 bg-white px-[20px] py-[15px]">
                                 <span class="block text-[13px] text-zinc-500">Total calculado</span>
                                 <strong class="mt-1 block text-[15px] text-black">${{ number_format($modalCalculatedTotal, 2) }}</strong>
                             </div>
@@ -914,10 +914,13 @@
                         </section>
                     </div>
 
-                    <div class="flex shrink-0 justify-end gap-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
-                        <button type="button" wire:click="closeModal" class="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 text-[15px] font-medium text-black focus:outline-none focus:ring-0">Cancelar</button>
-                        <button type="submit" wire:loading.attr="disabled" wire:target="saveDayAdjustment" class="inline-flex h-10 items-center justify-center rounded-lg bg-black px-5 text-[15px] font-medium text-white focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
-                            <span wire:loading.remove wire:target="saveDayAdjustment">Guardar cambios</span>
+                    <div class="flex shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white px-[20px] py-[15px]">
+                        <button type="button" wire:click="closeModal" class="inline-flex items-center justify-center gap-[10px] rounded-lg border border-zinc-300 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black focus:outline-none focus:ring-0">
+                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18 18 6M6 6l12 12"/></svg>
+                            Cancelar
+                        </button>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="saveDayAdjustment" class="inline-flex items-center justify-center gap-[10px] rounded-lg bg-black px-[20px] py-[15px] text-[15px] font-medium text-white focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                            <span wire:loading.remove wire:target="saveDayAdjustment" class="inline-flex items-center gap-[10px]"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12 4 4L19 6"/></svg>Guardar cambios</span>
                             <span wire:loading wire:target="saveDayAdjustment">Guardando...</span>
                         </button>
                     </div>
