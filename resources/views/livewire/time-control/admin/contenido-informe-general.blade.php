@@ -257,10 +257,9 @@
                 </div>
             @else
 
-            <!-- Contenedor con borde punteado que envuelve botones de exportación, métricas y distribuciones -->
-            <div style="margin-top: 20px; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; background-color: #fff; font-size: 15px;">
+            <div style="margin-top:20px;border:1px solid #e4e4e7;border-radius:12px;overflow:hidden;background-color:#fff;font-size:15px;">
 
-                <div style="padding:0 0 20px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+                <div style="display:flex;min-height:76px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;padding:15px 20px;">
                     <div>
                         <h2 style="margin:0;font-size:15px;font-weight:600;color:#000;">Resultado del reporte</h2>
                         <p style="margin:5px 0 0;font-size:15px;color:#71717a;">Consolidado de horas del periodo seleccionado.</p>
@@ -283,7 +282,7 @@
                                     <span style="display:flex;width:32px;height:32px;flex:none;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:6px;background:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#000' : '#fff' }};color:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#fff' : '#000' }};font-weight:600;">{{ mb_strtoupper(mb_substr($reportedUser['name'], 0, 1)) }}</span>
                                     <span style="min-width:0;flex:1;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">{{ $reportedUser['name'] }}</strong><small style="display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#71717a;">{{ filled($reportedUser['employee_id'] ?? null) ? 'ID '.$reportedUser['employee_id'] : $reportedUser['position_name'] }}</small></span>
                                     @if ((int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'])
-                                        <span aria-hidden="true">✓</span>
+                                        <svg aria-hidden="true" style="width:16px;height:16px;flex:none;color:#000;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 7"/></svg>
                                     @endif
                                 </button>
                             @endforeach
@@ -299,10 +298,10 @@
                             <div role="table" aria-label="Detalle de actividades por colaborador" style="display:flex;height:100%;min-width:1360px;flex-direction:column;--activity-columns:160px 210px 210px 180px 180px 210px 160px 90px;">
                                 <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
                                     <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:76px;align-items:center;border-bottom:1px solid #d4d4d8;">
-                                        <div role="columnheader" style="padding:15px 20px;font-weight:600;">Fecha</div>
+                                        <div role="columnheader" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;font-weight:600;">Fecha</div>
                                         @foreach ($activeResultActivityDetail['columns'] as $column)
                                             @continue($column === 'Observaciones')
-                                            <div role="columnheader" style="padding:15px 20px;font-weight:600;">{{ $column }}</div>
+                                            <div role="columnheader" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;font-weight:600;">{{ $column }}</div>
                                         @endforeach
                                         <div role="columnheader" style="padding:15px 20px;text-align:center;font-weight:600;">Acciones</div>
                                     </div>
@@ -315,7 +314,7 @@
                                                 <div role="cell" style="padding:15px 20px;">{{ $loop->first ? $dayGroup['date'] : '' }}</div>
                                                 @foreach ($activeResultActivityDetail['columns'] as $columnIndex => $column)
                                                     @continue($column === 'Observaciones')
-                                                    <div role="cell" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:15px 20px;" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</div>
+                                                    <div role="cell" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:15px 20px;{{ in_array($column, ['Intervalos', 'Tiempo efectivo'], true) ? 'font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-variant-numeric:tabular-nums;' : '' }}" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</div>
                                                 @endforeach
                                                 <div role="cell" style="padding:15px 20px;text-align:center;">
                                                     <button type="button" @if (! $resultIsExample) wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" @endif @disabled($resultIsExample) aria-label="{{ $resultIsExample ? 'Edición deshabilitada en la vista de ejemplo' : 'Editar actividad' }}" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;{{ $resultIsExample ? 'opacity:.35;cursor:not-allowed;' : '' }}">
@@ -331,13 +330,13 @@
 
                                 <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
                                     <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:64px;align-items:center;border-top:1px solid #d4d4d8;font-weight:600;color:#000;">
-                                        <div role="cell" style="padding:15px 20px;">TOTAL</div>
-                                        <div role="cell" style="padding:15px 20px;"></div>
-                                        <div role="cell" style="padding:15px 20px;">{{ $activeResultActivityCount }} {{ $activeResultActivityCount === 1 ? 'actividad' : 'actividades' }}</div>
-                                        <div role="cell" style="padding:15px 20px;"></div>
-                                        <div role="cell" style="padding:15px 20px;font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</div>
-                                        <div role="cell" style="padding:15px 20px;"></div>
-                                        <div role="cell" style="padding:15px 20px;">{{ $activeResultUser['area_name'] ?? '' }}</div>
+                                        <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;">TOTAL</div>
+                                        <div role="cell" style="align-self:stretch;border-right:1px solid #d4d4d8;padding:15px 20px;"></div>
+                                        <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;">{{ $activeResultActivityCount }} {{ $activeResultActivityCount === 1 ? 'actividad' : 'actividades' }}</div>
+                                        <div role="cell" style="align-self:stretch;border-right:1px solid #d4d4d8;padding:15px 20px;"></div>
+                                        <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</div>
+                                        <div role="cell" style="align-self:stretch;border-right:1px solid #d4d4d8;padding:15px 20px;"></div>
+                                        <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;">{{ $activeResultUser['area_name'] ?? '' }}</div>
                                         <div role="cell" style="padding:15px 20px;"></div>
                                     </div>
                                 </div>
@@ -346,7 +345,7 @@
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px;border-top:1px solid #e4e4e7;">
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));">
                     <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;border-right:1px solid #e4e4e7;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
                         <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                         <span><strong style="display:block;font-size:15px;">Reporte individual</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Información de una persona</small></span>
@@ -361,7 +360,7 @@
                     </button>
                 </div>
 
-            </div> <!-- Fin del contenedor con borde punteado -->
+            </div>
 
             @endif
         </div>
