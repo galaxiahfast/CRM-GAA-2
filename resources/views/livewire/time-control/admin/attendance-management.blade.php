@@ -90,6 +90,7 @@
                 minute: '00',
                 second: '00',
                 period: 'a. m.',
+                popoverStyle: '',
                 init() { this.syncFromValue(); },
                 syncFromValue() {
                     const parts = String(this.value || '00:00:00').split(':').map(Number);
@@ -111,6 +112,19 @@
                     if (this.period === 'p. m.') hour24 += 12;
                     this.value = `${String(hour24).padStart(2, '0')}:${this.minute}:${this.second}`;
                     this.open = false;
+                },
+                toggle(element) {
+                    this.syncFromValue();
+                    if (this.open) {
+                        this.open = false;
+                        return;
+                    }
+                    const rect = element.getBoundingClientRect();
+                    const width = Math.min(360, window.innerWidth - 32);
+                    const left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
+                    const bottom = Math.max(16, window.innerHeight - rect.top + 10);
+                    this.popoverStyle = `left:${left}px;bottom:${bottom}px;width:${width}px`;
+                    this.open = true;
                 },
                 get displayValue() {
                     return `${this.hour}:${this.minute}:${this.second} ${this.period}`;
@@ -194,8 +208,8 @@
         .attendance-monochrome table thead tr { background: #fff !important; }
         .attendance-monochrome :is(input, textarea, button):focus,
         .attendance-monochrome :is(input, textarea, button):focus-visible { outline: none !important; box-shadow: none !important; }
-        #attendance-edit-modal :is(input, textarea, select, button):focus,
-        #attendance-edit-modal :is(input, textarea, select, button):focus-visible {
+        :is(#attendance-edit-modal, .attendance-time-popover) :is(input, textarea, select, button):focus,
+        :is(#attendance-edit-modal, .attendance-time-popover) :is(input, textarea, select, button):focus-visible {
             outline: none !important;
             border-color: #d4d4d8 !important;
             box-shadow: none !important;
@@ -905,16 +919,17 @@
                             <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                 @foreach ($modalMarks as $index => $mark)
                                     <div class="rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px]" wire:key="attendance-mark-{{ $selectedDate }}-{{ $index }}">
-                                        <div class="mb-[10px] flex items-center justify-between gap-[20px]">
+                                        <div class="mb-[10px] flex items-center gap-[10px]">
                                             <label for="attendance-mark-{{ $index }}" class="text-[15px] font-medium text-black">Chequeo {{ $index + 1 }}</label>
-                                            <span class="text-[13px] italic text-zinc-500">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
+                                            <span class="text-[13px] not-italic text-zinc-500">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
                                         </div>
                                         <div class="flex gap-[20px]">
-                                            <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)" @click.outside="open = false">
-                                                <button id="attendance-mark-{{ $index }}" type="button" @click="syncFromValue(); open = !open" class="flex w-full items-center rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
+                                            <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)">
+                                                <button id="attendance-mark-{{ $index }}" type="button" @click.stop="toggle($el)" class="flex w-full items-center rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
                                                     <span class="whitespace-nowrap tabular-nums" x-text="displayValue"></span>
                                                 </button>
-                                                <div x-cloak x-show="open" x-transition class="absolute bottom-full left-0 z-[110] mb-[10px] w-[360px] max-w-[calc(100vw-80px)] rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
+                                                <template x-teleport="body">
+                                                <div x-cloak x-show="open" x-transition @click.outside="open = false" :style="popoverStyle" class="attendance-time-popover fixed z-[100100] rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
                                                     <div class="grid grid-cols-3 gap-[20px]">
                                                         @foreach (['hour' => 'Hora', 'minute' => 'Min.', 'second' => 'Seg.'] as $timePart => $timeLabel)
                                                             <label class="grid gap-[10px] text-[13px] text-zinc-500">
@@ -935,6 +950,7 @@
                                                         </button>
                                                     </div>
                                                 </div>
+                                                </template>
                                             </div>
                                             <button type="button" wire:click="removeAttendanceMark({{ $index }})" aria-label="Eliminar chequeo {{ $index + 1 }}" class="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-black focus:outline-none focus:ring-0">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6" /></svg>
