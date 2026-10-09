@@ -27,7 +27,7 @@ class PdfExporter implements ReportExporter
     {
         $html = $this->renderHtml($data);
         $isAttendanceReport = $this->isAttendanceReport($data);
-        $cacheKey = 'report-pdf:v5:'.hash('sha256', serialize([
+        $cacheKey = 'report-pdf:v6:'.hash('sha256', serialize([
             $data->title,
             $data->filenameBase,
             $data->meta,
@@ -64,21 +64,23 @@ class PdfExporter implements ReportExporter
                 ? '@page{size:A4 landscape;margin:12mm}'
                     .'body.attendance-print{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px;line-height:1.35;color:#111827;margin:0}'
                     .'body.attendance-print h1,body.attendance-print h2,body.attendance-print h3,body.attendance-print .generated,body.attendance-print .meta,body.attendance-print .section,body.attendance-print .empty,body.attendance-print .day-total{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px}'
-                    .'body.attendance-print .report-header{border:1px solid #d1d5db;background:#f9fafb;padding:10px 12px;margin-bottom:18px}'
+                    .'body.attendance-print .report-header{border:1px solid #d1d5db;background:#fff;padding:10px 12px;margin-bottom:18px}'
                     .'body.attendance-print h1{margin:0 0 5px;font-weight:normal}'
-                    .'body.attendance-print h2{margin:14px 0 6px;padding:6px 8px;border:1px solid #d1d5db;background:#f3f4f6;font-weight:normal}'
+                    .'body.attendance-print h2{margin:14px 0 6px;padding:7px;border:1px solid #d1d5db;background:#fff;font-weight:normal}'
                     .'body.attendance-print .generated{margin-bottom:10px}'
                     .'body.attendance-print .meta{margin-bottom:12px}'
-                    .'body.attendance-print .meta td{padding:2px 5px}'
+                    .'body.attendance-print .meta td{padding:2px 0}'
                     .'body.attendance-print .meta .label{width:180px}'
                     .'body.attendance-print .section{table-layout:auto}'
-                    .'body.attendance-print .section th,body.attendance-print .section td{padding:5px 6px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
+                    .'body.attendance-print .section th,body.attendance-print .section td{padding:7px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
+                    .'body.attendance-print .section th{background:#fff}'
                     .'body.attendance-print .section th,body.attendance-print .section th.num{text-align:center!important}'
                     .'body.attendance-print .section td,body.attendance-print .section td.num{text-align:left!important}'
+                    .'body.attendance-print .section th.section-heading-cell{text-align:left!important;border-bottom:1px solid #d1d5db}'
+                    .'body.attendance-print .section.report-start{page-break-before:always}'
                     .'body.attendance-print .section tr{page-break-inside:avoid}'
                     .'body.attendance-print .section td{white-space:nowrap}'
                     .'body.attendance-print .section th:nth-child(2),body.attendance-print .section td:nth-child(2){white-space:normal}'
-                    .'body.attendance-print .section tr.late-arrival{background:#fff1f2}'
                     .'body.attendance-print .section tr.late-arrival td:first-child{color:#b91c1c;font-weight:normal}'
                 : '')
             .'</style></head><body>';
@@ -108,6 +110,19 @@ class PdfExporter implements ReportExporter
 
         foreach ($data->sections as $sectionIndex => $section) {
             $startsReport = str_starts_with($section->title, 'Reporte individual:') && $sectionIndex > 0;
+
+            if ($isAttendanceReport && $section->dayGroups === null && $section->rows !== []) {
+                $html .= $this->table(
+                    $section->columns,
+                    $section->rows,
+                    false,
+                    true,
+                    $section->title,
+                    $startsReport,
+                );
+                continue;
+            }
+
             $html .= '<h2'.($startsReport ? ' class="report-start"' : '').'>'.$this->escape($section->title).'</h2>';
 
             if ($section->dayGroups !== null) {
@@ -133,9 +148,22 @@ class PdfExporter implements ReportExporter
         return $html.'</body></html>';
     }
 
-    private function table(array $columns, array $rows, bool $timeColumns = false, bool $attendanceReport = false): string
+    private function table(
+        array $columns,
+        array $rows,
+        bool $timeColumns = false,
+        bool $attendanceReport = false,
+        ?string $sectionTitle = null,
+        bool $startsReport = false,
+    ): string
     {
-        $html = '<table class="section"><thead><tr>';
+        $html = '<table class="section'.($startsReport ? ' report-start' : '').'"><thead>';
+
+        if ($sectionTitle !== null) {
+            $html .= '<tr class="section-heading"><th class="section-heading-cell" colspan="'.count($columns).'">'.$this->escape($sectionTitle).'</th></tr>';
+        }
+
+        $html .= '<tr>';
         foreach ($columns as $index => $column) {
             $numeric = $timeColumns
                 ? in_array($column, ['Inicio', 'Fin', 'Tiempo efectivo'], true)

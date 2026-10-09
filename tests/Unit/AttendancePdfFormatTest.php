@@ -34,9 +34,12 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringContainsString('<body class="attendance-print">', $html);
         $this->assertStringContainsString('<div class="report-header">', $html);
         $this->assertStringContainsString('font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px', $html);
+        $this->assertStringContainsString('<tr class="section-heading"><th class="section-heading-cell" colspan="3">Detalle de asistencia</th></tr>', $html);
         $this->assertStringContainsString('.section th.num{text-align:center!important}', $html);
         $this->assertStringContainsString('.section td.num{text-align:left!important}', $html);
         $this->assertStringContainsString('font-size:9px;font-weight:normal', $html);
+        $this->assertStringContainsString('.meta td{padding:2px 0}', $html);
+        $this->assertStringNotContainsString('background:#fff1f2', $html);
         $this->assertStringContainsString('Total acumulado', $html);
         $this->assertSame(1, substr_count($html, 'class="late-arrival"'));
 
