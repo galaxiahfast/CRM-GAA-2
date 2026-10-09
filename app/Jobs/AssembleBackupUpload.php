@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\BackupUpload;
+use App\Services\Backups\BackupArchiveExtractor;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,7 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -34,9 +34,9 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
         return $this->uploadId;
     }
 
-    public function handle(): void
+    public function handle(BackupArchiveExtractor $extractor): void
     {
-        $upload = BackupUpload::query()->with('customer:id,name')->findOrFail($this->uploadId);
+        $upload = BackupUpload::query()->findOrFail($this->uploadId);
         if ($upload->status === BackupUpload::STATUS_COMPLETED) {
             return;
         }
@@ -49,9 +49,8 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
 
         $upload->forceFill(['status' => BackupUpload::STATUS_PROCESSING, 'error_message' => null])->save();
 
-        $customerSlug = Str::slug((string) ($upload->customer?->name ?: 'cliente')) ?: 'cliente';
         $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($upload->original_name)) ?: 'respaldo.'.$upload->extension;
-        $directory = sprintf('backups/%s/%s-%d/%s', $upload->site, $customerSlug, $upload->customer_id, strtolower($upload->category));
+        $directory = sprintf('backup-archives/%s', $upload->site);
         $stagingPath = sprintf('backup-assembly/%s.part', $upload->id);
         $finalPath = $directory.'/'.$upload->id.'_'.$safeName;
 
@@ -81,14 +80,20 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
 
         $checksum = hash_file('sha256', $disk->path($stagingPath));
         $disk->makeDirectory($directory);
+        if ($disk->exists($finalPath)) {
+            $disk->delete($finalPath);
+        }
         if (! $disk->move($stagingPath, $finalPath)) {
             throw new RuntimeException('No fue posible mover el respaldo a su carpeta definitiva.');
         }
+
+        $manifest = $extractor->extract($disk, $finalPath, $upload->site, $upload->id);
 
         $disk->deleteDirectory('backup-chunks/'.$upload->id);
         $upload->forceFill([
             'status' => BackupUpload::STATUS_COMPLETED,
             'storage_path' => $finalPath,
+            'manifest' => $manifest,
             'checksum' => $checksum,
             'received_bytes' => $upload->size,
             'completed_at' => now(),

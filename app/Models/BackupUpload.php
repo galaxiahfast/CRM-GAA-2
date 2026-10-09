@@ -24,7 +24,7 @@ class BackupUpload extends Model
     protected $fillable = [
         'upload_key', 'site', 'customer_id', 'user_id', 'category', 'original_name',
         'extension', 'mime_type', 'size', 'chunk_size', 'total_chunks',
-        'uploaded_chunks', 'received_bytes', 'status', 'storage_path', 'checksum',
+        'uploaded_chunks', 'received_bytes', 'status', 'storage_path', 'manifest', 'checksum',
         'error_message', 'last_activity_at', 'queued_at', 'completed_at',
     ];
 
@@ -32,6 +32,7 @@ class BackupUpload extends Model
     {
         return [
             'uploaded_chunks' => 'array',
+            'manifest' => 'array',
             'size' => 'integer',
             'chunk_size' => 'integer',
             'total_chunks' => 'integer',

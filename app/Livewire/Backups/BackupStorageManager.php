@@ -3,7 +3,6 @@
 namespace App\Livewire\Backups;
 
 use App\Models\BackupUpload;
-use App\Models\Customer;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -34,33 +33,44 @@ class BackupStorageManager extends Component
     {
         Gate::authorize('manage-system-backups');
 
-        $customers = Customer::query()
-            ->when(filled($this->search), fn ($query) => $query->where('name', 'like', '%'.trim($this->search).'%'))
-            ->orderBy('name')
-            ->get(['id', 'name', 'last_name', 'maternal_last_name']);
-
         $site = in_array($this->activeTab, ['merida', 'tulum'], true) ? $this->activeTab : 'merida';
         $completed = BackupUpload::query()
             ->where('site', $site)
             ->where('status', BackupUpload::STATUS_COMPLETED)
-            ->whereIn('customer_id', $customers->pluck('id'))
             ->latest('completed_at')
             ->get();
-        $filesByCustomer = $completed->groupBy('customer_id');
+
+        $term = mb_strtolower(trim($this->search));
+        $backupTree = $completed
+            ->flatMap(function (BackupUpload $upload): array {
+                return collect($upload->manifest ?? [])->map(function (array $file, int $index) use ($upload): array {
+                    return $file + [
+                        'upload_id' => $upload->id,
+                        'file_index' => $index,
+                        'completed_at' => $upload->completed_at,
+                        'download_url' => route('activity-backups.files.download', [$upload, $index]),
+                    ];
+                })->all();
+            })
+            ->when($term !== '', fn ($files) => $files->filter(fn (array $file) => str_contains(mb_strtolower(
+                ($file['customer'] ?? '').' '.($file['name'] ?? '').' '.($file['category'] ?? '')
+            ), $term)))
+            ->groupBy('customer')
+            ->sortKeys(SORT_NATURAL | SORT_FLAG_CASE)
+            ->map(fn ($files) => $files->groupBy('category'));
 
         $history = BackupUpload::query()
-            ->with(['customer:id,name', 'user:id,name,last_name'])
-            ->when(filled($this->search), function ($query): void {
-                $term = '%'.trim($this->search).'%';
-                $query->where(function ($nested) use ($term): void {
-                    $nested->where('original_name', 'like', $term)
-                        ->orWhereHas('customer', fn ($customer) => $customer->where('name', 'like', $term))
-                        ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $term)->orWhere('last_name', 'like', $term));
-                });
-            })
+            ->with('user:id,name,last_name')
             ->latest()
-            ->limit(150)
-            ->get();
+            ->limit(300)
+            ->get()
+            ->when($term !== '', fn ($records) => $records->filter(function (BackupUpload $upload) use ($term): bool {
+                $manifestText = collect($upload->manifest ?? [])->pluck('customer')->implode(' ');
+                $text = $upload->original_name.' '.$upload->site.' '.$upload->user?->name.' '.$upload->user?->last_name.' '.$manifestText;
+
+                return str_contains(mb_strtolower($text), $term);
+            }))
+            ->take(150);
 
         $statusCounts = BackupUpload::query()
             ->selectRaw('status, COUNT(*) as total')
@@ -68,8 +78,7 @@ class BackupStorageManager extends Component
             ->pluck('total', 'status');
 
         return view('livewire.backups.backup-storage-manager', [
-            'customers' => $customers,
-            'filesByCustomer' => $filesByCustomer,
+            'backupTree' => $backupTree,
             'history' => $history,
             'statusCounts' => $statusCounts,
             'sites' => config('backup-storage.sites'),

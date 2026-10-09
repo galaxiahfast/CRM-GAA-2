@@ -20,8 +20,6 @@ class BackupUploadController extends Controller
 
         $data = $request->validate([
             'site' => ['required', Rule::in(array_keys(config('backup-storage.sites', [])))],
-            'customer_id' => ['required', 'integer', 'exists:customers,id'],
-            'category' => ['required', Rule::in(['index', 'bak'])],
             'file_name' => ['required', 'string', 'max:255'],
             'mime_type' => ['nullable', 'string', 'max:150'],
             'size' => ['required', 'integer', 'min:1', 'max:'.config('backup-storage.max_file_size')],
@@ -29,10 +27,10 @@ class BackupUploadController extends Controller
         ]);
 
         $extension = mb_strtolower((string) pathinfo(basename($data['file_name']), PATHINFO_EXTENSION));
-        abort_unless($extension === $data['category'], 422, 'El archivo no corresponde con la carpeta seleccionada.');
+        abort_unless($extension === 'zip', 422, 'Selecciona un archivo ZIP válido.');
 
         $uploadKey = hash('sha256', implode('|', [
-            $request->user()->id, $data['site'], $data['customer_id'], $data['category'], $data['fingerprint'],
+            $request->user()->id, $data['site'], $data['fingerprint'],
         ]));
         $chunkSize = max(1024, (int) config('backup-storage.chunk_size'));
 
@@ -58,9 +56,9 @@ class BackupUploadController extends Controller
             return BackupUpload::query()->create([
                 'upload_key' => $uploadKey,
                 'site' => $data['site'],
-                'customer_id' => $data['customer_id'],
+                'customer_id' => null,
                 'user_id' => $request->user()->id,
-                'category' => $data['category'],
+                'category' => null,
                 'original_name' => basename($data['file_name']),
                 'extension' => $extension,
                 'mime_type' => $data['mime_type'] ?? null,
@@ -163,6 +161,28 @@ class BackupUploadController extends Controller
 
         return $disk->download($upload->storage_path, $upload->original_name, [
             'Content-Type' => $upload->mime_type ?: 'application/octet-stream',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    public function downloadFile(BackupUpload $upload, int $index): StreamedResponse
+    {
+        Gate::authorize('manage-system-backups');
+        abort_unless($upload->status === BackupUpload::STATUS_COMPLETED, 404);
+
+        $file = collect($upload->manifest ?? [])->get($index);
+        abort_unless(
+            is_array($file)
+            && filled($file['path'] ?? null)
+            && str_starts_with((string) $file['path'], 'backups/'.$upload->site.'/'),
+            404,
+        );
+
+        $disk = Storage::disk((string) config('backup-storage.disk', 'local'));
+        abort_unless($disk->exists($file['path']), 404);
+
+        return $disk->download($file['path'], basename((string) ($file['name'] ?? 'respaldo')), [
+            'Content-Type' => 'application/octet-stream',
             'Cache-Control' => 'private, no-store',
         ]);
     }

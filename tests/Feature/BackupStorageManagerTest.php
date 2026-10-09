@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Jobs\AssembleBackupUpload;
 use App\Models\BackupUpload;
-use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Backups\BackupArchiveExtractor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -34,15 +34,6 @@ class BackupStorageManagerTest extends TestCase
         ]);
     }
 
-    private function customer(User $creator): Customer
-    {
-        return Customer::query()->create([
-            'name' => 'Cliente Contable',
-            'rfc' => 'XAXX010101000',
-            'created_by' => $creator->id,
-        ]);
-    }
-
     public function test_administrators_and_accountants_can_open_the_backup_manager(): void
     {
         $admin = $this->user('Administrador', 'admin-storage@datamid.test');
@@ -54,6 +45,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Respaldos Mérida')
             ->assertSee('Respaldos Tulum')
             ->assertSee('Historial de registros')
+            ->assertSee('Seleccionar ZIP')
+            ->assertDontSee('Selecciona un cliente')
             ->assertSee('data-backup-site', false);
         $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
         $this->assertFalse(Gate::forUser($auxiliary)->allows('manage-system-backups'));
@@ -68,18 +61,21 @@ class BackupStorageManagerTest extends TestCase
         config()->set('backup-storage.max_active_uploads', 1);
 
         $admin = $this->user('Administrador', 'admin-chunks@datamid.test');
-        $customer = $this->customer($admin);
-        $payload = str_repeat('A', 1024).str_repeat('B', 476);
+        $indexContents = random_bytes(1600);
+        $bakContents = 'contenido del respaldo BAK';
+        $payload = $this->zip([
+            'exportacion/Cliente Contable/Index/empresa_2026.index' => $indexContents,
+            'exportacion/Cliente Contable/Bak/empresa_2026.bak' => $bakContents,
+        ]);
 
         $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
-            'site' => 'merida', 'customer_id' => $customer->id, 'category' => 'bak',
-            'file_name' => 'empresa_2026.bak', 'mime_type' => 'application/octet-stream',
-            'size' => strlen($payload), 'fingerprint' => 'empresa:1500:12345',
+            'site' => 'merida', 'file_name' => 'empresa_2026.zip', 'mime_type' => 'application/zip',
+            'size' => strlen($payload), 'fingerprint' => 'empresa:zip:12345',
         ])->assertOk();
 
         $uploadId = $response->json('id');
         $upload = BackupUpload::query()->findOrFail($uploadId);
-        $this->assertSame(2, $upload->total_chunks);
+        $this->assertGreaterThanOrEqual(2, $upload->total_chunks);
 
         $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), substr($payload, 0, 1024))->assertOk();
         $status = $this->getJson(route('activity-backups.uploads.status', $upload))->assertOk();
@@ -87,19 +83,28 @@ class BackupStorageManagerTest extends TestCase
 
         // Reenviar un fragmento ya confirmado no duplica bytes ni progreso.
         $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), substr($payload, 0, 1024))->assertOk();
-        $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 1]), substr($payload, 1024))->assertOk();
+        for ($index = 1; $index < $upload->total_chunks; $index++) {
+            $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, $index]), substr($payload, $index * 1024, 1024))->assertOk();
+        }
         $this->postJson(route('activity-backups.uploads.complete', $upload))->assertAccepted();
         $this->postJson(route('activity-backups.uploads.complete', $upload))->assertAccepted();
         Queue::assertPushed(AssembleBackupUpload::class, 1);
         Queue::assertPushed(AssembleBackupUpload::class, fn (AssembleBackupUpload $job) => $job->uploadId === $upload->id);
 
-        (new AssembleBackupUpload($upload->id))->handle();
+        (new AssembleBackupUpload($upload->id))->handle(app(BackupArchiveExtractor::class));
         $upload->refresh();
         $this->assertSame(BackupUpload::STATUS_COMPLETED, $upload->status);
         $this->assertSame(hash('sha256', $payload), $upload->checksum);
         $this->assertSame($payload, Storage::disk('local')->get($upload->storage_path));
+        $this->assertCount(2, $upload->manifest);
+        $this->assertSame('Cliente Contable', $upload->manifest[0]['customer']);
+        $this->assertSame('index', $upload->manifest[0]['category']);
+        $this->assertSame($indexContents, Storage::disk('local')->get($upload->manifest[0]['path']));
 
         $this->get(route('activity-backups.download', $upload))
+            ->assertOk()
+            ->assertDownload('empresa_2026.zip');
+        $this->get(route('activity-backups.files.download', [$upload, 1]))
             ->assertOk()
             ->assertDownload('empresa_2026.bak');
     }
@@ -109,11 +114,24 @@ class BackupStorageManagerTest extends TestCase
         Storage::fake('local');
         config()->set('backup-storage.max_active_uploads', 1);
         $admin = $this->user('Administrador', 'admin-queue@datamid.test');
-        $customer = $this->customer($admin);
-        $base = ['site' => 'tulum', 'customer_id' => $customer->id, 'category' => 'index', 'mime_type' => 'application/octet-stream', 'size' => 100];
+        $base = ['site' => 'tulum', 'mime_type' => 'application/zip', 'size' => 100];
 
-        $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'primero.index', 'fingerprint' => 'first'])->assertJsonPath('status', 'uploading');
-        $this->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'segundo.index', 'fingerprint' => 'second'])->assertJsonPath('status', 'waiting');
+        $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'primero.zip', 'fingerprint' => 'first'])->assertJsonPath('status', 'uploading');
+        $this->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'segundo.zip', 'fingerprint' => 'second'])->assertJsonPath('status', 'waiting');
+    }
+
+    public function test_only_zip_archives_can_be_initialized(): void
+    {
+        $admin = $this->user('Administrador', 'admin-invalid-zip@datamid.test');
+
+        $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida',
+            'file_name' => 'respaldo.bak',
+            'mime_type' => 'application/octet-stream',
+            'size' => 100,
+            'fingerprint' => 'invalid-backup',
+        ])->assertUnprocessable()
+            ->assertJsonPath('message', 'Selecciona un archivo ZIP válido.');
     }
 
     private function postRaw(string $uri, string $content)
@@ -122,5 +140,21 @@ class BackupStorageManagerTest extends TestCase
             'CONTENT_TYPE' => 'application/octet-stream',
             'HTTP_ACCEPT' => 'application/json',
         ], $content);
+    }
+
+    /** @param array<string, string> $files */
+    private function zip(array $files): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'backup-test-').'.zip';
+        $archive = new \PharData($path);
+        foreach ($files as $name => $contents) {
+            $archive->addFromString($name, $contents);
+        }
+        unset($archive);
+
+        $contents = file_get_contents($path);
+        @unlink($path);
+
+        return $contents === false ? '' : $contents;
     }
 }
