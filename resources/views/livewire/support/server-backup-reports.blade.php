@@ -28,7 +28,7 @@
     <div class="relative z-10 min-h-[calc(100dvh-90px)] min-w-0 origin-top" :style="isCompact ? 'width: 100%; margin-left: 0; transform: none;' : `width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
         <header class="flex flex-col items-start justify-between gap-[24px] border-b border-zinc-200 bg-white px-[20px] py-[24px] md:px-[30px] lg:flex-row lg:items-center lg:gap-[30px] lg:whitespace-nowrap lg:p-[50px]">
             <div class="flex items-center gap-[15px] text-zinc-500">
-                <span class="font-medium">Soporte</span>
+                <span class="font-medium">Actividades</span>
                 <span class="text-gray-300">&gt;</span>
                 <span class="font-semibold text-black">Reporte de Respaldos</span>
             </div>

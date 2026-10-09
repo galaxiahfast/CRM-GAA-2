@@ -397,6 +397,34 @@
                     </li>
                 @endif
 
+                <!-- Hoja de Entrega: actividad independiente -->
+                @can('manage-delivery-notes')
+                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <a href="{{ route('soporte.hoja-entrega') }}"
+                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" />
+                            </svg>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
+                        </a>
+                    </li>
+                @endcan
+
+                <!-- Reporte de Respaldos: actividad independiente para administradores -->
+                @can('manage-backup-reports')
+                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <a href="{{ route('soporte.reportes-respaldos') }}"
+                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" />
+                            </svg>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
+                        </a>
+                    </li>
+                @endcan
+
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
                 <!-- ========================================================== -->
@@ -464,34 +492,6 @@
                         </ul>
                     </div>
                 </li>
-
-                <!-- Hoja de entrega: opción independiente de Centro de ayuda -->
-                @can('manage-delivery-notes')
-                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('soporte.hoja-entrega') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" />
-                            </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Hoja de entrega</span>
-                        </a>
-                    </li>
-                @endcan
-
-                <!-- Reportes de respaldos: opción independiente para administradores -->
-                @can('manage-backup-reports')
-                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('soporte.reportes-respaldos') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" />
-                            </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
-                        </a>
-                    </li>
-                @endcan
 
             </ul>
         </div>

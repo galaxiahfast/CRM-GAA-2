@@ -80,11 +80,9 @@
     <div class="relative z-10 min-h-[calc(100dvh-90px)] min-w-[1180px] origin-top" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
         <header class="flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px]">
             <div class="flex items-center gap-[15px] text-zinc-500">
-                <span class="font-medium">Soporte</span>
+                <span class="font-medium">Actividades</span>
                 <span class="text-gray-300">&gt;</span>
-                <span class="font-medium">Centro de ayuda</span>
-                <span class="text-gray-300">&gt;</span>
-                <span class="font-semibold text-black">Hoja de entrega</span>
+                <span class="font-semibold text-black">Hoja de Entrega</span>
             </div>
             <div class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/80 p-[5px]">
                 <button type="button" wire:click="switchTab('nueva')" class="rounded-lg px-[15px] py-[10px] font-medium transition {{ $tab === 'nueva' ? 'bg-black text-white' : 'text-zinc-600 hover:bg-zinc-100' }}">Nueva orden</button>

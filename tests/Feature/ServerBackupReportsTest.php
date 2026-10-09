@@ -147,16 +147,22 @@ HTML);
         }
     }
 
-    public function test_backup_reports_are_a_top_level_item_after_delivery_notes(): void
+    public function test_delivery_notes_and_backup_reports_are_listed_under_activities(): void
     {
         $admin = $this->userWithRole('Administrador', 'admin-menu@datamid.test');
         $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
 
-        $deliveryPosition = strpos($html, '>Hoja de entrega<');
+        $activitiesPosition = strpos($html, '>Actividades<');
+        $deliveryPosition = strpos($html, '>Hoja de Entrega<');
         $backupPosition = strpos($html, '>Reporte de Respaldos<');
+        $supportPosition = strpos($html, '>Soporte<');
+        $this->assertNotFalse($activitiesPosition);
         $this->assertNotFalse($deliveryPosition);
         $this->assertNotFalse($backupPosition);
+        $this->assertNotFalse($supportPosition);
+        $this->assertGreaterThan($activitiesPosition, $deliveryPosition);
         $this->assertGreaterThan($deliveryPosition, $backupPosition);
+        $this->assertGreaterThan($backupPosition, $supportPosition);
     }
 
     public function test_pdf_service_generates_a_valid_pdf(): void
