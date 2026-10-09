@@ -198,6 +198,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSeeHtml('rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px]')
             ->assertSeeHtml('h-[52px] w-[52px]')
             ->assertSeeHtml("timePicker(\$wire.entangle('modalMarks.0').live)")
+            ->assertSeeHtml('absolute left-0 top-full z-[110]')
             ->assertSeeHtml('@click="syncFromValue(); open = !open"')
             ->assertSeeHtml('Agrega, ordena o elimina marcas.')
             ->assertSeeHtml('class="text-[13px] italic text-zinc-500">(Entrada)</span>')

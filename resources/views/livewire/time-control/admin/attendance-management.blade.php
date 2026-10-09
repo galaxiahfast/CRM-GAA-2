@@ -899,14 +899,14 @@
                                             <span class="text-[13px] italic text-zinc-500">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
                                         </div>
                                         <div class="flex gap-[20px]">
-                                            <div class="min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)" @click.outside="open = false">
+                                            <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)" @click.outside="open = false">
                                                 <button id="attendance-mark-{{ $index }}" type="button" @click="syncFromValue(); open = !open" class="flex w-full items-center justify-between gap-[10px] rounded-xl border border-zinc-300 bg-white py-[7px] pl-[20px] pr-[7px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
                                                     <span class="tabular-nums" x-text="displayValue"></span>
                                                     <span class="inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-black">
                                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                                                     </span>
                                                 </button>
-                                                <div x-cloak x-show="open" x-transition class="mt-[10px] rounded-xl border border-zinc-200 bg-white p-[20px]">
+                                                <div x-cloak x-show="open" x-transition class="absolute left-0 top-full z-[110] mt-[10px] w-[360px] max-w-[calc(100vw-80px)] rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
                                                     <div class="grid grid-cols-3 gap-[20px]">
                                                         @foreach (['hour' => 'Hora', 'minute' => 'Min.', 'second' => 'Seg.'] as $timePart => $timeLabel)
                                                             <label class="grid gap-[10px] text-[13px] text-zinc-500">
