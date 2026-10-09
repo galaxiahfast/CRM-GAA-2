@@ -92,7 +92,11 @@ class TimeReportExportTest extends TestCase
 
         Livewire::actingAs($admin)->test(InformeGeneralHoras::class)
             ->assertSet('from', now()->toDateString())
-            ->assertSet('to', now()->toDateString());
+            ->assertSet('to', now()->toDateString())
+            ->assertSee('Supervisión de Horas')
+            ->assertSee('supervision-monochrome', false)
+            ->assertSee('Informe general')
+            ->assertSee('Actividad en línea');
     }
 
     public function test_user_report_matches_screen_total(): void

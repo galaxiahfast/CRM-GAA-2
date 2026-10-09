@@ -13,10 +13,27 @@
     .group-filter-scrollbar::-webkit-scrollbar-track,
     .group-scrollbar::-webkit-scrollbar-track { background: #f8fafc !important; }
     .group-filter-scrollbar::-webkit-scrollbar-thumb,
-    .group-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px !important; }
+    .group-scrollbar::-webkit-scrollbar-thumb { background: #000 !important; border-radius: 9999px !important; }
     .group-filter-scrollbar,
-    .group-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B #f8fafc; scrollbar-gutter: stable; }
+    .group-scrollbar { scrollbar-width: thin; scrollbar-color: #000 #fff; scrollbar-gutter: stable; overscroll-behavior: contain; }
     @keyframes group-report-spin { to { transform: rotate(360deg); } }
+    .supervision-monochrome { background: #fff !important; color: #3f3f46; font-size: 15px; }
+    .supervision-monochrome button,
+    .supervision-monochrome input,
+    .supervision-monochrome textarea { font-size: 15px; box-shadow: none !important; }
+    .supervision-monochrome button:focus,
+    .supervision-monochrome button:focus-visible,
+    .supervision-monochrome input:focus,
+    .supervision-monochrome input:focus-visible,
+    .supervision-monochrome textarea:focus,
+    .supervision-monochrome textarea:focus-visible { outline: none !important; box-shadow: none !important; --tw-ring-shadow: 0 0 #0000 !important; }
+    .supervision-monochrome [data-selection-list] { border: 1px solid #e4e4e7 !important; background: #fff !important; }
+    .supervision-monochrome [data-report-form] { border-radius: 12px !important; box-shadow: none !important; }
+    .supervision-monochrome [style*="color: #1A3A6B"] { color: #000 !important; }
+    .supervision-monochrome [style*="background-color: #1A3A6B"],
+    .supervision-monochrome [style*="background: #1A3A6B"] { background: #18181b !important; }
+    .supervision-monochrome [style*="border: 1px solid #1A3A6B"] { border-color: #18181b !important; }
+    .supervision-monochrome [style*="border: 2px dashed"] { border: 1px solid #e4e4e7 !important; }
 </style>
 
 <div
@@ -24,30 +41,34 @@
     data-selected-ids='@json(array_values(array_map('intval', $selectedCollaboratorIds)))'
     data-reported-ids='@json(array_values(array_map('intval', $reportedCollaboratorIds)))'
     data-report-current="{{ $groupReportIsCurrent ? 'true' : 'false' }}"
-    class="w-full bg-[#f4f4f4]"
-    style="overflow-x: auto; padding: 32px 40px 40px;"
+    class="supervision-monochrome w-full bg-white"
+    style="overflow-x: auto; padding: 0 50px 50px;"
 >
 
     <!-- Contenedor interno con min-width -->
     <div style="min-width: 800px; padding: 0; margin: 0; width: 100%;">
 
-        <!-- Header Superior con Migas de Pan -->
-        <div style="padding: 0 0 40px 0; border-bottom: 2px solid #e5e7eb; background-color: transparent; display: flex; align-items: center; justify-content: space-between; min-width: max-content; overflow: hidden; gap: 80px;">
-            <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
-                <span style="font-weight: 500;">Actividades</span>
-                <span style="color: #d1d5db; font-weight: 300;">></span>
-                <span style="font-weight: 500;">Control de Horas</span>
-                <span style="color: #d1d5db; font-weight: 300;">></span>
-                <span style="font-weight: 500;">Supervisión de Horas</span>
-                <span style="color: #d1d5db; font-weight: 300;">></span>
-                <span style="color: #1A3A6B; font-weight: 600;">Informe General</span>
+        <!-- Encabezado y migas de pan -->
+        <div style="margin: 0 -50px; padding: 50px; border-bottom: 1px solid #e4e4e7; background: #fff; display: flex; align-items: center; justify-content: space-between; min-width: max-content; gap: 80px;">
+            <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #71717a; white-space: nowrap;">
+                <span>Actividades</span><span style="color:#d4d4d8">&gt;</span>
+                <span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span>
+                <span style="color:#000; font-weight:600">Supervisión de Horas</span>
             </div>
-
-            <!-- Botones de acción -->
+            <div style="display:flex; align-items:center; gap:30px; color:#000; font-size:15px;">
+                <span style="display:inline-flex; align-items:center; gap:10px; white-space:nowrap;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
+                    Informe general
+                </span>
+                <a href="{{ route('time.admin.online') }}" style="display:inline-flex; align-items:center; gap:10px; color:#71717a; text-decoration:none; white-space:nowrap;">
+                    <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg>
+                    Actividad en línea
+                </a>
+            </div>
         </div>
 
         <!-- Header principal -->
-        <div style="background-color: transparent; padding: 40px 0 0 0; overflow: hidden; min-width: max-content;">
+        <div style="background-color: #fff; padding: 50px 0 0; overflow: hidden; min-width: max-content;">
 
             <!-- Encabezado -->
             <div style="border-bottom: none; min-width: max-content;">
@@ -55,10 +76,10 @@
 
                     <div style="max-width: 672px; flex-shrink: 0;">
 
-                        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 20px;">
 
-                            <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 0px; background-color: rgba(26, 58, 107, 0.1); flex-shrink: 0;">
-                                <svg style="height: 28px; width: 28px; color: #1A3A6B; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border:1px solid #e4e4e7; border-radius: 12px; background:#fff; flex-shrink: 0;">
+                                <svg style="height: 28px; width: 28px; color: #000; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -66,28 +87,24 @@
                             </div>
 
                             <div>
-                                <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: #111827; white-space: nowrap;">
-                                    Informe General de Horas
+                                <h1 style="font-size: 20px; font-weight: 600; letter-spacing: -0.025em; color: #000; white-space: nowrap;">
+                                    Supervisión de Horas
                                 </h1>
 
                                 <p style="font-size: 15px; color: #6b7280; white-space: nowrap;">
-                                    Selecciona colaboradores y consulta su consolidado en el periodo.
+                                    Consulta, compara y exporta las horas registradas por los colaboradores.
                                 </p>
                             </div>
 
                         </div>
 
-                        <p style="max-width: 672px; font-size: 15px; line-height: 28px; color: #6b7280;">
-                            Visualización consolidada del tiempo trabajado por colaboradores,<br>
-                            distribuido por cliente, puesto profesional, área física y actividades.
-                        </p>
-
                     </div>
 
                     <!-- Contador de seleccionados -->
                     <div style="flex-shrink: 0; margin-top: 16px;">
-                        <span style="display: inline-flex; align-items: center; border-radius: 9999px; background-color: rgba(26, 58, 107, 0.1); padding: 8px 20px; font-size: 14px; font-weight: 600; color: #1A3A6B; white-space: nowrap;">
-                            <span data-selected-count>{{ $selectedGroupUsers->count() }}</span>&nbsp;seleccionados
+                        <span style="display: inline-flex; align-items: center; gap:10px; padding: 15px 20px; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">
+                            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                            <span data-selected-count>{{ $selectedGroupUsers->count() }}</span> seleccionados
                         </span>
                     </div>
 
@@ -100,7 +117,7 @@
         <!-- ============================================================ -->
         <!-- LISTA DE COLABORADORES - ÁREA PUNTEADA                       -->
         <!-- ============================================================ -->
-        <div wire:ignore data-selection-list class="group-scrollbar" style="position: relative; margin-top: 30px; margin-bottom: 30px; background-color: transparent; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 2px dashed #9ca3af; border-radius: 12px; background-color: #F4F4F4;">
+        <div wire:ignore data-selection-list class="group-scrollbar" style="position: relative; margin-top: 20px; margin-bottom: 20px; overflow: hidden; max-height: 600px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff;">
 
             <!-- Barra superior con filtros de búsqueda -->
             <div style="position: sticky; top: 0; z-index: 10; display: inline-flex; align-items: center; gap: 20px; padding: 20px; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(229, 231, 235, 0.15); border-radius: 0 0 12px 0; width: auto;">
@@ -122,7 +139,7 @@
 
                         <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb;">
                             <label style="display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1; cursor: pointer;">
-                                <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
+                                <input data-area-checkbox data-user-ids='@json($areaUserIds)' type="checkbox" class="rounded border-gray-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
                                 <span class="min-w-0 flex-1 truncate">{{ $areaName }}</span>
                             </label>
                             <span style="color: #9ca3af; font-weight: 400;">{{ $areaUsers->count() }} colaboradores</span>
@@ -133,7 +150,7 @@
                                 <label style="display: flex; align-items: center; gap: 20px; font-size: 14px; color: #374151; background-color: #fafafa; border-radius: 10px; cursor: pointer; padding: 20px; transition: background-color 0.15s;"
                                     onmouseover="this.style.backgroundColor='#f3f4f6';"
                                     onmouseout="this.style.backgroundColor='#fafafa';">
-                                    <input data-area-collaborator data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #1A3A6B; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
+                                    <input data-area-collaborator data-collaborator-id="{{ $user['id'] }}" type="checkbox" wire:model.defer="selectedCollaboratorIds" value="{{ $user['id'] }}" class="focus:outline-none focus:ring-0 focus:ring-offset-0" style="border-radius: 4px; border: 1px solid #d1d5db; accent-color: #000; width: 16px; height: 16px; flex-shrink: 0; outline: none; box-shadow: none;" />
                                     <span class="min-w-0 flex-1">
                                         <span class="block truncate">{{ $user['name'] }}</span>
                                         <small class="block truncate" style="font-size: 12px; color: #9ca3af; margin-top: 5px;">{{ $user['position_name'] }}</small>
@@ -161,18 +178,14 @@
             <div style="position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; padding: 20px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-top: 1px solid rgba(229, 231, 235, 0.1); width: fit-content; margin-left: auto; border-radius: 12px 0 0 0;">
                 <div style="display: flex; gap: 24px; background-color: transparent;">
                     <button type="button" data-select-all
-                        style="display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background-color: transparent; color: #1A3A6B; font-size: 14px; font-weight: 600; cursor: pointer; transition: color 0.2s; white-space: nowrap;"
-                        onmouseover="this.style.color='#15305a'"
-                        onmouseout="this.style.color='#1A3A6B'">
+                        style="display: inline-flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #000; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;">
                         <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                         Seleccionar todos
                     </button>
                     <button type="button" data-clear-selection
-                        style="display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background-color: transparent; color: #6b7280; font-size: 14px; font-weight: 500; cursor: pointer; transition: color 0.2s; white-space: nowrap;"
-                        onmouseover="this.style.color='#374151'"
-                        onmouseout="this.style.color='#6b7280'">
+                        style="display: inline-flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #71717a; font-size: 15px; font-weight: 400; cursor: pointer; white-space: nowrap;">
                         <svg style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -186,35 +199,35 @@
         <!-- ============================================================ -->
         <!-- BOTONES DE EXPORTACIÓN Y REPORTE                             -->
         <!-- ============================================================ -->
-        <form data-report-form style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 24px; min-width: max-content; padding: 20px 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,0.05);">
+        <form data-report-form style="display: flex; align-items: flex-end; gap: 20px; margin: 0 0 20px; min-width: max-content; padding: 20px; background: #fff; border: 1px solid #e4e4e7; border-radius: 12px; box-shadow: none;">
             <div style="flex: 0 0 auto;">
-                <label for="from" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Desde</label>
-                <input id="from" type="date" wire:model.defer="from" style="height: 48px; width: 180px; border: 1px solid #d1d5db; border-radius: 12px; background-color: #ffffff; padding: 0 16px; font-size: 14px; color: #374151; outline: none;">
+                <label for="from" style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">Desde</label>
+                <input id="from" type="date" wire:model.defer="from" style="height: 50px; width: 190px; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff; padding: 0 20px; font-size: 15px; color: #000; outline: none;">
             </div>
             <div style="flex: 0 0 auto;">
-                <label for="to" style="margin-bottom: 8px; display: block; font-size: 15px; font-weight: 500; color: #1A3A6B; white-space: nowrap;">Hasta</label>
-                <input id="to" type="date" wire:model.defer="to" style="height: 48px; width: 180px; border: 1px solid #d1d5db; border-radius: 12px; background-color: #ffffff; padding: 0 16px; font-size: 14px; color: #374151; outline: none;">
+                <label for="to" style="margin-bottom: 10px; display: block; font-size: 15px; font-weight: 600; color: #000; white-space: nowrap;">Hasta</label>
+                <input id="to" type="date" wire:model.defer="to" style="height: 50px; width: 190px; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #fff; padding: 0 20px; font-size: 15px; color: #000; outline: none;">
             </div>
-            <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display: inline-flex; height: 48px; align-items: center; justify-content: center; border-radius: 12px; background-color: #1A3A6B; padding: 0 28px; font-size: 14px; font-weight: 600; color: white; border: none; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,0.12); transition: background-color .2s; disabled:opacity-50;" onmouseover="this.style.backgroundColor='#15305a'" onmouseout="this.style.backgroundColor='#1A3A6B'">Generar Reporte</button>
+            <button type="submit" wire:loading.attr="disabled" wire:target="generateGroupReport" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; background:#18181b; padding: 15px 20px; font-size: 15px; font-weight: 600; color: white; border: none; cursor: pointer; box-shadow:none;">Generar informe</button>
         </form>
 
-        <div wire:loading.flex wire:target="generateGroupReport" style="display: none; min-height: 220px; align-items: center; justify-content: center; flex-direction: column; gap: 14px; border: 1px solid #dbe4f0; border-radius: 16px; background: #ffffff; color: #1A3A6B; box-shadow: 0 1px 2px rgba(15,23,42,0.05);">
-            <span style="width: 32px; height: 32px; border: 3px solid #dbe4f0; border-top-color: #1A3A6B; border-radius: 9999px; animation: group-report-spin .7s linear infinite;"></span>
+        <div wire:loading.flex wire:target="generateGroupReport" style="display: none; min-height: 220px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; color: #000; box-shadow:none;">
+            <span style="width: 32px; height: 32px; border: 3px solid #e4e4e7; border-top-color: #000; border-radius: 9999px; animation: group-report-spin .7s linear infinite;"></span>
             <span style="font-size: 14px; font-weight: 600;">Calculando métricas y procesando datos...</span>
         </div>
 
         <div wire:loading.remove wire:target="generateGroupReport" wire:key="group-report-results-{{ $groupReportVersion }}">
 
             <!-- Contenedor con borde punteado que envuelve botones de exportación, métricas y distribuciones -->
-            <div style="margin-top: 30px; border: 2px dashed #9ca3af; border-radius: 12px; padding: 20px; background-color: #F4F4F4; font-size: 15px;">
+            <div style="margin-top: 20px; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; background-color: #fff; font-size: 15px;">
 
                 <!-- Botones de exportación (dentro del borde punteado) -->
                 <div style="padding: 0 0 20px 0; background-color: transparent; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-bottom: 2px solid #e5e7eb;">
                     <div style="font-size: 14px; color: #6b7280;">Las selecciones se aplican sólo al generar el informe.</div>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#eef2f7'" onmouseout="this.style.backgroundColor='transparent'">Descargar Individual</button>
-                        <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: #1A3A6B; color: white; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,0.12); transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#15305a'" onmouseout="this.style.backgroundColor='#1A3A6B'">Descargar Grupal</button>
-                        <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display: inline-flex; height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #1A3A6B; border-radius: 12px; background: transparent; color: #1A3A6B; padding: 0 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .2s; disabled:opacity-40;" onmouseover="this.style.backgroundColor='#eef2f7'" onmouseout="this.style.backgroundColor='transparent'">Descargar General</button>
+                        <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#000;padding:15px 20px;font-size:15px;font-weight:500;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar individual</button>
+                        <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #18181b;border-radius:12px;background:#18181b;color:#fff;padding:15px 20px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar grupal</button>
+                        <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid #e4e4e7;border-radius:12px;background:#fff;color:#000;padding:15px 20px;font-size:15px;font-weight:500;cursor:pointer;box-shadow:none;disabled:opacity-40;">Descargar general</button>
                     </div>
                 </div>
 
@@ -308,10 +321,10 @@
         role="dialog" aria-modal="true" aria-labelledby="activity-edit-title"
         wire:keydown.escape.window="closeActivityEditModal">
         <div x-data @click.away="$wire.closeActivityEditModal()"
-            class="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-[#F3F3F3] shadow-2xl">
+            class="flex max-h-[calc(100vh-40px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
             <div class="flex items-center justify-between gap-5 border-b border-gray-300 px-5 py-4">
                 <div class="flex min-w-0 items-center gap-[15px]">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1A3A6B] text-white">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                     </div>
                     <div class="min-w-0">
@@ -327,7 +340,7 @@
 
             <form wire:submit="saveActivityTimes" class="flex min-h-0 flex-1 flex-col">
                 <div class="overflow-y-auto p-5 text-[15px]">
-                    <div class="rounded-xl border border-gray-300 bg-white p-5 shadow-sm">
+                    <div class="rounded-xl border border-zinc-200 bg-white p-[20px] shadow-none">
                         <h3 class="text-[15px] font-semibold text-gray-900">Horario registrado</h3>
                         <p class="mt-1 text-[15px] text-gray-500">La duración efectiva se recalculará automáticamente al guardar.</p>
 
@@ -335,13 +348,13 @@
                             <div>
                                 <label for="activity-start-time" class="mb-2 block text-[15px] font-medium text-gray-700">Hora de inicio</label>
                                 <input id="activity-start-time" type="time" step="1" wire:model="activityStartTime"
-                                    class="h-12 w-full rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black shadow-none focus:border-zinc-200 focus:ring-0">
                                 @error('activityStartTime') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="activity-end-time" class="mb-2 block text-[15px] font-medium text-gray-700">Hora de fin</label>
                                 <input id="activity-end-time" type="time" step="1" wire:model="activityEndTime"
-                                    class="h-12 w-full rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0">
+                                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black shadow-none focus:border-zinc-200 focus:ring-0">
                                 @error('activityEndTime') <p class="mt-2 text-[15px] text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -352,7 +365,7 @@
                             </label>
                             <textarea id="activity-correction-comment" wire:model="activityCorrectionComment" rows="4" maxlength="500" required
                                 placeholder="Describe por qué es necesario corregir el horario de esta actividad..."
-                                class="w-full resize-y rounded-xl border border-gray-300 bg-[#F3F3F3] px-4 py-3 text-[15px] text-gray-900 shadow-none focus:border-[#1A3A6B] focus:ring-0"></textarea>
+                                class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] text-black shadow-none focus:border-zinc-200 focus:ring-0"></textarea>
                             <div class="mt-2 flex items-start justify-between gap-4">
                                 @error('activityCorrectionComment')
                                     <p class="text-[15px] text-red-600">{{ $message }}</p>
@@ -365,11 +378,11 @@
                     </div>
                 </div>
 
-                <div class="flex shrink-0 justify-end gap-[15px] border-t border-gray-300 bg-[#F3F3F3] p-5">
+                <div class="flex shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                     <button type="button" wire:click="closeActivityEditModal"
-                        class="inline-flex h-12 items-center justify-center rounded-xl border border-[#1A3A6B] bg-white px-6 text-[15px] font-medium text-[#1A3A6B] transition hover:bg-gray-100 focus:outline-none focus:ring-0">Cancelar</button>
+                        class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black focus:outline-none focus:ring-0">Cancelar</button>
                     <button type="submit" wire:loading.attr="disabled" wire:target="saveActivityTimes"
-                        class="inline-flex h-12 items-center justify-center rounded-xl bg-[#1A3A6B] px-6 text-[15px] font-medium text-white transition hover:bg-[#15305a] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                        class="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-[20px] py-[15px] text-[15px] font-semibold text-white focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                         <span wire:loading.remove wire:target="saveActivityTimes">Guardar cambios</span>
                         <span wire:loading wire:target="saveActivityTimes">Guardando...</span>
                     </button>
