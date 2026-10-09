@@ -289,14 +289,21 @@
                         </nav>
                     </aside>
 
-                    <div style="display:flex;min-width:0;min-height:0;flex-direction:column;background:#fff;">
+                    <div x-data="{
+                            syncActivityTableHorizontal(event) {
+                                const left = event.target.scrollLeft;
+                                this.$refs.activityTableHeader.scrollLeft = left;
+                                this.$refs.activityTableBody.scrollLeft = left;
+                                this.$refs.activityTableTotal.scrollLeft = left;
+                            }
+                        }" style="display:flex;min-width:0;min-height:0;flex-direction:column;background:#fff;">
                         <div style="display:flex;height:70px;box-sizing:border-box;flex:none;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #d4d4d8;padding:10px 20px;">
                             <h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3>
                             <div style="display:flex;align-items:center;gap:20px;color:#000;"><span>Tiempo efectivo: <strong style="font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</strong></span><span>Cierres automáticos: {{ $activeResultData['autoClosedCount'] ?? 0 }}</span></div>
                         </div>
-                        <div class="group-scrollbar" style="min-height:0;flex:1;overflow-x:auto;overflow-y:hidden;">
-                            <div role="table" aria-label="Detalle de actividades por colaborador" style="display:flex;height:100%;min-width:1360px;flex-direction:column;--activity-columns:160px 210px 210px 180px 180px 210px 160px 90px;">
-                                <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
+                        <div role="table" aria-label="Detalle de actividades por colaborador" style="display:flex;min-height:0;flex:1;flex-direction:column;--activity-columns:160px 210px 210px 180px 180px 210px 160px 90px;">
+                            <div x-ref="activityTableHeader" role="rowgroup" style="flex:none;overflow:hidden;background:#f4f4f5;">
+                                <div style="width:1400px;">
                                     <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:76px;align-items:center;border-bottom:1px solid #d4d4d8;">
                                         <div role="columnheader" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;font-weight:600;">Fecha</div>
                                         @foreach ($activeResultActivityDetail['columns'] as $column)
@@ -306,15 +313,17 @@
                                         <div role="columnheader" style="padding:15px 20px;text-align:center;font-weight:600;">Acciones</div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div role="rowgroup" class="group-scrollbar" style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;background:#fff;">
+                            <div x-ref="activityTableBody" role="rowgroup" class="group-scrollbar" style="min-height:0;flex:1;overflow-x:hidden;overflow-y:scroll;scrollbar-gutter:stable;background:#fff;">
+                                <div style="width:1400px;">
                                     @forelse ($activeResultActivityDetail['groups'] as $dayGroup)
                                         @foreach ($dayGroup['rows'] as $rowIndex => $row)
                                             <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:70px;align-items:center;border-bottom:1px solid #e4e4e7;background:#fff;">
-                                                <div role="cell" style="padding:15px 20px;">{{ $loop->first ? $dayGroup['date'] : '' }}</div>
+                                                <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #e4e4e7;padding:15px 20px;">{{ $loop->first ? $dayGroup['date'] : '' }}</div>
                                                 @foreach ($activeResultActivityDetail['columns'] as $columnIndex => $column)
                                                     @continue($column === 'Observaciones')
-                                                    <div role="cell" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:15px 20px;{{ in_array($column, ['Intervalos', 'Tiempo efectivo'], true) ? 'font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-variant-numeric:tabular-nums;' : '' }}" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</div>
+                                                    <div role="cell" style="align-self:stretch;display:flex;min-width:0;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-right:1px solid #e4e4e7;padding:15px 20px;{{ in_array($column, ['Intervalos', 'Tiempo efectivo'], true) ? 'font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-variant-numeric:tabular-nums;' : '' }}" title="{{ $row[$columnIndex] ?? '' }}"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $row[$columnIndex] ?? '' }}</span></div>
                                                 @endforeach
                                                 <div role="cell" style="padding:15px 20px;text-align:center;">
                                                     <button type="button" @if (! $resultIsExample) wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" @endif @disabled($resultIsExample) aria-label="{{ $resultIsExample ? 'Edición deshabilitada en la vista de ejemplo' : 'Editar actividad' }}" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;{{ $resultIsExample ? 'opacity:.35;cursor:not-allowed;' : '' }}">
@@ -327,8 +336,10 @@
                                         <div role="row" style="display:flex;min-height:160px;align-items:center;justify-content:center;color:#71717a;">Sin registros en el periodo.</div>
                                     @endforelse
                                 </div>
+                            </div>
 
-                                <div role="rowgroup" style="position:relative;z-index:2;flex:none;background:#f4f4f5;">
+                            <div x-ref="activityTableTotal" role="rowgroup" style="flex:none;overflow:hidden;background:#f4f4f5;">
+                                <div style="width:1400px;">
                                     <div role="row" style="display:grid;grid-template-columns:var(--activity-columns);min-height:64px;align-items:center;border-top:1px solid #d4d4d8;font-weight:600;color:#000;">
                                         <div role="cell" style="align-self:stretch;display:flex;align-items:center;border-right:1px solid #d4d4d8;padding:15px 20px;">TOTAL</div>
                                         <div role="cell" style="align-self:stretch;border-right:1px solid #d4d4d8;padding:15px 20px;"></div>
@@ -341,20 +352,23 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="group-scrollbar" style="flex:none;overflow-x:scroll;overflow-y:hidden;background:#fff;" @scroll="syncActivityTableHorizontal($event)" aria-label="Desplazar columnas del detalle de actividades">
+                                <div style="width:1400px;height:1px;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));">
-                    <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;border-right:1px solid #e4e4e7;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                    <button data-export-individual wire:click="exportSelectedIndividualReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->count() !== 1) style="display:flex;min-height:82px;align-items:center;justify-content:center;gap:10px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
                         <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                         <span><strong style="display:block;font-size:15px;">Reporte individual</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Información de una persona</small></span>
                     </button>
-                    <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;border-right:1px solid #e4e4e7;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                    <button data-export-group wire:click="exportSelectedIndividualBatch" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;justify-content:center;gap:10px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
                         <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                         <span><strong style="display:block;font-size:15px;">Reporte grupal</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Información de seleccionados</small></span>
                     </button>
-                    <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;gap:15px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
+                    <button data-export-general wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent || $reportedGroupUsers->isEmpty()) style="display:flex;min-height:82px;align-items:center;justify-content:center;gap:10px;border:0;background:#fff;padding:15px 20px;text-align:left;color:#000;cursor:pointer;disabled:opacity-40;">
                         <svg style="width:20px;height:20px;flex:none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                         <span><strong style="display:block;font-size:15px;">Reporte general</strong><small style="display:block;margin-top:5px;font-size:13px;color:#71717a;">Consolidado del periodo</small></span>
                     </button>
