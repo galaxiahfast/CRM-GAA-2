@@ -39,11 +39,13 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringContainsString('<tr class="section-heading"><th class="section-heading-cell" colspan="3">Detalle de asistencia</th></tr>', $html);
         $this->assertStringContainsString('.section th.num{text-align:center!important}', $html);
         $this->assertStringContainsString('.section td.num{text-align:left!important}', $html);
+        $this->assertStringContainsString('td.attendance-number{text-align:right!important;font-variant-numeric:tabular-nums', $html);
+        $this->assertStringContainsString('<td class="num attendance-number">07h 00m 00s</td>', $html);
+        $this->assertStringContainsString('<td>09:00:00, 16:00:00</td>', $html);
         $this->assertStringContainsString('font-size:9px;font-weight:normal', $html);
         $this->assertStringContainsString('.meta td{padding:2px 0}', $html);
         $this->assertStringContainsString('.meta{margin-bottom:0}', $html);
         $this->assertStringContainsString('border:1px solid #9ca3af;padding:8px', $html);
-        $this->assertStringContainsString('font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1', $html);
         $this->assertStringNotContainsString('background:#fff1f2', $html);
         $this->assertStringContainsString('Total acumulado', $html);
         $this->assertSame(1, substr_count($html, 'class="late-arrival"'));
@@ -54,7 +56,7 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertGreaterThan((float) $mediaBox[2], (float) $mediaBox[1]);
     }
 
-    public function test_nine_column_attendance_table_uses_stable_numeric_widths(): void
+    public function test_nine_column_attendance_table_keeps_different_proportional_widths(): void
     {
         $columns = ['Fecha jornada', 'Marcas / chequeos', 'Tiempo neto', 'Hrs. decimales', 'Pago base', 'Comida', 'Bono', 'Total del día', 'Estado'];
         $report = new ReportData(
@@ -68,7 +70,8 @@ class AttendancePdfFormatTest extends TestCase
         $html = $method->invoke($exporter, $report);
 
         $this->assertStringContainsString('<table class="section columns-9">', $html);
-        $this->assertStringContainsString('<col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%">', $html);
+        $this->assertStringContainsString('<col style="width:12%"><col style="width:22%">', $html);
+        $this->assertStringContainsString('<col style="width:9%"><col style="width:9%"><col style="width:9%">', $html);
     }
 
     public function test_long_attendance_selection_is_shortened_without_wrapping_the_header(): void
