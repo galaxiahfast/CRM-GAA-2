@@ -24,17 +24,24 @@ class BackupUploadController extends Controller
             'mime_type' => ['nullable', 'string', 'max:150'],
             'size' => ['required', 'integer', 'min:1', 'max:'.config('backup-storage.max_file_size')],
             'fingerprint' => ['required', 'string', 'max:500'],
+            'replace_upload_id' => ['nullable', 'uuid', 'exists:backup_uploads,id'],
         ]);
 
         $extension = mb_strtolower((string) pathinfo(basename($data['file_name']), PATHINFO_EXTENSION));
         abort_unless($extension === 'zip', 422, 'Selecciona un archivo ZIP válido.');
 
+        $replacement = filled($data['replace_upload_id'] ?? null)
+            ? BackupUpload::query()->findOrFail($data['replace_upload_id'])
+            : null;
+        abort_if($replacement && $replacement->site !== $data['site'], 422, 'El respaldo a reemplazar pertenece a otra sede.');
+        abort_if($replacement && $replacement->status !== BackupUpload::STATUS_COMPLETED, 422, 'Solo se puede reemplazar un respaldo completado.');
+
         $uploadKey = hash('sha256', implode('|', [
-            $request->user()->id, $data['site'], $data['fingerprint'],
+            $request->user()->id, $data['site'], $data['fingerprint'], $replacement?->id ?? '',
         ]));
         $chunkSize = max(1024, (int) config('backup-storage.chunk_size'));
 
-        $upload = DB::transaction(function () use ($data, $extension, $uploadKey, $chunkSize, $request): BackupUpload {
+        $upload = DB::transaction(function () use ($data, $extension, $uploadKey, $chunkSize, $request, $replacement): BackupUpload {
             $existing = BackupUpload::query()
                 ->where('upload_key', $uploadKey)
                 ->where('user_id', $request->user()->id)
@@ -69,6 +76,9 @@ class BackupUploadController extends Controller
                 'status' => $activeCount < (int) config('backup-storage.max_active_uploads', 2)
                     ? BackupUpload::STATUS_UPLOADING
                     : BackupUpload::STATUS_WAITING,
+                'supersedes_upload_id' => $replacement?->id,
+                'assigned_customer' => $replacement?->assigned_customer,
+                'notes' => $replacement?->notes,
                 'last_activity_at' => now(),
             ]);
         });

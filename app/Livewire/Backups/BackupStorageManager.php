@@ -3,7 +3,9 @@
 namespace App\Livewire\Backups;
 
 use App\Models\BackupUpload;
+use App\Services\Backups\BackupStoragePurger;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -50,6 +52,32 @@ class BackupStorageManager extends Component
         $this->activeTab = 'backups';
     }
 
+    public function updateMetadata(string $uploadId, ?string $assignedCustomer, ?string $notes): void
+    {
+        Gate::authorize('manage-system-backups');
+        $data = Validator::make([
+            'assigned_customer' => $assignedCustomer,
+            'notes' => $notes,
+        ], [
+            'assigned_customer' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ])->validate();
+
+        BackupUpload::query()->findOrFail($uploadId)->update([
+            'assigned_customer' => filled($data['assigned_customer'] ?? null) ? trim($data['assigned_customer']) : null,
+            'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
+        ]);
+
+        $this->dispatch('backup-metadata-saved');
+    }
+
+    public function deleteBackup(string $uploadId): void
+    {
+        Gate::authorize('manage-system-backups');
+        app(BackupStoragePurger::class)->purge(BackupUpload::query()->findOrFail($uploadId));
+        $this->dispatch('backup-record-deleted');
+    }
+
     public function render()
     {
         Gate::authorize('manage-system-backups');
@@ -58,6 +86,7 @@ class BackupStorageManager extends Component
         $completed = BackupUpload::query()
             ->where('site', $site)
             ->where('status', BackupUpload::STATUS_COMPLETED)
+            ->whereNull('superseded_at')
             ->latest('completed_at')
             ->get();
 
@@ -93,7 +122,20 @@ class BackupStorageManager extends Component
             }))
             ->take(150);
 
+        $activeUploads = BackupUpload::query()
+            ->where('site', $site)
+            ->whereIn('status', [
+                BackupUpload::STATUS_WAITING,
+                BackupUpload::STATUS_UPLOADING,
+                BackupUpload::STATUS_QUEUED,
+                BackupUpload::STATUS_PROCESSING,
+            ])
+            ->latest('created_at')
+            ->limit(25)
+            ->get();
+
         $statusCounts = BackupUpload::query()
+            ->where('site', $site)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -102,9 +144,11 @@ class BackupStorageManager extends Component
             'backupTree' => $backupTree,
             'history' => $history,
             'statusCounts' => $statusCounts,
+            'activeUploads' => $activeUploads,
             'sites' => config('backup-storage.sites'),
             'site' => $site,
             'uploadEndpoint' => route('activity-backups.uploads.initialize'),
+            'maxConcurrentUploads' => max(1, (int) config('backup-storage.max_active_uploads', 2)),
         ])->layout('layouts.app');
     }
 }

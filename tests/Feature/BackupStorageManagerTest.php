@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BackupStorageManagerTest extends TestCase
@@ -47,10 +48,10 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Mérida')
             ->assertSee('Tulum')
             ->assertSee('Cancún')
-            ->assertSeeInOrder(['Subir respaldo', 'Selecciona la sede y el archivo ZIP', 'Sede del respaldo', 'Seleccionar ZIP'])
+            ->assertSeeInOrder(['Subir respaldos', 'Selecciona varios ZIP', 'Sede del respaldo', 'ZIP', 'Carpeta'])
             ->assertDontSee('Destino')
             ->assertSee('Historial de registros')
-            ->assertSee('Seleccionar ZIP')
+            ->assertSee('multiple', false)
             ->assertDontSee('Selecciona un cliente')
             ->assertSee('data-backup-site', false);
         $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
@@ -137,6 +138,86 @@ class BackupStorageManagerTest extends TestCase
             'fingerprint' => 'invalid-backup',
         ])->assertUnprocessable()
             ->assertJsonPath('message', 'Selecciona un archivo ZIP válido.');
+    }
+
+    public function test_history_metadata_can_be_edited_and_the_backup_can_be_purged(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        $admin = $this->user('Administrador', 'admin-history@datamid.test');
+        $upload = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'history-actions'),
+            'site' => 'merida',
+            'user_id' => $admin->id,
+            'original_name' => 'historial.zip',
+            'extension' => 'zip',
+            'mime_type' => 'application/zip',
+            'size' => 10,
+            'chunk_size' => 1024,
+            'total_chunks' => 1,
+            'uploaded_chunks' => [0],
+            'received_bytes' => 10,
+            'status' => BackupUpload::STATUS_COMPLETED,
+            'storage_path' => 'backup-archives/merida/historial.zip',
+            'manifest' => [[
+                'customer' => 'Cliente Historial', 'category' => 'bak', 'name' => 'historial.bak',
+                'path' => 'backups/merida/cliente-historial/Bak/historial.bak', 'size' => 10,
+            ]],
+            'completed_at' => now(),
+        ]);
+        Storage::disk('local')->put($upload->storage_path, '0123456789');
+        Storage::disk('local')->put($upload->manifest[0]['path'], '0123456789');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('updateMetadata', $upload->id, 'Cliente asignado', 'Observación editada');
+
+        $this->assertDatabaseHas('backup_uploads', [
+            'id' => $upload->id,
+            'assigned_customer' => 'Cliente asignado',
+            'notes' => 'Observación editada',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('deleteBackup', $upload->id);
+
+        $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
+        Storage::disk('local')->assertMissing('backup-archives/merida/historial.zip');
+        Storage::disk('local')->assertMissing('backups/merida/cliente-historial/Bak/historial.bak');
+    }
+
+    public function test_replacement_upload_marks_the_previous_record_as_superseded(): void
+    {
+        Storage::fake('local');
+        Queue::fake();
+        config()->set('backup-storage.disk', 'local');
+        config()->set('backup-storage.chunk_size', 1024);
+        $admin = $this->user('Administrador', 'admin-replacement@datamid.test');
+        $previous = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'previous'), 'site' => 'merida', 'user_id' => $admin->id,
+            'original_name' => 'anterior.zip', 'extension' => 'zip', 'mime_type' => 'application/zip',
+            'size' => 10, 'chunk_size' => 1024, 'total_chunks' => 1, 'uploaded_chunks' => [0],
+            'received_bytes' => 10, 'status' => BackupUpload::STATUS_COMPLETED,
+            'storage_path' => 'backup-archives/merida/anterior.zip', 'manifest' => [], 'completed_at' => now(),
+        ]);
+        $payload = $this->zip([
+            'Cliente Reemplazo/Index/nuevo.index' => 'índice',
+            'Cliente Reemplazo/Bak/nuevo.bak' => 'respaldo',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida', 'file_name' => 'nuevo.zip', 'mime_type' => 'application/zip',
+            'size' => strlen($payload), 'fingerprint' => 'nuevo:zip:replacement',
+            'replace_upload_id' => $previous->id,
+        ])->assertOk();
+        $replacement = BackupUpload::query()->findOrFail($response->json('id'));
+        $this->postRaw(route('activity-backups.uploads.chunks.store', [$replacement, 0]), $payload)->assertOk();
+        $this->postJson(route('activity-backups.uploads.complete', $replacement))->assertAccepted();
+        (new AssembleBackupUpload($replacement->id))->handle(app(BackupArchiveExtractor::class));
+
+        $this->assertNotNull($previous->fresh()->superseded_at);
+        $this->assertSame($previous->id, $replacement->fresh()->supersedes_upload_id);
     }
 
     private function postRaw(string $uri, string $content)

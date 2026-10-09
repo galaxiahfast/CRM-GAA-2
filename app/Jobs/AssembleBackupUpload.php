@@ -99,6 +99,14 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
             'completed_at' => now(),
             'last_activity_at' => now(),
         ])->save();
+
+        if (filled($upload->supersedes_upload_id)) {
+            BackupUpload::query()
+                ->whereKey($upload->supersedes_upload_id)
+                ->where('site', $upload->site)
+                ->whereNull('superseded_at')
+                ->update(['superseded_at' => now()]);
+        }
     }
 
     public function failed(?Throwable $exception): void

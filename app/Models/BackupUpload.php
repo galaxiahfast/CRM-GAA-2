@@ -25,6 +25,7 @@ class BackupUpload extends Model
         'upload_key', 'site', 'customer_id', 'user_id', 'category', 'original_name',
         'extension', 'mime_type', 'size', 'chunk_size', 'total_chunks',
         'uploaded_chunks', 'received_bytes', 'status', 'storage_path', 'manifest', 'checksum',
+        'assigned_customer', 'notes', 'supersedes_upload_id', 'superseded_at',
         'error_message', 'last_activity_at', 'queued_at', 'completed_at',
     ];
 
@@ -40,6 +41,7 @@ class BackupUpload extends Model
             'last_activity_at' => 'datetime',
             'queued_at' => 'datetime',
             'completed_at' => 'datetime',
+            'superseded_at' => 'datetime',
         ];
     }
 
