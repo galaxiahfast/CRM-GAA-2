@@ -717,10 +717,17 @@
                     <h2 class="text-[15px] font-semibold text-black">Historial de cambios</h2>
                     <p class="mt-[5px] text-[15px] text-zinc-500">Consulta las correcciones realizadas en las jornadas.</p>
                 </div>
-                <span class="inline-flex items-center gap-[10px] text-[15px] font-medium text-black">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
-                    {{ $changeHistoryIsExample ? 'Vista de ejemplo' : count($changeHistory).' '.(count($changeHistory) === 1 ? 'cambio registrado' : 'cambios registrados') }}
-                </span>
+                <div class="flex flex-wrap items-center gap-[20px]">
+                    <span class="inline-flex items-center gap-[10px] text-[15px] font-medium text-black">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                        {{ $changeHistoryIsExample ? 'Vista de ejemplo' : count($changeHistory).' '.(count($changeHistory) === 1 ? 'cambio registrado' : 'cambios registrados') }}
+                    </span>
+                    <button type="button" wire:click="exportChangeHistory" wire:loading.attr="disabled" wire:target="exportChangeHistory" @disabled(empty($changeHistory)) class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black disabled:cursor-not-allowed disabled:text-zinc-400 focus:outline-none focus:ring-0">
+                        <svg wire:loading.remove wire:target="exportChangeHistory" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                        <svg wire:loading wire:target="exportChangeHistory" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"/></svg>
+                        Descargar PDF
+                    </button>
+                </div>
             </header>
 
             <div class="attendance-scrollbar max-h-[560px] overflow-y-auto overscroll-contain bg-white" style="overscroll-behavior: contain;">

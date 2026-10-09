@@ -89,6 +89,24 @@ class AttendanceExportService
         );
     }
 
+    /** @param array<int, array<string, mixed>> $changes */
+    public function downloadChangeHistory(array $changes, bool $isExample): StreamedResponse
+    {
+        abort_if($changes === [], 422);
+
+        $content = Pdf::loadView('livewire.time-control.reports.attendance-change-history-pdf', [
+            'changes' => $changes,
+            'isExample' => $isExample,
+            'generatedAt' => Carbon::now(),
+        ])->setPaper('a4', 'landscape')->output();
+
+        return response()->streamDownload(
+            fn () => print ($content),
+            'reloj-checador-historial_'.Carbon::now()->format('Y-m-d').'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
     /** @param Collection<int, User> $users */
     private function selectionNames(Collection $users): string
     {

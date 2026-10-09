@@ -412,6 +412,18 @@ class AttendanceManagement extends Component
         $this->searchAttendance($attendanceService, $settingsService);
     }
 
+    public function exportChangeHistory(AttendanceExportService $attendanceExportService): StreamedResponse
+    {
+        abort_unless(Gate::allows('view-time-admin'), 403);
+        abort_unless($this->changeHistoryLoaded && $this->changeHistory !== [], 422);
+        $this->skipRender();
+
+        return $attendanceExportService->downloadChangeHistory(
+            $this->changeHistory,
+            $this->changeHistoryIsExample,
+        );
+    }
+
     public function exportSelectionReport(
         string $mode,
         AttendanceService $attendanceService,

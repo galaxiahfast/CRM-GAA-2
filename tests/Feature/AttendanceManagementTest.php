@@ -144,9 +144,12 @@ class AttendanceManagementTest extends TestCase
             ->assertCount('changeHistory', 8)
             ->assertSee('Vista de ejemplo')
             ->assertDontSeeHtml('>Ejemplo</span>')
+            ->assertSeeHtml('wire:click="exportChangeHistory"')
             ->assertSeeHtml('grid min-w-0 grid-rows-3 items-center gap-[10px] text-left')
             ->assertDontSeeHtml('sm:items-center sm:text-center')
-            ->assertSeeHtml('max-h-[560px]');
+            ->assertSeeHtml('max-h-[560px]')
+            ->call('exportChangeHistory')
+            ->assertFileDownloaded('reloj-checador-historial_'.now()->format('Y-m-d').'.pdf');
     }
 
     public function test_admin_can_correct_daily_marks_pay_and_bonus_with_comment(): void
