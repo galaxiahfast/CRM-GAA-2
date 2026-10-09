@@ -397,6 +397,19 @@
                     </li>
                 @endif
 
+                @can('manage-system-backups')
+                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <a href="{{ route('activity-backups.index') }}"
+                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('activity-backups.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('activity-backups.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h7l2 2h9v11H3V7Zm5 5h8m-4-4v8" />
+                            </svg>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Gestión de Respaldos</span>
+                        </a>
+                    </li>
+                @endcan
+
                 <!-- Hoja de Entrega: actividad independiente -->
                 @can('manage-delivery-notes')
                     <li class="relative pt-[15px] px-[15px] pb-0 m-0">

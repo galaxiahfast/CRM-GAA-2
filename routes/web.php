@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\BackupUploadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
@@ -12,6 +13,7 @@ use App\Livewire\Administracion\PanelAdministracion;
 use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\GestionRoles;
 use App\Livewire\Administracion\Users\GestionUsuarios;
+use App\Livewire\Backups\BackupStorageManager;
 use App\Livewire\Customer\CrearCliente;
 use App\Livewire\Customer\DetalleCliente;
 use App\Livewire\Customer\EditarCliente;
@@ -236,6 +238,20 @@ Route::middleware([
     Route::get('/time/admin/online', ActiveTimers::class)
         ->middleware('access.permission:time-control.supervision.view')
         ->name('time.admin.online');
+
+    // Respaldos privados por sede y cliente (Administradores / Contadores).
+    Route::prefix('actividades/respaldos')
+        ->middleware('can:manage-system-backups')
+        ->name('activity-backups.')
+        ->group(function () {
+            Route::get('/', BackupStorageManager::class)->name('index');
+            Route::post('/uploads', [BackupUploadController::class, 'initialize'])->name('uploads.initialize');
+            Route::get('/uploads/{upload}/status', [BackupUploadController::class, 'status'])->name('uploads.status');
+            Route::post('/uploads/{upload}/chunks/{index}', [BackupUploadController::class, 'storeChunk'])
+                ->whereNumber('index')->middleware('throttle:180,1')->name('uploads.chunks.store');
+            Route::post('/uploads/{upload}/complete', [BackupUploadController::class, 'complete'])->name('uploads.complete');
+            Route::get('/files/{upload}/download', [BackupUploadController::class, 'download'])->name('download');
+        });
 
     // ==========================================
     // SOPORTE (Disponible para todos los usuarios autenticados)

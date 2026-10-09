@@ -106,6 +106,11 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-delivery-notes', fn (User $user): bool => $user->isAdmin());
         Gate::define('manage-backup-reports', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manage-system-backups', function (User $user): bool {
+            $roleName = mb_strtolower((string) ($user->role?->role ?? $user->role?->name ?? ''));
+
+            return $user->isAdmin() || str_contains($roleName, 'contador');
+        });
     }
 
     private function registerSystemNotificationListeners(): void
