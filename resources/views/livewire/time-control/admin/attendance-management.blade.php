@@ -209,6 +209,14 @@
         .attendance-monochrome table thead tr { background: #fff !important; }
         .attendance-monochrome :is(input, textarea, button):focus,
         .attendance-monochrome :is(input, textarea, button):focus-visible { outline: none !important; box-shadow: none !important; }
+        .attendance-monochrome :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+        .attendance-monochrome :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+            border-color: #d4d4d8 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-color: transparent !important;
+            --tw-ring-offset-width: 0px !important;
+        }
         :is(#attendance-edit-modal, .attendance-time-popover) :is(input, textarea, select, button):focus,
         :is(#attendance-edit-modal, .attendance-time-popover) :is(input, textarea, select, button):focus-visible {
             outline: none !important;
@@ -337,7 +345,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-[30px]">
             <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" @disabled(! $searched)
-                    class="attendance-header-emphasis inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] text-black transition-colors hover:text-gray-500 disabled:cursor-not-allowed disabled:text-gray-500 disabled:opacity-100">
+                    class="attendance-header-emphasis inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] text-black disabled:cursor-not-allowed disabled:text-gray-500 disabled:opacity-100 focus:outline-none focus:ring-0">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
                 Descargar PDF
             </button>
@@ -360,22 +368,22 @@
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Administración de marcas biométricas, ajustes por día y exportación.</p>
             </div>
         </div>
-        <nav class="flex flex-wrap items-center gap-[30px]" aria-label="Secciones del informe">
+        <nav class="flex flex-wrap items-center gap-[20px]" aria-label="Secciones del informe">
             <button type="button" wire:click="showPreparationSection"
                     @if ($reportSection === 'prepare') aria-current="page" @endif
-                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'prepare' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] focus:outline-none focus:ring-0 {{ $reportSection === 'prepare' ? 'font-semibold text-black' : 'font-normal text-zinc-500' }}">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
                 Generar informe
             </button>
             <button type="button" @click="syncSelection(); $wire.showResultsSection()"
                     @if ($reportSection === 'results') aria-current="page" @endif
-                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'results' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] focus:outline-none focus:ring-0 {{ $reportSection === 'results' ? 'font-semibold text-black' : 'font-normal text-zinc-500' }}">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
                 Ver resultados
             </button>
             <button type="button" wire:click="showHistorySection"
                     @if ($reportSection === 'history') aria-current="page" @endif
-                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] transition-colors {{ $reportSection === 'history' ? 'font-semibold text-black' : 'font-normal text-zinc-500 hover:text-black' }}">
+                    class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] focus:outline-none focus:ring-0 {{ $reportSection === 'history' ? 'font-semibold text-black' : 'font-normal text-zinc-500' }}">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
                 Historial de cambios
             </button>
@@ -393,7 +401,7 @@
                 <h2 class="text-[15px] font-semibold text-black">Preparar informe</h2>
                 <p class="mt-[5px] truncate text-[15px] text-zinc-500">Configura y genera los resultados fácilmente.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-[30px] text-[15px] font-medium text-black">
+            <div class="flex flex-wrap items-center gap-[20px] text-[15px] font-medium text-black">
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span>
                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
@@ -411,14 +419,14 @@
                        placeholder="Buscar colaborador, ID o área..."
                        class="attendance-report-search h-[50px] w-full rounded-xl border border-zinc-200 bg-white pl-[45px] pr-[55px] text-[15px] text-black outline-none focus:ring-0">
                 <button type="button" @click="startVoiceSearch()" :title="voiceListening ? 'Detener búsqueda por voz' : 'Buscar por voz'" aria-label="Buscar por voz"
-                        class="absolute right-[10px] top-1/2 inline-flex h-[34px] w-[34px] -translate-y-1/2 items-center justify-center rounded-lg text-black hover:bg-zinc-100"
+                        class="absolute right-[10px] top-1/2 inline-flex h-[34px] w-[34px] -translate-y-1/2 items-center justify-center rounded-lg text-black focus:outline-none focus:ring-0"
                         :class="voiceListening ? 'bg-black text-white animate-pulse' : ''">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Zm-7 9v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8"/></svg>
                 </button>
             </div>
             <div class="flex items-center gap-[20px] whitespace-nowrap">
-                <button type="button" @click="selectAllUsers()" class="inline-flex items-center gap-[8px] p-0 font-semibold text-black hover:text-zinc-600"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
-                <button type="button" @click="clearAllUsers()" class="inline-flex items-center gap-[8px] p-0 text-zinc-500 hover:text-black"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
+                <button type="button" @click="selectAllUsers()" class="inline-flex items-center gap-[10px] p-0 font-semibold text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
+                <button type="button" @click="clearAllUsers()" class="inline-flex items-center gap-[10px] p-0 text-zinc-500 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
             </div>
         </div>
 
@@ -431,29 +439,29 @@
                 @foreach (['from' => 'Desde', 'to' => 'Hasta'] as $dateField => $dateLabel)
                     <div class="relative grid gap-[10px] font-semibold text-black" x-data="datePicker($wire.entangle('{{ $dateField }}'))" @click.outside="open = false">
                         <span>{{ $dateLabel }}</span>
-                        <button type="button" @click="open = !open; if (open) setCursorFromValue()" class="flex h-[50px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[20px] font-normal text-black outline-none transition hover:bg-zinc-50 focus:border-zinc-200 focus:outline-none focus:ring-0" :aria-expanded="open">
+                        <button type="button" @click="open = !open; if (open) setCursorFromValue()" class="flex h-[50px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[20px] font-normal text-black outline-none focus:border-zinc-200 focus:outline-none focus:ring-0" :aria-expanded="open">
                             <span x-text="formattedValue"></span>
                             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
                         </button>
                         <div x-cloak x-show="open" x-transition class="absolute left-0 top-full z-[80] mt-[8px] w-[300px] rounded-xl border border-zinc-200 bg-white p-[15px] font-normal text-black shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
                             <div class="mb-[15px] flex items-center justify-between gap-[10px]">
-                                <button type="button" @click="previousMonth()" aria-label="Mes anterior" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg></button>
+                                <button type="button" @click="previousMonth()" aria-label="Mes anterior" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg></button>
                                 <strong class="text-[15px] font-semibold" x-text="monthLabel"></strong>
-                                <button type="button" @click="nextMonth()" aria-label="Mes siguiente" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg></button>
+                                <button type="button" @click="nextMonth()" aria-label="Mes siguiente" class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-black focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg></button>
                             </div>
                             <div class="mb-[5px] grid grid-cols-7 text-center text-[12px] font-medium text-zinc-400">
                                 @foreach (['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'] as $weekday)<span>{{ $weekday }}</span>@endforeach
                             </div>
                             <div class="grid grid-cols-7 gap-[3px]">
                                 <template x-for="day in days" :key="day.date.toISOString()">
-                                    <button type="button" @click="selectDate(day.date)" class="inline-flex aspect-square items-center justify-center rounded-lg text-[13px] transition focus:outline-none focus:ring-0" :class="isSelected(day.date) ? 'bg-black font-semibold text-white' : (isToday(day.date) ? 'border border-black bg-white font-semibold text-black' : (day.currentMonth ? 'text-black hover:bg-zinc-100' : 'text-zinc-300 hover:bg-zinc-50'))" x-text="day.date.getDate()"></button>
+                                    <button type="button" @click="selectDate(day.date)" class="inline-flex aspect-square items-center justify-center rounded-lg text-[13px] focus:outline-none focus:ring-0" :class="isSelected(day.date) ? 'bg-black font-semibold text-white' : (isToday(day.date) ? 'border border-black bg-white font-semibold text-black' : (day.currentMonth ? 'text-black' : 'text-zinc-300'))" x-text="day.date.getDate()"></button>
                                 </template>
                             </div>
-                            <button type="button" @click="selectDate(new Date())" class="mt-[10px] w-full rounded-lg bg-zinc-100 px-[12px] py-[8px] text-[13px] font-medium text-black transition hover:bg-zinc-200 focus:outline-none focus:ring-0">Seleccionar hoy</button>
+                            <button type="button" @click="selectDate(new Date())" class="mt-[10px] w-full rounded-lg bg-zinc-100 px-[20px] py-[15px] text-[13px] font-medium text-black focus:outline-none focus:ring-0">Seleccionar hoy</button>
                         </div>
                     </div>
                 @endforeach
-                <button type="submit" wire:loading.attr="disabled" wire:target="generateSelectionReport" class="inline-flex h-[50px] w-full shrink-0 items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] font-normal text-white hover:bg-zinc-800 disabled:opacity-50">
+                <button type="submit" wire:loading.attr="disabled" wire:target="generateSelectionReport" class="inline-flex h-[50px] w-full shrink-0 items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] font-normal text-white focus:outline-none focus:ring-0 disabled:opacity-50">
                     <svg wire:loading.remove wire:target="generateSelectionReport" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
                     <svg wire:loading wire:target="generateSelectionReport" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"/></svg>
                     Generar informe
@@ -482,13 +490,13 @@
                                 </div>
                                 <span class="text-zinc-500">{{ $areaUsers->count() }} colaboradores</span>
                             </div>
-                            <div class="grid gap-[15px] p-[20px] sm:grid-cols-2 xl:grid-cols-3">
+                            <div class="grid gap-[20px] p-[20px] sm:grid-cols-2 xl:grid-cols-3">
                                 @foreach ($areaUsers as $reportUser)
                                     @php
                                         $reportUserSearch = strtolower(trim($reportUser->name.' '.$reportUser->last_name).' '.$reportUser->employee_id.' '.$areaName);
                                     @endphp
-                                    <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white p-[10px] transition hover:bg-zinc-100">
-                                        <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-[15px] p-[5px]">
+                                    <div x-show="reportSearch === '' || @js($reportUserSearch).includes(reportSearch.toLowerCase())" class="flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white p-0">
+                                        <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-[10px] px-[20px] py-[15px]">
                                             <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
                                                 <input type="checkbox" x-model.number="selectedIds" value="{{ $reportUser->id }}" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-zinc-300 bg-white checked:border-zinc-300 checked:bg-white focus:outline-none focus:ring-0">
                                                 <svg class="pointer-events-none absolute h-3.5 w-3.5 text-black opacity-0 peer-checked:opacity-100" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true">
@@ -497,7 +505,7 @@
                                             </span>
                                             <span class="min-w-0 flex-1"><span class="block truncate font-medium text-black">{{ trim($reportUser->name.' '.$reportUser->last_name) }}</span><span class="mt-[3px] block truncate text-zinc-500">ID Checador: {{ $reportUser->employee_id }}</span></span>
                                         </label>
-                                        <button type="button" wire:click.stop="openEmployeeIdModal({{ $reportUser->id }})" title="Editar ID del checador" aria-label="Editar ID del checador de {{ trim($reportUser->name.' '.$reportUser->last_name) }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0">
+                                        <button type="button" wire:click.stop="openEmployeeIdModal({{ $reportUser->id }})" title="Editar ID del checador" aria-label="Editar ID del checador de {{ trim($reportUser->name.' '.$reportUser->last_name) }}" class="mr-[15px] inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white focus:outline-none focus:ring-0">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
                                         </button>
                                     </div>
@@ -515,20 +523,20 @@
     @endif
 
     @if ($selectionReportIsCurrent && $reportSection === 'results')
-    <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
+    <section class="admin-attendance-content mx-[50px] mb-[50px] mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
         <div>
             <div class="flex min-h-[76px] items-center justify-between gap-[20px] border-b border-zinc-200 bg-white px-[20px] py-[15px]">
                 <div>
                     <h2 class="text-[15px] font-semibold text-black">Informe de asistencia</h2>
                     <p class="mt-[5px] text-[15px] text-zinc-500">Selecciona un colaborador para consultar sus jornadas.</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-[25px] font-medium text-black">
+                <div class="flex flex-wrap items-center gap-[20px] font-medium text-black">
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         {{ $reportedUsers->count() }} {{ $reportedUsers->count() === 1 ? 'seleccionado' : 'seleccionados' }}
                     </span>
-                    <span class="inline-flex items-center gap-[8px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>{{ $from }} — {{ $to }}</span>
-                    <span class="inline-flex items-center gap-[8px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m0 14h16M8 15l3-3 3 2 5-6"/></svg>{{ count($payrollRows) }} jornadas</span>
+                    <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>{{ $from }} — {{ $to }}</span>
+                    <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m0 14h16M8 15l3-3 3 2 5-6"/></svg>{{ count($payrollRows) }} jornadas</span>
                 </div>
             </div>
             @php
@@ -542,15 +550,15 @@
     {{-- Tabla de resultados --}}
         <div class="grid border-t border-zinc-200 bg-white lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside class="flex min-h-0 flex-col border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r" aria-label="Colaboradores incluidos en el informe">
-                <div class="border-b border-zinc-200 p-[15px]">
+                <div class="border-b border-zinc-200 px-[20px] py-[15px]">
                     <div class="mb-[10px]">
                         <h3 class="font-semibold text-black">Colaboradores</h3>
                     </div>
                     <label class="relative block">
                         <span class="sr-only">Buscar colaborador en el informe</span>
-                        <svg class="pointer-events-none absolute left-[12px] top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                        <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
                         <input type="search" x-model="resultUserSearch" autocomplete="off" placeholder="Buscar por nombre o ID"
-                               class="h-[40px] w-full rounded-md border border-zinc-200 bg-white pl-[36px] pr-[12px] text-[13px] text-black outline-none focus:border-zinc-300 focus:ring-0">
+                               class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white pl-[45px] pr-[20px] text-[15px] text-black outline-none focus:border-zinc-200 focus:outline-none focus:ring-0">
                     </label>
                 </div>
                 <nav class="attendance-scrollbar h-[350px] overflow-y-auto p-0 lg:h-auto lg:min-h-0 lg:flex-1" aria-label="Cambiar colaborador">
@@ -561,7 +569,7 @@
                         <button type="button" wire:click="selectReportUser({{ $reportedUser->id }})"
                                 x-show="resultUserSearch === '' || @js($reportedUserSearch).includes(resultUserSearch.toLowerCase())"
                                 wire:key="report-result-user-{{ $reportedUser->id }}"
-                                class="flex min-h-[70px] w-full items-center gap-[10px] rounded-md border border-transparent px-[20px] py-[12px] text-left {{ $activeReportUserId === $reportedUser->id ? 'bg-zinc-100 text-black' : 'bg-white text-black' }}">
+                                class="flex min-h-[70px] w-full items-center gap-[10px] rounded-xl border border-transparent px-[20px] py-[15px] text-left focus:outline-none focus:ring-0 {{ $activeReportUserId === $reportedUser->id ? 'bg-zinc-100 text-black' : 'bg-white text-black' }}">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border {{ $activeReportUserId === $reportedUser->id ? 'border-zinc-200 bg-black text-white' : 'border-zinc-200 bg-white text-black' }} text-[13px] font-semibold">
                                 {{ mb_strtoupper(mb_substr($reportedUser->name, 0, 1)) }}
                             </span>
@@ -677,7 +685,7 @@
             @if ($searched)
                 <footer class="flex flex-wrap items-center justify-between gap-[20px] border-t border-zinc-200 bg-white p-[20px] text-zinc-500">
                     <span class="font-semibold text-black">Referencia de estados</span>
-                    <div class="flex flex-wrap items-center gap-[25px]">
+                    <div class="flex flex-wrap items-center gap-[20px]">
                         <span class="inline-flex items-center gap-[10px]"><span class="h-3 w-3 rounded-full border border-zinc-400 bg-white"></span>Día correcto</span>
                         <span class="inline-flex items-center gap-[10px]"><span class="h-3 w-3 rounded-full bg-black"></span>Impar / Revisar</span>
                         <span class="inline-flex items-center gap-[10px]"><span class="h-3 w-3 rounded-full border border-zinc-400 bg-zinc-300"></span>Ajuste individual</span>
@@ -686,11 +694,11 @@
             @endif
             </div>
         </div>
-        <div class="grid grid-cols-3 border-t border-zinc-200 bg-white px-[20px] py-[15px]">
+        <div class="grid grid-cols-3 border-t border-zinc-200 bg-white p-0">
             @foreach ($attendanceReportActions as $mode => $action)
                 <button type="button" wire:click="exportSelectionReport('{{ $mode }}')"
                         @disabled(! $action['enabled'])
-                        class="attendance-report-download inline-flex w-full min-w-0 items-center justify-center gap-[10px] whitespace-nowrap border-0 bg-transparent px-[20px] py-0 text-left text-black transition-colors disabled:cursor-not-allowed">
+                        class="attendance-report-download inline-flex w-full min-w-0 items-center justify-center gap-[10px] whitespace-nowrap border-0 bg-transparent px-[20px] py-[15px] text-left text-black disabled:cursor-not-allowed focus:outline-none focus:ring-0">
                     <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                     <span class="min-w-0">
                         <span class="block truncate font-semibold text-black">{{ $action['label'] }}</span>
@@ -725,7 +733,7 @@
                         <div class="flex min-w-0 flex-col justify-center text-left">
                             <h3 class="truncate font-semibold text-black">{{ $change['employee_name'] }}</h3>
                             <p class="mt-[3px] truncate text-zinc-500">ID {{ $change['employee_id'] }}</p>
-                            <p class="mt-[8px] inline-flex items-center gap-[8px] text-black">
+                            <p class="mt-[10px] inline-flex items-center gap-[10px] text-black">
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
                                 Jornada del {{ $change['date'] }}
                             </p>
