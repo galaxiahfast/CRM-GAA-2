@@ -1,4 +1,9 @@
-<div class="min-h-[calc(100dvh-90px)] min-w-[1300px] bg-white text-[15px] text-zinc-700">
+<div class="supervision-online-uniform min-h-[calc(100dvh-90px)] min-w-[1300px] bg-white text-[15px] text-zinc-700">
+    <style>
+        .supervision-online-uniform :where(p, span, small, label, input, textarea, button, a, strong, h2, h3, th, td) {
+            font-size: 15px !important;
+        }
+    </style>
     <main class="mx-auto w-full max-w-[1500px] space-y-[20px] px-[50px] py-[50px]" wire:poll.3s.visible="refreshActiveTimers">
         <section class="flex items-center justify-between gap-[20px]">
             <div class="flex items-center gap-[20px]">

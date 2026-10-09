@@ -19,6 +19,9 @@
     .group-scrollbar { scrollbar-width: thin; scrollbar-color: #000 #fff; scrollbar-gutter: stable; overscroll-behavior: contain; }
     @keyframes group-report-spin { to { transform: rotate(360deg); } }
     .supervision-monochrome { background: #fff !important; color: #3f3f46; font-size: 15px; }
+    .supervision-monochrome :where(p, span, small, label, input, textarea, button, a, strong, h2, h3, th, td) {
+        font-size: 15px !important;
+    }
     .supervision-monochrome button,
     .supervision-monochrome input,
     .supervision-monochrome textarea { font-size: 15px; box-shadow: none !important; }

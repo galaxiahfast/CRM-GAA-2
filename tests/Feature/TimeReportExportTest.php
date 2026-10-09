@@ -111,6 +111,7 @@ class TimeReportExportTest extends TestCase
             ->assertSee('data-edit-collaborator-placeholder', false)
             ->assertSee('Edición disponible próximamente')
             ->assertSeeInOrder(['data-area-name', 'data-area-checkbox'], false)
+            ->assertSee('font-size: 15px !important', false)
             ->assertSee('supervision-hours-scale', false)
             ->assertDontSee('Jefe directo...')
             ->assertDontSee('Filtrar por:');
