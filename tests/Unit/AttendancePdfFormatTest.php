@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\Services\Reports\Exporters\PdfExporter;
 use App\Services\Reports\ReportData;
 use App\Services\Reports\ReportSection;
+use App\Services\TimeControl\AttendanceExportService;
+use App\Models\User;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -39,6 +41,8 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringContainsString('.section td.num{text-align:left!important}', $html);
         $this->assertStringContainsString('font-size:9px;font-weight:normal', $html);
         $this->assertStringContainsString('.meta td{padding:2px 0}', $html);
+        $this->assertStringContainsString('.meta{margin-bottom:0}', $html);
+        $this->assertStringContainsString('border:1px solid #9ca3af;padding:8px', $html);
         $this->assertStringNotContainsString('background:#fff1f2', $html);
         $this->assertStringContainsString('Total acumulado', $html);
         $this->assertSame(1, substr_count($html, 'class="late-arrival"'));
@@ -47,5 +51,21 @@ class AttendancePdfFormatTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $pdf);
         $this->assertSame(1, preg_match('/\/MediaBox\s*\[\s*0(?:\.0+)?\s+0(?:\.0+)?\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdf, $mediaBox));
         $this->assertGreaterThan((float) $mediaBox[2], (float) $mediaBox[1]);
+    }
+
+    public function test_long_attendance_selection_is_shortened_without_wrapping_the_header(): void
+    {
+        $users = collect([
+            new User(['name' => 'Nombre extraordinariamente largo uno', 'last_name' => 'Apellido primero']),
+            new User(['name' => 'Nombre extraordinariamente largo dos', 'last_name' => 'Apellido segundo']),
+            new User(['name' => 'Nombre extraordinariamente largo tres', 'last_name' => 'Apellido tercero']),
+        ]);
+
+        $service = app(AttendanceExportService::class);
+        $method = new ReflectionMethod($service, 'selectionNames');
+        $selection = $method->invoke($service, $users);
+
+        $this->assertLessThanOrEqual(105, mb_strlen($selection));
+        $this->assertStringEndsWith('...', $selection);
     }
 }

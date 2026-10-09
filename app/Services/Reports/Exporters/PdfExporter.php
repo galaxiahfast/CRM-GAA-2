@@ -27,7 +27,7 @@ class PdfExporter implements ReportExporter
     {
         $html = $this->renderHtml($data);
         $isAttendanceReport = $this->isAttendanceReport($data);
-        $cacheKey = 'report-pdf:v6:'.hash('sha256', serialize([
+        $cacheKey = 'report-pdf:v7:'.hash('sha256', serialize([
             $data->title,
             $data->filenameBase,
             $data->meta,
@@ -64,19 +64,19 @@ class PdfExporter implements ReportExporter
                 ? '@page{size:A4 landscape;margin:12mm}'
                     .'body.attendance-print{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px;line-height:1.35;color:#111827;margin:0}'
                     .'body.attendance-print h1,body.attendance-print h2,body.attendance-print h3,body.attendance-print .generated,body.attendance-print .meta,body.attendance-print .section,body.attendance-print .empty,body.attendance-print .day-total{font-family:"DejaVu Sans Mono",Courier,monospace;font-size:9px}'
-                    .'body.attendance-print .report-header{border:1px solid #d1d5db;background:#fff;padding:10px 12px;margin-bottom:18px}'
+                    .'body.attendance-print .report-header{border:1px solid #9ca3af;background:#fff;padding:10px 12px;margin-bottom:18px}'
                     .'body.attendance-print h1{margin:0 0 5px;font-weight:normal}'
-                    .'body.attendance-print h2{margin:14px 0 6px;padding:7px;border:1px solid #d1d5db;background:#fff;font-weight:normal}'
+                    .'body.attendance-print h2{margin:14px 0 6px;padding:8px;border:1px solid #9ca3af;background:#fff;font-weight:normal}'
                     .'body.attendance-print .generated{margin-bottom:10px}'
-                    .'body.attendance-print .meta{margin-bottom:12px}'
+                    .'body.attendance-print .meta{margin-bottom:0}'
                     .'body.attendance-print .meta td{padding:2px 0}'
                     .'body.attendance-print .meta .label{width:180px}'
                     .'body.attendance-print .section{table-layout:auto}'
-                    .'body.attendance-print .section th,body.attendance-print .section td{padding:7px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
+                    .'body.attendance-print .section th,body.attendance-print .section td{border:1px solid #9ca3af;padding:8px;vertical-align:middle;font-size:9px;font-weight:normal;font-family:"DejaVu Sans Mono",Courier,monospace}'
                     .'body.attendance-print .section th{background:#fff}'
                     .'body.attendance-print .section th,body.attendance-print .section th.num{text-align:center!important}'
                     .'body.attendance-print .section td,body.attendance-print .section td.num{text-align:left!important}'
-                    .'body.attendance-print .section th.section-heading-cell{text-align:left!important;border-bottom:1px solid #d1d5db}'
+                    .'body.attendance-print .section th.section-heading-cell{text-align:left!important;border-bottom:1px solid #9ca3af}'
                     .'body.attendance-print .section.report-start{page-break-before:always}'
                     .'body.attendance-print .section tr{page-break-inside:avoid}'
                     .'body.attendance-print .section td{white-space:nowrap}'

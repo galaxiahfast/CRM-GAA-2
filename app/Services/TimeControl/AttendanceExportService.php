@@ -8,6 +8,7 @@ use App\Services\Reports\ReportSection;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceExportService
@@ -82,10 +83,20 @@ class AttendanceExportService
             meta: [
                 'Periodo' => $from.' — '.$to,
                 'Colaboradores incluidos' => (string) $users->count(),
-                'Selección' => $users->map(fn (User $user) => mb_strtoupper(trim($user->name.' '.$user->last_name)))->join(', '),
+                'Selección' => $this->selectionNames($users),
             ],
             sections: $sections,
         );
+    }
+
+    /** @param Collection<int, User> $users */
+    private function selectionNames(Collection $users): string
+    {
+        $names = $users
+            ->map(fn (User $user) => mb_strtoupper(trim($user->name.' '.$user->last_name)))
+            ->join(', ');
+
+        return Str::limit($names, 102, '...');
     }
 
     /** @param array<string, mixed> $result */
