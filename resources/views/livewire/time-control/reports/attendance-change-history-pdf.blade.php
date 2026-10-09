@@ -14,13 +14,14 @@
         .meta td { padding: 2px 0; }
         .meta .label { width: 180px; color: #6b7280; }
         .report { width: 100%; table-layout: fixed; border-collapse: collapse; }
-        .report th, .report td { border: 1px solid #9ca3af; padding: 8px; vertical-align: middle; font-size: 9px; font-weight: normal; }
+        .report th, .report td { border: 1px solid #9ca3af; padding: 10px; vertical-align: middle; font-size: 9px; font-weight: normal; }
         .report th { text-align: center; }
         .report td { text-align: left; }
         .report tr { page-break-inside: avoid; }
         .report .section-title { text-align: left; }
-        .wrap { white-space: normal; overflow-wrap: break-word; }
-        .nowrap { white-space: nowrap; }
+        .entry-lines { white-space: normal; overflow-wrap: break-word; }
+        .entry-lines div + div { margin-top: 6px; }
+        .entry-lines .label { color: #6b7280; }
         .person { text-transform: uppercase; }
     </style>
 </head>
@@ -36,14 +37,12 @@
 
     <table class="report">
         <colgroup>
-            <col style="width: 11%"><col style="width: 16%"><col style="width: 8%"><col style="width: 18%">
-            <col style="width: 20%"><col style="width: 17%"><col style="width: 10%">
+            <col style="width: 22%"><col style="width: 31%"><col style="width: 31%"><col style="width: 16%">
         </colgroup>
         <thead>
-            <tr><th class="section-title" colspan="7">Detalle del historial</th></tr>
+            <tr><th class="section-title" colspan="4">Detalle del historial</th></tr>
             <tr>
-                <th>Fecha del cambio</th><th>Colaborador</th><th>Jornada</th><th>Motivo</th>
-                <th>Cambios de marcas</th><th>Cambios de pago</th><th>Administrador</th>
+                <th>Colaborador</th><th>Cambio realizado</th><th>Valores actualizados</th><th>Registro</th>
             </tr>
         </thead>
         <tbody>
@@ -54,20 +53,25 @@
                     $mealBefore = isset($change['bonus_before']) ? '$'.number_format((float) $change['bonus_before'], 2) : 'Sin valor';
                 @endphp
                 <tr>
-                    <td class="nowrap">{{ $change['changed_at'] ?? 'Fecha no disponible' }}</td>
-                    <td class="wrap person">{{ $change['employee_name'] ?? 'Colaborador' }} · ID {{ $change['employee_id'] ?? '' }}</td>
-                    <td class="nowrap">{{ $change['date'] ?? 'Día no disponible' }}</td>
-                    <td class="wrap">{{ $change['comment'] ?? 'Sin comentario' }}</td>
-                    <td class="wrap">
-                        Antes: {{ $marksBefore === [] ? 'Sin marcas' : implode(' · ', $marksBefore) }}<br>
-                        Después: {{ $marksAfter === [] ? 'Sin marcas' : implode(' · ', $marksAfter) }}
+                    <td class="entry-lines">
+                        <div class="person">{{ $change['employee_name'] ?? 'Colaborador' }}</div>
+                        <div><span class="label">ID:</span> {{ $change['employee_id'] ?? '' }}</div>
+                        <div><span class="label">Jornada:</span> {{ $change['date'] ?? 'Día no disponible' }}</div>
                     </td>
-                    <td class="wrap">
-                        Hora: ${{ number_format((float) ($change['hourly_rate_before'] ?? 0), 2) }} → ${{ number_format((float) ($change['hourly_rate_after'] ?? 0), 2) }}<br>
-                        Comida: {{ $mealBefore }} → ${{ number_format((float) ($change['bonus_after'] ?? 0), 2) }}<br>
-                        Bono: ${{ number_format((float) ($change['extra_bonus_before'] ?? 0), 2) }} → ${{ number_format((float) ($change['extra_bonus_after'] ?? 0), 2) }}
+                    <td class="entry-lines">
+                        <div>{{ $change['comment'] ?? 'Sin comentario' }}</div>
+                        <div><span class="label">Marcas anteriores:</span> {{ $marksBefore === [] ? 'Sin marcas' : implode(' · ', $marksBefore) }}</div>
+                        <div><span class="label">Pago por hora:</span> ${{ number_format((float) ($change['hourly_rate_before'] ?? 0), 2) }} → ${{ number_format((float) ($change['hourly_rate_after'] ?? 0), 2) }}</div>
                     </td>
-                    <td class="wrap">{{ $change['admin_name'] ?? 'Administrador' }}</td>
+                    <td class="entry-lines">
+                        <div><span class="label">Marcas nuevas:</span> {{ $marksAfter === [] ? 'Sin marcas' : implode(' · ', $marksAfter) }}</div>
+                        <div><span class="label">Comida:</span> {{ $mealBefore }} → ${{ number_format((float) ($change['bonus_after'] ?? 0), 2) }}</div>
+                        <div><span class="label">Bono:</span> ${{ number_format((float) ($change['extra_bonus_before'] ?? 0), 2) }} → ${{ number_format((float) ($change['extra_bonus_after'] ?? 0), 2) }}</div>
+                    </td>
+                    <td class="entry-lines">
+                        <div>{{ $change['admin_name'] ?? 'Administrador' }}</div>
+                        <div><span class="label">Fecha:</span> {{ $change['changed_at'] ?? 'Fecha no disponible' }}</div>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
