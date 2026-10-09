@@ -271,80 +271,63 @@
                     </div>
                 </div>
 
-                <!-- ============================================================ -->
-                <!-- MÉTRICAS PRINCIPALES (2 bloques)                              -->
-                <!-- ============================================================ -->
-                <div style="padding: 20px 0 0 0; background-color: transparent; overflow: hidden;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-                        <!-- Horas efectivas del grupo -->
-                        <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
-                            <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
-                                Horas efectivas del grupo
-                            </div>
-                            <div style="padding: 16px; background-color: #ffffff;">
-                                <p style="font-family: monospace; font-size: 24px; font-weight: 700; color: #111827; margin: 0;">{{ $fmt($groupData['total']) }}</p>
-                            </div>
+                <div style="display:grid;grid-template-columns:280px minmax(0,1fr);min-height:520px;border-bottom:1px solid #e4e4e7;">
+                    <aside style="display:flex;min-height:0;flex-direction:column;border-right:1px solid #e4e4e7;background:#fff;">
+                        <div style="border-bottom:1px solid #e4e4e7;padding:15px 20px;">
+                            <h3 style="margin:0;font-weight:600;color:#000;">Colaboradores</h3>
+                            <p style="margin:5px 0 0;color:#71717a;">Selecciona una persona.</p>
                         </div>
+                        <nav class="group-scrollbar" style="max-height:520px;overflow-y:auto;padding:0;" aria-label="Colaboradores incluidos en el reporte">
+                            @foreach ($reportedGroupUsers as $reportedUser)
+                                <button type="button" wire:click="selectResultUser({{ $reportedUser['id'] }})" style="display:flex;min-height:70px;width:100%;align-items:center;gap:10px;border:0;border-bottom:1px solid #f4f4f5;background:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#f4f4f5' : '#fff' }};padding:15px 20px;text-align:left;color:#000;">
+                                    <span style="display:flex;width:32px;height:32px;flex:none;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:6px;background:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#000' : '#fff' }};color:{{ (int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'] ? '#fff' : '#000' }};font-weight:600;">{{ mb_strtoupper(mb_substr($reportedUser['name'], 0, 1)) }}</span>
+                                    <span style="min-width:0;flex:1;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">{{ $reportedUser['name'] }}</strong><small style="display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#71717a;">{{ filled($reportedUser['employee_id'] ?? null) ? 'ID '.$reportedUser['employee_id'] : $reportedUser['position_name'] }}</small></span>
+                                    @if ((int) ($activeResultUser['id'] ?? 0) === (int) $reportedUser['id'])
+                                        <span aria-hidden="true">✓</span>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </nav>
+                    </aside>
 
-                        <!-- Cierres automáticos -->
-                        <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
-                            <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #ef4444; border-bottom: 1px solid #e5e7eb;">
-                                Cierres automáticos
-                            </div>
-                            <div style="padding: 16px; background-color: #ffffff;">
-                                <p style="font-family: monospace; font-size: 24px; font-weight: 700; color: #dc2626; margin: 0;">{{ $groupData['autoClosedCount'] }}</p>
-                            </div>
+                    <div style="min-width:0;background:#fff;">
+                        <div style="display:flex;min-height:70px;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid #e4e4e7;padding:15px 20px;">
+                            <div><h3 style="margin:0;font-weight:600;color:#000;">Detalle de actividades</h3><p style="margin:5px 0 0;color:#71717a;">{{ $activeResultUser['name'] ?? 'Colaborador' }}</p></div>
+                            <div style="display:flex;align-items:center;gap:20px;color:#000;"><span>Tiempo efectivo: <strong style="font-family:monospace;">{{ $fmt((int) ($activeResultData['total'] ?? 0)) }}</strong></span><span>Cierres automáticos: {{ $activeResultData['autoClosedCount'] ?? 0 }}</span></div>
                         </div>
-
-                    </div>
-                </div>
-
-                <!-- ============================================================ -->
-                <!-- DISTRIBUCIONES (4 bloques)                                    -->
-                <!-- ============================================================ -->
-                <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-                        @foreach (['Por colaborador' => $groupData['byCollaborator'], 'Por cliente' => $groupData['byCustomer'], 'Por puesto profesional' => $groupData['byPosition'], 'Por área física' => $groupData['byArea']] as $title => $rows)
-                            <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
-                                <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
-                                    {{ $title }}
-                                </div>
-                                <div style="padding: 12px 16px; background-color: #ffffff; max-height: 224px; overflow-y: auto; overscroll-behavior: contain;">
-                                    @forelse ($rows as $row)
-                                        <div style="display: flex; justify-content: space-between; gap: 12px; min-width: 0; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #f3f4f6;">
-                                            <span class="truncate" style="min-width: 0; flex: 1; color: #374151;">{{ $row['name'] }}</span>
-                                            <span style="flex: 0 0 auto; font-family: monospace; font-size: 14px; color: #111827; font-weight: 500;">{{ $fmt($row['seconds']) }}</span>
-                                        </div>
+                        <div class="group-scrollbar" style="max-height:520px;overflow:auto;">
+                            <table style="width:100%;min-width:1100px;border-collapse:collapse;table-layout:fixed;">
+                                <thead style="position:sticky;top:0;z-index:2;background:#f4f4f5;">
+                                    <tr>
+                                        <th style="padding:15px 20px;text-align:left;border-bottom:1px solid #e4e4e7;">Fecha</th>
+                                        @foreach ($activeResultActivityDetail['columns'] as $column)
+                                            @continue($column === 'Observaciones')
+                                            <th style="padding:15px 20px;text-align:left;border-bottom:1px solid #e4e4e7;">{{ $column }}</th>
+                                        @endforeach
+                                        <th style="padding:15px 20px;text-align:center;border-bottom:1px solid #e4e4e7;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($activeResultActivityDetail['groups'] as $dayGroup)
+                                        @foreach ($dayGroup['rows'] as $rowIndex => $row)
+                                            <tr style="border-bottom:1px solid #e4e4e7;background:#fff;">
+                                                <td style="padding:15px 20px;vertical-align:middle;">{{ $loop->first ? $dayGroup['date'] : '' }}</td>
+                                                @foreach ($activeResultActivityDetail['columns'] as $columnIndex => $column)
+                                                    @continue($column === 'Observaciones')
+                                                    <td style="padding:15px 20px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $row[$columnIndex] ?? '' }}">{{ $row[$columnIndex] ?? '' }}</td>
+                                                @endforeach
+                                                <td style="padding:15px 20px;text-align:center;vertical-align:middle;">
+                                                    <button type="button" wire:click="openActivityEditModal({{ (int) ($dayGroup['entry_ids'][$rowIndex] ?? 0) }})" aria-label="Editar actividad" style="display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #e4e4e7;border-radius:10px;background:#fff;color:#000;">
+                                                        <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15.2 5.2 3.6 3.6M4 20l4.2-1 10.6-10.6a2.55 2.55 0 0 0-3.6-3.6L4.6 15.4 4 20Z"/></svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     @empty
-                                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Sin datos.</p>
+                                        <tr><td colspan="9" style="padding:40px 20px;text-align:center;color:#71717a;">Sin registros en el periodo.</td></tr>
                                     @endforelse
-                                </div>
-                            </div>
-                        @endforeach
-
-                    </div>
-                </div>
-
-                <!-- ============================================================ -->
-                <!-- DETALLE DE ACTIVIDADES (1 bloque)                             -->
-                <!-- ============================================================ -->
-                <div style="padding: 30px 0 0 0; background-color: transparent; overflow: hidden;">
-                    <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #fafafa;">
-                        <div style="background-color: #f3f4f6; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
-                            Detalle de actividades
-                            <span style="font-weight: 400; color: #6b7280; font-size: 13px; margin-left: 8px;">({{ $groupData['entries']->count() }} registros)</span>
-                        </div>
-                        <div style="padding: 16px; background-color: #ffffff;">
-                            @error('activityEdit')
-                                <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[15px] text-amber-800">{{ $message }}</div>
-                            @enderror
-                            @if ($groupActivityDetail['groups'] === [])
-                                <p style="font-size: 14px; color: #6b7280;">Sin registros en el periodo.</p>
-                            @else
-                                <x-time-activity-detail class="group-scrollbar max-h-[680px] overflow-y-auto pr-2" :columns="$groupActivityDetail['columns']" :groups="$groupActivityDetail['groups']" :hidden-columns="['Observaciones']" actions />
-                            @endif
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

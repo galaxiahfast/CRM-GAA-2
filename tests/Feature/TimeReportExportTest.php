@@ -251,8 +251,8 @@ class TimeReportExportTest extends TestCase
             ->set('to', $today)
             ->call('generateGroupReport')
             ->assertSee('Intervalos')
-            ->assertSee('Total efectivo')
-            ->assertSee('01h 30m 00s');
+            ->assertSee('Tiempo efectivo:')
+            ->assertSee('01:30:00');
     }
 
     public function test_user_report_includes_activity_detail_by_day(): void
@@ -286,9 +286,14 @@ class TimeReportExportTest extends TestCase
             ->set('to', $today)
             ->call('generateGroupReport')
             ->assertSet('reportSection', 'results')
+            ->assertSet('activeResultUserId', $aux->id)
+            ->assertSeeInOrder(['Colaboradores', 'Detalle de actividades'])
+            ->assertSee('Tiempo efectivo:')
             ->assertSee('Reporte individual')
             ->assertSee('Reporte grupal')
-            ->assertSee('Reporte general');
+            ->assertSee('Reporte general')
+            ->call('selectResultUser', $aux->id)
+            ->assertSet('activeResultUserId', $aux->id);
 
         $component->call('exportSelectedIndividualReport')
             ->assertFileDownloaded("supervision-horas_usuario-{$aux->id}_{$today}_{$today}.pdf");

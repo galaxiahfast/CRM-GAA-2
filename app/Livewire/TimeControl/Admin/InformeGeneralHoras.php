@@ -41,6 +41,8 @@ class InformeGeneralHoras extends Component
 
     public ?string $lastReportGeneratedAt = null;
 
+    public ?int $activeResultUserId = null;
+
     /**
      * Directorio liviano para el selector grupal. Se hidrata una vez al montar
      * el componente y se usa en memoria durante los cambios de casillas.
@@ -100,6 +102,7 @@ class InformeGeneralHoras extends Component
             $defaultId = (int) $defaultCollaborator['id'];
             $this->selectedCollaboratorIds = [$defaultId];
             $this->reportedCollaboratorIds = [$defaultId];
+            $this->activeResultUserId = $defaultId;
             $this->groupReportIsCurrent = true;
             $this->groupReportVersion = 1;
             $this->lastReportGeneratedAt = Carbon::now($this->moduleTimezone())->format('d/m/Y H:i');
@@ -135,6 +138,13 @@ class InformeGeneralHoras extends Component
     public function showResultsSection(): void
     {
         $this->reportSection = 'results';
+    }
+
+    public function selectResultUser(int $userId): void
+    {
+        abort_unless(in_array($userId, array_map('intval', $this->reportedCollaboratorIds), true), 404);
+
+        $this->activeResultUserId = $userId;
     }
 
     public function selectAllCollaborators(): void
@@ -192,6 +202,9 @@ class InformeGeneralHoras extends Component
 
         $this->groupReportVersion++;
         $this->groupReportIsCurrent = true;
+        $this->activeResultUserId = in_array((int) $this->activeResultUserId, $this->reportedCollaboratorIds, true)
+            ? $this->activeResultUserId
+            : ($this->reportedCollaboratorIds[0] ?? null);
         $this->lastReportGeneratedAt = Carbon::now($this->moduleTimezone())->format('d/m/Y H:i');
         $this->reportSection = 'results';
     }
@@ -479,8 +492,13 @@ class InformeGeneralHoras extends Component
                 'entries' => collect(), 'total' => 0, 'byCollaborator' => collect(), 'byCustomer' => collect(),
                 'byPosition' => collect(), 'byArea' => collect(), 'autoClosedCount' => 0,
             ];
-        $groupActivityDetail = $this->groupReportIsCurrent && $reportedGroupUsers->isNotEmpty()
-            ? $reports->activityDetailByDay($groupData['entries'], true, true)
+        $activeResultUser = $reportedGroupUsers->firstWhere('id', $this->activeResultUserId)
+            ?? $reportedGroupUsers->first();
+        $activeResultData = $this->groupReportIsCurrent && $activeResultUser
+            ? $reports->adminSupervisionForUsers([(int) $activeResultUser['id']], $this->from, $this->to)
+            : ['entries' => collect(), 'total' => 0, 'autoClosedCount' => 0];
+        $activeResultActivityDetail = $activeResultUser
+            ? $reports->activityDetailByDay($activeResultData['entries'], false, true)
             : ['columns' => [], 'groups' => []];
 
         return view('livewire.time-control.admin.informe-general-horas', [
@@ -489,7 +507,9 @@ class InformeGeneralHoras extends Component
             'selectedGroupUsers' => $selectedGroupUsers,
             'reportedGroupUsers' => $reportedGroupUsers,
             'groupData' => $groupData,
-            'groupActivityDetail' => $groupActivityDetail,
+            'activeResultUser' => $activeResultUser,
+            'activeResultData' => $activeResultData,
+            'activeResultActivityDetail' => $activeResultActivityDetail,
         ])->layout('layouts.app');
     }
 
