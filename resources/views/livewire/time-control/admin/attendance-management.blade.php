@@ -82,9 +82,10 @@
             };
         },
 
-        timePicker(model) {
+        timePicker(model, pickerId) {
             return {
                 open: false,
+                pickerId,
                 value: model,
                 hour: '12',
                 minute: '00',
@@ -924,8 +925,8 @@
                                             <span class="text-[13px] not-italic text-zinc-500">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
                                         </div>
                                         <div class="flex gap-[20px]">
-                                            <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live)">
-                                                <button id="attendance-mark-{{ $index }}" type="button" @click.stop="toggle($el)" class="flex w-full items-center rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
+                                            <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live, 'attendance-mark-{{ $index }}')" @attendance-time-picker-open.window="if ($event.detail !== pickerId) open = false">
+                                                <button id="attendance-mark-{{ $index }}" type="button" @click.stop="$dispatch('attendance-time-picker-open', pickerId); toggle($el)" class="flex w-full items-center rounded-xl border border-zinc-300 bg-white px-[20px] py-[15px] text-left text-[15px] text-black shadow-none focus:border-zinc-300 focus:outline-none focus:ring-0" :aria-expanded="open">
                                                     <span class="whitespace-nowrap tabular-nums" x-text="displayValue"></span>
                                                 </button>
                                                 <template x-teleport="body">
@@ -939,12 +940,12 @@
                                                         @endforeach
                                                     </div>
                                                     <div class="mt-[20px] flex items-center justify-between gap-[20px]">
-                                                        <div class="grid flex-1 grid-cols-2 overflow-hidden rounded-xl border border-zinc-300 bg-white">
+                                                        <div class="grid h-[52px] flex-1 grid-cols-2 overflow-hidden rounded-xl border border-zinc-300 bg-white">
                                                             @foreach (['a. m.', 'p. m.'] as $timePeriod)
-                                                                <button type="button" @click="period = @js($timePeriod)" class="px-[10px] py-[10px] text-[13px] focus:outline-none focus:ring-0" :class="period === @js($timePeriod) ? 'bg-black text-white' : 'bg-white text-black'">{{ $timePeriod }}</button>
+                                                                <button type="button" @click="period = @js($timePeriod)" class="h-full px-[10px] text-[13px] focus:outline-none focus:ring-0" :class="period === @js($timePeriod) ? 'bg-black text-white' : 'bg-white text-black'">{{ $timePeriod }}</button>
                                                             @endforeach
                                                         </div>
-                                                        <button type="button" @click="apply()" class="inline-flex items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-[15px] text-white focus:outline-none focus:ring-0">
+                                                        <button type="button" @click="apply()" class="inline-flex h-[52px] items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] text-[15px] text-white focus:outline-none focus:ring-0">
                                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12 4 4L19 6"/></svg>
                                                             Aplicar
                                                         </button>
