@@ -39,10 +39,11 @@ No se incluye en `DatabaseSeeder` para evitar insertar registros ficticios accid
 ## Carga y administración
 
 - La zona admite selección múltiple, carpetas y arrastrar y soltar paquetes ZIP.
+- La vista inicia en la zona de carga; cada archivo muestra progreso, velocidad, tiempo restante y una cancelación que purga sus fragmentos del servidor.
 - Las cargas se fragmentan, conservan su avance local y se reanudan después de recuperar la conexión.
 - El historial permite descargar el paquete o sus archivos internos, editar metadatos, eliminar archivos individuales y reconstruir el ZIP restante.
 - **Re-subir** solicita un nuevo paquete y conserva la versión actual hasta que el reemplazo se procese correctamente.
-- El árbol inicia plegado y muestra las carpetas `Index` y `Bak` únicamente al abrir un cliente.
+- El árbol inicia plegado, mantiene abiertas las carpetas sin cierres temporizados y limita la consulta simultánea a tres clientes; al abrir un cuarto se pliega el más antiguo.
 
 ## Variables opcionales
 

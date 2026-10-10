@@ -12,6 +12,28 @@
     x-on:backup-reupload.window="chooseFiles($event.detail)"
     x-on:backup-upload-finished.window="$wire.$refresh()"
 >
+    <style>
+        .backup-scrollbar {
+            scrollbar-color: #18181b #f4f4f5;
+            scrollbar-width: thin;
+        }
+
+        .backup-scrollbar::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .backup-scrollbar::-webkit-scrollbar-track {
+            background: #f4f4f5;
+        }
+
+        .backup-scrollbar::-webkit-scrollbar-thumb {
+            border: 2px solid #f4f4f5;
+            border-radius: 999px;
+            background: #18181b;
+        }
+    </style>
+
     <canvas
         wire:ignore
         data-clock-network-canvas
@@ -92,7 +114,7 @@
             <div class="flex items-center gap-[30px]">
                 <button
                     type="button"
-                    @click="focusUploader(); chooseFiles()"
+                    @click="showUploader()"
                     class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-semibold text-black focus:outline-none"
                 >
                     <svg
@@ -170,6 +192,7 @@
                     <button
                         type="button"
                         wire:click="selectTab('backups')"
+                        @click="showTree()"
                         class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === "backups" ? "font-semibold text-black" : "text-zinc-500" }} focus:outline-none"
                     >
                         <svg
@@ -214,18 +237,31 @@
                 class="overflow-hidden rounded-xl border border-zinc-200 bg-white"
             >
                 <div
-                    @if ($activeTab !== "history")
-                        wire:poll.3s.visible="$refresh"
-                    @endif
                     class="flex min-h-[80px] items-center justify-between gap-[30px] border-b border-zinc-200 px-[20px] py-[15px]"
                 >
                     <div>
-                        <h2 class="font-semibold text-black">
-                            {{ $activeTab === "history" ? "Historial de registros" : "Explorador de respaldos · " . ($sites[$site] ?? ucfirst($site)) }}
-                        </h2>
-                        <p class="mt-[5px] text-zinc-500">
-                            {{ $activeTab === "history" ? "Inspecciona, descarga, reemplaza, edita o elimina cada respaldo." : "El árbol se actualiza automáticamente mientras se procesan los ZIP." }}
-                        </p>
+                        @if ($activeTab === "history")
+                            <h2 class="font-semibold text-black">
+                                Historial de registros
+                            </h2>
+                            <p class="mt-[5px] text-zinc-500">
+                                Inspecciona, descarga, reemplaza, edita o
+                                elimina cada respaldo.
+                            </p>
+                        @else
+                            <h2
+                                class="font-semibold text-black"
+                                x-text="workspaceMode === 'upload' ? @js("Cargar respaldos · " . ($sites[$site] ?? ucfirst($site))) : @js("Explorador de respaldos · " . ($sites[$site] ?? ucfirst($site)))"
+                            ></h2>
+                            <p
+                                class="mt-[5px] text-zinc-500"
+                                x-text="
+                                    workspaceMode === 'upload'
+                                        ? 'Arrastra tus paquetes, revisa su progreso o cancela la carga.'
+                                        : 'Abre hasta tres clientes al mismo tiempo para consultar sus archivos.'
+                                "
+                            ></p>
+                        @endif
                     </div>
                     <div
                         class="flex items-center gap-[20px] font-medium text-black"
@@ -240,6 +276,10 @@
                     </div>
                 </div>
                 <div
+                    @if ($activeTab !== "history")
+                        x-show="workspaceMode === 'tree'"
+                        x-cloak
+                    @endif
                     class="flex min-h-[76px] items-center gap-[20px] border-b border-zinc-200 px-[20px] py-[15px]"
                 >
                     <label class="relative block flex-1">
@@ -276,11 +316,10 @@
                             class="border-r border-zinc-200 p-[20px]"
                         >
                             <h3 class="font-semibold text-black">
-                                Subir respaldos
+                                Ubicación del respaldo
                             </h3>
                             <p class="mt-[5px] text-zinc-500">
-                                Selecciona varios ZIP o una carpeta completa.
-                                Cada archivo conserva su propio progreso.
+                                Elige la sede donde se guardará el paquete.
                             </p>
                             <div class="mt-[20px] space-y-[20px]">
                                 <label class="block">
@@ -303,101 +342,6 @@
                                         @endforeach
                                     </select>
                                 </label>
-                                <input
-                                    x-ref="fallbackFiles"
-                                    type="file"
-                                    class="hidden"
-                                    accept=".zip,application/zip"
-                                    multiple
-                                    @change="receiveFallback($event)"
-                                />
-                                <input
-                                    x-ref="fallbackFolder"
-                                    type="file"
-                                    class="hidden"
-                                    accept=".zip,application/zip"
-                                    multiple
-                                    webkitdirectory
-                                    @change="receiveFallback($event)"
-                                />
-                                <div class="grid grid-cols-2 gap-[10px]">
-                                    <button
-                                        type="button"
-                                        @click="chooseFiles()"
-                                        title="Seleccionar uno o varios paquetes ZIP"
-                                        aria-label="Seleccionar archivos ZIP"
-                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border-0 bg-zinc-900 px-[20px] py-[15px] font-semibold text-white focus:outline-none"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="1.8"
-                                                d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"
-                                            />
-                                        </svg>
-                                        ZIP
-                                    </button>
-                                    <button
-                                        type="button"
-                                        @click="chooseFolder()"
-                                        title="Seleccionar una carpeta que contenga archivos ZIP"
-                                        aria-label="Seleccionar carpeta con respaldos"
-                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="1.8"
-                                                d="M3 7h7l2 2h9v11H3V7Z"
-                                            />
-                                        </svg>
-                                        Carpeta
-                                    </button>
-                                </div>
-                                <button
-                                    type="button"
-                                    @click="chooseFiles()"
-                                    @dragenter.prevent="dragging = true"
-                                    @dragover.prevent="dragging = true"
-                                    @dragleave.prevent="dragging = false"
-                                    @drop.prevent="handleDrop($event)"
-                                    :class="dragging ? 'border-zinc-900 bg-zinc-100' : 'border-zinc-300 bg-zinc-50/60'"
-                                    class="flex min-h-[150px] w-full flex-col items-center justify-center gap-[10px] rounded-xl border-2 border-dashed px-[20px] py-[20px] text-center transition-colors focus:outline-none"
-                                    title="Arrastra paquetes ZIP aquí o haz clic para seleccionarlos"
-                                >
-                                    <svg
-                                        class="h-8 w-8 text-zinc-500"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="1.8"
-                                            d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"
-                                        />
-                                    </svg>
-                                    <strong class="text-black">
-                                        Arrastra tus ZIP aquí
-                                    </strong>
-                                    <span class="text-zinc-500">
-                                        o haz clic para seleccionar varios
-                                        archivos
-                                    </span>
-                                </button>
                                 <a
                                     href="{{ route("activity-backups.example") }}"
                                     class="flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black"
@@ -419,71 +363,6 @@
                                     Descargar ZIP de prueba
                                 </a>
                             </div>
-                            <div
-                                x-show="uploads.length"
-                                x-cloak
-                                class="mt-[20px] max-h-[330px] space-y-[10px] overflow-y-auto pr-[4px]"
-                            >
-                                <template
-                                    x-for="item in uploads"
-                                    :key="item.localId"
-                                >
-                                    <article
-                                        class="rounded-xl border border-zinc-200 p-[15px]"
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-[10px]"
-                                        >
-                                            <div class="min-w-0">
-                                                <strong
-                                                    class="block truncate text-black"
-                                                    x-text="item.fileName"
-                                                ></strong>
-                                                <span
-                                                    class="mt-[3px] block text-zinc-500"
-                                                    x-text="statusLabel(item.status)"
-                                                ></span>
-                                            </div>
-                                            <span
-                                                class="font-semibold tabular-nums text-black"
-                                                x-text="item.progress + '%'"
-                                            >
-                                                0%
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="mt-[12px] h-2 overflow-hidden rounded-full bg-zinc-100"
-                                        >
-                                            <div
-                                                class="h-full rounded-full transition-all"
-                                                :class="item.status === 'error' ? 'bg-red-500' : 'bg-black'"
-                                                :style="`width:${item.progress}%`"
-                                            ></div>
-                                        </div>
-                                        <div
-                                            class="mt-[10px] flex items-center justify-between gap-[10px] text-zinc-500"
-                                        >
-                                            <span x-text="item.speed"></span>
-                                            <span
-                                                class="text-right"
-                                                x-text="item.eta"
-                                            ></span>
-                                        </div>
-                                        <span
-                                            class="mt-[5px] block text-zinc-500"
-                                            x-text="item.message"
-                                        ></span>
-                                        <button
-                                            x-show="item.status === 'error'"
-                                            type="button"
-                                            @click="retry(item)"
-                                            class="mt-[10px] p-0 font-semibold text-black focus:outline-none"
-                                        >
-                                            Reintentar
-                                        </button>
-                                    </article>
-                                </template>
-                            </div>
                             <p class="mt-[20px] leading-6 text-zinc-500">
                                 Estructura esperada:
                                 <strong class="text-black">
@@ -498,22 +377,68 @@
                             </p>
                         </aside>
 
-                        <div class="flex min-w-0 flex-col">
-                            <div
-                                class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-zinc-700"
+                        <div class="min-w-0">
+                            <section
+                                x-show="workspaceMode === 'upload'"
+                                x-ref="uploadWorkspace"
+                                @dragenter.prevent="dragging = true"
+                                @dragover.prevent="dragging = true"
+                                @dragleave.prevent="dragging = false"
+                                @drop.prevent="handleDrop($event)"
+                                class="flex min-h-[610px] flex-col p-[20px]"
                             >
-                                <span>Cliente / archivo</span>
-                                <span>Tamaño</span>
-                                <span>Fecha de respaldo</span>
-                            </div>
-                            <div
-                                class="max-h-[610px] min-h-0 flex-1 overflow-y-auto overscroll-contain"
-                            >
+                                <input
+                                    x-ref="fallbackFiles"
+                                    type="file"
+                                    class="hidden"
+                                    accept=".zip,application/zip"
+                                    multiple
+                                    @change="receiveFallback($event)"
+                                />
+                                <input
+                                    x-ref="fallbackFolder"
+                                    type="file"
+                                    class="hidden"
+                                    accept=".zip,application/zip"
+                                    multiple
+                                    webkitdirectory
+                                    @change="receiveFallback($event)"
+                                />
+
                                 <div
-                                    class="flex min-h-[64px] items-center gap-[10px] border-b border-zinc-200 bg-zinc-50 px-[20px] font-semibold text-black"
+                                    class="flex items-start justify-between gap-[20px]"
+                                >
+                                    <div>
+                                        <h3 class="font-semibold text-black">
+                                            Cargar respaldos
+                                        </h3>
+                                        <p class="mt-[5px] text-zinc-500">
+                                            Arrastra uno o varios ZIP. Aquí
+                                            verás el progreso y podrás cancelar
+                                            cada carga.
+                                        </p>
+                                    </div>
+                                    @if ($backupTree->isNotEmpty())
+                                        <button
+                                            type="button"
+                                            @click="showTree()"
+                                            class="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
+                                            title="Ver respaldos ya cargados"
+                                        >
+                                            Ver respaldos existentes
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <button
+                                    type="button"
+                                    @click="chooseFiles()"
+                                    :class="dragging ? 'border-zinc-900 bg-zinc-100' : 'border-zinc-300 bg-zinc-50/60'"
+                                    class="mt-[20px] flex min-h-[220px] w-full flex-col items-center justify-center gap-[10px] rounded-xl border-2 border-dashed px-[20px] py-[30px] text-center transition-colors focus:outline-none"
+                                    title="Arrastra paquetes ZIP aquí o haz clic para seleccionarlos"
                                 >
                                     <svg
-                                        class="h-5 w-5 text-zinc-500"
+                                        class="h-10 w-10 text-zinc-500"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -522,246 +447,392 @@
                                             stroke-linecap="round"
                                             stroke-linejoin="round"
                                             stroke-width="1.8"
-                                            d="M3 7h7l2 2h9v11H3V7Z"
+                                            d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"
                                         />
                                     </svg>
-                                    Respaldos /
-                                    {{ $sites[$site] ?? ucfirst($site) }}
+                                    <strong class="text-black">
+                                        Arrastra tus ZIP aquí
+                                    </strong>
+                                    <span class="text-zinc-500">
+                                        o haz clic para seleccionar varios
+                                        archivos
+                                    </span>
+                                </button>
+
+                                <div
+                                    class="mt-[20px] grid grid-cols-2 gap-[10px]"
+                                >
+                                    <button
+                                        type="button"
+                                        @click="chooseFiles()"
+                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border-0 bg-zinc-900 px-[20px] py-[15px] font-semibold text-white focus:outline-none"
+                                        title="Seleccionar uno o varios paquetes ZIP"
+                                    >
+                                        Seleccionar ZIP
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="chooseFolder()"
+                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
+                                        title="Seleccionar una carpeta que contenga paquetes ZIP"
+                                    >
+                                        Seleccionar carpeta
+                                    </button>
                                 </div>
-                                @foreach ($activeUploads as $activeUpload)
-                                    <div
-                                        class="grid min-h-[64px] grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-amber-50/40 px-[20px]"
+
+                                <div
+                                    x-show="uploads.length"
+                                    x-cloak
+                                    class="backup-scrollbar mt-[20px] max-h-[260px] space-y-[10px] overflow-y-auto pr-[5px]"
+                                >
+                                    <template
+                                        x-for="item in uploads"
+                                        :key="item.localId"
                                     >
-                                        <span
-                                            class="flex min-w-0 items-center gap-[10px]"
+                                        <article
+                                            class="rounded-xl border border-zinc-200 p-[15px]"
                                         >
-                                            <svg
-                                                class="h-5 w-5 shrink-0 animate-pulse text-amber-600"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
+                                            <div
+                                                class="flex items-start justify-between gap-[20px]"
                                             >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="1.8"
-                                                    d="M12 3v9l4 2M21 12a9 9 0 1 1-9-9"
-                                                />
-                                            </svg>
-                                            <span class="truncate">
-                                                <strong class="text-black">
-                                                    {{ $activeUpload->original_name }}
-                                                </strong>
-                                                <span
-                                                    class="mt-[3px] block text-zinc-500"
-                                                >
-                                                    {{ ["waiting" => "Pendiente", "uploading" => "Subiendo", "queued" => "En cola", "processing" => "Procesando"][$activeUpload->status] ?? ucfirst($activeUpload->status) }}
-                                                </span>
-                                            </span>
-                                        </span>
-                                        <span class="tabular-nums">
-                                            {{ number_format($activeUpload->received_bytes / 1048576, 2) }}
-                                            /
-                                            {{ number_format($activeUpload->size / 1048576, 2) }}
-                                            MB
-                                        </span>
-                                        <span class="tabular-nums">
-                                            {{ $activeUpload->last_activity_at?->format("d/m/Y H:i:s") }}
-                                        </span>
-                                    </div>
-                                @endforeach
-
-                                @forelse ($backupTree as $customerName => $customerFolders)
-                                    @php
-                                        $customerFileCount = $customerFolders->flatten(1)->count();
-                                    @endphp
-
-                                    <details
-                                        class="group/customer border-b border-zinc-200"
-                                    >
-                                        <summary
-                                            class="flex min-h-[64px] cursor-pointer list-none items-center gap-[10px] px-[20px] font-semibold text-black hover:bg-zinc-50"
-                                            title="Desplegar carpetas Index y Bak de {{ $customerName }}"
-                                        >
-                                            <svg
-                                                class="h-4 w-4 shrink-0 text-zinc-500 transition-transform group-open/customer:rotate-90"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="1.8"
-                                                    d="m9 5 7 7-7 7"
-                                                />
-                                            </svg>
-                                            <svg
-                                                class="h-5 w-5 text-zinc-500"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="1.8"
-                                                    d="M3 7h7l2 2h9v11H3V7Z"
-                                                />
-                                            </svg>
-                                            <span
-                                                class="min-w-0 flex-1 truncate"
-                                            >
-                                                {{ $customerName }}
-                                            </span>
-                                            <span
-                                                class="font-normal text-zinc-500"
-                                            >
-                                                {{ $customerFileCount }}
-                                                archivos
-                                            </span>
-                                        </summary>
-                                        <div
-                                            class="relative ml-[48px] border-l border-zinc-300"
-                                        >
-                                            @foreach (["index" => "Index", "bak" => "Bak"] as $categoryKey => $categoryLabel)
-                                                @php
-                                                    $categoryFiles = $customerFolders->get($categoryKey, collect());
-                                                @endphp
-
+                                                <div class="min-w-0 flex-1">
+                                                    <strong
+                                                        class="block truncate text-black"
+                                                        x-text="item.fileName"
+                                                    ></strong>
+                                                    <span
+                                                        class="mt-[3px] block text-zinc-500"
+                                                        x-text="statusLabel(item.status)"
+                                                    ></span>
+                                                </div>
                                                 <div
-                                                    class="relative border-t border-zinc-200"
+                                                    class="flex shrink-0 items-center gap-[15px]"
                                                 >
                                                     <span
-                                                        class="absolute -left-px top-[27px] h-px w-[24px] bg-zinc-300"
-                                                        aria-hidden="true"
+                                                        class="font-semibold tabular-nums text-black"
+                                                        x-text="item.progress + '%'"
                                                     ></span>
-                                                    <div
-                                                        class="flex min-h-[54px] items-center gap-[10px] bg-zinc-50/60 pl-[38px] pr-[20px] text-black"
+                                                    <button
+                                                        x-show="canCancel(item)"
+                                                        type="button"
+                                                        @click="cancelUpload(item)"
+                                                        class="font-semibold text-red-600 focus:outline-none"
+                                                        title="Cancelar esta carga y eliminar sus fragmentos"
                                                     >
-                                                        <svg
-                                                            class="h-4 w-4 text-zinc-500"
-                                                            fill="none"
-                                                            viewBox="0 0 24 24"
-                                                            stroke="currentColor"
-                                                        >
-                                                            <path
-                                                                stroke-linecap="round"
-                                                                stroke-linejoin="round"
-                                                                stroke-width="1.8"
-                                                                d="M3 7h7l2 2h9v11H3V7Z"
-                                                            />
-                                                        </svg>
-                                                        <span
-                                                            class="font-medium"
-                                                        >
-                                                            {{ $categoryLabel }}
-                                                        </span>
-                                                        <span
-                                                            class="text-zinc-400"
-                                                        >
-                                                            {{ $categoryFiles->count() }}
-                                                        </span>
-                                                    </div>
-                                                    @forelse ($categoryFiles as $file)
-                                                        <a
-                                                            href="{{ $file["download_url"] }}"
-                                                            class="relative grid min-h-[58px] grid-cols-[minmax(240px,1fr)_150px_180px] items-center border-t border-zinc-200 pl-[58px] pr-[20px] text-zinc-600 hover:bg-zinc-50 hover:text-black"
-                                                            title="Haz clic para descargar {{ $file["name"] }}"
-                                                        >
-                                                            <span
-                                                                class="absolute -left-px top-1/2 h-px w-[42px] bg-zinc-300"
-                                                                aria-hidden="true"
-                                                            ></span>
-                                                            <span
-                                                                class="flex min-w-0 items-center gap-[10px]"
-                                                            >
-                                                                <svg
-                                                                    class="h-4 w-4 shrink-0"
-                                                                    fill="none"
-                                                                    viewBox="0 0 24 24"
-                                                                    stroke="currentColor"
-                                                                >
-                                                                    <path
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round"
-                                                                        stroke-width="1.8"
-                                                                        d="M6 3h8l4 4v14H6V3Zm8 0v5h5"
-                                                                    />
-                                                                </svg>
-                                                                <span
-                                                                    class="truncate"
-                                                                >
-                                                                    {{ $file["name"] }}
-                                                                </span>
-                                                                <svg
-                                                                    class="ml-auto h-4 w-4 shrink-0 text-black"
-                                                                    fill="none"
-                                                                    viewBox="0 0 24 24"
-                                                                    stroke="currentColor"
-                                                                    aria-label="Descargar archivo"
-                                                                >
-                                                                    <path
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round"
-                                                                        stroke-width="1.8"
-                                                                        d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"
-                                                                    />
-                                                                </svg>
-                                                            </span>
-                                                            <span
-                                                                class="tabular-nums"
-                                                            >
-                                                                {{ number_format($file["size"] / 1048576, 2) }}
-                                                                MB
-                                                            </span>
-                                                            <span
-                                                                class="tabular-nums"
-                                                            >
-                                                                {{ $file["completed_at"]?->format("d/m/Y H:i") }}
-                                                            </span>
-                                                        </a>
-                                                    @empty
-                                                        <div
-                                                            class="relative border-t border-zinc-200 py-[15px] pl-[58px] pr-[20px] text-zinc-400"
-                                                        >
-                                                            <span
-                                                                class="absolute -left-px top-1/2 h-px w-[42px] bg-zinc-300"
-                                                                aria-hidden="true"
-                                                            ></span>
-                                                            Sin archivos en esta
-                                                            carpeta.
-                                                        </div>
-                                                    @endforelse
+                                                        Cancelar
+                                                    </button>
                                                 </div>
-                                            @endforeach
-                                        </div>
-                                    </details>
-                                @empty
-                                    @if ($activeUploads->isEmpty())
-                                        <div
-                                            class="flex min-h-[220px] items-center justify-center text-zinc-500"
-                                        >
-                                            No hay respaldos que coincidan con
-                                            la búsqueda.
-                                        </div>
-                                    @endif
-                                @endforelse
-                            </div>
-                            <div
-                                class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-t border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-black"
+                                            </div>
+                                            <div
+                                                class="mt-[12px] h-2 overflow-hidden rounded-full bg-zinc-100"
+                                            >
+                                                <div
+                                                    class="h-full rounded-full transition-all"
+                                                    :class="item.status === 'error' ? 'bg-red-500' : 'bg-black'"
+                                                    :style="`width:${item.progress}%`"
+                                                ></div>
+                                            </div>
+                                            <div
+                                                class="mt-[10px] flex items-center justify-between gap-[10px] text-zinc-500"
+                                            >
+                                                <span
+                                                    x-text="item.speed"
+                                                ></span>
+                                                <span
+                                                    class="text-right"
+                                                    x-text="item.eta"
+                                                ></span>
+                                            </div>
+                                            <span
+                                                class="mt-[5px] block text-zinc-500"
+                                                x-text="item.message"
+                                            ></span>
+                                            <button
+                                                x-show="item.status === 'error'"
+                                                type="button"
+                                                @click="retry(item)"
+                                                class="mt-[10px] p-0 font-semibold text-black focus:outline-none"
+                                            >
+                                                Reintentar
+                                            </button>
+                                        </article>
+                                    </template>
+                                </div>
+                            </section>
+
+                            <section
+                                x-show="workspaceMode === 'tree'"
+                                x-cloak
+                                class="flex min-h-[610px] min-w-0 flex-col"
                             >
-                                <span>
-                                    {{ $backupTree->count() }} clientes
-                                </span>
-                                <span>
-                                    {{ $backupTree->flatten(2)->count() }}
-                                    archivos
-                                </span>
-                                <span>
-                                    {{ $sites[$site] ?? ucfirst($site) }}
-                                </span>
-                            </div>
+                                <div
+                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-zinc-700"
+                                >
+                                    <span>Cliente / archivo</span>
+                                    <span>Tamaño</span>
+                                    <span>Fecha de respaldo</span>
+                                </div>
+                                <div
+                                    class="backup-scrollbar max-h-[610px] min-h-0 flex-1 overflow-y-auto overscroll-contain"
+                                >
+                                    <div
+                                        class="flex min-h-[64px] items-center gap-[10px] border-b border-zinc-200 bg-zinc-50 px-[20px] font-semibold text-black"
+                                    >
+                                        <svg
+                                            class="h-5 w-5 text-zinc-500"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="1.8"
+                                                d="M3 7h7l2 2h9v11H3V7Z"
+                                            />
+                                        </svg>
+                                        Respaldos /
+                                        {{ $sites[$site] ?? ucfirst($site) }}
+                                    </div>
+                                    @foreach ($activeUploads as $activeUpload)
+                                        <div
+                                            class="grid min-h-[64px] grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-amber-50/40 px-[20px]"
+                                        >
+                                            <span
+                                                class="flex min-w-0 items-center gap-[10px]"
+                                            >
+                                                <svg
+                                                    class="h-5 w-5 shrink-0 animate-pulse text-amber-600"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="1.8"
+                                                        d="M12 3v9l4 2M21 12a9 9 0 1 1-9-9"
+                                                    />
+                                                </svg>
+                                                <span class="truncate">
+                                                    <strong class="text-black">
+                                                        {{ $activeUpload->original_name }}
+                                                    </strong>
+                                                    <span
+                                                        class="mt-[3px] block text-zinc-500"
+                                                    >
+                                                        {{ ["waiting" => "Pendiente", "uploading" => "Subiendo", "queued" => "En cola", "processing" => "Procesando"][$activeUpload->status] ?? ucfirst($activeUpload->status) }}
+                                                    </span>
+                                                </span>
+                                            </span>
+                                            <span class="tabular-nums">
+                                                {{ number_format($activeUpload->received_bytes / 1048576, 2) }}
+                                                /
+                                                {{ number_format($activeUpload->size / 1048576, 2) }}
+                                                MB
+                                            </span>
+                                            <span class="tabular-nums">
+                                                {{ $activeUpload->last_activity_at?->format("d/m/Y H:i:s") }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+
+                                    @forelse ($backupTree as $customerName => $customerFolders)
+                                        @php
+                                            $customerFileCount = $customerFolders->flatten(1)->count();
+                                        @endphp
+
+                                        <details
+                                            class="group/customer border-b border-zinc-200"
+                                            wire:key="backup-customer-{{ md5($site . $customerName) }}"
+                                            data-customer-key="{{ $customerName }}"
+                                            :open="isCustomerOpen(@js($customerName))"
+                                            @toggle="toggleCustomer(@js($customerName), $event)"
+                                        >
+                                            <summary
+                                                class="flex min-h-[64px] cursor-pointer list-none items-center gap-[10px] px-[20px] font-semibold text-black hover:bg-zinc-50"
+                                                title="Desplegar carpetas Index y Bak de {{ $customerName }}"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4 shrink-0 text-zinc-500 transition-transform group-open/customer:rotate-90"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="1.8"
+                                                        d="m9 5 7 7-7 7"
+                                                    />
+                                                </svg>
+                                                <svg
+                                                    class="h-5 w-5 text-zinc-500"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="1.8"
+                                                        d="M3 7h7l2 2h9v11H3V7Z"
+                                                    />
+                                                </svg>
+                                                <span
+                                                    class="min-w-0 flex-1 truncate"
+                                                >
+                                                    {{ $customerName }}
+                                                </span>
+                                                <span
+                                                    class="font-normal text-zinc-500"
+                                                >
+                                                    {{ $customerFileCount }}
+                                                    archivos
+                                                </span>
+                                            </summary>
+                                            <div
+                                                class="relative ml-[48px] border-l border-zinc-300"
+                                            >
+                                                @foreach (["index" => "Index", "bak" => "Bak"] as $categoryKey => $categoryLabel)
+                                                    @php
+                                                        $categoryFiles = $customerFolders->get($categoryKey, collect());
+                                                    @endphp
+
+                                                    <div
+                                                        class="relative border-t border-zinc-200"
+                                                    >
+                                                        <span
+                                                            class="absolute -left-px top-[27px] h-px w-[24px] bg-zinc-300"
+                                                            aria-hidden="true"
+                                                        ></span>
+                                                        <div
+                                                            class="flex min-h-[54px] items-center gap-[10px] bg-zinc-50/60 pl-[38px] pr-[20px] text-black"
+                                                        >
+                                                            <svg
+                                                                class="h-4 w-4 text-zinc-500"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    stroke-width="1.8"
+                                                                    d="M3 7h7l2 2h9v11H3V7Z"
+                                                                />
+                                                            </svg>
+                                                            <span
+                                                                class="font-medium"
+                                                            >
+                                                                {{ $categoryLabel }}
+                                                            </span>
+                                                            <span
+                                                                class="text-zinc-400"
+                                                            >
+                                                                {{ $categoryFiles->count() }}
+                                                            </span>
+                                                        </div>
+                                                        @forelse ($categoryFiles as $file)
+                                                            <a
+                                                                href="{{ $file["download_url"] }}"
+                                                                class="relative grid min-h-[58px] grid-cols-[minmax(240px,1fr)_150px_180px] items-center border-t border-zinc-200 pl-[58px] pr-[20px] text-zinc-600 hover:bg-zinc-50 hover:text-black"
+                                                                title="Haz clic para descargar {{ $file["name"] }}"
+                                                            >
+                                                                <span
+                                                                    class="absolute -left-px top-1/2 h-px w-[42px] bg-zinc-300"
+                                                                    aria-hidden="true"
+                                                                ></span>
+                                                                <span
+                                                                    class="flex min-w-0 items-center gap-[10px]"
+                                                                >
+                                                                    <svg
+                                                                        class="h-4 w-4 shrink-0"
+                                                                        fill="none"
+                                                                        viewBox="0 0 24 24"
+                                                                        stroke="currentColor"
+                                                                    >
+                                                                        <path
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            stroke-width="1.8"
+                                                                            d="M6 3h8l4 4v14H6V3Zm8 0v5h5"
+                                                                        />
+                                                                    </svg>
+                                                                    <span
+                                                                        class="truncate"
+                                                                    >
+                                                                        {{ $file["name"] }}
+                                                                    </span>
+                                                                    <svg
+                                                                        class="ml-auto h-4 w-4 shrink-0 text-black"
+                                                                        fill="none"
+                                                                        viewBox="0 0 24 24"
+                                                                        stroke="currentColor"
+                                                                        aria-label="Descargar archivo"
+                                                                    >
+                                                                        <path
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            stroke-width="1.8"
+                                                                            d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"
+                                                                        />
+                                                                    </svg>
+                                                                </span>
+                                                                <span
+                                                                    class="tabular-nums"
+                                                                >
+                                                                    {{ number_format($file["size"] / 1048576, 2) }}
+                                                                    MB
+                                                                </span>
+                                                                <span
+                                                                    class="tabular-nums"
+                                                                >
+                                                                    {{ $file["completed_at"]?->format("d/m/Y H:i") }}
+                                                                </span>
+                                                            </a>
+                                                        @empty
+                                                            <div
+                                                                class="relative border-t border-zinc-200 py-[15px] pl-[58px] pr-[20px] text-zinc-400"
+                                                            >
+                                                                <span
+                                                                    class="absolute -left-px top-1/2 h-px w-[42px] bg-zinc-300"
+                                                                    aria-hidden="true"
+                                                                ></span>
+                                                                Sin archivos en
+                                                                esta carpeta.
+                                                            </div>
+                                                        @endforelse
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </details>
+                                    @empty
+                                        @if ($activeUploads->isEmpty())
+                                            <div
+                                                class="flex min-h-[220px] items-center justify-center text-zinc-500"
+                                            >
+                                                No hay respaldos que coincidan
+                                                con la búsqueda.
+                                            </div>
+                                        @endif
+                                    @endforelse
+                                </div>
+                                <div
+                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-t border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-black"
+                                >
+                                    <span>
+                                        {{ $backupTree->count() }} clientes
+                                    </span>
+                                    <span>
+                                        {{ $backupTree->flatten(2)->count() }}
+                                        archivos
+                                    </span>
+                                    <span>
+                                        {{ $sites[$site] ?? ucfirst($site) }}
+                                    </span>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 @else
@@ -770,9 +841,11 @@
                         $historyFiles = $history->sum(fn ($record) => count($record->manifest ?? []));
                     @endphp
 
-                    <div class="max-h-[650px] overflow-auto overscroll-contain">
+                    <div
+                        class="backup-scrollbar max-h-[650px] overflow-auto overscroll-contain"
+                    >
                         <table
-                            class="w-full min-w-[1320px] table-fixed border-collapse text-left"
+                            class="w-full min-w-[1380px] table-fixed border-collapse text-left"
                         >
                             <colgroup>
                                 <col class="w-[120px]" />
@@ -782,7 +855,7 @@
                                 <col class="w-[220px]" />
                                 <col class="w-[250px]" />
                                 <col class="w-[135px]" />
-                                <col class="w-[170px]" />
+                                <col class="w-[230px]" />
                             </colgroup>
                             <thead
                                 class="sticky top-0 z-20 bg-zinc-100 shadow-[0_1px_0_#d4d4d8]"
@@ -790,7 +863,7 @@
                                 <tr>
                                     @foreach (["Fecha", "Hora", "Sede", "Usuario", "Contenido detectado", "ZIP subido", "Estado", "Acciones"] as $heading)
                                         <th
-                                            class="border-r border-zinc-200 px-[20px] py-[15px] font-semibold last:border-r-0"
+                                            class="border-r border-zinc-200 px-[20px] py-[15px] font-semibold last:sticky last:right-0 last:z-30 last:border-l last:border-r-0 last:bg-zinc-100"
                                         >
                                             {{ $heading }}
                                         </th>
@@ -904,7 +977,9 @@
                                                 {{ $record->superseded_at ? "Reemplazado" : $statusLabel }}
                                             </span>
                                         </td>
-                                        <td class="px-[10px] py-[10px]">
+                                        <td
+                                            class="sticky right-0 z-10 border-l border-zinc-200 bg-white px-[10px] py-[10px]"
+                                        >
                                             <div
                                                 class="flex items-center justify-center gap-[5px]"
                                             >
@@ -1077,10 +1152,10 @@
                                                     </dl>
                                                 </div>
                                                 <div
-                                                    class="overflow-hidden rounded-xl border border-zinc-200 bg-white"
+                                                    class="backup-scrollbar overflow-auto rounded-xl border border-zinc-200 bg-white"
                                                 >
                                                     <div
-                                                        class="grid grid-cols-[minmax(220px,1fr)_110px_180px] border-b border-zinc-200 bg-zinc-100 px-[15px] py-[12px] font-semibold text-black"
+                                                        class="grid min-w-[650px] grid-cols-[minmax(260px,1fr)_110px_220px] border-b border-zinc-200 bg-zinc-100 px-[15px] py-[12px] font-semibold text-black"
                                                     >
                                                         <span>Archivo</span>
                                                         <span>Carpeta</span>
@@ -1088,7 +1163,7 @@
                                                     </div>
                                                     @forelse ($manifest as $fileIndex => $file)
                                                         <div
-                                                            class="grid min-h-[50px] grid-cols-[minmax(220px,1fr)_110px_180px] items-center border-b border-zinc-200 px-[15px] last:border-b-0"
+                                                            class="grid min-h-[50px] min-w-[650px] grid-cols-[minmax(260px,1fr)_110px_220px] items-center border-b border-zinc-200 px-[15px] last:border-b-0"
                                                         >
                                                             <span
                                                                 class="truncate"
@@ -1489,6 +1564,8 @@
                     uploads: [],
                     activeCount: 0,
                     dragging: false,
+                    workspaceMode: 'upload',
+                    openCustomers: [],
                     fallbackReplacement: null,
                     editRecord: {
                         id: null,
@@ -1513,9 +1590,44 @@
                         else await root.requestFullscreen();
                     },
                     focusUploader() {
-                        this.$refs.uploader?.scrollIntoView({
+                        this.$refs.uploadWorkspace?.scrollIntoView({
                             behavior: 'smooth',
                             block: 'center',
+                        });
+                    },
+                    showUploader() {
+                        this.workspaceMode = 'upload';
+                        this.$nextTick(() => this.focusUploader());
+                    },
+                    showTree() {
+                        this.workspaceMode = 'tree';
+                    },
+                    isCustomerOpen(customer) {
+                        return this.openCustomers.includes(customer);
+                    },
+                    toggleCustomer(customer, event) {
+                        if (!event.target.open) {
+                            this.openCustomers = this.openCustomers.filter(
+                                (item) => item !== customer,
+                            );
+                            return;
+                        }
+
+                        if (!this.openCustomers.includes(customer))
+                            this.openCustomers.push(customer);
+                        if (this.openCustomers.length <= 3) return;
+
+                        const oldest = this.openCustomers.shift();
+                        this.$nextTick(() => {
+                            const detail = Array.from(
+                                this.$root.querySelectorAll(
+                                    'details[data-customer-key]',
+                                ),
+                            ).find(
+                                (element) =>
+                                    element.dataset.customerKey === oldest,
+                            );
+                            if (detail) detail.open = false;
                         });
                     },
                     openEdit(record) {
@@ -1773,6 +1885,9 @@
                             message: '',
                             status: 'pending',
                             running: false,
+                            cancelled: false,
+                            cancelUrl: null,
+                            abortController: null,
                         };
                         this.uploads.unshift(item);
                         if (persist) this.persist(item);
@@ -1800,7 +1915,8 @@
                             const item = this.uploads.find(
                                 (candidate) =>
                                     candidate.status === 'pending' &&
-                                    !candidate.running,
+                                    !candidate.running &&
+                                    !candidate.cancelled,
                             );
                             if (!item) break;
                             item.running = true;
@@ -1815,9 +1931,11 @@
                     },
                     async uploadItem(item) {
                         try {
+                            item.abortController = new AbortController();
                             let upload = await this.request(config.endpoint, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
+                                signal: item.abortController.signal,
                                 body: JSON.stringify({
                                     site: item.site,
                                     file_name: item.file.name,
@@ -1828,11 +1946,14 @@
                                     replace_upload_id: item.replaceUploadId,
                                 }),
                             });
+                            item.cancelUrl = upload.cancelUrl;
                             while (upload.status === 'waiting') {
                                 item.status = 'waiting';
                                 item.message = 'Esperando turno';
                                 await this.pause(2500);
-                                upload = await this.request(upload.statusUrl);
+                                upload = await this.request(upload.statusUrl, {
+                                    signal: item.abortController.signal,
+                                });
                             }
                             if (upload.status === 'completed') {
                                 await this.completeItem(item);
@@ -1885,6 +2006,8 @@
                                                         'application/octet-stream',
                                                 },
                                                 body: blob,
+                                                signal: item.abortController
+                                                    .signal,
                                             },
                                         );
                                         sent = true;
@@ -1900,6 +2023,10 @@
                                         await this.pause(2500);
                                         upload = await this.request(
                                             upload.statusUrl,
+                                            {
+                                                signal: item.abortController
+                                                    .signal,
+                                            },
                                         );
                                         if (
                                             (upload.uploadedChunks || [])
@@ -1940,6 +2067,7 @@
                             }
                             upload = await this.request(upload.completeUrl, {
                                 method: 'POST',
+                                signal: item.abortController.signal,
                             });
                             item.progress = 100;
                             while (
@@ -1951,7 +2079,9 @@
                                         ? 'En cola del servidor'
                                         : 'Organizando contenido';
                                 await this.pause(2500);
-                                upload = await this.request(upload.statusUrl);
+                                upload = await this.request(upload.statusUrl, {
+                                    signal: item.abortController.signal,
+                                });
                             }
                             if (upload.status === 'failed')
                                 throw new Error(
@@ -1960,6 +2090,7 @@
                                 );
                             await this.completeItem(item);
                         } catch (error) {
+                            if (item.cancelled) return;
                             item.status = 'error';
                             item.message =
                                 error.message ||
@@ -1979,8 +2110,46 @@
                         window.dispatchEvent(
                             new CustomEvent('backup-upload-finished'),
                         );
+                        this.uploads = this.uploads.filter(
+                            (candidate) => candidate.localId !== item.localId,
+                        );
+                        if (!this.uploads.length) this.showTree();
+                    },
+                    canCancel(item) {
+                        return ['pending', 'waiting', 'uploading'].includes(
+                            item.status,
+                        );
+                    },
+                    async cancelUpload(item) {
+                        if (!this.canCancel(item)) return;
+                        item.cancelled = true;
+                        item.abortController?.abort();
+                        item.status = 'cancelled';
+                        item.message = 'Cancelando carga';
+
+                        try {
+                            if (item.cancelUrl)
+                                await this.request(item.cancelUrl, {
+                                    method: 'DELETE',
+                                });
+                            await pendingRequest('readwrite', (store) =>
+                                store.delete(item.localId),
+                            ).catch(() => {});
+                            this.uploads = this.uploads.filter(
+                                (candidate) =>
+                                    candidate.localId !== item.localId,
+                            );
+                        } catch (error) {
+                            item.cancelled = false;
+                            item.status = 'error';
+                            item.message =
+                                error.message ||
+                                'No fue posible cancelar la carga.';
+                        }
                     },
                     retry(item) {
+                        item.cancelled = false;
+                        item.abortController = null;
                         item.status = 'pending';
                         item.progress = 0;
                         item.message = '';
@@ -2009,6 +2178,7 @@
                                 queued: 'En cola',
                                 processing: 'Procesando',
                                 completed: 'Completado',
+                                cancelled: 'Cancelado',
                                 error: 'Error',
                             }[status] || status
                         );

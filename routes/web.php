@@ -251,6 +251,7 @@ Route::middleware([
             Route::post('/uploads/{upload}/chunks/{index}', [BackupUploadController::class, 'storeChunk'])
                 ->whereNumber('index')->middleware('throttle:180,1')->name('uploads.chunks.store');
             Route::post('/uploads/{upload}/complete', [BackupUploadController::class, 'complete'])->name('uploads.complete');
+            Route::delete('/uploads/{upload}', [BackupUploadController::class, 'cancel'])->name('uploads.cancel');
             Route::get('/files/{upload}/download', [BackupUploadController::class, 'download'])->name('download');
             Route::get('/files/{upload}/{index}/download', [BackupUploadController::class, 'downloadFile'])
                 ->whereNumber('index')->name('files.download');

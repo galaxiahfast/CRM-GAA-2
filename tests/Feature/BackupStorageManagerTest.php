@@ -48,7 +48,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Mérida')
             ->assertSee('Tulum')
             ->assertSee('Cancún')
-            ->assertSeeInOrder(['Subir respaldos', 'Selecciona varios ZIP', 'Sede del respaldo', 'ZIP', 'Carpeta'])
+            ->assertSeeInOrder(['Subir respaldos', 'Sede del respaldo', 'Cargar respaldos', 'Arrastra tus ZIP aquí'])
             ->assertDontSee('Destino')
             ->assertSee('Historial de registros')
             ->assertSee('Arrastra tus ZIP aquí')
@@ -157,6 +157,33 @@ class BackupStorageManagerTest extends TestCase
 
         $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'primero.zip', 'fingerprint' => 'first'])->assertJsonPath('status', 'uploading');
         $this->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'segundo.zip', 'fingerprint' => 'second'])->assertJsonPath('status', 'waiting');
+    }
+
+    public function test_an_active_upload_can_be_cancelled_and_its_chunks_are_removed(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        config()->set('backup-storage.chunk_size', 1024);
+        $admin = $this->user('Administrador', 'admin-cancel@datamid.test');
+
+        $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida',
+            'file_name' => 'cancelable.zip',
+            'mime_type' => 'application/zip',
+            'size' => 2048,
+            'fingerprint' => 'cancelable:zip',
+        ])->assertOk();
+        $upload = BackupUpload::query()->findOrFail($response->json('id'));
+
+        $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), random_bytes(1024))->assertOk();
+        Storage::disk('local')->assertExists("backup-chunks/{$upload->id}/0.part");
+
+        $this->deleteJson(route('activity-backups.uploads.cancel', $upload))
+            ->assertOk()
+            ->assertJson(['cancelled' => true]);
+
+        $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
+        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");
     }
 
     public function test_only_zip_archives_can_be_initialized(): void

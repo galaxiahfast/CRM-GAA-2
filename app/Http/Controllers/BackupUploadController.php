@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\AssembleBackupUpload;
 use App\Models\BackupUpload;
+use App\Services\Backups\BackupStoragePurger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,6 +194,21 @@ class BackupUploadController extends Controller
         return response()->json($this->payload($upload->fresh()), 202);
     }
 
+    public function cancel(Request $request, BackupUpload $upload, BackupStoragePurger $purger): JsonResponse
+    {
+        Gate::authorize('manage-system-backups');
+        abort_unless($upload->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
+        abort_unless(
+            in_array($upload->status, [BackupUpload::STATUS_WAITING, BackupUpload::STATUS_UPLOADING], true),
+            409,
+            'La carga ya está siendo procesada y no se puede cancelar.',
+        );
+
+        $purger->purge($upload);
+
+        return response()->json(['cancelled' => true]);
+    }
+
     public function download(BackupUpload $upload): StreamedResponse
     {
         Gate::authorize('manage-system-backups');
@@ -273,6 +289,7 @@ class BackupUploadController extends Controller
             'statusUrl' => route('activity-backups.uploads.status', $upload),
             'chunkUrlTemplate' => route('activity-backups.uploads.chunks.store', [$upload, '__INDEX__']),
             'completeUrl' => route('activity-backups.uploads.complete', $upload),
+            'cancelUrl' => route('activity-backups.uploads.cancel', $upload),
             'downloadUrl' => $upload->status === BackupUpload::STATUS_COMPLETED
                 ? route('activity-backups.download', $upload)
                 : null,
