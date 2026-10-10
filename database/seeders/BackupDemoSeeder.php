@@ -11,31 +11,12 @@ use PharData;
 
 class BackupDemoSeeder extends Seeder
 {
-    /** @var array<int, string> */
-    private array $companies = [
-        'Abarrotes del Sureste',
-        'Administradora Peninsular',
-        'Arquitectura Maya',
-        'Comercializadora del Caribe',
-        'Constructora Horizonte',
-        'Consultoría Fiscal del Mayab',
-        'Distribuidora Kukulkán',
-        'Grupo Contable Mérida',
-        'Hotel Costa Esmeralda',
-        'Inmobiliaria Montejo',
-        'Logística Yucatán',
-        'Operadora Tulum',
-        'Servicios Corporativos Itzá',
-        'Tecnología del Golfo',
-        'Transportes Peninsulares',
-    ];
-
     public function run(): void
     {
         $disk = Storage::disk((string) config('backup-storage.disk', 'local'));
         $userId = User::query()->with('role')->get()->first(fn (User $user) => $user->isAdmin())?->id;
 
-        foreach ($this->companies as $position => $company) {
+        foreach (config('backup-storage.demo_companies', []) as $position => $company) {
             $slug = Str::slug($company);
             $date = now()->subMinutes(($position + 1) * 7);
             $upload = BackupUpload::query()->firstOrCreate([

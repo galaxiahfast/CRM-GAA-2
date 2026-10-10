@@ -9,11 +9,43 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use PharData;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BackupUploadController extends Controller
 {
+    public function example(): StreamedResponse
+    {
+        Gate::authorize('manage-system-backups');
+
+        return response()->streamDownload(function (): void {
+            $temporary = tempnam(sys_get_temp_dir(), 'backup-example-');
+            if ($temporary === false) {
+                throw new RuntimeException('No fue posible crear el ZIP de ejemplo.');
+            }
+
+            @unlink($temporary);
+            $temporary .= '.zip';
+            $zip = new PharData($temporary);
+
+            foreach (config('backup-storage.demo_companies', []) as $company) {
+                $slug = Str::slug($company);
+                $zip->addFromString("{$company}/Index/{$slug}_ejemplo.index", "Índice de prueba para {$company}\n");
+                $zip->addFromString("{$company}/Bak/{$slug}_ejemplo.bak", "Respaldo de prueba para {$company}\n");
+            }
+            unset($zip);
+
+            readfile($temporary);
+            @unlink($temporary);
+        }, 'respaldo-ejemplo-15-clientes.zip', [
+            'Content-Type' => 'application/zip',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
     public function initialize(Request $request): JsonResponse
     {
         Gate::authorize('manage-system-backups');

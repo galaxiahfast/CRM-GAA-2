@@ -245,6 +245,7 @@ Route::middleware([
         ->name('activity-backups.')
         ->group(function () {
             Route::get('/', BackupStorageManager::class)->name('index');
+            Route::get('/ejemplo', [BackupUploadController::class, 'example'])->name('example');
             Route::post('/uploads', [BackupUploadController::class, 'initialize'])->name('uploads.initialize');
             Route::get('/uploads/{upload}/status', [BackupUploadController::class, 'status'])->name('uploads.status');
             Route::post('/uploads/{upload}/chunks/{index}', [BackupUploadController::class, 'storeChunk'])

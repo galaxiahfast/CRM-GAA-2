@@ -51,6 +51,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSeeInOrder(['Subir respaldos', 'Selecciona varios ZIP', 'Sede del respaldo', 'ZIP', 'Carpeta'])
             ->assertDontSee('Destino')
             ->assertSee('Historial de registros')
+            ->assertSee('Arrastra tus ZIP aquí')
+            ->assertSee('Descargar ZIP de prueba')
             ->assertSee('multiple', false)
             ->assertDontSee('Selecciona un cliente')
             ->assertSee('data-backup-site', false);
@@ -113,6 +115,37 @@ class BackupStorageManagerTest extends TestCase
         $this->get(route('activity-backups.files.download', [$upload, 1]))
             ->assertOk()
             ->assertDownload('empresa_2026.bak');
+
+        $deletedPath = $upload->manifest[0]['path'];
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('deleteBackupFile', $upload->id, 0);
+
+        $upload->refresh();
+        $this->assertCount(1, $upload->manifest);
+        $this->assertSame('bak', $upload->manifest[0]['category']);
+        Storage::disk('local')->assertMissing($deletedPath);
+        $this->get(route('activity-backups.download', $upload))
+            ->assertOk()
+            ->assertDownload('empresa_2026.zip');
+    }
+
+    public function test_example_zip_contains_the_fifteen_company_structures(): void
+    {
+        $admin = $this->user('Administrador', 'admin-example@datamid.test');
+
+        $response = $this->actingAs($admin)->get(route('activity-backups.example'))
+            ->assertOk()
+            ->assertDownload('respaldo-ejemplo-15-clientes.zip');
+
+        $temporaryBase = tempnam(sys_get_temp_dir(), 'backup-example-test-');
+        @unlink($temporaryBase);
+        $temporary = $temporaryBase.'.zip';
+        file_put_contents($temporary, $response->streamedContent());
+        $zip = new \PharData($temporary);
+        $this->assertSame(30, iterator_count(new \RecursiveIteratorIterator($zip)));
+        unset($zip);
+        @unlink($temporary);
     }
 
     public function test_secondary_upload_waits_when_the_concurrency_limit_is_reached(): void

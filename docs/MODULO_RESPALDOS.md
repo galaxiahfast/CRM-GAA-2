@@ -28,13 +28,21 @@ En producción conviene administrar este comando con Supervisor, systemd o el ad
 
 ## Datos visuales de prueba
 
-El siguiente comando crea de forma idempotente 15 empresas de demostración en la sede Mérida, cada una con un archivo `.index` y otro `.bak`:
+Desde la zona de carga se puede descargar **ZIP de prueba**, un paquete listo para subir con 15 empresas y sus carpetas `Index` y `Bak`. El siguiente comando ofrece una alternativa para crear esos mismos datos de forma idempotente directamente en la sede Mérida:
 
 ```bash
 php artisan db:seed --class=BackupDemoSeeder --force
 ```
 
 No se incluye en `DatabaseSeeder` para evitar insertar registros ficticios accidentalmente durante una carga normal de producción.
+
+## Carga y administración
+
+- La zona admite selección múltiple, carpetas y arrastrar y soltar paquetes ZIP.
+- Las cargas se fragmentan, conservan su avance local y se reanudan después de recuperar la conexión.
+- El historial permite descargar el paquete o sus archivos internos, editar metadatos, eliminar archivos individuales y reconstruir el ZIP restante.
+- **Re-subir** solicita un nuevo paquete y conserva la versión actual hasta que el reemplazo se procese correctamente.
+- El árbol inicia plegado y muestra las carpetas `Index` y `Bak` únicamente al abrir un cliente.
 
 ## Variables opcionales
 

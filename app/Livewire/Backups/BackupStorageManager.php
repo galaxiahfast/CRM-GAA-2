@@ -3,6 +3,7 @@
 namespace App\Livewire\Backups;
 
 use App\Models\BackupUpload;
+use App\Services\Backups\BackupArchiveEditor;
 use App\Services\Backups\BackupStoragePurger;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -76,6 +77,16 @@ class BackupStorageManager extends Component
         Gate::authorize('manage-system-backups');
         app(BackupStoragePurger::class)->purge(BackupUpload::query()->findOrFail($uploadId));
         $this->dispatch('backup-record-deleted');
+    }
+
+    public function deleteBackupFile(string $uploadId, int $fileIndex): void
+    {
+        Gate::authorize('manage-system-backups');
+        app(BackupArchiveEditor::class)->deleteFile(
+            BackupUpload::query()->findOrFail($uploadId),
+            $fileIndex,
+        );
+        $this->dispatch('backup-file-deleted', uploadId: $uploadId, fileIndex: $fileIndex);
     }
 
     public function render()
