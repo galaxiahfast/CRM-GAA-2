@@ -52,7 +52,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('Destino')
             ->assertSee('Historial de registros')
             ->assertSee('Arrastra tus ZIP aquí')
-            ->assertSee('Descargar ZIP de prueba')
+            ->assertDontSee('Descargar ZIP de prueba')
+            ->assertSee('Cancelar subida')
             ->assertSee('multiple', false)
             ->assertDontSee('Selecciona un cliente')
             ->assertSee('data-backup-site', false);

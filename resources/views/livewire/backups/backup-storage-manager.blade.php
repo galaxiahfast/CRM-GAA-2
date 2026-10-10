@@ -342,26 +342,6 @@
                                         @endforeach
                                     </select>
                                 </label>
-                                <a
-                                    href="{{ route("activity-backups.example") }}"
-                                    class="flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black"
-                                    title="Descargar ZIP listo para probar el árbol de 15 clientes"
-                                >
-                                    <svg
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="1.8"
-                                            d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"
-                                        />
-                                    </svg>
-                                    Descargar ZIP de prueba
-                                </a>
                             </div>
                             <p class="mt-[20px] leading-6 text-zinc-500">
                                 Estructura esperada:
@@ -405,85 +385,89 @@
                                     @change="receiveFallback($event)"
                                 />
 
-                                <div
-                                    class="flex items-start justify-between gap-[20px]"
-                                >
-                                    <div>
-                                        <h3 class="font-semibold text-black">
-                                            Cargar respaldos
-                                        </h3>
-                                        <p class="mt-[5px] text-zinc-500">
-                                            Arrastra uno o varios ZIP. Aquí
-                                            verás el progreso y podrás cancelar
-                                            cada carga.
-                                        </p>
-                                    </div>
-                                    @if ($backupTree->isNotEmpty())
-                                        <button
-                                            type="button"
-                                            @click="showTree()"
-                                            class="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
-                                            title="Ver respaldos ya cargados"
-                                        >
-                                            Ver respaldos existentes
-                                        </button>
-                                    @endif
-                                </div>
-
-                                <button
-                                    type="button"
-                                    @click="chooseFiles()"
-                                    :class="dragging ? 'border-zinc-900 bg-zinc-100' : 'border-zinc-300 bg-zinc-50/60'"
-                                    class="mt-[20px] flex min-h-[220px] w-full flex-col items-center justify-center gap-[10px] rounded-xl border-2 border-dashed px-[20px] py-[30px] text-center transition-colors focus:outline-none"
-                                    title="Arrastra paquetes ZIP aquí o haz clic para seleccionarlos"
-                                >
-                                    <svg
-                                        class="h-10 w-10 text-zinc-500"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                <div x-show="!uploads.length">
+                                    <div
+                                        class="flex items-start justify-between gap-[20px]"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="1.8"
-                                            d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"
-                                        />
-                                    </svg>
-                                    <strong class="text-black">
-                                        Arrastra tus ZIP aquí
-                                    </strong>
-                                    <span class="text-zinc-500">
-                                        o haz clic para seleccionar varios
-                                        archivos
-                                    </span>
-                                </button>
+                                        <div>
+                                            <h3
+                                                class="font-semibold text-black"
+                                            >
+                                                Cargar respaldos
+                                            </h3>
+                                            <p class="mt-[5px] text-zinc-500">
+                                                Arrastra uno o varios ZIP. Aquí
+                                                verás el progreso y podrás
+                                                cancelar cada carga.
+                                            </p>
+                                        </div>
+                                        @if ($backupTree->isNotEmpty())
+                                            <button
+                                                type="button"
+                                                @click="showTree()"
+                                                class="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
+                                                title="Ver respaldos ya cargados"
+                                            >
+                                                Ver respaldos existentes
+                                            </button>
+                                        @endif
+                                    </div>
 
-                                <div
-                                    class="mt-[20px] grid grid-cols-2 gap-[10px]"
-                                >
                                     <button
                                         type="button"
                                         @click="chooseFiles()"
-                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border-0 bg-zinc-900 px-[20px] py-[15px] font-semibold text-white focus:outline-none"
-                                        title="Seleccionar uno o varios paquetes ZIP"
+                                        :class="dragging ? 'border-zinc-900 bg-zinc-100' : 'border-zinc-300 bg-zinc-50/60'"
+                                        class="mt-[20px] flex min-h-[220px] w-full flex-col items-center justify-center gap-[10px] rounded-xl border-2 border-dashed px-[20px] py-[30px] text-center transition-colors focus:outline-none"
+                                        title="Arrastra paquetes ZIP aquí o haz clic para seleccionarlos"
                                     >
-                                        Seleccionar ZIP
+                                        <svg
+                                            class="h-10 w-10 text-zinc-500"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="1.8"
+                                                d="M12 16V4m0 0L7 9m5-5 5 5M4 15v5h16v-5"
+                                            />
+                                        </svg>
+                                        <strong class="text-black">
+                                            Arrastra tus ZIP aquí
+                                        </strong>
+                                        <span class="text-zinc-500">
+                                            o haz clic para seleccionar varios
+                                            archivos
+                                        </span>
                                     </button>
-                                    <button
-                                        type="button"
-                                        @click="chooseFolder()"
-                                        class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
-                                        title="Seleccionar una carpeta que contenga paquetes ZIP"
+
+                                    <div
+                                        class="mt-[20px] grid grid-cols-2 gap-[10px]"
                                     >
-                                        Seleccionar carpeta
-                                    </button>
+                                        <button
+                                            type="button"
+                                            @click="chooseFiles()"
+                                            class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border-0 bg-zinc-900 px-[20px] py-[15px] font-semibold text-white focus:outline-none"
+                                            title="Seleccionar uno o varios paquetes ZIP"
+                                        >
+                                            Seleccionar ZIP
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="chooseFolder()"
+                                            class="inline-flex min-h-[50px] items-center justify-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] font-semibold text-black focus:outline-none"
+                                            title="Seleccionar una carpeta que contenga paquetes ZIP"
+                                        >
+                                            Seleccionar carpeta
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div
                                     x-show="uploads.length"
                                     x-cloak
-                                    class="backup-scrollbar mt-[20px] max-h-[260px] space-y-[10px] overflow-y-auto pr-[5px]"
+                                    class="backup-scrollbar space-y-[10px] overflow-y-auto pr-[5px]"
                                 >
                                     <template
                                         x-for="item in uploads"
@@ -519,7 +503,7 @@
                                                         class="font-semibold text-red-600 focus:outline-none"
                                                         title="Cancelar esta carga y eliminar sus fragmentos"
                                                     >
-                                                        Cancelar
+                                                        Cancelar subida
                                                     </button>
                                                 </div>
                                             </div>
@@ -1556,6 +1540,7 @@
                         request.onerror = () => reject(request.error);
                     });
                 };
+                const uploadControllers = new Map();
 
                 Alpine.data('backupUploadManager', (config) => ({
                     zoom: Number(
@@ -1740,6 +1725,7 @@
                         } catch (_) {}
                     },
                     async chooseFiles(replacement = null) {
+                        if (this.uploads.length) return;
                         this.focusUploader();
                         if (!window.showOpenFilePicker) {
                             this.fallbackReplacement = replacement;
@@ -1770,6 +1756,7 @@
                         }
                     },
                     async chooseFolder() {
+                        if (this.uploads.length) return;
                         this.focusUploader();
                         if (!window.showDirectoryPicker) {
                             this.$refs.fallbackFolder.click();
@@ -1820,6 +1807,7 @@
                     },
                     async handleDrop(event) {
                         this.dragging = false;
+                        if (this.uploads.length) return;
                         const files = Array.from(
                             event.dataTransfer?.files || [],
                         );
@@ -1887,7 +1875,6 @@
                             running: false,
                             cancelled: false,
                             cancelUrl: null,
-                            abortController: null,
                         };
                         this.uploads.unshift(item);
                         if (persist) this.persist(item);
@@ -1923,6 +1910,7 @@
                             item.status = 'uploading';
                             this.activeCount++;
                             this.uploadItem(item).finally(() => {
+                                uploadControllers.delete(item.localId);
                                 item.running = false;
                                 this.activeCount--;
                                 this.pump();
@@ -1931,11 +1919,12 @@
                     },
                     async uploadItem(item) {
                         try {
-                            item.abortController = new AbortController();
+                            const controller = new AbortController();
+                            uploadControllers.set(item.localId, controller);
                             let upload = await this.request(config.endpoint, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                signal: item.abortController.signal,
+                                signal: controller.signal,
                                 body: JSON.stringify({
                                     site: item.site,
                                     file_name: item.file.name,
@@ -1952,7 +1941,7 @@
                                 item.message = 'Esperando turno';
                                 await this.pause(2500);
                                 upload = await this.request(upload.statusUrl, {
-                                    signal: item.abortController.signal,
+                                    signal: controller.signal,
                                 });
                             }
                             if (upload.status === 'completed') {
@@ -2006,8 +1995,7 @@
                                                         'application/octet-stream',
                                                 },
                                                 body: blob,
-                                                signal: item.abortController
-                                                    .signal,
+                                                signal: controller.signal,
                                             },
                                         );
                                         sent = true;
@@ -2024,8 +2012,7 @@
                                         upload = await this.request(
                                             upload.statusUrl,
                                             {
-                                                signal: item.abortController
-                                                    .signal,
+                                                signal: controller.signal,
                                             },
                                         );
                                         if (
@@ -2067,7 +2054,7 @@
                             }
                             upload = await this.request(upload.completeUrl, {
                                 method: 'POST',
-                                signal: item.abortController.signal,
+                                signal: controller.signal,
                             });
                             item.progress = 100;
                             while (
@@ -2080,7 +2067,7 @@
                                         : 'Organizando contenido';
                                 await this.pause(2500);
                                 upload = await this.request(upload.statusUrl, {
-                                    signal: item.abortController.signal,
+                                    signal: controller.signal,
                                 });
                             }
                             if (upload.status === 'failed')
@@ -2092,9 +2079,7 @@
                         } catch (error) {
                             if (item.cancelled) return;
                             item.status = 'error';
-                            item.message =
-                                error.message ||
-                                'No fue posible completar la carga.';
+                            item.message = this.describeError(error);
                             item.eta = 'Revisión necesaria';
                         }
                     },
@@ -2116,14 +2101,18 @@
                         if (!this.uploads.length) this.showTree();
                     },
                     canCancel(item) {
-                        return ['pending', 'waiting', 'uploading'].includes(
-                            item.status,
-                        );
+                        return [
+                            'pending',
+                            'waiting',
+                            'uploading',
+                            'error',
+                        ].includes(item.status);
                     },
                     async cancelUpload(item) {
                         if (!this.canCancel(item)) return;
                         item.cancelled = true;
-                        item.abortController?.abort();
+                        uploadControllers.get(item.localId)?.abort();
+                        uploadControllers.delete(item.localId);
                         item.status = 'cancelled';
                         item.message = 'Cancelando carga';
 
@@ -2142,14 +2131,11 @@
                         } catch (error) {
                             item.cancelled = false;
                             item.status = 'error';
-                            item.message =
-                                error.message ||
-                                'No fue posible cancelar la carga.';
+                            item.message = this.describeError(error);
                         }
                     },
                     retry(item) {
                         item.cancelled = false;
-                        item.abortController = null;
                         item.status = 'pending';
                         item.progress = 0;
                         item.message = '';
@@ -2183,6 +2169,23 @@
                             }[status] || status
                         );
                     },
+                    describeError(error) {
+                        const message =
+                            error?.message ||
+                            'No fue posible completar la carga.';
+                        if (error?.status === 419)
+                            return 'Sesión vencida (419). Recarga la página e inténtalo nuevamente.';
+                        if (error?.status === 413)
+                            return 'El ZIP supera el tamaño permitido por el servidor (413).';
+                        if (error?.status)
+                            return `Error del servidor (${error.status}): ${message}`;
+                        if (
+                            error instanceof TypeError ||
+                            /failed to fetch|networkerror/i.test(message)
+                        )
+                            return 'No se pudo conectar con el servidor. Revisa la red e inténtalo nuevamente.';
+                        return message;
+                    },
                     async request(url, options = {}) {
                         const response = await fetch(url, {
                             credentials: 'same-origin',
@@ -2195,10 +2198,14 @@
                         });
                         const payload = await response.json().catch(() => ({}));
                         if (!response.ok) {
+                            const validationMessage = payload?.errors
+                                ? Object.values(payload.errors).flat()[0]
+                                : null;
                             const error = new Error(
-                                payload.message ||
+                                validationMessage ||
+                                    payload.message ||
                                     payload.error ||
-                                    'No fue posible completar la solicitud.',
+                                    `La solicitud devolvió HTTP ${response.status}.`,
                             );
                             error.status = response.status;
                             throw error;
