@@ -1,0 +1,107 @@
+# CONFIGURACION Y OPTIMIZACION DEL SERVIDOR
+# Proyecto: CRM-GAA-2
+# Este archivo no contiene contrasenas, APP_KEY ni otras credenciales.
+
+
+# 1. ACTUALIZAR EL PROYECTO
+# Ejecutar dentro de la carpeta del proyecto.
+
+cd C:\xampp\htdocs\crm-gaa-2
+git pull origin main
+
+
+# 2. INSTALAR DEPENDENCIAS PHP PARA PRODUCCION
+# --no-dev evita instalar herramientas que solo se usan durante el desarrollo.
+# --optimize-autoloader mejora la carga de clases.
+
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+
+# 3. INSTALAR Y COMPILAR LOS RECURSOS DEL FRONTEND
+
+npm ci
+npm run build
+
+
+# 4. ACTUALIZAR LA BASE DE DATOS
+# Ejecutar solamente cuando el despliegue incluya migraciones nuevas.
+# En el despliegue realizado no habia migraciones pendientes.
+
+php artisan migrate --force
+
+
+# 5. LIMPIAR Y REGENERAR LAS CACHES DE LARAVEL
+
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+
+# Alternativa equivalente para los siguientes despliegues:
+# Primero limpia las caches anteriores y despues genera las caches de produccion.
+
+php artisan optimize:clear
+php artisan optimize
+
+
+# 6. REINICIAR LOS WORKERS DE COLA
+# Solo es necesario cuando hay un worker de colas ejecutandose.
+
+php artisan queue:restart
+
+
+# 7. CAMBIOS IMPORTANTES DEL ARCHIVO .env
+# Conservar los valores secretos reales solamente en el .env del servidor.
+
+APP_ENV=production
+APP_DEBUG=false
+APP_TIMEZONE=America/Mexico_City
+APP_URL=http://192.168.2.249:8001
+
+# Reduce la escritura de registros innecesarios en produccion.
+LOG_LEVEL=warning
+
+# Para una sola computadora servidor, estas opciones evitan consultas de sesion
+# y cache a MySQL en cada peticion.
+SESSION_DRIVER=file
+CACHE_STORE=file
+
+# Las tareas en segundo plano continuan almacenandose en la base de datos.
+QUEUE_CONNECTION=database
+
+
+# 8. SERVIDOR WEB
+# No usar "php artisan serve" como servidor permanente de produccion.
+# En Windows, PHP_CLI_SERVER_WORKERS no habilita multiples workers.
+# Se configuro Apache de XAMPP para servir esta carpeta publica:
+
+C:\xampp\htdocs\crm-gaa-2\public
+
+# URL de acceso configurada:
+
+http://192.168.2.249:8001
+
+
+# 9. COMPROBACION DE VELOCIDAD
+# Estas pruebas permiten comparar el acceso local con el acceso por la red.
+
+curl.exe -o NUL -s -w "Local: %{time_total}s\n" http://127.0.0.1:8001/up
+curl.exe -o NUL -s -w "Red: %{time_total}s\n" http://192.168.2.249:8001/up
+
+
+# 10. DESPLIEGUE RAPIDO PARA CAMBIOS SOLO DE VISTAS BLADE
+# Cuando no cambian dependencias, migraciones ni archivos JavaScript/CSS:
+
+cd C:\xampp\htdocs\crm-gaa-2
+git pull origin main
+php artisan optimize:clear
+php artisan optimize
+
+
+# NOTAS DE SEGURIDAD
+# - No guardar APP_KEY ni contrasenas en este archivo o en Git.
+# - El archivo .env no debe subirse al repositorio.
+# - Usar un usuario MySQL exclusivo para la aplicacion en lugar de root sin clave.
+# - Cambiar las contrasenas de correo que hayan sido compartidas fuera del servidor.
