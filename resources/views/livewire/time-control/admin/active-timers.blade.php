@@ -44,16 +44,16 @@
                 </div>
             </header>
 
-            <div class="grid min-h-0 flex-1 grid-cols-[290px_minmax(0,1fr)]">
+            <div class="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)]">
                 <aside class="border-r border-zinc-200 bg-zinc-50/40">
-                <div class="flex h-[74px] items-center gap-[15px] border-b border-gray-200 px-[25px] py-[15px]">
-                    <span class="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-zinc-900 text-white">
+                <div class="flex h-[74px] items-center gap-[12px] border-b border-gray-200 px-[20px] py-[12px]">
+                    <span class="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-900 text-white">
                         <svg class="block h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 13a4 4 0 100-8 4 4 0 000 8zm7 7a7 7 0 00-14 0" /></svg>
                         <span class="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-gray-100"></span>
                     </span>
-                    <div>
-                        <p class="font-semibold text-gray-800">Referencia de actividad</p>
-                        <p class="mt-0.5 text-gray-500">Lectura en tiempo real</p>
+                    <div class="min-w-0">
+                        <p class="whitespace-nowrap font-semibold text-gray-800">Referencia de actividad</p>
+                        <p class="mt-[3px] whitespace-nowrap text-gray-500">Lectura en tiempo real</p>
                     </div>
                 </div>
 
@@ -93,15 +93,15 @@
                     <div class="flex items-center justify-end border-l border-zinc-200 px-[20px]">Tiempo activo</div>
                 </div>
 
-                <div class="active-timers-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
+                <div class="active-timers-scrollbar min-h-0 flex-1 overflow-y-auto">
                     @forelse ($activeTimers as $timer)
                         <article
                             wire:key="active-timer-{{ $timer['id'] }}"
                             data-active-timer
-                            class="mb-[12px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none last:mb-0"
+                            class="overflow-hidden border-b border-zinc-200 bg-white last:border-b-0"
                         >
-                            <div class="grid min-h-[108px] grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px]">
-                            <div class="flex min-w-0 items-center gap-[15px] px-[20px] py-[18px]">
+                            <div class="grid min-h-[92px] grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px]">
+                            <div class="flex min-w-0 items-center gap-[15px] px-[25px] py-[15px]">
                                 <span class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible rounded-full bg-zinc-900 text-[12px] font-semibold text-white">
                                     @if ($timer['photo_url'])
                                         <img src="{{ $timer['photo_url'] }}" alt="Foto de {{ $timer['name'] }}" class="h-full w-full rounded-full object-cover">
@@ -116,20 +116,16 @@
                                 </div>
                             </div>
 
-                            <div class="flex min-w-0 items-center gap-[15px] border-l border-gray-200 px-[20px] py-[18px]">
-                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-zinc-100 text-black">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-6 0a3 3 0 006 0m-6 7h6m-6 4h4" /></svg>
-                                </span>
+                            <div class="flex min-w-0 items-center border-l border-gray-200 px-[20px] py-[15px]">
                                 <div class="min-w-0">
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Actividad actual</p>
-                                    <p class="mt-[5px] truncate font-semibold text-gray-800" title="{{ $timer['activity'] }}">{{ $timer['activity'] }}</p>
-                                    <p class="mt-[3px] truncate text-[12px] text-gray-500" title="{{ $timer['customer'] }}">{{ $timer['customer'] }}</p>
+                                    <p class="truncate font-semibold text-gray-800" title="{{ $timer['activity'] }}">{{ $timer['activity'] }}</p>
+                                    <p class="mt-[6px] truncate text-gray-500" title="{{ $timer['customer'] }}">{{ $timer['customer'] }}</p>
                                 </div>
                             </div>
 
                             <div
                                 wire:ignore
-                                class="flex flex-col items-end justify-center border-l border-gray-200 bg-[#f7faff] px-[20px] py-[18px] text-right"
+                                class="flex flex-col items-end justify-center border-l border-gray-200 bg-zinc-50 px-[20px] py-[15px] text-right"
                                 x-data="{
                                     seconds: {{ (int) $timer['elapsed_seconds'] }},
                                     interval: null,
@@ -143,35 +139,34 @@
                                     }
                                 }"
                             >
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Tiempo activo</p>
-                                <p class="mt-[7px] font-mono text-[16px] font-semibold tabular-nums text-black" x-text="formatted()"></p>
-                                <p class="mt-[5px] text-[12px] text-gray-500">Desde {{ $timer['started_at'] }}</p>
+                                <p class="font-mono font-semibold tabular-nums text-black" x-text="formatted()"></p>
+                                <p class="mt-[6px] text-gray-500">Desde {{ $timer['started_at'] }}</p>
                             </div>
                             </div>
 
-                            <div class="grid grid-cols-[0.85fr_0.85fr_1fr_1.3fr] border-t border-gray-200 bg-gray-50/70">
-                                <div class="min-w-0 px-[20px] py-[14px]">
-                                    <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Puesto</p>
-                                    <p class="mt-[6px] truncate text-[12px] font-medium text-gray-700" title="{{ $timer['position'] }}">{{ $timer['position'] }}</p>
+                            <div class="grid min-h-[70px] grid-cols-[0.85fr_0.85fr_1fr_1.3fr] border-t border-gray-200 bg-zinc-50/70">
+                                <div class="min-w-0 px-[20px] py-[12px]">
+                                    <p class="font-semibold text-gray-500">Puesto</p>
+                                    <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ $timer['position'] }}">{{ $timer['position'] }}</p>
                                 </div>
-                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[14px]">
-                                    <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Área</p>
-                                    <p class="mt-[6px] truncate text-[12px] font-medium text-gray-700" title="{{ $timer['area'] }}">{{ $timer['area'] }}</p>
+                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[12px]">
+                                    <p class="font-semibold text-gray-500">Área</p>
+                                    <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ $timer['area'] }}">{{ $timer['area'] }}</p>
                                 </div>
-                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[14px]">
-                                    <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Jefe directo</p>
-                                    <p class="mt-[6px] truncate text-[12px] font-medium text-gray-700" title="{{ collect($timer['superiors'])->pluck('name')->join(', ') }}">
+                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[12px]">
+                                    <p class="font-semibold text-gray-500">Jefe directo</p>
+                                    <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ collect($timer['superiors'])->pluck('name')->join(', ') }}">
                                         {{ collect($timer['superiors'])->pluck('name')->join(', ') ?: 'Sin jefe asignado' }}
                                     </p>
                                 </div>
-                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[14px]">
+                                <div class="min-w-0 border-l border-gray-200 px-[20px] py-[12px]">
                                     <div class="flex items-center justify-between gap-[10px]">
-                                        <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Subordinados</p>
+                                        <p class="font-semibold text-gray-500">Subordinados</p>
                                         @if (count($timer['subordinates']) > 0)
                                             <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-black">{{ count($timer['subordinates']) }}</span>
                                         @endif
                                     </div>
-                                    <p class="mt-[6px] truncate text-[12px] font-medium text-gray-700" title="{{ collect($timer['subordinates'])->pluck('name')->join(', ') }}">
+                                    <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ collect($timer['subordinates'])->pluck('name')->join(', ') }}">
                                         {{ collect($timer['subordinates'])->pluck('name')->join(', ') ?: 'Sin subordinados directos' }}
                                     </p>
                                 </div>
