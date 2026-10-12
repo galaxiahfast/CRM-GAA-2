@@ -35,11 +35,76 @@
 <div x-data="{ 
     isTransitioning: false,
     darkMode: document.documentElement.classList.contains('module-dark-theme'),
+    sidebarSearch: '',
+    sidebarSearchOpen: false,
+    sidebarListening: false,
+    sidebarVoiceMessage: '',
+    sidebarMatches: [],
     toggleDarkMode() {
         this.darkMode = !this.darkMode;
         document.documentElement.classList.toggle('module-dark-theme', this.darkMode);
         localStorage.setItem('activities-support-theme', this.darkMode ? 'dark' : 'light');
         window.dispatchEvent(new CustomEvent('module-theme-changed', { detail: { dark: this.darkMode } }));
+    },
+    normalizeSidebarText(value) {
+        return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    },
+    updateSidebarMatches() {
+        const query = this.normalizeSidebarText(this.sidebarSearch);
+
+        if (!query) {
+            this.sidebarMatches = [];
+            this.sidebarSearchOpen = false;
+            return;
+        }
+
+        const links = Array.from(document.querySelectorAll('#logo-sidebar .sidebar-menu-scrollbar a[href]'));
+        const seen = new Set();
+
+        this.sidebarMatches = links.map((link) => ({
+            label: link.textContent.replace(/\s+/g, ' ').trim(),
+            url: link.href,
+        })).filter((item) => {
+            if (!item.label || seen.has(item.url) || !this.normalizeSidebarText(item.label).includes(query)) {
+                return false;
+            }
+
+            seen.add(item.url);
+            return true;
+        }).slice(0, 8);
+        this.sidebarSearchOpen = true;
+    },
+    openCompactSidebarSearch() {
+        collapsed = false;
+        this.$nextTick(() => this.$refs.sidebarSearchInput?.focus());
+    },
+    startSidebarVoiceSearch() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            this.sidebarVoiceMessage = 'La búsqueda por voz no está disponible en este navegador.';
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'es-MX';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        this.sidebarListening = true;
+        this.sidebarVoiceMessage = 'Escuchando…';
+
+        recognition.onresult = (event) => {
+            this.sidebarSearch = event.results[0][0].transcript;
+            this.sidebarVoiceMessage = '';
+            this.updateSidebarMatches();
+        };
+        recognition.onerror = () => {
+            this.sidebarVoiceMessage = 'No fue posible reconocer la voz. Inténtalo nuevamente.';
+        };
+        recognition.onend = () => {
+            this.sidebarListening = false;
+        };
+        recognition.start();
     }
 }">
 
@@ -154,10 +219,71 @@
     <aside
         id="logo-sidebar"
         class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)]
-            flex flex-col bg-white shadow-sm
+            flex flex-col bg-zinc-100 shadow-sm
             overflow-hidden"
     >
-        
+
+        <div class="relative shrink-0 border-b border-zinc-200 bg-zinc-100 p-[15px]" @click.outside="sidebarSearchOpen = false">
+            <div x-show="!collapsed" class="relative">
+                <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                </svg>
+                <input
+                    x-ref="sidebarSearchInput"
+                    x-model="sidebarSearch"
+                    @input.debounce.120ms="updateSidebarMatches()"
+                    @focus="sidebarSearch && updateSidebarMatches()"
+                    @keydown.escape="sidebarSearchOpen = false"
+                    type="search"
+                    placeholder="Buscar Apartados..."
+                    aria-label="Buscar Apartados"
+                    class="h-[50px] w-full rounded-xl border border-zinc-300 bg-white py-[12px] pl-[45px] pr-[48px] text-[15px] text-black outline-none transition placeholder:text-zinc-500 focus:!border-zinc-500 focus:!ring-0 focus:!shadow-none"
+                >
+                <button
+                    type="button"
+                    @click="startSidebarVoiceSearch()"
+                    :class="sidebarListening ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-black'"
+                    class="absolute right-[7px] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg transition focus:outline-none focus:ring-0"
+                    aria-label="Buscar Apartados por Voz"
+                    title="Buscar por Voz"
+                >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3m-4 0h8" /></svg>
+                </button>
+            </div>
+
+            <button
+                x-show="collapsed"
+                x-cloak
+                type="button"
+                @click="openCompactSidebarSearch()"
+                class="flex h-[50px] w-[50px] items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-600 transition hover:border-zinc-400 hover:text-black focus:outline-none focus:ring-0"
+                aria-label="Abrir Buscador de Apartados"
+                title="Buscar Apartados"
+            >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
+            </button>
+
+            <div
+                x-show="!collapsed && sidebarSearchOpen"
+                x-cloak
+                class="absolute left-[15px] right-[15px] top-[70px] z-[100] max-h-[320px] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_16px_35px_rgba(0,0,0,0.14)]"
+            >
+                <template x-if="sidebarMatches.length > 0">
+                    <div class="space-y-[4px]">
+                        <template x-for="result in sidebarMatches" :key="result.url">
+                            <a :href="result.url" class="flex min-h-[42px] items-center gap-[12px] rounded-lg px-[12px] py-[9px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                                <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
+                                <span class="truncate" x-text="result.label"></span>
+                            </a>
+                        </template>
+                    </div>
+                </template>
+                <p x-show="sidebarMatches.length === 0" class="px-[12px] py-[10px] text-[15px] text-zinc-500">No se encontraron apartados.</p>
+            </div>
+
+            <p x-show="!collapsed && sidebarVoiceMessage" x-text="sidebarVoiceMessage" class="mt-[8px] text-[13px] text-zinc-600"></p>
+        </div>
+
         <!-- Contenedor del menú -->
         <div class="sidebar-menu-scrollbar flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain"
             :style="collapsed ? 'opacity: 1;' : 'opacity: 1; transition: opacity 300ms ease-in-out;'">
@@ -194,7 +320,7 @@
                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v8H4V4Zm10 0h6v4h-6V4ZM4 16h6v4H4v-4Zm10-4h6v8h-6v-8Z" />
                         </svg>
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Dashboard</span>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel General</span>
                     </a>
                 </li>
 
@@ -456,7 +582,7 @@
                             <svg class="w-5 h-5 transition-colors {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Centro de ayuda</span>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Centro de Ayuda</span>
                         </div>
                         <div class="ml-[15px] shrink-0">
                             <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
@@ -488,7 +614,7 @@
                                     <svg class="w-5 h-5 transition-colors {{ request()->routeIs('soporte.ticket') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                                     </svg>
-                                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Ticket</span>
+                                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Chat de Soporte</span>
                                 </a>
                             </li>
                             <!-- Preguntas -->
