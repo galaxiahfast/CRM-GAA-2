@@ -286,12 +286,12 @@ class BackupUploadController extends Controller
             'uploadedChunks' => array_values($upload->uploaded_chunks ?? []),
             'receivedBytes' => $upload->received_bytes,
             'error' => $upload->error_message,
-            'statusUrl' => route('activity-backups.uploads.status', $upload),
-            'chunkUrlTemplate' => route('activity-backups.uploads.chunks.store', [$upload, '__INDEX__']),
-            'completeUrl' => route('activity-backups.uploads.complete', $upload),
-            'cancelUrl' => route('activity-backups.uploads.cancel', $upload),
+            'statusUrl' => route('activity-backups.uploads.status', $upload, false),
+            'chunkUrlTemplate' => route('activity-backups.uploads.chunks.store', [$upload, '__INDEX__'], false),
+            'completeUrl' => route('activity-backups.uploads.complete', $upload, false),
+            'cancelUrl' => route('activity-backups.uploads.cancel', $upload, false),
             'downloadUrl' => $upload->status === BackupUpload::STATUS_COMPLETED
-                ? route('activity-backups.download', $upload)
+                ? route('activity-backups.download', $upload, false)
                 : null,
         ];
     }

@@ -4,6 +4,7 @@
     class="relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="backupUploadManager({
                 endpoint: @js($uploadEndpoint),
+                csrfRefreshEndpoint: @js($csrfRefreshEndpoint),
                 site: @js($site),
                 csrf: @js(csrf_token()),
                 maxConcurrent: @js($maxConcurrentUploads),
@@ -31,6 +32,18 @@
             border: 2px solid #f4f4f5;
             border-radius: 999px;
             background: #18181b;
+        }
+
+        [data-backup-site] input:focus,
+        [data-backup-site] select:focus,
+        [data-backup-site] textarea:focus,
+        [data-backup-site] button:focus {
+            border-color: #d4d4d8 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-color: transparent !important;
+            --tw-ring-offset-shadow: 0 0 #0000 !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
         }
     </style>
 
@@ -307,9 +320,7 @@
                 </div>
 
                 @if ($activeTab !== "history")
-                    <div
-                        class="grid min-h-[610px] grid-cols-[370px_minmax(0,1fr)]"
-                    >
+                    <div class="grid grid-cols-[370px_minmax(0,1fr)]">
                         <aside
                             x-ref="uploader"
                             wire:key="backup-uploader-{{ $site }}"
@@ -322,26 +333,79 @@
                                 Elige la sede donde se guardará el paquete.
                             </p>
                             <div class="mt-[20px] space-y-[20px]">
-                                <label class="block">
+                                <div
+                                    class="relative"
+                                    @click.outside="siteMenuOpen = false"
+                                    @keydown.escape.window="siteMenuOpen = false"
+                                >
                                     <span
                                         class="mb-[10px] block font-semibold text-black"
                                     >
                                         Sede del respaldo
                                     </span>
-                                    <select
-                                        wire:change="selectSite($event.target.value)"
-                                        class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:ring-0"
+                                    <button
+                                        type="button"
+                                        @click="siteMenuOpen = !siteMenuOpen"
+                                        :aria-expanded="siteMenuOpen"
+                                        class="flex h-[50px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[20px] text-left text-[15px] text-black shadow-none outline-none"
+                                        aria-haspopup="listbox"
+                                    >
+                                        <span>
+                                            {{ $sites[$site] ?? ucfirst($site) }}
+                                        </span>
+                                        <svg
+                                            class="h-5 w-5 text-zinc-500 transition-transform"
+                                            :class="siteMenuOpen ? 'rotate-180' : ''"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="1.8"
+                                                d="m6 9 6 6 6-6"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <div
+                                        x-show="siteMenuOpen"
+                                        x-cloak
+                                        x-transition.opacity.duration.150ms
+                                        class="absolute left-0 right-0 top-[84px] z-40 overflow-hidden rounded-xl border border-zinc-200 bg-white p-[5px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+                                        role="listbox"
                                     >
                                         @foreach ($sites as $siteKey => $siteName)
-                                            <option
-                                                value="{{ $siteKey }}"
-                                                @selected($site === $siteKey)
+                                            <button
+                                                type="button"
+                                                wire:click="selectSite('{{ $siteKey }}')"
+                                                @click="siteMenuOpen = false"
+                                                class="flex min-h-[42px] w-full items-center justify-between rounded-lg px-[15px] text-left text-[15px] transition-colors {{ $site === $siteKey ? "bg-zinc-900 font-semibold text-white" : "text-black hover:bg-zinc-100" }}"
+                                                role="option"
+                                                aria-selected="{{ $site === $siteKey ? "true" : "false" }}"
                                             >
                                                 {{ $siteName }}
-                                            </option>
+                                                @if ($site === $siteKey)
+                                                    <svg
+                                                        class="h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="m5 12 4 4L19 6"
+                                                        />
+                                                    </svg>
+                                                @endif
+                                            </button>
                                         @endforeach
-                                    </select>
-                                </label>
+                                    </div>
+                                </div>
                             </div>
                             <p class="mt-[20px] leading-6 text-zinc-500">
                                 Estructura esperada:
@@ -365,7 +429,7 @@
                                 @dragover.prevent="dragging = true"
                                 @dragleave.prevent="dragging = false"
                                 @drop.prevent="handleDrop($event)"
-                                class="flex min-h-[610px] flex-col p-[20px]"
+                                class="flex flex-col p-[20px]"
                             >
                                 <input
                                     x-ref="fallbackFiles"
@@ -1549,6 +1613,7 @@
                     uploads: [],
                     activeCount: 0,
                     dragging: false,
+                    siteMenuOpen: false,
                     workspaceMode: 'upload',
                     openCustomers: [],
                     fallbackReplacement: null,
@@ -2186,17 +2251,41 @@
                             return 'No se pudo conectar con el servidor. Revisa la red e inténtalo nuevamente.';
                         return message;
                     },
-                    async request(url, options = {}) {
+                    async refreshCsrfToken() {
+                        const response = await fetch(
+                            config.csrfRefreshEndpoint,
+                            {
+                                credentials: 'same-origin',
+                                headers: { Accept: 'application/json' },
+                                cache: 'no-store',
+                            },
+                        );
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok || !payload.csrf_token)
+                            throw new Error(
+                                'No se pudo renovar la sesión de carga.',
+                            );
+                        config.csrf = payload.csrf_token;
+                        const meta = document.querySelector(
+                            'meta[name="csrf-token"]',
+                        );
+                        if (meta) meta.content = config.csrf;
+                    },
+                    async request(url, options = {}, retryCsrf = true) {
                         const response = await fetch(url, {
                             credentials: 'same-origin',
+                            ...options,
                             headers: {
                                 Accept: 'application/json',
                                 'X-CSRF-TOKEN': config.csrf,
                                 ...(options.headers || {}),
                             },
-                            ...options,
                         });
                         const payload = await response.json().catch(() => ({}));
+                        if (response.status === 419 && retryCsrf) {
+                            await this.refreshCsrfToken();
+                            return this.request(url, options, false);
+                        }
                         if (!response.ok) {
                             const validationMessage = payload?.errors
                                 ? Object.values(payload.errors).flat()[0]

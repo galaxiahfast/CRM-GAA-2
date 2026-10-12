@@ -54,6 +54,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Arrastra tus ZIP aquí')
             ->assertDontSee('Descargar ZIP de prueba')
             ->assertSee('Cancelar subida')
+            ->assertSee(route('session.keep-alive', [], false), false)
             ->assertSee('multiple', false)
             ->assertDontSee('Selecciona un cliente')
             ->assertSee('data-backup-site', false);
@@ -83,6 +84,10 @@ class BackupStorageManagerTest extends TestCase
         ])->assertOk();
 
         $uploadId = $response->json('id');
+        $this->assertStringStartsWith('/', $response->json('statusUrl'));
+        $this->assertStringStartsWith('/', $response->json('chunkUrlTemplate'));
+        $this->assertStringStartsWith('/', $response->json('completeUrl'));
+        $this->assertStringStartsWith('/', $response->json('cancelUrl'));
         $upload = BackupUpload::query()->findOrFail($uploadId);
         $this->assertGreaterThanOrEqual(2, $upload->total_chunks);
 

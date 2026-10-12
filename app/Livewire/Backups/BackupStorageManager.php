@@ -109,7 +109,7 @@ class BackupStorageManager extends Component
                         'upload_id' => $upload->id,
                         'file_index' => $index,
                         'completed_at' => $upload->completed_at,
-                        'download_url' => route('activity-backups.files.download', [$upload, $index]),
+                        'download_url' => route('activity-backups.files.download', [$upload, $index], false),
                     ];
                 })->all();
             })
@@ -158,7 +158,8 @@ class BackupStorageManager extends Component
             'activeUploads' => $activeUploads,
             'sites' => config('backup-storage.sites'),
             'site' => $site,
-            'uploadEndpoint' => route('activity-backups.uploads.initialize'),
+            'uploadEndpoint' => route('activity-backups.uploads.initialize', [], false),
+            'csrfRefreshEndpoint' => route('session.keep-alive', [], false),
             'maxConcurrentUploads' => max(1, (int) config('backup-storage.max_active_uploads', 2)),
         ])->layout('layouts.app');
     }
