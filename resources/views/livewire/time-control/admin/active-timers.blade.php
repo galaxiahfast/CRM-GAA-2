@@ -22,22 +22,44 @@
             </nav>
         </section>
 
-        <section class="grid h-[640px] min-h-0 grid-cols-[290px_minmax(0,1fr)] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
-            <aside class="border-r border-gray-200">
+        <section class="flex h-[700px] min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
+            <header class="flex min-h-[80px] items-center justify-between gap-[30px] border-b border-zinc-200 px-[25px] py-[16px]">
+                <div>
+                    <h2 class="font-semibold text-black">Actividad en línea</h2>
+                    <p class="mt-[5px] text-zinc-500">Seguimiento en tiempo real de los cronómetros activos.</p>
+                </div>
+                <div class="flex items-center gap-[28px] text-black">
+                    <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
+                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                        <strong class="font-semibold">Sincronización activa</strong>
+                    </span>
+                    <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87m-1-12a4 4 0 010 7.75" /></svg>
+                        <strong class="font-semibold">{{ count($activeTimers) }} {{ count($activeTimers) === 1 ? 'persona activa' : 'personas activas' }}</strong>
+                    </span>
+                    <span class="inline-flex items-center gap-[10px] whitespace-nowrap text-zinc-500">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l2.5 1.5M19 5l-2 2M5 5l2 2m5-4v2m0 16a8 8 0 100-16 8 8 0 000 16z" /></svg>
+                        Actualización cada 3 segundos
+                    </span>
+                </div>
+            </header>
+
+            <div class="grid min-h-0 flex-1 grid-cols-[290px_minmax(0,1fr)]">
+                <aside class="border-r border-zinc-200 bg-zinc-50/40">
                 <div class="flex h-[74px] items-center gap-[15px] border-b border-gray-200 px-[25px] py-[15px]">
                     <span class="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-zinc-900 text-white">
                         <svg class="block h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 13a4 4 0 100-8 4 4 0 000 8zm7 7a7 7 0 00-14 0" /></svg>
                         <span class="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-gray-100"></span>
                     </span>
                     <div>
-                        <p class="font-semibold text-gray-800">Supervisión en vivo</p>
-                        <p class="mt-0.5 text-[12px] text-gray-500">Sincronización activa</p>
+                        <p class="font-semibold text-gray-800">Referencia de actividad</p>
+                        <p class="mt-0.5 text-gray-500">Lectura en tiempo real</p>
                     </div>
                 </div>
 
                 <div class="space-y-[25px] p-[25px]">
                     <div>
-                        <p class="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-400">Estado mostrado</p>
+                        <p class="font-semibold text-gray-800">Estado mostrado</p>
                         <div class="mt-[15px] flex items-center gap-[10px]">
                             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                             <span class="font-medium text-gray-700">Cronómetro ejecutándose</span>
@@ -45,27 +67,33 @@
                     </div>
 
                     <div>
-                        <p class="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-400">Actualización</p>
+                        <p class="font-semibold text-gray-800">Actualización</p>
                         <p class="mt-[10px] leading-6 text-gray-500">La lista consulta el servidor cada 3 segundos y los contadores avanzan cada segundo.</p>
                     </div>
 
                     <div class="border-t border-gray-200 pt-[25px]">
-                        <p class="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-400">Vista operativa</p>
+                        <p class="font-semibold text-gray-800">Vista operativa</p>
                         <p class="mt-[10px] leading-6 text-gray-500">Identifica al colaborador, su actividad, tiempo activo, puesto, área y equipo relacionado.</p>
                     </div>
                 </div>
-            </aside>
+                </aside>
 
             <div class="flex min-h-0 flex-col">
-                <header class="flex h-[74px] items-center justify-between gap-[25px] border-b border-gray-200 px-[25px] py-[15px]">
+                <header class="flex h-[74px] items-center justify-between gap-[25px] border-b border-zinc-200 px-[25px] py-[15px]">
                     <div>
-                        <h2 class="font-semibold text-gray-800">Personas con cronómetro activo</h2>
-                        <p class="mt-0.5 text-[12px] text-gray-500">Seguimiento operativo actualizado en tiempo real</p>
+                        <h3 class="font-semibold text-black">Personas con cronómetro activo</h3>
+                        <p class="mt-0.5 text-gray-500">Consulta la actividad actual y el tiempo transcurrido.</p>
                     </div>
-                    <span class="text-[12px] font-medium text-gray-500">{{ count($activeTimers) }} {{ count($activeTimers) === 1 ? 'persona activa' : 'personas activas' }}</span>
+                    <span class="font-medium text-gray-500">Ordenados alfabéticamente</span>
                 </header>
 
-                <div class="active-timers-scrollbar min-h-0 flex-1 overflow-y-auto p-[25px]">
+                <div class="grid h-[54px] shrink-0 grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px] border-b border-zinc-200 bg-zinc-100 font-semibold text-zinc-700">
+                    <div class="flex items-center px-[25px]">Colaborador</div>
+                    <div class="flex items-center border-l border-zinc-200 px-[20px]">Actividad actual</div>
+                    <div class="flex items-center justify-end border-l border-zinc-200 px-[20px]">Tiempo activo</div>
+                </div>
+
+                <div class="active-timers-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                     @forelse ($activeTimers as $timer)
                         <article
                             wire:key="active-timer-{{ $timer['id'] }}"
@@ -159,6 +187,14 @@
                         </div>
                     @endforelse
                 </div>
+                <footer class="flex min-h-[58px] shrink-0 items-center justify-between gap-[25px] border-t border-zinc-200 bg-zinc-50 px-[25px]">
+                    <div class="flex items-center gap-[20px]">
+                        <strong class="font-semibold text-black">Referencia de estados</strong>
+                        <span class="inline-flex items-center gap-[8px] text-zinc-600"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Cronómetro ejecutándose</span>
+                    </div>
+                    <span class="text-zinc-500">Los datos se sincronizan automáticamente.</span>
+                </footer>
+            </div>
             </div>
         </section>
     </main>
