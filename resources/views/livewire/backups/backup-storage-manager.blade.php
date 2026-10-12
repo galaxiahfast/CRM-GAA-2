@@ -1,11 +1,13 @@
 <div
     data-clock-particle-network
     data-backup-site="{{ $site }}"
+    data-backup-product="{{ $product }}"
     class="relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="backupUploadManager({
                 endpoint: @js($uploadEndpoint),
                 csrfRefreshEndpoint: @js($csrfRefreshEndpoint),
                 site: @js($site),
+                product: @js($product),
                 csrf: @js(csrf_token()),
                 maxConcurrent: @js($maxConcurrentUploads),
             })"
@@ -268,7 +270,7 @@
                         @else
                             <h2
                                 class="font-semibold text-black"
-                                x-text="workspaceMode === 'upload' ? @js("Cargar respaldos · " . ($sites[$site] ?? ucfirst($site))) : @js("Explorador de respaldos · " . ($sites[$site] ?? ucfirst($site)))"
+                                x-text="workspaceMode === 'upload' ? @js("Cargar respaldos · " . ($sites[$site] ?? ucfirst($site)) . " / " . ($products[$product] ?? ucfirst($product))) : @js("Explorador de respaldos · " . ($sites[$site] ?? ucfirst($site)) . " / " . ($products[$product] ?? ucfirst($product)))"
                             ></h2>
                             <p
                                 class="mt-[5px] text-zinc-500"
@@ -327,14 +329,14 @@
                     <div class="grid grid-cols-[370px_minmax(0,1fr)]">
                         <aside
                             x-ref="uploader"
-                            wire:key="backup-uploader-{{ $site }}"
+                            wire:key="backup-uploader-{{ $site }}-{{ $product }}"
                             class="border-r border-zinc-200 p-[20px]"
                         >
                             <h3 class="font-semibold text-black">
                                 Ubicación del respaldo
                             </h3>
                             <p class="mt-[5px] text-zinc-500">
-                                Elige la sede donde se guardará el paquete.
+                                Elige la sede y el sistema donde se guardará el paquete.
                             </p>
                             <div class="mt-[20px] space-y-[20px]">
                                 <div
@@ -404,6 +406,59 @@
                                                             stroke-width="2"
                                                             d="m5 12 4 4L19 6"
                                                         />
+                                                    </svg>
+                                                @endif
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div
+                                    class="relative"
+                                    @click.outside="productMenuOpen = false"
+                                    @keydown.escape.window="productMenuOpen = false"
+                                >
+                                    <span class="mb-[10px] block font-semibold text-black">
+                                        Sistema del respaldo
+                                    </span>
+                                    <button
+                                        type="button"
+                                        @click="productMenuOpen = !productMenuOpen"
+                                        :aria-expanded="productMenuOpen"
+                                        class="flex h-[50px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[20px] text-left text-[15px] text-black shadow-none outline-none"
+                                        aria-haspopup="listbox"
+                                    >
+                                        <span>{{ $products[$product] ?? ucfirst($product) }}</span>
+                                        <svg
+                                            class="h-5 w-5 text-zinc-500 transition-transform"
+                                            :class="productMenuOpen ? 'rotate-180' : ''"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            aria-hidden="true"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </button>
+                                    <div
+                                        x-show="productMenuOpen"
+                                        x-cloak
+                                        x-transition.opacity.duration.150ms
+                                        class="absolute left-0 right-0 top-[84px] z-40 overflow-hidden rounded-xl border border-zinc-200 bg-white p-[5px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+                                        role="listbox"
+                                    >
+                                        @foreach ($products as $productKey => $productName)
+                                            <button
+                                                type="button"
+                                                wire:click="selectProduct('{{ $productKey }}')"
+                                                @click="productMenuOpen = false"
+                                                class="flex min-h-[42px] w-full items-center justify-between rounded-lg px-[15px] text-left text-[15px] transition-colors {{ $product === $productKey ? 'bg-zinc-900 font-semibold text-white' : 'text-black hover:bg-zinc-100' }}"
+                                                role="option"
+                                                aria-selected="{{ $product === $productKey ? 'true' : 'false' }}"
+                                            >
+                                                {{ $productName }}
+                                                @if ($product === $productKey)
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" />
                                                     </svg>
                                                 @endif
                                             </button>
@@ -645,7 +700,8 @@
                                             />
                                         </svg>
                                         Respaldos /
-                                        {{ $sites[$site] ?? ucfirst($site) }}
+                                        {{ $sites[$site] ?? ucfirst($site) }} /
+                                        {{ $products[$product] ?? ucfirst($product) }}
                                     </div>
                                     @foreach ($activeUploads as $activeUpload)
                                         <div
@@ -729,7 +785,7 @@
 
                                         <details
                                             class="group/customer border-b border-zinc-200"
-                                            wire:key="backup-customer-{{ md5($site . $customerName) }}"
+                                            wire:key="backup-customer-{{ md5($site . $product . $customerName) }}"
                                             data-customer-key="{{ $customerName }}"
                                             :open="isCustomerOpen(@js($customerName))"
                                             @toggle="toggleCustomer(@js($customerName), $event)"
@@ -920,6 +976,7 @@
                                     </span>
                                     <span>
                                         {{ $sites[$site] ?? ucfirst($site) }}
+                                        / {{ $products[$product] ?? ucfirst($product) }}
                                     </span>
                                     <span></span>
                                 </div>
@@ -995,6 +1052,9 @@
                                             class="truncate border-r border-zinc-200 px-[20px] py-[15px]"
                                         >
                                             {{ $sites[$record->site] ?? ucfirst($record->site) }}
+                                            <span class="mt-[2px] block truncate text-zinc-500">
+                                                {{ config("backup-storage.products.{$record->site}.{$record->product}", ucfirst($record->product)) }}
+                                            </span>
                                         </td>
                                         <td
                                             class="overflow-hidden border-r border-zinc-200 px-[20px] py-[15px]"
@@ -1125,7 +1185,7 @@
                                                     </a>
                                                     <button
                                                         type="button"
-                                                        @click="openReplace({ id: @js($record->id), site: @js($record->site), fileName: @js($record->original_name) })"
+                                                        @click="openReplace({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name) })"
                                                         class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-black hover:bg-zinc-100 focus:outline-none"
                                                         title="Re-subir y reemplazar este respaldo"
                                                         aria-label="Re-subir y reemplazar este respaldo"
@@ -1148,7 +1208,7 @@
 
                                                 <button
                                                     type="button"
-                                                    @click="openEdit({ id: @js($record->id), site: @js($record->site), fileName: @js($record->original_name), assignedCustomer: @js($record->assigned_customer ?? ""), notes: @js($record->notes ?? ""), files: @js($manifest->values()->map(fn ($file, $index) => ["index" => $index, "name" => $file["name"] ?? "archivo", "category" => ucfirst($file["category"] ?? ""), "downloadUrl" => route("activity-backups.files.download", [$record, $index])])->all()) })"
+                                                    @click="openEdit({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name), assignedCustomer: @js($record->assigned_customer ?? ""), notes: @js($record->notes ?? ""), files: @js($manifest->values()->map(fn ($file, $index) => ["index" => $index, "name" => $file["name"] ?? "archivo", "category" => ucfirst($file["category"] ?? ""), "downloadUrl" => route("activity-backups.files.download", [$record, $index])])->all()) })"
                                                     class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-black hover:bg-zinc-100 focus:outline-none"
                                                     title="Editar metadatos y archivos"
                                                     aria-label="Editar metadatos y archivos"
@@ -1662,12 +1722,14 @@
                     activeCount: 0,
                     dragging: false,
                     siteMenuOpen: false,
+                    productMenuOpen: false,
                     workspaceMode: 'upload',
                     openCustomers: [],
                     fallbackReplacement: null,
                     editRecord: {
                         id: null,
                         site: '',
+                        product: '',
                         fileName: '',
                         assignedCustomer: '',
                         notes: '',
@@ -1735,6 +1797,7 @@
                         this.editRecord = {
                             id: null,
                             site: '',
+                            product: '',
                             fileName: '',
                             assignedCustomer: '',
                             notes: '',
@@ -1754,6 +1817,7 @@
                         const replacement = {
                             id: this.editRecord.id,
                             site: this.editRecord.site,
+                            product: this.editRecord.product,
                             fileName: this.editRecord.fileName,
                         };
                         this.resetEdit();
@@ -1813,6 +1877,8 @@
                                 (entry) =>
                                     entry?.meta?.site ===
                                         this.$root.dataset.backupSite &&
+                                    (entry?.meta?.product || 'contabilidad') ===
+                                        this.$root.dataset.backupProduct &&
                                     entry.id !== 'active',
                             )) {
                                 let file = entry.file || null;
@@ -1832,6 +1898,7 @@
                                         entry.id,
                                         false,
                                         entry.meta.site,
+                                        entry.meta.product || 'contabilidad',
                                     );
                             }
                             this.pump();
@@ -1948,6 +2015,8 @@
                                 true,
                                 replacement?.site ||
                                     this.$root.dataset.backupSite,
+                                replacement?.product ||
+                                    this.$root.dataset.backupProduct,
                             );
                         this.pump();
                     },
@@ -1958,12 +2027,15 @@
                         savedId = null,
                         persist = true,
                         site = null,
+                        product = null,
                     ) {
                         site = site || this.$root.dataset.backupSite;
+                        product =
+                            product || this.$root.dataset.backupProduct;
                         const fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
                         const localId =
                             savedId ||
-                            `${site}:${fingerprint}:${replaceUploadId || 'new'}`;
+                            `${site}:${product}:${fingerprint}:${replaceUploadId || 'new'}`;
                         if (
                             this.uploads.some(
                                 (item) =>
@@ -1978,6 +2050,7 @@
                             handle,
                             fileName: file.name,
                             site,
+                            product,
                             replaceUploadId,
                             fingerprint,
                             progress: 0,
@@ -2000,6 +2073,7 @@
                                 handle: item.handle,
                                 meta: {
                                     site: item.site,
+                                    product: item.product,
                                     fileName: item.fileName,
                                     replaceUploadId: item.replaceUploadId,
                                 },
@@ -2040,6 +2114,7 @@
                                 signal: controller.signal,
                                 body: JSON.stringify({
                                     site: item.site,
+                                    product: item.product,
                                     file_name: item.file.name,
                                     mime_type:
                                         item.file.type || 'application/zip',

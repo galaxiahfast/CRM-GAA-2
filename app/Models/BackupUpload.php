@@ -22,7 +22,7 @@ class BackupUpload extends Model
     public const STATUS_FAILED = 'failed';
 
     protected $fillable = [
-        'upload_key', 'site', 'customer_id', 'user_id', 'category', 'original_name',
+        'upload_key', 'site', 'product', 'customer_id', 'user_id', 'category', 'original_name',
         'extension', 'mime_type', 'size', 'chunk_size', 'total_chunks',
         'uploaded_chunks', 'received_bytes', 'status', 'storage_path', 'manifest', 'checksum',
         'assigned_customer', 'notes', 'supersedes_upload_id', 'superseded_at',

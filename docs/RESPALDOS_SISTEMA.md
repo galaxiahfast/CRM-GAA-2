@@ -1,6 +1,6 @@
 # Gestión de Respaldos
 
-El usuario solamente elige la pestaña de la sede (Mérida o Tulum) y carga un archivo `.zip`. No tiene que elegir cliente ni tipo de respaldo. El ZIP debe contener una o más carpetas con esta estructura:
+El usuario elige la sede y el sistema antes de cargar un archivo `.zip`: Mérida permite **Contabilidad** y **Nóminas**, mientras que Tulum permite solamente **Contabilidad**. No tiene que elegir cliente ni tipo de archivo interno. El ZIP debe contener una o más carpetas con esta estructura:
 
 ```text
 Cliente 1/
@@ -10,7 +10,7 @@ Cliente 1/
     └── respaldo.bak
 ```
 
-También se admite una carpeta contenedora adicional antes de los clientes. El worker detecta automáticamente cada cliente, guarda los archivos privados en `storage/app/private/backups` y genera el árbol que aparece en pantalla. El ZIP original queda en `storage/app/private/backup-archives` para auditoría. Las cargas parciales permanecen en `storage/app/private/backup-chunks` hasta que el worker termina de ensamblarlas.
+También se admite una carpeta contenedora adicional antes de los clientes. El worker detecta automáticamente cada cliente y separa los archivos por `sede/sistema/cliente`. El ZIP original queda igualmente separado por sede y sistema en `storage/app/private/backup-archives`. Las cargas parciales permanecen en `storage/app/private/backup-chunks` hasta que el worker termina de ensamblarlas.
 
 Las sedes no tienen pantallas ni lógica duplicada. Para agregar otra, basta con incorporarla al arreglo `sites` de `config/backup-storage.php`; aparecerá automáticamente en el selector y utilizará el mismo flujo de carga, historial y descarga.
 

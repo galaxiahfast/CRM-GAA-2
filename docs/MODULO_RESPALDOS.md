@@ -1,6 +1,6 @@
 # Módulo de Gestión de Respaldos
 
-El módulo está disponible en `/actividades/respaldos` para administradores y usuarios con rol de contador.
+El módulo está disponible en `/actividades/respaldos` para administradores y usuarios con rol de contador. Los respaldos se clasifican por sede y sistema: Mérida admite **Contabilidad** y **Nóminas**; Tulum admite únicamente **Contabilidad**.
 
 ## Preparación del servidor
 
@@ -50,7 +50,7 @@ No se incluye en `DatabaseSeeder` para evitar insertar registros ficticios accid
 
 ## Carga y administración
 
-- La zona admite selección múltiple, carpetas y arrastrar y soltar paquetes ZIP.
+- La zona permite elegir primero la sede y el sistema válido para esa sede; después admite selección múltiple, carpetas y arrastrar y soltar paquetes ZIP.
 - La vista inicia en la zona de carga; cada archivo muestra progreso, velocidad, tiempo restante y una cancelación que purga sus fragmentos del servidor.
 - Las cargas se fragmentan, conservan su avance local y se reanudan después de recuperar la conexión.
 - El historial permite descargar el paquete o sus archivos internos, editar metadatos, eliminar archivos individuales y reconstruir el ZIP restante.

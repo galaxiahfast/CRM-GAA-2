@@ -47,6 +47,9 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Respaldos')
             ->assertSee('Mérida')
             ->assertSee('Tulum')
+            ->assertSee('Sistema del respaldo')
+            ->assertSee('Contabilidad')
+            ->assertSee('Nóminas')
             ->assertSee('Cancún')
             ->assertSeeInOrder(['Subir respaldos', 'Sede del respaldo', 'Cargar respaldos', 'Arrastra tus ZIP aquí'])
             ->assertDontSee('Destino')
@@ -60,6 +63,40 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('data-backup-site', false);
         $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
         $this->assertFalse(Gate::forUser($auxiliary)->allows('manage-system-backups'));
+    }
+
+    public function test_backup_products_are_restricted_by_site(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        $admin = $this->user('Administrador', 'admin-products@datamid.test');
+
+        $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida',
+            'product' => 'nominas',
+            'file_name' => 'nominas.zip',
+            'mime_type' => 'application/zip',
+            'size' => 100,
+            'fingerprint' => 'merida:nominas',
+        ])->assertOk()
+            ->assertJsonPath('product', 'nominas');
+
+        $this->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'tulum',
+            'product' => 'nominas',
+            'file_name' => 'nominas-tulum.zip',
+            'mime_type' => 'application/zip',
+            'size' => 100,
+            'fingerprint' => 'tulum:nominas',
+        ])->assertUnprocessable()
+            ->assertJsonPath('message', 'El sistema seleccionado no está disponible en esta sede.');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('selectProduct', 'nominas')
+            ->assertSet('selectedProduct', 'nominas')
+            ->call('selectSite', 'tulum')
+            ->assertSet('selectedProduct', 'contabilidad');
     }
 
     public function test_chunked_upload_can_resume_queue_assemble_and_download(): void
@@ -112,10 +149,12 @@ class BackupStorageManagerTest extends TestCase
         $this->assertSame(BackupUpload::STATUS_COMPLETED, $upload->status);
         $this->assertSame(hash('sha256', $payload), $upload->checksum);
         $this->assertSame($payload, Storage::disk('local')->get($upload->storage_path));
+        $this->assertStringStartsWith('backup-archives/merida/contabilidad/', $upload->storage_path);
         $this->assertCount(2, $upload->manifest);
         $this->assertSame('Cliente Contable', $upload->manifest[0]['customer']);
         $this->assertSame('index', $upload->manifest[0]['category']);
         $this->assertSame($indexContents, Storage::disk('local')->get($upload->manifest[0]['path']));
+        $this->assertStringStartsWith('backups/merida/contabilidad/', $upload->manifest[0]['path']);
 
         $this->get(route('activity-backups.download', $upload))
             ->assertOk()

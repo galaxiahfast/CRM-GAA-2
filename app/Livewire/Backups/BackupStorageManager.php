@@ -18,6 +18,9 @@ class BackupStorageManager extends Component
     #[Url(as: 'site')]
     public string $selectedSite = 'merida';
 
+    #[Url(as: 'product')]
+    public string $selectedProduct = 'contabilidad';
+
     #[Url(as: 'q')]
     public string $search = '';
 
@@ -38,6 +41,11 @@ class BackupStorageManager extends Component
         if (! in_array($this->selectedSite, $sites, true)) {
             $this->selectedSite = $sites[0];
         }
+        $products = config('backup-storage.products.'.$this->selectedSite, []);
+        abort_if($products === [], 500, 'La sede no tiene sistemas configurados para respaldos.');
+        if (! array_key_exists($this->selectedProduct, $products)) {
+            $this->selectedProduct = array_key_first($products);
+        }
     }
 
     public function selectTab(string $tab): void
@@ -49,7 +57,17 @@ class BackupStorageManager extends Component
     public function selectSite(string $site): void
     {
         abort_unless(array_key_exists($site, config('backup-storage.sites', [])), 404);
+        $products = config('backup-storage.products.'.$site, []);
+        abort_if($products === [], 500, 'La sede no tiene sistemas configurados para respaldos.');
         $this->selectedSite = $site;
+        $this->selectedProduct = array_key_first($products);
+        $this->activeTab = 'backups';
+    }
+
+    public function selectProduct(string $product): void
+    {
+        abort_unless(array_key_exists($product, config('backup-storage.products.'.$this->selectedSite, [])), 404);
+        $this->selectedProduct = $product;
         $this->activeTab = 'backups';
     }
 
@@ -107,8 +125,10 @@ class BackupStorageManager extends Component
         Gate::authorize('manage-system-backups');
 
         $site = $this->selectedSite;
+        $product = $this->selectedProduct;
         $completed = BackupUpload::query()
             ->where('site', $site)
+            ->where('product', $product)
             ->where('status', BackupUpload::STATUS_COMPLETED)
             ->whereNull('superseded_at')
             ->latest('completed_at')
@@ -140,7 +160,7 @@ class BackupStorageManager extends Component
             ->get()
             ->when($term !== '', fn ($records) => $records->filter(function (BackupUpload $upload) use ($term): bool {
                 $manifestText = collect($upload->manifest ?? [])->pluck('customer')->implode(' ');
-                $text = $upload->original_name.' '.$upload->site.' '.$upload->user?->name.' '.$upload->user?->last_name.' '.$manifestText;
+                $text = $upload->original_name.' '.$upload->site.' '.$upload->product.' '.$upload->user?->name.' '.$upload->user?->last_name.' '.$manifestText;
 
                 return str_contains(mb_strtolower($text), $term);
             }))
@@ -148,6 +168,7 @@ class BackupStorageManager extends Component
 
         $activeUploads = BackupUpload::query()
             ->where('site', $site)
+            ->where('product', $product)
             ->whereIn('status', [
                 BackupUpload::STATUS_WAITING,
                 BackupUpload::STATUS_UPLOADING,
@@ -160,6 +181,7 @@ class BackupStorageManager extends Component
 
         $statusCounts = BackupUpload::query()
             ->where('site', $site)
+            ->where('product', $product)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -170,7 +192,9 @@ class BackupStorageManager extends Component
             'statusCounts' => $statusCounts,
             'activeUploads' => $activeUploads,
             'sites' => config('backup-storage.sites'),
+            'products' => config('backup-storage.products.'.$site, []),
             'site' => $site,
+            'product' => $product,
             'uploadEndpoint' => route('activity-backups.uploads.initialize', [], false),
             'csrfRefreshEndpoint' => route('session.keep-alive', [], false),
             'maxConcurrentUploads' => max(1, (int) config('backup-storage.max_active_uploads', 2)),

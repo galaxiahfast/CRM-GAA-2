@@ -53,12 +53,18 @@ class BackupUploadController extends Controller
 
         $data = $request->validate([
             'site' => ['required', Rule::in(array_keys(config('backup-storage.sites', [])))],
+            'product' => ['nullable', 'string', 'max:20'],
             'file_name' => ['required', 'string', 'max:255'],
             'mime_type' => ['nullable', 'string', 'max:150'],
             'size' => ['required', 'integer', 'min:1', 'max:'.config('backup-storage.max_file_size')],
             'fingerprint' => ['required', 'string', 'max:500'],
             'replace_upload_id' => ['nullable', 'uuid', 'exists:backup_uploads,id'],
         ]);
+
+        $availableProducts = config('backup-storage.products.'.$data['site'], []);
+        abort_if($availableProducts === [], 422, 'La sede seleccionada no tiene sistemas configurados.');
+        $data['product'] = $data['product'] ?? array_key_first($availableProducts);
+        abort_unless(array_key_exists($data['product'], $availableProducts), 422, 'El sistema seleccionado no está disponible en esta sede.');
 
         $extension = mb_strtolower((string) pathinfo(basename($data['file_name']), PATHINFO_EXTENSION));
         abort_unless($extension === 'zip', 422, 'Selecciona un archivo ZIP válido.');
@@ -67,10 +73,11 @@ class BackupUploadController extends Controller
             ? BackupUpload::query()->findOrFail($data['replace_upload_id'])
             : null;
         abort_if($replacement && $replacement->site !== $data['site'], 422, 'El respaldo a reemplazar pertenece a otra sede.');
+        abort_if($replacement && $replacement->product !== $data['product'], 422, 'El respaldo a reemplazar pertenece a otro sistema.');
         abort_if($replacement && $replacement->status !== BackupUpload::STATUS_COMPLETED, 422, 'Solo se puede reemplazar un respaldo completado.');
 
         $uploadKey = hash('sha256', implode('|', [
-            $request->user()->id, $data['site'], $data['fingerprint'], $replacement?->id ?? '',
+            $request->user()->id, $data['site'], $data['product'], $data['fingerprint'], $replacement?->id ?? '',
         ]));
         $chunkSize = max(1024, (int) config('backup-storage.chunk_size'));
 
@@ -96,6 +103,7 @@ class BackupUploadController extends Controller
             return BackupUpload::query()->create([
                 'upload_key' => $uploadKey,
                 'site' => $data['site'],
+                'product' => $data['product'],
                 'customer_id' => null,
                 'user_id' => $request->user()->id,
                 'category' => null,
@@ -323,6 +331,7 @@ class BackupUploadController extends Controller
         return [
             'id' => $upload->id,
             'status' => $upload->status,
+            'product' => $upload->product,
             'fileName' => $upload->original_name,
             'size' => $upload->size,
             'chunkSize' => $upload->chunk_size,

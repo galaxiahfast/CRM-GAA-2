@@ -12,7 +12,7 @@ class BackupArchiveExtractor
     /**
      * @return array<int, array{customer:string, category:string, name:string, path:string, size:int}>
      */
-    public function extract(FilesystemAdapter $disk, string $archivePath, string $site, string $uploadId): array
+    public function extract(FilesystemAdapter $disk, string $archivePath, string $site, string $product, string $uploadId): array
     {
         $absoluteArchive = $disk->path($archivePath);
         $entries = class_exists(ZipArchive::class)
@@ -36,8 +36,9 @@ class BackupArchiveExtractor
             $customerSlug = Str::slug($backup['customer']) ?: 'cliente';
             $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', $backup['name']) ?: 'respaldo.'.$backup['category'];
             $path = sprintf(
-                'backups/%s/%s/%s/%s_%d_%s',
+                'backups/%s/%s/%s/%s/%s_%d_%s',
                 $site,
+                $product,
                 $customerSlug,
                 ucfirst($backup['category']),
                 $uploadId,

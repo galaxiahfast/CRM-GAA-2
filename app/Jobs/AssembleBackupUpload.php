@@ -56,7 +56,7 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
         $upload->forceFill(['status' => BackupUpload::STATUS_PROCESSING, 'error_message' => null])->save();
 
         $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', basename($upload->original_name)) ?: 'respaldo.'.$upload->extension;
-        $directory = sprintf('backup-archives/%s', $upload->site);
+        $directory = sprintf('backup-archives/%s/%s', $upload->site, $upload->product);
         $stagingPath = sprintf('backup-assembly/%s.part', $upload->id);
         $finalPath = $directory.'/'.$upload->id.'_'.$safeName;
 
@@ -104,7 +104,7 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
             throw new RuntimeException('No fue posible mover el respaldo a su carpeta definitiva.');
         }
 
-        $manifest = $extractor->extract($disk, $finalPath, $upload->site, $upload->id);
+        $manifest = $extractor->extract($disk, $finalPath, $upload->site, $upload->product, $upload->id);
 
         $disk->deleteDirectory('backup-chunks/'.$upload->id);
         $upload->forceFill([
@@ -121,6 +121,7 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
             BackupUpload::query()
                 ->whereKey($upload->supersedes_upload_id)
                 ->where('site', $upload->site)
+                ->where('product', $upload->product)
                 ->whereNull('superseded_at')
                 ->update(['superseded_at' => now()]);
         }

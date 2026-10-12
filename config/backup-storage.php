@@ -14,6 +14,15 @@ return [
         'merida' => 'Mérida',
         'tulum' => 'Tulum',
     ],
+    'products' => [
+        'merida' => [
+            'contabilidad' => 'Contabilidad',
+            'nominas' => 'Nóminas',
+        ],
+        'tulum' => [
+            'contabilidad' => 'Contabilidad',
+        ],
+    ],
     'demo_companies' => [
         'Abarrotes del Sureste',
         'Administradora Peninsular',
