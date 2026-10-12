@@ -22,7 +22,6 @@
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
     $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
     $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
-    $accountTypeLabel = $currentUser?->isAdmin() ? 'Admin' : ($currentUser?->role?->role ?? 'Usuario');
     $supportsDarkTheme = request()->routeIs('time.*', 'soporte.*');
 @endphp
 @if ($supportsDarkTheme)
@@ -659,23 +658,23 @@
         @endif
 
         <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[220px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
-                <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[220px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
+                <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span>Ayuda</span>
                 </a>
-                <a href="{{ route('soporte.ticket') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('soporte.ticket') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path stroke-linecap="round" stroke-width="1.8" d="M8 9h8M8 13h5"/></svg>
                     <span>Soporte</span>
                 </a>
-                <a href="{{ route('profile.show') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('profile.show') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
                     <span>Mi Perfil</span>
                 </a>
-                <div class="my-[6px] border-t border-zinc-200"></div>
+                <div class="my-[15px] border-t border-zinc-200"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex h-[42px] w-full items-center gap-[12px] rounded-lg px-[12px] text-left text-[15px] font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-0">
+                    <button type="submit" class="flex h-[42px] w-full items-center gap-[15px] rounded-lg text-left text-[15px] font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-0">
                         <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 17 5-5-5-5M20 12H9m4 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg>
                         <span>Cerrar Sesión</span>
                     </button>
@@ -692,8 +691,10 @@
                 </span>
                 <span x-show="!collapsed" class="min-w-0 flex-1">
                     <span class="flex min-w-0 items-center gap-[8px]">
-                        <strong class="block max-w-[115px] truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
-                        <span class="max-w-[70px] shrink-0 truncate rounded-full bg-zinc-900 px-[7px] py-[2px] text-[15px] font-semibold leading-none text-white" title="{{ $accountTypeLabel }}">{{ $accountTypeLabel }}</span>
+                        <strong class="block max-w-[145px] truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
+                        <span class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full bg-blue-600 text-white" title="Cuenta Verificada" aria-label="Cuenta Verificada">
+                            <svg class="h-[12px] w-[12px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" d="m7 12 3 3 7-7"/></svg>
+                        </span>
                     </span>
                     <span class="mt-[4px] block max-w-[180px] truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
