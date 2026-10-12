@@ -22,6 +22,7 @@
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
     $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
     $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
+    $accountTypeLabel = $currentUser?->isAdmin() ? 'Admin' : ($currentUser?->role?->role ?? 'Usuario');
     $supportsDarkTheme = request()->routeIs('time.*', 'soporte.*');
 @endphp
 @if ($supportsDarkTheme)
@@ -691,8 +692,8 @@
                 </span>
                 <span x-show="!collapsed" class="min-w-0 flex-1">
                     <span class="flex min-w-0 items-center gap-[8px]">
-                        <strong class="min-w-0 flex-1 truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
-                        <span class="max-w-[45px] shrink-0 truncate rounded-full bg-zinc-900 px-[7px] py-[2px] text-[15px] font-semibold leading-none text-white" title="Pro">Pro</span>
+                        <strong class="block max-w-[115px] truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
+                        <span class="max-w-[70px] shrink-0 truncate rounded-full bg-zinc-900 px-[7px] py-[2px] text-[15px] font-semibold leading-none text-white" title="{{ $accountTypeLabel }}">{{ $accountTypeLabel }}</span>
                     </span>
                     <span class="mt-[4px] block truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
