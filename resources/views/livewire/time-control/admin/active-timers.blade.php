@@ -46,7 +46,7 @@
 
             <div class="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)]">
                 <aside class="border-r border-zinc-200 bg-zinc-50/40">
-                <div class="flex h-[74px] items-center gap-[12px] border-b border-gray-200 px-[20px] py-[12px]">
+                <div class="flex h-[74px] items-center gap-[18px] border-b border-gray-200 px-[20px] py-[12px]">
                     <span class="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-900 text-white">
                         <svg class="block h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 13a4 4 0 100-8 4 4 0 000 8zm7 7a7 7 0 00-14 0" /></svg>
                         <span class="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-gray-100"></span>
@@ -98,7 +98,7 @@
                         <article
                             wire:key="active-timer-{{ $timer['id'] }}"
                             data-active-timer
-                            class="overflow-hidden border-b border-zinc-200 bg-white last:border-b-0"
+                            class="overflow-hidden border-b border-zinc-200 bg-white {{ $loop->first ? '' : 'border-t-[6px] border-t-zinc-100' }} last:border-b-0"
                         >
                             <div class="grid min-h-[92px] grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px]">
                             <div class="flex min-w-0 items-center gap-[15px] px-[25px] py-[15px]">
@@ -144,7 +144,7 @@
                             </div>
                             </div>
 
-                            <div class="grid min-h-[70px] grid-cols-[0.85fr_0.85fr_1fr_1.3fr] border-t border-gray-200 bg-zinc-50/70">
+                            <div class="grid min-h-[70px] grid-cols-4 border-t border-gray-200 bg-zinc-50/70">
                                 <div class="min-w-0 px-[20px] py-[12px]">
                                     <p class="font-semibold text-gray-500">Puesto</p>
                                     <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ $timer['position'] }}">{{ $timer['position'] }}</p>
