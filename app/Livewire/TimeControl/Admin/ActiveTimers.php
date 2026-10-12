@@ -14,6 +14,8 @@ class ActiveTimers extends Component
     /** @var array<int, array<string, mixed>> */
     public array $activeTimers = [];
 
+    public bool $showingDemoTimers = false;
+
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-admin'), 403);
@@ -24,6 +26,8 @@ class ActiveTimers extends Component
     public function refreshActiveTimers(): void
     {
         $now = Carbon::now($this->timezone());
+
+        $this->showingDemoTimers = false;
 
         $this->activeTimers = TimeEntry::query()
             ->where('status', TimeEntry::STATUS_IN_PROGRESS)
@@ -77,6 +81,11 @@ class ActiveTimers extends Component
             ->values()
             ->all();
 
+        if ($this->activeTimers === [] && app()->environment('local')) {
+            $this->activeTimers = $this->localDemoTimers($now);
+            $this->showingDemoTimers = true;
+        }
+
         $this->dispatch('active-timers-refreshed');
     }
 
@@ -126,6 +135,77 @@ class ActiveTimers extends Component
 
             return (int) $startedAt->diffInSeconds($endedAt, true);
         });
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function localDemoTimers(Carbon $now): array
+    {
+        return [
+            [
+                'id' => -1,
+                'user_id' => -1,
+                'name' => 'Alejandra Medina',
+                'email' => 'alejandra.medina@ejemplo.local',
+                'initials' => 'AM',
+                'photo_url' => null,
+                'activity' => 'Conciliación bancaria',
+                'customer' => 'Comercializadora del Caribe',
+                'position' => 'Auxiliar de Auditoría',
+                'area' => 'Contabilidad',
+                'elapsed_seconds' => 8137,
+                'started_at' => $now->copy()->subSeconds(8137)->format('H:i'),
+                'superiors' => [['id' => -11, 'name' => 'María Fernández']],
+                'subordinates' => [],
+            ],
+            [
+                'id' => -2,
+                'user_id' => -2,
+                'name' => 'Carlos Jesús Campos',
+                'email' => 'carlos.campos@ejemplo.local',
+                'initials' => 'CC',
+                'photo_url' => null,
+                'activity' => 'Revisión de pólizas contables',
+                'customer' => 'Grupo Contable Mérida',
+                'position' => 'Contador Senior',
+                'area' => 'Contabilidad',
+                'elapsed_seconds' => 5422,
+                'started_at' => $now->copy()->subSeconds(5422)->format('H:i'),
+                'superiors' => [['id' => -12, 'name' => 'Laura Méndez']],
+                'subordinates' => [['id' => -21, 'name' => 'Diego Cen']],
+            ],
+            [
+                'id' => -3,
+                'user_id' => -3,
+                'name' => 'Diego Cen',
+                'email' => 'diego.cen@ejemplo.local',
+                'initials' => 'DC',
+                'photo_url' => null,
+                'activity' => 'Captura de movimientos',
+                'customer' => 'Administradora Peninsular',
+                'position' => 'Becario Contable',
+                'area' => 'Contabilidad',
+                'elapsed_seconds' => 2984,
+                'started_at' => $now->copy()->subSeconds(2984)->format('H:i'),
+                'superiors' => [['id' => -13, 'name' => 'Carlos Jesús Campos']],
+                'subordinates' => [],
+            ],
+            [
+                'id' => -4,
+                'user_id' => -4,
+                'name' => 'Maydeli Lisseth Hernández',
+                'email' => 'maydeli.hernandez@ejemplo.local',
+                'initials' => 'MH',
+                'photo_url' => null,
+                'activity' => 'Cálculo y revisión de impuestos',
+                'customer' => 'Consultoría Fiscal del Mayab',
+                'position' => 'Auxiliar de Nómina',
+                'area' => 'Contabilidad',
+                'elapsed_seconds' => 10451,
+                'started_at' => $now->copy()->subSeconds(10451)->format('H:i'),
+                'superiors' => [['id' => -14, 'name' => 'Dionicio Farfán']],
+                'subordinates' => [],
+            ],
+        ];
     }
 
     private function timezone(): string

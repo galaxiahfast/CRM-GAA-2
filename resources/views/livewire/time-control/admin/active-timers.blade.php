@@ -31,7 +31,7 @@
                 <div class="flex items-center gap-[28px] text-black">
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                         <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                        <strong class="font-semibold">Sincronización activa</strong>
+                        <strong class="font-semibold">{{ $showingDemoTimers ? 'Ejemplo local' : 'Sincronización activa' }}</strong>
                     </span>
                     <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87m-1-12a4 4 0 010 7.75" /></svg>
