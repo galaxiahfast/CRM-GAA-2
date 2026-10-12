@@ -647,16 +647,18 @@
             </ul>
         </div>
 
-        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[10px]">
-            @if ($supportsDarkTheme)
-                <button type="button" @click="toggleDarkMode()" class="flex h-[44px] w-full items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[15px]'" :title="darkMode ? 'Tema Claro' : 'Tema Oscuro'">
+        @if ($supportsDarkTheme)
+            <div class="shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
+                <button type="button" @click="toggleDarkMode()" class="flex h-[40px] w-full items-center rounded-xl text-[15px] font-medium text-black transition hover:bg-white focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[15px]'" :title="darkMode ? 'Tema Claro' : 'Tema Oscuro'">
                     <svg x-show="!darkMode" class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
                     <svg x-show="darkMode" x-cloak class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
                     <span x-show="!collapsed" x-text="darkMode ? 'Tema Claro' : 'Tema Oscuro'"></span>
                 </button>
-            @endif
+            </div>
+        @endif
 
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[10px] left-[130px] w-[220px]' : 'absolute bottom-[82px] left-[10px] right-[10px]'">
+        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[220px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span>Ayuda</span>
@@ -679,7 +681,7 @@
                 </form>
             </div>
 
-            <button type="button" @click="profileMenuOpen = !profileMenuOpen" :aria-expanded="profileMenuOpen" class="mt-[6px] flex min-h-[64px] w-full items-center border-t border-zinc-200 px-[10px] pt-[10px] text-left transition focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Menú de Usuario">
+            <button type="button" @click="profileMenuOpen = !profileMenuOpen" :aria-expanded="profileMenuOpen" class="flex min-h-[50px] w-full items-center text-left transition focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Menú de Usuario">
                 <span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                     @if(Auth::user()->profile_photo_path)
                         <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
