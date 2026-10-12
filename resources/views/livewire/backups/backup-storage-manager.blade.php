@@ -34,6 +34,10 @@
             background: #18181b;
         }
 
+        .backup-history-scroll::-webkit-scrollbar-track {
+            margin-block: 58px;
+        }
+
         [data-backup-site] input:focus,
         [data-backup-site] select:focus,
         [data-backup-site] textarea:focus,
@@ -929,7 +933,7 @@
                     @endphp
 
                     <div
-                        class="backup-scrollbar max-h-[650px] overflow-auto overscroll-contain"
+                        class="backup-scrollbar backup-history-scroll max-h-[650px] overflow-auto overscroll-contain"
                     >
                         <table
                             class="w-full min-w-[1400px] table-fixed border-collapse text-left"
@@ -945,7 +949,7 @@
                                 <col class="w-[250px]" />
                             </colgroup>
                             <thead
-                                class="sticky top-0 z-20 bg-zinc-100 shadow-[0_1px_0_#d4d4d8]"
+                                class="sticky top-0 z-20 border-b border-zinc-200 bg-zinc-100"
                             >
                                 <tr>
                                     @foreach (["Fecha", "Hora", "Sede", "Usuario", "Contenido detectado", "ZIP subido", "Estado", "Acciones"] as $heading)
@@ -1341,7 +1345,7 @@
                                 </tbody>
                             @endforelse
                             <tfoot
-                                class="sticky bottom-0 z-20 bg-zinc-100 font-semibold text-black shadow-[0_-1px_0_#d4d4d8]"
+                                class="sticky bottom-0 z-20 border-t border-zinc-200 bg-zinc-100 font-semibold text-black"
                             >
                                 <tr class="text-center">
                                     <td
