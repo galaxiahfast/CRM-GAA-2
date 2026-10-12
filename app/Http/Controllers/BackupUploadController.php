@@ -143,12 +143,27 @@ class BackupUploadController extends Controller
         $stream = $request->getContent(true);
         abort_unless(is_resource($stream), 422, 'No se recibió el fragmento.');
         $path = sprintf('backup-chunks/%s/%d.part', $upload->id, $index);
+        $temporaryPath = $path.'.uploading';
         $disk = Storage::disk((string) config('backup-storage.disk', 'local'));
-        abort_unless($disk->writeStream($path, $stream), 500, 'No se pudo guardar el fragmento.');
-        fclose($stream);
+        $disk->delete($temporaryPath);
 
-        $size = (int) $disk->size($path);
-        abort_if($size < 1 || $size > $upload->chunk_size, 422, 'El tamaño del fragmento es inválido.');
+        try {
+            abort_unless($disk->writeStream($temporaryPath, $stream), 500, 'No se pudo guardar el fragmento.');
+        } finally {
+            fclose($stream);
+        }
+
+        $size = (int) $disk->size($temporaryPath);
+        $expectedSize = min($upload->chunk_size, $upload->size - ($index * $upload->chunk_size));
+        if ($size !== $expectedSize) {
+            $disk->delete($temporaryPath);
+            abort(422, "El fragmento {$index} está incompleto; se esperaban {$expectedSize} bytes y llegaron {$size}. Reintenta la carga.");
+        }
+
+        if ($disk->exists($path)) {
+            $disk->delete($path);
+        }
+        abort_unless($disk->move($temporaryPath, $path), 500, 'No se pudo confirmar el fragmento recibido.');
 
         $upload = DB::transaction(function () use ($upload, $index, $disk): BackupUpload {
             $locked = BackupUpload::query()->lockForUpdate()->findOrFail($upload->id);
@@ -180,8 +195,17 @@ class BackupUploadController extends Controller
             return response()->json($this->payload($upload), 202);
         }
 
-        $chunks = collect($upload->uploaded_chunks ?? [])->unique();
-        abort_unless($chunks->count() === $upload->total_chunks, 422, 'Aún faltan fragmentos por cargar.');
+        $state = $this->validatedChunkState($upload);
+        if (count($state['chunks']) !== $upload->total_chunks) {
+            $upload->forceFill([
+                'uploaded_chunks' => $state['chunks'],
+                'received_bytes' => $state['bytes'],
+                'status' => BackupUpload::STATUS_UPLOADING,
+                'last_activity_at' => now(),
+            ])->save();
+
+            abort(422, "Falta el fragmento {$state['missing']} o está incompleto. La carga se reanudará desde ese punto.");
+        }
 
         $upload->forceFill([
             'status' => BackupUpload::STATUS_QUEUED,
@@ -267,6 +291,30 @@ class BackupUploadController extends Controller
             ->where('status', BackupUpload::STATUS_UPLOADING)
             ->where('last_activity_at', '<', now()->subMinutes((int) config('backup-storage.stale_after_minutes', 15)))
             ->update(['status' => BackupUpload::STATUS_WAITING]);
+    }
+
+    /** @return array{chunks: array<int, int>, bytes: int, missing: int|null} */
+    private function validatedChunkState(BackupUpload $upload): array
+    {
+        $disk = Storage::disk((string) config('backup-storage.disk', 'local'));
+        $chunks = [];
+        $bytes = 0;
+        $missing = null;
+
+        for ($index = 0; $index < $upload->total_chunks; $index++) {
+            $path = "backup-chunks/{$upload->id}/{$index}.part";
+            $expectedSize = min($upload->chunk_size, $upload->size - ($index * $upload->chunk_size));
+            if (! $disk->exists($path) || (int) $disk->size($path) !== $expectedSize) {
+                $missing ??= $index;
+
+                continue;
+            }
+
+            $chunks[] = $index;
+            $bytes += $expectedSize;
+        }
+
+        return ['chunks' => $chunks, 'bytes' => $bytes, 'missing' => $missing];
     }
 
     /** @return array<string, mixed> */

@@ -26,7 +26,10 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
 
     public function __construct(public string $uploadId)
     {
+        $this->onConnection((string) config('backup-storage.queue_connection', 'backup_database'));
         $this->onQueue((string) config('backup-storage.queue', 'backup-uploads'));
+        $this->timeout = (int) config('backup-storage.worker_timeout', 7200);
+        $this->uniqueFor = $this->timeout;
     }
 
     public function uniqueId(): string
@@ -64,17 +67,28 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
         }
 
         try {
-            for ($index = 0; $index < $upload->total_chunks; $index++) {
-                $chunkPath = sprintf('backup-chunks/%s/%d.part', $upload->id, $index);
-                $source = $disk->readStream($chunkPath);
-                if ($source === false) {
-                    throw new RuntimeException("Falta el fragmento {$index} del respaldo.");
+            try {
+                for ($index = 0; $index < $upload->total_chunks; $index++) {
+                    $chunkPath = sprintf('backup-chunks/%s/%d.part', $upload->id, $index);
+                    $source = $disk->readStream($chunkPath);
+                    if (! is_resource($source)) {
+                        throw new RuntimeException("Falta el fragmento {$index} del respaldo.");
+                    }
+
+                    try {
+                        if (stream_copy_to_stream($source, $destination) === false) {
+                            throw new RuntimeException("No fue posible copiar el fragmento {$index} del respaldo.");
+                        }
+                    } finally {
+                        fclose($source);
+                    }
                 }
-                stream_copy_to_stream($source, $destination);
-                fclose($source);
+            } finally {
+                fclose($destination);
             }
-        } finally {
-            fclose($destination);
+        } catch (Throwable $exception) {
+            $disk->delete($stagingPath);
+            throw $exception;
         }
 
         if ((int) $disk->size($stagingPath) !== $upload->size) {

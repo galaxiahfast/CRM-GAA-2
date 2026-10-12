@@ -103,7 +103,9 @@ class BackupStorageManagerTest extends TestCase
         $this->postJson(route('activity-backups.uploads.complete', $upload))->assertAccepted();
         $this->postJson(route('activity-backups.uploads.complete', $upload))->assertAccepted();
         Queue::assertPushed(AssembleBackupUpload::class, 1);
-        Queue::assertPushed(AssembleBackupUpload::class, fn (AssembleBackupUpload $job) => $job->uploadId === $upload->id);
+        Queue::assertPushed(AssembleBackupUpload::class, fn (AssembleBackupUpload $job) => $job->uploadId === $upload->id
+            && $job->connection === 'backup_database'
+            && $job->queue === 'backup-uploads');
 
         (new AssembleBackupUpload($upload->id))->handle(app(BackupArchiveExtractor::class));
         $upload->refresh();
@@ -163,6 +165,73 @@ class BackupStorageManagerTest extends TestCase
 
         $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'primero.zip', 'fingerprint' => 'first'])->assertJsonPath('status', 'uploading');
         $this->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'segundo.zip', 'fingerprint' => 'second'])->assertJsonPath('status', 'waiting');
+    }
+
+    public function test_an_incomplete_chunk_is_rejected_without_advancing_progress(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        config()->set('backup-storage.chunk_size', 1024);
+        $admin = $this->user('Administrador', 'admin-partial-chunk@datamid.test');
+
+        $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida', 'file_name' => 'parcial.zip', 'mime_type' => 'application/zip',
+            'size' => 2048, 'fingerprint' => 'partial:chunk',
+        ])->assertOk();
+        $upload = BackupUpload::query()->findOrFail($response->json('id'));
+
+        $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), random_bytes(512))
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'El fragmento 0 está incompleto; se esperaban 1024 bytes y llegaron 512. Reintenta la carga.');
+
+        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");
+        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part.uploading");
+        $this->assertSame([], $upload->fresh()->uploaded_chunks);
+        $this->assertSame(0, $upload->fresh()->received_bytes);
+    }
+
+    public function test_completion_reconciles_database_progress_with_physical_chunks(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        $admin = $this->user('Administrador', 'admin-missing-chunk@datamid.test');
+        $upload = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'missing-chunk'), 'site' => 'merida', 'user_id' => $admin->id,
+            'original_name' => 'incompleto.zip', 'extension' => 'zip', 'mime_type' => 'application/zip',
+            'size' => 1024, 'chunk_size' => 1024, 'total_chunks' => 1, 'uploaded_chunks' => [0],
+            'received_bytes' => 1024, 'status' => BackupUpload::STATUS_UPLOADING, 'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->postJson(route('activity-backups.uploads.complete', $upload))
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Falta el fragmento 0 o está incompleto. La carga se reanudará desde ese punto.');
+
+        $upload->refresh();
+        $this->assertSame([], $upload->uploaded_chunks);
+        $this->assertSame(0, $upload->received_bytes);
+        $this->assertSame(BackupUpload::STATUS_UPLOADING, $upload->status);
+    }
+
+    public function test_assembler_reports_a_missing_chunk_without_a_php_type_error(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        $admin = $this->user('Administrador', 'admin-assembler-missing@datamid.test');
+        $upload = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'assembler-missing'), 'site' => 'merida', 'user_id' => $admin->id,
+            'original_name' => 'faltante.zip', 'extension' => 'zip', 'mime_type' => 'application/zip',
+            'size' => 1024, 'chunk_size' => 1024, 'total_chunks' => 1, 'uploaded_chunks' => [0],
+            'received_bytes' => 1024, 'status' => BackupUpload::STATUS_QUEUED, 'last_activity_at' => now(),
+        ]);
+
+        try {
+            (new AssembleBackupUpload($upload->id))->handle(app(BackupArchiveExtractor::class));
+            $this->fail('El ensamblador debió detectar el fragmento físico faltante.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Falta el fragmento 0 del respaldo.', $exception->getMessage());
+        }
+
+        Storage::disk('local')->assertMissing("backup-assembly/{$upload->id}.part");
     }
 
     public function test_an_active_or_queued_upload_can_be_cancelled_and_its_chunks_are_removed(): void
