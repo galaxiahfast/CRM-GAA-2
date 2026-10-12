@@ -686,15 +686,15 @@
                     @if(Auth::user()->profile_photo_path)
                         <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
                     @else
-                        <span class="text-[13px] font-semibold text-black">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1).mb_substr(Auth::user()->last_name ?? '', 0, 1)) }}</span>
+                    <span class="text-[15px] font-semibold text-black">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1).mb_substr(Auth::user()->last_name ?? '', 0, 1)) }}</span>
                     @endif
                 </span>
                 <span x-show="!collapsed" class="min-w-0 flex-1">
                     <span class="flex min-w-0 items-center gap-[8px]">
-                        <strong class="truncate text-[13px] text-black">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
-                        <span class="rounded-full bg-zinc-900 px-[7px] py-[2px] text-[10px] font-semibold text-white">Pro</span>
+                        <strong class="min-w-0 flex-1 truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
+                        <span class="max-w-[45px] shrink-0 truncate rounded-full bg-zinc-900 px-[7px] py-[2px] text-[15px] font-semibold leading-none text-white" title="Pro">Pro</span>
                     </span>
-                    <span class="mt-[4px] block truncate text-[11px] text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
+                    <span class="mt-[4px] block truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
                 <svg x-show="!collapsed" class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
             </button>
