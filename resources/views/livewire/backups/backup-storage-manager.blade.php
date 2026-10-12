@@ -614,11 +614,12 @@
                                 class="flex min-h-[610px] min-w-0 flex-col"
                             >
                                 <div
-                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-zinc-700"
+                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px_150px] items-center border-b border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-zinc-700"
                                 >
                                     <span>Cliente / archivo</span>
                                     <span>Tamaño</span>
                                     <span>Fecha de respaldo</span>
+                                    <span>Acciones</span>
                                 </div>
                                 <div
                                     class="backup-scrollbar max-h-[610px] min-h-0 flex-1 overflow-y-auto overscroll-contain"
@@ -644,7 +645,7 @@
                                     </div>
                                     @foreach ($activeUploads as $activeUpload)
                                         <div
-                                            class="grid min-h-[64px] grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-b border-zinc-200 bg-amber-50/40 px-[20px]"
+                                            class="grid min-h-[64px] grid-cols-[minmax(260px,1fr)_150px_180px_150px] items-center border-b border-zinc-200 bg-amber-50/40 px-[20px]"
                                         >
                                             <span
                                                 class="flex min-w-0 items-center gap-[10px]"
@@ -681,6 +682,38 @@
                                             </span>
                                             <span class="tabular-nums">
                                                 {{ $activeUpload->last_activity_at?->format("d/m/Y H:i:s") }}
+                                            </span>
+                                            <span>
+                                                @if ($activeUpload->isCancellable() &&($activeUpload->user_id === auth()->id() ||auth()->user()?->isAdmin()))
+                                                    <button
+                                                        type="button"
+                                                        wire:click="cancelActiveUpload('{{ $activeUpload->id }}')"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="cancelActiveUpload('{{ $activeUpload->id }}')"
+                                                        class="inline-flex items-center gap-[7px] font-semibold text-red-600 disabled:cursor-wait disabled:opacity-50"
+                                                        title="Cancelar la carga y eliminar sus fragmentos"
+                                                    >
+                                                        <svg
+                                                            class="h-4 w-4"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="1.8"
+                                                                d="M6 6l12 12M18 6 6 18"
+                                                            />
+                                                        </svg>
+                                                        Cancelar carga
+                                                    </button>
+                                                @else
+                                                    <span class="text-zinc-400">
+                                                        Procesando
+                                                    </span>
+                                                @endif
                                             </span>
                                         </div>
                                     @endforeach
@@ -784,7 +817,7 @@
                                                         @forelse ($categoryFiles as $file)
                                                             <a
                                                                 href="{{ $file["download_url"] }}"
-                                                                class="relative grid min-h-[58px] grid-cols-[minmax(240px,1fr)_150px_180px] items-center border-t border-zinc-200 pl-[58px] pr-[20px] text-zinc-600 hover:bg-zinc-50 hover:text-black"
+                                                                class="relative grid min-h-[58px] grid-cols-[minmax(240px,1fr)_150px_180px_150px] items-center border-t border-zinc-200 pl-[58px] pr-[20px] text-zinc-600 hover:bg-zinc-50 hover:text-black"
                                                                 title="Haz clic para descargar {{ $file["name"] }}"
                                                             >
                                                                 <span
@@ -812,20 +845,6 @@
                                                                     >
                                                                         {{ $file["name"] }}
                                                                     </span>
-                                                                    <svg
-                                                                        class="ml-auto h-4 w-4 shrink-0 text-black"
-                                                                        fill="none"
-                                                                        viewBox="0 0 24 24"
-                                                                        stroke="currentColor"
-                                                                        aria-label="Descargar archivo"
-                                                                    >
-                                                                        <path
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round"
-                                                                            stroke-width="1.8"
-                                                                            d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"
-                                                                        />
-                                                                    </svg>
                                                                 </span>
                                                                 <span
                                                                     class="tabular-nums"
@@ -837,6 +856,25 @@
                                                                     class="tabular-nums"
                                                                 >
                                                                     {{ $file["completed_at"]?->format("d/m/Y H:i") }}
+                                                                </span>
+                                                                <span
+                                                                    class="inline-flex items-center gap-[7px] font-semibold text-black"
+                                                                >
+                                                                    <svg
+                                                                        class="h-4 w-4"
+                                                                        fill="none"
+                                                                        viewBox="0 0 24 24"
+                                                                        stroke="currentColor"
+                                                                        aria-hidden="true"
+                                                                    >
+                                                                        <path
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            stroke-width="1.8"
+                                                                            d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"
+                                                                        />
+                                                                    </svg>
+                                                                    Descargar
                                                                 </span>
                                                             </a>
                                                         @empty
@@ -867,7 +905,7 @@
                                     @endforelse
                                 </div>
                                 <div
-                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px] items-center border-t border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-black"
+                                    class="grid min-h-[58px] shrink-0 grid-cols-[minmax(260px,1fr)_150px_180px_150px] items-center border-t border-zinc-200 bg-zinc-100 px-[20px] font-semibold text-black"
                                 >
                                     <span>
                                         {{ $backupTree->count() }} clientes
@@ -879,6 +917,7 @@
                                     <span>
                                         {{ $sites[$site] ?? ucfirst($site) }}
                                     </span>
+                                    <span></span>
                                 </div>
                             </section>
                         </div>
@@ -2121,6 +2160,9 @@
                                 method: 'POST',
                                 signal: controller.signal,
                             });
+                            await pendingRequest('readwrite', (store) =>
+                                store.delete(item.localId),
+                            ).catch(() => {});
                             item.progress = 100;
                             while (
                                 ['queued', 'processing'].includes(upload.status)
@@ -2170,6 +2212,7 @@
                             'pending',
                             'waiting',
                             'uploading',
+                            'queued',
                             'error',
                         ].includes(item.status);
                     },

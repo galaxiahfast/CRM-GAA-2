@@ -59,4 +59,13 @@ class BackupUpload extends Model
     {
         return in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_FAILED], true);
     }
+
+    public function isCancellable(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_WAITING,
+            self::STATUS_UPLOADING,
+            self::STATUS_QUEUED,
+        ], true);
+    }
 }

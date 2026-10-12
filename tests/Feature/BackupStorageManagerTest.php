@@ -165,7 +165,7 @@ class BackupStorageManagerTest extends TestCase
         $this->postJson(route('activity-backups.uploads.initialize'), $base + ['file_name' => 'segundo.zip', 'fingerprint' => 'second'])->assertJsonPath('status', 'waiting');
     }
 
-    public function test_an_active_upload_can_be_cancelled_and_its_chunks_are_removed(): void
+    public function test_an_active_or_queued_upload_can_be_cancelled_and_its_chunks_are_removed(): void
     {
         Storage::fake('local');
         config()->set('backup-storage.disk', 'local');
@@ -183,10 +183,45 @@ class BackupStorageManagerTest extends TestCase
 
         $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), random_bytes(1024))->assertOk();
         Storage::disk('local')->assertExists("backup-chunks/{$upload->id}/0.part");
+        $upload->forceFill(['status' => BackupUpload::STATUS_QUEUED])->save();
 
         $this->deleteJson(route('activity-backups.uploads.cancel', $upload))
             ->assertOk()
             ->assertJson(['cancelled' => true]);
+
+        $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
+        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");
+    }
+
+    public function test_a_queued_upload_can_be_cancelled_after_reloading_the_manager(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        $admin = $this->user('Administrador', 'admin-reloaded-queue@datamid.test');
+        $upload = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'reloaded-queue'),
+            'site' => 'merida',
+            'user_id' => $admin->id,
+            'original_name' => 'respaldo-en-cola.zip',
+            'extension' => 'zip',
+            'mime_type' => 'application/zip',
+            'size' => 1024,
+            'chunk_size' => 1024,
+            'total_chunks' => 1,
+            'uploaded_chunks' => [0],
+            'received_bytes' => 1024,
+            'status' => BackupUpload::STATUS_QUEUED,
+            'queued_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+        Storage::disk('local')->put("backup-chunks/{$upload->id}/0.part", 'fragmento');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSee('respaldo-en-cola.zip')
+            ->assertSee('Cancelar carga')
+            ->call('cancelActiveUpload', $upload->id)
+            ->assertDontSee('respaldo-en-cola.zip');
 
         $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
         Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");

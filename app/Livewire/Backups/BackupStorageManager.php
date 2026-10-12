@@ -89,6 +89,19 @@ class BackupStorageManager extends Component
         $this->dispatch('backup-file-deleted', uploadId: $uploadId, fileIndex: $fileIndex);
     }
 
+    public function cancelActiveUpload(string $uploadId): void
+    {
+        Gate::authorize('manage-system-backups');
+        $upload = BackupUpload::query()->findOrFail($uploadId);
+        $user = auth()->user();
+
+        abort_unless($upload->user_id === $user->id || $user->isAdmin(), 403);
+        abort_unless($upload->isCancellable(), 409, 'La carga ya está siendo procesada y no se puede cancelar.');
+
+        app(BackupStoragePurger::class)->purge($upload);
+        $this->dispatch('backup-server-upload-cancelled', uploadId: $uploadId);
+    }
+
     public function render()
     {
         Gate::authorize('manage-system-backups');

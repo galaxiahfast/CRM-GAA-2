@@ -36,7 +36,10 @@ class AssembleBackupUpload implements ShouldBeUnique, ShouldQueue
 
     public function handle(BackupArchiveExtractor $extractor): void
     {
-        $upload = BackupUpload::query()->findOrFail($this->uploadId);
+        $upload = BackupUpload::query()->find($this->uploadId);
+        if (! $upload) {
+            return;
+        }
         if ($upload->status === BackupUpload::STATUS_COMPLETED) {
             return;
         }

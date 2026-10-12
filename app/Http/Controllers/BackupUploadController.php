@@ -198,11 +198,7 @@ class BackupUploadController extends Controller
     {
         Gate::authorize('manage-system-backups');
         abort_unless($upload->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
-        abort_unless(
-            in_array($upload->status, [BackupUpload::STATUS_WAITING, BackupUpload::STATUS_UPLOADING], true),
-            409,
-            'La carga ya está siendo procesada y no se puede cancelar.',
-        );
+        abort_unless($upload->isCancellable(), 409, 'La carga ya está siendo procesada y no se puede cancelar.');
 
         $purger->purge($upload);
 
