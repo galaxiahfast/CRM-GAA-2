@@ -40,6 +40,7 @@
     sidebarListening: false,
     sidebarVoiceMessage: '',
     sidebarMatches: [],
+    profileMenuOpen: false,
     toggleDarkMode() {
         this.darkMode = !this.darkMode;
         document.documentElement.classList.toggle('module-dark-theme', this.darkMode);
@@ -646,25 +647,39 @@
             </ul>
         </div>
 
-        <footer class="shrink-0 border-t border-zinc-200 bg-zinc-100 p-[10px]">
-            <a href="{{ route('soporte.preguntas') }}" class="flex h-[44px] items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white" :class="collapsed ? 'justify-center' : 'gap-[15px]'" title="Ayuda">
-                <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                <span x-show="!collapsed">Ayuda</span>
-            </a>
-            <a href="{{ route('soporte.ticket') }}" class="mt-[2px] flex h-[44px] items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white" :class="collapsed ? 'justify-center' : 'gap-[15px]'" title="Soporte">
-                <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path stroke-linecap="round" stroke-width="1.8" d="M8 9h8M8 13h5"/></svg>
-                <span x-show="!collapsed">Soporte</span>
-            </a>
-
+        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[10px]">
             @if ($supportsDarkTheme)
-                <button type="button" @click="toggleDarkMode()" class="mt-[2px] flex h-[44px] w-full items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[15px]'" :title="darkMode ? 'Tema Claro' : 'Tema Oscuro'">
+                <button type="button" @click="toggleDarkMode()" class="flex h-[44px] w-full items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[15px]'" :title="darkMode ? 'Tema Claro' : 'Tema Oscuro'">
                     <svg x-show="!darkMode" class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
                     <svg x-show="darkMode" x-cloak class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
                     <span x-show="!collapsed" x-text="darkMode ? 'Tema Claro' : 'Tema Oscuro'"></span>
                 </button>
             @endif
 
-            <a href="{{ route('profile.show') }}" class="mt-[6px] flex min-h-[64px] items-center border-t border-zinc-200 px-[10px] pt-[10px] transition" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Mi Perfil">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[10px] left-[130px] w-[220px]' : 'absolute bottom-[82px] left-[10px] right-[10px]'">
+                <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                    <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                    <span>Ayuda</span>
+                </a>
+                <a href="{{ route('soporte.ticket') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                    <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path stroke-linecap="round" stroke-width="1.8" d="M8 9h8M8 13h5"/></svg>
+                    <span>Soporte</span>
+                </a>
+                <a href="{{ route('profile.show') }}" class="flex h-[42px] items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                    <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                    <span>Mi Perfil</span>
+                </a>
+                <div class="my-[6px] border-t border-zinc-200"></div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex h-[42px] w-full items-center gap-[12px] rounded-lg px-[12px] text-left text-[15px] font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 17 5-5-5-5M20 12H9m4 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
+            </div>
+
+            <button type="button" @click="profileMenuOpen = !profileMenuOpen" :aria-expanded="profileMenuOpen" class="mt-[6px] flex min-h-[64px] w-full items-center border-t border-zinc-200 px-[10px] pt-[10px] text-left transition focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Menú de Usuario">
                 <span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                     @if(Auth::user()->profile_photo_path)
                         <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
@@ -680,7 +695,7 @@
                     <span class="mt-[4px] block truncate text-[11px] text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
                 <svg x-show="!collapsed" class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
-            </a>
+            </button>
         </footer>
     </aside>
     <!-- ============================================================ -->
