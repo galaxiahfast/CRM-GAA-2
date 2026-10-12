@@ -100,7 +100,7 @@
                             data-active-timer
                             class="overflow-hidden border-b border-zinc-200 last:border-b-0"
                         >
-                            <div class="grid min-h-[92px] grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px] {{ $loop->even ? 'bg-zinc-50' : 'bg-white' }}">
+                            <div class="grid min-h-[92px] grid-cols-[minmax(280px,0.95fr)_minmax(320px,1.25fr)_190px] {{ $loop->even ? 'bg-zinc-100' : 'bg-white' }}">
                             <div class="flex min-w-0 items-center gap-[15px] px-[25px] py-[15px]">
                                 <span class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible rounded-full bg-zinc-900 text-[12px] font-semibold text-white">
                                     @if ($timer['photo_url'])
@@ -125,7 +125,7 @@
 
                             <div
                                 wire:ignore
-                                class="flex flex-col items-end justify-center border-l border-gray-200 px-[20px] py-[15px] text-right {{ $loop->even ? 'bg-zinc-100/70' : 'bg-zinc-50' }}"
+                                class="flex flex-col items-end justify-center border-l border-gray-200 px-[20px] py-[15px] text-right {{ $loop->even ? 'bg-zinc-100' : 'bg-white' }}"
                                 x-data="{
                                     seconds: {{ (int) $timer['elapsed_seconds'] }},
                                     interval: null,
@@ -144,7 +144,7 @@
                             </div>
                             </div>
 
-                            <div class="grid min-h-[70px] grid-cols-4 border-t border-gray-200 {{ $loop->even ? 'bg-zinc-100/70' : 'bg-zinc-50/70' }}">
+                            <div class="grid min-h-[70px] grid-cols-4 border-t border-gray-200 {{ $loop->even ? 'bg-zinc-100' : 'bg-white' }}">
                                 <div class="min-w-0 px-[20px] py-[12px]">
                                     <p class="font-semibold text-gray-500">Puesto</p>
                                     <p class="mt-[5px] truncate font-medium text-gray-700" title="{{ $timer['position'] }}">{{ $timer['position'] }}</p>
