@@ -205,7 +205,7 @@
                     <button
                         type="button"
                         wire:click="selectTab('backups')"
-                        @click="showTree()"
+                        @click="showUploader()"
                         class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 {{ $activeTab === "backups" ? "font-semibold text-black" : "text-zinc-500" }} focus:outline-none"
                     >
                         <svg
@@ -932,7 +932,7 @@
                         class="backup-scrollbar max-h-[650px] overflow-auto overscroll-contain"
                     >
                         <table
-                            class="w-full min-w-[1380px] table-fixed border-collapse text-left"
+                            class="w-full min-w-[1400px] table-fixed border-collapse text-left"
                         >
                             <colgroup>
                                 <col class="w-[120px]" />
@@ -941,8 +941,8 @@
                                 <col class="w-[190px]" />
                                 <col class="w-[220px]" />
                                 <col class="w-[250px]" />
-                                <col class="w-[135px]" />
-                                <col class="w-[230px]" />
+                                <col class="w-[160px]" />
+                                <col class="w-[250px]" />
                             </colgroup>
                             <thead
                                 class="sticky top-0 z-20 bg-zinc-100 shadow-[0_1px_0_#d4d4d8]"
@@ -950,7 +950,7 @@
                                 <tr>
                                     @foreach (["Fecha", "Hora", "Sede", "Usuario", "Contenido detectado", "ZIP subido", "Estado", "Acciones"] as $heading)
                                         <th
-                                            class="border-r border-zinc-200 px-[20px] py-[15px] font-semibold last:sticky last:right-0 last:z-30 last:border-l last:border-r-0 last:bg-zinc-100"
+                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px] text-center font-semibold last:sticky last:right-0 last:z-30 last:border-l last:border-r-0 last:bg-zinc-100"
                                         >
                                             {{ $heading }}
                                         </th>
@@ -978,35 +978,38 @@
                                 >
                                     <tr class="border-b border-zinc-200">
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
+                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
                                         >
                                             {{ $record->created_at->format("d/m/Y") }}
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
+                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
                                         >
                                             {{ $record->created_at->format("H:i:s") }}
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px]"
                                         >
                                             {{ $sites[$record->site] ?? ucfirst($record->site) }}
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                            class="overflow-hidden border-r border-zinc-200 px-[20px] py-[15px]"
                                         >
-                                            <span class="line-clamp-2">
+                                            <span
+                                                class="block truncate"
+                                                title="{{ trim(($record->user?->name ?? "Usuario eliminado") . " " . ($record->user?->last_name ?? "")) }}"
+                                            >
                                                 {{ trim(($record->user?->name ?? "Usuario eliminado") . " " . ($record->user?->last_name ?? "")) }}
                                             </span>
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                            class="overflow-hidden border-r border-zinc-200 px-[20px] py-[15px]"
                                         >
                                             <button
                                                 type="button"
                                                 @click="open = !open"
                                                 :aria-expanded="open"
-                                                class="flex w-full items-center gap-[10px] p-0 text-left focus:outline-none"
+                                                class="flex w-full items-center gap-[10px] overflow-hidden p-0 text-left focus:outline-none"
                                                 title="Desplegar contenido del respaldo"
                                             >
                                                 <svg
@@ -1023,9 +1026,10 @@
                                                         d="m9 5 7 7-7 7"
                                                     />
                                                 </svg>
-                                                <span class="min-w-0">
+                                                <span class="min-w-0 flex-1">
                                                     <span
-                                                        class="block font-medium text-black"
+                                                        class="block truncate font-medium text-black"
+                                                        title="{{ $detectedCustomers->count() }} clientes · {{ $manifest->count() }} archivos"
                                                     >
                                                         {{ $detectedCustomers->count() }}
                                                         clientes ·
@@ -1041,10 +1045,11 @@
                                             </button>
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                            class="overflow-hidden border-r border-zinc-200 px-[20px] py-[15px]"
                                         >
                                             <span
                                                 class="block truncate text-black"
+                                                title="{{ $record->original_name }}"
                                             >
                                                 {{ $record->original_name }}
                                             </span>
@@ -1056,19 +1061,19 @@
                                             </span>
                                         </td>
                                         <td
-                                            class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                            class="overflow-hidden border-r border-zinc-200 px-[20px] py-[15px] text-center"
                                         >
                                             <span
-                                                class="inline-flex rounded-full border border-zinc-200 px-[10px] py-[4px] font-medium {{ $record->status === "completed" ? "bg-zinc-900 text-white" : ($record->status === "failed" ? "bg-red-50 text-red-700" : "bg-white text-black") }}"
+                                                class="inline-block max-w-full truncate rounded-full border border-zinc-200 px-[10px] py-[4px] align-middle font-medium {{ $record->status === "completed" ? "bg-zinc-900 text-white" : ($record->status === "failed" ? "bg-red-50 text-red-700" : "bg-white text-black") }}"
                                             >
                                                 {{ $record->superseded_at ? "Reemplazado" : $statusLabel }}
                                             </span>
                                         </td>
                                         <td
-                                            class="sticky right-0 z-10 border-l border-zinc-200 bg-white px-[10px] py-[10px]"
+                                            class="sticky right-0 z-10 overflow-hidden border-l border-zinc-200 bg-white px-[20px] py-[10px]"
                                         >
                                             <div
-                                                class="flex items-center justify-center gap-[5px]"
+                                                class="flex items-center justify-center gap-[2px]"
                                             >
                                                 <button
                                                     type="button"
@@ -1338,26 +1343,26 @@
                             <tfoot
                                 class="sticky bottom-0 z-20 bg-zinc-100 font-semibold text-black shadow-[0_-1px_0_#d4d4d8]"
                             >
-                                <tr>
+                                <tr class="text-center">
                                     <td
                                         colspan="4"
-                                        class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                        class="truncate border-r border-zinc-200 px-[20px] py-[15px]"
                                     >
                                         TOTAL DEL HISTORIAL
                                     </td>
                                     <td
-                                        class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                        class="truncate border-r border-zinc-200 px-[20px] py-[15px]"
                                     >
                                         {{ $historyFiles }} archivos
                                     </td>
                                     <td
-                                        class="border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
+                                        class="truncate border-r border-zinc-200 px-[20px] py-[15px] tabular-nums"
                                     >
                                         {{ number_format($historyBytes / 1048576, 2) }}
                                         MB
                                     </td>
                                     <td
-                                        class="border-r border-zinc-200 px-[20px] py-[15px]"
+                                        class="truncate border-r border-zinc-200 px-[20px] py-[15px]"
                                     >
                                         {{ $history->count() }} registros
                                     </td>
