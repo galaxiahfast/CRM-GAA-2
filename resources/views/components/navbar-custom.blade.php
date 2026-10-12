@@ -58,7 +58,7 @@
             return;
         }
 
-        const links = Array.from(document.querySelectorAll('#logo-sidebar .sidebar-menu-scrollbar a[href]'));
+        const links = Array.from(document.querySelectorAll('#logo-sidebar a[href]'));
         const seen = new Set();
 
         this.sidebarMatches = links.map((link) => ({
@@ -109,10 +109,10 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed top-0 z-[90] flex h-[90px] w-full items-center bg-[#1a3a6b] px-[15px] py-[15px]">
-        <div class="flex items-center justify-between w-full">
-            <div class="flex items-center justify-start rtl:justify-end">
-                <div class="flex items-center">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[70px] items-center bg-[#1a3a6b] px-[20px]">
+        <div class="flex w-full items-center justify-end">
+            <div class="hidden items-center justify-start rtl:justify-end">
+                <div class="hidden items-center">
                     <div class="flex flex-col leading-[2]">
                         <span class="text-[15px] font-medium text-white">González Alonzo y</span>
                         <span class="text-[15px] font-medium text-white pl-[42px]">Asociados S.C.P.</span>
@@ -145,7 +145,7 @@
                 <livewire:notification-center />
 
                 <!-- AVATAR -->
-                <div class="flex items-center">
+                <div class="hidden items-center">
                     <x-dropdown
                         align="right"
                         width="72"
@@ -218,10 +218,21 @@
     <!-- ============================================================ -->
     <aside
         id="logo-sidebar"
-        class="fixed top-[90px] left-0 z-[80] h-[calc(100vh-90px)]
+        class="fixed left-0 top-0 z-[100] h-screen
             flex flex-col bg-zinc-100 shadow-sm
             overflow-hidden"
     >
+
+        <div class="flex h-[90px] shrink-0 items-center gap-[10px] border-b border-zinc-200 px-[15px]">
+            <img src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
+            <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
+                <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
+                <p class="mt-[4px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
+            </div>
+            <button @click="collapsed = !collapsed" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-700 transition hover:border-zinc-400 hover:text-black focus:outline-none focus:ring-0" aria-label="Comprimir o Expandir Menú" title="Comprimir o Expandir Menú">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" /></svg>
+            </button>
+        </div>
 
         <div class="relative shrink-0 border-b border-zinc-200 bg-zinc-100 p-[15px]" @click.outside="sidebarSearchOpen = false">
             <div x-show="!collapsed" class="relative">
@@ -567,14 +578,14 @@
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                <li class="hidden pt-[15px] px-[15px] pb-0 m-0">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Soporte</span>
                 </li>
 
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Centro de ayuda (con flecha siempre visible)      -->
                 <!-- ========================================================== -->
-                <li x-data="{ openSoporte: {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openSoporte: {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'true' : 'false' }} }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
                     <button @click="openSoporte = !openSoporte" 
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -634,6 +645,35 @@
 
             </ul>
         </div>
+
+        <footer class="shrink-0 border-t border-zinc-200 bg-zinc-100 p-[10px]">
+            <a href="{{ route('profile.show') }}" class="flex h-[44px] items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white" :class="collapsed ? 'justify-center' : 'gap-[15px]'" title="Ajustes">
+                <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.38.36.72.66 1 .3.27.68.4 1.08.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg>
+                <span x-show="!collapsed">Ajustes</span>
+            </a>
+            <a href="{{ route('soporte.preguntas') }}" class="mt-[4px] flex h-[44px] items-center rounded-xl px-[12px] text-[15px] font-medium text-black transition hover:bg-white" :class="collapsed ? 'justify-center' : 'gap-[15px]'" title="Ayuda y Soporte">
+                <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                <span x-show="!collapsed">Ayuda y Soporte</span>
+            </a>
+
+            <a href="{{ route('profile.show') }}" class="mt-[8px] flex min-h-[70px] items-center rounded-xl border border-zinc-200 bg-white p-[10px] transition hover:border-zinc-300" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Mi Perfil">
+                <span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
+                    @if(Auth::user()->profile_photo_path)
+                        <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
+                    @else
+                        <span class="text-[13px] font-semibold text-black">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1).mb_substr(Auth::user()->last_name ?? '', 0, 1)) }}</span>
+                    @endif
+                </span>
+                <span x-show="!collapsed" class="min-w-0 flex-1">
+                    <span class="flex min-w-0 items-center gap-[8px]">
+                        <strong class="truncate text-[13px] text-black">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
+                        <span class="rounded-full bg-zinc-900 px-[7px] py-[2px] text-[10px] font-semibold text-white">Pro</span>
+                    </span>
+                    <span class="mt-[4px] block truncate text-[11px] text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
+                </span>
+                <svg x-show="!collapsed" class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
+            </a>
+        </footer>
     </aside>
     <!-- ============================================================ -->
     <!-- FIN DEL MENÚ LATERAL                                          -->
@@ -682,13 +722,15 @@
 
                 const sidebar = document.getElementById('logo-sidebar');
                 const main = document.getElementById('main-content');
+                const nav = document.getElementById('main-nav');
 
                 if (!sidebar || !main) return;
 
                 new ResizeObserver(() => {
 
-                    main.style.marginLeft =
-                        sidebar.getBoundingClientRect().width + 'px';
+                    const sidebarWidth = sidebar.getBoundingClientRect().width + 'px';
+                    main.style.marginLeft = sidebarWidth;
+                    if (nav) nav.style.left = sidebarWidth;
 
                 }).observe(sidebar);
 

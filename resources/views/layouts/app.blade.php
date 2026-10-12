@@ -53,7 +53,7 @@
         <!-- CONTENIDO -->
         <main
             id="main-content"
-            class="pt-[90px]"
+            class="pt-[70px]"
         >
 
             <div>
