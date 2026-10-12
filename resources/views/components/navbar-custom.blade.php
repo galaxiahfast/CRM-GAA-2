@@ -695,7 +695,7 @@
                         <strong class="block max-w-[115px] truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
                         <span class="max-w-[70px] shrink-0 truncate rounded-full bg-zinc-900 px-[7px] py-[2px] text-[15px] font-semibold leading-none text-white" title="{{ $accountTypeLabel }}">{{ $accountTypeLabel }}</span>
                     </span>
-                    <span class="mt-[4px] block truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
+                    <span class="mt-[4px] block max-w-[180px] truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
                 <svg x-show="!collapsed" class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
             </button>
