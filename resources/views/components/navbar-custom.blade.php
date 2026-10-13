@@ -223,7 +223,7 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[90px] shrink-0 items-center gap-[10px] border-b border-zinc-200 px-[15px]">
+        <div class="flex h-[90px] shrink-0 items-center gap-[10px] px-[15px]">
             <img src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
             <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
@@ -234,7 +234,7 @@
             </button>
         </div>
 
-        <div class="relative shrink-0 border-b border-zinc-200 bg-zinc-100 p-[15px]" @click.outside="sidebarSearchOpen = false">
+        <div class="relative shrink-0 bg-zinc-100 p-[15px]" @click.outside="sidebarSearchOpen = false">
             <div x-show="!collapsed" class="relative">
                 <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
@@ -293,19 +293,17 @@
             </div>
 
             <p x-show="!collapsed && sidebarVoiceMessage" x-text="sidebarVoiceMessage" class="mt-[8px] text-[13px] text-zinc-600"></p>
+
+            <div x-show="!collapsed" class="mt-[15px]">
+                <p class="text-[15px] font-medium leading-none text-black">General</p>
+                <div class="mt-[15px] border-t border-zinc-200"></div>
+            </div>
         </div>
 
         <!-- Contenedor del menú -->
         <div class="sidebar-menu-scrollbar flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain"
             :style="collapsed ? 'opacity: 1;' : 'opacity: 1; transition: opacity 300ms ease-in-out;'">
             <ul class="font-medium inline-block min-w-full m-0 p-0">
-
-                <!-- ========================================================== -->
-                <!-- SECCIÓN: GENERAL (oculta en modo compacto)                 -->
-                <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
-                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">General</span>
-                </li>
 
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
@@ -646,7 +644,8 @@
             </ul>
         </div>
 
-        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
+        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 p-[15px]">
+            <div class="absolute left-[15px] right-[15px] top-0 border-t border-zinc-200" aria-hidden="true"></div>
             <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+15px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="group flex items-center gap-[15px] rounded-xl p-[15px] text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }}">
                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.preguntas') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z"/></svg>
