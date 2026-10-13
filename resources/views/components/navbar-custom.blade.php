@@ -55,12 +55,6 @@
     updateSidebarMatches() {
         const query = this.normalizeSidebarText(this.sidebarSearch);
 
-        if (!query) {
-            this.sidebarMatches = [];
-            this.sidebarSearchOpen = false;
-            return;
-        }
-
         const links = Array.from(document.querySelectorAll('#logo-sidebar a[href]'));
         const seen = new Set();
 
@@ -68,13 +62,13 @@
             label: link.textContent.replace(/\s+/g, ' ').trim(),
             url: link.href,
         })).filter((item) => {
-            if (!item.label || seen.has(item.url) || !this.normalizeSidebarText(item.label).includes(query)) {
+            if (!item.label || seen.has(item.url) || (query && !this.normalizeSidebarText(item.label).includes(query))) {
                 return false;
             }
 
             seen.add(item.url);
             return true;
-        }).slice(0, 8);
+        });
         this.sidebarSearchOpen = true;
         this.$nextTick(() => this.updateSidebarSearchScrollbar());
     },
@@ -268,7 +262,8 @@
                     x-ref="sidebarSearchInput"
                     x-model="sidebarSearch"
                     @input.debounce.120ms="updateSidebarMatches()"
-                    @focus="sidebarSearch && updateSidebarMatches()"
+                    @focus="updateSidebarMatches()"
+                    @click="updateSidebarMatches()"
                     @keydown.escape="sidebarSearchOpen = false"
                     type="search"
                     placeholder="Buscar Apartados..."
@@ -420,7 +415,7 @@
                 <!-- ========================================================== -->
                 @if ($canTimeControl && $canTimeSupervision)
                     <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
-                    <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -486,7 +481,7 @@
                     </li>
                 @elseif ($canTimeControl)
                     <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
-                    <li x-data="{ openTimeControl: {{ request()->routeIs('time.*') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -587,7 +582,7 @@
                 @endcan
 
                 @canany(['manage-delivery-notes', 'manage-backup-reports'])
-                    <li x-data="{ openDocuments: {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openDocuments: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button type="button" @click="openDocuments = !openDocuments"
                             :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -637,7 +632,7 @@
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Centro de ayuda (con flecha siempre visible)      -->
                 <!-- ========================================================== -->
-                <li x-data="{ openSoporte: {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'true' : 'false' }} }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openSoporte: true }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
                     <button @click="openSoporte = !openSoporte" 
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
