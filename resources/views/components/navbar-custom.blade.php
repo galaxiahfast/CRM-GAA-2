@@ -294,9 +294,10 @@
 
             <p x-show="!collapsed && sidebarVoiceMessage" x-text="sidebarVoiceMessage" class="mt-[8px] text-[13px] text-zinc-600"></p>
 
-            <div x-show="!collapsed" class="mt-[30px]">
-                <p class="text-[15px] font-medium leading-none text-black">General</p>
-            </div>
+        </div>
+
+        <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
+            <p class="text-[15px] font-medium leading-none text-black">General</p>
         </div>
 
         <!-- Contenedor del menú -->
@@ -307,7 +308,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
                 <!-- ========================================================== -->
-                <li class="pt-[8px] px-[15px] pb-0 m-0">
+                <li class="pt-[15px] px-[15px] pb-0 m-0">
                     <a href="{{ route('inicio') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('inicio') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
