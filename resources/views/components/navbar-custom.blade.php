@@ -651,7 +651,7 @@
         </div>
 
         <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] w-[320px] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px]' : 'absolute bottom-[calc(100%+10px)] left-[15px]'">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span class="truncate">Centro de Ayuda</span>
@@ -662,7 +662,7 @@
                 </a>
                 <a href="{{ route('profile.show') }}" class="mt-[15px] flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
-                    <span class="truncate">Configuración de Cuenta</span>
+                    <span class="truncate">Mi Cuenta</span>
                 </a>
                 <button type="button" @click="toggleDarkMode()" class="mt-[15px] flex h-[42px] w-full items-center gap-[15px] rounded-lg px-[15px] text-left text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0" :title="darkMode ? 'Cambiar a Tema Claro' : 'Cambiar a Tema Oscuro'">
                     <svg x-show="!darkMode" class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
