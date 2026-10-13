@@ -594,7 +594,7 @@
                             <span class="flex items-center">
                                 <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 3h7l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 3v5h5M10 12h6M10 16h6M4 7v13a1 1 0 0 0 1 1" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 3v5h5M10 12h6M10 16h6" />
                                 </svg>
                                 <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Documentos</span>
                             </span>

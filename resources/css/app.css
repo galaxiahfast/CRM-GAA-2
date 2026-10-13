@@ -250,6 +250,21 @@ html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [c
     background-color: #27272a !important;
 }
 
+/* Paleta coherente del menú: base, superficie y estado activo. */
+html.module-dark-theme #logo-sidebar > .bg-zinc-100,
+html.module-dark-theme #logo-sidebar > footer.bg-zinc-100 {
+    background-color: #111113 !important;
+}
+
+html.module-dark-theme #logo-sidebar .bg-gray-50 {
+    background-color: #18181b !important;
+}
+
+html.module-dark-theme #logo-sidebar .bg-gray-100,
+html.module-dark-theme #logo-sidebar .hover\:bg-gray-100:hover {
+    background-color: #27272a !important;
+}
+
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-black"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-900"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-800"],
