@@ -124,7 +124,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[70px] items-center bg-[#1a3a6b] px-[20px]">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] px-[20px]">
         <div class="flex w-full items-center justify-end">
             <div class="hidden items-center justify-start rtl:justify-end">
                 <div class="hidden items-center">
