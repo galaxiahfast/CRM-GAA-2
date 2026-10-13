@@ -653,16 +653,16 @@
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span>Ayuda</span>
                 </a>
-                <a href="{{ route('soporte.ticket') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('soporte.ticket') }}" class="mt-[15px] flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path stroke-linecap="round" stroke-width="1.8" d="M8 9h8M8 13h5"/></svg>
                     <span>Soporte</span>
                 </a>
-                <a href="{{ route('profile.show') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('profile.show') }}" class="mt-[15px] flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
                     <span>Mi Perfil</span>
                 </a>
                 @if ($supportsDarkTheme)
-                    <button type="button" @click="toggleDarkMode()" class="flex h-[42px] w-full items-center gap-[15px] rounded-lg px-[15px] text-left text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0" :title="darkMode ? 'Cambiar a Tema Claro' : 'Cambiar a Tema Oscuro'">
+                    <button type="button" @click="toggleDarkMode()" class="mt-[15px] flex h-[42px] w-full items-center gap-[15px] rounded-lg px-[15px] text-left text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0" :title="darkMode ? 'Cambiar a Tema Claro' : 'Cambiar a Tema Oscuro'">
                         <svg x-show="!darkMode" class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
                         <svg x-show="darkMode" x-cloak class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
                         <span class="min-w-0 flex-1 truncate" x-text="darkMode ? 'Tema Claro' : 'Tema Oscuro'"></span>
