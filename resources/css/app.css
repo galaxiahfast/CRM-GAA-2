@@ -188,22 +188,23 @@ div.dataTables_filter {
 
 /* El listado del buscador conserva el mismo trazo fino del menú lateral. */
 .sidebar-search-results-scrollbar {
-    scrollbar-color: #1a3a6b transparent !important;
-    scrollbar-width: thin;
+    scrollbar-width: none;
 }
 
 .sidebar-search-results-scrollbar::-webkit-scrollbar {
-    width: 3px !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
-.sidebar-search-results-scrollbar::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-.sidebar-search-results-scrollbar::-webkit-scrollbar-thumb {
-    border: 0 !important;
+.sidebar-search-overlay-scrollbar {
+    position: absolute;
+    right: 0;
+    z-index: 1;
+    width: 3px;
+    min-height: 32px;
     border-radius: 9999px;
-    background: #1a3a6b !important;
+    background: #1a3a6b;
+    pointer-events: none;
 }
 
 /* Tema oscuro, limitado a los módulos de Actividades y Soporte. */

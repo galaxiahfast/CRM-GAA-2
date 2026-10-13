@@ -39,6 +39,9 @@
     sidebarListening: false,
     sidebarVoiceMessage: '',
     sidebarMatches: [],
+    sidebarSearchThumbTop: 0,
+    sidebarSearchThumbHeight: 0,
+    sidebarSearchThumbVisible: false,
     profileMenuOpen: false,
     toggleDarkMode() {
         this.darkMode = !this.darkMode;
@@ -73,6 +76,24 @@
             return true;
         }).slice(0, 8);
         this.sidebarSearchOpen = true;
+        this.$nextTick(() => this.updateSidebarSearchScrollbar());
+    },
+    updateSidebarSearchScrollbar() {
+        const scroller = this.$refs.sidebarSearchResults;
+
+        if (!scroller || scroller.scrollHeight <= scroller.clientHeight) {
+            this.sidebarSearchThumbVisible = false;
+            return;
+        }
+
+        const viewportHeight = scroller.clientHeight;
+        const thumbHeight = Math.max(32, viewportHeight * viewportHeight / scroller.scrollHeight);
+        const availableTravel = Math.max(0, viewportHeight - thumbHeight);
+        const scrollRange = Math.max(1, scroller.scrollHeight - viewportHeight);
+
+        this.sidebarSearchThumbHeight = thumbHeight;
+        this.sidebarSearchThumbTop = (scroller.scrollTop / scrollRange) * availableTravel;
+        this.sidebarSearchThumbVisible = true;
     },
     openCompactSidebarSearch() {
         collapsed = false;
@@ -284,13 +305,21 @@
                 class="absolute left-[15px] right-[15px] top-[80px] z-[100] rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_16px_35px_rgba(0,0,0,0.14)]"
             >
                 <template x-if="sidebarMatches.length > 0">
-                    <div class="sidebar-search-results-scrollbar h-[210px] snap-y snap-mandatory scroll-smooth overflow-y-auto">
-                        <template x-for="result in sidebarMatches" :key="result.url">
-                            <a :href="result.url" class="flex h-[42px] snap-start items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition-colors duration-150 hover:bg-zinc-200">
-                                <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
-                                <span class="truncate" x-text="result.label"></span>
-                            </a>
-                        </template>
+                    <div class="relative">
+                        <div x-ref="sidebarSearchResults" x-init="$nextTick(() => updateSidebarSearchScrollbar())" @scroll="updateSidebarSearchScrollbar()" class="sidebar-search-results-scrollbar h-[210px] snap-y snap-mandatory scroll-smooth overflow-y-auto">
+                            <template x-for="result in sidebarMatches" :key="result.url">
+                                <a :href="result.url" class="flex h-[42px] snap-start items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition-colors duration-150 hover:bg-zinc-200">
+                                    <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
+                                    <span class="truncate" x-text="result.label"></span>
+                                </a>
+                            </template>
+                        </div>
+                        <span
+                            x-show="sidebarSearchThumbVisible"
+                            class="sidebar-search-overlay-scrollbar"
+                            :style="`height: ${sidebarSearchThumbHeight}px; transform: translateY(${sidebarSearchThumbTop}px);`"
+                            aria-hidden="true"
+                        ></span>
                     </div>
                 </template>
                 <p x-show="sidebarMatches.length === 0" class="px-[12px] py-[10px] text-[15px] text-zinc-500">No se encontraron apartados.</p>
