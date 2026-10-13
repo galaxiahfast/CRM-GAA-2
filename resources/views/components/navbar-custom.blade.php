@@ -125,7 +125,17 @@
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
     <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] px-[20px]">
-        <div class="flex w-full items-center justify-end">
+        <div class="flex w-full items-center justify-between gap-[30px]">
+            @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] text-white/75">
+                    <span>Actividades</span>
+                    <span class="text-white/40">›</span>
+                    <span>Control de Horas</span>
+                    <span class="text-white/40">›</span>
+                    <span class="font-semibold text-white">Reloj Checador</span>
+                </div>
+            @endif
+
             <div class="hidden items-center justify-start rtl:justify-end">
                 <div class="hidden items-center">
                     <div class="flex flex-col leading-[2]">
@@ -146,7 +156,21 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-[15px]">
+            <div class="ml-auto flex items-center gap-[15px]">
+                @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
+                    <div class="mr-[15px] flex items-center gap-[30px] text-white">
+                        <button type="button" onclick="document.getElementById('attendance-header-download')?.click()"
+                            class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-white transition-colors hover:text-white/75 focus:outline-none focus:ring-0">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                            Descargar PDF
+                        </button>
+                        <button type="button" @if(request()->routeIs('time.admin.attendance')) disabled @else onclick="window.print()" @endif
+                            class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-white transition-colors hover:text-white/75 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:text-white/50">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2m2 4h6a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4h10ZM9 7V3h6v4"/></svg>
+                            Imprimir
+                        </button>
+                    </div>
+                @endif
                 @if ($supportsDarkTheme)
                     <button type="button" @click="toggleDarkMode()"
                         class="hidden"
@@ -160,17 +184,17 @@
                 <livewire:notification-center />
 
                 <a href="{{ route('soporte.preguntas') }}"
-                    class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-white/60 text-white transition-colors duration-200 hover:border-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+                    class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border-0 bg-transparent text-white transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-0"
                     aria-label="Abrir ayuda"
                     title="Ayuda">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z" />
+                        <circle cx="12" cy="12" r="9" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.7 9a2.5 2.5 0 1 1 4.05 1.96c-.92.72-1.75 1.16-1.75 2.54M12 17h.01" />
                     </svg>
                 </a>
 
                 <a href="{{ route('profile.show') }}"
-                    class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-white/60 text-white transition-colors duration-200 hover:border-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+                    class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border-0 bg-transparent text-white transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-0"
                     aria-label="Abrir ajustes"
                     title="Ajustes">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">

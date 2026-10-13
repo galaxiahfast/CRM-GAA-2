@@ -8,7 +8,7 @@
         @click="open = !open; filterOpen = false"
         wire:click="loadNotifications"
         type="button"
-        class="relative flex items-center justify-center rounded-lg border border-white/60 p-[10px] text-white transition-colors duration-200 hover:border-white focus:outline-none focus:ring-2 focus:ring-white/40"
+        class="relative flex h-[42px] w-[42px] items-center justify-center rounded-lg border-0 bg-transparent p-0 text-white transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-0"
         aria-label="Abrir notificaciones"
         :aria-expanded="open"
     >

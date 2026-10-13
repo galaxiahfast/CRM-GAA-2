@@ -118,7 +118,7 @@
 
 <div class="relative z-10 min-h-[calc(100dvh-90px)] w-full origin-top bg-white" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
     <div class="w-full min-w-0">
-        <div class="attendance-topbar flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px] text-[15px] text-zinc-500">
+        <div class="attendance-topbar hidden">
             <div class="flex items-center gap-[15px]">
                 <span class="font-medium">Actividades</span>
                 <span class="font-light text-gray-300">&gt;</span>
@@ -127,7 +127,7 @@
                 <span class="font-semibold text-black">Reloj Checador</span>
             </div>
             <div class="no-print flex items-center gap-[20px]">
-                <button type="button" onclick="exportarChecador('pdf')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
+                <button id="attendance-header-download" type="button" onclick="exportarChecador('pdf')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>

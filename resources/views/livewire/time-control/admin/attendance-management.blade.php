@@ -335,7 +335,7 @@
     @endif
 
     {{-- Encabezado y migas de pan --}}
-    <div class="admin-attendance-topbar flex flex-wrap items-center justify-between gap-12 whitespace-nowrap border-b border-zinc-200 bg-white p-[50px]">
+    <div class="admin-attendance-topbar hidden">
         <div class="flex items-center gap-[15px] text-[15px] font-normal text-gray-500">
             <span>Actividades</span>
             <span class="font-light text-gray-300">&gt;</span>
@@ -344,7 +344,7 @@
             <span class="attendance-header-emphasis text-black">Reloj Checador</span>
         </div>
         <div class="flex flex-wrap items-center gap-[30px]">
-            <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" @disabled(! $searched)
+            <button id="attendance-header-download" type="button" wire:click="export('pdf')" wire:loading.attr="disabled" @disabled(! $searched)
                     class="attendance-header-emphasis inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] text-black disabled:cursor-not-allowed disabled:text-gray-500 disabled:opacity-100 focus:outline-none focus:ring-0">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
                 Descargar PDF
