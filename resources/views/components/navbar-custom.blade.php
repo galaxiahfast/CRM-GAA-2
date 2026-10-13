@@ -284,7 +284,7 @@
                 class="absolute left-[15px] right-[15px] top-[80px] z-[100] rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_16px_35px_rgba(0,0,0,0.14)]"
             >
                 <template x-if="sidebarMatches.length > 0">
-                    <div class="h-[210px] snap-y snap-mandatory scroll-smooth overflow-y-auto">
+                    <div class="sidebar-search-results-scrollbar h-[210px] snap-y snap-mandatory scroll-smooth overflow-y-auto">
                         <template x-for="result in sidebarMatches" :key="result.url">
                             <a :href="result.url" class="flex h-[42px] snap-start items-center gap-[12px] rounded-lg px-[12px] text-[15px] font-medium text-black transition-colors duration-150 hover:bg-zinc-200">
                                 <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
@@ -300,13 +300,13 @@
 
         </div>
 
-        <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
-            <p class="text-[15px] font-medium leading-none text-black">General</p>
-        </div>
-
         <!-- Contenedor del menú -->
         <div class="sidebar-menu-scrollbar flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain"
             :style="collapsed ? 'opacity: 1;' : 'opacity: 1; transition: opacity 300ms ease-in-out;'">
+            <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
+                <p class="text-[15px] font-medium leading-none text-black">General</p>
+            </div>
+
             <ul class="font-medium inline-block min-w-full m-0 p-0">
 
                 <!-- ========================================================== -->

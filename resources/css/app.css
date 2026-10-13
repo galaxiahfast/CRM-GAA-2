@@ -186,6 +186,26 @@ div.dataTables_filter {
     opacity: 1;
 }
 
+/* El listado del buscador conserva el mismo trazo fino del menú lateral. */
+.sidebar-search-results-scrollbar {
+    scrollbar-color: #1a3a6b transparent !important;
+    scrollbar-width: thin;
+}
+
+.sidebar-search-results-scrollbar::-webkit-scrollbar {
+    width: 3px !important;
+}
+
+.sidebar-search-results-scrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.sidebar-search-results-scrollbar::-webkit-scrollbar-thumb {
+    border: 0 !important;
+    border-radius: 9999px;
+    background: #1a3a6b !important;
+}
+
 /* Tema oscuro, limitado a los módulos de Actividades y Soporte. */
 html.module-dark-theme {
     color-scheme: dark;
