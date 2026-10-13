@@ -294,7 +294,7 @@
 
             <p x-show="!collapsed && sidebarVoiceMessage" x-text="sidebarVoiceMessage" class="mt-[8px] text-[13px] text-zinc-600"></p>
 
-            <div x-show="!collapsed" class="mt-[15px]">
+            <div x-show="!collapsed" class="mt-[30px]">
                 <p class="text-[15px] font-medium leading-none text-black">General</p>
             </div>
         </div>
@@ -307,7 +307,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0">
+                <li class="pt-[8px] px-[15px] pb-0 m-0">
                     <a href="{{ route('inicio') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('inicio') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -326,7 +326,10 @@
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v8H4V4Zm10 0h6v4h-6V4ZM4 16h6v4H4v-4Zm10-4h6v8h-6v-8Z" />
+                            <rect x="4" y="4" width="6" height="6" rx="1" />
+                            <rect x="14" y="4" width="6" height="6" rx="1" />
+                            <rect x="4" y="14" width="6" height="6" rx="1" />
+                            <rect x="14" y="14" width="6" height="6" rx="1" />
                         </svg>
                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel General</span>
                     </a>
@@ -541,7 +544,8 @@
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                             class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('activity-backups.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('activity-backups.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h7l2 2h9v11H3V7Zm5 5h8m-4-4v8" />
+                                <ellipse cx="12" cy="5" rx="8" ry="3" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7" />
                             </svg>
                             <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Gestión de Respaldos</span>
                         </a>
@@ -555,8 +559,8 @@
                             class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <span class="flex items-center">
                                 <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h6l2 2h8v12H4V5Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11h8M8 15h5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 3h7l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 3v5h5M10 12h6M10 16h6M4 7v13a1 1 0 0 0 1 1" />
                                 </svg>
                                 <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Documentos</span>
                             </span>
