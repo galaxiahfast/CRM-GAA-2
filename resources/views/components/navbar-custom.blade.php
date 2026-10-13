@@ -22,13 +22,11 @@
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
     $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
     $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
-    $supportsDarkTheme = request()->routeIs('time.*', 'soporte.*');
+    $supportsDarkTheme = true;
 @endphp
-@if ($supportsDarkTheme)
-    <script>
-        document.documentElement.classList.toggle('module-dark-theme', localStorage.getItem('activities-support-theme') === 'dark');
-    </script>
-@endif
+<script>
+    document.documentElement.classList.toggle('module-dark-theme', localStorage.getItem('activities-support-theme') === 'dark');
+</script>
 <!-- ============================================================ -->
 <!-- CONTENEDOR PRINCIPAL CON x-data COMPARTIDO                    -->
 <!-- ============================================================ -->
@@ -44,9 +42,7 @@
     profileMenuOpen: false,
     toggleDarkMode() {
         this.darkMode = !this.darkMode;
-        if (this.supportsDarkTheme) {
-            document.documentElement.classList.toggle('module-dark-theme', this.darkMode);
-        }
+        document.documentElement.classList.toggle('module-dark-theme', this.darkMode);
         localStorage.setItem('activities-support-theme', this.darkMode ? 'dark' : 'light');
         window.dispatchEvent(new CustomEvent('module-theme-changed', { detail: { dark: this.darkMode } }));
     },
@@ -652,19 +648,19 @@
 
         <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
             <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
-                <a href="{{ route('soporte.preguntas') }}" class="flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('soporte.preguntas') }}" class="flex items-center gap-[15px] rounded-lg p-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.1 9a3 3 0 1 1 5.83 1c0 2-2.93 2-2.93 4m.01 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span class="truncate">Centro de Ayuda</span>
                 </a>
-                <a href="{{ route('soporte.ticket') }}" class="mt-[15px] flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('soporte.ticket') }}" class="mt-[15px] flex items-center gap-[15px] rounded-lg p-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path stroke-linecap="round" stroke-width="1.8" d="M8 9h8M8 13h5"/></svg>
                     <span class="truncate">Soporte Técnico</span>
                 </a>
-                <a href="{{ route('profile.show') }}" class="mt-[15px] flex h-[42px] items-center gap-[15px] rounded-lg px-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
+                <a href="{{ route('profile.show') }}" class="mt-[15px] flex items-center gap-[15px] rounded-lg p-[15px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                     <svg class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
                     <span class="truncate">Mi Cuenta</span>
                 </a>
-                <button type="button" @click="toggleDarkMode()" class="mt-[15px] flex h-[42px] w-full items-center gap-[15px] rounded-lg px-[15px] text-left text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0" :title="darkMode ? 'Cambiar a Tema Claro' : 'Cambiar a Tema Oscuro'">
+                <button type="button" @click="toggleDarkMode()" class="mt-[15px] flex w-full items-center gap-[15px] rounded-lg p-[15px] text-left text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0" :title="darkMode ? 'Cambiar a Tema Claro' : 'Cambiar a Tema Oscuro'">
                     <svg x-show="!darkMode" class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
                     <svg x-show="darkMode" x-cloak class="h-5 w-5 shrink-0 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
                     <span class="min-w-0 flex-1 truncate" x-text="darkMode ? 'Tema Claro' : 'Tema Oscuro'"></span>
@@ -675,7 +671,7 @@
                 <div class="my-[15px] border-t border-zinc-200"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex h-[42px] w-full items-center gap-[15px] rounded-lg px-[15px] text-left text-[15px] font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-0">
+                    <button type="submit" class="flex w-full items-center gap-[15px] rounded-lg p-[15px] text-left text-[15px] font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-0">
                         <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 17 5-5-5-5M20 12H9m4 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"/></svg>
                         <span>Cerrar Sesión</span>
                     </button>
