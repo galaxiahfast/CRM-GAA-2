@@ -240,6 +240,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
                 </svg>
                 <input
+                    id="sidebar-section-search"
                     x-ref="sidebarSearchInput"
                     x-model="sidebarSearch"
                     @input.debounce.120ms="updateSidebarMatches()"
@@ -248,7 +249,7 @@
                     type="search"
                     placeholder="Buscar Apartados..."
                     aria-label="Buscar Apartados"
-                    class="h-[50px] w-full rounded-xl border border-zinc-300 bg-white py-[12px] pl-[45px] pr-[48px] text-[15px] text-black outline-none transition placeholder:text-zinc-500 focus:!border-zinc-500 focus:!ring-0 focus:!shadow-none"
+                    class="h-[50px] w-full rounded-xl border border-zinc-300 bg-white py-[12px] pl-[45px] pr-[48px] text-[15px] text-black outline-none transition placeholder:text-zinc-500 focus:!border-zinc-300 focus:!outline-none focus:!ring-0 focus:!shadow-none focus-visible:!outline-none"
                 >
                 <button
                     type="button"
@@ -277,10 +278,10 @@
             <div
                 x-show="!collapsed && sidebarSearchOpen"
                 x-cloak
-                class="absolute left-[15px] right-[15px] top-[70px] z-[100] max-h-[320px] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[8px] shadow-[0_16px_35px_rgba(0,0,0,0.14)]"
+                class="absolute left-[15px] right-[15px] top-[70px] z-[100] max-h-[304px] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_16px_35px_rgba(0,0,0,0.14)]"
             >
                 <template x-if="sidebarMatches.length > 0">
-                    <div class="space-y-[4px]">
+                    <div class="space-y-[4px] pb-[15px]">
                         <template x-for="result in sidebarMatches" :key="result.url">
                             <a :href="result.url" class="flex min-h-[42px] items-center gap-[12px] rounded-lg px-[12px] py-[9px] text-[15px] font-medium text-black transition hover:bg-zinc-100">
                                 <svg class="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
@@ -296,7 +297,7 @@
 
         </div>
 
-        <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
+        <div x-show="!collapsed" class="shrink-0 px-[15px]">
             <p class="text-[15px] font-medium leading-none text-black">General</p>
         </div>
 

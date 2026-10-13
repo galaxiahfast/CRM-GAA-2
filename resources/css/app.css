@@ -334,6 +334,16 @@ html.module-dark-theme .sidebar-overlay-scrollbar {
     background: #fff;
 }
 
+#sidebar-section-search:focus,
+#sidebar-section-search:focus-visible {
+    border-color: #d4d4d8 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+}
+
 /* Scroll del directorio lateral de personas del perfil. */
 .profile-people-scrollbar {
     scrollbar-color: #000 #f4f4f5;
