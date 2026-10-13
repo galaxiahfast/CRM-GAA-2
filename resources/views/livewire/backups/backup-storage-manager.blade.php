@@ -1011,7 +1011,7 @@
                                 <tr>
                                     @foreach (["Fecha", "Hora", "Sede", "Usuario", "Contenido detectado", "ZIP subido", "Estado", "Acciones"] as $heading)
                                         <th
-                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px] text-center font-semibold last:sticky last:right-0 last:z-30 last:border-l last:border-r-0 last:bg-zinc-100"
+                                            class="truncate border-r border-zinc-200 px-[20px] py-[15px] text-center font-semibold last:border-r-0"
                                         >
                                             {{ $heading }}
                                         </th>
@@ -1134,7 +1134,7 @@
                                             </span>
                                         </td>
                                         <td
-                                            class="sticky right-0 z-10 overflow-hidden border-l border-zinc-200 bg-white px-[20px] py-[10px]"
+                                            class="overflow-hidden px-[20px] py-[10px]"
                                         >
                                             <div
                                                 class="flex items-center justify-center gap-[2px]"

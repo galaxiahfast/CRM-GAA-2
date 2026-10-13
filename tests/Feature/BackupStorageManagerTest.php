@@ -141,7 +141,7 @@ class BackupStorageManagerTest extends TestCase
         $this->postJson(route('activity-backups.uploads.complete', $upload))->assertAccepted();
         Queue::assertPushed(AssembleBackupUpload::class, 1);
         Queue::assertPushed(AssembleBackupUpload::class, fn (AssembleBackupUpload $job) => $job->uploadId === $upload->id
-            && $job->connection === 'backup_database'
+            && $job->connection === 'sync'
             && $job->queue === 'backup-uploads');
 
         (new AssembleBackupUpload($upload->id))->handle(app(BackupArchiveExtractor::class));
@@ -175,6 +175,42 @@ class BackupStorageManagerTest extends TestCase
         $this->get(route('activity-backups.download', $upload))
             ->assertOk()
             ->assertDownload('empresa_2026.zip');
+    }
+
+    public function test_upload_is_assembled_automatically_without_a_queue_worker(): void
+    {
+        Storage::fake('local');
+        config()->set('backup-storage.disk', 'local');
+        config()->set('backup-storage.queue_connection', 'sync');
+        config()->set('backup-storage.chunk_size', 1024 * 1024);
+
+        $admin = $this->user('Administrador', 'admin-automatic-upload@datamid.test');
+        $payload = $this->zip([
+            'Cliente Automático/Index/empresa.index' => 'indice',
+            'Cliente Automático/Bak/empresa.bak' => 'respaldo',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+            'site' => 'merida',
+            'file_name' => 'automatico.zip',
+            'mime_type' => 'application/zip',
+            'size' => strlen($payload),
+            'fingerprint' => 'automatico:zip:1',
+        ])->assertOk();
+
+        $upload = BackupUpload::query()->findOrFail($response->json('id'));
+        $this->postRaw(route('activity-backups.uploads.chunks.store', [$upload, 0]), $payload)->assertOk();
+
+        $this->postJson(route('activity-backups.uploads.complete', $upload))
+            ->assertAccepted()
+            ->assertJsonPath('status', BackupUpload::STATUS_COMPLETED);
+
+        $upload->refresh();
+        $this->assertSame(BackupUpload::STATUS_COMPLETED, $upload->status);
+        $this->assertCount(2, $upload->manifest);
+        $this->assertSame('Cliente Automático', $upload->manifest[0]['customer']);
+        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}");
+        Storage::disk('local')->assertExists($upload->storage_path);
     }
 
     public function test_example_zip_contains_the_fifteen_company_structures(): void

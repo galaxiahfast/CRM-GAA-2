@@ -164,7 +164,7 @@ class BackupArchiveExtractor
     /** @return array{customer:string, category:string, name:string}|null */
     private function backupMetadata(string $entry): ?array
     {
-        $normalized = str_replace('\\', '/', trim($entry, '/'));
+        $normalized = $this->toUtf8(str_replace('\\', '/', trim($entry, '/')));
         $parts = array_values(array_filter(explode('/', $normalized), fn (string $part) => $part !== ''));
         if (count($parts) < 3 || str_ends_with($entry, '/')) {
             return null;
@@ -180,6 +180,17 @@ class BackupArchiveExtractor
         }
 
         return compact('customer', 'category', 'name');
+    }
+
+    private function toUtf8(string $value): string
+    {
+        if (mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        // Windows ZIP tools commonly store Spanish file names as Windows-1252
+        // when the UTF-8 filename flag is absent.
+        return mb_convert_encoding($value, 'UTF-8', 'Windows-1252');
     }
 
     private function assertSafeEntry(string $entry): void

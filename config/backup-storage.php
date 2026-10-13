@@ -8,7 +8,9 @@ return [
     'max_active_uploads' => (int) env('BACKUP_MAX_ACTIVE_UPLOADS', 2),
     'stale_after_minutes' => (int) env('BACKUP_UPLOAD_STALE_MINUTES', 15),
     'queue' => env('BACKUP_UPLOAD_QUEUE', 'backup-uploads'),
-    'queue_connection' => env('BACKUP_QUEUE_CONNECTION', 'backup_database'),
+    // Process the archive as part of the completion request. This keeps the
+    // upload self-contained and avoids requiring a separately managed worker.
+    'queue_connection' => env('BACKUP_QUEUE_CONNECTION', 'sync'),
     'worker_timeout' => (int) env('BACKUP_WORKER_TIMEOUT', 7200),
     'sites' => [
         'merida' => 'Mérida',
