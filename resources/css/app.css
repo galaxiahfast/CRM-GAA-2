@@ -176,7 +176,7 @@ div.dataTables_filter {
     width: 3px;
     min-height: 32px;
     border-radius: 9999px;
-    background: #000;
+    background: #1a3a6b;
     opacity: 0;
     pointer-events: none;
     transition: opacity 140ms ease;
@@ -331,7 +331,7 @@ html.module-dark-theme #main-content [class*="text-[#166534]"] {
 }
 
 html.module-dark-theme .sidebar-overlay-scrollbar {
-    background: #fff;
+    background: #1a3a6b;
 }
 
 #sidebar-section-search:focus,

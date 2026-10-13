@@ -223,13 +223,13 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[85px] shrink-0 items-start gap-[10px] pt-[30px]" :class="collapsed ? 'justify-center px-0' : 'px-[15px]'">
+        <div class="flex h-[85px] shrink-0 items-start gap-[10px] px-[15px] pt-[30px]">
             <img x-show="!collapsed" x-cloak src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
             <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
                 <p class="mt-[4px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
             </div>
-            <button @click="collapsed = !collapsed" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
+            <button @click="collapsed = !collapsed" type="button" class="flex h-[50px] w-[50px] shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <path stroke-linecap="round" d="M9 3v18" />
@@ -569,7 +569,7 @@
                                 </svg>
                                 <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Documentos</span>
                             </span>
-                            <svg x-show="!collapsed" class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openDocuments ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openDocuments ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
                             </svg>
                         </button>
