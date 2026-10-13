@@ -339,7 +339,7 @@
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
                 </li>
 
@@ -548,33 +548,46 @@
                     </li>
                 @endcan
 
-                <!-- Hoja de Entrega: actividad independiente -->
-                @can('manage-delivery-notes')
-                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('soporte.hoja-entrega') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" />
+                @canany(['manage-delivery-notes', 'manage-backup-reports'])
+                    <li x-data="{ openDocuments: {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'true' : 'false' }} }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <button type="button" @click="openDocuments = !openDocuments"
+                            :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
+                            class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <span class="flex items-center">
+                                <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h6l2 2h8v12H4V5Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11h8M8 15h5" />
+                                </svg>
+                                <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Documentos</span>
+                            </span>
+                            <svg x-show="!collapsed" class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openDocuments ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
                             </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
-                        </a>
-                    </li>
-                @endcan
+                        </button>
 
-                <!-- Reporte de Respaldos: actividad independiente para administradores -->
-                @can('manage-backup-reports')
-                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
-                        <a href="{{ route('soporte.reportes-respaldos') }}"
-                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" />
-                            </svg>
-                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
-                        </a>
+                        <div x-show="openDocuments" x-transition class="relative" style="display: none;">
+                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <ul class="w-full">
+                                @can('manage-delivery-notes')
+                                    <li class="pt-[15px] m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                        <a href="{{ route('soporte.hoja-entrega') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" /></svg>
+                                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
+                                        </a>
+                                    </li>
+                                @endcan
+                                @can('manage-backup-reports')
+                                    <li class="pt-[15px] m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                        <a href="{{ route('soporte.reportes-respaldos') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" /></svg>
+                                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
+                                        </a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </div>
                     </li>
-                @endcan
+                @endcanany
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
