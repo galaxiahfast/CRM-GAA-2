@@ -296,7 +296,6 @@
 
             <div x-show="!collapsed" class="mt-[15px]">
                 <p class="text-[15px] font-medium leading-none text-black">General</p>
-                <div class="mt-[15px] border-t border-zinc-200"></div>
             </div>
         </div>
 
@@ -331,6 +330,10 @@
                         </svg>
                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel General</span>
                     </a>
+                </li>
+
+                <li class="px-[15px] pt-[15px] m-0" :class="collapsed ? 'hidden' : 'block'" aria-hidden="true">
+                    <div class="border-t border-zinc-200"></div>
                 </li>
 
                 <!-- ========================================================== -->
