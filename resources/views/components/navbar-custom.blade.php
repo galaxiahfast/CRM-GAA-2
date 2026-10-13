@@ -647,7 +647,7 @@
         </div>
 
         <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 border-t border-zinc-200 bg-zinc-100 p-[15px]">
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+10px)] left-[15px] right-[15px]'">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+15px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="group flex items-center gap-[15px] rounded-xl p-[15px] text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }}">
                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.preguntas') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z"/></svg>
                     <span class="truncate">Centro de Ayuda</span>
@@ -668,7 +668,7 @@
                         <span class="absolute top-[2px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform" :class="darkMode ? 'translate-x-[18px]' : 'translate-x-[2px]'"></span>
                     </span>
                 </button>
-                <div class="my-[15px] -mx-[15px] border-t border-zinc-200"></div>
+                <div class="my-[15px] border-t border-zinc-200"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="flex w-full items-center gap-[15px] rounded-xl bg-gray-50 p-[15px] text-left text-[15px] font-medium text-red-600 transition-all duration-200 hover:bg-red-50 focus:outline-none focus:ring-0">
