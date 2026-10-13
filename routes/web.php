@@ -239,9 +239,9 @@ Route::middleware([
         ->middleware('access.permission:time-control.supervision.view')
         ->name('time.admin.online');
 
-    // Respaldos privados por sede y cliente (Administradores / Contadores).
+    // Respaldos privados por sede y cliente (todos excepto Becarios).
     Route::prefix('actividades/respaldos')
-        ->middleware('can:manage-system-backups')
+        ->middleware('can:access-system-backups')
         ->name('activity-backups.')
         ->group(function () {
             Route::get('/', BackupStorageManager::class)->name('index');
@@ -249,7 +249,7 @@ Route::middleware([
             Route::post('/uploads', [BackupUploadController::class, 'initialize'])->name('uploads.initialize');
             Route::get('/uploads/{upload}/status', [BackupUploadController::class, 'status'])->name('uploads.status');
             Route::post('/uploads/{upload}/chunks/{index}', [BackupUploadController::class, 'storeChunk'])
-                ->whereNumber('index')->middleware('throttle:180,1')->name('uploads.chunks.store');
+                ->whereNumber('index')->middleware('throttle:600,1')->name('uploads.chunks.store');
             Route::post('/uploads/{upload}/complete', [BackupUploadController::class, 'complete'])->name('uploads.complete');
             Route::delete('/uploads/{upload}', [BackupUploadController::class, 'cancel'])->name('uploads.cancel');
             Route::get('/files/{upload}/download', [BackupUploadController::class, 'download'])->name('download');

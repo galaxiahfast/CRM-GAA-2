@@ -10,6 +10,7 @@
                 product: @js($product),
                 csrf: @js(csrf_token()),
                 maxConcurrent: @js($maxConcurrentUploads),
+                parallelChunks: @js($parallelChunks),
             })"
     x-init="init()"
     x-on:backup-reupload.window="chooseFiles($event.detail)"
@@ -1183,12 +1184,38 @@
                                                             />
                                                         </svg>
                                                     </a>
+                                                    @can('manage-system-backups')
+                                                        <button
+                                                            type="button"
+                                                            @click="openReplace({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name) })"
+                                                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-black hover:bg-zinc-100 focus:outline-none"
+                                                            title="Re-subir y reemplazar este respaldo"
+                                                            aria-label="Re-subir y reemplazar este respaldo"
+                                                        >
+                                                            <svg
+                                                                class="h-4 w-4"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    stroke-width="1.8"
+                                                                    d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    @endcan
+                                                @endif
+
+                                                @can('manage-system-backups')
                                                     <button
                                                         type="button"
-                                                        @click="openReplace({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name) })"
+                                                        @click="openEdit({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name), assignedCustomer: @js($record->assigned_customer ?? ""), notes: @js($record->notes ?? ""), files: @js($manifest->values()->map(fn ($file, $index) => ["index" => $index, "name" => $file["name"] ?? "archivo", "category" => ucfirst($file["category"] ?? ""), "downloadUrl" => route("activity-backups.files.download", [$record, $index])])->all()) })"
                                                         class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-black hover:bg-zinc-100 focus:outline-none"
-                                                        title="Re-subir y reemplazar este respaldo"
-                                                        aria-label="Re-subir y reemplazar este respaldo"
+                                                        title="Editar metadatos y archivos"
+                                                        aria-label="Editar metadatos y archivos"
                                                     >
                                                         <svg
                                                             class="h-4 w-4"
@@ -1200,54 +1227,32 @@
                                                                 stroke-linecap="round"
                                                                 stroke-linejoin="round"
                                                                 stroke-width="1.8"
-                                                                d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"
+                                                                d="m4 16-1 5 5-1L19 9l-4-4L4 16Z"
                                                             />
                                                         </svg>
                                                     </button>
-                                                @endif
-
-                                                <button
-                                                    type="button"
-                                                    @click="openEdit({ id: @js($record->id), site: @js($record->site), product: @js($record->product), fileName: @js($record->original_name), assignedCustomer: @js($record->assigned_customer ?? ""), notes: @js($record->notes ?? ""), files: @js($manifest->values()->map(fn ($file, $index) => ["index" => $index, "name" => $file["name"] ?? "archivo", "category" => ucfirst($file["category"] ?? ""), "downloadUrl" => route("activity-backups.files.download", [$record, $index])])->all()) })"
-                                                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-black hover:bg-zinc-100 focus:outline-none"
-                                                    title="Editar metadatos y archivos"
-                                                    aria-label="Editar metadatos y archivos"
-                                                >
-                                                    <svg
-                                                        class="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
+                                                    <button
+                                                        type="button"
+                                                        @click="openDelete({ id: @js($record->id), fileName: @js($record->original_name) })"
+                                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-red-600 hover:bg-red-50 focus:outline-none"
+                                                        title="Eliminar respaldo"
+                                                        aria-label="Eliminar respaldo completo"
                                                     >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="1.8"
-                                                            d="m4 16-1 5 5-1L19 9l-4-4L4 16Z"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    @click="openDelete({ id: @js($record->id), fileName: @js($record->original_name) })"
-                                                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-red-600 hover:bg-red-50 focus:outline-none"
-                                                    title="Eliminar respaldo"
-                                                    aria-label="Eliminar respaldo completo"
-                                                >
-                                                    <svg
-                                                        class="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="1.8"
-                                                            d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"
-                                                        />
-                                                    </svg>
-                                                </button>
+                                                        <svg
+                                                            class="h-4 w-4"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="1.8"
+                                                                d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
@@ -1354,27 +1359,29 @@
                                                                     </svg>
                                                                     Descargar
                                                                 </a>
-                                                                <button
-                                                                    type="button"
-                                                                    @click="openFileDelete({ uploadId: @js($record->id), fileIndex: @js($fileIndex), name: @js($file["name"] ?? "archivo") })"
-                                                                    class="inline-flex items-center gap-[7px] text-red-600 focus:outline-none"
-                                                                    title="Eliminar este archivo del paquete"
-                                                                >
-                                                                    <svg
-                                                                        class="h-4 w-4"
-                                                                        fill="none"
-                                                                        viewBox="0 0 24 24"
-                                                                        stroke="currentColor"
+                                                                @can('manage-system-backups')
+                                                                    <button
+                                                                        type="button"
+                                                                        @click="openFileDelete({ uploadId: @js($record->id), fileIndex: @js($fileIndex), name: @js($file["name"] ?? "archivo") })"
+                                                                        class="inline-flex items-center gap-[7px] text-red-600 focus:outline-none"
+                                                                        title="Eliminar este archivo del paquete"
                                                                     >
-                                                                        <path
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round"
-                                                                            stroke-width="1.8"
-                                                                            d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
-                                                                        />
-                                                                    </svg>
-                                                                    Eliminar
-                                                                </button>
+                                                                        <svg
+                                                                            class="h-4 w-4"
+                                                                            fill="none"
+                                                                            viewBox="0 0 24 24"
+                                                                            stroke="currentColor"
+                                                                        >
+                                                                            <path
+                                                                                stroke-linecap="round"
+                                                                                stroke-linejoin="round"
+                                                                                stroke-width="1.8"
+                                                                                d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                                                                            />
+                                                                        </svg>
+                                                                        Eliminar
+                                                                    </button>
+                                                                @endcan
                                                             </span>
                                                         </div>
                                                     @empty
@@ -2142,105 +2149,139 @@
                             );
                             const started = performance.now();
                             const initialBytes = upload.receivedBytes || 0;
-                            for (
-                                let index = 0;
-                                index < upload.totalChunks;
-                                index++
-                            ) {
-                                if (uploaded.has(index)) continue;
-                                const start = index * upload.chunkSize;
-                                const blob = item.file.slice(
-                                    start,
-                                    Math.min(
-                                        item.file.size,
-                                        start + upload.chunkSize,
-                                    ),
-                                );
-                                let sent = false;
-                                while (!sent) {
-                                    try {
-                                        if (!navigator.onLine) {
-                                            item.status = 'waiting';
-                                            item.message = 'Sin conexión';
-                                            await new Promise((resolve) =>
-                                                window.addEventListener(
-                                                    'online',
-                                                    resolve,
-                                                    { once: true },
-                                                ),
-                                            );
-                                            item.status = 'uploading';
-                                        }
-                                        upload = await this.request(
-                                            upload.chunkUrlTemplate.replace(
-                                                '__INDEX__',
-                                                index,
-                                            ),
-                                            {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type':
-                                                        'application/octet-stream',
-                                                },
-                                                body: blob,
-                                                signal: controller.signal,
-                                            },
-                                        );
-                                        sent = true;
-                                    } catch (error) {
-                                        if (
-                                            error.status &&
-                                            error.status < 500 &&
-                                            error.status !== 409
-                                        )
-                                            throw error;
-                                        item.status = 'waiting';
-                                        item.message = 'Reconectando';
-                                        await this.pause(2500);
-                                        upload = await this.request(
-                                            upload.statusUrl,
-                                            {
-                                                signal: controller.signal,
-                                            },
-                                        );
-                                        if (
-                                            (upload.uploadedChunks || [])
-                                                .map(Number)
-                                                .includes(index)
-                                        )
-                                            sent = true;
-                                    }
-                                }
-                                const elapsed = Math.max(
-                                    1,
-                                    (performance.now() - started) / 1000,
-                                );
-                                const transferred = Math.max(
-                                    0,
-                                    upload.receivedBytes - initialBytes,
-                                );
-                                const bytesPerSecond = transferred / elapsed;
-                                item.progress = Math.min(
-                                    99,
-                                    Math.round(
-                                        (upload.receivedBytes * 100) /
+                            const pendingChunks = Array.from(
+                                { length: upload.totalChunks },
+                                (_, index) => index,
+                            ).filter((index) => !uploaded.has(index));
+                            const statusUrl = upload.statusUrl;
+                            const completeUrl = upload.completeUrl;
+                            const chunkUrlTemplate = upload.chunkUrlTemplate;
+                            const totalChunks = upload.totalChunks;
+                            const chunkSize = upload.chunkSize;
+                            let nextChunk = 0;
+                            let completedChunks = uploaded.size;
+                            let receivedBytes = initialBytes;
+
+                            const sendNextChunk = async () => {
+                                while (nextChunk < pendingChunks.length) {
+                                    const index = pendingChunks[nextChunk++];
+                                    const start = index * chunkSize;
+                                    const blob = item.file.slice(
+                                        start,
+                                        Math.min(
                                             item.file.size,
-                                    ),
-                                );
-                                item.speed =
-                                    this.formatBytes(bytesPerSecond) + '/s';
-                                item.eta =
-                                    bytesPerSecond > 0
-                                        ? 'Restante: ' +
-                                          this.formatTime(
-                                              (item.file.size -
-                                                  upload.receivedBytes) /
-                                                  bytesPerSecond,
-                                          )
-                                        : 'Tiempo restante: —';
-                                item.message = `Fragmento ${index + 1} de ${upload.totalChunks}`;
-                            }
-                            upload = await this.request(upload.completeUrl, {
+                                            start + chunkSize,
+                                        ),
+                                    );
+                                    let sent = false;
+                                    while (!sent) {
+                                        try {
+                                            if (!navigator.onLine) {
+                                                item.status = 'waiting';
+                                                item.message = 'Sin conexión';
+                                                await new Promise((resolve) =>
+                                                    window.addEventListener(
+                                                        'online',
+                                                        resolve,
+                                                        { once: true },
+                                                    ),
+                                                );
+                                                item.status = 'uploading';
+                                            }
+                                            const result = await this.request(
+                                                chunkUrlTemplate.replace(
+                                                    '__INDEX__',
+                                                    index,
+                                                ),
+                                                {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type':
+                                                            'application/octet-stream',
+                                                    },
+                                                    body: blob,
+                                                    signal: controller.signal,
+                                                },
+                                            );
+                                            receivedBytes = Math.max(
+                                                receivedBytes,
+                                                result.receivedBytes || 0,
+                                            );
+                                            sent = true;
+                                        } catch (error) {
+                                            if (
+                                                error.status &&
+                                                error.status < 500 &&
+                                                error.status !== 409
+                                            )
+                                                throw error;
+                                            item.status = 'waiting';
+                                            item.message = 'Reconectando';
+                                            await this.pause(2500);
+                                            const status = await this.request(
+                                                statusUrl,
+                                                { signal: controller.signal },
+                                            );
+                                            receivedBytes = Math.max(
+                                                receivedBytes,
+                                                status.receivedBytes || 0,
+                                            );
+                                            if (
+                                                (status.uploadedChunks || [])
+                                                    .map(Number)
+                                                    .includes(index)
+                                            )
+                                                sent = true;
+                                        }
+                                    }
+
+                                    completedChunks++;
+                                    const elapsed = Math.max(
+                                        1,
+                                        (performance.now() - started) / 1000,
+                                    );
+                                    const transferred = Math.max(
+                                        0,
+                                        receivedBytes - initialBytes,
+                                    );
+                                    const bytesPerSecond = transferred / elapsed;
+                                    item.progress = Math.min(
+                                        99,
+                                        Math.round(
+                                            (receivedBytes * 100) /
+                                                item.file.size,
+                                        ),
+                                    );
+                                    item.speed =
+                                        this.formatBytes(bytesPerSecond) + '/s';
+                                    item.eta =
+                                        bytesPerSecond > 0
+                                            ? 'Restante: ' +
+                                              this.formatTime(
+                                                  (item.file.size -
+                                                      receivedBytes) /
+                                                      bytesPerSecond,
+                                              )
+                                            : 'Tiempo restante: —';
+                                    item.message = `Fragmento ${completedChunks} de ${totalChunks}`;
+                                }
+                            };
+
+                            const parallelChunks = Math.min(
+                                pendingChunks.length,
+                                Math.max(
+                                    1,
+                                    Number(config.parallelChunks || 3),
+                                ),
+                            );
+                            await Promise.all(
+                                Array.from(
+                                    { length: parallelChunks },
+                                    () => sendNextChunk(),
+                                ),
+                            );
+
+                            upload = await this.request(completeUrl, {
                                 method: 'POST',
                                 signal: controller.signal,
                             });

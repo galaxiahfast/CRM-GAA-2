@@ -20,7 +20,7 @@ class BackupUploadController extends Controller
 {
     public function example(): StreamedResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('access-system-backups');
 
         return response()->streamDownload(function (): void {
             $temporary = tempnam(sys_get_temp_dir(), 'backup-example-');
@@ -49,7 +49,7 @@ class BackupUploadController extends Controller
 
     public function initialize(Request $request): JsonResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
 
         $data = $request->validate([
             'site' => ['required', Rule::in(array_keys(config('backup-storage.sites', [])))],
@@ -72,6 +72,9 @@ class BackupUploadController extends Controller
         $replacement = filled($data['replace_upload_id'] ?? null)
             ? BackupUpload::query()->findOrFail($data['replace_upload_id'])
             : null;
+        if ($replacement) {
+            Gate::authorize('manage-system-backups');
+        }
         abort_if($replacement && $replacement->site !== $data['site'], 422, 'El respaldo a reemplazar pertenece a otra sede.');
         abort_if($replacement && $replacement->product !== $data['product'], 422, 'El respaldo a reemplazar pertenece a otro sistema.');
         abort_if($replacement && $replacement->status !== BackupUpload::STATUS_COMPLETED, 422, 'Solo se puede reemplazar un respaldo completado.');
@@ -129,7 +132,7 @@ class BackupUploadController extends Controller
 
     public function status(BackupUpload $upload): JsonResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
         $this->activateIfSlotAvailable($upload);
 
         return response()->json($this->payload($upload->fresh()));
@@ -137,7 +140,7 @@ class BackupUploadController extends Controller
 
     public function storeChunk(Request $request, BackupUpload $upload, int $index): JsonResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
         abort_unless($upload->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
         abort_if($index < 0 || $index >= $upload->total_chunks, 422, 'Índice de fragmento inválido.');
 
@@ -193,7 +196,7 @@ class BackupUploadController extends Controller
 
     public function complete(Request $request, BackupUpload $upload): JsonResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
         abort_unless($upload->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
 
         if ($upload->status === BackupUpload::STATUS_COMPLETED) {
@@ -228,7 +231,7 @@ class BackupUploadController extends Controller
 
     public function cancel(Request $request, BackupUpload $upload, BackupStoragePurger $purger): JsonResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
         abort_unless($upload->user_id === $request->user()->id || $request->user()->isAdmin(), 403);
         abort_unless($upload->isCancellable(), 409, 'La carga ya está siendo procesada y no se puede cancelar.');
 
@@ -239,7 +242,7 @@ class BackupUploadController extends Controller
 
     public function download(BackupUpload $upload): StreamedResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('access-system-backups');
         abort_unless($upload->status === BackupUpload::STATUS_COMPLETED && filled($upload->storage_path), 404);
 
         $disk = Storage::disk((string) config('backup-storage.disk', 'local'));
@@ -253,7 +256,7 @@ class BackupUploadController extends Controller
 
     public function downloadFile(BackupUpload $upload, int $index): StreamedResponse
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('access-system-backups');
         abort_unless($upload->status === BackupUpload::STATUS_COMPLETED, 404);
 
         $file = collect($upload->manifest ?? [])->get($index);

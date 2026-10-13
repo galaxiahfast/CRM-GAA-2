@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -106,8 +107,15 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-delivery-notes', fn (User $user): bool => $user->isAdmin());
         Gate::define('manage-backup-reports', fn (User $user): bool => $user->isAdmin());
+        $canAccessSystemBackups = function (User $user): bool {
+            $roleName = Str::lower(Str::ascii((string) ($user->role?->role ?? $user->role?->name ?? '')));
+
+            return $roleName !== '' && ! str_contains($roleName, 'becario');
+        };
+        Gate::define('access-system-backups', $canAccessSystemBackups);
+        Gate::define('upload-system-backups', $canAccessSystemBackups);
         Gate::define('manage-system-backups', function (User $user): bool {
-            $roleName = mb_strtolower((string) ($user->role?->role ?? $user->role?->name ?? ''));
+            $roleName = Str::lower(Str::ascii((string) ($user->role?->role ?? $user->role?->name ?? '')));
 
             return $user->isAdmin() || str_contains($roleName, 'contador');
         });

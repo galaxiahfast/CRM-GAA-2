@@ -35,12 +35,16 @@ class BackupStorageManagerTest extends TestCase
         ]);
     }
 
-    public function test_administrators_and_accountants_can_open_the_backup_manager(): void
+    public function test_every_role_except_interns_can_open_the_backup_manager(): void
     {
         $admin = $this->user('Administrador', 'admin-storage@datamid.test');
         $accountant = $this->user('Contador', 'contador-storage@datamid.test');
         $auxiliary = $this->user('Auxiliar', 'aux-storage@datamid.test');
+        $coordinator = $this->user('Coordinador', 'coordinator-storage@datamid.test');
+        $intern = $this->user('Becario', 'intern-storage@datamid.test');
+        $seniorIntern = $this->user('Becario Senior', 'senior-intern-storage@datamid.test');
         config()->set('backup-storage.sites.cancun', 'Cancún');
+        config()->set('backup-storage.parallel_chunks', 3);
 
         $this->actingAs($admin)->get(route('activity-backups.index'))
             ->assertOk()
@@ -60,9 +64,59 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee(route('session.keep-alive', [], false), false)
             ->assertSee('multiple', false)
             ->assertDontSee('Selecciona un cliente')
-            ->assertSee('data-backup-site', false);
+            ->assertSee('data-backup-site', false)
+            ->assertSee('parallelChunks: 3', false);
         $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
         $this->assertFalse(Gate::forUser($auxiliary)->allows('manage-system-backups'));
+        $this->assertTrue(Gate::forUser($auxiliary)->allows('access-system-backups'));
+        $this->assertTrue(Gate::forUser($auxiliary)->allows('upload-system-backups'));
+        $this->assertTrue(Gate::forUser($coordinator)->allows('upload-system-backups'));
+        $this->assertFalse(Gate::forUser($intern)->allows('access-system-backups'));
+        $this->assertFalse(Gate::forUser($intern)->allows('upload-system-backups'));
+        $this->assertFalse(Gate::forUser($seniorIntern)->allows('upload-system-backups'));
+
+        $this->flushSession()->actingAs($auxiliary)->get(route('activity-backups.index'))->assertOk();
+        $this->flushSession()->actingAs($coordinator)->get(route('activity-backups.index'))->assertOk();
+        $this->flushSession()->actingAs($intern)->get(route('activity-backups.index'))->assertForbidden();
+        $this->flushSession()->actingAs($seniorIntern)->get(route('activity-backups.index'))->assertForbidden();
+
+        $upload = [
+            'site' => 'merida',
+            'product' => 'contabilidad',
+            'file_name' => 'auxiliar.zip',
+            'mime_type' => 'application/zip',
+            'size' => 100,
+            'fingerprint' => 'auxiliar:upload',
+        ];
+        $this->flushSession()->actingAs($auxiliary)
+            ->postJson(route('activity-backups.uploads.initialize'), $upload)
+            ->assertOk();
+        $this->flushSession()->actingAs($intern)
+            ->postJson(route('activity-backups.uploads.initialize'), array_merge($upload, ['fingerprint' => 'intern:upload']))
+            ->assertForbidden();
+
+        $existing = BackupUpload::query()->create([
+            'upload_key' => hash('sha256', 'managed-backup'),
+            'site' => 'merida',
+            'product' => 'contabilidad',
+            'user_id' => $admin->id,
+            'original_name' => 'administrado.zip',
+            'extension' => 'zip',
+            'size' => 100,
+            'chunk_size' => 100,
+            'total_chunks' => 1,
+            'uploaded_chunks' => [0],
+            'received_bytes' => 100,
+            'status' => BackupUpload::STATUS_COMPLETED,
+            'last_activity_at' => now(),
+            'completed_at' => now(),
+        ]);
+        $this->flushSession()->actingAs($auxiliary)
+            ->postJson(route('activity-backups.uploads.initialize'), array_merge($upload, [
+                'fingerprint' => 'auxiliary:replacement',
+                'replace_upload_id' => $existing->id,
+            ]))
+            ->assertForbidden();
     }
 
     public function test_backup_products_are_restricted_by_site(): void
@@ -177,20 +231,20 @@ class BackupStorageManagerTest extends TestCase
             ->assertDownload('empresa_2026.zip');
     }
 
-    public function test_upload_is_assembled_automatically_without_a_queue_worker(): void
+    public function test_non_intern_upload_is_assembled_automatically_without_a_queue_worker(): void
     {
         Storage::fake('local');
         config()->set('backup-storage.disk', 'local');
         config()->set('backup-storage.queue_connection', 'sync');
         config()->set('backup-storage.chunk_size', 1024 * 1024);
 
-        $admin = $this->user('Administrador', 'admin-automatic-upload@datamid.test');
+        $auxiliary = $this->user('Auxiliar', 'auxiliary-automatic-upload@datamid.test');
         $payload = $this->zip([
             'Cliente Automático/Index/empresa.index' => 'indice',
             'Cliente Automático/Bak/empresa.bak' => 'respaldo',
         ]);
 
-        $response = $this->actingAs($admin)->postJson(route('activity-backups.uploads.initialize'), [
+        $response = $this->actingAs($auxiliary)->postJson(route('activity-backups.uploads.initialize'), [
             'site' => 'merida',
             'file_name' => 'automatico.zip',
             'mime_type' => 'application/zip',

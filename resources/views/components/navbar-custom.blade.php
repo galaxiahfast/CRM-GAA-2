@@ -609,7 +609,7 @@
                     </li>
                 @endif
 
-                @can('manage-system-backups')
+                @can('access-system-backups')
                     <li class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <a href="{{ route('activity-backups.index') }}"
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"

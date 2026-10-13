@@ -26,7 +26,7 @@ class BackupStorageManager extends Component
 
     public function mount(): void
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('access-system-backups');
         $sites = array_keys(config('backup-storage.sites', []));
         abort_if($sites === [], 500, 'No hay sedes configuradas para respaldos.');
 
@@ -109,7 +109,7 @@ class BackupStorageManager extends Component
 
     public function cancelActiveUpload(string $uploadId): void
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('upload-system-backups');
         $upload = BackupUpload::query()->findOrFail($uploadId);
         $user = auth()->user();
 
@@ -122,7 +122,7 @@ class BackupStorageManager extends Component
 
     public function render()
     {
-        Gate::authorize('manage-system-backups');
+        Gate::authorize('access-system-backups');
 
         $site = $this->selectedSite;
         $product = $this->selectedProduct;
@@ -198,6 +198,7 @@ class BackupStorageManager extends Component
             'uploadEndpoint' => route('activity-backups.uploads.initialize', [], false),
             'csrfRefreshEndpoint' => route('session.keep-alive', [], false),
             'maxConcurrentUploads' => max(1, (int) config('backup-storage.max_active_uploads', 2)),
+            'parallelChunks' => max(1, min(4, (int) config('backup-storage.parallel_chunks', 3))),
         ])->layout('layouts.app');
     }
 }

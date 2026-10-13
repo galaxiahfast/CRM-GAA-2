@@ -2,7 +2,10 @@
 
 return [
     'disk' => env('BACKUP_STORAGE_DISK', 'local'),
-    'chunk_size' => (int) env('BACKUP_CHUNK_SIZE', 16 * 1024 * 1024),
+    // Keep each request below the usual 40 MB PHP post limit while reducing
+    // round trips for large backup archives.
+    'chunk_size' => (int) env('BACKUP_CHUNK_SIZE', 32 * 1024 * 1024),
+    'parallel_chunks' => (int) env('BACKUP_PARALLEL_CHUNKS', 3),
     'max_file_size' => (int) env('BACKUP_MAX_FILE_SIZE', 500 * 1024 * 1024 * 1024),
     'max_extracted_size' => (int) env('BACKUP_MAX_EXTRACTED_SIZE', 500 * 1024 * 1024 * 1024),
     'max_active_uploads' => (int) env('BACKUP_MAX_ACTIVE_UPLOADS', 2),
