@@ -223,14 +223,21 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[75px] shrink-0 items-center gap-[10px] px-[15px]">
+        <div class="flex h-[85px] shrink-0 items-start gap-[10px] px-[15px] pt-[30px]">
             <img src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
             <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
                 <p class="mt-[4px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
             </div>
-            <button @click="collapsed = !collapsed" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-700 transition hover:border-zinc-400 hover:text-black focus:outline-none focus:ring-0" aria-label="Comprimir o Expandir Menú" title="Comprimir o Expandir Menú">
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" /></svg>
+            <button @click="collapsed = !collapsed" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
+                <svg x-show="!collapsed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path stroke-linecap="round" d="M9 3v18m7-12-3 3 3 3" />
+                </svg>
+                <svg x-show="collapsed" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path stroke-linecap="round" d="M9 3v18m5-12 3 3-3 3" />
+                </svg>
             </button>
         </div>
 
