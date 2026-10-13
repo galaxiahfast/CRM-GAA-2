@@ -223,7 +223,7 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[90px] shrink-0 items-center gap-[10px] px-[15px]">
+        <div class="flex h-[75px] shrink-0 items-center gap-[10px] px-[15px]">
             <img src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
             <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
@@ -297,7 +297,7 @@
 
         </div>
 
-        <div x-show="!collapsed" class="shrink-0 px-[15px]">
+        <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
             <p class="text-[15px] font-medium leading-none text-black">General</p>
         </div>
 
