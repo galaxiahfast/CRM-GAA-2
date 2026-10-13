@@ -223,20 +223,16 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[85px] shrink-0 items-start gap-[10px] px-[15px] pt-[30px]">
-            <img src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
+        <div class="flex h-[85px] shrink-0 items-start gap-[10px] pt-[30px]" :class="collapsed ? 'justify-center px-0' : 'px-[15px]'">
+            <img x-show="!collapsed" x-cloak src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
             <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
                 <p class="mt-[4px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
             </div>
             <button @click="collapsed = !collapsed" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
-                <svg x-show="!collapsed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path stroke-linecap="round" d="M9 3v18m7-12-3 3 3 3" />
-                </svg>
-                <svg x-show="collapsed" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path stroke-linecap="round" d="M9 3v18m5-12 3 3-3 3" />
+                    <path stroke-linecap="round" d="M9 3v18" />
                 </svg>
             </button>
         </div>
@@ -673,7 +669,7 @@
             </ul>
         </div>
 
-        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 p-[15px]">
+        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 px-[15px] py-[30px]">
             <div class="absolute left-[15px] right-[15px] top-0 border-t border-zinc-200" aria-hidden="true"></div>
             <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+15px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="group flex items-center gap-[15px] rounded-xl p-[15px] text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }}">
