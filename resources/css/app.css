@@ -189,6 +189,7 @@ div.dataTables_filter {
 /* El listado del buscador conserva el mismo trazo fino del menú lateral. */
 .sidebar-search-results-scrollbar {
     scrollbar-width: none;
+    overscroll-behavior-y: contain;
 }
 
 .sidebar-search-results-scrollbar::-webkit-scrollbar {
@@ -198,14 +199,20 @@ div.dataTables_filter {
 
 .sidebar-search-overlay-scrollbar {
     position: absolute;
-    right: 0;
+    right: -15px;
     top: 0;
     z-index: 1;
     width: 3px;
     min-height: 32px;
     border-radius: 9999px;
     background: #1a3a6b;
+    opacity: 0;
     pointer-events: none;
+    transition: opacity 140ms ease;
+}
+
+.sidebar-search-scroll-region:hover .sidebar-search-overlay-scrollbar {
+    opacity: 1;
 }
 
 /* Tema oscuro, limitado a los módulos de Actividades y Soporte. */
