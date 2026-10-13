@@ -445,15 +445,13 @@
                             <!-- Línea vertical siempre visible -->
                             <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
-                                <!-- Sub-elemento: Supervisión de horas -->
+                                <!-- Sub-elemento: Reloj Checador -->
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('time.admin.dashboard') }}" 
+                                    <a href="{{ route('time.admin.attendance') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de Horas</span>
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.attendance') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
@@ -467,13 +465,15 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
                                     </a>
                                 </li>
-                                <!-- Sub-elemento: Reloj Checador -->
+                                <!-- Sub-elemento: Supervisión de horas -->
                                 <li class="pt-[15px] pl-[30px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('time.admin.attendance') }}"
+                                    <a href="{{ route('time.admin.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                        <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.attendance') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.admin.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de Horas</span>
                                     </a>
                                 </li>
                             </ul>
@@ -598,7 +598,7 @@
                             </svg>
                         </button>
 
-                        <div x-show="openDocuments" x-transition class="relative" style="display: none;">
+                        <div x-show="openDocuments" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
                             <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="w-full">
                                 @can('manage-delivery-notes')
