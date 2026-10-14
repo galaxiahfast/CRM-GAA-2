@@ -16,9 +16,9 @@
 
 <div class="backup-storage-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
-        viewScale: Number(localStorage.getItem('backup-storage-view-scale') || 100),
+        viewScale: Number(localStorage.getItem('backup-storage-view-scale-v2') || 75),
         isFullscreen: false,
-        saveScale() { localStorage.setItem('backup-storage-view-scale', String(this.viewScale)) },
+        saveScale() { localStorage.setItem('backup-storage-view-scale-v2', String(this.viewScale)) },
         zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale() },
         zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.saveScale() },
         async toggleFullscreen() { if (document.fullscreenElement) await document.exitFullscreen(); else await $root.requestFullscreen() }
@@ -48,7 +48,7 @@
         <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
         <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Gestión de Respaldos">
         <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
-        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
+        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">75%</span>
         <span class="h-5 w-px bg-zinc-200"></span>
         <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
@@ -258,7 +258,7 @@
                                         <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="border-b border-zinc-200 last:border-b-0">
                                             <tr @click="open = !open" class="cursor-pointer transition hover:bg-zinc-50/70" :class="open ? 'bg-zinc-50/70' : ''">
                                                 <td class="px-[20px] py-[16px]" @click.stop>
-                                                    <input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border-zinc-300 text-black focus:ring-0 disabled:cursor-not-allowed disabled:opacity-25">
+                                                    <input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100">
                                                 </td>
                                                 <td class="max-w-[420px] px-[5px] py-[16px]"><p class="truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</p><p class="mt-[3px] truncate text-[11px] text-zinc-400" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</p></td>
                                                 <td class="px-[12px] py-[16px] tabular-nums text-zinc-500">{{ $record['time'] }}</td>
