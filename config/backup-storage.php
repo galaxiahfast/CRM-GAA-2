@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'server' => [
+        // Catálogo de solo lectura de CONTPAQi. La aplicación nunca crea,
+        // mueve, renombra ni elimina archivos dentro de esta ubicación.
+        'root' => env('CONTPAQ_BACKUP_ROOT', '\\\\SRVCONTPAQ\\Compac2'),
+        'companies_directory' => env('CONTPAQ_COMPANIES_DIRECTORY', 'Empresas'),
+        'archives_directory' => env('CONTPAQ_ARCHIVES_DIRECTORY', 'Index/respaldos'),
+        'cache_seconds' => (int) env('CONTPAQ_BACKUP_CACHE_SECONDS', 300),
+    ],
+    'export' => [
+        // Carpeta raíz de la memoria externa. Se deja vacía hasta confirmar
+        // la unidad exacta (por ejemplo: E:\\). Nunca se escribe en el servidor.
+        'destination_root' => env('CONTPAQ_EXPORT_ROOT', ''),
+        'directory' => env('CONTPAQ_EXPORT_DIRECTORY', 'Respaldos CONTPAQi'),
+        'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 8 * 1024 * 1024),
+        'queue_connection' => env('CONTPAQ_EXPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
+    ],
     'disk' => env('BACKUP_STORAGE_DISK', 'local'),
     // Keep each request below the usual 40 MB PHP post limit while reducing
     // round trips for large backup archives.

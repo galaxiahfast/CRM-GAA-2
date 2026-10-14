@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BackupUploadController;
+use App\Http\Controllers\ContpaqiBackupDownloadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
@@ -245,6 +246,10 @@ Route::middleware([
         ->name('activity-backups.')
         ->group(function () {
             Route::get('/', BackupStorageManager::class)->name('index');
+            Route::get('/servidor/{kind}/{token}', ContpaqiBackupDownloadController::class)
+                ->whereIn('kind', ['database', 'archive'])
+                ->where('token', '[A-Za-z0-9_-]+')
+                ->name('server.download');
             Route::get('/ejemplo', [BackupUploadController::class, 'example'])->name('example');
             Route::post('/uploads', [BackupUploadController::class, 'initialize'])->name('uploads.initialize');
             Route::get('/uploads/{upload}/status', [BackupUploadController::class, 'status'])->name('uploads.status');

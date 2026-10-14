@@ -5,6 +5,40 @@ import './activity-sortable';
 import './organization-sortable';
 import './clock-particle-network';
 
+document.addEventListener('alpine:init', () => {
+    window.Alpine.data('backupOverlayScroll', () => ({
+        visible: false,
+        height: 32,
+        top: 0,
+        observer: null,
+        init() {
+            this.$nextTick(() => {
+                this.update();
+                this.observer = new ResizeObserver(() => this.update());
+                this.observer.observe(this.$refs.scroller);
+            });
+        },
+        destroy() {
+            this.observer?.disconnect();
+        },
+        update() {
+            const scroller = this.$refs.scroller;
+
+            if (!scroller || scroller.clientHeight <= 0 || scroller.scrollHeight <= scroller.clientHeight) {
+                this.visible = false;
+                return;
+            }
+
+            const viewport = scroller.clientHeight;
+            this.height = Math.max(32, viewport * viewport / scroller.scrollHeight);
+            const travel = Math.max(0, viewport - this.height);
+            const range = Math.max(1, scroller.scrollHeight - viewport);
+            this.top = (scroller.scrollTop / range) * travel;
+            this.visible = true;
+        },
+    }));
+});
+
 // Este plugin debe registrarse después de que Livewire 3 expone window.Livewire.
 // Cargarlo antes produce un error JavaScript y rompe las peticiones wire:click.
 const registerLivewireSortable = () => import('livewire-sortable');

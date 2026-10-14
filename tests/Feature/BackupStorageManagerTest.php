@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\Backups\BackupArchiveExtractor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
@@ -18,6 +19,29 @@ use Tests\TestCase;
 class BackupStorageManagerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private string $catalogRoot;
+
+    private string $exportRoot;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->catalogRoot = storage_path('framework/testing/backup-manager-'.uniqid());
+        $this->exportRoot = storage_path('framework/testing/backup-manager-export-'.uniqid());
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEmpresa_Prueba');
+        File::ensureDirectoryExists($this->catalogRoot.'/Index/respaldos');
+        File::ensureDirectoryExists($this->exportRoot);
+        config()->set('backup-storage.server.root', $this->catalogRoot);
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory($this->catalogRoot);
+        File::deleteDirectory($this->exportRoot);
+        parent::tearDown();
+    }
 
     private function user(string $roleName, string $email): User
     {
@@ -48,24 +72,13 @@ class BackupStorageManagerTest extends TestCase
 
         $this->actingAs($admin)->get(route('activity-backups.index'))
             ->assertOk()
-            ->assertSee('Respaldos')
-            ->assertSee('Mérida')
-            ->assertSee('Tulum')
-            ->assertSee('Sistema del respaldo')
-            ->assertSee('Contabilidad')
-            ->assertSee('Nóminas')
-            ->assertSee('Cancún')
-            ->assertSeeInOrder(['Subir respaldos', 'Sede del respaldo', 'Cargar respaldos', 'Arrastra tus ZIP aquí'])
-            ->assertDontSee('Destino')
-            ->assertSee('Historial de registros')
-            ->assertSee('Arrastra tus ZIP aquí')
-            ->assertDontSee('Descargar ZIP de prueba')
-            ->assertSee('Cancelar subida')
-            ->assertSee(route('session.keep-alive', [], false), false)
-            ->assertSee('multiple', false)
-            ->assertDontSee('Selecciona un cliente')
-            ->assertSee('data-backup-site', false)
-            ->assertSee('parallelChunks: 3', false);
+            ->assertSee('Gestión de Respaldos')
+            ->assertSee('Consulta de solo lectura')
+            ->assertSee('Respaldos por día')
+            ->assertSee('Estado de empresas')
+            ->assertDontSee('Subir respaldos')
+            ->assertDontSee('Eliminar respaldo')
+            ->assertDontSee('Cancelar subida');
         $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
         $this->assertFalse(Gate::forUser($auxiliary)->allows('manage-system-backups'));
         $this->assertTrue(Gate::forUser($auxiliary)->allows('access-system-backups'));
@@ -119,6 +132,30 @@ class BackupStorageManagerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_interface_keeps_server_and_memory_states_separate_and_can_verify_synchronization(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEmpresa_Incompleta');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Incompleta/ctEmpresa_Incompleta-{$date}-1000.bak", 'database-only');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-sync@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSee('Estado servidor')
+            ->assertSee('Estado memoria')
+            ->assertSee('Completos')
+            ->assertSee('Incompletos')
+            ->call('verifySynchronization')
+            ->assertSet('syncResult.server_complete', 1)
+            ->assertSet('syncResult.server_incomplete', 1)
+            ->assertSet('syncResult.synced', 0)
+            ->assertSet('syncResult.pending', 1)
+            ->assertSee('Resultado de sincronización');
+    }
+
     public function test_backup_products_are_restricted_by_site(): void
     {
         Storage::fake('local');
@@ -145,12 +182,6 @@ class BackupStorageManagerTest extends TestCase
         ])->assertUnprocessable()
             ->assertJsonPath('message', 'El sistema seleccionado no está disponible en esta sede.');
 
-        Livewire::actingAs($admin)
-            ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->call('selectProduct', 'nominas')
-            ->assertSet('selectedProduct', 'nominas')
-            ->call('selectSite', 'tulum')
-            ->assertSet('selectedProduct', 'contabilidad');
     }
 
     public function test_chunked_upload_can_resume_queue_assemble_and_download(): void
@@ -217,18 +248,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertOk()
             ->assertDownload('empresa_2026.bak');
 
-        $deletedPath = $upload->manifest[0]['path'];
-        Livewire::actingAs($admin)
-            ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->call('deleteBackupFile', $upload->id, 0);
-
         $upload->refresh();
-        $this->assertCount(1, $upload->manifest);
-        $this->assertSame('bak', $upload->manifest[0]['category']);
-        Storage::disk('local')->assertMissing($deletedPath);
-        $this->get(route('activity-backups.download', $upload))
-            ->assertOk()
-            ->assertDownload('empresa_2026.zip');
+        $this->assertCount(2, $upload->manifest);
     }
 
     public function test_non_intern_upload_is_assembled_automatically_without_a_queue_worker(): void
@@ -391,7 +412,7 @@ class BackupStorageManagerTest extends TestCase
         Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");
     }
 
-    public function test_a_queued_upload_can_be_cancelled_after_reloading_the_manager(): void
+    public function test_read_only_manager_does_not_expose_queued_upload_controls(): void
     {
         Storage::fake('local');
         config()->set('backup-storage.disk', 'local');
@@ -416,13 +437,11 @@ class BackupStorageManagerTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->assertSee('respaldo-en-cola.zip')
-            ->assertSee('Cancelar carga')
-            ->call('cancelActiveUpload', $upload->id)
-            ->assertDontSee('respaldo-en-cola.zip');
+            ->assertDontSee('respaldo-en-cola.zip')
+            ->assertDontSee('Cancelar carga');
 
-        $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
-        Storage::disk('local')->assertMissing("backup-chunks/{$upload->id}/0.part");
+        $this->assertDatabaseHas('backup_uploads', ['id' => $upload->id]);
+        Storage::disk('local')->assertExists("backup-chunks/{$upload->id}/0.part");
     }
 
     public function test_only_zip_archives_can_be_initialized(): void
@@ -439,7 +458,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertJsonPath('message', 'Selecciona un archivo ZIP válido.');
     }
 
-    public function test_history_metadata_can_be_edited_and_the_backup_can_be_purged(): void
+    public function test_read_only_manager_does_not_expose_metadata_or_purge_actions(): void
     {
         Storage::fake('local');
         config()->set('backup-storage.disk', 'local');
@@ -469,21 +488,13 @@ class BackupStorageManagerTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->call('updateMetadata', $upload->id, 'Cliente asignado', 'Observación editada');
+            ->assertDontSee('historial.zip')
+            ->assertDontSee('Editar')
+            ->assertDontSee('Eliminar');
 
-        $this->assertDatabaseHas('backup_uploads', [
-            'id' => $upload->id,
-            'assigned_customer' => 'Cliente asignado',
-            'notes' => 'Observación editada',
-        ]);
-
-        Livewire::actingAs($admin)
-            ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->call('deleteBackup', $upload->id);
-
-        $this->assertDatabaseMissing('backup_uploads', ['id' => $upload->id]);
-        Storage::disk('local')->assertMissing('backup-archives/merida/historial.zip');
-        Storage::disk('local')->assertMissing('backups/merida/cliente-historial/Bak/historial.bak');
+        $this->assertDatabaseHas('backup_uploads', ['id' => $upload->id]);
+        Storage::disk('local')->assertExists('backup-archives/merida/historial.zip');
+        Storage::disk('local')->assertExists('backups/merida/cliente-historial/Bak/historial.bak');
     }
 
     public function test_replacement_upload_marks_the_previous_record_as_superseded(): void

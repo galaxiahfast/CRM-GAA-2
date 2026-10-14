@@ -39,7 +39,9 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Las copias a memoria externa pueden durar varios minutos. El
+            // trabajo no debe liberarse y ejecutarse dos veces mientras sigue activo.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 7500),
             'after_commit' => false,
         ],
 

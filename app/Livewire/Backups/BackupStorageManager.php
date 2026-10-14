@@ -2,203 +2,262 @@
 
 namespace App\Livewire\Backups;
 
-use App\Models\BackupUpload;
-use App\Services\Backups\BackupArchiveEditor;
-use App\Services\Backups\BackupStoragePurger;
+use App\Jobs\CopyContpaqiBackups;
+use App\Services\Backups\ContpaqiBackupCatalog;
+use App\Services\Backups\ContpaqiBackupExport;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use RuntimeException;
+use Throwable;
 
 class BackupStorageManager extends Component
 {
-    #[Url(as: 'tab')]
-    public string $activeTab = 'backups';
+    #[Url(as: 'vista')]
+    public string $activeView = 'backups';
 
-    #[Url(as: 'site')]
-    public string $selectedSite = 'merida';
+    #[Url(as: 'fecha')]
+    public string $selectedDate = '';
 
-    #[Url(as: 'product')]
-    public string $selectedProduct = 'contabilidad';
+    #[Url(as: 'estado')]
+    public string $status = 'all';
 
     #[Url(as: 'q')]
     public string $search = '';
 
+    public array $selectedRecords = [];
+
+    public ?string $currentExportId = null;
+
+    public ?array $exportStatus = null;
+
+    public ?string $exportMessage = null;
+
+    public ?array $syncResult = null;
+
     public function mount(): void
     {
         Gate::authorize('access-system-backups');
-        $sites = array_keys(config('backup-storage.sites', []));
-        abort_if($sites === [], 500, 'No hay sedes configuradas para respaldos.');
 
-        // Mantiene compatibles los enlaces anteriores que usaban ?tab=merida o ?tab=tulum.
-        if (in_array($this->activeTab, $sites, true)) {
-            $this->selectedSite = $this->activeTab;
-            $this->activeTab = 'backups';
+        if (! in_array($this->activeView, ['backups', 'companies'], true)) {
+            $this->activeView = 'backups';
         }
-        if (! in_array($this->activeTab, ['backups', 'history'], true)) {
-            $this->activeTab = 'backups';
+
+        if (! in_array($this->status, ['all', 'complete', 'partial', 'available', 'backed_up'], true)) {
+            $this->status = 'all';
         }
-        if (! in_array($this->selectedSite, $sites, true)) {
-            $this->selectedSite = $sites[0];
-        }
-        $products = config('backup-storage.products.'.$this->selectedSite, []);
-        abort_if($products === [], 500, 'La sede no tiene sistemas configurados para respaldos.');
-        if (! array_key_exists($this->selectedProduct, $products)) {
-            $this->selectedProduct = array_key_first($products);
+
+        if ($this->selectedDate === '') {
+            $this->selectedDate = now()->toDateString();
         }
     }
 
-    public function selectTab(string $tab): void
+    public function selectView(string $view): void
     {
-        abort_unless(in_array($tab, ['backups', 'history'], true), 404);
-        $this->activeTab = $tab;
+        abort_unless(in_array($view, ['backups', 'companies'], true), 404);
+        $this->activeView = $view;
     }
 
-    public function selectSite(string $site): void
+    public function selectDate(string $date): void
     {
-        abort_unless(array_key_exists($site, config('backup-storage.sites', [])), 404);
-        $products = config('backup-storage.products.'.$site, []);
-        abort_if($products === [], 500, 'La sede no tiene sistemas configurados para respaldos.');
-        $this->selectedSite = $site;
-        $this->selectedProduct = array_key_first($products);
-        $this->activeTab = 'backups';
+        abort_unless((bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $date), 422);
+        $this->selectedDate = $date;
+        $this->activeView = 'backups';
+        $this->selectedRecords = [];
+        $this->exportMessage = null;
+        $this->syncResult = null;
     }
 
-    public function selectProduct(string $product): void
+    public function refreshCatalog(ContpaqiBackupCatalog $catalog): void
     {
-        abort_unless(array_key_exists($product, config('backup-storage.products.'.$this->selectedSite, [])), 404);
-        $this->selectedProduct = $product;
-        $this->activeTab = 'backups';
+        $catalog->forget();
+        $this->dispatch('backup-catalog-refreshed');
     }
 
-    public function updateMetadata(string $uploadId, ?string $assignedCustomer, ?string $notes): void
+    public function selectAllComplete(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
-        Gate::authorize('manage-system-backups');
-        $data = Validator::make([
-            'assigned_customer' => $assignedCustomer,
-            'notes' => $notes,
-        ], [
-            'assigned_customer' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ])->validate();
-
-        BackupUpload::query()->findOrFail($uploadId)->update([
-            'assigned_customer' => filled($data['assigned_customer'] ?? null) ? trim($data['assigned_customer']) : null,
-            'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
-        ]);
-
-        $this->dispatch('backup-metadata-saved');
+        $records = $catalog->dashboard($this->selectedDate)['records'];
+        $availability = $export->recordAvailability($this->selectedDate, $records);
+        $this->selectedRecords = collect($records)
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
+            ->pluck('id')
+            ->values()
+            ->all();
     }
 
-    public function deleteBackup(string $uploadId): void
+    public function clearSelection(): void
     {
-        Gate::authorize('manage-system-backups');
-        app(BackupStoragePurger::class)->purge(BackupUpload::query()->findOrFail($uploadId));
-        $this->dispatch('backup-record-deleted');
+        $this->selectedRecords = [];
     }
 
-    public function deleteBackupFile(string $uploadId, int $fileIndex): void
-    {
-        Gate::authorize('manage-system-backups');
-        app(BackupArchiveEditor::class)->deleteFile(
-            BackupUpload::query()->findOrFail($uploadId),
-            $fileIndex,
-        );
-        $this->dispatch('backup-file-deleted', uploadId: $uploadId, fileIndex: $fileIndex);
-    }
-
-    public function cancelActiveUpload(string $uploadId): void
+    public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         Gate::authorize('upload-system-backups');
-        $upload = BackupUpload::query()->findOrFail($uploadId);
-        $user = auth()->user();
+        $this->exportMessage = null;
 
-        abort_unless($upload->user_id === $user->id || $user->isAdmin(), 403);
-        abort_unless($upload->isCancellable(), 409, 'La carga ya está siendo procesada y no se puede cancelar.');
-
-        app(BackupStoragePurger::class)->purge($upload);
-        $this->dispatch('backup-server-upload-cancelled', uploadId: $uploadId);
+        try {
+            if ($this->currentExportId !== null) {
+                $current = $export->find($this->currentExportId);
+                if (in_array($current['status'] ?? null, ['queued', 'copying'], true)) {
+                    throw new RuntimeException('Espera a que termine la copia actual antes de iniciar otra.');
+                }
+            }
+            $state = $export->create($this->selectedDate, $this->selectedRecords, (int) auth()->id(), $catalog);
+            $this->currentExportId = $state['id'];
+            $this->exportStatus = $state;
+            CopyContpaqiBackups::dispatch($state['id']);
+            $this->refreshExportStatus($export);
+            $this->selectedRecords = [];
+        } catch (RuntimeException $exception) {
+            $this->exportMessage = $exception->getMessage();
+        }
     }
 
-    public function render()
+    public function refreshExportStatus(ContpaqiBackupExport $export): void
+    {
+        if ($this->currentExportId === null) {
+            return;
+        }
+
+        $state = $export->find($this->currentExportId);
+        if ($state !== null && (int) ($state['user_id'] ?? 0) !== (int) auth()->id() && ! auth()->user()?->isAdmin()) {
+            abort(403);
+        }
+
+        $this->exportStatus = $state;
+    }
+
+    public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         Gate::authorize('access-system-backups');
 
-        $site = $this->selectedSite;
-        $product = $this->selectedProduct;
-        $completed = BackupUpload::query()
-            ->where('site', $site)
-            ->where('product', $product)
-            ->where('status', BackupUpload::STATUS_COMPLETED)
-            ->whereNull('superseded_at')
-            ->latest('completed_at')
-            ->get();
+        try {
+            if ($this->selectedDate === now()->toDateString()) {
+                $catalog->refreshToday();
+            }
 
-        $term = mb_strtolower(trim($this->search));
-        $backupTree = $completed
-            ->flatMap(function (BackupUpload $upload): array {
-                return collect($upload->manifest ?? [])->map(function (array $file, int $index) use ($upload): array {
-                    return $file + [
-                        'upload_id' => $upload->id,
-                        'file_index' => $index,
-                        'completed_at' => $upload->completed_at,
-                        'download_url' => route('activity-backups.files.download', [$upload, $index], false),
-                    ];
-                })->all();
-            })
-            ->when($term !== '', fn ($files) => $files->filter(fn (array $file) => str_contains(mb_strtolower(
-                ($file['customer'] ?? '').' '.($file['name'] ?? '').' '.($file['category'] ?? '')
-            ), $term)))
-            ->groupBy('customer')
-            ->sortKeys(SORT_NATURAL | SORT_FLAG_CASE)
-            ->map(fn ($files) => $files->groupBy('category'));
+            $data = $catalog->dashboard($this->selectedDate);
+            $availability = $export->recordAvailability($this->selectedDate, $data['records']);
+            $latestComplete = collect($data['records'])
+                ->where('complete', true)
+                ->groupBy(fn (array $record): string => (string) ($record['company_key'] ?: $record['company']))
+                ->map(fn ($records): array => $records->sortByDesc('occurred_at')->first());
+            $latestStates = $latestComplete->map(fn (array $record): string => $availability[$record['id']] ?? 'destination_missing');
 
-        $history = BackupUpload::query()
-            ->with('user:id,name,last_name')
-            ->latest()
-            ->limit(300)
-            ->get()
-            ->when($term !== '', fn ($records) => $records->filter(function (BackupUpload $upload) use ($term): bool {
-                $manifestText = collect($upload->manifest ?? [])->pluck('customer')->implode(' ');
-                $text = $upload->original_name.' '.$upload->site.' '.$upload->product.' '.$upload->user?->name.' '.$upload->user?->last_name.' '.$manifestText;
+            $this->syncResult = [
+                'checked_at' => now()->toIso8601String(),
+                'server_complete' => $latestComplete->count(),
+                'server_incomplete' => collect($data['records'])->where('complete', false)->count(),
+                'synced' => $latestStates->filter(fn (string $state): bool => $state === 'backed_up')->count(),
+                'pending' => $latestStates->filter(fn (string $state): bool => in_array($state, ['available', 'destination_missing'], true))->count(),
+                'outdated' => $latestStates->filter(fn (string $state): bool => $state === 'outdated')->count(),
+                'copying' => $latestStates->filter(fn (string $state): bool => $state === 'copying')->count(),
+                'destination_connected' => $export->destination()['connected'],
+                'error' => null,
+            ];
+        } catch (RuntimeException $exception) {
+            $this->syncResult = [
+                'checked_at' => now()->toIso8601String(),
+                'error' => $exception->getMessage(),
+            ];
+        }
+    }
 
-                return str_contains(mb_strtolower($text), $term);
-            }))
-            ->take(150);
+    public function render(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export)
+    {
+        Gate::authorize('access-system-backups');
 
-        $activeUploads = BackupUpload::query()
-            ->where('site', $site)
-            ->where('product', $product)
-            ->whereIn('status', [
-                BackupUpload::STATUS_WAITING,
-                BackupUpload::STATUS_UPLOADING,
-                BackupUpload::STATUS_QUEUED,
-                BackupUpload::STATUS_PROCESSING,
-            ])
-            ->latest('created_at')
-            ->limit(25)
-            ->get();
+        try {
+            $data = $catalog->dashboard($this->selectedDate);
+            $error = null;
+        } catch (Throwable $exception) {
+            $data = [
+                'connected' => false,
+                'root' => config('backup-storage.server.root'),
+                'scanned_at' => null,
+                'scan_seconds' => null,
+                'companies' => [],
+                'records' => [],
+                'today_records' => [],
+                'dates' => [],
+                'last_by_company' => [],
+            ];
+            $error = $exception instanceof RuntimeException
+                ? $exception->getMessage()
+                : 'La conexión con el servidor se interrumpió durante la lectura.';
+        }
 
-        $statusCounts = BackupUpload::query()
-            ->where('site', $site)
-            ->where('product', $product)
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $today = now()->toDateString();
+        $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records']);
+        $term = Str::lower(Str::ascii(trim($this->search)));
+        $recordsForDate = collect($data['records'])
+            ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
+            ->when($this->status === 'available', fn ($records) => $records->filter(
+                fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated'], true)
+            ))
+            ->when($this->status === 'backed_up', fn ($records) => $records->filter(
+                fn (array $record): bool => ($recordAvailability[$record['id']] ?? null) === 'backed_up'
+            ))
+            ->when($this->status === 'partial', fn ($records) => $records->where('complete', false))
+            ->when($term !== '', fn ($records) => $records->filter(fn (array $record): bool => str_contains(
+                Str::lower(Str::ascii($record['company'].' '.$record['stem'].' '.($record['company_folder'] ?? ''))),
+                $term,
+            )))
+            ->values();
+
+        $todayRecords = collect($data['today_records']);
+        $completeTodayByCompany = $todayRecords
+            ->where('complete', true)
+            ->whereNotNull('company_key')
+            ->groupBy('company_key');
+        $partialTodayByCompany = $todayRecords
+            ->where('complete', false)
+            ->whereNotNull('company_key')
+            ->groupBy('company_key');
+
+        $companies = collect($data['companies'])->map(function (array $company) use ($completeTodayByCompany, $partialTodayByCompany, $data): array {
+            $todayStatus = $completeTodayByCompany->has($company['key'])
+                ? 'complete'
+                : ($partialTodayByCompany->has($company['key']) ? 'partial' : 'missing');
+            $last = $data['last_by_company'][$company['key']] ?? null;
+
+            return $company + [
+                'today_status' => $todayStatus,
+                'today_records' => $completeTodayByCompany->get($company['key'], collect())->count()
+                    + $partialTodayByCompany->get($company['key'], collect())->count(),
+                'last_backup' => $last,
+            ];
+        })->when($term !== '', fn ($items) => $items->filter(fn (array $company): bool => str_contains(
+            Str::lower(Str::ascii($company['name'].' '.$company['folder'])),
+            $term,
+        )))->values();
+
+        $summary = [
+            'companies' => count($data['companies']),
+            'complete_today' => $completeTodayByCompany->count(),
+            'partial_today' => $partialTodayByCompany->keys()->diff($completeTodayByCompany->keys())->count(),
+        ];
+        $summary['missing_today'] = max(0, $summary['companies'] - $summary['complete_today']);
+
+        $selectedCompleteRecords = collect($data['records'])
+            ->whereIn('id', $this->selectedRecords)
+            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated'], true));
 
         return view('livewire.backups.backup-storage-manager', [
-            'backupTree' => $backupTree,
-            'history' => $history,
-            'statusCounts' => $statusCounts,
-            'activeUploads' => $activeUploads,
-            'sites' => config('backup-storage.sites'),
-            'products' => config('backup-storage.products.'.$site, []),
-            'site' => $site,
-            'product' => $product,
-            'uploadEndpoint' => route('activity-backups.uploads.initialize', [], false),
-            'csrfRefreshEndpoint' => route('session.keep-alive', [], false),
-            'maxConcurrentUploads' => max(1, (int) config('backup-storage.max_active_uploads', 2)),
-            'parallelChunks' => max(1, min(4, (int) config('backup-storage.parallel_chunks', 3))),
+            'catalog' => $data,
+            'error' => $error,
+            'today' => $today,
+            'records' => $recordsForDate,
+            'companies' => $companies,
+            'summary' => $summary,
+            'exportDestination' => $export->destination(),
+            'selectedExportCount' => $selectedCompleteRecords->count(),
+            'selectedExportBytes' => (int) $selectedCompleteRecords->sum('total_size'),
+            'recordAvailability' => $recordAvailability,
+            'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated'], true))->count(),
+            'backedUpExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'backed_up')->count(),
+            'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
         ])->layout('layouts.app');
     }
 }

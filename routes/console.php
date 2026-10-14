@@ -2,6 +2,7 @@
 
 use App\Mail\ReporteSemanal;
 use App\Models\SupportChatMessage;
+use App\Services\Backups\ContpaqiBackupCatalog;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,13 @@ Schedule::call(function () {
 // 1. REVISIÓN INCREMENTAL (Cada minuto)
 // Captura marcas nuevas al instante de forma rápida y silenciosa
 Schedule::command('biometric:sync')->everyMinute()->withoutOverlapping();
+
+// Actualiza únicamente el índice del día actual de CONTPAQi. El proceso es
+// de solo lectura y se ejecuta dentro del mismo schedule:work de desarrollo.
+Schedule::call(fn () => app(ContpaqiBackupCatalog::class)->refreshToday())
+    ->everyMinute()
+    ->name('contpaqi-backups:refresh-today')
+    ->withoutOverlapping();
 
 // 2. MANTENIMIENTO PROFUNDO (Una vez al día)
 // Valida los últimos 30 días contra el hardware y purga inconsistencias a las 11:00 PM
