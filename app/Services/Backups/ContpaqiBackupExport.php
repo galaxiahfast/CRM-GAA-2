@@ -504,12 +504,12 @@ class ContpaqiBackupExport
 
     private function destinationDefinitions(): array
     {
-        $expectedLabel = trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD')) ?: 'CONTABILIDAD';
+        $configuredLabel = trim((string) config('backup-storage.export.volume_label', 'Memoria configurada')) ?: 'Memoria configurada';
         $configuredRoot = trim((string) config('backup-storage.export.destination_root'));
         $definitions = [];
 
         if ($configuredRoot !== '') {
-            $definitions[] = ['key' => 'principal', 'label' => $expectedLabel, 'root' => $configuredRoot, 'type' => 'configured'];
+            $definitions[] = ['key' => 'principal', 'label' => $configuredLabel, 'root' => $configuredRoot, 'type' => 'configured'];
         }
 
         foreach ((array) config('backup-storage.export.additional_destinations', []) as $index => $definition) {
@@ -528,22 +528,15 @@ class ContpaqiBackupExport
             $definitions[] = ['key' => $key, 'label' => $label ?: basename($root), 'root' => $root, 'type' => 'configured'];
         }
 
-        $expectedVolumeFound = false;
         foreach ($this->detectedLocalVolumes() as $volume) {
             $drive = strtoupper(rtrim((string) $volume['root'], '\\/'));
             $label = trim((string) ($volume['volume_label'] ?? ''));
-            $matchesExpected = $configuredRoot === '' && Str::lower($label) === Str::lower($expectedLabel);
-            $expectedVolumeFound = $expectedVolumeFound || $matchesExpected;
             $definitions[] = [
-                'key' => $matchesExpected ? 'principal' : 'unidad-'.Str::lower(rtrim($drive, ':')),
+                'key' => 'unidad-'.Str::lower(rtrim($drive, ':')),
                 'label' => ($label !== '' ? $label : 'Unidad').' ('.$drive.')',
                 'root' => $volume['root'],
                 'type' => $volume['type'] ?? 'local',
             ];
-        }
-
-        if ($configuredRoot === '' && ! $expectedVolumeFound) {
-            $definitions[] = ['key' => 'principal', 'label' => $expectedLabel, 'root' => '', 'type' => 'expected'];
         }
 
         $seenRoots = [];
