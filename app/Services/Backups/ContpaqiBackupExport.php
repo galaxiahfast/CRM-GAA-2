@@ -572,7 +572,7 @@ class ContpaqiBackupExport
 
         return Cache::remember('contpaqi-backup-export:local-volumes', 10, function (): array {
             if (! function_exists('shell_exec')) {
-                return [];
+                return $this->fallbackLocalVolumes();
             }
 
             $script = <<<'POWERSHELL'
@@ -588,7 +588,7 @@ POWERSHELL;
                 $output = @shell_exec('powershell.exe -NoProfile -NonInteractive -EncodedCommand '.$encoded.' 2>NUL');
                 $decoded = json_decode(trim((string) $output), true);
                 if (! is_array($decoded)) {
-                    return [];
+                    return $this->fallbackLocalVolumes();
                 }
                 if (isset($decoded['root'])) {
                     $decoded = [$decoded];
@@ -607,9 +607,25 @@ POWERSHELL;
                     ->values()
                     ->all();
             } catch (Throwable) {
-                return [];
+                return $this->fallbackLocalVolumes();
             }
         });
+    }
+
+    private function fallbackLocalVolumes(): array
+    {
+        $systemDrive = Str::upper(rtrim((string) ($_SERVER['SystemDrive'] ?? getenv('SystemDrive') ?: 'C:'), '\\/'));
+        $volumes = [];
+
+        foreach (range('D', 'Z') as $letter) {
+            $root = $letter.':'.DIRECTORY_SEPARATOR;
+            if ($letter.':' === $systemDrive || ! @is_dir($root)) {
+                continue;
+            }
+            $volumes[] = ['root' => $root, 'volume_label' => '', 'type' => 'local'];
+        }
+
+        return $volumes;
     }
 
     private function requireDestinationFolder(string $folder, string $destinationRoot): string
