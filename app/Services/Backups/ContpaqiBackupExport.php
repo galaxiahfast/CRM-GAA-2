@@ -19,6 +19,11 @@ class ContpaqiBackupExport
             ->all();
     }
 
+    public function forgetDetectedVolumes(): void
+    {
+        Cache::forget('contpaqi-backup-export:local-volumes');
+    }
+
     public function destination(?string $key = null): array
     {
         $definitions = $this->destinationDefinitions();
@@ -39,11 +44,11 @@ class ContpaqiBackupExport
         $volumeLabel = trim((string) ($definition['label'] ?? 'Memoria externa'));
         $key = (string) ($definition['key'] ?? '');
         if ($configuredPath === '') {
-            return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel];
+            return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
         }
 
         if (! $this->isAbsolutePath($configuredPath)) {
-            return ['key' => $key, 'configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel];
+            return ['key' => $key, 'configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
         }
 
         $realPath = realpath($configuredPath);
@@ -56,6 +61,7 @@ class ContpaqiBackupExport
             'root' => $realPath !== false ? $realPath : $configuredPath,
             'free_bytes' => $connected ? (@disk_free_space($realPath) ?: null) : null,
             'label' => $volumeLabel,
+            'type' => $definition['type'] ?? null,
         ];
     }
 
@@ -494,11 +500,13 @@ class ContpaqiBackupExport
 
     private function destinationDefinitions(): array
     {
-        $definitions = [[
-            'key' => 'principal',
-            'label' => trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD')) ?: 'CONTABILIDAD',
-            'root' => trim((string) config('backup-storage.export.destination_root')),
-        ]];
+        $expectedLabel = trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD')) ?: 'CONTABILIDAD';
+        $configuredRoot = trim((string) config('backup-storage.export.destination_root'));
+        $definitions = [];
+
+        if ($configuredRoot !== '') {
+            $definitions[] = ['key' => 'principal', 'label' => $expectedLabel, 'root' => $configuredRoot, 'type' => 'configured'];
+        }
 
         foreach ((array) config('backup-storage.export.additional_destinations', []) as $index => $definition) {
             if (! is_array($definition)) {
@@ -513,10 +521,95 @@ class ContpaqiBackupExport
             if ($key === '' || $key === 'principal') {
                 $key = 'destino-'.$index;
             }
-            $definitions[] = ['key' => $key, 'label' => $label ?: basename($root), 'root' => $root];
+            $definitions[] = ['key' => $key, 'label' => $label ?: basename($root), 'root' => $root, 'type' => 'configured'];
         }
 
-        return collect($definitions)->unique('key')->values()->all();
+        $expectedVolumeFound = false;
+        foreach ($this->detectedLocalVolumes() as $volume) {
+            $drive = strtoupper(rtrim((string) $volume['root'], '\\/'));
+            $label = trim((string) ($volume['volume_label'] ?? ''));
+            $matchesExpected = $configuredRoot === '' && Str::lower($label) === Str::lower($expectedLabel);
+            $expectedVolumeFound = $expectedVolumeFound || $matchesExpected;
+            $definitions[] = [
+                'key' => $matchesExpected ? 'principal' : 'unidad-'.Str::lower(rtrim($drive, ':')),
+                'label' => ($label !== '' ? $label : 'Unidad').' ('.$drive.')',
+                'root' => $volume['root'],
+                'type' => $volume['type'] ?? 'local',
+            ];
+        }
+
+        if ($configuredRoot === '' && ! $expectedVolumeFound) {
+            $definitions[] = ['key' => 'principal', 'label' => $expectedLabel, 'root' => '', 'type' => 'expected'];
+        }
+
+        $seenRoots = [];
+
+        return collect($definitions)
+            ->filter(function (array $definition) use (&$seenRoots): bool {
+                $root = trim((string) ($definition['root'] ?? ''));
+                if ($root === '') {
+                    return true;
+                }
+                $normalized = $this->normalize($root);
+                if (isset($seenRoots[$normalized])) {
+                    return false;
+                }
+                $seenRoots[$normalized] = true;
+
+                return true;
+            })
+            ->unique('key')
+            ->sortByDesc(fn (array $definition): bool => (string) ($definition['root'] ?? '') !== '')
+            ->values()
+            ->all();
+    }
+
+    private function detectedLocalVolumes(): array
+    {
+        if (PHP_OS_FAMILY !== 'Windows' || ! config('backup-storage.export.detect_local_volumes', true)) {
+            return [];
+        }
+
+        return Cache::remember('contpaqi-backup-export:local-volumes', 10, function (): array {
+            if (! function_exists('shell_exec')) {
+                return [];
+            }
+
+            $script = <<<'POWERSHELL'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[System.IO.DriveInfo]::GetDrives() |
+    Where-Object { $_.IsReady -and @('Fixed', 'Removable', 'Network') -contains $_.DriveType.ToString() } |
+    ForEach-Object { [pscustomobject]@{ root = $_.Name; volume_label = $_.VolumeLabel; type = $_.DriveType.ToString() } } |
+    ConvertTo-Json -Compress
+POWERSHELL;
+            $encoded = base64_encode(mb_convert_encoding($script, 'UTF-16LE', 'UTF-8'));
+
+            try {
+                $output = @shell_exec('powershell.exe -NoProfile -NonInteractive -EncodedCommand '.$encoded.' 2>NUL');
+                $decoded = json_decode(trim((string) $output), true);
+                if (! is_array($decoded)) {
+                    return [];
+                }
+                if (isset($decoded['root'])) {
+                    $decoded = [$decoded];
+                }
+
+                $systemDrive = Str::upper(rtrim((string) ($_SERVER['SystemDrive'] ?? getenv('SystemDrive') ?: 'C:'), '\\/'));
+
+                return collect($decoded)
+                    ->filter(fn ($volume): bool => is_array($volume) && preg_match('/^[A-Za-z]:[\\\\\/]$/', (string) ($volume['root'] ?? '')) === 1)
+                    ->filter(fn (array $volume): bool => Str::upper(rtrim((string) $volume['root'], '\\/')) !== $systemDrive)
+                    ->map(fn (array $volume): array => [
+                        'root' => strtoupper(substr((string) $volume['root'], 0, 2)).DIRECTORY_SEPARATOR,
+                        'volume_label' => trim((string) ($volume['volume_label'] ?? '')),
+                        'type' => (string) ($volume['type'] ?? 'local'),
+                    ])
+                    ->values()
+                    ->all();
+            } catch (Throwable) {
+                return [];
+            }
+        });
     }
 
     private function requireDestinationFolder(string $folder, string $destinationRoot): string

@@ -75,9 +75,10 @@ class BackupStorageManager extends Component
         $this->syncResult = null;
     }
 
-    public function refreshCatalog(ContpaqiBackupCatalog $catalog): void
+    public function refreshCatalog(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         $catalog->forget();
+        $export->forgetDetectedVolumes();
         $this->dispatch('backup-catalog-refreshed');
     }
 

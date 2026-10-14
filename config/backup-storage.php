@@ -15,6 +15,9 @@ return [
         // Debe ser una ruta de red estable compartida por el servidor, por ejemplo
         // \\SERVIDOR\CONTABILIDAD. Así no depende de la letra local del USB.
         'destination_root' => env('CONTPAQ_EXPORT_ROOT', ''),
+        // En Windows busca automáticamente las unidades disponibles en el
+        // equipo donde corre PHP. La unidad del sistema nunca se ofrece.
+        'detect_local_volumes' => (bool) env('CONTPAQ_EXPORT_DETECT_VOLUMES', true),
         // Destinos adicionales opcionales. Cada raíz debe ser una ruta UNC
         // previamente compartida con el equipo donde se ejecuta Laravel.
         'additional_destinations' => [
