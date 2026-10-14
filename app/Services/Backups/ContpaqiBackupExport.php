@@ -11,22 +11,46 @@ use Throwable;
 
 class ContpaqiBackupExport
 {
-    public function destination(): array
+    public function destinations(): array
     {
-        $configuredPath = trim((string) config('backup-storage.export.destination_root'));
-        $volumeLabel = trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD'));
+        return collect($this->destinationDefinitions())
+            ->map(fn (array $definition): array => $this->inspectDestination($definition))
+            ->values()
+            ->all();
+    }
+
+    public function destination(?string $key = null): array
+    {
+        $definitions = $this->destinationDefinitions();
+        $definition = $key === null || $key === ''
+            ? ($definitions[0] ?? null)
+            : collect($definitions)->firstWhere('key', $key);
+
+        if ($definition === null) {
+            return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => 'Memoria no seleccionada'];
+        }
+
+        return $this->inspectDestination($definition);
+    }
+
+    private function inspectDestination(array $definition): array
+    {
+        $configuredPath = trim((string) ($definition['root'] ?? ''));
+        $volumeLabel = trim((string) ($definition['label'] ?? 'Memoria externa'));
+        $key = (string) ($definition['key'] ?? '');
         if ($configuredPath === '') {
-            return ['configured' => $volumeLabel !== '', 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel];
+            return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel];
         }
 
         if (! $this->isAbsolutePath($configuredPath)) {
-            return ['configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel];
+            return ['key' => $key, 'configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel];
         }
 
         $realPath = realpath($configuredPath);
         $connected = $realPath !== false && is_dir($realPath) && is_writable($realPath) && ! $this->overlapsSource($realPath);
 
         return [
+            'key' => $key,
             'configured' => true,
             'connected' => $connected,
             'root' => $realPath !== false ? $realPath : $configuredPath,
@@ -35,9 +59,9 @@ class ContpaqiBackupExport
         ];
     }
 
-    public function destinationFolders(): array
+    public function destinationFolders(?string $destinationKey = null): array
     {
-        $destination = $this->destination();
+        $destination = $this->destination($destinationKey);
         if (! $destination['connected']) {
             return [];
         }
@@ -54,14 +78,14 @@ class ContpaqiBackupExport
         }
     }
 
-    public function create(string $date, array $recordIds, int $userId, string $destinationFolder, ContpaqiBackupCatalog $catalog): array
+    public function create(string $date, array $recordIds, int $userId, string $destinationFolder, ContpaqiBackupCatalog $catalog, ?string $destinationKey = null): array
     {
-        return Cache::lock('contpaqi-backup-export:create:'.$date.':'.hash('sha256', $destinationFolder), 15)->block(5, function () use ($date, $recordIds, $userId, $destinationFolder, $catalog): array {
-            $destination = $this->requireDestination();
+        return Cache::lock('contpaqi-backup-export:create:'.$date.':'.hash('sha256', $destinationKey.'|'.$destinationFolder), 15)->block(5, function () use ($date, $recordIds, $userId, $destinationFolder, $catalog, $destinationKey): array {
+            $destination = $this->requireDestination($destinationKey);
             $folderPath = $this->requireDestinationFolder($destinationFolder, $destination['root']);
             $allRecords = $catalog->dashboard($date)['records'];
             $records = $this->selectedRecords($allRecords, $date, $recordIds);
-            $availability = $this->recordAvailability($date, $allRecords, $destinationFolder);
+            $availability = $this->recordAvailability($date, $allRecords, $destinationFolder, $destination['key']);
 
             foreach ($records as $record) {
                 $status = $availability[$record['id']] ?? 'unavailable';
@@ -89,6 +113,8 @@ class ContpaqiBackupExport
                 'record_ids' => array_values(array_unique($recordIds)),
                 'user_id' => $userId,
                 'destination_root' => $destination['root'],
+                'destination_key' => $destination['key'],
+                'destination_label' => $destination['label'],
                 'destination_folder' => basename($folderPath),
                 'destination_path' => null,
                 'total_files' => count($records) * 2,
@@ -122,7 +148,7 @@ class ContpaqiBackupExport
         }
 
         try {
-            $destination = $this->requireDestination();
+            $destination = $this->requireDestination($state['destination_key'] ?? null);
             if ($this->normalize($destination['root']) !== $this->normalize((string) $state['destination_root'])) {
                 throw new RuntimeException('El destino configurado cambió después de iniciar la copia.');
             }
@@ -233,9 +259,9 @@ class ContpaqiBackupExport
     }
 
     /** @return array<string, string> */
-    public function recordAvailability(string $date, array $records, ?string $destinationFolder = null): array
+    public function recordAvailability(string $date, array $records, ?string $destinationFolder = null, ?string $destinationKey = null): array
     {
-        $destination = $this->destination();
+        $destination = $this->destination($destinationKey);
         $latestCompleteByCompany = collect($records)
             ->where('complete', true)
             ->groupBy(fn (array $record): string => $this->companyKey($record))
@@ -453,9 +479,9 @@ class ContpaqiBackupExport
         return ['name' => basename($target), 'size' => $sourceSize, 'status' => 'copied', 'checksum' => hash_final($hash)];
     }
 
-    private function requireDestination(): array
+    private function requireDestination(?string $destinationKey = null): array
     {
-        $destination = $this->destination();
+        $destination = $this->destination($destinationKey);
         if (! $destination['configured']) {
             throw new RuntimeException('Primero configura la ruta de la memoria externa.');
         }
@@ -464,6 +490,33 @@ class ContpaqiBackupExport
         }
 
         return $destination;
+    }
+
+    private function destinationDefinitions(): array
+    {
+        $definitions = [[
+            'key' => 'principal',
+            'label' => trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD')) ?: 'CONTABILIDAD',
+            'root' => trim((string) config('backup-storage.export.destination_root')),
+        ]];
+
+        foreach ((array) config('backup-storage.export.additional_destinations', []) as $index => $definition) {
+            if (! is_array($definition)) {
+                continue;
+            }
+            $label = trim((string) ($definition['label'] ?? ''));
+            $root = trim((string) ($definition['root'] ?? ''));
+            if ($label === '' && $root === '') {
+                continue;
+            }
+            $key = Str::slug((string) ($definition['key'] ?? $label ?: 'destino-'.$index));
+            if ($key === '' || $key === 'principal') {
+                $key = 'destino-'.$index;
+            }
+            $definitions[] = ['key' => $key, 'label' => $label ?: basename($root), 'root' => $root];
+        }
+
+        return collect($definitions)->unique('key')->values()->all();
     }
 
     private function requireDestinationFolder(string $folder, string $destinationRoot): string

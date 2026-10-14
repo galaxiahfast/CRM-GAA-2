@@ -15,6 +15,15 @@ return [
         // Debe ser una ruta de red estable compartida por el servidor, por ejemplo
         // \\SERVIDOR\CONTABILIDAD. Así no depende de la letra local del USB.
         'destination_root' => env('CONTPAQ_EXPORT_ROOT', ''),
+        // Destinos adicionales opcionales. Cada raíz debe ser una ruta UNC
+        // previamente compartida con el equipo donde se ejecuta Laravel.
+        'additional_destinations' => [
+            [
+                'key' => 'secundaria',
+                'label' => env('CONTPAQ_EXPORT_SECONDARY_LABEL', ''),
+                'root' => env('CONTPAQ_EXPORT_SECONDARY_ROOT', ''),
+            ],
+        ],
         'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 8 * 1024 * 1024),
         'queue_connection' => env('CONTPAQ_EXPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
     ],

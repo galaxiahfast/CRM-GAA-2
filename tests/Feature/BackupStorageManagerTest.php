@@ -158,6 +158,28 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Resultado de sincronización');
     }
 
+    public function test_user_can_choose_a_memory_and_then_one_of_its_folders(): void
+    {
+        $secondaryRoot = $this->exportRoot.'/_secondary';
+        File::ensureDirectoryExists($secondaryRoot.'/BRENDA');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        config()->set('backup-storage.export.additional_destinations', [[
+            'key' => 'usb-contabilidad-2',
+            'label' => 'CONTABILIDAD 2',
+            'root' => $secondaryRoot,
+        ]]);
+        $admin = $this->user('Administrador', 'admin-destinations@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSet('destinationKey', 'principal')
+            ->assertSee('CONTABILIDAD 2')
+            ->set('destinationFolder', 'ANGEL MOO')
+            ->set('destinationKey', 'usb-contabilidad-2')
+            ->assertSet('destinationFolder', '')
+            ->assertSee('BRENDA');
+    }
+
     public function test_backup_products_are_restricted_by_site(): void
     {
         Storage::fake('local');
