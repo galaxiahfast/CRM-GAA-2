@@ -36,6 +36,8 @@ class BackupStorageManager extends Component
 
     public ?array $syncResult = null;
 
+    public string $destinationFolder = '';
+
     public function mount(): void
     {
         Gate::authorize('access-system-backups');
@@ -78,7 +80,7 @@ class BackupStorageManager extends Component
     public function selectAllComplete(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         $records = $catalog->dashboard($this->selectedDate)['records'];
-        $availability = $export->recordAvailability($this->selectedDate, $records);
+        $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder);
         $this->selectedRecords = collect($records)
             ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
             ->pluck('id')
@@ -89,6 +91,13 @@ class BackupStorageManager extends Component
     public function clearSelection(): void
     {
         $this->selectedRecords = [];
+    }
+
+    public function updatedDestinationFolder(): void
+    {
+        $this->selectedRecords = [];
+        $this->syncResult = null;
+        $this->exportMessage = null;
     }
 
     public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
@@ -103,7 +112,13 @@ class BackupStorageManager extends Component
                     throw new RuntimeException('Espera a que termine la copia actual antes de iniciar otra.');
                 }
             }
-            $state = $export->create($this->selectedDate, $this->selectedRecords, (int) auth()->id(), $catalog);
+            $state = $export->create(
+                $this->selectedDate,
+                $this->selectedRecords,
+                (int) auth()->id(),
+                $this->destinationFolder,
+                $catalog,
+            );
             $this->currentExportId = $state['id'];
             $this->exportStatus = $state;
             CopyContpaqiBackups::dispatch($state['id']);
@@ -138,7 +153,7 @@ class BackupStorageManager extends Component
             }
 
             $data = $catalog->dashboard($this->selectedDate);
-            $availability = $export->recordAvailability($this->selectedDate, $data['records']);
+            $availability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder);
             $latestComplete = collect($data['records'])
                 ->where('complete', true)
                 ->groupBy(fn (array $record): string => (string) ($record['company_key'] ?: $record['company']))
@@ -150,7 +165,7 @@ class BackupStorageManager extends Component
                 'server_complete' => $latestComplete->count(),
                 'server_incomplete' => collect($data['records'])->where('complete', false)->count(),
                 'synced' => $latestStates->filter(fn (string $state): bool => $state === 'backed_up')->count(),
-                'pending' => $latestStates->filter(fn (string $state): bool => in_array($state, ['available', 'destination_missing'], true))->count(),
+                'pending' => $latestStates->filter(fn (string $state): bool => in_array($state, ['available', 'destination_missing', 'folder_missing'], true))->count(),
                 'outdated' => $latestStates->filter(fn (string $state): bool => $state === 'outdated')->count(),
                 'copying' => $latestStates->filter(fn (string $state): bool => $state === 'copying')->count(),
                 'destination_connected' => $export->destination()['connected'],
@@ -189,7 +204,7 @@ class BackupStorageManager extends Component
         }
 
         $today = now()->toDateString();
-        $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records']);
+        $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder);
         $term = Str::lower(Str::ascii(trim($this->search)));
         $recordsForDate = collect($data['records'])
             ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
@@ -258,6 +273,7 @@ class BackupStorageManager extends Component
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated'], true))->count(),
             'backedUpExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'backed_up')->count(),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
+            'destinationFolders' => $export->destinationFolders(),
         ])->layout('layouts.app');
     }
 }

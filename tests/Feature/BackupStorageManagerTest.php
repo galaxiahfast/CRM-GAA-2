@@ -33,6 +33,7 @@ class BackupStorageManagerTest extends TestCase
         File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEmpresa_Prueba');
         File::ensureDirectoryExists($this->catalogRoot.'/Index/respaldos');
         File::ensureDirectoryExists($this->exportRoot);
+        File::ensureDirectoryExists($this->exportRoot.'/ANGEL MOO');
         config()->set('backup-storage.server.root', $this->catalogRoot);
     }
 
@@ -144,6 +145,7 @@ class BackupStorageManagerTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('destinationFolder', 'ANGEL MOO')
             ->assertSee('Estado servidor')
             ->assertSee('Estado memoria')
             ->assertSee('Completos')

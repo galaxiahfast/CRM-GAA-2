@@ -10,10 +10,11 @@ return [
         'cache_seconds' => (int) env('CONTPAQ_BACKUP_CACHE_SECONDS', 300),
     ],
     'export' => [
-        // Carpeta raíz de la memoria externa. Se deja vacía hasta confirmar
-        // la unidad exacta (por ejemplo: E:\\). Nunca se escribe en el servidor.
+        // Nombre esperado del volumen, mostrado en la interfaz.
+        'volume_label' => env('CONTPAQ_EXPORT_VOLUME_LABEL', 'CONTABILIDAD'),
+        // Debe ser una ruta de red estable compartida por el servidor, por ejemplo
+        // \\SERVIDOR\CONTABILIDAD. Así no depende de la letra local del USB.
         'destination_root' => env('CONTPAQ_EXPORT_ROOT', ''),
-        'directory' => env('CONTPAQ_EXPORT_DIRECTORY', 'Respaldos CONTPAQi'),
         'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 8 * 1024 * 1024),
         'queue_connection' => env('CONTPAQ_EXPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
     ],

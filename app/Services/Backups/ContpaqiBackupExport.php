@@ -2,6 +2,7 @@
 
 namespace App\Services\Backups;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -13,12 +14,13 @@ class ContpaqiBackupExport
     public function destination(): array
     {
         $configuredPath = trim((string) config('backup-storage.export.destination_root'));
+        $volumeLabel = trim((string) config('backup-storage.export.volume_label', 'CONTABILIDAD'));
         if ($configuredPath === '') {
-            return ['configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null];
+            return ['configured' => $volumeLabel !== '', 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel];
         }
 
         if (! $this->isAbsolutePath($configuredPath)) {
-            return ['configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null];
+            return ['configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel];
         }
 
         $realPath = realpath($configuredPath);
@@ -29,16 +31,37 @@ class ContpaqiBackupExport
             'connected' => $connected,
             'root' => $realPath !== false ? $realPath : $configuredPath,
             'free_bytes' => $connected ? (@disk_free_space($realPath) ?: null) : null,
+            'label' => $volumeLabel,
         ];
     }
 
-    public function create(string $date, array $recordIds, int $userId, ContpaqiBackupCatalog $catalog): array
+    public function destinationFolders(): array
     {
-        return Cache::lock('contpaqi-backup-export:create:'.$date, 15)->block(5, function () use ($date, $recordIds, $userId, $catalog): array {
+        $destination = $this->destination();
+        if (! $destination['connected']) {
+            return [];
+        }
+
+        try {
+            return collect(new \FilesystemIterator($destination['root'], \FilesystemIterator::SKIP_DOTS))
+                ->filter(fn (\SplFileInfo $item): bool => $item->isDir() && ! $item->isLink() && ! str_starts_with($item->getFilename(), '$'))
+                ->map(fn (\SplFileInfo $item): array => ['name' => $item->getFilename()])
+                ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values()
+                ->all();
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    public function create(string $date, array $recordIds, int $userId, string $destinationFolder, ContpaqiBackupCatalog $catalog): array
+    {
+        return Cache::lock('contpaqi-backup-export:create:'.$date.':'.hash('sha256', $destinationFolder), 15)->block(5, function () use ($date, $recordIds, $userId, $destinationFolder, $catalog): array {
             $destination = $this->requireDestination();
+            $folderPath = $this->requireDestinationFolder($destinationFolder, $destination['root']);
             $allRecords = $catalog->dashboard($date)['records'];
             $records = $this->selectedRecords($allRecords, $date, $recordIds);
-            $availability = $this->recordAvailability($date, $allRecords);
+            $availability = $this->recordAvailability($date, $allRecords, $destinationFolder);
 
             foreach ($records as $record) {
                 $status = $availability[$record['id']] ?? 'unavailable';
@@ -66,7 +89,7 @@ class ContpaqiBackupExport
                 'record_ids' => array_values(array_unique($recordIds)),
                 'user_id' => $userId,
                 'destination_root' => $destination['root'],
-                'destination_directory' => $this->safeSegment((string) config('backup-storage.export.directory', 'Respaldos CONTPAQi')),
+                'destination_folder' => basename($folderPath),
                 'destination_path' => null,
                 'total_files' => count($records) * 2,
                 'completed_files' => 0,
@@ -105,7 +128,8 @@ class ContpaqiBackupExport
             }
 
             $records = $this->selectedRecords($catalog->dashboard($state['date'])['records'], $state['date'], $state['record_ids']);
-            $dateDirectory = $this->join($destination['root'], $state['destination_directory'], $state['date']);
+            $baseDirectory = $this->requireDestinationFolder($state['destination_folder'], $destination['root']);
+            $dateDirectory = $this->join($baseDirectory, $this->dateFolder($state['date']));
             File::ensureDirectoryExists($dateDirectory);
 
             $state['status'] = 'copying';
@@ -115,7 +139,10 @@ class ContpaqiBackupExport
 
             foreach ($records as $recordIndex => $record) {
                 $companyDirectory = $this->join($dateDirectory, $this->safeSegment($record['company_folder'] ?: $record['company']));
-                File::ensureDirectoryExists($companyDirectory);
+                $databaseDirectory = $this->join($companyDirectory, 'BAK');
+                $archiveDirectory = $this->join($companyDirectory, 'INDEX');
+                File::ensureDirectoryExists($databaseDirectory);
+                File::ensureDirectoryExists($archiveDirectory);
                 $state['current_company'] = $record['company'];
                 $state['items'][$recordIndex]['status'] = 'copying';
                 $this->write($id, $state);
@@ -123,7 +150,7 @@ class ContpaqiBackupExport
                 foreach ([['database', 'database'], ['archive', 'archive']] as [$kind, $field]) {
                     $file = $record[$field];
                     $source = $catalog->resolveDownload($kind, $file['token']);
-                    $target = $this->join($companyDirectory, basename($file['name']));
+                    $target = $this->join($kind === 'database' ? $databaseDirectory : $archiveDirectory, basename($file['name']));
                     $result = $this->copyVerified($source, $target, $id, $state);
                     $state['completed_files']++;
                     $state['items'][$recordIndex]['files'][] = $result;
@@ -206,7 +233,7 @@ class ContpaqiBackupExport
     }
 
     /** @return array<string, string> */
-    public function recordAvailability(string $date, array $records): array
+    public function recordAvailability(string $date, array $records, ?string $destinationFolder = null): array
     {
         $destination = $this->destination();
         $latestCompleteByCompany = collect($records)
@@ -214,14 +241,17 @@ class ContpaqiBackupExport
             ->groupBy(fn (array $record): string => $this->companyKey($record))
             ->map(fn ($companyRecords): array => $companyRecords->sortByDesc('occurred_at')->first());
         $latestIds = $latestCompleteByCompany->pluck('id')->flip();
-        $destinationCopies = $destination['connected']
-            ? $this->destinationCopies($date, collect($records)->where('complete', true)->values()->all(), $destination['root'])
+        $folderPath = $destination['connected'] && filled($destinationFolder)
+            ? $this->resolveDestinationFolder((string) $destinationFolder, $destination['root'])
+            : null;
+        $destinationCopies = $folderPath !== null
+            ? $this->destinationCopies($date, collect($records)->where('complete', true)->values()->all(), $folderPath)
             : ['record_ids' => [], 'company_keys' => []];
-        $copyingCompanies = $destination['connected']
-            ? $this->activeCompanyKeys($date, $destination['root'])
+        $copyingCompanies = $folderPath !== null
+            ? $this->activeCompanyKeys($date, $destination['root'], basename($folderPath))
             : [];
 
-        return collect($records)->mapWithKeys(function (array $record) use ($destination, $latestIds, $destinationCopies, $copyingCompanies): array {
+        return collect($records)->mapWithKeys(function (array $record) use ($destination, $folderPath, $latestIds, $destinationCopies, $copyingCompanies): array {
             $companyKey = $this->companyKey($record);
             $status = match (true) {
                 ! $record['complete'] => 'incomplete',
@@ -229,6 +259,7 @@ class ContpaqiBackupExport
                 in_array($companyKey, $copyingCompanies, true) => 'copying',
                 in_array($record['id'], $destinationCopies['record_ids'], true) => 'backed_up',
                 ! $destination['connected'] => 'destination_missing',
+                $folderPath === null => 'folder_missing',
                 in_array($companyKey, $destinationCopies['company_keys'], true) => 'outdated',
                 default => 'available',
             };
@@ -259,13 +290,9 @@ class ContpaqiBackupExport
         return $records->all();
     }
 
-    private function destinationCopies(string $date, array $completeRecords, string $destinationRoot): array
+    private function destinationCopies(string $date, array $completeRecords, string $destinationFolderPath): array
     {
-        $dateDirectory = $this->join(
-            $destinationRoot,
-            $this->safeSegment((string) config('backup-storage.export.directory', 'Respaldos CONTPAQi')),
-            $date,
-        );
+        $dateDirectory = $this->join($destinationFolderPath, $this->dateFolder($date));
         if (! is_dir($dateDirectory)) {
             return ['record_ids' => [], 'company_keys' => []];
         }
@@ -279,8 +306,8 @@ class ContpaqiBackupExport
                 continue;
             }
 
-            $database = $this->join($companyDirectory, basename($record['database']['name']));
-            $archive = $this->join($companyDirectory, basename($record['archive']['name']));
+            $database = $this->join($companyDirectory, 'BAK', basename($record['database']['name']));
+            $archive = $this->join($companyDirectory, 'INDEX', basename($record['archive']['name']));
 
             if (is_file($database) && is_file($archive)
                 && filesize($database) === $record['database']['size']
@@ -296,7 +323,7 @@ class ContpaqiBackupExport
         ];
     }
 
-    private function activeCompanyKeys(string $date, string $destinationRoot): array
+    private function activeCompanyKeys(string $date, string $destinationRoot, string $destinationFolder): array
     {
         if (! is_dir($this->stateDirectory())) {
             return [];
@@ -310,6 +337,9 @@ class ContpaqiBackupExport
                 continue;
             }
             if ($this->normalize((string) ($state['destination_root'] ?? '')) !== $this->normalize($destinationRoot)) {
+                continue;
+            }
+            if (Str::lower((string) ($state['destination_folder'] ?? '')) !== Str::lower($destinationFolder)) {
                 continue;
             }
             $activityAt = $state['started_at'] ?? $state['created_at'] ?? null;
@@ -434,6 +464,36 @@ class ContpaqiBackupExport
         }
 
         return $destination;
+    }
+
+    private function requireDestinationFolder(string $folder, string $destinationRoot): string
+    {
+        $resolved = $this->resolveDestinationFolder($folder, $destinationRoot);
+        if ($resolved === null) {
+            throw new RuntimeException('Selecciona una carpeta válida dentro de la memoria CONTABILIDAD.');
+        }
+
+        return $resolved;
+    }
+
+    private function resolveDestinationFolder(string $folder, string $destinationRoot): ?string
+    {
+        if ($folder === '' || basename($folder) !== $folder || str_contains($folder, "\0")) {
+            return null;
+        }
+
+        $root = realpath($destinationRoot);
+        $candidate = realpath($this->join($destinationRoot, $folder));
+        if ($root === false || $candidate === false || ! is_dir($candidate) || is_link($candidate)) {
+            return null;
+        }
+
+        return $this->normalize(dirname($candidate)) === $this->normalize($root) ? $candidate : null;
+    }
+
+    private function dateFolder(string $date): string
+    {
+        return CarbonImmutable::createFromFormat('!Y-m-d', $date)->format('d-m-Y');
     }
 
     private function write(string $id, array $state): void

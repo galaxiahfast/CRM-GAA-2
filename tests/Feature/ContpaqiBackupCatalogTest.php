@@ -31,6 +31,7 @@ class ContpaqiBackupCatalogTest extends TestCase
         File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEmpresa_Pendiente');
         File::ensureDirectoryExists($this->catalogRoot.'/Index/respaldos');
         File::ensureDirectoryExists($this->exportRoot);
+        File::ensureDirectoryExists($this->exportRoot.'/ANGEL MOO');
         config()->set('backup-storage.server.root', $this->catalogRoot);
         config()->set('backup-storage.server.cache_seconds', 60);
     }
@@ -126,23 +127,23 @@ class ContpaqiBackupCatalogTest extends TestCase
         $catalog = app(ContpaqiBackupCatalog::class);
         $record = collect($catalog->catalog(true)['records'])->firstWhere('date', now()->toDateString());
         $export = app(ContpaqiBackupExport::class);
-        $state = $export->create(now()->toDateString(), [$record['id']], 1, $catalog);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
         $this->exportIds[] = $state['id'];
-        $this->assertSame('copying', $export->recordAvailability(now()->toDateString(), [$record])[$record['id']]);
+        $this->assertSame('copying', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO')[$record['id']]);
         $export->execute($state['id'], $catalog);
 
-        $destination = $this->exportRoot.'/Respaldos CONTPAQi/'.now()->toDateString().'/ctEmpresa_Demo';
+        $destination = $this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo';
         $this->assertSame('database-content', File::get($databasePath));
         $this->assertSame('archive-content', File::get($archivePath));
-        $this->assertSame('database-content', File::get($destination.'/'.basename($databasePath)));
-        $this->assertSame('archive-content', File::get($destination.'/'.basename($archivePath)));
-        $this->assertCount(1, File::glob($this->exportRoot.'/Respaldos CONTPAQi/'.now()->toDateString().'/_registro-*.json'));
+        $this->assertSame('database-content', File::get($destination.'/BAK/'.basename($databasePath)));
+        $this->assertSame('archive-content', File::get($destination.'/INDEX/'.basename($archivePath)));
+        $this->assertCount(1, File::glob($this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/_registro-*.json'));
         $this->assertSame('completed', $export->find($state['id'])['status']);
         $this->assertSame(2, $export->find($state['id'])['completed_files']);
-        $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record])[$record['id']]);
+        $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO')[$record['id']]);
 
         try {
-            $export->create(now()->toDateString(), [$record['id']], 1, $catalog);
+            $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
             $this->fail('La misma empresa no debe poder respaldarse dos veces el mismo día.');
         } catch (\RuntimeException $exception) {
             $this->assertStringContainsString('ya fue respaldada', $exception->getMessage());
@@ -160,7 +161,7 @@ class ContpaqiBackupCatalogTest extends TestCase
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Selecciona únicamente empresas');
-        $export->create(now()->toDateString(), [$record['id']], 1, $catalog);
+        $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
     }
 
     public function test_export_destination_cannot_be_the_server_or_one_of_its_subdirectories(): void
@@ -184,7 +185,7 @@ class ContpaqiBackupCatalogTest extends TestCase
 
         $catalog = app(ContpaqiBackupCatalog::class);
         $records = collect($catalog->catalog(true)['records'])->where('date', now()->toDateString())->values();
-        $availability = app(ContpaqiBackupExport::class)->recordAvailability(now()->toDateString(), $records->all());
+        $availability = app(ContpaqiBackupExport::class)->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
 
         $this->assertSame('available', $availability[$records->firstWhere('time', '17:30')['id']]);
         $this->assertSame('older', $availability[$records->firstWhere('time', '09:00')['id']]);
@@ -200,14 +201,14 @@ class ContpaqiBackupCatalogTest extends TestCase
         $catalog = app(ContpaqiBackupCatalog::class);
         $oldRecord = collect($catalog->catalog(true)['records'])->firstWhere('time', '09:00');
         $export = app(ContpaqiBackupExport::class);
-        $state = $export->create(now()->toDateString(), [$oldRecord['id']], 1, $catalog);
+        $state = $export->create(now()->toDateString(), [$oldRecord['id']], 1, 'ANGEL MOO', $catalog);
         $this->exportIds[] = $state['id'];
         $export->execute($state['id'], $catalog);
 
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/ctEmpresa_Demo-{$date}-1730.bak", 'database-new');
         File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Demo-{$date}-1730.zip", 'archive-new');
         $records = collect($catalog->catalog(true)['records'])->where('date', now()->toDateString())->values();
-        $availability = $export->recordAvailability(now()->toDateString(), $records->all());
+        $availability = $export->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
 
         $this->assertSame('outdated', $availability[$records->firstWhere('time', '17:30')['id']]);
         $this->assertSame('older', $availability[$records->firstWhere('time', '09:00')['id']]);
