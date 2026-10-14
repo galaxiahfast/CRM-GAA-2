@@ -16,9 +16,9 @@
 
 <div class="backup-storage-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
-        viewScale: Number(localStorage.getItem('backup-storage-view-scale-v2') || 75),
+        viewScale: Number(localStorage.getItem('backup-storage-view-scale-v3') || 90),
         isFullscreen: false,
-        saveScale() { localStorage.setItem('backup-storage-view-scale-v2', String(this.viewScale)) },
+        saveScale() { localStorage.setItem('backup-storage-view-scale-v3', String(this.viewScale)) },
         zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale() },
         zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.saveScale() },
         async toggleFullscreen() { if (document.fullscreenElement) await document.exitFullscreen(); else await $root.requestFullscreen() }
@@ -48,7 +48,7 @@
         <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
         <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Gestión de Respaldos">
         <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
-        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">75%</span>
+        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">90%</span>
         <span class="h-5 w-px bg-zinc-200"></span>
         <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
