@@ -44,20 +44,21 @@ class ContpaqiBackupExport
         $volumeLabel = trim((string) ($definition['label'] ?? 'Memoria externa'));
         $key = (string) ($definition['key'] ?? '');
         if ($configuredPath === '') {
-            return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
+            return ['key' => $key, 'configured' => false, 'connected' => false, 'writable' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
         }
 
         if (! $this->isAbsolutePath($configuredPath)) {
-            return ['key' => $key, 'configured' => true, 'connected' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
+            return ['key' => $key, 'configured' => true, 'connected' => false, 'writable' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
         }
 
         $realPath = realpath($configuredPath);
-        $connected = $realPath !== false && is_dir($realPath) && is_writable($realPath) && ! $this->overlapsSource($realPath);
+        $connected = $realPath !== false && is_dir($realPath) && is_readable($realPath) && ! $this->overlapsSource($realPath);
 
         return [
             'key' => $key,
             'configured' => true,
             'connected' => $connected,
+            'writable' => $connected && is_writable($realPath),
             'root' => $realPath !== false ? $realPath : $configuredPath,
             'free_bytes' => $connected ? (@disk_free_space($realPath) ?: null) : null,
             'label' => $volumeLabel,
@@ -75,7 +76,10 @@ class ContpaqiBackupExport
         try {
             return collect(new \FilesystemIterator($destination['root'], \FilesystemIterator::SKIP_DOTS))
                 ->filter(fn (\SplFileInfo $item): bool => $item->isDir() && ! $item->isLink() && ! str_starts_with($item->getFilename(), '$'))
-                ->map(fn (\SplFileInfo $item): array => ['name' => $item->getFilename()])
+                ->map(fn (\SplFileInfo $item): array => [
+                    'name' => $item->getFilename(),
+                    'writable' => is_writable($item->getPathname()),
+                ])
                 ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
                 ->values()
                 ->all();
@@ -492,7 +496,7 @@ class ContpaqiBackupExport
             throw new RuntimeException('Primero configura la ruta de la memoria externa.');
         }
         if (! $destination['connected']) {
-            throw new RuntimeException('La memoria externa configurada no está conectada, no es escribible o coincide con el servidor de origen.');
+            throw new RuntimeException('La memoria externa no está conectada, no se puede leer o coincide con el servidor de origen.');
         }
 
         return $destination;
@@ -633,6 +637,9 @@ POWERSHELL;
         $resolved = $this->resolveDestinationFolder($folder, $destinationRoot);
         if ($resolved === null) {
             throw new RuntimeException('Selecciona una carpeta válida dentro de la memoria CONTABILIDAD.');
+        }
+        if (! is_writable($resolved)) {
+            throw new RuntimeException('PHP puede leer la memoria, pero no tiene permiso para escribir en la carpeta seleccionada.');
         }
 
         return $resolved;
