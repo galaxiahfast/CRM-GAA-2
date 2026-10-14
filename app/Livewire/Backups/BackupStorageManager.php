@@ -57,6 +57,7 @@ class BackupStorageManager extends Component
         }
 
         $this->destinationKey = (string) (collect($export->destinations())->first()['key'] ?? '');
+        $this->adoptActiveExport($export);
     }
 
     public function selectView(string $view): void
@@ -148,11 +149,35 @@ class BackupStorageManager extends Component
         }
 
         $state = $export->find($this->currentExportId);
-        if ($state !== null && (int) ($state['user_id'] ?? 0) !== (int) auth()->id() && ! auth()->user()?->isAdmin()) {
-            abort(403);
+        $this->exportStatus = $state;
+    }
+
+    public function refreshSharedExportStatus(ContpaqiBackupExport $export): void
+    {
+        Gate::authorize('access-system-backups');
+
+        if ($this->currentExportId !== null) {
+            $state = $export->find($this->currentExportId);
+            if ($state !== null) {
+                $this->exportStatus = $state;
+                if (in_array($state['status'] ?? null, ['queued', 'copying'], true)) {
+                    return;
+                }
+            }
         }
 
-        $this->exportStatus = $state;
+        $this->adoptActiveExport($export);
+    }
+
+    private function adoptActiveExport(ContpaqiBackupExport $export): void
+    {
+        $active = $export->latestActive();
+        if ($active === null) {
+            return;
+        }
+
+        $this->currentExportId = $active['id'];
+        $this->exportStatus = $active;
     }
 
     public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void

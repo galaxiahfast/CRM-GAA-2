@@ -27,7 +27,7 @@ return [
                 'root' => env('CONTPAQ_EXPORT_SECONDARY_ROOT', ''),
             ],
         ],
-        'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 8 * 1024 * 1024),
+        'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 16 * 1024 * 1024),
         'queue_connection' => env('CONTPAQ_EXPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
     ],
     'disk' => env('BACKUP_STORAGE_DISK', 'local'),

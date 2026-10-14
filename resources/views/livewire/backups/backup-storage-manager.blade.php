@@ -25,6 +25,7 @@
     }"
     x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
     wire:poll.60s>
+    <span class="hidden" wire:poll.2s="refreshSharedExportStatus" aria-hidden="true"></span>
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
@@ -229,7 +230,7 @@
                                 @endif
 
                                 @if($exportStatus)
-                                    <div class="mt-[12px] rounded-xl border border-zinc-200 bg-white p-[12px]" @if($exportIsActive) wire:poll.2s="refreshExportStatus" @endif>
+                                    <div class="mt-[12px] rounded-xl border border-zinc-200 bg-white p-[12px]">
                                         <div class="flex items-center justify-between gap-[15px] text-[12px]">
                                             <span class="min-w-0 truncate font-medium text-black">
                                                 @if(($exportStatus['status'] ?? '') === 'queued') En espera para copiar
@@ -238,9 +239,12 @@
                                                 @else Copia interrumpida
                                                 @endif
                                             </span>
-                                            <span class="shrink-0 tabular-nums text-zinc-500">{{ $exportPercent }}% · {{ $exportStatus['completed_files'] ?? 0 }}/{{ $exportStatus['total_files'] ?? 0 }} archivos</span>
+                                            <span class="shrink-0 tabular-nums text-zinc-500">{{ $exportPercent }}% · {{ $formatBytes((int) ($exportStatus['copied_bytes'] ?? 0)) }} / {{ $formatBytes((int) ($exportStatus['total_bytes'] ?? 0)) }}</span>
                                         </div>
                                         <div class="mt-[9px] h-[5px] overflow-hidden rounded-full bg-zinc-100"><span class="block h-full rounded-full {{ ($exportStatus['status'] ?? '') === 'failed' ? 'bg-red-500' : 'bg-[#1A3A6B]' }} transition-all" style="width: {{ $exportPercent }}%"></span></div>
+                                        @if($exportIsActive)
+                                            <p class="mt-[8px] truncate text-[11px] text-zinc-500" title="{{ $exportStatus['destination_label'] ?? 'Memoria' }} · {{ $exportStatus['destination_folder'] ?? 'carpeta seleccionada' }}">Destino: {{ $exportStatus['destination_label'] ?? 'Memoria' }} · {{ $exportStatus['destination_folder'] ?? 'carpeta seleccionada' }}</p>
+                                        @endif
                                         @if(($exportStatus['status'] ?? '') === 'completed')
                                             <p class="mt-[8px] truncate text-[11px] text-emerald-600" title="{{ $exportStatus['destination_path'] ?? '' }}">Guardado en {{ $exportStatus['destination_path'] ?? '' }}</p>
                                         @elseif(($exportStatus['status'] ?? '') === 'failed')

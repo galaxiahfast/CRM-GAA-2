@@ -7,6 +7,8 @@ use App\Models\BackupUpload;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Backups\BackupArchiveExtractor;
+use App\Services\Backups\ContpaqiBackupCatalog;
+use App\Services\Backups\ContpaqiBackupExport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +25,8 @@ class BackupStorageManagerTest extends TestCase
     private string $catalogRoot;
 
     private string $exportRoot;
+
+    private array $exportStateIds = [];
 
     protected function setUp(): void
     {
@@ -41,6 +45,9 @@ class BackupStorageManagerTest extends TestCase
     {
         File::deleteDirectory($this->catalogRoot);
         File::deleteDirectory($this->exportRoot);
+        foreach ($this->exportStateIds as $id) {
+            File::delete(storage_path("app/private/backup-exports/{$id}.json"));
+        }
         parent::tearDown();
     }
 
@@ -178,6 +185,34 @@ class BackupStorageManagerTest extends TestCase
             ->set('destinationKey', 'usb-contabilidad-2')
             ->assertSet('destinationFolder', '')
             ->assertSee('BRENDA');
+    }
+
+    public function test_all_users_see_the_same_active_export_and_cannot_start_another_one(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", str_repeat('b', 1024));
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", str_repeat('z', 2048));
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->dashboard(now()->toDateString())['records'])->firstWhere('complete', true);
+        $owner = $this->user('Administrador', 'owner-shared-export@datamid.test');
+        $viewer = $this->user('Auxiliar', 'viewer-shared-export@datamid.test');
+        $state = app(ContpaqiBackupExport::class)->create(
+            now()->toDateString(),
+            [$record['id']],
+            $owner->id,
+            'ANGEL MOO',
+            $catalog,
+        );
+        $this->exportStateIds[] = $state['id'];
+
+        Livewire::actingAs($viewer)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSet('currentExportId', $state['id'])
+            ->assertSet('exportStatus.current_company', null)
+            ->assertSee('En espera para copiar')
+            ->call('startExport')
+            ->assertSet('exportMessage', 'Espera a que termine la copia actual antes de iniciar otra.');
     }
 
     public function test_backup_products_are_restricted_by_site(): void

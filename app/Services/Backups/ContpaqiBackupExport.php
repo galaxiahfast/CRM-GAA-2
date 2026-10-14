@@ -90,7 +90,11 @@ class ContpaqiBackupExport
 
     public function create(string $date, array $recordIds, int $userId, string $destinationFolder, ContpaqiBackupCatalog $catalog, ?string $destinationKey = null): array
     {
-        return Cache::lock('contpaqi-backup-export:create:'.$date.':'.hash('sha256', $destinationKey.'|'.$destinationFolder), 15)->block(5, function () use ($date, $recordIds, $userId, $destinationFolder, $catalog, $destinationKey): array {
+        return Cache::lock('contpaqi-backup-export:create', 15)->block(5, function () use ($date, $recordIds, $userId, $destinationFolder, $catalog, $destinationKey): array {
+            if ($this->latestActive() !== null) {
+                throw new RuntimeException('Ya hay un respaldo en proceso. Todos los usuarios pueden ver su avance; espera a que termine.');
+            }
+
             $destination = $this->requireDestination($destinationKey);
             $folderPath = $this->requireDestinationFolder($destinationFolder, $destination['root']);
             $allRecords = $catalog->dashboard($date)['records'];
@@ -252,6 +256,26 @@ class ContpaqiBackupExport
         $state = json_decode($contents ?: '', true);
 
         return is_array($state) ? $state : null;
+    }
+
+    public function latestActive(): ?array
+    {
+        if (! is_dir($this->stateDirectory())) {
+            return null;
+        }
+
+        return collect(File::glob($this->stateDirectory().DIRECTORY_SEPARATOR.'*.json'))
+            ->map(fn (string $path): ?array => $this->find(pathinfo($path, PATHINFO_FILENAME)))
+            ->filter(function (?array $state): bool {
+                if ($state === null || ! in_array($state['status'] ?? null, ['queued', 'copying'], true)) {
+                    return false;
+                }
+                $activityAt = $state['started_at'] ?? $state['created_at'] ?? null;
+
+                return $activityAt !== null && now()->diffInHours($activityAt, absolute: true) <= 3;
+            })
+            ->sortByDesc(fn (array $state): string => (string) ($state['started_at'] ?? $state['created_at'] ?? ''))
+            ->first();
     }
 
     public function markFailed(string $id, string $message): void
@@ -435,7 +459,8 @@ class ContpaqiBackupExport
         $hash = hash_init('sha256');
         $written = 0;
         $pendingProgress = 0;
-        $chunkSize = max(1024 * 1024, (int) config('backup-storage.export.chunk_size', 8 * 1024 * 1024));
+        $chunkSize = max(1024 * 1024, (int) config('backup-storage.export.chunk_size', 16 * 1024 * 1024));
+        $progressInterval = max(4 * 1024 * 1024, min(16 * 1024 * 1024, $chunkSize));
 
         try {
             try {
@@ -459,7 +484,7 @@ class ContpaqiBackupExport
                     }
                     $written += $length;
                     $pendingProgress += $length;
-                    if ($pendingProgress >= 64 * 1024 * 1024) {
+                    if ($pendingProgress >= $progressInterval) {
                         $state['copied_bytes'] += $pendingProgress;
                         $pendingProgress = 0;
                         $this->write($exportId, $state);
