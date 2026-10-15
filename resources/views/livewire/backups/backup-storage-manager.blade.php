@@ -34,6 +34,7 @@
         .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: #1A3A6B; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
+        .backup-catalog-scroll-always-visible > .backup-catalog-scroll-thumb { opacity: 1; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
@@ -170,14 +171,14 @@
                     <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
                         <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
                             <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700"><span class="truncate font-semibold">Fecha de respaldos</span></div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-always-visible relative min-h-0 flex-1">
                                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($catalog['dates'] as $day)
                                     @php
                                         $dayDate = \Carbon\CarbonImmutable::parse($day['date']);
                                         $fullDayLabel = ucfirst($dayDate->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
                                     @endphp
-                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" class="flex min-h-[90px] w-full min-w-0 flex-col justify-center border-b border-zinc-200 px-[20px] py-[12px] text-left transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'overflow-hidden rounded-xl bg-black text-white' : ($loop->odd ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100' : 'bg-white text-zinc-700 hover:bg-zinc-100') }}">
+                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" class="flex min-h-[90px] w-full min-w-0 flex-col justify-center border-b border-zinc-200 px-[20px] py-[12px] text-left transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'bg-black text-white' : ($loop->odd ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100' : 'bg-white text-zinc-700 hover:bg-zinc-100') }}">
                                         <span class="block w-full truncate font-medium" title="{{ $fullDayLabel }}">{{ $fullDayLabel }}</span>
                                         <span class="mt-[3px] flex w-full min-w-0 items-center {{ $selectedDate === $day['date'] ? 'text-white/70' : 'text-zinc-500' }}" title="{{ $day['complete'] }} completos"><span class="w-[36px] shrink-0 text-right tabular-nums">{{ $day['complete'] }}</span><span class="ml-[8px] truncate">completos</span></span>
                                         <span class="mt-[2px] flex w-full min-w-0 items-center {{ $selectedDate === $day['date'] ? 'text-white/70' : 'text-zinc-500' }}" title="{{ $day['partial'] }} parciales"><span class="w-[36px] shrink-0 text-right tabular-nums">{{ $day['partial'] }}</span><span class="ml-[8px] truncate">parciales</span></span>
