@@ -33,6 +33,10 @@
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb { opacity: 1; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         .backup-storage-monochrome { background: #fff; color: #3f3f46; font-size: 15px; }
+        .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
+            font-size: 15px !important;
+        }
+        .backup-storage-monochrome h1 { font-size: 20px !important; }
         .backup-storage-monochrome button,
         .backup-storage-monochrome input { box-shadow: none; }
         .backup-storage-monochrome button:focus,
