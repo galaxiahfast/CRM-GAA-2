@@ -33,7 +33,8 @@ document.addEventListener('alpine:init', () => {
             event.preventDefault();
             const startX = event.clientX;
             const startScrollLeft = scroller.scrollLeft;
-            const trackTravel = Math.max(1, scroller.clientWidth - this.width);
+            const rightOffset = Number(scroller.dataset.scrollRightOffset || 0);
+            const trackTravel = Math.max(1, scroller.clientWidth - rightOffset - this.width);
             const scrollRange = Math.max(1, scroller.scrollWidth - scroller.clientWidth);
             const move = (moveEvent) => {
                 scroller.scrollLeft = startScrollLeft + ((moveEvent.clientX - startX) / trackTravel) * scrollRange;
@@ -64,7 +65,8 @@ document.addEventListener('alpine:init', () => {
             this.visible = scroller.clientHeight > 0 && scroller.scrollHeight > scroller.clientHeight;
             if (this.visible) {
                 const offset = Number(scroller.dataset.scrollTopOffset || 0);
-                const viewport = Math.max(1, scroller.clientHeight - offset);
+                const bottomOffset = Number(scroller.dataset.scrollBottomOffset || 0);
+                const viewport = Math.max(1, scroller.clientHeight - offset - bottomOffset);
                 const content = Math.max(viewport, scroller.scrollHeight - offset);
                 this.height = Math.max(32, viewport * viewport / content);
                 const travel = Math.max(0, viewport - this.height);
@@ -74,9 +76,10 @@ document.addEventListener('alpine:init', () => {
 
             this.horizontalVisible = scroller.clientWidth > 0 && scroller.scrollWidth > scroller.clientWidth;
             if (this.horizontalVisible) {
-                const viewport = scroller.clientWidth;
-                this.width = Math.max(48, viewport * viewport / scroller.scrollWidth);
-                const travel = Math.max(0, viewport - this.width);
+                const rightOffset = Number(scroller.dataset.scrollRightOffset || 0);
+                const trackWidth = Math.max(1, scroller.clientWidth - rightOffset);
+                this.width = Math.max(48, trackWidth * scroller.clientWidth / scroller.scrollWidth);
+                const travel = Math.max(0, trackWidth - this.width);
                 const range = Math.max(1, scroller.scrollWidth - viewport);
                 this.left = (scroller.scrollLeft / range) * travel;
             }

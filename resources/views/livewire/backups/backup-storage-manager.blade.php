@@ -33,6 +33,10 @@
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
+        .backup-record-group > tr { background: inherit; }
+        .backup-record-group > tr:first-child:hover { background: #f4f4f5; }
+        .backup-record-detail > div > :where(a, div) { background: transparent !important; }
+        .backup-record-detail > div > a:hover { background: rgba(228, 228, 231, 0.55) !important; }
         .backup-storage-monochrome { background: #fff; color: #3f3f46; font-size: 15px; }
         .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
             font-size: 15px !important;
@@ -198,7 +202,7 @@
                                 @endif
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1" wire:loading.class="opacity-60" wire:target="selectDate">
-                                <div x-ref="scroller" data-scroll-top-offset="70" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                                <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="16" data-scroll-right-offset="10" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1060px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[340px]"></colgroup>
                                     <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700"><tr class="h-[70px] whitespace-nowrap border-b border-zinc-300 text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold">Empresa</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
@@ -208,8 +212,8 @@
                                             $recordDestinations = $completedDestinations[$record['id']] ?? [];
                                             $latestDestination = $recordDestinations[0] ?? null;
                                         @endphp
-                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="border-b border-zinc-200 last:border-b-0">
-                                            <tr @click="open = !open" class="h-[70px] cursor-pointer transition hover:bg-zinc-50/70" :class="open ? 'bg-zinc-50/70' : ''">
+                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group border-b border-zinc-200 {{ $loop->even ? 'bg-zinc-50/70' : 'bg-white' }} last:border-b-0">
+                                            <tr @click="open = !open" class="h-[70px] cursor-pointer transition">
                                                 <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px] text-center font-mono tabular-nums text-zinc-600">{{ $record['time'] }}</td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="text-emerald-700">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-red-700">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-red-700">Falta BAK</span>@else<span class="text-red-700">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-black" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
@@ -227,7 +231,7 @@
                                                 </td>
                                             </tr>
                                             <tr x-show="open" x-cloak>
-                                                <td colspan="4" class="bg-white p-0">
+                                                <td colspan="4" class="backup-record-detail bg-inherit p-0">
                                                     <div class="grid border-t border-zinc-200 md:grid-cols-2 md:divide-x md:divide-zinc-200">
                                                         @if($record['database'])
                                                             <a @click.stop href="{{ route('activity-backups.server.download', ['kind' => 'database', 'token' => $record['database']['token']]) }}" class="flex min-h-[78px] min-w-0 items-center justify-between gap-[15px] bg-white px-[20px] py-[15px] transition hover:bg-zinc-50" title="Descargar {{ $record['database']['name'] }}"><span class="flex min-w-0 items-center gap-[12px]"><span class="grid h-10 w-10 shrink-0 place-items-center border border-zinc-200 bg-white text-black"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM14 2v5h5"/></svg></span><span class="min-w-0"><span class="block font-medium text-black">Base de datos · BAK</span><span class="mt-[2px] block truncate text-zinc-500">{{ $record['database']['name'] }} · {{ $formatBytes($record['database']['size']) }}</span></span></span><svg class="h-5 w-5 shrink-0 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
