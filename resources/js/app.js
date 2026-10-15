@@ -10,6 +10,9 @@ document.addEventListener('alpine:init', () => {
         visible: false,
         height: 32,
         top: 0,
+        horizontalVisible: false,
+        width: 32,
+        left: 0,
         observer: null,
         init() {
             this.$nextTick(() => {
@@ -24,17 +27,29 @@ document.addEventListener('alpine:init', () => {
         update() {
             const scroller = this.$refs.scroller;
 
-            if (!scroller || scroller.clientHeight <= 0 || scroller.scrollHeight <= scroller.clientHeight) {
+            if (!scroller) {
                 this.visible = false;
+                this.horizontalVisible = false;
                 return;
             }
 
-            const viewport = scroller.clientHeight;
-            this.height = Math.max(32, viewport * viewport / scroller.scrollHeight);
-            const travel = Math.max(0, viewport - this.height);
-            const range = Math.max(1, scroller.scrollHeight - viewport);
-            this.top = (scroller.scrollTop / range) * travel;
-            this.visible = true;
+            this.visible = scroller.clientHeight > 0 && scroller.scrollHeight > scroller.clientHeight;
+            if (this.visible) {
+                const viewport = scroller.clientHeight;
+                this.height = Math.max(32, viewport * viewport / scroller.scrollHeight);
+                const travel = Math.max(0, viewport - this.height);
+                const range = Math.max(1, scroller.scrollHeight - viewport);
+                this.top = (scroller.scrollTop / range) * travel;
+            }
+
+            this.horizontalVisible = scroller.clientWidth > 0 && scroller.scrollWidth > scroller.clientWidth;
+            if (this.horizontalVisible) {
+                const viewport = scroller.clientWidth;
+                this.width = Math.max(48, viewport * viewport / scroller.scrollWidth);
+                const travel = Math.max(0, viewport - this.width);
+                const range = Math.max(1, scroller.scrollWidth - viewport);
+                this.left = (scroller.scrollLeft / range) * travel;
+            }
         },
     }));
 });
