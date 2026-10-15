@@ -167,19 +167,24 @@
                 </header>
 
                 @if ($activeView === 'backups')
-                    <div class="grid min-h-[520px] xl:h-[790px] xl:grid-cols-[260px_minmax(0,1fr)]">
-                        <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-zinc-50 p-[15px] xl:border-b-0 xl:border-r">
-                            <div class="flex items-center justify-between px-[5px] py-[8px]"><h2 class="font-semibold text-black">Días con respaldos</h2><span class="text-[12px] text-zinc-400">{{ count($catalog['dates']) }}</span></div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative mt-[8px] min-h-0 flex-1">
-                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full space-y-[5px] overflow-y-auto pr-[5px]">
+                    <div class="grid min-h-[520px] xl:h-[790px] xl:grid-cols-[330px_minmax(0,1fr)]">
+                        <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
+                            <div class="grid h-[70px] shrink-0 grid-cols-[minmax(0,1fr)_90px_90px] items-center border-b border-zinc-300 bg-zinc-100 text-center text-zinc-700">
+                                <span class="truncate border-r border-zinc-300 px-[10px] font-semibold">Día</span>
+                                <span class="truncate border-r border-zinc-300 px-[8px] font-semibold">Completos</span>
+                                <span class="truncate px-[8px] font-semibold">Parciales</span>
+                            </div>
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
+                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($catalog['dates'] as $day)
                                     @php $dayDate = \Carbon\CarbonImmutable::parse($day['date']); @endphp
-                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" class="flex w-full items-center justify-between rounded-xl px-[12px] py-[11px] text-left transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'bg-black text-white' : 'text-zinc-600 hover:bg-white' }}">
-                                        <span><span class="block font-medium {{ $selectedDate === $day['date'] ? 'text-white' : 'text-black' }}">{{ $dayDate->isToday() ? 'Hoy' : $dayDate->translatedFormat('d M Y') }}</span><span class="mt-[2px] block text-[11px] {{ $selectedDate === $day['date'] ? 'text-white/65' : 'text-zinc-400' }}">{{ $day['complete'] }} completos · {{ $day['partial'] }} parciales</span></span>
-                                        <span class="rounded-lg px-[8px] py-[4px] text-[11px] tabular-nums {{ $selectedDate === $day['date'] ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $day['total'] }}</span>
+                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" class="grid h-[70px] w-full grid-cols-[minmax(0,1fr)_90px_90px] items-stretch border-b border-zinc-200 text-center transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'bg-black text-white' : ($loop->odd ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100' : 'bg-white text-zinc-700 hover:bg-zinc-100') }}">
+                                        <span class="flex min-w-0 items-center justify-center border-r border-zinc-200 px-[10px]"><span class="truncate font-medium" title="{{ $dayDate->translatedFormat('d M Y') }}">{{ $dayDate->isToday() ? 'Hoy' : $dayDate->translatedFormat('d M Y') }}</span></span>
+                                        <span class="flex min-w-0 items-center justify-center border-r border-zinc-200 px-[8px]"><span class="truncate tabular-nums" title="{{ $day['complete'] }} completos">{{ $day['complete'] }}</span></span>
+                                        <span class="flex min-w-0 items-center justify-center px-[8px]"><span class="truncate tabular-nums" title="{{ $day['partial'] }} parciales">{{ $day['partial'] }}</span></span>
                                     </button>
                                 @empty
-                                    <p class="p-[12px] text-[13px] text-zinc-400">No se encontraron respaldos con fecha válida.</p>
+                                    <p class="truncate p-[20px] text-zinc-400" title="No se encontraron respaldos con fecha válida.">No se encontraron respaldos con fecha válida.</p>
                                 @endforelse
                                 </div>
                                 <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
