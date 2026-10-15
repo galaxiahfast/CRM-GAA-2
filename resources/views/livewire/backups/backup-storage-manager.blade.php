@@ -169,10 +169,11 @@
 
                 @if ($activeView === 'backups')
                     <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
-                        <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
-                            <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700"><span class="truncate font-semibold">Fecha de respaldos</span></div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
-                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
+                        <aside class="backup-soft-panel h-[520px] min-h-0 overflow-hidden border-b border-zinc-200 bg-white xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
+                            <div class="flex h-full min-h-0 flex-col xl:absolute xl:inset-0">
+                                <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700"><span class="truncate font-semibold">Fecha de respaldos</span></div>
+                                <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
+                                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($catalog['dates'] as $day)
                                     @php
                                         $dayDate = \Carbon\CarbonImmutable::parse($day['date']);
@@ -186,8 +187,9 @@
                                 @empty
                                     <p class="truncate p-[20px] text-zinc-400" title="No se encontraron respaldos con fecha válida.">No se encontraron respaldos con fecha válida.</p>
                                 @endforelse
+                                    </div>
+                                    <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                 </div>
-                                <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
                         </aside>
 
