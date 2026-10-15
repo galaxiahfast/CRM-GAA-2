@@ -433,7 +433,7 @@ class ContpaqiBackupCatalog
             'stem' => pathinfo($filename, PATHINFO_FILENAME),
             'company' => $matches['company'],
             'date' => $date->toDateString(),
-            'time' => $date->format('H:i'),
+            'time' => $date->format('H:i:s'),
             'occurred_at' => $date->toIso8601String(),
         ];
     }

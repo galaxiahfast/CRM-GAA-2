@@ -14,6 +14,7 @@ document.addEventListener('alpine:init', () => {
         width: 32,
         left: 0,
         observer: null,
+        stopHorizontalDrag: null,
         init() {
             this.$nextTick(() => {
                 this.update();
@@ -23,6 +24,33 @@ document.addEventListener('alpine:init', () => {
         },
         destroy() {
             this.observer?.disconnect();
+            this.stopHorizontalDrag?.();
+        },
+        startHorizontalDrag(event) {
+            const scroller = this.$refs.scroller;
+            if (!scroller || !this.horizontalVisible) return;
+
+            event.preventDefault();
+            const startX = event.clientX;
+            const startScrollLeft = scroller.scrollLeft;
+            const trackTravel = Math.max(1, scroller.clientWidth - this.width);
+            const scrollRange = Math.max(1, scroller.scrollWidth - scroller.clientWidth);
+            const move = (moveEvent) => {
+                scroller.scrollLeft = startScrollLeft + ((moveEvent.clientX - startX) / trackTravel) * scrollRange;
+                this.update();
+            };
+            const stop = () => {
+                window.removeEventListener('pointermove', move);
+                window.removeEventListener('pointerup', stop);
+                window.removeEventListener('pointercancel', stop);
+                this.stopHorizontalDrag = null;
+            };
+
+            this.stopHorizontalDrag?.();
+            this.stopHorizontalDrag = stop;
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', stop);
+            window.addEventListener('pointercancel', stop);
         },
         update() {
             const scroller = this.$refs.scroller;
@@ -35,11 +63,13 @@ document.addEventListener('alpine:init', () => {
 
             this.visible = scroller.clientHeight > 0 && scroller.scrollHeight > scroller.clientHeight;
             if (this.visible) {
-                const viewport = scroller.clientHeight;
-                this.height = Math.max(32, viewport * viewport / scroller.scrollHeight);
+                const offset = Number(scroller.dataset.scrollTopOffset || 0);
+                const viewport = Math.max(1, scroller.clientHeight - offset);
+                const content = Math.max(viewport, scroller.scrollHeight - offset);
+                this.height = Math.max(32, viewport * viewport / content);
                 const travel = Math.max(0, viewport - this.height);
-                const range = Math.max(1, scroller.scrollHeight - viewport);
-                this.top = (scroller.scrollTop / range) * travel;
+                const range = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
+                this.top = offset + (scroller.scrollTop / range) * travel;
             }
 
             this.horizontalVisible = scroller.clientWidth > 0 && scroller.scrollWidth > scroller.clientWidth;

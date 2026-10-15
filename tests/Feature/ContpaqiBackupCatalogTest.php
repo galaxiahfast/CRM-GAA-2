@@ -190,8 +190,8 @@ class ContpaqiBackupCatalogTest extends TestCase
         $records = collect($catalog->catalog(true)['records'])->where('date', now()->toDateString())->values();
         $availability = app(ContpaqiBackupExport::class)->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
 
-        $this->assertSame('available', $availability[$records->firstWhere('time', '17:30')['id']]);
-        $this->assertSame('older', $availability[$records->firstWhere('time', '09:00')['id']]);
+        $this->assertSame('available', $availability[$records->firstWhere('time', '17:30:00')['id']]);
+        $this->assertSame('older', $availability[$records->firstWhere('time', '09:00:00')['id']]);
     }
 
     public function test_a_newer_server_backup_is_marked_for_update_after_the_company_was_exported(): void
@@ -202,7 +202,7 @@ class ContpaqiBackupCatalogTest extends TestCase
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
 
         $catalog = app(ContpaqiBackupCatalog::class);
-        $oldRecord = collect($catalog->catalog(true)['records'])->firstWhere('time', '09:00');
+        $oldRecord = collect($catalog->catalog(true)['records'])->firstWhere('time', '09:00:00');
         $export = app(ContpaqiBackupExport::class);
         $state = $export->create(now()->toDateString(), [$oldRecord['id']], 1, 'ANGEL MOO', $catalog);
         $this->exportIds[] = $state['id'];
@@ -213,7 +213,7 @@ class ContpaqiBackupCatalogTest extends TestCase
         $records = collect($catalog->catalog(true)['records'])->where('date', now()->toDateString())->values();
         $availability = $export->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
 
-        $this->assertSame('outdated', $availability[$records->firstWhere('time', '17:30')['id']]);
-        $this->assertSame('older', $availability[$records->firstWhere('time', '09:00')['id']]);
+        $this->assertSame('outdated', $availability[$records->firstWhere('time', '17:30:00')['id']]);
+        $this->assertSame('older', $availability[$records->firstWhere('time', '09:00:00')['id']]);
     }
 }
