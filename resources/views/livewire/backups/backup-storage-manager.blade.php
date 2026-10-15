@@ -72,11 +72,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-[12px]">
-                <span class="inline-flex h-[42px] items-center gap-[8px] rounded-xl border border-zinc-200 bg-white px-[15px] text-[13px] text-zinc-500">
-                    <span class="h-2 w-2 rounded-full {{ $catalog['connected'] ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-                    {{ $catalog['connected'] ? 'Servidor conectado' : 'Servidor sin conexión' }}
-                </span>
-                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex items-center gap-[8px] bg-transparent p-0 font-medium text-zinc-600 transition hover:text-black disabled:opacity-50">
+                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex items-center gap-[8px] bg-transparent p-0 font-medium text-black transition hover:text-zinc-600 disabled:opacity-50">
                     <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
                     <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
                     <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
@@ -114,10 +110,10 @@
 
             <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
                 <header class="flex flex-col gap-[15px] border-b border-zinc-200 p-[20px] xl:flex-row xl:items-center xl:justify-between">
-                    <nav class="flex items-center gap-[5px] rounded-xl bg-zinc-100 p-[4px]" aria-label="Vistas de respaldos">
-                        <button type="button" wire:click="selectView('backups')" class="h-[38px] rounded-lg px-[15px] transition {{ $activeView === 'backups' ? 'bg-white font-medium text-black shadow-sm' : 'text-zinc-500' }}">Respaldos por día</button>
-                        <button type="button" wire:click="selectView('companies')" class="h-[38px] rounded-lg px-[15px] transition {{ $activeView === 'companies' ? 'bg-white font-medium text-black shadow-sm' : 'text-zinc-500' }}">Estado de empresas</button>
-                    </nav>
+                    <div>
+                        <h2 class="font-semibold text-black">Generar respaldo de la empresa</h2>
+                        <p class="mt-[3px] text-[13px] text-zinc-500">Configura y genera los respaldos fácilmente.</p>
+                    </div>
                     <label class="relative block w-full xl:w-[400px]">
                         <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
                         <input type="search" wire:model.live.debounce.300ms="search" placeholder="Buscar empresa o archivo…" class="h-[46px] w-full rounded-xl border-zinc-200 bg-white pl-[44px] pr-[15px] text-[14px] shadow-none focus:border-[#1A3A6B] focus:ring-[#1A3A6B]/10">

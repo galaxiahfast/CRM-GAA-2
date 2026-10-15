@@ -82,8 +82,9 @@ class BackupStorageManagerTest extends TestCase
             ->assertOk()
             ->assertSee('Gestión de Respaldos')
             ->assertSee('Consulta de solo lectura')
-            ->assertSee('Respaldos por día')
-            ->assertSee('Estado de empresas')
+            ->assertSee('Generar respaldo de la empresa')
+            ->assertSee('Configura y genera los respaldos fácilmente.')
+            ->assertDontSee('Servidor conectado')
             ->assertDontSee('Subir respaldos')
             ->assertDontSee('Eliminar respaldo')
             ->assertDontSee('Cancelar subida');
