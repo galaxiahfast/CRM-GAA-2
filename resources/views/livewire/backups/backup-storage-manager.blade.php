@@ -67,7 +67,7 @@
                 </span>
                 <div class="min-w-0">
                     <h1 class="text-xl font-semibold tracking-tight text-black">Gestión de Respaldos</h1>
-                    <p class="mt-[4px] text-zinc-500">Consulta de solo lectura del servidor. Aquí no se crean, cambian ni eliminan archivos.</p>
+                    <p class="mt-[4px] text-zinc-500">Consulta de solo lectura del servidor.</p>
                 </div>
             </div>
 
@@ -97,33 +97,6 @@
                 </div>
             </section>
         @else
-            <section class="grid gap-[15px] sm:grid-cols-2 xl:grid-cols-4">
-                <article class="backup-status-card relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-[#1A3A6B]"></span>
-                    <div class="flex items-center justify-between"><span class="text-zinc-500">Empresas detectadas</span><span class="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 21V5l8-3v19M4 9h8m-4-3v.01M8 13v.01M8 17v.01M12 8h8v13M16 12h.01M16 16h.01"/></svg></span></div>
-                    <p class="mt-[14px] text-[28px] font-semibold tabular-nums text-black">{{ number_format($summary['companies']) }}</p>
-                    <p class="mt-[4px] text-[12px] text-zinc-400">Carpetas ct* del servidor</p>
-                </article>
-                <article class="backup-status-card relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></span>
-                    <div class="flex items-center justify-between"><span class="text-zinc-500">Respaldadas hoy</span><span class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-600"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/></svg></span></div>
-                    <p class="mt-[14px] text-[28px] font-semibold tabular-nums text-black">{{ number_format($summary['complete_today']) }}</p>
-                    <p class="mt-[4px] text-[12px] text-zinc-400">Con BAK y documento digital</p>
-                </article>
-                <article class="backup-status-card relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-amber-500"></span>
-                    <div class="flex items-center justify-between"><span class="text-zinc-500">Pendientes hoy</span><span class="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 text-amber-600"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span></div>
-                    <p class="mt-[14px] text-[28px] font-semibold tabular-nums text-black">{{ number_format($summary['missing_today']) }}</p>
-                    <p class="mt-[4px] text-[12px] text-zinc-400">Sin pareja completa hoy</p>
-                </article>
-                <article class="backup-status-card relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-[20px] shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-zinc-500"></span>
-                    <div class="flex items-center justify-between"><span class="text-zinc-500">Lectura del catálogo</span><span class="grid h-9 w-9 place-items-center rounded-xl bg-zinc-100 text-zinc-600"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span></div>
-                    <p class="mt-[14px] text-[28px] font-semibold tabular-nums text-black">{{ number_format((float) $catalog['scan_seconds'], 1) }} s</p>
-                    <p class="mt-[4px] truncate text-[12px] text-zinc-400" title="{{ $catalog['root'] }}">{{ $catalog['root'] }}</p>
-                </article>
-            </section>
-
             @if($syncResult)
                 <section class="rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-red-200 bg-red-50' : 'border-zinc-200 bg-white' }} p-[15px]">
                     @if($syncResult['error'] ?? null)
