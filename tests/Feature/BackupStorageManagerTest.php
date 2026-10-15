@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\AssembleBackupUpload;
+use App\Jobs\CopyContpaqiBackups;
 use App\Models\BackupUpload;
 use App\Models\Role;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Services\Backups\BackupArchiveExtractor;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -228,6 +230,33 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('selectedRecords', [$record['id']])
             ->set('destinationFolder', 'ANGEL MOO')
             ->assertSet('selectedRecords', [$record['id']]);
+    }
+
+    public function test_export_recovers_the_fixed_destination_and_runs_after_the_response_without_a_worker(): void
+    {
+        Bus::fake([CopyContpaqiBackups::class]);
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $record = collect(app(ContpaqiBackupCatalog::class)->dashboard(now()->toDateString())['records'])
+            ->firstWhere('complete', true);
+        $admin = $this->user('Administrador', 'admin-automatic-export@datamid.test');
+
+        $component = Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('destinationKey', 'unidad-anterior')
+            ->set('destinationFolder', 'ANGEL MOO')
+            ->set('selectedRecords', [$record['id']])
+            ->call('startExport')
+            ->assertSet('exportMessage', null)
+            ->assertSet('destinationKey', 'principal')
+            ->assertSet('exportStatus.status', 'queued');
+
+        $exportId = $component->get('currentExportId');
+        $this->exportStateIds[] = $exportId;
+        Bus::assertDispatchedAfterResponse(CopyContpaqiBackups::class, fn (CopyContpaqiBackups $job): bool => $job->exportId === $exportId && $job->connection === 'sync'
+        );
     }
 
     public function test_all_users_see_the_same_active_export_and_cannot_start_another_one(): void

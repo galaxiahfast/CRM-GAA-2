@@ -142,9 +142,10 @@ class BackupStorageManager extends Component
                 $catalog,
                 $this->destinationKey,
             );
+            $this->destinationKey = (string) $state['destination_key'];
             $this->currentExportId = $state['id'];
             $this->exportStatus = $state;
-            CopyContpaqiBackups::dispatch($state['id']);
+            CopyContpaqiBackups::dispatchAfterResponse($state['id'])->onConnection('sync');
             $this->refreshExportStatus($export);
             $this->selectedRecords = [];
         } catch (RuntimeException $exception) {

@@ -35,6 +35,11 @@ class CopyContpaqiBackups implements ShouldBeUnique, ShouldQueue
 
     public function handle(ContpaqiBackupExport $export, ContpaqiBackupCatalog $catalog): void
     {
+        ignore_user_abort(true);
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
         $export->execute($this->exportId, $catalog);
     }
 

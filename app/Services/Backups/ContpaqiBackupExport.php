@@ -29,7 +29,7 @@ class ContpaqiBackupExport
         $definitions = $this->destinationDefinitions();
         $definition = $key === null || $key === ''
             ? ($definitions[0] ?? null)
-            : collect($definitions)->firstWhere('key', $key);
+            : (collect($definitions)->firstWhere('key', $key) ?? ($definitions[0] ?? null));
 
         if ($definition === null) {
             return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => 'Memoria no seleccionada'];
