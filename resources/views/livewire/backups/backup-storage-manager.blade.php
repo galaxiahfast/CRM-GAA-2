@@ -222,8 +222,12 @@
                                             </div>
                                         </div>
                             </div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1" wire:loading.class="opacity-60" wire:target="selectDate">
-                                <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
+                                <div wire:loading.flex wire:target="selectDate" class="absolute inset-0 z-30 hidden flex-col items-center justify-center bg-white text-zinc-500">
+                                    <svg class="h-9 w-9 animate-spin text-[#1A3A6B]" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-20" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"/><path class="opacity-90" fill="currentColor" d="M21 12a9 9 0 0 0-9-9v3a6 6 0 0 1 6 6h3Z"/></svg>
+                                    <span class="mt-[12px] font-medium text-black">Cargando respaldos…</span>
+                                </div>
+                                <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[290px]"></colgroup>
                                     <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold">Empresa</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
@@ -273,8 +277,8 @@
                                     @endforelse
                                 </table>
                                 </div>
-                                <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
-                                <span x-show="horizontalVisible" x-cloak @pointerdown="startHorizontalDrag($event)" class="backup-catalog-scroll-thumb-x" :style="`width:${width}px; transform:translateX(${left}px)`" aria-label="Desplazar tabla horizontalmente"></span>
+                                <span wire:loading.remove wire:target="selectDate" x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                <span wire:loading.remove wire:target="selectDate" x-show="horizontalVisible" x-cloak @pointerdown="startHorizontalDrag($event)" class="backup-catalog-scroll-thumb-x" :style="`width:${width}px; transform:translateX(${left}px)`" aria-label="Desplazar tabla horizontalmente"></span>
                             </div>
                         </div>
                     </div>
