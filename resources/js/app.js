@@ -80,7 +80,7 @@ document.addEventListener('alpine:init', () => {
                 const trackWidth = Math.max(1, scroller.clientWidth - rightOffset);
                 this.width = Math.max(48, trackWidth * scroller.clientWidth / scroller.scrollWidth);
                 const travel = Math.max(0, trackWidth - this.width);
-                const range = Math.max(1, scroller.scrollWidth - viewport);
+                const range = Math.max(1, scroller.scrollWidth - scroller.clientWidth);
                 this.left = (scroller.scrollLeft / range) * travel;
             }
         },

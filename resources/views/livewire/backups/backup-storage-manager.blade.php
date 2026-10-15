@@ -34,7 +34,7 @@
         .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: #1A3A6B; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
-        .backup-catalog-scroll-always-visible > .backup-catalog-scroll-thumb { opacity: 1; }
+        .backup-catalog-scroll-horizontal-visible > .backup-catalog-scroll-thumb-x { opacity: 1; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
@@ -171,7 +171,7 @@
                     <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
                         <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
                             <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700"><span class="truncate font-semibold">Fecha de respaldos</span></div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-always-visible relative min-h-0 flex-1">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
                                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($catalog['dates'] as $day)
                                     @php
@@ -223,7 +223,7 @@
                                             </div>
                                         </div>
                             </div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative h-[490px] min-h-0 flex-none">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-horizontal-visible relative h-[490px] min-h-0 flex-none">
                                 <div wire:loading.flex wire:target="selectDate" class="absolute inset-0 z-30 hidden flex-col items-center justify-center bg-white text-zinc-500">
                                     <svg class="h-9 w-9 animate-spin text-[#1A3A6B]" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-20" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"/><path class="opacity-90" fill="currentColor" d="M21 12a9 9 0 0 0-9-9v3a6 6 0 0 1 6 6h3Z"/></svg>
                                     <span class="mt-[12px] font-medium text-black">Cargando respaldos…</span>
