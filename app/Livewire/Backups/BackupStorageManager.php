@@ -42,6 +42,8 @@ class BackupStorageManager extends Component
 
     public string $destinationFolder = '';
 
+    public ?string $selectionNotice = null;
+
     public function mount(ContpaqiBackupExport $export): void
     {
         Gate::authorize('access-system-backups');
@@ -76,6 +78,7 @@ class BackupStorageManager extends Component
         $this->selectedRecords = [];
         $this->exportMessage = null;
         $this->syncResult = null;
+        $this->selectionNotice = null;
     }
 
     public function selectAllComplete(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
@@ -92,17 +95,33 @@ class BackupStorageManager extends Component
     public function clearSelection(): void
     {
         $this->selectedRecords = [];
+        $this->selectionNotice = null;
+    }
+
+    public function updatedSelectedRecords(): void
+    {
+        $this->selectionNotice = null;
+    }
+
+    public function updatedStatus(string $status): void
+    {
+        if (in_array($status, ['backed_up', 'partial'], true)) {
+            $this->selectedRecords = [];
+            $this->selectionNotice = null;
+        }
     }
 
     public function updatedDestinationFolder(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         $this->syncResult = null;
         $this->exportMessage = null;
+        $this->selectionNotice = null;
 
         if ($this->destinationFolder === '' || $this->selectedRecords === []) {
             return;
         }
 
+        $selectedBeforeValidation = count($this->selectedRecords);
         $records = $catalog->dashboard($this->selectedDate)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
         $selectableIds = collect($records)
@@ -113,6 +132,13 @@ class BackupStorageManager extends Component
             ->intersect($selectableIds)
             ->values()
             ->all();
+
+        $removed = $selectedBeforeValidation - count($this->selectedRecords);
+        if ($removed > 0) {
+            $this->selectionNotice = $removed === 1
+                ? 'Se deseleccionó 1 empresa porque ya está respaldada o no está disponible en esta carpeta.'
+                : "Se deseleccionaron {$removed} empresas porque ya están respaldadas o no están disponibles en esta carpeta.";
+        }
     }
 
     public function updatedDestinationKey(): void
@@ -120,6 +146,7 @@ class BackupStorageManager extends Component
         $this->destinationFolder = '';
         $this->syncResult = null;
         $this->exportMessage = null;
+        $this->selectionNotice = null;
     }
 
     public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void

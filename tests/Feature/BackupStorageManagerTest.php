@@ -224,12 +224,43 @@ class BackupStorageManagerTest extends TestCase
             ->firstWhere('complete', true);
         $admin = $this->user('Administrador', 'admin-select-first@datamid.test');
 
+        $component = Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('selectedRecords', [$record['id']])
+            ->assertSet('selectedRecords', [$record['id']])
+            ->assertSee('1 empresa seleccionada')
+            ->assertSee('Respaldar 1 empresa')
+            ->set('status', 'backed_up')
+            ->assertSet('selectedRecords', [])
+            ->set('status', 'all')
+            ->set('selectedRecords', [$record['id']])
+            ->set('destinationFolder', 'ANGEL MOO')
+            ->assertSet('selectedRecords', [$record['id']]);
+
+        $component->assertDontSee('Se deseleccionó 1 empresa');
+    }
+
+    public function test_selecting_a_folder_explains_when_an_already_backed_up_company_is_removed(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->dashboard(now()->toDateString())['records'])->firstWhere('complete', true);
+        $export = app(ContpaqiBackupExport::class);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+        $this->exportStateIds[] = $state['id'];
+        $export->execute($state['id'], $catalog);
+        $admin = $this->user('Administrador', 'admin-selection-validation@datamid.test');
+
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->set('selectedRecords', [$record['id']])
             ->assertSet('selectedRecords', [$record['id']])
             ->set('destinationFolder', 'ANGEL MOO')
-            ->assertSet('selectedRecords', [$record['id']]);
+            ->assertSet('selectedRecords', [])
+            ->assertSee('Se deseleccionó 1 empresa porque ya está respaldada');
     }
 
     public function test_export_recovers_the_fixed_destination_and_runs_after_the_response_without_a_worker(): void
