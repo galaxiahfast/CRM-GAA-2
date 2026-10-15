@@ -76,15 +76,10 @@
                     <span class="h-2 w-2 rounded-full {{ $catalog['connected'] ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
                     {{ $catalog['connected'] ? 'Servidor conectado' : 'Servidor sin conexión' }}
                 </span>
-                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex h-[42px] items-center gap-[9px] rounded-xl border border-zinc-200 bg-white px-[16px] font-medium text-black transition hover:bg-zinc-50 disabled:opacity-60">
+                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex items-center gap-[8px] bg-transparent p-0 font-medium text-zinc-600 transition hover:text-black disabled:opacity-50">
                     <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
-                    <span wire:loading.remove wire:target="verifySynchronization">Comprobar sincronización</span>
-                    <span wire:loading wire:target="verifySynchronization">Comprobando…</span>
-                </button>
-                <button type="button" wire:click="refreshCatalog" wire:loading.attr="disabled" class="inline-flex h-[42px] items-center gap-[9px] rounded-xl bg-black px-[20px] font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60">
-                    <svg wire:loading.class="animate-spin" wire:target="refreshCatalog" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
-                    <span wire:loading.remove wire:target="refreshCatalog">Actualizar</span>
-                    <span wire:loading wire:target="refreshCatalog">Leyendo…</span>
+                    <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
+                    <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
                 </button>
             </div>
         </section>

@@ -76,13 +76,6 @@ class BackupStorageManager extends Component
         $this->syncResult = null;
     }
 
-    public function refreshCatalog(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
-    {
-        $catalog->forget();
-        $export->forgetDetectedVolumes();
-        $this->dispatch('backup-catalog-refreshed');
-    }
-
     public function selectAllComplete(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         $records = $catalog->dashboard($this->selectedDate)['records'];
@@ -185,6 +178,9 @@ class BackupStorageManager extends Component
         Gate::authorize('access-system-backups');
 
         try {
+            $catalog->forget();
+            $export->forgetDetectedVolumes();
+
             if ($this->selectedDate === now()->toDateString()) {
                 $catalog->refreshToday();
             }
@@ -208,6 +204,7 @@ class BackupStorageManager extends Component
                 'destination_connected' => $export->destination($this->destinationKey)['connected'],
                 'error' => null,
             ];
+            $this->dispatch('backup-catalog-refreshed');
         } catch (RuntimeException $exception) {
             $this->syncResult = [
                 'checked_at' => now()->toIso8601String(),
