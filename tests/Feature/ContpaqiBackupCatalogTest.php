@@ -141,6 +141,9 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertSame('completed', $export->find($state['id'])['status']);
         $this->assertSame(2, $export->find($state['id'])['completed_files']);
         $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO')[$record['id']]);
+        $completedDestinations = $export->completedDestinations(now()->toDateString());
+        $this->assertArrayHasKey($record['id'], $completedDestinations);
+        $this->assertSame(realpath($destination), realpath($completedDestinations[$record['id']][0]['path']));
 
         try {
             $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);

@@ -140,7 +140,9 @@ class ContpaqiBackupExport
                     'id' => $record['id'],
                     'company_key' => $this->companyKey($record),
                     'company' => $record['company'],
+                    'company_folder' => $record['company_folder'] ?: $record['company'],
                     'status' => 'pending',
+                    'destination_path' => null,
                     'files' => [],
                 ])->values()->all(),
                 'error' => null,
@@ -185,6 +187,7 @@ class ContpaqiBackupExport
                 File::ensureDirectoryExists($archiveDirectory);
                 $state['current_company'] = $record['company'];
                 $state['items'][$recordIndex]['status'] = 'copying';
+                $state['items'][$recordIndex]['destination_path'] = $companyDirectory;
                 $this->write($id, $state);
 
                 foreach ([['database', 'database'], ['archive', 'archive']] as [$kind, $field]) {
@@ -276,6 +279,40 @@ class ContpaqiBackupExport
             })
             ->sortByDesc(fn (array $state): string => (string) ($state['started_at'] ?? $state['created_at'] ?? ''))
             ->first();
+    }
+
+    /** @return array<string, array<int, array{label: string, path: string, completed_at: ?string}>> */
+    public function completedDestinations(string $date): array
+    {
+        if (! is_dir($this->stateDirectory())) {
+            return [];
+        }
+
+        $destinations = [];
+        foreach (File::glob($this->stateDirectory().DIRECTORY_SEPARATOR.'*.json') as $path) {
+            $state = $this->find(pathinfo($path, PATHINFO_FILENAME));
+            if ($state === null || ($state['status'] ?? null) !== 'completed' || ($state['date'] ?? null) !== $date) {
+                continue;
+            }
+
+            foreach ($state['items'] ?? [] as $item) {
+                if (($item['status'] ?? null) !== 'completed' || ! filled($item['id'] ?? null)) {
+                    continue;
+                }
+
+                $destinations[(string) $item['id']][] = [
+                    'label' => (string) ($state['destination_label'] ?? 'Memoria externa'),
+                    'path' => (string) ($item['destination_path'] ?? $state['destination_path'] ?? $state['destination_root'] ?? ''),
+                    'completed_at' => $state['completed_at'] ?? null,
+                ];
+            }
+        }
+
+        foreach ($destinations as &$recordDestinations) {
+            usort($recordDestinations, fn (array $left, array $right): int => strcmp((string) ($right['completed_at'] ?? ''), (string) ($left['completed_at'] ?? '')));
+        }
+
+        return $destinations;
     }
 
     public function markFailed(string $id, string $message): void

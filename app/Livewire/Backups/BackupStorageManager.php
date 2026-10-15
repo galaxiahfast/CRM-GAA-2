@@ -202,11 +202,25 @@ class BackupStorageManager extends Component
 
             $data = $catalog->dashboard($this->selectedDate);
             $availability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
+            $completedDestinations = $export->completedDestinations($this->selectedDate);
             $latestComplete = collect($data['records'])
                 ->where('complete', true)
                 ->groupBy(fn (array $record): string => (string) ($record['company_key'] ?: $record['company']))
                 ->map(fn ($records): array => $records->sortByDesc('occurred_at')->first());
-            $latestStates = $latestComplete->map(fn (array $record): string => $availability[$record['id']] ?? 'destination_missing');
+            $completedRecordIds = collect(array_keys($completedDestinations));
+            $completedCompanyKeys = collect($data['records'])
+                ->whereIn('id', $completedRecordIds)
+                ->map(fn (array $record): string => (string) ($record['company_key'] ?: $record['company']))
+                ->unique();
+            $latestStates = $latestComplete->map(function (array $record) use ($availability, $completedDestinations, $completedCompanyKeys): string {
+                if (isset($completedDestinations[$record['id']])) {
+                    return 'backed_up';
+                }
+
+                return $completedCompanyKeys->contains((string) ($record['company_key'] ?: $record['company']))
+                    ? 'outdated'
+                    : ($availability[$record['id']] ?? 'destination_missing');
+            });
 
             $this->syncResult = [
                 'checked_at' => now()->toIso8601String(),
@@ -254,6 +268,7 @@ class BackupStorageManager extends Component
 
         $today = now()->toDateString();
         $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
+        $completedDestinations = $export->completedDestinations($this->selectedDate);
         $term = Str::lower(Str::ascii(trim($this->search)));
         $recordsForDate = collect($data['records'])
             ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
@@ -261,7 +276,7 @@ class BackupStorageManager extends Component
                 fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated'], true)
             ))
             ->when($this->status === 'backed_up', fn ($records) => $records->filter(
-                fn (array $record): bool => ($recordAvailability[$record['id']] ?? null) === 'backed_up'
+                fn (array $record): bool => isset($completedDestinations[$record['id']])
             ))
             ->when($this->status === 'partial', fn ($records) => $records->where('complete', false))
             ->when($term !== '', fn ($records) => $records->filter(fn (array $record): bool => str_contains(
@@ -320,8 +335,9 @@ class BackupStorageManager extends Component
             'selectedExportCount' => $selectedCompleteRecords->count(),
             'selectedExportBytes' => (int) $selectedCompleteRecords->sum('total_size'),
             'recordAvailability' => $recordAvailability,
+            'completedDestinations' => $completedDestinations,
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
-            'backedUpExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'backed_up')->count(),
+            'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
             'destinationFolders' => $export->destinationFolders($this->destinationKey),
         ])->layout('layouts.app');
