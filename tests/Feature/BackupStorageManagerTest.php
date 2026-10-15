@@ -182,6 +182,23 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('destinationFolder', 'ANGEL MOO');
     }
 
+    public function test_failed_export_is_shown_as_a_temporary_toast_without_progress_panel(): void
+    {
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-export-error@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('exportStatus', [
+                'status' => 'failed',
+                'error' => 'No fue posible copiar el respaldo.',
+                'completed_at' => now()->toIso8601String(),
+            ])
+            ->assertSee('No fue posible copiar el respaldo.')
+            ->assertSeeHtml('x-init="setTimeout(() => visible = false, 5000)"')
+            ->assertDontSee('Copia interrumpida');
+    }
+
     public function test_complete_companies_can_be_selected_before_choosing_the_destination(): void
     {
         $date = now()->format('Ymd');

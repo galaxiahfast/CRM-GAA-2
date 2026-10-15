@@ -34,6 +34,8 @@ class BackupStorageManager extends Component
 
     public ?string $exportMessage = null;
 
+    public int $exportErrorVersion = 0;
+
     public ?array $syncResult = null;
 
     public string $destinationKey = '';
@@ -147,6 +149,9 @@ class BackupStorageManager extends Component
             $this->selectedRecords = [];
         } catch (RuntimeException $exception) {
             $this->exportMessage = $exception->getMessage();
+            $this->exportStatus = null;
+            $this->currentExportId = null;
+            $this->exportErrorVersion++;
         }
     }
 

@@ -11,6 +11,7 @@
         : 0;
     $writableFolders = collect($destinationFolders)->where('writable', true)->values();
     $bothLocationsOnline = ($catalog['connected'] ?? false) && ($exportDestination['connected'] ?? false);
+    $exportError = $exportMessage ?: (($exportStatus['status'] ?? null) === 'failed' ? ($exportStatus['error'] ?? 'La copia no pudo completarse.') : null);
 @endphp
 
 <div class="backup-storage-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
@@ -55,6 +56,16 @@
         html.module-dark-theme .backup-soft-panel { background: #111113 !important; }
         html.module-dark-theme .backup-storage-monochrome:fullscreen { background: #09090b; }
     </style>
+
+    @if($exportError)
+        @teleport('body')
+            <div wire:key="backup-export-error-{{ $exportErrorVersion }}-{{ md5((string) $exportError.($exportStatus['completed_at'] ?? '')) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-red-200 bg-white px-[20px] py-[15px] text-red-700 shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="alert">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg></span>
+                <span class="min-w-0 flex-1">{{ $exportError }}</span>
+                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+            </div>
+        @endteleport
+    @endif
 
     <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
         <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
@@ -163,23 +174,19 @@
                                 </div>
                             </div>
                             <div class="order-last border-t border-zinc-300 bg-zinc-100 p-[20px]">
-                                        <div>
+                                        <div class="grid gap-[12px] xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
                                             <div class="relative" x-data="{ open: false }" @click.outside="open = false"><span class="mb-[8px] block font-medium text-black">Carpeta</span><button type="button" @click="if ({{ $exportDestination['connected'] && $writableFolders->isNotEmpty() && ! $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black"><span class="truncate">{{ $destinationFolder !== '' ? $destinationFolder : 'Selecciona una carpeta…' }}</span><svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button><div x-show="open" x-cloak class="absolute bottom-full z-40 mb-[8px] max-h-[220px] w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">@foreach($writableFolders as $folder)<button type="button" @click="$wire.set('destinationFolder', @js($folder['name'])); open = false" class="flex min-h-[44px] w-full items-center justify-between gap-[12px] px-[15px] text-left text-black hover:bg-zinc-50"><span class="truncate">{{ $folder['name'] }}</span>@if($destinationFolder === $folder['name'])<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif</button>@endforeach</div></div>
+                                            <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl bg-black px-[18px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black disabled:text-white">
+                                                <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
+                                                <span wire:loading.remove wire:target="startExport">Respaldar seleccionadas</span>
+                                                <span wire:loading wire:target="startExport">Validando…</span>
+                                            </button>
                                         </div>
                                         @if($destinationFolder !== '')
                                             <p class="mt-[12px] break-words leading-6 text-zinc-600">Se guardará en <strong class="font-medium text-black">{{ $destinationFolder }}\{{ \Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y') }}\EMPRESA\BAK e INDEX</strong>. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.</p>
                                         @endif
-                                        <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="mt-[12px] inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl bg-black px-[18px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black disabled:text-white">
-                                            <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
-                                            <span wire:loading.remove wire:target="startExport">Respaldar seleccionadas</span>
-                                            <span wire:loading wire:target="startExport">Validando…</span>
-                                        </button>
 
-                                @if($exportMessage)
-                                    <p class="mt-[10px] rounded-lg bg-red-50 px-[12px] py-[9px] text-[12px] text-red-700">{{ $exportMessage }}</p>
-                                @endif
-
-                                @if($exportStatus)
+                                @if($exportStatus && ($exportStatus['status'] ?? null) !== 'failed')
                                     <div class="mt-[12px] rounded-xl border border-zinc-200 bg-white p-[12px]">
                                         <div class="flex items-center justify-between gap-[15px] text-[12px]">
                                             <span class="min-w-0 truncate font-medium text-black">

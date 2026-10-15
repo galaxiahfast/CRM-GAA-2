@@ -164,10 +164,7 @@ class ContpaqiBackupExport
         }
 
         try {
-            $destination = $this->requireDestination($state['destination_key'] ?? null);
-            if ($this->normalize($destination['root']) !== $this->normalize((string) $state['destination_root'])) {
-                throw new RuntimeException('El destino configurado cambió después de iniciar la copia.');
-            }
+            $destination = $this->destinationFromState($state);
 
             $records = $this->selectedRecords($catalog->dashboard($state['date'])['records'], $state['date'], $state['record_ids']);
             $baseDirectory = $this->requireDestinationFolder($state['destination_folder'], $destination['root']);
@@ -559,6 +556,29 @@ class ContpaqiBackupExport
         }
         if (! $destination['connected']) {
             throw new RuntimeException('La memoria externa no está conectada, no se puede leer o coincide con el servidor de origen.');
+        }
+
+        return $destination;
+    }
+
+    private function destinationFromState(array $state): array
+    {
+        $storedRoot = trim((string) ($state['destination_root'] ?? ''));
+        $destination = $this->inspectDestination([
+            'key' => (string) ($state['destination_key'] ?? 'principal'),
+            'label' => (string) ($state['destination_label'] ?? 'Memoria externa'),
+            'root' => $storedRoot,
+            'type' => 'queued',
+        ]);
+
+        if (! $destination['configured'] || ! $destination['connected']) {
+            throw new RuntimeException('La memoria externa no está conectada o ya no se puede leer desde el servidor.');
+        }
+
+        $configured = $this->destination($state['destination_key'] ?? null);
+        if ($configured['configured']
+            && $this->normalize((string) $configured['root']) !== $this->normalize($storedRoot)) {
+            throw new RuntimeException('El destino configurado cambió después de iniciar la copia.');
         }
 
         return $destination;

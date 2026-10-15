@@ -153,6 +153,26 @@ class ContpaqiBackupCatalogTest extends TestCase
         }
     }
 
+    public function test_queued_export_uses_the_destination_validated_when_it_was_created(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/Respaldo/ctEmpresa_Demo-{$date}-1715.bak", 'database-content');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Demo-{$date}-1715.zip", 'archive-content');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->catalog(true)['records'])->firstWhere('date', now()->toDateString());
+        $export = app(ContpaqiBackupExport::class);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+        $this->exportIds[] = $state['id'];
+
+        config()->set('backup-storage.export.destination_root', '');
+        $export->execute($state['id'], $catalog);
+
+        $this->assertSame('completed', $export->find($state['id'])['status']);
+        $this->assertFileExists($this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo/BAK/ctEmpresa_Demo-'.$date.'-1715.bak');
+    }
+
     public function test_export_rejects_incomplete_records(): void
     {
         $date = now()->format('Ymd');
