@@ -167,7 +167,7 @@
                 </header>
 
                 @if ($activeView === 'backups')
-                    <div class="grid min-h-[520px] xl:h-[650px] xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <div class="grid min-h-[520px] xl:h-[790px] xl:grid-cols-[260px_minmax(0,1fr)]">
                         <aside class="backup-soft-panel flex min-h-0 flex-col border-b border-zinc-200 bg-zinc-50 p-[15px] xl:border-b-0 xl:border-r">
                             <div class="flex items-center justify-between px-[5px] py-[8px]"><h2 class="font-semibold text-black">Días con respaldos</h2><span class="text-[12px] text-zinc-400">{{ count($catalog['dates']) }}</span></div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative mt-[8px] min-h-0 flex-1">
