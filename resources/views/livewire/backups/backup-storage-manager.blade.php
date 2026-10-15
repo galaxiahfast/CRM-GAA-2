@@ -9,9 +9,8 @@
     $exportPercent = ($exportStatus['total_bytes'] ?? 0) > 0
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
         : 0;
-    $connectedDestinations = collect($exportDestinations)->where('connected', true)->values();
-    $selectedDestination = $connectedDestinations->firstWhere('key', $destinationKey);
     $writableFolders = collect($destinationFolders)->where('writable', true)->values();
+    $bothLocationsOnline = ($catalog['connected'] ?? false) && ($exportDestination['connected'] ?? false);
 @endphp
 
 <div class="backup-storage-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
@@ -83,12 +82,13 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-[12px]">
+            <div class="flex flex-col items-end gap-[5px]">
                 <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex items-center gap-[8px] bg-transparent p-0 font-medium text-black transition hover:text-zinc-600 disabled:opacity-50">
                     <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
                     <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
                     <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
                 </button>
+                <span class="inline-flex items-center gap-[7px] {{ $bothLocationsOnline ? 'text-emerald-700' : 'text-red-700' }}" title="Origen: {{ ($catalog['connected'] ?? false) ? 'en línea' : 'fuera de línea' }} · Memoria: {{ ($exportDestination['connected'] ?? false) ? 'en línea' : 'fuera de línea' }}"><span class="h-1.5 w-1.5 rounded-full {{ $bothLocationsOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></span>{{ $bothLocationsOnline ? 'En línea' : 'Fuera de línea' }}</span>
             </div>
         </section>
 
@@ -163,8 +163,7 @@
                                 </div>
                             </div>
                             <div class="order-last border-t border-zinc-300 bg-zinc-100 p-[20px]">
-                                        <div class="grid gap-[12px] sm:grid-cols-2">
-                                            <div class="relative" x-data="{ open: false }" @click.outside="open = false"><span class="mb-[8px] block font-medium text-black">Memoria</span><button type="button" @click="if ({{ $connectedDestinations->isNotEmpty() && ! $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black"><span class="truncate">{{ $selectedDestination['label'] ?? 'Selecciona una memoria…' }}</span><svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button><div x-show="open" x-cloak class="absolute bottom-full z-40 mb-[8px] max-h-[220px] w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">@foreach($connectedDestinations as $destination)<button type="button" @click="$wire.set('destinationKey', @js($destination['key'])); open = false" class="flex min-h-[44px] w-full items-center justify-between gap-[12px] px-[15px] text-left text-black hover:bg-zinc-50"><span class="truncate">{{ $destination['label'] }}</span>@if($destinationKey === $destination['key'])<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif</button>@endforeach</div></div>
+                                        <div>
                                             <div class="relative" x-data="{ open: false }" @click.outside="open = false"><span class="mb-[8px] block font-medium text-black">Carpeta</span><button type="button" @click="if ({{ $exportDestination['connected'] && $writableFolders->isNotEmpty() && ! $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black"><span class="truncate">{{ $destinationFolder !== '' ? $destinationFolder : 'Selecciona una carpeta…' }}</span><svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button><div x-show="open" x-cloak class="absolute bottom-full z-40 mb-[8px] max-h-[220px] w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">@foreach($writableFolders as $folder)<button type="button" @click="$wire.set('destinationFolder', @js($folder['name'])); open = false" class="flex min-h-[44px] w-full items-center justify-between gap-[12px] px-[15px] text-left text-black hover:bg-zinc-50"><span class="truncate">{{ $folder['name'] }}</span>@if($destinationFolder === $folder['name'])<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif</button>@endforeach</div></div>
                                         </div>
                                         @if($destinationFolder !== '')
