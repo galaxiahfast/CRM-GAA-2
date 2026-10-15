@@ -221,9 +221,13 @@
                             <div class="order-last border-t border-zinc-300 bg-zinc-100 p-[20px]">
                                         <div>
                                             <div class="min-w-0">
-                                                <div class="flex min-w-0 items-center justify-between gap-[15px]">
+                                                <div class="flex min-w-0 flex-wrap items-center justify-between gap-[15px]">
                                                     <h3 class="shrink-0 font-semibold text-black">Seleccione la carpeta</h3>
-                                                    <span class="min-w-0 truncate text-right text-zinc-500">{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }} · {{ $formatBytes($selectedExportBytes) }}</span>
+                                                    <div class="flex min-w-0 flex-wrap items-center justify-end gap-x-[15px] gap-y-[5px]">
+                                                        <button type="button" wire:click="selectAllAvailable" wire:loading.attr="disabled" wire:target="selectAllAvailable" @disabled($exportIsActive || in_array($status, ['backed_up', 'partial'], true)) class="inline-flex items-center gap-[7px] bg-transparent p-0 font-medium text-black transition hover:text-zinc-600 disabled:cursor-not-allowed disabled:text-zinc-400"><svg class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span wire:loading.remove wire:target="selectAllAvailable">Seleccionar disponibles</span><span wire:loading wire:target="selectAllAvailable">Seleccionando…</span></button>
+                                                        @if($selectedExportCount > 0)<button type="button" wire:click="clearSelection" class="inline-flex items-center gap-[7px] bg-transparent p-0 text-zinc-500 transition hover:text-black"><svg class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg><span>Limpiar selección</span></button>@endif
+                                                        <span class="min-w-0 truncate text-right text-zinc-500">{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }} · {{ $formatBytes($selectedExportBytes) }}</span>
+                                                    </div>
                                                 </div>
                                                 <p class="mt-[4px] min-w-0 truncate text-zinc-500" title="{{ $destinationFolder !== '' ? 'Se guardará en '.$destinationFolder.'\\'.\Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y').'\\EMPRESA\\BAK e INDEX. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.' : 'Selecciona una carpeta para definir dónde se guardará el respaldo.' }}">
                                                 @if($destinationFolder !== '')

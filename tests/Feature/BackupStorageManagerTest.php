@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Backups\BackupArchiveExtractor;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
+use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\File;
@@ -226,7 +227,8 @@ class BackupStorageManagerTest extends TestCase
 
         $component = Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->set('selectedRecords', [$record['id']])
+            ->assertSee('Seleccionar disponibles')
+            ->call('selectAllAvailable')
             ->assertSet('selectedRecords', [$record['id']])
             ->assertSee('1 empresa seleccionada')
             ->assertSee('Respaldar 1 empresa')
@@ -263,9 +265,12 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Se deseleccionó 1 empresa porque ya está respaldada');
     }
 
-    public function test_export_recovers_the_fixed_destination_and_runs_after_the_response_without_a_worker(): void
+    public function test_export_recovers_the_fixed_destination_and_starts_a_background_process_without_a_worker(): void
     {
         Bus::fake([CopyContpaqiBackups::class]);
+        $launcher = \Mockery::mock(ContpaqiBackupProcessLauncher::class);
+        $launcher->shouldReceive('launch')->once()->andReturnTrue();
+        $this->app->instance(ContpaqiBackupProcessLauncher::class, $launcher);
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
@@ -286,8 +291,7 @@ class BackupStorageManagerTest extends TestCase
 
         $exportId = $component->get('currentExportId');
         $this->exportStateIds[] = $exportId;
-        Bus::assertDispatchedAfterResponse(CopyContpaqiBackups::class, fn (CopyContpaqiBackups $job): bool => $job->exportId === $exportId && $job->connection === 'sync'
-        );
+        Bus::assertNotDispatched(CopyContpaqiBackups::class);
     }
 
     public function test_all_users_see_the_same_active_export_and_cannot_start_another_one(): void

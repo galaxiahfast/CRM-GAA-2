@@ -5,6 +5,7 @@ namespace App\Livewire\Backups;
 use App\Jobs\CopyContpaqiBackups;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
+use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
@@ -81,7 +82,7 @@ class BackupStorageManager extends Component
         $this->selectionNotice = null;
     }
 
-    public function selectAllComplete(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
+    public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
         $records = $catalog->dashboard($this->selectedDate)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
@@ -90,6 +91,7 @@ class BackupStorageManager extends Component
             ->pluck('id')
             ->values()
             ->all();
+        $this->selectionNotice = null;
     }
 
     public function clearSelection(): void
@@ -149,7 +151,7 @@ class BackupStorageManager extends Component
         $this->selectionNotice = null;
     }
 
-    public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
+    public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProcessLauncher $launcher): void
     {
         Gate::authorize('upload-system-backups');
         $this->exportMessage = null;
@@ -172,7 +174,9 @@ class BackupStorageManager extends Component
             $this->destinationKey = (string) $state['destination_key'];
             $this->currentExportId = $state['id'];
             $this->exportStatus = $state;
-            CopyContpaqiBackups::dispatchAfterResponse($state['id'])->onConnection('sync');
+            if (! $launcher->launch($state['id'])) {
+                CopyContpaqiBackups::dispatchAfterResponse($state['id'])->onConnection('sync');
+            }
             $this->refreshExportStatus($export);
             $this->selectedRecords = [];
         } catch (RuntimeException $exception) {
