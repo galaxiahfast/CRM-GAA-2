@@ -26,14 +26,16 @@
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
-        .backup-catalog-scroll-thumb { position: absolute; right: 2px; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: #1A3A6B; opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
+        .backup-catalog-scroll-thumb { position: absolute; right: 0; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: #1A3A6B; opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x { position: absolute; bottom: 0; left: 0; z-index: 21; height: 14px; min-width: 48px; background: transparent; opacity: 0; cursor: ew-resize; touch-action: none; transition: opacity 140ms ease; }
-        .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 2px; left: 0; height: 3px; border-radius: 9999px; background: #1A3A6B; }
+        .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: #1A3A6B; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
+        .backup-record-gray > tr > td { background-color: #f4f4f5; }
+        .backup-record-white > tr > td { background-color: #fff; }
         .backup-record-detail > div > :where(a, div) { background: transparent !important; }
         .backup-storage-monochrome { background: #fff; color: #3f3f46; font-size: 15px; }
         .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
@@ -200,7 +202,7 @@
                                 @endif
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1" wire:loading.class="opacity-60" wire:target="selectDate">
-                                <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="16" data-scroll-right-offset="10" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                                <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1060px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[340px]"></colgroup>
                                     <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700"><tr class="h-[70px] whitespace-nowrap border-b border-zinc-300 text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold">Empresa</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
@@ -210,9 +212,9 @@
                                             $recordDestinations = $completedDestinations[$record['id']] ?? [];
                                             $latestDestination = $recordDestinations[0] ?? null;
                                         @endphp
-                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group border-b border-zinc-200 {{ $loop->odd ? 'bg-zinc-50' : 'bg-white' }} last:border-b-0">
+                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group {{ $loop->odd ? 'backup-record-gray' : 'backup-record-white' }} border-b border-zinc-200 last:border-b-0">
                                             <tr @click="open = !open" class="h-[70px] cursor-pointer">
-                                                <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
+                                                <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px] text-center font-mono tabular-nums text-zinc-600">{{ $record['time'] }}</td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="text-emerald-700">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-red-700">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-red-700">Falta BAK</span>@else<span class="text-red-700">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-black" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
                                                 <td class="min-w-0 px-[15px] py-[15px] text-center">
