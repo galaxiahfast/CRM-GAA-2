@@ -187,8 +187,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('destinationFolder', 'ANGEL MOO')
             ->assertSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
-            ->assertSeeHtml('relative h-[504px]')
-            ->assertSeeHtml('class="h-[70px] leading-[18px]"')
+            ->assertSeeHtml('relative h-[544px]')
+            ->assertSeeHtml('class="h-[70px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
     }
 
