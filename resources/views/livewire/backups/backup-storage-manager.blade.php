@@ -5,9 +5,6 @@
         $power = min((int) floor(log($bytes, 1024)), count($units) - 1);
         return number_format($bytes / (1024 ** $power), $power === 0 ? 0 : 1).' '.$units[$power];
     };
-    $selectedDateLabel = \Carbon\CarbonImmutable::parse($selectedDate)->isToday()
-        ? 'Hoy'
-        : \Carbon\CarbonImmutable::parse($selectedDate)->translatedFormat('d M Y');
     $exportIsActive = in_array($exportStatus['status'] ?? null, ['queued', 'copying'], true);
     $exportPercent = ($exportStatus['total_bytes'] ?? 0) > 0
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
@@ -146,7 +143,6 @@
 
                         <div class="relative flex min-h-0 min-w-0 flex-col">
                             <div class="flex flex-col gap-[12px] border-b border-zinc-200 px-[20px] py-[15px]">
-                                <div><h2 class="font-semibold text-black">{{ $selectedDateLabel }}</h2><p class="mt-[3px] text-[12px] text-zinc-400">{{ $records->count() }} respaldo{{ $records->count() === 1 ? '' : 's' }} visible{{ $records->count() === 1 ? '' : 's' }}</p></div>
                                 <div class="grid w-full grid-cols-2 border-b border-zinc-200 sm:grid-cols-3 md:grid-cols-5" aria-label="Filtrar respaldos por estado">
                                     <button type="button" wire:click="$set('status', 'all')" class="flex min-h-[44px] items-center justify-center gap-[8px] border-b-2 px-[10px] transition {{ $status === 'all' ? 'border-black font-medium text-black' : 'border-transparent text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg><span>Todos</span></button>
                                     <button type="button" wire:click="$set('status', 'complete')" class="flex min-h-[44px] items-center justify-center gap-[8px] border-b-2 px-[10px] transition {{ $status === 'complete' ? 'border-black font-medium text-black' : 'border-transparent text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span>Completos</span></button>
