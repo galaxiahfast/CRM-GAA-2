@@ -170,6 +170,9 @@ class BackupStorageManagerTest extends TestCase
 
     public function test_user_can_choose_a_folder_from_the_fixed_backup_memory(): void
     {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
         $admin = $this->user('Administrador', 'admin-destinations@datamid.test');
 
@@ -179,7 +182,10 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Carpeta')
             ->assertSee('ANGEL MOO')
             ->set('destinationFolder', 'ANGEL MOO')
-            ->assertSet('destinationFolder', 'ANGEL MOO');
+            ->assertSet('destinationFolder', 'ANGEL MOO')
+            ->assertSee('Se guardará en')
+            ->assertSeeHtml('class="h-[70px]"')
+            ->assertDontSeeHtml('<tr @click="open = !open"');
     }
 
     public function test_failed_export_is_shown_as_a_temporary_toast_without_progress_panel(): void
