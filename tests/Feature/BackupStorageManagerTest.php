@@ -179,7 +179,7 @@ class BackupStorageManagerTest extends TestCase
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->assertSet('destinationKey', 'principal')
-            ->assertSee('Carpeta')
+            ->assertSee('Seleccione la carpeta')
             ->assertSee('ANGEL MOO')
             ->set('destinationFolder', 'ANGEL MOO')
             ->assertSet('destinationFolder', 'ANGEL MOO')

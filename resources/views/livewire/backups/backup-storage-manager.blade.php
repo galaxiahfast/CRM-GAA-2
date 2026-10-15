@@ -175,9 +175,9 @@
                             </div>
                             <div class="order-last border-t border-zinc-300 bg-zinc-100 p-[20px]">
                                         <div>
-                                            <div class="flex min-w-0 items-center gap-[10px]">
-                                                <span class="shrink-0 font-medium text-black">Carpeta</span>
-                                                <p class="min-w-0 truncate text-zinc-600" title="{{ $destinationFolder !== '' ? 'Se guardará en '.$destinationFolder.'\\'.\Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y').'\\EMPRESA\\BAK e INDEX. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.' : 'Selecciona una carpeta para definir dónde se guardará el respaldo.' }}">
+                                            <div class="min-w-0">
+                                                <h3 class="font-semibold text-black">Seleccione la carpeta</h3>
+                                                <p class="mt-[3px] min-w-0 truncate text-zinc-500" title="{{ $destinationFolder !== '' ? 'Se guardará en '.$destinationFolder.'\\'.\Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y').'\\EMPRESA\\BAK e INDEX. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.' : 'Selecciona una carpeta para definir dónde se guardará el respaldo.' }}">
                                                 @if($destinationFolder !== '')
                                                     <span class="truncate">Se guardará en <strong class="font-medium text-black">{{ $destinationFolder }}\{{ \Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y') }}\EMPRESA\BAK e INDEX</strong>. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.</span>
                                                 @else
