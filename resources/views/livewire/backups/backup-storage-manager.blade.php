@@ -203,8 +203,8 @@
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1" wire:loading.class="opacity-60" wire:target="selectDate">
                                 <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
-                                <table class="w-full min-w-[1060px] table-fixed border-collapse text-left">
-                                    <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[340px]"></colgroup>
+                                <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
+                                    <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[290px]"></colgroup>
                                     <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700"><tr class="h-[70px] whitespace-nowrap border-b border-zinc-300 text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold">Empresa</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
@@ -220,14 +220,14 @@
                                                 <td class="min-w-0 px-[15px] py-[15px] text-center">
                                                     @if($latestDestination)
                                                         <div class="mx-auto min-w-0" title="{{ $latestDestination['label'] }} · {{ $latestDestination['path'] }}"><p class="truncate font-medium text-black">{{ $latestDestination['label'] }}</p><p class="mt-[3px] truncate text-zinc-500">{{ $latestDestination['path'] }}</p>@if(count($recordDestinations) > 1)<p class="mt-[2px] text-zinc-500">+{{ count($recordDestinations) - 1 }} {{ count($recordDestinations) === 2 ? 'destino' : 'destinos' }}</p>@endif</div>
-                                                    @elseif($recordState === 'available')<span class="inline-flex items-center gap-[6px] text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Disponible</span>
-                                                    @elseif($recordState === 'backed_up')<span class="inline-flex items-center gap-[6px] rounded-full bg-blue-50 px-[10px] py-[5px] text-[12px] font-medium text-[#1A3A6B]"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>Ya respaldada</span>
-                                                    @elseif($recordState === 'copying')<span class="inline-flex items-center gap-[6px] rounded-full bg-violet-50 px-[10px] py-[5px] text-[12px] font-medium text-violet-700"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-500"></span>Copiando</span>
-                                                    @elseif($recordState === 'outdated')<span class="inline-flex items-center rounded-full bg-orange-50 px-[10px] py-[5px] text-[12px] font-medium text-orange-700">Requiere actualización</span>
-                                                    @elseif($recordState === 'older')<span class="inline-flex items-center rounded-full bg-zinc-100 px-[10px] py-[5px] text-[12px] text-zinc-500" title="Solo se permite el respaldo completo más reciente de la empresa para este día.">Hay uno más reciente</span>
-                                                    @elseif($recordState === 'destination_missing')<span class="inline-flex items-center rounded-full bg-amber-50 px-[10px] py-[5px] text-[12px] text-amber-700">Conecta la memoria</span>
-                                                    @elseif($recordState === 'folder_missing')<span class="inline-flex items-center rounded-full bg-zinc-100 px-[10px] py-[5px] text-[12px] text-zinc-600">Selecciona carpeta</span>
-                                                    @else<span class="inline-flex items-center gap-[6px] rounded-full bg-red-50 px-[10px] py-[5px] text-[12px] font-medium text-red-700"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Incompleta</span>@endif
+                                                    @elseif($recordState === 'available')<span class="text-emerald-700">Disponible</span>
+                                                    @elseif($recordState === 'backed_up')<span class="text-[#1A3A6B]">Ya respaldada</span>
+                                                    @elseif($recordState === 'copying')<span class="text-violet-700">Copiando</span>
+                                                    @elseif($recordState === 'outdated')<span class="text-orange-700">Requiere actualización</span>
+                                                    @elseif($recordState === 'older')<span class="text-zinc-500" title="Solo se permite el respaldo completo más reciente de la empresa para este día.">Hay uno más reciente</span>
+                                                    @elseif($recordState === 'destination_missing')<span class="text-amber-700">Conecta la memoria</span>
+                                                    @elseif($recordState === 'folder_missing')<span class="text-zinc-600">Selecciona carpeta</span>
+                                                    @else<span class="text-red-700">Incompleta</span>@endif
                                                 </td>
                                             </tr>
                                             <tr x-show="open" x-cloak>
