@@ -69,6 +69,40 @@
         @endteleport
     @endif
 
+    @if($syncResult)
+        @teleport('body')
+            <div wire:key="backup-sync-result-{{ md5(json_encode($syncResult)) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 6000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" class="backup-sync-toast fixed left-1/2 top-[20px] z-[199998] w-[calc(100%-40px)] max-w-3xl -translate-x-1/2 rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-red-200' : 'border-emerald-200' }} bg-white px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+                <div class="flex items-start gap-[12px]">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ ($syncResult['error'] ?? null) ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' }}">
+                        @if($syncResult['error'] ?? null)
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+                        @else
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m8 12 2.5 2.5L16 9"/></svg>
+                        @endif
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        @if($syncResult['error'] ?? null)
+                            <p class="font-semibold text-red-700">No se pudo comprobar</p>
+                            <p class="mt-[3px] text-red-700">{{ $syncResult['error'] }}</p>
+                        @else
+                            <p class="font-semibold text-black">Sincronización comprobada</p>
+                            <p class="mt-[3px] text-zinc-500">Parejas BAK + ZIP/RAR y tamaños comprobados {{ \Carbon\CarbonImmutable::parse($syncResult['checked_at'])->translatedFormat('d M Y · H:i:s') }}</p>
+                            <div class="mt-[10px] flex flex-wrap gap-x-[15px] gap-y-[5px]">
+                                <span class="text-emerald-700">{{ $syncResult['server_complete'] }} completas en servidor</span>
+                                <span class="text-red-700">{{ $syncResult['server_incomplete'] }} incompletas</span>
+                                <span class="text-[#1A3A6B]">{{ $syncResult['synced'] }} sincronizadas</span>
+                                <span class="text-amber-700">{{ $syncResult['pending'] }} pendientes</span>
+                                @if($syncResult['outdated'] > 0)<span class="text-orange-700">{{ $syncResult['outdated'] }} por actualizar</span>@endif
+                                @if($syncResult['copying'] > 0)<span class="text-violet-700">{{ $syncResult['copying'] }} copiándose</span>@endif
+                            </div>
+                        @endif
+                    </div>
+                    <button type="button" @click="visible = false" aria-label="Cerrar resultado" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+                </div>
+            </div>
+        @endteleport
+    @endif
+
     @if($exportIsActive)
         @teleport('body')
             <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" class="fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-zinc-700 shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
@@ -136,26 +170,6 @@
                 </div>
             </section>
         @else
-            @if($syncResult)
-                <section class="rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-red-200 bg-red-50' : 'border-zinc-200 bg-white' }} p-[15px]">
-                    @if($syncResult['error'] ?? null)
-                        <p class="text-[13px] text-red-700"><strong>No se pudo comprobar:</strong> {{ $syncResult['error'] }}</p>
-                    @else
-                        <div class="flex flex-col gap-[10px] lg:flex-row lg:items-center lg:justify-between">
-                            <div><h2 class="font-medium text-black">Resultado de sincronización</h2><p class="mt-[2px] text-[11px] text-zinc-400">Parejas BAK + ZIP/RAR y tamaños comprobados {{ \Carbon\CarbonImmutable::parse($syncResult['checked_at'])->translatedFormat('d M Y · H:i:s') }}</p></div>
-                            <div class="flex flex-wrap gap-[8px] text-[12px]">
-                                <span class="rounded-full bg-emerald-50 px-[10px] py-[6px] text-emerald-700">{{ $syncResult['server_complete'] }} completas en servidor</span>
-                                <span class="rounded-full bg-red-50 px-[10px] py-[6px] text-red-700">{{ $syncResult['server_incomplete'] }} incompletas</span>
-                                <span class="rounded-full bg-blue-50 px-[10px] py-[6px] text-[#1A3A6B]">{{ $syncResult['synced'] }} sincronizadas</span>
-                                <span class="rounded-full bg-amber-50 px-[10px] py-[6px] text-amber-700">{{ $syncResult['pending'] }} pendientes</span>
-                                @if($syncResult['outdated'] > 0)<span class="rounded-full bg-orange-50 px-[10px] py-[6px] text-orange-700">{{ $syncResult['outdated'] }} por actualizar</span>@endif
-                                @if($syncResult['copying'] > 0)<span class="rounded-full bg-violet-50 px-[10px] py-[6px] text-violet-700">{{ $syncResult['copying'] }} copiándose</span>@endif
-                            </div>
-                        </div>
-                    @endif
-                </section>
-            @endif
-
             <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
                 <header class="flex flex-col gap-[15px] border-b border-zinc-200 p-[20px] xl:flex-row xl:items-center xl:justify-between">
                     <div>

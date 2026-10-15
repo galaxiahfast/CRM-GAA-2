@@ -165,7 +165,10 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('syncResult.server_incomplete', 1)
             ->assertSet('syncResult.synced', 0)
             ->assertSet('syncResult.pending', 1)
-            ->assertSee('Resultado de sincronización');
+            ->assertSee('Sincronización comprobada')
+            ->assertSeeHtml('backup-sync-toast fixed')
+            ->assertSeeHtml('setTimeout(() => visible = false, 6000)')
+            ->assertDontSee('Resultado de sincronización');
     }
 
     public function test_user_can_choose_a_folder_from_the_fixed_backup_memory(): void
