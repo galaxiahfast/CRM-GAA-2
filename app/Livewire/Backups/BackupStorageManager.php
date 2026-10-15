@@ -130,7 +130,7 @@ class BackupStorageManager extends Component
         try {
             if ($this->currentExportId !== null) {
                 $current = $export->find($this->currentExportId);
-                if (in_array($current['status'] ?? null, ['queued', 'copying'], true)) {
+                if (in_array($current['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
                     throw new RuntimeException('Espera a que termine la copia actual antes de iniciar otra.');
                 }
             }
@@ -165,6 +165,17 @@ class BackupStorageManager extends Component
         $this->exportStatus = $state;
     }
 
+    public function cancelExport(ContpaqiBackupExport $export): void
+    {
+        Gate::authorize('upload-system-backups');
+
+        if ($this->currentExportId === null) {
+            return;
+        }
+
+        $this->exportStatus = $export->cancel($this->currentExportId);
+    }
+
     public function refreshSharedExportStatus(ContpaqiBackupExport $export): void
     {
         Gate::authorize('access-system-backups');
@@ -173,7 +184,7 @@ class BackupStorageManager extends Component
             $state = $export->find($this->currentExportId);
             if ($state !== null) {
                 $this->exportStatus = $state;
-                if (in_array($state['status'] ?? null, ['queued', 'copying'], true)) {
+                if (in_array($state['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
                     return;
                 }
             }

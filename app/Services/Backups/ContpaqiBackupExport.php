@@ -159,7 +159,13 @@ class ContpaqiBackupExport
     public function execute(string $id, ContpaqiBackupCatalog $catalog): void
     {
         $state = $this->find($id);
-        if ($state === null || $state['status'] === 'completed') {
+        if ($state === null || in_array($state['status'] ?? null, ['completed', 'cancelled'], true)) {
+            return;
+        }
+
+        if (($state['status'] ?? null) === 'cancelling') {
+            $this->completeCancellation($id, $state);
+
             return;
         }
 
@@ -174,9 +180,11 @@ class ContpaqiBackupExport
             $state['status'] = 'copying';
             $state['started_at'] = now()->toIso8601String();
             $state['destination_path'] = $dateDirectory;
+            $this->throwIfCancellationRequested($id);
             $this->write($id, $state);
 
             foreach ($records as $recordIndex => $record) {
+                $this->throwIfCancellationRequested($id);
                 $companyDirectory = $this->join($dateDirectory, $this->safeSegment($record['company_folder'] ?: $record['company']));
                 $databaseDirectory = $this->join($companyDirectory, 'BAK');
                 $archiveDirectory = $this->join($companyDirectory, 'INDEX');
@@ -185,22 +193,27 @@ class ContpaqiBackupExport
                 $state['current_company'] = $record['company'];
                 $state['items'][$recordIndex]['status'] = 'copying';
                 $state['items'][$recordIndex]['destination_path'] = $companyDirectory;
+                $this->throwIfCancellationRequested($id);
                 $this->write($id, $state);
 
                 foreach ([['database', 'database'], ['archive', 'archive']] as [$kind, $field]) {
+                    $this->throwIfCancellationRequested($id);
                     $file = $record[$field];
                     $source = $catalog->resolveDownload($kind, $file['token']);
                     $target = $this->join($kind === 'database' ? $databaseDirectory : $archiveDirectory, basename($file['name']));
                     $result = $this->copyVerified($source, $target, $id, $state);
                     $state['completed_files']++;
                     $state['items'][$recordIndex]['files'][] = $result;
+                    $this->throwIfCancellationRequested($id);
                     $this->write($id, $state);
                 }
 
                 $state['items'][$recordIndex]['status'] = 'completed';
+                $this->throwIfCancellationRequested($id);
                 $this->write($id, $state);
             }
 
+            $this->throwIfCancellationRequested($id);
             $state['status'] = 'completed';
             $state['current_company'] = null;
             $state['copied_bytes'] = $state['total_bytes'];
@@ -218,6 +231,13 @@ class ContpaqiBackupExport
                 throw new RuntimeException('Los archivos se copiaron, pero no fue posible guardar su registro de verificación.');
             }
         } catch (Throwable $exception) {
+            $latestState = $this->find($id);
+            if (($latestState['status'] ?? null) === 'cancelling') {
+                $this->completeCancellation($id, $latestState);
+
+                return;
+            }
+
             $state['status'] = 'failed';
             $state['error'] = $exception instanceof RuntimeException
                 ? $exception->getMessage()
@@ -267,7 +287,7 @@ class ContpaqiBackupExport
         return collect(File::glob($this->stateDirectory().DIRECTORY_SEPARATOR.'*.json'))
             ->map(fn (string $path): ?array => $this->find(pathinfo($path, PATHINFO_FILENAME)))
             ->filter(function (?array $state): bool {
-                if ($state === null || ! in_array($state['status'] ?? null, ['queued', 'copying'], true)) {
+                if ($state === null || ! in_array($state['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
                     return false;
                 }
                 $activityAt = $state['started_at'] ?? $state['created_at'] ?? null;
@@ -315,7 +335,7 @@ class ContpaqiBackupExport
     public function markFailed(string $id, string $message): void
     {
         $state = $this->find($id);
-        if ($state === null || in_array($state['status'], ['completed', 'failed'], true)) {
+        if ($state === null || in_array($state['status'], ['completed', 'failed', 'cancelled', 'cancelling'], true)) {
             return;
         }
 
@@ -324,6 +344,20 @@ class ContpaqiBackupExport
         $state['error'] = mb_substr($message, 0, 1000);
         $state['completed_at'] = now()->toIso8601String();
         $this->write($id, $state);
+    }
+
+    public function cancel(string $id): ?array
+    {
+        $state = $this->find($id);
+        if ($state === null || ! in_array($state['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
+            return $state;
+        }
+
+        $state['status'] = 'cancelling';
+        $state['error'] = null;
+        $this->write($id, $state);
+
+        return $state;
     }
 
     /** @return array<string, string> */
@@ -427,7 +461,7 @@ class ContpaqiBackupExport
         foreach (File::glob($this->stateDirectory().DIRECTORY_SEPARATOR.'*.json') as $path) {
             $id = pathinfo($path, PATHINFO_FILENAME);
             $state = $this->find($id);
-            if ($state === null || $state['date'] !== $date || ! in_array($state['status'], ['queued', 'copying'], true)) {
+            if ($state === null || $state['date'] !== $date || ! in_array($state['status'], ['queued', 'copying', 'cancelling'], true)) {
                 continue;
             }
             if ($this->normalize((string) ($state['destination_root'] ?? '')) !== $this->normalize($destinationRoot)) {
@@ -519,6 +553,7 @@ class ContpaqiBackupExport
                     $written += $length;
                     $pendingProgress += $length;
                     if ($pendingProgress >= $progressInterval) {
+                        $this->throwIfCancellationRequested($exportId);
                         $state['copied_bytes'] += $pendingProgress;
                         $pendingProgress = 0;
                         $this->write($exportId, $state);
@@ -575,12 +610,6 @@ class ContpaqiBackupExport
             throw new RuntimeException('La memoria externa no está conectada o ya no se puede leer desde el servidor.');
         }
 
-        $configured = $this->destination($state['destination_key'] ?? null);
-        if ($configured['configured']
-            && $this->normalize((string) $configured['root']) !== $this->normalize($storedRoot)) {
-            throw new RuntimeException('El destino configurado cambió después de iniciar la copia.');
-        }
-
         return $destination;
     }
 
@@ -588,6 +617,9 @@ class ContpaqiBackupExport
     {
         $configuredLabel = trim((string) config('backup-storage.export.volume_label', 'Memoria configurada')) ?: 'Memoria configurada';
         $configuredRoot = trim((string) config('backup-storage.export.destination_root'));
+        if ($configuredRoot === '') {
+            $configuredRoot = '\\\\Srvcontpaq\\e';
+        }
         $definitions = [];
 
         if ($configuredRoot !== '') {
@@ -689,6 +721,22 @@ POWERSHELL;
                 return $this->fallbackLocalVolumes();
             }
         });
+    }
+
+    private function completeCancellation(string $id, array $state): void
+    {
+        $state['status'] = 'cancelled';
+        $state['current_company'] = null;
+        $state['error'] = null;
+        $state['completed_at'] = now()->toIso8601String();
+        $this->write($id, $state);
+    }
+
+    private function throwIfCancellationRequested(string $id): void
+    {
+        if (($this->find($id)['status'] ?? null) === 'cancelling') {
+            throw new RuntimeException('El respaldo fue cancelado.');
+        }
     }
 
     private function fallbackLocalVolumes(): array

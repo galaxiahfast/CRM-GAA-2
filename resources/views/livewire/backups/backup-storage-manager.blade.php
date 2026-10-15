@@ -5,7 +5,7 @@
         $power = min((int) floor(log($bytes, 1024)), count($units) - 1);
         return number_format($bytes / (1024 ** $power), $power === 0 ? 0 : 1).' '.$units[$power];
     };
-    $exportIsActive = in_array($exportStatus['status'] ?? null, ['queued', 'copying'], true);
+    $exportIsActive = in_array($exportStatus['status'] ?? null, ['queued', 'copying', 'cancelling'], true);
     $exportPercent = ($exportStatus['total_bytes'] ?? 0) > 0
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
         : 0;
@@ -25,7 +25,7 @@
     }"
     x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
     wire:poll.60s>
-    <span class="hidden" wire:poll.2s="refreshSharedExportStatus" aria-hidden="true"></span>
+    <span class="hidden" wire:poll.1s="refreshSharedExportStatus" aria-hidden="true"></span>
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
@@ -63,6 +63,29 @@
                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg></span>
                 <span class="min-w-0 flex-1">{{ $exportError }}</span>
                 <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+            </div>
+        @endteleport
+    @endif
+
+    @if($exportIsActive)
+        @teleport('body')
+            <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" class="fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-zinc-700 shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+                <div class="flex items-center justify-between gap-[15px]">
+                    <div class="min-w-0">
+                        <p class="truncate font-semibold text-black">
+                            @if(($exportStatus['status'] ?? '') === 'queued') Respaldo en espera
+                            @elseif(($exportStatus['status'] ?? '') === 'cancelling') Cancelando respaldo…
+                            @else Respaldando {{ $exportStatus['current_company'] ?? 'archivos' }}
+                            @endif
+                        </p>
+                        <p class="mt-[3px] truncate text-zinc-500">Todos los usuarios pueden ver este avance. No se puede iniciar otro respaldo hasta que termine.</p>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-[15px]">
+                        <span class="tabular-nums text-zinc-500">{{ $exportPercent }}% · {{ $formatBytes((int) ($exportStatus['copied_bytes'] ?? 0)) }} / {{ $formatBytes((int) ($exportStatus['total_bytes'] ?? 0)) }}</span>
+                        <button type="button" wire:click="cancelExport" wire:loading.attr="disabled" wire:target="cancelExport" @disabled(($exportStatus['status'] ?? null) === 'cancelling') class="font-medium text-red-700 transition hover:text-red-900 disabled:cursor-wait disabled:text-zinc-400">{{ ($exportStatus['status'] ?? null) === 'cancelling' ? 'Cancelando…' : 'Cancelar respaldo' }}</button>
+                    </div>
+                </div>
+                <div class="mt-[12px] h-[6px] overflow-hidden rounded-full bg-zinc-100"><span class="block h-full rounded-full bg-[#1A3A6B] transition-all duration-300" style="width: {{ $exportPercent }}%"></span></div>
             </div>
         @endteleport
     @endif
@@ -194,30 +217,6 @@
                                                 </button>
                                             </div>
                                         </div>
-
-                                @if($exportStatus && ($exportStatus['status'] ?? null) !== 'failed')
-                                    <div class="mt-[12px] rounded-xl border border-zinc-200 bg-white p-[12px]">
-                                        <div class="flex items-center justify-between gap-[15px] text-[12px]">
-                                            <span class="min-w-0 truncate font-medium text-black">
-                                                @if(($exportStatus['status'] ?? '') === 'queued') En espera para copiar
-                                                @elseif(($exportStatus['status'] ?? '') === 'copying') Copiando {{ $exportStatus['current_company'] ?? 'archivos' }}
-                                                @elseif(($exportStatus['status'] ?? '') === 'completed') Copia terminada y verificada
-                                                @else Copia interrumpida
-                                                @endif
-                                            </span>
-                                            <span class="shrink-0 tabular-nums text-zinc-500">{{ $exportPercent }}% · {{ $formatBytes((int) ($exportStatus['copied_bytes'] ?? 0)) }} / {{ $formatBytes((int) ($exportStatus['total_bytes'] ?? 0)) }}</span>
-                                        </div>
-                                        <div class="mt-[9px] h-[5px] overflow-hidden rounded-full bg-zinc-100"><span class="block h-full rounded-full {{ ($exportStatus['status'] ?? '') === 'failed' ? 'bg-red-500' : 'bg-[#1A3A6B]' }} transition-all" style="width: {{ $exportPercent }}%"></span></div>
-                                        @if($exportIsActive)
-                                            <p class="mt-[8px] truncate text-[11px] text-zinc-500" title="{{ $exportStatus['destination_label'] ?? 'Memoria' }} · {{ $exportStatus['destination_folder'] ?? 'carpeta seleccionada' }}">Destino: {{ $exportStatus['destination_label'] ?? 'Memoria' }} · {{ $exportStatus['destination_folder'] ?? 'carpeta seleccionada' }}</p>
-                                        @endif
-                                        @if(($exportStatus['status'] ?? '') === 'completed')
-                                            <p class="mt-[8px] truncate text-[11px] text-emerald-600" title="{{ $exportStatus['destination_path'] ?? '' }}">Guardado en {{ $exportStatus['destination_path'] ?? '' }}</p>
-                                        @elseif(($exportStatus['status'] ?? '') === 'failed')
-                                            <p class="mt-[8px] text-[11px] text-red-600">{{ $exportStatus['error'] ?? 'La copia no pudo completarse.' }}</p>
-                                        @endif
-                                    </div>
-                                @endif
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1" wire:loading.class="opacity-60" wire:target="selectDate">
                                 <div x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">

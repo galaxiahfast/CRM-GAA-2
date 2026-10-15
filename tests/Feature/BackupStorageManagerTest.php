@@ -242,11 +242,20 @@ class BackupStorageManagerTest extends TestCase
         );
         $this->exportStateIds[] = $state['id'];
 
-        Livewire::actingAs($viewer)
+        $viewerComponent = Livewire::actingAs($viewer)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->assertSet('currentExportId', $state['id'])
             ->assertSet('exportStatus.current_company', null)
-            ->assertSee('En espera para copiar')
+            ->assertSee('Respaldo en espera')
+            ->assertSee('Cancelar respaldo');
+
+        $viewerComponent
+            ->call('cancelExport')
+            ->assertSet('exportStatus.status', 'cancelling')
+            ->assertSee('Cancelando respaldo');
+
+        Livewire::actingAs($owner)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->call('startExport')
             ->assertSet('exportMessage', 'Espera a que termine la copia actual antes de iniciar otra.');
     }

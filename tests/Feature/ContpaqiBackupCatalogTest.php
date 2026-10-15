@@ -173,6 +173,39 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertFileExists($this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo/BAK/ctEmpresa_Demo-'.$date.'-1715.bak');
     }
 
+    public function test_empty_cached_destination_configuration_uses_the_fixed_server_share(): void
+    {
+        config()->set('backup-storage.export.destination_root', '');
+
+        $destination = app(ContpaqiBackupExport::class)->destination();
+
+        $this->assertTrue($destination['configured']);
+        $this->assertSame('principal', $destination['key']);
+        $this->assertStringContainsString('srvcontpaq', strtolower((string) $destination['root']));
+    }
+
+    public function test_cancelling_a_queued_export_keeps_it_locked_until_the_worker_stops(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/Respaldo/ctEmpresa_Demo-{$date}-1715.bak", 'database-content');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Demo-{$date}-1715.zip", 'archive-content');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->catalog(true)['records'])->firstWhere('date', now()->toDateString());
+        $export = app(ContpaqiBackupExport::class);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+        $this->exportIds[] = $state['id'];
+
+        $this->assertSame('cancelling', $export->cancel($state['id'])['status']);
+        $this->assertSame($state['id'], $export->latestActive()['id']);
+
+        $export->execute($state['id'], $catalog);
+
+        $this->assertSame('cancelled', $export->find($state['id'])['status']);
+        $this->assertNull($export->latestActive());
+    }
+
     public function test_export_rejects_incomplete_records(): void
     {
         $date = now()->format('Ymd');
