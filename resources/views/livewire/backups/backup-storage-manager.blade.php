@@ -34,9 +34,7 @@
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
-        .backup-record-group > tr:first-child:hover { background: #f4f4f5; }
         .backup-record-detail > div > :where(a, div) { background: transparent !important; }
-        .backup-record-detail > div > a:hover { background: rgba(228, 228, 231, 0.55) !important; }
         .backup-storage-monochrome { background: #fff; color: #3f3f46; font-size: 15px; }
         .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
             font-size: 15px !important;
@@ -212,8 +210,8 @@
                                             $recordDestinations = $completedDestinations[$record['id']] ?? [];
                                             $latestDestination = $recordDestinations[0] ?? null;
                                         @endphp
-                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group border-b border-zinc-200 {{ $loop->even ? 'bg-zinc-50/70' : 'bg-white' }} last:border-b-0">
-                                            <tr @click="open = !open" class="h-[70px] cursor-pointer transition">
+                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group border-b border-zinc-200 {{ $loop->odd ? 'bg-zinc-50' : 'bg-white' }} last:border-b-0">
+                                            <tr @click="open = !open" class="h-[70px] cursor-pointer">
                                                 <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px] text-center font-mono tabular-nums text-zinc-600">{{ $record['time'] }}</td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="text-emerald-700">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-red-700">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-red-700">Falta BAK</span>@else<span class="text-red-700">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-black" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
