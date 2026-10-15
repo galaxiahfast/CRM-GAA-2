@@ -188,6 +188,24 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('BRENDA');
     }
 
+    public function test_complete_companies_can_be_selected_before_choosing_the_destination(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $record = collect(app(ContpaqiBackupCatalog::class)->dashboard(now()->toDateString())['records'])
+            ->firstWhere('complete', true);
+        $admin = $this->user('Administrador', 'admin-select-first@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('selectedRecords', [$record['id']])
+            ->assertSet('selectedRecords', [$record['id']])
+            ->set('destinationFolder', 'ANGEL MOO')
+            ->assertSet('selectedRecords', [$record['id']]);
+    }
+
     public function test_all_users_see_the_same_active_export_and_cannot_start_another_one(): void
     {
         $date = now()->format('Ymd');

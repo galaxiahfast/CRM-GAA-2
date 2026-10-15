@@ -142,8 +142,8 @@
                         </aside>
 
                         <div class="relative flex min-h-0 min-w-0 flex-col">
-                            <div class="flex flex-col gap-[12px] border-b border-zinc-200 px-[20px] py-[15px]">
-                                <div class="grid w-full grid-cols-2 border-b border-zinc-200 sm:grid-cols-3 md:grid-cols-5" aria-label="Filtrar respaldos por estado">
+                            <div class="flex flex-col gap-[12px] px-[20px] py-[15px]">
+                                <div class="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5" aria-label="Filtrar respaldos por estado">
                                     <button type="button" wire:click="$set('status', 'all')" class="flex min-h-[44px] items-center justify-center gap-[8px] px-[10px] transition {{ $status === 'all' ? 'font-medium text-black' : 'text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg><span>Todos</span></button>
                                     <button type="button" wire:click="$set('status', 'complete')" class="flex min-h-[44px] items-center justify-center gap-[8px] px-[10px] transition {{ $status === 'complete' ? 'font-medium text-black' : 'text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span>Completos</span></button>
                                     <button type="button" wire:click="$set('status', 'available')" class="flex min-h-[44px] items-center justify-center gap-[8px] px-[10px] transition {{ $status === 'available' ? 'font-medium text-black' : 'text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg><span>Por respaldar</span></button>
@@ -151,7 +151,7 @@
                                     <button type="button" wire:click="$set('status', 'partial')" class="flex min-h-[44px] items-center justify-center gap-[8px] px-[10px] transition {{ $status === 'partial' ? 'font-medium text-black' : 'text-zinc-500 hover:text-black' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v6m0 4h.01"/></svg><span>Incompletos</span></button>
                                 </div>
                             </div>
-                            <div class="border-b border-zinc-200 bg-zinc-50/70 p-[15px]">
+                            <div class="order-last border-t border-zinc-200 bg-zinc-50/70 p-[15px]">
                                 <div>
                                     <section class="rounded-xl border border-zinc-200 bg-white p-[13px]" aria-labelledby="backup-action-title">
                                         <div class="flex items-center gap-[10px]"><span class="grid h-7 w-7 place-items-center rounded-full bg-black text-[12px] font-semibold text-white">2</span><div class="min-w-0"><h3 id="backup-action-title" class="font-medium text-black">Elige dónde guardar</h3><p class="truncate text-[11px] {{ $exportDestination['connected'] ? 'text-emerald-600' : 'text-amber-600' }}" title="{{ $exportDestination['root'] ?? '' }}">@if(!$exportDestination['configured'])No se encontró esta unidad en el equipo que ejecuta PHP.@elseif(!$exportDestination['connected'])PHP no puede abrir esta unidad.@else {{ $exportDestination['label'] }} disponible; selecciona una carpeta @endif</p></div></div>
@@ -207,7 +207,7 @@
                                         <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="border-b border-zinc-200 last:border-b-0">
                                             <tr @click="open = !open" class="cursor-pointer transition hover:bg-zinc-50/70" :class="open ? 'bg-zinc-50/70' : ''">
                                                 <td class="px-[20px] py-[16px]" @click.stop>
-                                                    <input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100">
+                                                    <input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-5 w-5 rounded border-2 border-zinc-500 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100">
                                                 </td>
                                                 <td class="max-w-[420px] px-[5px] py-[16px]"><p class="truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</p><p class="mt-[3px] truncate text-[11px] text-zinc-400" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</p></td>
                                                 <td class="px-[12px] py-[16px] tabular-nums text-zinc-500">{{ $record['time'] }}</td>

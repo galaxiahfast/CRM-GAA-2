@@ -81,7 +81,7 @@ class BackupStorageManager extends Component
         $records = $catalog->dashboard($this->selectedDate)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
         $this->selectedRecords = collect($records)
-            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))
             ->pluck('id')
             ->values()
             ->all();
@@ -92,17 +92,32 @@ class BackupStorageManager extends Component
         $this->selectedRecords = [];
     }
 
-    public function updatedDestinationFolder(): void
+    public function updatedDestinationFolder(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
     {
-        $this->selectedRecords = [];
         $this->syncResult = null;
         $this->exportMessage = null;
+
+        if ($this->destinationFolder === '' || $this->selectedRecords === []) {
+            return;
+        }
+
+        $records = $catalog->dashboard($this->selectedDate)['records'];
+        $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $selectableIds = collect($records)
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
+            ->pluck('id');
+
+        $this->selectedRecords = collect($this->selectedRecords)
+            ->intersect($selectableIds)
+            ->values()
+            ->all();
     }
 
     public function updatedDestinationKey(): void
     {
         $this->destinationFolder = '';
-        $this->updatedDestinationFolder();
+        $this->syncResult = null;
+        $this->exportMessage = null;
     }
 
     public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
@@ -291,7 +306,7 @@ class BackupStorageManager extends Component
 
         $selectedCompleteRecords = collect($data['records'])
             ->whereIn('id', $this->selectedRecords)
-            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated'], true));
+            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true));
 
         return view('livewire.backups.backup-storage-manager', [
             'catalog' => $data,
@@ -305,7 +320,7 @@ class BackupStorageManager extends Component
             'selectedExportCount' => $selectedCompleteRecords->count(),
             'selectedExportBytes' => (int) $selectedCompleteRecords->sum('total_size'),
             'recordAvailability' => $recordAvailability,
-            'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated'], true))->count(),
+            'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
             'backedUpExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'backed_up')->count(),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
             'destinationFolders' => $export->destinationFolders($this->destinationKey),
