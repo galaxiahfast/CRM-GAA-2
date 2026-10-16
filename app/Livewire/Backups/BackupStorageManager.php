@@ -6,6 +6,7 @@ use App\Jobs\CopyContpaqiBackups;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
 use App\Services\Backups\ContpaqiBackupProcessLauncher;
+use App\Services\Backups\ContpaqiBackupProfile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
@@ -43,9 +44,12 @@ class BackupStorageManager extends Component
 
     public string $destinationFolder = '';
 
+    #[Url(as: 'departamento')]
+    public string $backupProfile = '';
+
     public ?string $selectionNotice = null;
 
-    public function mount(ContpaqiBackupExport $export): void
+    public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
         Gate::authorize('access-system-backups');
 
@@ -61,8 +65,23 @@ class BackupStorageManager extends Component
             $this->selectedDate = now()->toDateString();
         }
 
-        $this->destinationKey = (string) (collect($export->destinations())->first()['key'] ?? '');
+        $enabledKeys = collect($profiles->profiles())->pluck('key');
+        if (! $enabledKeys->contains($this->backupProfile)) {
+            $this->backupProfile = $profiles->defaultKey();
+        }
+        $this->destinationKey = $this->destinationKeyForProfile($profiles);
         $this->adoptActiveExport($export);
+    }
+
+    public function updatedBackupProfile(ContpaqiBackupProfile $profiles): void
+    {
+        abort_unless(collect($profiles->profiles())->pluck('key')->contains($this->backupProfile), 422);
+        $this->destinationKey = $this->destinationKeyForProfile($profiles);
+        $this->destinationFolder = '';
+        $this->selectedRecords = [];
+        $this->selectionNotice = null;
+        $this->syncResult = null;
+        $this->exportMessage = null;
     }
 
     public function selectView(string $view): void
@@ -82,9 +101,9 @@ class BackupStorageManager extends Component
         $this->selectionNotice = null;
     }
 
-    public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
+    public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
-        $records = $catalog->dashboard($this->selectedDate)['records'];
+        $records = $this->profileDashboard($catalog, $profiles)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
         $this->selectedRecords = collect($records)
             ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))
@@ -113,7 +132,7 @@ class BackupStorageManager extends Component
         }
     }
 
-    public function updatedDestinationFolder(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
+    public function updatedDestinationFolder(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
         $this->syncResult = null;
         $this->exportMessage = null;
@@ -124,7 +143,7 @@ class BackupStorageManager extends Component
         }
 
         $selectedBeforeValidation = count($this->selectedRecords);
-        $records = $catalog->dashboard($this->selectedDate)['records'];
+        $records = $this->profileDashboard($catalog, $profiles)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
         $selectableIds = collect($records)
             ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
@@ -236,7 +255,7 @@ class BackupStorageManager extends Component
         $this->exportStatus = $active;
     }
 
-    public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export): void
+    public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
         Gate::authorize('access-system-backups');
 
@@ -248,9 +267,9 @@ class BackupStorageManager extends Component
                 $catalog->refreshToday();
             }
 
-            $data = $catalog->dashboard($this->selectedDate);
+            $data = $this->profileDashboard($catalog, $profiles);
             $availability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
-            $completedDestinations = $export->completedDestinations($this->selectedDate);
+            $completedDestinations = $export->completedDestinations($this->selectedDate, $this->destinationKey);
             $latestComplete = collect($data['records'])
                 ->where('complete', true)
                 ->groupBy(fn (array $record): string => (string) ($record['company_key'] ?: $record['company']))
@@ -290,12 +309,12 @@ class BackupStorageManager extends Component
         }
     }
 
-    public function render(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export)
+    public function render(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles)
     {
         Gate::authorize('access-system-backups');
 
         try {
-            $data = $catalog->dashboard($this->selectedDate);
+            $data = $this->profileDashboard($catalog, $profiles);
             $error = null;
         } catch (Throwable $exception) {
             $data = [
@@ -316,7 +335,7 @@ class BackupStorageManager extends Component
 
         $today = now()->toDateString();
         $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
-        $completedDestinations = $export->completedDestinations($this->selectedDate);
+        $completedDestinations = $export->completedDestinations($this->selectedDate, $this->destinationKey);
         $term = Str::lower(Str::ascii(trim($this->search)));
         $recordsForDate = collect($data['records'])
             ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
@@ -388,6 +407,28 @@ class BackupStorageManager extends Component
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
             'destinationFolders' => $export->destinationFolders($this->destinationKey),
+            'backupProfiles' => $profiles->profiles(),
+            'currentBackupProfile' => $profiles->profile($this->backupProfile),
         ])->layout('layouts.app');
+    }
+
+    private function profileDashboard(ContpaqiBackupCatalog $catalog, ContpaqiBackupProfile $profiles): array
+    {
+        $dashboard = $catalog->dashboard($this->selectedDate);
+        $dashboard['all_records'] = $catalog->catalog()['records'];
+
+        return $profiles->dashboard($dashboard, $this->backupProfile);
+    }
+
+    private function destinationKeyForProfile(ContpaqiBackupProfile $profiles): string
+    {
+        if ($this->backupProfile !== 'merida-contabilidad') {
+            return $this->backupProfile;
+        }
+
+        $legacyRoot = rtrim(str_replace('\\', '/', (string) config('backup-storage.export.destination_root')), '/');
+        $profileRoot = rtrim(str_replace('\\', '/', (string) ($profiles->profile($this->backupProfile)['destination_root'] ?? '')), '/');
+
+        return strcasecmp($legacyRoot, $profileRoot) === 0 ? $this->backupProfile : 'principal';
     }
 }

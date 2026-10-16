@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
+use App\Services\Backups\ContpaqiBackupProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -13,6 +14,19 @@ use Tests\TestCase;
 
 class ContpaqiBackupCatalogTest extends TestCase
 {
+    public function test_backup_profiles_separate_accounting_and_payroll_records(): void
+    {
+        $profiles = app(ContpaqiBackupProfile::class);
+        $accounting = ['company_folder' => 'ctEMPRESA_CONTABLE', 'company_raw' => 'EMPRESA CONTABLE', 'company' => 'EMPRESA CONTABLE', 'stem' => 'EMPRESA CONTABLE-20261016-0900'];
+        $payrollByFolder = ['company_folder' => 'ct1_EMPRESA_NOMINA', 'company_raw' => 'EMPRESA NOMINA', 'company' => 'EMPRESA NOMINA', 'stem' => 'EMPRESA NOMINA-20261016-0900'];
+        $payrollByPeriod = ['company_folder' => null, 'company_raw' => 'EMPRESA Q19 2026', 'company' => 'EMPRESA Q19 2026', 'stem' => 'EMPRESA Q19 2026-20261016-0900'];
+
+        $this->assertTrue($profiles->matches($accounting, $profiles->profile('merida-contabilidad')));
+        $this->assertFalse($profiles->matches($accounting, $profiles->profile('merida-nominas')));
+        $this->assertTrue($profiles->matches($payrollByFolder, $profiles->profile('merida-nominas')));
+        $this->assertTrue($profiles->matches($payrollByPeriod, $profiles->profile('merida-nominas')));
+    }
+
     use RefreshDatabase;
 
     private string $catalogRoot;

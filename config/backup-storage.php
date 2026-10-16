@@ -30,6 +30,39 @@ return [
         'chunk_size' => (int) env('CONTPAQ_EXPORT_CHUNK_SIZE', 16 * 1024 * 1024),
         'queue_connection' => env('CONTPAQ_EXPORT_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
     ],
+    'backup_profiles' => [
+        'merida-contabilidad' => [
+            'label' => 'Mérida · Contabilidad',
+            'site' => 'merida',
+            'department' => 'contabilidad',
+            'source_root' => env('CONTPAQ_MERIDA_CONTABILIDAD_ROOT', '\\\\SRVCONTPAQ\\Compac2'),
+            'destination_root' => env('CONTPAQ_MERIDA_CONTABILIDAD_EXPORT_ROOT', '\\\\SRVCONTPAQ\\e'),
+            'destination_label' => 'CONTABILIDAD',
+            'classification' => 'accounting',
+            'enabled' => true,
+        ],
+        'merida-nominas' => [
+            'label' => 'Mérida · Nóminas',
+            'site' => 'merida',
+            'department' => 'nominas',
+            'source_root' => env('CONTPAQ_MERIDA_NOMINAS_ROOT', '\\\\SRVCONTPAQ\\Compac2'),
+            'destination_root' => env('CONTPAQ_MERIDA_NOMINAS_EXPORT_ROOT', '\\\\SRVCONTPAQ\\f'),
+            'destination_label' => 'NÓMINAS',
+            'classification' => 'payroll',
+            'enabled' => true,
+        ],
+        // Al habilitar Tulum solo será necesario configurar sus rutas.
+        'tulum-contabilidad' => [
+            'label' => 'Tulum · Contabilidad',
+            'site' => 'tulum',
+            'department' => 'contabilidad',
+            'source_root' => env('CONTPAQ_TULUM_CONTABILIDAD_ROOT', ''),
+            'destination_root' => env('CONTPAQ_TULUM_CONTABILIDAD_EXPORT_ROOT', ''),
+            'destination_label' => 'TULUM CONTABILIDAD',
+            'classification' => 'accounting',
+            'enabled' => (bool) env('CONTPAQ_TULUM_CONTABILIDAD_ENABLED', false),
+        ],
+    ],
     'disk' => env('BACKUP_STORAGE_DISK', 'local'),
     // Keep each request below the usual 40 MB PHP post limit while reducing
     // round trips for large backup archives.

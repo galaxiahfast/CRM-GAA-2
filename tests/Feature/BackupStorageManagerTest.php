@@ -187,7 +187,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('destinationKey', 'principal')
             ->assertSee('Seleccione la carpeta')
             ->assertSee('Cargando respaldos…')
-            ->assertSee('Jueves, 15 de octubre de 2026')
+            ->assertSee(ucfirst(now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')))
             ->assertSee('ANGEL MOO')
             ->set('destinationFolder', 'ANGEL MOO')
             ->assertSet('destinationFolder', 'ANGEL MOO')
@@ -196,6 +196,31 @@ class BackupStorageManagerTest extends TestCase
             ->assertSeeHtml('relative h-[544px]')
             ->assertSeeHtml('class="h-[70px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
+    }
+
+    public function test_user_can_switch_between_accounting_and_payroll_profiles(): void
+    {
+        $date = now()->format('Ymd');
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEMPRESA_CONTABLE');
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEMPRESA_NOMINA');
+        File::put($this->catalogRoot."/Empresas/ctEMPRESA_CONTABLE/EMPRESA CONTABLE-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/EMPRESA CONTABLE-{$date}-0900.zip", 'archive');
+        File::put($this->catalogRoot."/Empresas/ctEMPRESA_NOMINA/EMPRESA NOMINA Q19-{$date}-0910.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/EMPRESA NOMINA Q19-{$date}-0910.zip", 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        config()->set('backup-storage.backup_profiles.merida-nominas.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-backup-profiles@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSee('EMPRESA CONTABLE')
+            ->assertDontSee('EMPRESA NOMINA Q19')
+            ->set('backupProfile', 'merida-nominas')
+            ->assertSet('destinationKey', 'merida-nominas')
+            ->assertSet('destinationFolder', '')
+            ->assertSee('Mérida · Nóminas')
+            ->assertSee('EMPRESA NOMINA Q19')
+            ->assertDontSee('EMPRESA CONTABLE');
     }
 
     public function test_failed_export_is_shown_as_a_temporary_toast_without_progress_panel(): void

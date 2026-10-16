@@ -299,7 +299,7 @@ class ContpaqiBackupExport
     }
 
     /** @return array<string, array<int, array{label: string, path: string, completed_at: ?string}>> */
-    public function completedDestinations(string $date): array
+    public function completedDestinations(string $date, ?string $destinationKey = null): array
     {
         if (! is_dir($this->stateDirectory())) {
             return [];
@@ -310,6 +310,14 @@ class ContpaqiBackupExport
             $state = $this->find(pathinfo($path, PATHINFO_FILENAME));
             if ($state === null || ($state['status'] ?? null) !== 'completed' || ($state['date'] ?? null) !== $date) {
                 continue;
+            }
+            if (filled($destinationKey) && ($state['destination_key'] ?? null) !== $destinationKey) {
+                $isLegacyAccountingState = $destinationKey === 'merida-contabilidad'
+                    && ($state['destination_key'] ?? null) === 'principal'
+                    && $this->normalize((string) ($state['destination_root'] ?? '')) === $this->normalize((string) ($this->destination($destinationKey)['root'] ?? ''));
+                if (! $isLegacyAccountingState) {
+                    continue;
+                }
             }
 
             foreach ($state['items'] ?? [] as $item) {
@@ -642,6 +650,18 @@ class ContpaqiBackupExport
             $definitions[] = ['key' => $key, 'label' => $label ?: basename($root), 'root' => $root, 'type' => 'configured'];
         }
 
+        foreach ((array) config('backup-storage.backup_profiles', []) as $key => $profile) {
+            if (! is_array($profile) || ! ($profile['enabled'] ?? false)) {
+                continue;
+            }
+            $definitions[] = [
+                'key' => (string) $key,
+                'label' => (string) ($profile['destination_label'] ?? $profile['label'] ?? $key),
+                'root' => (string) ($profile['destination_root'] ?? ''),
+                'type' => 'profile',
+            ];
+        }
+
         foreach ($this->detectedLocalVolumes() as $volume) {
             $drive = strtoupper(rtrim((string) $volume['root'], '\\/'));
             $label = trim((string) ($volume['volume_label'] ?? ''));
@@ -653,22 +673,7 @@ class ContpaqiBackupExport
             ];
         }
 
-        $seenRoots = [];
-
         return collect($definitions)
-            ->filter(function (array $definition) use (&$seenRoots): bool {
-                $root = trim((string) ($definition['root'] ?? ''));
-                if ($root === '') {
-                    return true;
-                }
-                $normalized = $this->normalize($root);
-                if (isset($seenRoots[$normalized])) {
-                    return false;
-                }
-                $seenRoots[$normalized] = true;
-
-                return true;
-            })
             ->unique('key')
             ->sortByDesc(fn (array $definition): bool => (string) ($definition['root'] ?? '') !== '')
             ->values()
