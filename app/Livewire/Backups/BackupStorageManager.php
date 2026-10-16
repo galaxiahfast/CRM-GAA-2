@@ -80,6 +80,7 @@ class BackupStorageManager extends Component
         $this->destinationFolder = '';
         $this->destinationBrowsePath = '';
         $this->selectedRecords = [];
+        $this->status = 'all';
         $this->selectionNotice = null;
         $this->syncResult = null;
         $this->exportMessage = null;

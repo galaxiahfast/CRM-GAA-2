@@ -246,6 +246,23 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('EMPRESA CONTABLE');
     }
 
+    public function test_empty_status_filter_explains_that_other_records_exist(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        $admin = $this->user('Administrador', 'admin-empty-status@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('status', 'partial')
+            ->assertSee('No hay respaldos en este estado')
+            ->assertSee('La fecha tiene 1 respaldo en otros estados.')
+            ->assertSee('Mostrar todos los respaldos')
+            ->set('status', 'all')
+            ->assertSee('ctEmpresa_Prueba');
+    }
+
     public function test_failed_export_is_shown_as_a_temporary_toast_without_progress_panel(): void
     {
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
