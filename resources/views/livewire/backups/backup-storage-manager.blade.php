@@ -199,7 +199,16 @@
             </div>
         </section>
 
-        @if ($error)
+        <nav class="flex items-center gap-[5px] border-b border-zinc-200" aria-label="Secciones de respaldos">
+            <button type="button" wire:click="selectView('backups')" class="min-h-[44px] border-b-2 px-[15px] font-medium transition {{ $activeView === 'backups' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black' }}">Respaldos</button>
+            <button type="button" wire:click="selectView('companies')" class="min-h-[44px] border-b-2 px-[15px] font-medium transition {{ $activeView === 'companies' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black' }}">Empresas</button>
+            <button type="button" wire:click="selectView('history')" class="inline-flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition {{ $activeView === 'history' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black' }}">
+                <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg>
+                <span>Historial</span>
+            </button>
+        </nav>
+
+        @if ($error && $activeView !== 'history')
             <section class="rounded-2xl border border-red-200 bg-red-50 p-[20px] text-red-800">
                 <div class="flex items-start gap-[12px]">
                     <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/></svg>
@@ -380,7 +389,7 @@
                             </div>
                         </div>
                     </div>
-                @else
+                @elseif ($activeView === 'companies')
                     <div class="border-b border-zinc-200 px-[20px] py-[15px]"><h2 class="font-semibold text-black">Estado de respaldo de hoy</h2><p class="mt-[3px] text-[12px] text-zinc-400">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
                     <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative max-h-[650px]">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[650px] overflow-auto">
@@ -395,9 +404,58 @@
                         </div>
                         <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
+                @else
+                    <div class="border-b border-zinc-200 bg-zinc-100 px-[20px] py-[15px]">
+                        <h2 class="font-semibold text-black">Historial de movimientos</h2>
+                        <p class="mt-[3px] text-zinc-500">Respaldos, reemplazos, cancelaciones, errores y eliminaciones registrados por el sistema.</p>
+                    </div>
+                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative h-[650px]">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                            <table class="w-full min-w-[1050px] table-fixed border-collapse text-left">
+                                <colgroup><col class="w-[170px]"><col class="w-[190px]"><col class="w-[290px]"><col class="w-[230px]"><col class="w-[190px]"></colgroup>
+                                <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px]"><th class="border-r border-zinc-300 px-[20px] font-semibold">Fecha y hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Movimiento</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Empresas</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Destino</th><th class="px-[20px] font-semibold">Usuario</th></tr></thead>
+                                <tbody class="divide-y divide-zinc-200">
+                                    @forelse($movementHistory as $movement)
+                                        @php
+                                            $movementLabel = match($movement['type']) {
+                                                'backup' => 'Respaldo creado',
+                                                'replacement' => 'Respaldo reemplazado',
+                                                'deleted' => 'Respaldo eliminado',
+                                                'cancelled' => 'Respaldo cancelado',
+                                                'failed' => 'Respaldo fallido',
+                                                'queued' => 'En espera',
+                                                'copying' => 'Copia en proceso',
+                                                'cancelling' => 'Cancelando',
+                                                default => 'Movimiento registrado',
+                                            };
+                                            $movementColor = match($movement['type']) {
+                                                'deleted', 'failed' => 'text-red-700',
+                                                'cancelled', 'cancelling' => 'text-amber-700',
+                                                'copying', 'queued' => 'text-violet-700',
+                                                'replacement' => 'text-[#1A3A6B]',
+                                                default => 'text-emerald-700',
+                                            };
+                                            $companyNames = implode(', ', $movement['companies'] ?? []);
+                                            $destinationText = trim(($movement['destination_label'] ?? 'Memoria externa').' · '.str_replace('/', '\\', $movement['destination_folder'] ?? ''), ' ·');
+                                        @endphp
+                                        <tr wire:key="history-{{ $movement['id'] }}" class="h-[82px] {{ $loop->odd ? 'bg-zinc-50' : 'bg-white' }}">
+                                            <td class="border-r border-zinc-200 px-[20px] py-[15px]"><p class="font-medium text-black">{{ \Carbon\CarbonImmutable::parse($movement['occurred_at'])->locale('es')->translatedFormat('d M Y') }}</p><p class="mt-[3px] font-mono text-zinc-500">{{ \Carbon\CarbonImmutable::parse($movement['occurred_at'])->format('H:i:s') }}</p></td>
+                                            <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="font-medium {{ $movementColor }}">{{ $movementLabel }}</p><p class="mt-[3px] text-zinc-500">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[3px] truncate text-red-700" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
+                                            <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="truncate text-black" title="{{ $companyNames }}">{{ $companyNames !== '' ? $companyNames : 'Sin empresas registradas' }}</p>@if($movement['backup_date'])<p class="mt-[3px] text-zinc-500">Respaldo del {{ \Carbon\CarbonImmutable::parse($movement['backup_date'])->locale('es')->translatedFormat('d \d\e F \d\e Y') }}</p>@endif</td>
+                                            <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="truncate text-black" title="{{ $destinationText }}">{{ $movement['destination_label'] ?? 'Memoria externa' }}</p><p class="mt-[3px] truncate text-zinc-500" title="{{ $movement['destination_folder'] }}">{{ str_replace('/', '\\', $movement['destination_folder'] ?? '') ?: 'Carpeta no registrada' }}</p></td>
+                                            <td class="px-[20px] py-[15px]"><p class="truncate text-black" title="{{ $movement['user_name'] }}">{{ $movement['user_name'] }}</p></td>
+                                        </tr>
+                                    @empty
+                                        <tr class="h-[580px]"><td colspan="5" class="px-[20px] text-center align-middle"><svg class="mx-auto h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><p class="mt-[12px] font-medium text-black">Todavía no hay movimientos registrados</p><p class="mt-[4px] text-zinc-500">Los próximos respaldos y eliminaciones aparecerán aquí.</p></td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                    </div>
                 @endif
 
-                <footer class="flex flex-col gap-[5px] border-t border-zinc-200 bg-zinc-50 px-[20px] py-[12px] text-[11px] text-zinc-400 md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span><span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span></footer>
+                <footer class="flex flex-col gap-[5px] border-t border-zinc-200 bg-zinc-50 px-[20px] py-[12px] text-[11px] text-zinc-400 md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
             </section>
         @endif
     </main>

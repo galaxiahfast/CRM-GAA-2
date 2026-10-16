@@ -3,6 +3,7 @@
 namespace App\Livewire\Backups;
 
 use App\Jobs\CopyContpaqiBackups;
+use App\Models\User;
 use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
 use App\Services\Backups\ContpaqiBackupProcessLauncher;
@@ -66,7 +67,7 @@ class BackupStorageManager extends Component
     {
         Gate::authorize('access-system-backups');
 
-        if (! in_array($this->activeView, ['backups', 'companies'], true)) {
+        if (! in_array($this->activeView, ['backups', 'companies', 'history'], true)) {
             $this->activeView = 'backups';
         }
 
@@ -101,7 +102,7 @@ class BackupStorageManager extends Component
 
     public function selectView(string $view): void
     {
-        abort_unless(in_array($view, ['backups', 'companies'], true), 404);
+        abort_unless(in_array($view, ['backups', 'companies', 'history'], true), 404);
         $this->activeView = $view;
     }
 
@@ -378,6 +379,7 @@ class BackupStorageManager extends Component
                 $deletable,
                 $this->destinationFolder,
                 $this->destinationKey,
+                (int) $user->getAuthIdentifier(),
             );
             RateLimiter::clear($rateKey);
             $this->closeDeleteConfirmation();
@@ -555,6 +557,18 @@ class BackupStorageManager extends Component
         $headerSelectableCount = collect($recordAvailability)
             ->filter(fn (string $state): bool => in_array($state, $headerSelectableStates, true))
             ->count();
+        $movementHistory = $this->activeView === 'history'
+            ? collect($export->history())
+            : collect();
+        $historyUsers = User::query()
+            ->whereIn('id', $movementHistory->pluck('user_id')->filter()->unique())
+            ->get(['id', 'name', 'last_name'])
+            ->mapWithKeys(fn (User $user): array => [$user->id => trim($user->name.' '.$user->last_name)]);
+        $movementHistory = $movementHistory->map(function (array $movement) use ($historyUsers): array {
+            $movement['user_name'] = $historyUsers->get($movement['user_id']) ?: 'Usuario no disponible';
+
+            return $movement;
+        })->all();
 
         return view('livewire.backups.backup-storage-manager', [
             'catalog' => $data,
@@ -576,6 +590,7 @@ class BackupStorageManager extends Component
             'destinationFolders' => $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
+            'movementHistory' => $movementHistory,
         ])->layout('layouts.app');
     }
 
