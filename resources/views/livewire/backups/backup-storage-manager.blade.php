@@ -230,14 +230,15 @@
                                                         <svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
                                                     <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
-                                                        <div class="flex items-center gap-[10px] border-b border-zinc-200 px-[20px] py-[15px]">
+                                                        <div class="flex items-center gap-[15px] border-b border-zinc-200 px-[20px] py-[15px]">
                                                             @if($destinationBrowsePath !== '')
-                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex shrink-0 items-center gap-[10px] font-medium text-black transition hover:text-zinc-600" title="Volver a la carpeta anterior">
+                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex shrink-0 items-center gap-[10px] font-semibold text-[#1A3A6B] transition hover:text-[#102a52]" title="Volver a la carpeta anterior">
                                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
                                                                     <span>Volver</span>
                                                                 </button>
+                                                                <span class="h-5 w-px shrink-0 bg-zinc-300" aria-hidden="true"></span>
                                                             @endif
-                                                            <span class="min-w-0 truncate font-medium text-black" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">{{ $destinationBrowsePath !== '' ? str_replace('/', '  ›  ', $destinationBrowsePath) : 'Inicio de la USB' }}</span>
+                                                            <span class="min-w-0 truncate font-medium {{ $destinationBrowsePath !== '' ? 'text-zinc-600' : 'text-black' }}" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">{{ $destinationBrowsePath !== '' ? str_replace('/', '  ›  ', $destinationBrowsePath) : 'Inicio de la USB' }}</span>
                                                         </div>
                                                         <div x-data="backupOverlayScroll()" x-effect="if (open) $nextTick(() => update())" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative">
                                                             <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[240px] divide-y divide-zinc-100 overflow-y-auto overscroll-contain">
