@@ -63,6 +63,45 @@ return [
             'enabled' => (bool) env('CONTPAQ_TULUM_CONTABILIDAD_ENABLED', false),
         ],
     ],
+    // Catálogo confirmado de las bases que pertenecen a Nóminas. La
+    // clasificación se hace por carpeta y no por palabras del respaldo:
+    // "semana", "quincena", "mensual" o un prefijo nt también pueden
+    // aparecer en bases que pertenecen a Contabilidad.
+    'company_classifications' => [
+        'merida' => [
+            'payroll_folders' => [
+                'ct1_CORPORATIVO_N',
+                'ct1_SOLUCIONANDO_',
+                'ct1_TRADEWINDS_AP',
+                'ctALBERTO_RENE_GO',
+                'NtALMACEN_DE_PINT',
+                'NtALPINA_SA_DE_CV',
+                'NtALUMIK_SA_DE_CV',
+                'NtARGENTUM_MEXICA',
+                'NtCIRCUITO_SA_DE_',
+                'ct_COCO_MAYA',
+                'ctCOCO_MAYA_DE_YU',
+                'ctCOCO_MAYA_DE_YUCATAN_SPR',
+                'ctCORPORATIVO_NOH',
+                'ctCORPORATIVO_NOHOCH_TULUM_PTU',
+                'ctDATAMID_DEL_SUR',
+                'ntDEFENSA_PENAL_E',
+                'ctDEFENSA_PENAL_E',
+                'NtALUMAYAB21_DE',
+                'NtHERRAMAX_SA_DE_',
+                'ctINMOBILIARIA_HO',
+                'ctJACOBO_711',
+                'ctJEREMY_TOURS_S',
+                'ctKORLINT',
+                'NtLA_VIGA_VIANA_Y',
+                'ctMEXICO_PACIFIC_',
+                'ctPINTURAS_SIMILA',
+                'ctSOC_COOP_PRODUC',
+                'ctTRADEWINDS_APLI',
+                'NtVALSI_SA_DE_CV',
+            ],
+        ],
+    ],
     'disk' => env('BACKUP_STORAGE_DISK', 'local'),
     // Keep each request below the usual 40 MB PHP post limit while reducing
     // round trips for large backup archives.

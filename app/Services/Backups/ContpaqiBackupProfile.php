@@ -6,6 +6,9 @@ use Illuminate\Support\Str;
 
 class ContpaqiBackupProfile
 {
+    /** @var array<string, array<string, true>> */
+    private array $payrollFoldersBySite = [];
+
     public function profiles(bool $includeDisabled = false): array
     {
         return collect((array) config('backup-storage.backup_profiles', []))
@@ -69,16 +72,18 @@ class ContpaqiBackupProfile
             return true;
         }
 
-        $folder = (string) ($record['company_folder'] ?? '');
-        $text = Str::ascii(implode(' ', [
-            $record['company_raw'] ?? '',
-            $record['company'] ?? '',
-            $record['stem'] ?? '',
-        ]));
-        $isPayroll = preg_match('/^nt/i', $folder) === 1
-            || preg_match('/^ct\d+_/i', $folder) === 1
-            || preg_match('/(?:^|[\s_-])(?:Q\d+|S\s*#?\s*\d+|SEM(?:ANA|ANAL)?\w*\s*#?\s*\d*|QUINCEN\w*|MENSUAL\w*|PTU)(?:[\s_-]|$)/i', $text) === 1;
+        $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
+        $site = (string) ($profile['site'] ?? 'merida');
+        $isPayroll = isset($this->payrollFolders($site)[$folder]);
 
         return $classification === 'payroll' ? $isPayroll : ! $isPayroll;
+    }
+
+    /** @return array<string, true> */
+    private function payrollFolders(string $site): array
+    {
+        return $this->payrollFoldersBySite[$site] ??= collect((array) config("backup-storage.company_classifications.{$site}.payroll_folders", []))
+            ->mapWithKeys(fn (string $folder): array => [Str::lower(trim($folder)) => true])
+            ->all();
     }
 }
