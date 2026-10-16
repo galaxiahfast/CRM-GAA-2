@@ -407,7 +407,7 @@ class BackupStorageManager extends Component
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
             'destinationFolders' => $export->destinationFolders($this->destinationKey),
-            'backupProfiles' => $profiles->profiles(),
+            'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
         ])->layout('layouts.app');
     }
