@@ -37,15 +37,8 @@
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
         .backup-catalog-scroll-vertical-visible > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-horizontal-visible > .backup-catalog-scroll-thumb-x { opacity: 1; }
-        .backup-folder-scroll { scrollbar-width: thin; scrollbar-color: #1A3A6B transparent; }
-        .backup-folder-scroll::-webkit-scrollbar { width: 3px; }
-        .backup-folder-scroll::-webkit-scrollbar-track { background: transparent; }
-        .backup-folder-scroll::-webkit-scrollbar-thumb { border-radius: 9999px; background: #1A3A6B; }
-        .backup-folder-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
-        html.module-dark-theme .backup-folder-scroll { scrollbar-color: #a9a4cf transparent; }
-        html.module-dark-theme .backup-folder-scroll::-webkit-scrollbar-thumb { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
         .backup-record-gray > tr > td { background-color: #f4f4f5; }
         .backup-record-white > tr > td { background-color: #fff; }
@@ -237,20 +230,21 @@
                                                         <svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
                                                     <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
-                                                        <div class="flex items-center gap-[20px] border-b border-zinc-200 px-[20px] py-[15px]">
+                                                        <div class="flex items-center gap-[10px] border-b border-zinc-200 px-[20px] py-[15px]">
                                                             @if($destinationBrowsePath !== '')
                                                                 <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex shrink-0 items-center gap-[10px] font-medium text-black transition hover:text-zinc-600" title="Volver a la carpeta anterior">
                                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
                                                                     <span>Volver</span>
                                                                 </button>
                                                             @else
-                                                                <span class="grid h-4 w-4 shrink-0 place-items-center text-zinc-500">
-                                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
+                                                                <span class="grid h-[18px] w-[18px] shrink-0 place-items-center text-zinc-500">
+                                                                    <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
                                                                 </span>
                                                             @endif
                                                             <span class="min-w-0 truncate font-medium text-black" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">{{ $destinationBrowsePath !== '' ? str_replace('/', '  ›  ', $destinationBrowsePath) : 'Inicio de la USB' }}</span>
                                                         </div>
-                                                        <div class="backup-folder-scroll max-h-[240px] divide-y divide-zinc-100 overflow-y-auto overscroll-contain">
+                                                        <div x-data="backupOverlayScroll()" x-effect="if (open) $nextTick(() => update())" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative">
+                                                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[240px] divide-y divide-zinc-100 overflow-y-auto overscroll-contain">
                                                             @forelse($visibleDestinationFolders as $folder)
                                                                 <div class="flex items-stretch bg-white transition hover:bg-zinc-50">
                                                                     <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] px-[20px] py-[15px] text-left text-black disabled:cursor-not-allowed disabled:text-zinc-400" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
@@ -273,6 +267,8 @@
                                                                     <span>Esta carpeta no contiene subcarpetas.</span>
                                                                 </div>
                                                             @endforelse
+                                                            </div>
+                                                            <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                         </div>
                                                     </div>
                                                 </div>
