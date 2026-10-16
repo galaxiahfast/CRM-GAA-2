@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class ContpaqiSqlCompanyCatalogTest extends TestCase
 {
-    public function test_sql_instances_classify_companies_and_allow_a_company_in_both_departments(): void
+    public function test_physical_bak_path_disambiguates_a_company_registered_in_both_systems(): void
     {
         config()->set('backup-storage.sql_catalog', [
             'enabled' => true,
@@ -19,6 +19,10 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
             'sqlcmd_path' => 'sqlcmd',
             'timeout_seconds' => 15,
             'cache_seconds' => 300,
+            'databases' => [
+                'payroll' => 'nomGenerales',
+                'accounting' => 'GeneralesSQL',
+            ],
             'sites' => [
                 'merida' => [
                     'payroll' => 'SRVCONTPAQ\\NOMINAS',
@@ -42,9 +46,12 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
         $this->assertArrayNotHasKey('document_123_content', $catalog['accounting']);
 
         $profiles = app(ContpaqiBackupProfile::class);
-        $both = ['company_folder' => 'ctEN_AMBAS'];
-        $this->assertTrue($profiles->matches($both, $profiles->profile('merida-nominas')));
-        $this->assertTrue($profiles->matches($both, $profiles->profile('merida-contabilidad')));
+        $payroll = ['company_folder' => 'ctEN_AMBAS', 'source_classification' => 'payroll'];
+        $accounting = ['company_folder' => 'ctEN_AMBAS', 'source_classification' => 'accounting'];
+        $this->assertTrue($profiles->matches($payroll, $profiles->profile('merida-nominas')));
+        $this->assertFalse($profiles->matches($payroll, $profiles->profile('merida-contabilidad')));
+        $this->assertTrue($profiles->matches($accounting, $profiles->profile('merida-contabilidad')));
+        $this->assertFalse($profiles->matches($accounting, $profiles->profile('merida-nominas')));
         $this->assertFalse($profiles->matches(['company_folder' => 'ctNO_EXISTE'], $profiles->profile('merida-contabilidad')));
 
         Process::assertRan(function ($process): bool {
@@ -52,7 +59,7 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
                 ? implode(' ', $process->command)
                 : $process->command;
 
-            return str_contains($command, 'sys.databases')
+            return (str_contains($command, 'dbo.nom10000') || str_contains($command, 'dbo.ListaEmpresas'))
                 && ! preg_match('/\b(?:INSERT|UPDATE|DELETE|ALTER|CREATE|DROP|EXEC)\b/i', $command);
         });
     }

@@ -77,11 +77,22 @@ class ContpaqiBackupProfile
             return true;
         }
 
+        $sourceClassification = (string) ($record['source_classification'] ?? '');
+        if (in_array($sourceClassification, ['payroll', 'accounting'], true)
+            && $sourceClassification !== $classification) {
+            return false;
+        }
+
         $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
         $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
         if ($sqlCatalog !== null) {
-            return isset($sqlCatalog[$classification][$folder]);
+            return isset($sqlCatalog[$classification][$folder])
+                && ($sourceClassification === '' || $sourceClassification === $classification);
+        }
+
+        if ($sourceClassification !== '') {
+            return $sourceClassification === $classification;
         }
 
         $isPayroll = isset($this->payrollFolders($site)[$folder]);

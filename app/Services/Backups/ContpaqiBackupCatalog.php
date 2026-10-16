@@ -14,7 +14,7 @@ use Throwable;
 
 class ContpaqiBackupCatalog
 {
-    private const CACHE_VERSION = 2;
+    private const CACHE_VERSION = 3;
 
     private const PRELOADED_DAYS = 60;
 
@@ -176,6 +176,7 @@ class ContpaqiBackupCatalog
             $records[$recordKey]['company_folder'] = $companyFolder;
             $records[$recordKey]['company_key'] = $this->normalizeCompany($companyFolder);
             $records[$recordKey]['company'] = $this->displayCompany($parsed['company']);
+            $records[$recordKey]['source_classification'] = $this->sourceClassification($relativePath);
             $records[$recordKey]['database'] = $this->fileData($file, $relativePath);
         }
 
@@ -268,6 +269,7 @@ class ContpaqiBackupCatalog
             $records[$recordKey]['company_folder'] = $companyFolder;
             $records[$recordKey]['company_key'] = $this->normalizeCompany($companyFolder);
             $records[$recordKey]['company'] = $this->displayCompany($parsed['company']);
+            $records[$recordKey]['source_classification'] = $this->sourceClassification($relativePath);
             $records[$recordKey]['database'] = $this->fileData($file, $relativePath);
         }
 
@@ -447,6 +449,7 @@ class ContpaqiBackupCatalog
             'company' => $this->displayCompany($parsed['company']),
             'company_folder' => null,
             'company_key' => null,
+            'source_classification' => null,
             'date' => $parsed['date'],
             'time' => $parsed['time'],
             'occurred_at' => $parsed['occurred_at'],
@@ -506,6 +509,21 @@ class ContpaqiBackupCatalog
         $normalizedPath = str_replace('\\', '/', $path);
 
         return ltrim(substr($normalizedPath, strlen($base)), '/');
+    }
+
+    private function sourceClassification(string $relativePath): ?string
+    {
+        $segments = array_values(array_filter(explode('/', str_replace('\\', '/', $relativePath)), 'strlen'));
+
+        if (count($segments) === 2) {
+            return 'accounting';
+        }
+
+        if (count($segments) >= 3 && Str::lower($segments[1]) === 'respaldo') {
+            return 'payroll';
+        }
+
+        return null;
     }
 
     private function decodeToken(string $token): string

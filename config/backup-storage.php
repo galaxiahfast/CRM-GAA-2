@@ -64,13 +64,17 @@ return [
         ],
     ],
     'sql_catalog' => [
-        // Solo ejecuta SELECT sobre master.sys.databases mediante sqlcmd.
+        // Solo ejecuta SELECT sobre los catálogos generales de CONTPAQi.
         'enabled' => (bool) env('CONTPAQ_SQL_CATALOG_ENABLED', true),
         'username' => env('CONTPAQ_SQL_USERNAME', ''),
         'password' => env('CONTPAQ_SQL_PASSWORD', ''),
         'sqlcmd_path' => env('CONTPAQ_SQLCMD_PATH', 'sqlcmd'),
         'timeout_seconds' => (int) env('CONTPAQ_SQL_TIMEOUT_SECONDS', 15),
         'cache_seconds' => (int) env('CONTPAQ_SQL_CACHE_SECONDS', 300),
+        'databases' => [
+            'payroll' => env('CONTPAQ_MERIDA_NOMINAS_CATALOG_DATABASE', 'nomGenerales'),
+            'accounting' => env('CONTPAQ_MERIDA_CONTABILIDAD_CATALOG_DATABASE', 'GeneralesSQL'),
+        ],
         'sites' => [
             'merida' => [
                 'payroll' => env('CONTPAQ_MERIDA_NOMINAS_SQL_INSTANCE', 'SRVCONTPAQ\\NOMINAS'),

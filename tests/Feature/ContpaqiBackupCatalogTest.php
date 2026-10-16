@@ -17,8 +17,8 @@ class ContpaqiBackupCatalogTest extends TestCase
     public function test_backup_profiles_separate_accounting_and_payroll_records(): void
     {
         $profiles = app(ContpaqiBackupProfile::class);
-        $accounting = ['company_folder' => 'ctEMPRESA_CONTABLE', 'company_raw' => 'EMPRESA CONTABLE', 'company' => 'EMPRESA CONTABLE', 'stem' => 'EMPRESA CONTABLE-20261016-0900'];
-        $payrollByCatalog = ['company_folder' => 'NtALMACEN_DE_PINT', 'company_raw' => 'ALMACEN DE PINTURAS', 'company' => 'ALMACEN DE PINTURAS', 'stem' => 'ALMACEN DE PINTURAS-20261016-0900'];
+        $accounting = ['company_folder' => 'ctEMPRESA_CONTABLE', 'source_classification' => 'accounting', 'company_raw' => 'EMPRESA CONTABLE', 'company' => 'EMPRESA CONTABLE', 'stem' => 'EMPRESA CONTABLE-20261016-0900'];
+        $payrollByCatalog = ['company_folder' => 'NtALMACEN_DE_PINT', 'source_classification' => 'payroll', 'company_raw' => 'ALMACEN DE PINTURAS', 'company' => 'ALMACEN DE PINTURAS', 'stem' => 'ALMACEN DE PINTURAS-20261016-0900'];
         $unlistedNtFolder = ['company_folder' => 'ntMATA_ALCOCER_PEDRO_ORLANDO', 'company_raw' => 'MATA ALCOCER PEDRO ORLANDO', 'company' => 'MATA ALCOCER PEDRO ORLANDO', 'stem' => 'MATA ALCOCER PEDRO ORLANDO-20261016-0900'];
         $unlistedPeriod = ['company_folder' => 'ctCASA_VIOLETA_RE', 'company_raw' => 'CASA VIOLETA Q19 2026', 'company' => 'CASA VIOLETA Q19 2026', 'stem' => 'CASA VIOLETA Q19 2026-20261016-0900'];
 
@@ -82,6 +82,17 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertSame('bak', $today['database']['extension']);
         $this->assertSame('zip', $today['archive']['extension']);
         $this->assertSame(2, collect($catalog['dates'])->count());
+    }
+
+    public function test_catalog_classifies_the_system_from_the_physical_bak_path(): void
+    {
+        File::put($this->catalogRoot.'/Empresas/ctEmpresa_Demo/ctEmpresa_Demo-20261016-0900.bak', 'accounting');
+        File::put($this->catalogRoot.'/Empresas/ctEmpresa_Demo/Respaldo/Empresa Demo-20261016-0915.bak', 'payroll');
+
+        $records = collect(app(ContpaqiBackupCatalog::class)->catalog(true)['records']);
+
+        $this->assertSame('accounting', $records->firstWhere('time', '09:00:00')['source_classification']);
+        $this->assertSame('payroll', $records->firstWhere('time', '09:15:00')['source_classification']);
     }
 
     public function test_download_is_read_only_and_cannot_escape_the_allowed_directories(): void

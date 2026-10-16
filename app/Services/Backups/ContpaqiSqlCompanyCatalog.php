@@ -34,8 +34,8 @@ class ContpaqiSqlCompanyCatalog
         try {
             $instances = (array) config("backup-storage.sql_catalog.sites.{$site}", []);
             $catalog = [
-                'payroll' => $this->readInstance((string) $instances['payroll']),
-                'accounting' => $this->readInstance((string) $instances['accounting']),
+                'payroll' => $this->readInstance((string) $instances['payroll'], 'payroll'),
+                'accounting' => $this->readInstance((string) $instances['accounting'], 'accounting'),
             ];
 
             Cache::put($cacheKey, $catalog, max(1, (int) config('backup-storage.sql_catalog.cache_seconds', 300)));
@@ -70,9 +70,19 @@ class ContpaqiSqlCompanyCatalog
     }
 
     /** @return array<string, true> */
-    private function readInstance(string $instance): array
+    private function readInstance(string $instance, string $classification): array
     {
-        $query = "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE state_desc = 'ONLINE' AND database_id > 4 AND (LOWER(name) LIKE 'ct%' OR LOWER(name) LIKE 'nt%' OR LOWER(name) LIKE 'nct%') ORDER BY name;";
+        [$database, $query] = match ($classification) {
+            'payroll' => [
+                (string) config('backup-storage.sql_catalog.databases.payroll', 'nomGenerales'),
+                'SET NOCOUNT ON; SELECT RutaEmpresa FROM dbo.nom10000 WHERE DatosVigente = 1 AND RutaEmpresa IS NOT NULL ORDER BY RutaEmpresa;',
+            ],
+            'accounting' => [
+                (string) config('backup-storage.sql_catalog.databases.accounting', 'GeneralesSQL'),
+                'SET NOCOUNT ON; SELECT AliasBDD FROM dbo.ListaEmpresas WHERE AliasBDD IS NOT NULL ORDER BY AliasBDD;',
+            ],
+            default => throw new \InvalidArgumentException("Clasificación SQL no compatible: {$classification}."),
+        };
         $result = Process::env([
             'SQLCMDPASSWORD' => (string) config('backup-storage.sql_catalog.password'),
         ])->timeout(max(5, (int) config('backup-storage.sql_catalog.timeout_seconds', 15)))
@@ -80,7 +90,7 @@ class ContpaqiSqlCompanyCatalog
                 (string) config('backup-storage.sql_catalog.sqlcmd_path', 'sqlcmd'),
                 '-S', $instance,
                 '-U', (string) config('backup-storage.sql_catalog.username'),
-                '-d', 'master',
+                '-d', $database,
                 '-l', '8',
                 '-b',
                 '-W',

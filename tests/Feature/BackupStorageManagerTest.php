@@ -225,10 +225,10 @@ class BackupStorageManagerTest extends TestCase
     {
         $date = now()->format('Ymd');
         File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEMPRESA_CONTABLE');
-        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/NtALMACEN_DE_PINT');
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/NtALMACEN_DE_PINT/Respaldo');
         File::put($this->catalogRoot."/Empresas/ctEMPRESA_CONTABLE/EMPRESA CONTABLE-{$date}-0900.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/EMPRESA CONTABLE-{$date}-0900.zip", 'archive');
-        File::put($this->catalogRoot."/Empresas/NtALMACEN_DE_PINT/ALMACEN DE PINTURAS ZONA MERIDA SA DE CV S#42 16 oct-{$date}-0910.bak", 'database');
+        File::put($this->catalogRoot."/Empresas/NtALMACEN_DE_PINT/Respaldo/ALMACEN DE PINTURAS ZONA MERIDA SA DE CV S#42 16 oct-{$date}-0910.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/ALMACEN DE PINTURAS ZONA MERIDA SA DE CV S#42 16 oct-{$date}-0910.zip", 'archive');
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
         config()->set('backup-storage.backup_profiles.merida-nominas.destination_root', $this->exportRoot);
