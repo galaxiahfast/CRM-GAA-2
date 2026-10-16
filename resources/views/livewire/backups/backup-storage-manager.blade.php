@@ -37,8 +37,15 @@
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
         .backup-catalog-scroll-vertical-visible > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-horizontal-visible > .backup-catalog-scroll-thumb-x { opacity: 1; }
+        .backup-folder-scroll { scrollbar-width: thin; scrollbar-color: #1A3A6B transparent; }
+        .backup-folder-scroll::-webkit-scrollbar { width: 3px; }
+        .backup-folder-scroll::-webkit-scrollbar-track { background: transparent; }
+        .backup-folder-scroll::-webkit-scrollbar-thumb { border-radius: 9999px; background: #1A3A6B; }
+        .backup-folder-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
         html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
         html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
+        html.module-dark-theme .backup-folder-scroll { scrollbar-color: #a9a4cf transparent; }
+        html.module-dark-theme .backup-folder-scroll::-webkit-scrollbar-thumb { background: #a9a4cf; }
         .backup-record-group > tr { background: inherit; }
         .backup-record-gray > tr > td { background-color: #f4f4f5; }
         .backup-record-white > tr > td { background-color: #fff; }
@@ -229,42 +236,41 @@
                                                         <span class="truncate" title="{{ str_replace('/', '\\', $destinationFolder) }}">{{ $destinationFolder !== '' ? str_replace('/', '\\', $destinationFolder) : 'Selecciona una carpeta…' }}</span>
                                                         <svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
-                                                    <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_14px_35px_rgba(0,0,0,0.14)]">
-                                                        <div class="flex h-[52px] items-center gap-[10px] border-b border-zinc-200 bg-zinc-50 px-[10px]">
+                                                    <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">
+                                                        <div class="mx-[4px] flex h-[44px] items-center gap-[10px] border-b border-zinc-200 px-[11px]">
                                                             @if($destinationBrowsePath !== '')
-                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex h-8 shrink-0 items-center gap-[6px] rounded-lg border border-zinc-200 bg-white px-[9px] font-medium text-black transition hover:border-zinc-300 hover:bg-zinc-100" title="Volver a la carpeta anterior">
+                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex h-[36px] shrink-0 items-center gap-[7px] px-[4px] font-medium text-black transition hover:text-zinc-600" title="Volver a la carpeta anterior">
                                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
                                                                     <span>Volver</span>
                                                                 </button>
+                                                                <span class="h-5 w-px shrink-0 bg-zinc-200"></span>
                                                             @else
-                                                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-zinc-200 bg-white text-zinc-500">
+                                                                <span class="grid h-8 w-8 shrink-0 place-items-center text-zinc-500">
                                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
                                                                 </span>
                                                             @endif
                                                             <span class="min-w-0 truncate font-medium text-black" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">{{ $destinationBrowsePath !== '' ? str_replace('/', '  ›  ', $destinationBrowsePath) : 'Inicio de la USB' }}</span>
                                                         </div>
-                                                        <div class="max-h-[250px] divide-y divide-zinc-100 overflow-y-auto overscroll-contain">
+                                                        <div class="backup-folder-scroll max-h-[220px] divide-y divide-zinc-100 overflow-y-auto overscroll-contain">
                                                             @forelse($visibleDestinationFolders as $folder)
-                                                                <div class="group flex min-h-[50px] items-stretch bg-white transition hover:bg-zinc-50">
-                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[11px] px-[14px] text-left text-black disabled:cursor-not-allowed disabled:text-zinc-400" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
-                                                                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 transition group-hover:bg-white">
-                                                                            <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
-                                                                        </span>
-                                                                        <span class="truncate font-medium">{{ $folder['name'] }}</span>
+                                                                <div class="flex min-h-[44px] items-stretch bg-white transition hover:bg-zinc-50">
+                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] px-[15px] text-left text-black disabled:cursor-not-allowed disabled:text-zinc-400" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
+                                                                        <svg class="h-[18px] w-[18px] shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
+                                                                        <span class="truncate">{{ $folder['name'] }}</span>
                                                                         @if($destinationFolder === $folder['path'])
-                                                                            <span class="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#1A3A6B] text-white"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="m5 12 4 4L19 6"/></svg></span>
+                                                                            <svg class="ml-auto h-4 w-4 shrink-0 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>
                                                                         @endif
                                                                     </button>
                                                                     @if($folder['has_children'])
-                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="inline-flex w-[86px] shrink-0 items-center justify-center gap-[5px] border-l border-zinc-200 font-medium text-zinc-500 transition hover:bg-white hover:text-black" aria-label="Abrir {{ $folder['name'] }}" title="Ver subcarpetas">
+                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="inline-flex w-[82px] shrink-0 items-center justify-center gap-[5px] border-l border-zinc-200 text-zinc-500 transition hover:bg-white hover:text-black" aria-label="Abrir {{ $folder['name'] }}" title="Ver subcarpetas">
                                                                             <span>Abrir</span>
                                                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
                                                                         </button>
                                                                     @endif
                                                                 </div>
                                                             @empty
-                                                                <div class="flex min-h-[82px] items-center gap-[12px] px-[15px] text-zinc-500">
-                                                                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-100"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg></span>
+                                                                <div class="flex min-h-[70px] items-center gap-[10px] px-[15px] text-zinc-500">
+                                                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
                                                                     <span>Esta carpeta no contiene subcarpetas.</span>
                                                                 </div>
                                                             @endforelse
