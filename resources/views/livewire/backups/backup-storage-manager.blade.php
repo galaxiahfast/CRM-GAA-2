@@ -10,6 +10,7 @@
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
         : 0;
     $writableFolders = collect($destinationFolders)->where('writable', true)->values();
+    $allAvailableSelected = $availableExportCount > 0 && $selectedExportCount === $availableExportCount;
     $bothLocationsOnline = ($catalog['connected'] ?? false) && ($exportDestination['connected'] ?? false);
     $exportError = $exportMessage ?: (($exportStatus['status'] ?? null) === 'failed' ? ($exportStatus['error'] ?? 'La copia no pudo completarse.') : null);
 @endphp
@@ -171,17 +172,6 @@
             </section>
         @else
             <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none">
-                <header class="flex flex-col gap-[15px] border-b border-zinc-200 p-[20px] xl:flex-row xl:items-center xl:justify-between">
-                    <div>
-                        <h2 class="font-semibold text-black">Generar respaldo de la empresa</h2>
-                        <p class="mt-[3px] text-[13px] text-zinc-500">Configura y genera los respaldos fácilmente.</p>
-                    </div>
-                    <label class="relative block w-full xl:w-[400px]">
-                        <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-                        <input type="search" wire:model.live.debounce.300ms="search" placeholder="Buscar empresa o archivo…" class="h-[46px] w-full rounded-xl border-zinc-200 bg-white pl-[44px] pr-[15px] text-[14px] shadow-none focus:border-[#1A3A6B] focus:ring-[#1A3A6B]/10">
-                    </label>
-                </header>
-
                 @if ($activeView === 'backups')
                     <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
                         <aside class="backup-soft-panel h-[520px] min-h-0 overflow-hidden border-b border-zinc-200 bg-white xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
@@ -224,7 +214,6 @@
                                                 <div class="flex min-w-0 flex-wrap items-center justify-between gap-[15px]">
                                                     <h3 class="shrink-0 font-semibold text-black">Seleccione la sede, el departamento y la carpeta</h3>
                                                     <div class="flex min-w-0 flex-wrap items-center justify-end gap-x-[15px] gap-y-[5px]">
-                                                        <button type="button" wire:click="selectAllAvailable" wire:loading.attr="disabled" wire:target="selectAllAvailable" @disabled($exportIsActive || in_array($status, ['backed_up', 'partial'], true)) class="inline-flex items-center gap-[7px] bg-transparent p-0 font-medium text-black transition hover:text-zinc-600 disabled:cursor-not-allowed disabled:text-zinc-400"><svg class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span wire:loading.remove wire:target="selectAllAvailable">Seleccionar disponibles</span><span wire:loading wire:target="selectAllAvailable">Seleccionando…</span></button>
                                                         @if($selectedExportCount > 0)<button type="button" wire:click="clearSelection" class="inline-flex items-center gap-[7px] bg-transparent p-0 text-zinc-500 transition hover:text-black"><svg class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg><span>Limpiar selección</span></button>@endif
                                                         <span class="min-w-0 truncate text-right text-zinc-500">{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }} · {{ $formatBytes($selectedExportBytes) }}</span>
                                                     </div>
@@ -270,7 +259,7 @@
                                 <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[290px]"></colgroup>
-                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold">Empresa</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
+                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold"><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($availableExportCount === 0 || $exportIsActive || in_array($status, ['backed_up', 'partial'], true)) aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"><span>Empresa</span></span></th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
                                             $recordState = $recordAvailability[$record['id']] ?? 'incomplete';
@@ -313,7 +302,7 @@
                                             </tr>
                                         </tbody>
                                     @empty
-                                        <tbody><tr><td colspan="4" class="px-[20px] py-[70px] text-center"><svg class="mx-auto h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h7l2 2h9v11H3V7Z"/></svg><p class="mt-[12px] font-medium text-black">No hay resultados</p><p class="mt-[4px] text-[13px] text-zinc-400">Cambia la fecha, el estado o la búsqueda.</p></td></tr></tbody>
+                                        <tbody><tr><td colspan="4" class="px-[20px] py-[70px] text-center"><svg class="mx-auto h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h7l2 2h9v11H3V7Z"/></svg><p class="mt-[12px] font-medium text-black">No hay resultados</p><p class="mt-[4px] text-[13px] text-zinc-400">Cambia la fecha o el estado.</p></td></tr></tbody>
                                     @endforelse
                                 </table>
                                 </div>

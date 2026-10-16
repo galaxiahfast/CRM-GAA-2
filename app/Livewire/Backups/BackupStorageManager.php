@@ -8,7 +8,6 @@ use App\Services\Backups\ContpaqiBackupExport;
 use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use App\Services\Backups\ContpaqiBackupProfile;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use RuntimeException;
@@ -24,9 +23,6 @@ class BackupStorageManager extends Component
 
     #[Url(as: 'estado')]
     public string $status = 'all';
-
-    #[Url(as: 'q')]
-    public string $search = '';
 
     public array $selectedRecords = [];
 
@@ -110,6 +106,21 @@ class BackupStorageManager extends Component
             ->pluck('id')
             ->values()
             ->all();
+        $this->selectionNotice = null;
+    }
+
+    public function toggleAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
+    {
+        $records = $this->profileDashboard($catalog, $profiles)['records'];
+        $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $availableIds = collect($records)
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))
+            ->pluck('id')
+            ->values();
+
+        $allSelected = $availableIds->isNotEmpty()
+            && collect($this->selectedRecords)->intersect($availableIds)->count() === $availableIds->count();
+        $this->selectedRecords = $allSelected ? [] : $availableIds->all();
         $this->selectionNotice = null;
     }
 
@@ -336,7 +347,6 @@ class BackupStorageManager extends Component
         $today = now()->toDateString();
         $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
         $completedDestinations = $export->completedDestinations($this->selectedDate, $this->destinationKey);
-        $term = Str::lower(Str::ascii(trim($this->search)));
         $recordsForDate = collect($data['records'])
             ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
             ->when($this->status === 'available', fn ($records) => $records->filter(
@@ -346,10 +356,6 @@ class BackupStorageManager extends Component
                 fn (array $record): bool => isset($completedDestinations[$record['id']])
             ))
             ->when($this->status === 'partial', fn ($records) => $records->where('complete', false))
-            ->when($term !== '', fn ($records) => $records->filter(fn (array $record): bool => str_contains(
-                Str::lower(Str::ascii($record['company'].' '.$record['stem'].' '.($record['company_folder'] ?? ''))),
-                $term,
-            )))
             ->values();
 
         $todayRecords = collect($data['today_records']);
@@ -374,10 +380,7 @@ class BackupStorageManager extends Component
                     + $partialTodayByCompany->get($company['key'], collect())->count(),
                 'last_backup' => $last,
             ];
-        })->when($term !== '', fn ($items) => $items->filter(fn (array $company): bool => str_contains(
-            Str::lower(Str::ascii($company['name'].' '.$company['folder'])),
-            $term,
-        )))->values();
+        })->values();
 
         $summary = [
             'companies' => count($data['companies']),
