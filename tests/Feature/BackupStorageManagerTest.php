@@ -180,6 +180,7 @@ class BackupStorageManagerTest extends TestCase
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        File::ensureDirectoryExists($this->exportRoot.'/ANGEL MOO/NOMINAS/SEMANALES');
         $admin = $this->user('Administrador', 'admin-destinations@datamid.test');
 
         Livewire::actingAs($admin)
@@ -191,13 +192,32 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Cargando respaldos…')
             ->assertSee(ucfirst(now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')))
             ->assertSee('ANGEL MOO')
-            ->set('destinationFolder', 'ANGEL MOO')
-            ->assertSet('destinationFolder', 'ANGEL MOO')
+            ->call('browseDestinationFolder', 'ANGEL MOO')
+            ->assertSet('destinationBrowsePath', 'ANGEL MOO')
+            ->assertSee('NOMINAS')
+            ->call('browseDestinationFolder', 'ANGEL MOO/NOMINAS')
+            ->assertSet('destinationBrowsePath', 'ANGEL MOO/NOMINAS')
+            ->assertSee('SEMANALES')
+            ->set('destinationFolder', 'ANGEL MOO/NOMINAS/SEMANALES')
+            ->assertSet('destinationFolder', 'ANGEL MOO/NOMINAS/SEMANALES')
+            ->call('browseDestinationUp')
+            ->assertSet('destinationBrowsePath', 'ANGEL MOO')
             ->assertDontSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
             ->assertSeeHtml('relative h-[544px]')
             ->assertSeeHtml('class="h-[70px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
+    }
+
+    public function test_destination_browser_rejects_paths_outside_the_usb(): void
+    {
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-invalid-destination@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('browseDestinationFolder', '../fuera')
+            ->assertStatus(422);
     }
 
     public function test_user_can_switch_between_accounting_and_payroll_profiles(): void

@@ -66,26 +66,47 @@ class ContpaqiBackupExport
         ];
     }
 
-    public function destinationFolders(?string $destinationKey = null): array
+    public function destinationFolders(?string $destinationKey = null, string $parent = ''): array
     {
         $destination = $this->destination($destinationKey);
         if (! $destination['connected']) {
             return [];
         }
 
+        $parentPath = $parent === ''
+            ? $destination['root']
+            : $this->resolveDestinationFolder($parent, $destination['root']);
+        if ($parentPath === null) {
+            return [];
+        }
+
         try {
-            return collect(new \FilesystemIterator($destination['root'], \FilesystemIterator::SKIP_DOTS))
+            return collect(new \FilesystemIterator($parentPath, \FilesystemIterator::SKIP_DOTS))
                 ->filter(fn (\SplFileInfo $item): bool => $item->isDir() && ! $item->isLink() && ! str_starts_with($item->getFilename(), '$'))
-                ->map(fn (\SplFileInfo $item): array => [
-                    'name' => $item->getFilename(),
-                    'writable' => is_writable($item->getPathname()),
-                ])
+                ->map(function (\SplFileInfo $item) use ($parent): array {
+                    $path = ltrim(($parent !== '' ? trim($parent, '\\/').'/' : '').$item->getFilename(), '/');
+
+                    return [
+                        'name' => $item->getFilename(),
+                        'path' => $path,
+                        'writable' => is_writable($item->getPathname()),
+                        'has_children' => $this->hasChildDirectories($item->getPathname()),
+                    ];
+                })
                 ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
                 ->values()
                 ->all();
         } catch (Throwable) {
             return [];
         }
+    }
+
+    public function destinationFolderExists(string $folder, ?string $destinationKey = null): bool
+    {
+        $destination = $this->destination($destinationKey);
+
+        return $destination['connected']
+            && $this->resolveDestinationFolder($folder, $destination['root']) !== null;
     }
 
     public function create(string $date, array $recordIds, int $userId, string $destinationFolder, ContpaqiBackupCatalog $catalog, ?string $destinationKey = null): array
@@ -129,7 +150,7 @@ class ContpaqiBackupExport
                 'destination_root' => $destination['root'],
                 'destination_key' => $destination['key'],
                 'destination_label' => $destination['label'],
-                'destination_folder' => basename($folderPath),
+                'destination_folder' => $this->relativeDestinationFolder($folderPath, $destination['root']),
                 'destination_path' => null,
                 'total_files' => count($records) * 2,
                 'completed_files' => 0,
@@ -384,7 +405,7 @@ class ContpaqiBackupExport
             ? $this->destinationCopies($date, collect($records)->where('complete', true)->values()->all(), $folderPath)
             : ['record_ids' => [], 'company_keys' => []];
         $copyingCompanies = $folderPath !== null
-            ? $this->activeCompanyKeys($date, $destination['root'], basename($folderPath))
+            ? $this->activeCompanyKeys($date, $destination['root'], $this->relativeDestinationFolder($folderPath, $destination['root']))
             : [];
 
         return collect($records)->mapWithKeys(function (array $record) use ($destination, $folderPath, $latestIds, $destinationCopies, $copyingCompanies): array {
@@ -764,7 +785,7 @@ POWERSHELL;
     {
         $resolved = $this->resolveDestinationFolder($folder, $destinationRoot);
         if ($resolved === null) {
-            throw new RuntimeException('Selecciona una carpeta válida dentro de la memoria CONTABILIDAD.');
+            throw new RuntimeException('Selecciona una carpeta válida dentro de la memoria externa.');
         }
         if (! is_writable($resolved)) {
             throw new RuntimeException('PHP puede leer la memoria, pero no tiene permiso para escribir en la carpeta seleccionada.');
@@ -775,17 +796,50 @@ POWERSHELL;
 
     private function resolveDestinationFolder(string $folder, string $destinationRoot): ?string
     {
-        if ($folder === '' || basename($folder) !== $folder || str_contains($folder, "\0")) {
+        $folder = str_replace('\\', '/', trim($folder));
+        if ($folder === '' || str_contains($folder, "\0") || $this->isAbsolutePath($folder)) {
+            return null;
+        }
+        $segments = explode('/', trim($folder, '/'));
+        if (collect($segments)->contains(fn (string $segment): bool => $segment === '' || $segment === '.' || $segment === '..')) {
             return null;
         }
 
         $root = realpath($destinationRoot);
-        $candidate = realpath($this->join($destinationRoot, $folder));
+        $candidate = realpath($this->join($destinationRoot, ...$segments));
         if ($root === false || $candidate === false || ! is_dir($candidate) || is_link($candidate)) {
             return null;
         }
 
-        return $this->normalize(dirname($candidate)) === $this->normalize($root) ? $candidate : null;
+        $normalizedRoot = $this->normalize($root);
+        $normalizedCandidate = $this->normalize($candidate);
+
+        return str_starts_with($normalizedCandidate.'/', $normalizedRoot.'/') && $normalizedCandidate !== $normalizedRoot
+            ? $candidate
+            : null;
+    }
+
+    private function relativeDestinationFolder(string $folderPath, string $destinationRoot): string
+    {
+        $root = rtrim(str_replace('\\', '/', (string) realpath($destinationRoot)), '/').'/';
+        $folder = str_replace('\\', '/', (string) realpath($folderPath));
+
+        return ltrim(substr($folder, strlen($root)), '/');
+    }
+
+    private function hasChildDirectories(string $path): bool
+    {
+        try {
+            foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $item) {
+                if ($item->isDir() && ! $item->isLink() && ! str_starts_with($item->getFilename(), '$')) {
+                    return true;
+                }
+            }
+        } catch (Throwable) {
+            return false;
+        }
+
+        return false;
     }
 
     private function dateFolder(string $date): string

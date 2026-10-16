@@ -141,30 +141,32 @@ class ContpaqiBackupCatalogTest extends TestCase
         File::put($archivePath, 'archive-content');
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
         config()->set('backup-storage.export.directory', 'Respaldos CONTPAQi');
+        File::ensureDirectoryExists($this->exportRoot.'/ANGEL MOO/NOMINAS/SEMANALES');
 
         $catalog = app(ContpaqiBackupCatalog::class);
         $record = collect($catalog->catalog(true)['records'])->firstWhere('date', now()->toDateString());
         $export = app(ContpaqiBackupExport::class);
-        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO/NOMINAS/SEMANALES', $catalog);
         $this->exportIds[] = $state['id'];
-        $this->assertSame('copying', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO')[$record['id']]);
+        $this->assertSame('ANGEL MOO/NOMINAS/SEMANALES', $state['destination_folder']);
+        $this->assertSame('copying', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO/NOMINAS/SEMANALES')[$record['id']]);
         $export->execute($state['id'], $catalog);
 
-        $destination = $this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo';
+        $destination = $this->exportRoot.'/ANGEL MOO/NOMINAS/SEMANALES/'.now()->format('d-m-Y').'/ctEmpresa_Demo';
         $this->assertSame('database-content', File::get($databasePath));
         $this->assertSame('archive-content', File::get($archivePath));
         $this->assertSame('database-content', File::get($destination.'/BAK/'.basename($databasePath)));
         $this->assertSame('archive-content', File::get($destination.'/INDEX/'.basename($archivePath)));
-        $this->assertCount(1, File::glob($this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/_registro-*.json'));
+        $this->assertCount(1, File::glob($this->exportRoot.'/ANGEL MOO/NOMINAS/SEMANALES/'.now()->format('d-m-Y').'/_registro-*.json'));
         $this->assertSame('completed', $export->find($state['id'])['status']);
         $this->assertSame(2, $export->find($state['id'])['completed_files']);
-        $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO')[$record['id']]);
+        $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO/NOMINAS/SEMANALES')[$record['id']]);
         $completedDestinations = $export->completedDestinations(now()->toDateString());
         $this->assertArrayHasKey($record['id'], $completedDestinations);
         $this->assertSame(realpath($destination), realpath($completedDestinations[$record['id']][0]['path']));
 
         try {
-            $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+            $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO/NOMINAS/SEMANALES', $catalog);
             $this->fail('La misma empresa no debe poder respaldarse dos veces el mismo día.');
         } catch (\RuntimeException $exception) {
             $this->assertStringContainsString('ya fue respaldada', $exception->getMessage());

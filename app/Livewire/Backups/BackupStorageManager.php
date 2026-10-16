@@ -8,6 +8,7 @@ use App\Services\Backups\ContpaqiBackupExport;
 use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use App\Services\Backups\ContpaqiBackupProfile;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use RuntimeException;
@@ -39,6 +40,8 @@ class BackupStorageManager extends Component
     public string $destinationKey = '';
 
     public string $destinationFolder = '';
+
+    public string $destinationBrowsePath = '';
 
     #[Url(as: 'departamento')]
     public string $backupProfile = '';
@@ -74,6 +77,7 @@ class BackupStorageManager extends Component
         abort_unless(collect($profiles->profiles())->pluck('key')->contains($this->backupProfile), 422);
         $this->destinationKey = $this->destinationKeyForProfile($profiles);
         $this->destinationFolder = '';
+        $this->destinationBrowsePath = '';
         $this->selectedRecords = [];
         $this->selectionNotice = null;
         $this->syncResult = null;
@@ -176,9 +180,25 @@ class BackupStorageManager extends Component
     public function updatedDestinationKey(): void
     {
         $this->destinationFolder = '';
+        $this->destinationBrowsePath = '';
         $this->syncResult = null;
         $this->exportMessage = null;
         $this->selectionNotice = null;
+    }
+
+    public function browseDestinationFolder(string $path, ContpaqiBackupExport $export): void
+    {
+        $path = trim(str_replace('\\', '/', $path), '/');
+        abort_if($path === '' || str_contains($path, "\0") || collect(explode('/', $path))->contains(fn (string $segment): bool => in_array($segment, ['', '.', '..'], true)), 422);
+        abort_unless($export->destinationFolderExists($path, $this->destinationKey), 422);
+        $this->destinationBrowsePath = $path;
+    }
+
+    public function browseDestinationUp(): void
+    {
+        $this->destinationBrowsePath = str_contains($this->destinationBrowsePath, '/')
+            ? (string) Str::beforeLast($this->destinationBrowsePath, '/')
+            : '';
     }
 
     public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProcessLauncher $launcher): void
@@ -408,7 +428,7 @@ class BackupStorageManager extends Component
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
-            'destinationFolders' => $export->destinationFolders($this->destinationKey),
+            'destinationFolders' => $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
         ])->layout('layouts.app');

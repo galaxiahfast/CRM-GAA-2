@@ -9,7 +9,7 @@
     $exportPercent = ($exportStatus['total_bytes'] ?? 0) > 0
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
         : 0;
-    $writableFolders = collect($destinationFolders)->where('writable', true)->values();
+    $visibleDestinationFolders = collect($destinationFolders)->values();
     $allAvailableSelected = $availableExportCount > 0 && $selectedExportCount === $availableExportCount;
     $bothLocationsOnline = ($catalog['connected'] ?? false) && ($exportDestination['connected'] ?? false);
     $exportError = $exportMessage ?: (($exportStatus['status'] ?? null) === 'failed' ? ($exportStatus['error'] ?? 'La copia no pudo completarse.') : null);
@@ -224,7 +224,36 @@
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                                <div class="relative" x-data="{ open: false }" @click.outside="open = false"><button type="button" @click="if ({{ $exportDestination['connected'] && $writableFolders->isNotEmpty() && ! $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black"><span class="truncate">{{ $destinationFolder !== '' ? $destinationFolder : 'Selecciona una carpeta…' }}</span><svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button><div x-show="open" x-cloak class="absolute top-full z-40 mt-[8px] max-h-[220px] w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">@foreach($writableFolders as $folder)<button type="button" @click="$wire.set('destinationFolder', @js($folder['name'])); open = false" class="flex min-h-[44px] w-full items-center justify-between gap-[12px] px-[15px] text-left text-black hover:bg-zinc-50"><span class="truncate">{{ $folder['name'] }}</span>@if($destinationFolder === $folder['name'])<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif</button>@endforeach</div></div>
+                                                <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                                    <button type="button" @click="if ({{ $exportDestination['connected'] && ($visibleDestinationFolders->isNotEmpty() || $destinationBrowsePath !== '') && ! $exportIsActive ? 'true' : 'false' }}) open = !open" @disabled(!$exportDestination['connected'] || ($visibleDestinationFolders->isEmpty() && $destinationBrowsePath === '') || $exportIsActive) class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black disabled:cursor-not-allowed disabled:text-zinc-400">
+                                                        <span class="truncate" title="{{ str_replace('/', '\\', $destinationFolder) }}">{{ $destinationFolder !== '' ? str_replace('/', '\\', $destinationFolder) : 'Selecciona una carpeta…' }}</span>
+                                                        <svg class="h-4 w-4 shrink-0 text-zinc-500 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                                                    </button>
+                                                    <div x-show="open" x-cloak class="absolute top-full z-40 mt-[8px] max-h-[280px] w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white py-[4px] shadow-lg">
+                                                        @if($destinationBrowsePath !== '')
+                                                            <button type="button" wire:click="browseDestinationUp" class="flex min-h-[44px] w-full items-center gap-[10px] border-b border-zinc-200 px-[15px] text-left font-medium text-black hover:bg-zinc-50" title="Volver a la carpeta anterior">
+                                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
+                                                                <span class="min-w-0"><span class="block text-zinc-500">Volver</span><span class="block truncate" title="{{ str_replace('/', '\\', $destinationBrowsePath) }}">{{ str_replace('/', '\\', $destinationBrowsePath) }}</span></span>
+                                                            </button>
+                                                        @endif
+                                                        @forelse($visibleDestinationFolders as $folder)
+                                                            <div class="flex min-h-[44px] items-stretch hover:bg-zinc-50">
+                                                                <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] px-[15px] text-left text-black disabled:cursor-not-allowed disabled:text-zinc-400" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
+                                                                    <svg class="h-[18px] w-[18px] shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
+                                                                    <span class="truncate">{{ $folder['name'] }}</span>
+                                                                    @if($destinationFolder === $folder['path'])<svg class="ml-auto h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif
+                                                                </button>
+                                                                @if($folder['has_children'])
+                                                                    <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="grid w-[44px] shrink-0 place-items-center border-l border-zinc-200 text-zinc-500 hover:text-black" aria-label="Ver subcarpetas de {{ $folder['name'] }}" title="Ver subcarpetas">
+                                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
+                                                                    </button>
+                                                                @endif
+                                                            </div>
+                                                        @empty
+                                                            <p class="px-[15px] py-[14px] text-zinc-500">Esta carpeta no contiene subcarpetas.</p>
+                                                        @endforelse
+                                                    </div>
+                                                </div>
                                                 <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl bg-black px-[18px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black disabled:text-white">
                                                     <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
                                                     <span wire:loading.remove wire:target="startExport">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
