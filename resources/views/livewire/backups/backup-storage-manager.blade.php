@@ -327,7 +327,7 @@
                                             </tr>
                                         </tbody>
                                     @empty
-                                        <tbody><tr><td colspan="4" class="px-[20px] py-[70px] text-center"><svg class="mx-auto h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h7l2 2h9v11H3V7Z"/></svg><p class="mt-[12px] font-medium text-black">No hay resultados</p><p class="mt-[4px] text-[13px] text-zinc-400">Cambia la fecha o el estado.</p></td></tr></tbody>
+                                        <tbody><tr class="h-[474px]"><td colspan="4" class="px-[20px] text-center align-middle"><svg class="mx-auto h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h7l2 2h9v11H3V7Z"/></svg><p class="mt-[12px] font-medium text-black">No hay resultados</p><p class="mt-[4px] text-[13px] text-zinc-400">Cambia la fecha o el estado.</p></td></tr></tbody>
                                     @endforelse
                                 </table>
                                 </div>
