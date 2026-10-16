@@ -78,21 +78,21 @@ class ContpaqiBackupProfile
         }
 
         $sourceClassification = (string) ($record['source_classification'] ?? '');
-        if (in_array($sourceClassification, ['payroll', 'accounting'], true)
-            && $sourceClassification !== $classification) {
-            return false;
+        if (in_array($sourceClassification, ['payroll', 'accounting'], true)) {
+            return $sourceClassification === $classification;
         }
 
         $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
         $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
         if ($sqlCatalog !== null) {
-            return isset($sqlCatalog[$classification][$folder])
-                && ($sourceClassification === '' || $sourceClassification === $classification);
-        }
+            $inPayroll = isset($sqlCatalog['payroll'][$folder]);
+            $inAccounting = isset($sqlCatalog['accounting'][$folder]);
+            if ($inPayroll && $inAccounting) {
+                return false;
+            }
 
-        if ($sourceClassification !== '') {
-            return $sourceClassification === $classification;
+            return isset($sqlCatalog[$classification][$folder]);
         }
 
         $isPayroll = isset($this->payrollFolders($site)[$folder]);

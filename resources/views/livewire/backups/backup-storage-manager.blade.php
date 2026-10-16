@@ -10,7 +10,7 @@
         ? min(100, (int) round(($exportStatus['copied_bytes'] ?? 0) * 100 / $exportStatus['total_bytes']))
         : 0;
     $visibleDestinationFolders = collect($destinationFolders)->values();
-    $allAvailableSelected = $availableExportCount > 0 && $selectedExportCount === $availableExportCount;
+    $allAvailableSelected = $headerSelectableCount > 0 && $selectedExportCount === $headerSelectableCount;
     $bothLocationsOnline = ($catalog['connected'] ?? false) && ($exportDestination['connected'] ?? false);
     $exportError = $exportMessage ?: (($exportStatus['status'] ?? null) === 'failed' ? ($exportStatus['error'] ?? 'La copia no pudo completarse.') : null);
 @endphp
@@ -98,6 +98,43 @@
                         @endif
                     </div>
                     <button type="button" @click="visible = false" aria-label="Cerrar resultado" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+                </div>
+            </div>
+        @endteleport
+    @endif
+
+    @if($actionMessage)
+        @teleport('body')
+            <div wire:key="backup-action-result-{{ md5($actionMessage) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-emerald-200 bg-white px-[20px] py-[15px] text-emerald-700 shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status">
+                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg>
+                <span class="min-w-0 flex-1">{{ $actionMessage }}</span>
+                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 items-center justify-center text-black"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+            </div>
+        @endteleport
+    @endif
+
+    @if($showDeleteConfirmation)
+        @teleport('body')
+            <div class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-backups-title">
+                <div class="w-full max-w-lg rounded-2xl bg-white p-[20px] shadow-2xl">
+                    <h2 id="delete-backups-title" class="font-semibold text-black">Eliminar {{ count($pendingDeleteRecords) === 1 ? 'respaldo' : count($pendingDeleteRecords).' respaldos' }}</h2>
+                    <p class="mt-[5px] text-zinc-500">Solo se eliminarán las copias de la memoria externa. Los archivos originales del servidor no se modificarán.</p>
+                    <div class="mt-[20px] space-y-[15px]">
+                        <div>
+                            <label for="delete-backup-password" class="mb-[7px] block font-medium text-black">Contraseña</label>
+                            <input id="delete-backup-password" type="password" wire:model="deletePassword" autocomplete="current-password" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-black focus:border-[#1A3A6B]">
+                            @error('deletePassword')<p class="mt-[5px] text-red-700">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label for="delete-backup-code" class="mb-[7px] block font-medium text-black">Código del autenticador</label>
+                            <input id="delete-backup-code" type="text" inputmode="numeric" maxlength="6" wire:model="deleteTwoFactorCode" autocomplete="one-time-code" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] font-mono tracking-[0.2em] text-black focus:border-[#1A3A6B]">
+                            @error('deleteTwoFactorCode')<p class="mt-[5px] text-red-700">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                    <div class="mt-[20px] grid grid-cols-2 gap-[10px]">
+                        <button type="button" wire:click="closeDeleteConfirmation" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] font-medium text-black hover:bg-zinc-50">Cancelar</button>
+                        <button type="button" wire:click="deleteDestinationBackups" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[44px] w-full rounded-xl bg-red-700 px-[15px] font-medium text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60"><span wire:loading.remove wire:target="deleteDestinationBackups">Eliminar definitivamente</span><span wire:loading wire:target="deleteDestinationBackups">Verificando…</span></button>
+                    </div>
                 </div>
             </div>
         @endteleport
@@ -268,11 +305,19 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl bg-black px-[18px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black disabled:text-white">
-                                                    <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
-                                                    <span wire:loading.remove wire:target="startExport">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
-                                                    <span wire:loading wire:target="startExport">Validando…</span>
-                                                </button>
+                                                <div class="grid w-full {{ $selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups') ? 'grid-cols-2' : 'grid-cols-1' }} gap-[10px]">
+                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl bg-black px-[12px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-black disabled:text-white">
+                                                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
+                                                        <span wire:loading.remove wire:target="startExport" class="truncate">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedDeletableCount === $selectedExportCount) Reemplazar {{ $selectedExportCount === 1 ? 'respaldo' : $selectedExportCount.' respaldos' }} @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
+                                                        <span wire:loading wire:target="startExport">Validando…</span>
+                                                    </button>
+                                                    @if($selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups'))
+                                                        <button type="button" wire:click="openDeleteConfirmation" wire:loading.attr="disabled" wire:target="openDeleteConfirmation" @disabled($exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[9px] rounded-xl border border-red-200 bg-white px-[12px] font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-zinc-400">
+                                                            <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg>
+                                                            <span class="truncate">Eliminar {{ $selectedDeletableCount }}</span>
+                                                        </button>
+                                                    @endif
+                                                </div>
                                         </div>
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative h-[544px] order-3 min-h-0 flex-none">
@@ -283,7 +328,7 @@
                                 <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[290px]"></colgroup>
-                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold"><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($availableExportCount === 0 || $exportIsActive || in_array($status, ['backed_up', 'partial'], true)) aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"><span class="inline-flex items-baseline gap-[6px]">Empresa <span class="font-medium text-zinc-500" title="{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }}">({{ $selectedExportCount }})</span></span></span></th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
+                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold"><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($headerSelectableCount === 0 || $exportIsActive || $status === 'partial') aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"><span class="inline-flex items-baseline gap-[6px]">Empresa <span class="font-medium text-zinc-500" title="{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }}">({{ $selectedExportCount }})</span></span></span></th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
                                             $recordState = $recordAvailability[$record['id']] ?? 'incomplete';
@@ -292,7 +337,7 @@
                                         @endphp
                                         <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group {{ $loop->odd ? 'backup-record-gray' : 'backup-record-white' }} border-b border-zinc-200 last:border-b-0">
                                             <tr class="h-[70px]">
-                                                <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled($status === 'backed_up' || !in_array($recordState, ['available', 'outdated', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
+                                                <td class="min-w-0 border-r border-zinc-200 px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100 disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate font-medium text-black" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[3px] block truncate text-zinc-500" title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px] text-center font-mono tabular-nums text-zinc-600">{{ $record['time'] }}</td>
                                                 <td class="border-r border-zinc-200 px-[15px] py-[15px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="text-emerald-700">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-red-700">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-red-700">Falta BAK</span>@else<span class="text-red-700">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-black" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
                                                 <td class="min-w-0 px-[15px] py-[15px] text-center">

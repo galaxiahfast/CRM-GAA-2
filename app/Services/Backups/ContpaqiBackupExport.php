@@ -124,13 +124,10 @@ class ContpaqiBackupExport
 
             foreach ($records as $record) {
                 $status = $availability[$record['id']] ?? 'unavailable';
-                if ($status === 'backed_up') {
-                    throw new RuntimeException('Una de las empresas seleccionadas ya fue respaldada en esta memoria para ese día.');
-                }
                 if ($status === 'copying') {
                     throw new RuntimeException('Una de las empresas seleccionadas ya se está copiando.');
                 }
-                if (! in_array($status, ['available', 'outdated'], true)) {
+                if (! in_array($status, ['available', 'outdated', 'backed_up'], true)) {
                     throw new RuntimeException('La selección cambió. Elige únicamente empresas disponibles para respaldar.');
                 }
             }
@@ -228,6 +225,9 @@ class ContpaqiBackupExport
                     $this->throwIfCancellationRequested($id);
                     $this->write($id, $state);
                 }
+
+                $this->removeSupersededFiles($databaseDirectory, basename($record['database']['name']));
+                $this->removeSupersededFiles($archiveDirectory, basename($record['archive']['name']));
 
                 $state['items'][$recordIndex]['status'] = 'completed';
                 $this->throwIfCancellationRequested($id);
@@ -342,7 +342,9 @@ class ContpaqiBackupExport
             }
 
             foreach ($state['items'] ?? [] as $item) {
-                if (($item['status'] ?? null) !== 'completed' || ! filled($item['id'] ?? null)) {
+                if (($item['status'] ?? null) !== 'completed'
+                    || ! filled($item['id'] ?? null)
+                    || ! $this->completedItemExists($item)) {
                     continue;
                 }
 
@@ -393,6 +395,47 @@ class ContpaqiBackupExport
         $this->write($id, $state);
 
         return $state;
+    }
+
+    public function deleteDestinationBackups(
+        string $date,
+        array $records,
+        string $destinationFolder,
+        ?string $destinationKey,
+    ): int {
+        return Cache::lock('contpaqi-backup-export:delete', 30)->block(5, function () use ($date, $records, $destinationFolder, $destinationKey): int {
+            if ($this->latestActive() !== null) {
+                throw new RuntimeException('No se puede eliminar mientras hay un respaldo en proceso.');
+            }
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                throw new RuntimeException('La fecha seleccionada no es válida.');
+            }
+
+            $destination = $this->requireDestination($destinationKey);
+            $baseDirectory = $this->requireDestinationFolder($destinationFolder, $destination['root']);
+            $dateDirectory = $this->join($baseDirectory, $this->dateFolder($date));
+            $deleted = 0;
+
+            foreach ($records as $record) {
+                $companyDirectory = $this->join($dateDirectory, $this->safeSegment($record['company_folder'] ?: $record['company']));
+                if (! is_dir($companyDirectory)) {
+                    continue;
+                }
+                if (is_link($companyDirectory) || ! $this->isInside($companyDirectory, $baseDirectory)) {
+                    throw new RuntimeException('La carpeta del respaldo no es segura para eliminarse.');
+                }
+                if (! File::deleteDirectory($companyDirectory)) {
+                    throw new RuntimeException('No fue posible eliminar el respaldo de '.$record['company'].'.');
+                }
+                $deleted++;
+            }
+
+            if ($deleted === 0) {
+                throw new RuntimeException('No se encontraron respaldos en la memoria para eliminar.');
+            }
+
+            return $deleted;
+        });
     }
 
     /** @return array<string, string> */
@@ -535,10 +578,8 @@ class ContpaqiBackupExport
             throw new RuntimeException('No fue posible leer el tamaño de '.basename($source).'.');
         }
 
-        if (is_file($target)) {
-            if (filesize($target) !== $sourceSize || hash_file('sha256', $target) !== hash_file('sha256', $source)) {
-                throw new RuntimeException('Ya existe un archivo diferente en el destino: '.basename($target).'. No se sobrescribió.');
-            }
+        $targetExists = is_file($target);
+        if ($targetExists && filesize($target) === $sourceSize && hash_file('sha256', $target) === hash_file('sha256', $source)) {
 
             $state['copied_bytes'] += $sourceSize;
 
@@ -610,12 +651,72 @@ class ContpaqiBackupExport
             @unlink($partial);
             throw new RuntimeException('La verificación de tamaño falló para '.basename($source).'.');
         }
+        if ($targetExists) {
+            $previous = $target.'.previous-'.$exportId;
+            @unlink($previous);
+            if (! rename($target, $previous)) {
+                @unlink($partial);
+                throw new RuntimeException('No fue posible preparar el reemplazo de '.basename($source).'.');
+            }
+            if (! rename($partial, $target)) {
+                @rename($previous, $target);
+                @unlink($partial);
+                throw new RuntimeException('No fue posible reemplazar '.basename($source).' en la memoria externa.');
+            }
+            @unlink($previous);
+
+            return ['name' => basename($target), 'size' => $sourceSize, 'status' => 'replaced', 'checksum' => hash_final($hash)];
+        }
+
         if (! rename($partial, $target)) {
             @unlink($partial);
             throw new RuntimeException('No fue posible finalizar '.basename($source).' en la memoria externa.');
         }
 
         return ['name' => basename($target), 'size' => $sourceSize, 'status' => 'copied', 'checksum' => hash_final($hash)];
+    }
+
+    private function removeSupersededFiles(string $directory, string $keep): void
+    {
+        foreach (File::files($directory) as $file) {
+            if ($file->getFilename() === $keep) {
+                continue;
+            }
+            if (! @unlink($file->getPathname())) {
+                throw new RuntimeException('El respaldo nuevo se copió, pero no fue posible retirar el archivo anterior '.$file->getFilename().'.');
+            }
+        }
+    }
+
+    private function completedItemExists(array $item): bool
+    {
+        $companyDirectory = (string) ($item['destination_path'] ?? '');
+        if ($companyDirectory === '' || ! is_dir($companyDirectory)) {
+            return false;
+        }
+
+        foreach ((array) ($item['files'] ?? []) as $file) {
+            $name = basename((string) ($file['name'] ?? ''));
+            $directory = Str::lower(pathinfo($name, PATHINFO_EXTENSION)) === 'bak' ? 'BAK' : 'INDEX';
+            $path = $this->join($companyDirectory, $directory, $name);
+            if ($name === '' || ! is_file($path) || filesize($path) !== (int) ($file['size'] ?? -1)) {
+                return false;
+            }
+        }
+
+        return count((array) ($item['files'] ?? [])) === 2;
+    }
+
+    private function isInside(string $path, string $parent): bool
+    {
+        $realPath = realpath($path);
+        $realParent = realpath($parent);
+        if ($realPath === false || $realParent === false) {
+            return false;
+        }
+
+        return str_starts_with($this->normalize($realPath).'/', $this->normalize($realParent).'/')
+            && $this->normalize($realPath) !== $this->normalize($realParent);
     }
 
     private function requireDestination(?string $destinationKey = null): array

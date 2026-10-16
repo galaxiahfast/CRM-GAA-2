@@ -9,7 +9,10 @@ use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use App\Services\Backups\ContpaqiBackupProfile;
 use App\Services\Backups\ContpaqiSqlCompanyCatalog;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use RuntimeException;
@@ -48,6 +51,16 @@ class BackupStorageManager extends Component
     public string $backupProfile = '';
 
     public ?string $selectionNotice = null;
+
+    public bool $showDeleteConfirmation = false;
+
+    public array $pendingDeleteRecords = [];
+
+    public string $deletePassword = '';
+
+    public string $deleteTwoFactorCode = '';
+
+    public ?string $actionMessage = null;
 
     public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
@@ -107,8 +120,11 @@ class BackupStorageManager extends Component
     {
         $records = $this->profileDashboard($catalog, $profiles)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $selectableStates = $this->status === 'backed_up'
+            ? ['backed_up']
+            : ['available', 'outdated', 'destination_missing', 'folder_missing'];
         $this->selectedRecords = collect($records)
-            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, $selectableStates, true))
             ->pluck('id')
             ->values()
             ->all();
@@ -119,8 +135,11 @@ class BackupStorageManager extends Component
     {
         $records = $this->profileDashboard($catalog, $profiles)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $selectableStates = $this->status === 'backed_up'
+            ? ['backed_up']
+            : ['available', 'outdated', 'destination_missing', 'folder_missing'];
         $availableIds = collect($records)
-            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, $selectableStates, true))
             ->pluck('id')
             ->values();
 
@@ -143,7 +162,7 @@ class BackupStorageManager extends Component
 
     public function updatedStatus(string $status): void
     {
-        if (in_array($status, ['backed_up', 'partial'], true)) {
+        if ($status === 'partial') {
             $this->selectedRecords = [];
             $this->selectionNotice = null;
         }
@@ -163,7 +182,7 @@ class BackupStorageManager extends Component
         $records = $this->profileDashboard($catalog, $profiles)['records'];
         $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
         $selectableIds = collect($records)
-            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated'], true))
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['available', 'outdated', 'backed_up'], true))
             ->pluck('id');
 
         $this->selectedRecords = collect($this->selectedRecords)
@@ -258,6 +277,116 @@ class BackupStorageManager extends Component
         }
 
         $this->exportStatus = $export->cancel($this->currentExportId);
+    }
+
+    public function openDeleteConfirmation(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
+    {
+        Gate::authorize('manage-system-backups');
+        $this->resetErrorBag(['deletePassword', 'deleteTwoFactorCode']);
+        $this->exportMessage = null;
+        $user = auth()->user();
+        if ($user === null || blank($user->two_factor_secret) || blank($user->two_factor_confirmed_at)) {
+            $this->exportMessage = 'Activa y confirma la autenticación en dos pasos en tu perfil antes de eliminar respaldos.';
+            $this->exportErrorVersion++;
+
+            return;
+        }
+
+        $records = $this->profileDashboard($catalog, $profiles)['records'];
+        $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $deletable = collect($records)
+            ->whereIn('id', $this->selectedRecords)
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['backed_up', 'outdated'], true))
+            ->values();
+        if ($deletable->isEmpty()) {
+            $this->exportMessage = 'Selecciona al menos una empresa que tenga un respaldo en la carpeta elegida.';
+            $this->exportErrorVersion++;
+
+            return;
+        }
+
+        $this->pendingDeleteRecords = $deletable->pluck('id')->all();
+        $this->deletePassword = '';
+        $this->deleteTwoFactorCode = '';
+        $this->showDeleteConfirmation = true;
+    }
+
+    public function closeDeleteConfirmation(): void
+    {
+        $this->showDeleteConfirmation = false;
+        $this->pendingDeleteRecords = [];
+        $this->deletePassword = '';
+        $this->deleteTwoFactorCode = '';
+        $this->resetErrorBag(['deletePassword', 'deleteTwoFactorCode']);
+    }
+
+    public function deleteDestinationBackups(
+        ContpaqiBackupCatalog $catalog,
+        ContpaqiBackupExport $export,
+        ContpaqiBackupProfile $profiles,
+        TwoFactorAuthenticationProvider $twoFactorProvider,
+    ): void {
+        Gate::authorize('manage-system-backups');
+        $this->resetErrorBag(['deletePassword', 'deleteTwoFactorCode']);
+        $this->validate([
+            'deletePassword' => ['required', 'string'],
+            'deleteTwoFactorCode' => ['required', 'digits:6'],
+        ], [
+            'deletePassword.required' => 'Escribe tu contraseña.',
+            'deleteTwoFactorCode.required' => 'Escribe el código de tu autenticador.',
+            'deleteTwoFactorCode.digits' => 'El código debe tener 6 dígitos.',
+        ]);
+
+        $user = auth()->user();
+        $rateKey = 'delete-backup-confirmation:'.($user?->getAuthIdentifier() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($rateKey, 5)) {
+            $this->addError('deleteTwoFactorCode', 'Demasiados intentos. Espera '.RateLimiter::availableIn($rateKey).' segundos.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        if ($user === null || ! Hash::check($this->deletePassword, (string) $user->password)) {
+            $this->addError('deletePassword', 'La contraseña no es correcta.');
+
+            return;
+        }
+        try {
+            $validTwoFactor = filled($user->two_factor_secret)
+                && filled($user->two_factor_confirmed_at)
+                && $twoFactorProvider->verify(decrypt($user->two_factor_secret), $this->deleteTwoFactorCode);
+        } catch (Throwable) {
+            $validTwoFactor = false;
+        }
+        if (! $validTwoFactor) {
+            $this->addError('deleteTwoFactorCode', 'El código del autenticador no es correcto.');
+
+            return;
+        }
+
+        $records = $this->profileDashboard($catalog, $profiles)['records'];
+        $availability = $export->recordAvailability($this->selectedDate, $records, $this->destinationFolder, $this->destinationKey);
+        $deletable = collect($records)
+            ->whereIn('id', $this->pendingDeleteRecords)
+            ->filter(fn (array $record): bool => in_array($availability[$record['id']] ?? null, ['backed_up', 'outdated'], true))
+            ->values()
+            ->all();
+
+        try {
+            $deleted = $export->deleteDestinationBackups(
+                $this->selectedDate,
+                $deletable,
+                $this->destinationFolder,
+                $this->destinationKey,
+            );
+            RateLimiter::clear($rateKey);
+            $this->closeDeleteConfirmation();
+            $this->selectedRecords = [];
+            $this->actionMessage = $deleted === 1 ? 'Se eliminó 1 respaldo de la memoria.' : "Se eliminaron {$deleted} respaldos de la memoria.";
+        } catch (RuntimeException $exception) {
+            $this->exportMessage = $exception->getMessage();
+            $this->exportErrorVersion++;
+        }
     }
 
     public function refreshSharedExportStatus(ContpaqiBackupExport $export): void
@@ -378,7 +507,7 @@ class BackupStorageManager extends Component
                 fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated'], true)
             ))
             ->when($this->status === 'backed_up', fn ($records) => $records->filter(
-                fn (array $record): bool => isset($completedDestinations[$record['id']])
+                fn (array $record): bool => ($recordAvailability[$record['id']] ?? null) === 'backed_up'
             ))
             ->when($this->status === 'partial', fn ($records) => $records->where('complete', false))
             ->values();
@@ -416,7 +545,16 @@ class BackupStorageManager extends Component
 
         $selectedCompleteRecords = collect($data['records'])
             ->whereIn('id', $this->selectedRecords)
-            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated', 'destination_missing', 'folder_missing'], true));
+            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true));
+        $selectedDeletableCount = $selectedCompleteRecords
+            ->filter(fn (array $record): bool => in_array($recordAvailability[$record['id']] ?? null, ['backed_up', 'outdated'], true))
+            ->count();
+        $headerSelectableStates = $this->status === 'backed_up'
+            ? ['backed_up']
+            : ['available', 'outdated', 'destination_missing', 'folder_missing'];
+        $headerSelectableCount = collect($recordAvailability)
+            ->filter(fn (string $state): bool => in_array($state, $headerSelectableStates, true))
+            ->count();
 
         return view('livewire.backups.backup-storage-manager', [
             'catalog' => $data,
@@ -428,6 +566,8 @@ class BackupStorageManager extends Component
             'exportDestinations' => $export->destinations(),
             'exportDestination' => $export->destination($this->destinationKey),
             'selectedExportCount' => $selectedCompleteRecords->count(),
+            'selectedDeletableCount' => $selectedDeletableCount,
+            'headerSelectableCount' => $headerSelectableCount,
             'recordAvailability' => $recordAvailability,
             'completedDestinations' => $completedDestinations,
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),

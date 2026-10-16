@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -306,7 +307,7 @@ class BackupStorageManagerTest extends TestCase
             ->call('toggleAllAvailable')
             ->assertSet('selectedRecords', [$record['id']])
             ->set('status', 'backed_up')
-            ->assertSet('selectedRecords', [])
+            ->assertSet('selectedRecords', [$record['id']])
             ->set('status', 'all')
             ->set('selectedRecords', [$record['id']])
             ->set('destinationFolder', 'ANGEL MOO')
@@ -315,7 +316,7 @@ class BackupStorageManagerTest extends TestCase
         $component->assertDontSee('Se deseleccionó 1 empresa');
     }
 
-    public function test_selecting_a_folder_explains_when_an_already_backed_up_company_is_removed(): void
+    public function test_an_already_backed_up_company_remains_selectable_for_replacement(): void
     {
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
@@ -334,9 +335,73 @@ class BackupStorageManagerTest extends TestCase
             ->set('selectedRecords', [$record['id']])
             ->assertSet('selectedRecords', [$record['id']])
             ->set('destinationFolder', 'ANGEL MOO')
-            ->assertSet('selectedRecords', [])
-            ->assertSet('selectionNotice', 'Se deseleccionó 1 empresa porque ya está respaldada o no está disponible en esta carpeta.')
-            ->assertDontSee('Se deseleccionó 1 empresa porque ya está respaldada');
+            ->assertSet('selectedRecords', [$record['id']])
+            ->assertSet('selectionNotice', null)
+            ->assertSee('Reemplazar respaldo');
+    }
+
+    public function test_manager_can_delete_only_the_external_copy_with_password_and_two_factor_code(): void
+    {
+        $date = now()->format('Ymd');
+        $databasePath = $this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak";
+        $archivePath = $this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip";
+        File::put($databasePath, 'database');
+        File::put($archivePath, 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->dashboard(now()->toDateString())['records'])->firstWhere('complete', true);
+        $export = app(ContpaqiBackupExport::class);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
+        $this->exportStateIds[] = $state['id'];
+        $export->execute($state['id'], $catalog);
+        $destination = $this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Prueba';
+
+        $admin = $this->user('Administrador', 'admin-delete-backup@datamid.test');
+        $admin->forceFill([
+            'two_factor_secret' => encrypt('two-factor-secret'),
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+        $provider = \Mockery::mock(TwoFactorAuthenticationProvider::class);
+        $provider->shouldReceive('verify')->once()->with('two-factor-secret', '000000')->andReturnFalse();
+        $provider->shouldReceive('verify')->once()->with('two-factor-secret', '123456')->andReturnTrue();
+        $this->app->instance(TwoFactorAuthenticationProvider::class, $provider);
+
+        $component = Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->set('destinationFolder', 'ANGEL MOO')
+            ->set('selectedRecords', [$record['id']])
+            ->call('openDeleteConfirmation')
+            ->assertSet('showDeleteConfirmation', true)
+            ->set('deletePassword', 'secret')
+            ->set('deleteTwoFactorCode', '000000')
+            ->call('deleteDestinationBackups')
+            ->assertHasErrors('deleteTwoFactorCode')
+            ->assertSet('showDeleteConfirmation', true);
+
+        $this->assertDirectoryExists($destination);
+
+        $component
+            ->set('deleteTwoFactorCode', '123456')
+            ->call('deleteDestinationBackups')
+            ->assertHasNoErrors()
+            ->assertSet('showDeleteConfirmation', false)
+            ->assertSet('actionMessage', 'Se eliminó 1 respaldo de la memoria.');
+
+        $this->assertDirectoryDoesNotExist($destination);
+        $this->assertSame('database', File::get($databasePath));
+        $this->assertSame('archive', File::get($archivePath));
+    }
+
+    public function test_backup_deletion_is_blocked_until_two_factor_is_configured(): void
+    {
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-delete-without-2fa@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->call('openDeleteConfirmation')
+            ->assertSet('showDeleteConfirmation', false)
+            ->assertSet('exportMessage', 'Activa y confirma la autenticación en dos pasos en tu perfil antes de eliminar respaldos.');
     }
 
     public function test_export_recovers_the_fixed_destination_and_starts_a_background_process_without_a_worker(): void

@@ -95,6 +95,21 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertSame('payroll', $records->firstWhere('time', '09:15:00')['source_classification']);
     }
 
+    public function test_identical_backup_names_in_root_and_respaldo_remain_separate(): void
+    {
+        $stem = 'EMPRESA DUPLICADA-20261016-1015';
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/{$stem}.bak", 'accounting');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/Respaldo/{$stem}.bak", 'payroll');
+        File::put($this->catalogRoot."/Index/respaldos/{$stem}.zip", 'archive');
+
+        $records = collect(app(ContpaqiBackupCatalog::class)->catalog(true)['records'])->where('stem', $stem)->values();
+
+        $this->assertCount(2, $records);
+        $this->assertCount(2, $records->pluck('id')->unique());
+        $this->assertEqualsCanonicalizing(['accounting', 'payroll'], $records->pluck('source_classification')->all());
+        $this->assertTrue($records->every(fn (array $record): bool => $record['complete']));
+    }
+
     public function test_download_is_read_only_and_cannot_escape_the_allowed_directories(): void
     {
         $path = $this->catalogRoot.'/Empresas/ctEmpresa_Demo/ctEmpresa_Demo-20261014-1200.bak';
@@ -177,12 +192,16 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertArrayHasKey($record['id'], $completedDestinations);
         $this->assertSame(realpath($destination), realpath($completedDestinations[$record['id']][0]['path']));
 
-        try {
-            $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO/NOMINAS/SEMANALES', $catalog);
-            $this->fail('La misma empresa no debe poder respaldarse dos veces el mismo día.');
-        } catch (\RuntimeException $exception) {
-            $this->assertStringContainsString('ya fue respaldada', $exception->getMessage());
-        }
+        File::put($databasePath, 'DATABASE-CONTENT');
+        File::put($archivePath, 'ARCHIVE-CONTENT');
+        $replacement = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO/NOMINAS/SEMANALES', $catalog);
+        $this->exportIds[] = $replacement['id'];
+        $export->execute($replacement['id'], $catalog);
+
+        $this->assertSame('DATABASE-CONTENT', File::get($destination.'/BAK/'.basename($databasePath)));
+        $this->assertSame('ARCHIVE-CONTENT', File::get($destination.'/INDEX/'.basename($archivePath)));
+        $this->assertSame('replaced', $export->find($replacement['id'])['items'][0]['files'][0]['status']);
+        $this->assertSame('replaced', $export->find($replacement['id'])['items'][0]['files'][1]['status']);
     }
 
     public function test_queued_export_uses_the_destination_validated_when_it_was_created(): void
@@ -298,7 +317,21 @@ class ContpaqiBackupCatalogTest extends TestCase
         $records = collect($catalog->catalog(true)['records'])->where('date', now()->toDateString())->values();
         $availability = $export->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
 
-        $this->assertSame('outdated', $availability[$records->firstWhere('time', '17:30:00')['id']]);
+        $newRecord = $records->firstWhere('time', '17:30:00');
+        $this->assertSame('outdated', $availability[$newRecord['id']]);
         $this->assertSame('older', $availability[$records->firstWhere('time', '09:00:00')['id']]);
+
+        $replacement = $export->create(now()->toDateString(), [$newRecord['id']], 1, 'ANGEL MOO', $catalog);
+        $this->exportIds[] = $replacement['id'];
+        $export->execute($replacement['id'], $catalog);
+        $companyDirectory = $this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo';
+
+        $this->assertFileDoesNotExist($companyDirectory.'/BAK/ctEmpresa_Demo-'.$date.'-0900.bak');
+        $this->assertFileDoesNotExist($companyDirectory.'/INDEX/ctEmpresa_Demo-'.$date.'-0900.zip');
+        $this->assertSame('database-new', File::get($companyDirectory.'/BAK/ctEmpresa_Demo-'.$date.'-1730.bak'));
+        $this->assertSame('archive-new', File::get($companyDirectory.'/INDEX/ctEmpresa_Demo-'.$date.'-1730.zip'));
+        $availability = $export->recordAvailability(now()->toDateString(), $records->all(), 'ANGEL MOO');
+        $this->assertSame('backed_up', $availability[$newRecord['id']]);
+        $this->assertArrayNotHasKey($oldRecord['id'], $export->completedDestinations(now()->toDateString()));
     }
 }

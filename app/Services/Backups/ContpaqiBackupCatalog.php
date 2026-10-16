@@ -14,7 +14,7 @@ use Throwable;
 
 class ContpaqiBackupCatalog
 {
-    private const CACHE_VERSION = 3;
+    private const CACHE_VERSION = 4;
 
     private const PRELOADED_DAYS = 60;
 
@@ -162,6 +162,7 @@ class ContpaqiBackupCatalog
 
         $companies = $this->companyDirectories($companiesPath);
         $records = [];
+        $databaseRecordKeysByStem = [];
 
         foreach ($this->files($companiesPath, ['bak']) as $file) {
             $parsed = $this->parseBackupName($file->getFilename());
@@ -171,13 +172,16 @@ class ContpaqiBackupCatalog
 
             $relativePath = $this->relativePath($companiesPath, $file->getPathname());
             $companyFolder = Str::before($relativePath, '/');
-            $recordKey = Str::lower($parsed['stem']);
-            $records[$recordKey] ??= $this->newRecord($parsed);
+            $sourceClassification = $this->sourceClassification($relativePath);
+            $stemKey = Str::lower($parsed['stem']);
+            $recordKey = Str::lower(($sourceClassification ?? 'unknown').'|'.$companyFolder.'|'.$parsed['stem']);
+            $records[$recordKey] ??= $this->newRecord($parsed, $recordKey);
             $records[$recordKey]['company_folder'] = $companyFolder;
             $records[$recordKey]['company_key'] = $this->normalizeCompany($companyFolder);
             $records[$recordKey]['company'] = $this->displayCompany($parsed['company']);
-            $records[$recordKey]['source_classification'] = $this->sourceClassification($relativePath);
+            $records[$recordKey]['source_classification'] = $sourceClassification;
             $records[$recordKey]['database'] = $this->fileData($file, $relativePath);
+            $databaseRecordKeysByStem[$stemKey][] = $recordKey;
         }
 
         foreach ($this->files($archivesPath, ['zip', 'rar']) as $file) {
@@ -186,13 +190,19 @@ class ContpaqiBackupCatalog
                 continue;
             }
 
-            $recordKey = Str::lower($parsed['stem']);
-            $records[$recordKey] ??= $this->newRecord($parsed);
+            $stemKey = Str::lower($parsed['stem']);
+            $recordKeys = array_values(array_unique($databaseRecordKeysByStem[$stemKey] ?? []));
+            if ($recordKeys === []) {
+                $recordKeys = ['archive|'.$stemKey];
+                $records[$recordKeys[0]] ??= $this->newRecord($parsed, $recordKeys[0]);
+            }
             $relativePath = $this->relativePath($archivesPath, $file->getPathname());
             $candidate = $this->fileData($file, $relativePath);
 
-            if ($records[$recordKey]['archive'] === null || $file->getExtension() === 'zip') {
-                $records[$recordKey]['archive'] = $candidate;
+            foreach ($recordKeys as $recordKey) {
+                if ($records[$recordKey]['archive'] === null || Str::lower($file->getExtension()) === 'zip') {
+                    $records[$recordKey]['archive'] = $candidate;
+                }
             }
         }
 
@@ -246,6 +256,7 @@ class ContpaqiBackupCatalog
     {
         $compactDate = str_replace('-', '', $date);
         $records = [];
+        $databaseRecordKeysByStem = [];
         $companyMap = collect($companies)->keyBy('key')->all();
         $companiesPath = $this->companiesPath();
         $archivesPath = $this->archivesPath();
@@ -264,13 +275,16 @@ class ContpaqiBackupCatalog
 
             $relativePath = $this->relativePath($companiesPath, $file->getPathname());
             $companyFolder = Str::before($relativePath, '/');
-            $recordKey = Str::lower($parsed['stem']);
-            $records[$recordKey] ??= $this->newRecord($parsed);
+            $sourceClassification = $this->sourceClassification($relativePath);
+            $stemKey = Str::lower($parsed['stem']);
+            $recordKey = Str::lower(($sourceClassification ?? 'unknown').'|'.$companyFolder.'|'.$parsed['stem']);
+            $records[$recordKey] ??= $this->newRecord($parsed, $recordKey);
             $records[$recordKey]['company_folder'] = $companyFolder;
             $records[$recordKey]['company_key'] = $this->normalizeCompany($companyFolder);
             $records[$recordKey]['company'] = $this->displayCompany($parsed['company']);
-            $records[$recordKey]['source_classification'] = $this->sourceClassification($relativePath);
+            $records[$recordKey]['source_classification'] = $sourceClassification;
             $records[$recordKey]['database'] = $this->fileData($file, $relativePath);
+            $databaseRecordKeysByStem[$stemKey][] = $recordKey;
         }
 
         $archivePatterns = [
@@ -287,12 +301,18 @@ class ContpaqiBackupCatalog
                 continue;
             }
 
-            $recordKey = Str::lower($parsed['stem']);
-            $records[$recordKey] ??= $this->newRecord($parsed);
+            $stemKey = Str::lower($parsed['stem']);
+            $recordKeys = array_values(array_unique($databaseRecordKeysByStem[$stemKey] ?? []));
+            if ($recordKeys === []) {
+                $recordKeys = ['archive|'.$stemKey];
+                $records[$recordKeys[0]] ??= $this->newRecord($parsed, $recordKeys[0]);
+            }
             $relativePath = $this->relativePath($archivesPath, $file->getPathname());
             $candidate = $this->fileData($file, $relativePath);
-            if ($records[$recordKey]['archive'] === null || $file->getExtension() === 'zip') {
-                $records[$recordKey]['archive'] = $candidate;
+            foreach ($recordKeys as $recordKey) {
+                if ($records[$recordKey]['archive'] === null || Str::lower($file->getExtension()) === 'zip') {
+                    $records[$recordKey]['archive'] = $candidate;
+                }
             }
         }
 
@@ -440,10 +460,10 @@ class ContpaqiBackupCatalog
         ];
     }
 
-    private function newRecord(array $parsed): array
+    private function newRecord(array $parsed, ?string $identity = null): array
     {
         return [
-            'id' => hash('sha256', Str::lower($parsed['stem'])),
+            'id' => hash('sha256', Str::lower($identity ?? 'archive|'.$parsed['stem'])),
             'stem' => $parsed['stem'],
             'company_raw' => $parsed['company'],
             'company' => $this->displayCompany($parsed['company']),

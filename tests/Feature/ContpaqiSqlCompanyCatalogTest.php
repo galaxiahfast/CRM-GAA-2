@@ -52,6 +52,9 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
         $this->assertFalse($profiles->matches($payroll, $profiles->profile('merida-contabilidad')));
         $this->assertTrue($profiles->matches($accounting, $profiles->profile('merida-contabilidad')));
         $this->assertFalse($profiles->matches($accounting, $profiles->profile('merida-nominas')));
+        $physicalAccounting = ['company_folder' => 'ctSOLO_NOMINAS', 'source_classification' => 'accounting'];
+        $this->assertTrue($profiles->matches($physicalAccounting, $profiles->profile('merida-contabilidad')));
+        $this->assertFalse($profiles->matches($physicalAccounting, $profiles->profile('merida-nominas')));
         $this->assertFalse($profiles->matches(['company_folder' => 'ctNO_EXISTE'], $profiles->profile('merida-contabilidad')));
 
         Process::assertRan(function ($process): bool {
