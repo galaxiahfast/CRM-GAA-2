@@ -84,7 +84,7 @@ class BackupStorageManagerTest extends TestCase
         $this->actingAs($admin)->get(route('activity-backups.index'))
             ->assertOk()
             ->assertSee('Gestión de Respaldos')
-            ->assertSee('Consulta de solo lectura')
+            ->assertSee('Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.')
             ->assertDontSee('Generar respaldo de la empresa')
             ->assertDontSee('Configura y genera los respaldos fácilmente.')
             ->assertDontSee('Servidor conectado')
@@ -185,7 +185,7 @@ class BackupStorageManagerTest extends TestCase
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->assertSet('destinationKey', 'principal')
-            ->assertSee('Seleccione la sede, el departamento y la carpeta')
+            ->assertDontSee('Seleccione la sede, el departamento y la carpeta')
             ->assertSee('Tulum · Contabilidad')
             ->assertSee('Próximamente')
             ->assertSee('Cargando respaldos…')
@@ -193,7 +193,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('ANGEL MOO')
             ->set('destinationFolder', 'ANGEL MOO')
             ->assertSet('destinationFolder', 'ANGEL MOO')
-            ->assertSee('Se guardará en')
+            ->assertDontSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
             ->assertSeeHtml('relative h-[544px]')
             ->assertSeeHtml('class="h-[70px]"')
@@ -259,7 +259,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('Buscar empresa o archivo')
             ->call('toggleAllAvailable')
             ->assertSet('selectedRecords', [$record['id']])
-            ->assertSee('1 empresa seleccionada')
+            ->assertSee('Empresa')
+            ->assertSee('(1 seleccionada)')
             ->assertSee('Respaldar 1 empresa')
             ->call('toggleAllAvailable')
             ->assertSet('selectedRecords', [])
@@ -295,7 +296,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('selectedRecords', [$record['id']])
             ->set('destinationFolder', 'ANGEL MOO')
             ->assertSet('selectedRecords', [])
-            ->assertSee('Se deseleccionó 1 empresa porque ya está respaldada');
+            ->assertSet('selectionNotice', 'Se deseleccionó 1 empresa porque ya está respaldada o no está disponible en esta carpeta.')
+            ->assertDontSee('Se deseleccionó 1 empresa porque ya está respaldada');
     }
 
     public function test_export_recovers_the_fixed_destination_and_starts_a_background_process_without_a_worker(): void

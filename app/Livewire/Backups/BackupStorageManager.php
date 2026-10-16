@@ -403,7 +403,6 @@ class BackupStorageManager extends Component
             'exportDestinations' => $export->destinations(),
             'exportDestination' => $export->destination($this->destinationKey),
             'selectedExportCount' => $selectedCompleteRecords->count(),
-            'selectedExportBytes' => (int) $selectedCompleteRecords->sum('total_size'),
             'recordAvailability' => $recordAvailability,
             'completedDestinations' => $completedDestinations,
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),

@@ -149,7 +149,7 @@
                 </span>
                 <div class="min-w-0">
                     <h1 class="text-xl font-semibold tracking-tight text-black">Gestión de Respaldos</h1>
-                    <p class="mt-[4px] text-zinc-500">Consulta de solo lectura del servidor.</p>
+                    <p class="mt-[4px] text-zinc-500">Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.</p>
                 </div>
             </div>
 
@@ -209,25 +209,7 @@
                                 </div>
                             </div>
                             <div class="order-1 border-b border-zinc-300 bg-zinc-100 p-[20px]">
-                                        <div>
-                                            <div class="min-w-0">
-                                                <div class="flex min-w-0 flex-wrap items-center justify-between gap-[15px]">
-                                                    <h3 class="shrink-0 font-semibold text-black">Seleccione la sede, el departamento y la carpeta</h3>
-                                                    <div class="flex min-w-0 flex-wrap items-center justify-end gap-x-[15px] gap-y-[5px]">
-                                                        @if($selectedExportCount > 0)<button type="button" wire:click="clearSelection" class="inline-flex items-center gap-[7px] bg-transparent p-0 text-zinc-500 transition hover:text-black"><svg class="h-[17px] w-[17px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg><span>Limpiar selección</span></button>@endif
-                                                        <span class="min-w-0 truncate text-right text-zinc-500">{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }} · {{ $formatBytes($selectedExportBytes) }}</span>
-                                                    </div>
-                                                </div>
-                                                <p class="mt-[4px] min-w-0 truncate text-zinc-500" title="{{ $destinationFolder !== '' ? 'Se guardará en '.$destinationFolder.'\\'.\Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y').'\\EMPRESA\\BAK e INDEX. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.' : 'Selecciona una carpeta para definir dónde se guardará el respaldo.' }}">
-                                                @if($destinationFolder !== '')
-                                                    <span class="truncate">Se guardará en <strong class="font-medium text-black">{{ $destinationFolder }}\{{ \Carbon\CarbonImmutable::parse($selectedDate)->format('d-m-Y') }}\EMPRESA\BAK e INDEX</strong>. Si la fecha o empresa ya existe, se reutiliza sin duplicar archivos.</span>
-                                                @else
-                                                    <span class="truncate text-zinc-500">Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.</span>
-                                                @endif
-                                                </p>
-                                                @if($selectionNotice)<p class="mt-[4px] truncate text-amber-700" title="{{ $selectionNotice }}">{{ $selectionNotice }}</p>@endif
-                                            </div>
-                                            <div class="mt-[15px] grid gap-[15px] md:grid-cols-3">
+                                        <div class="grid gap-[15px] md:grid-cols-3">
                                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                                                     <button type="button" @click="if (!{{ $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-[15px] text-left text-black">
                                                         <span class="truncate">{{ $currentBackupProfile['label'] }}</span>
@@ -248,7 +230,6 @@
                                                     <span wire:loading.remove wire:target="startExport">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
                                                     <span wire:loading wire:target="startExport">Validando…</span>
                                                 </button>
-                                            </div>
                                         </div>
                             </div>
                             <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative h-[544px] order-3 min-h-0 flex-none">
@@ -259,7 +240,7 @@
                                 <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[260px]"><col class="w-[290px]"></colgroup>
-                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold"><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($availableExportCount === 0 || $exportIsActive || in_array($status, ['backed_up', 'partial'], true)) aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"><span>Empresa</span></span></th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
+                                    <thead class="sticky top-0 z-10 bg-zinc-100 text-zinc-700 shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r border-zinc-300 px-[20px] font-semibold"><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($availableExportCount === 0 || $exportIsActive || in_array($status, ['backed_up', 'partial'], true)) aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border border-zinc-400 bg-white text-[#1A3A6B] focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"><span>Empresa <span class="font-normal text-zinc-500">({{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'seleccionada' : 'seleccionadas' }})</span></span></span></th><th class="border-r border-zinc-300 px-[15px] font-semibold">Hora</th><th class="border-r border-zinc-300 px-[15px] font-semibold">Archivos del servidor</th><th class="px-[15px] font-semibold">Respaldo en memoria</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
                                             $recordState = $recordAvailability[$record['id']] ?? 'incomplete';
