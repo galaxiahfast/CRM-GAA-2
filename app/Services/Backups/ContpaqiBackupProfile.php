@@ -6,8 +6,13 @@ use Illuminate\Support\Str;
 
 class ContpaqiBackupProfile
 {
+    /** @var array<string, array{payroll: array<string, true>, accounting: array<string, true>}|null> */
+    private array $sqlCatalogBySite = [];
+
     /** @var array<string, array<string, true>> */
     private array $payrollFoldersBySite = [];
+
+    public function __construct(private readonly ContpaqiSqlCompanyCatalog $sqlCatalog) {}
 
     public function profiles(bool $includeDisabled = false): array
     {
@@ -74,6 +79,11 @@ class ContpaqiBackupProfile
 
         $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
+        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
+        if ($sqlCatalog !== null) {
+            return isset($sqlCatalog[$classification][$folder]);
+        }
+
         $isPayroll = isset($this->payrollFolders($site)[$folder]);
 
         return $classification === 'payroll' ? $isPayroll : ! $isPayroll;

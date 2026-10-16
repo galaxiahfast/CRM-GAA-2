@@ -63,10 +63,24 @@ return [
             'enabled' => (bool) env('CONTPAQ_TULUM_CONTABILIDAD_ENABLED', false),
         ],
     ],
+    'sql_catalog' => [
+        // Solo ejecuta SELECT sobre master.sys.databases mediante sqlcmd.
+        'enabled' => (bool) env('CONTPAQ_SQL_CATALOG_ENABLED', true),
+        'username' => env('CONTPAQ_SQL_USERNAME', ''),
+        'password' => env('CONTPAQ_SQL_PASSWORD', ''),
+        'sqlcmd_path' => env('CONTPAQ_SQLCMD_PATH', 'sqlcmd'),
+        'timeout_seconds' => (int) env('CONTPAQ_SQL_TIMEOUT_SECONDS', 15),
+        'cache_seconds' => (int) env('CONTPAQ_SQL_CACHE_SECONDS', 300),
+        'sites' => [
+            'merida' => [
+                'payroll' => env('CONTPAQ_MERIDA_NOMINAS_SQL_INSTANCE', 'SRVCONTPAQ\\NOMINAS'),
+                'accounting' => env('CONTPAQ_MERIDA_CONTABILIDAD_SQL_INSTANCE', 'SRVCONTPAQ\\CONTABILIDAD'),
+            ],
+        ],
+    ],
     // Catálogo confirmado de las bases que pertenecen a Nóminas. La
-    // clasificación se hace por carpeta y no por palabras del respaldo:
-    // "semana", "quincena", "mensual" o un prefijo nt también pueden
-    // aparecer en bases que pertenecen a Contabilidad.
+    // lista solo se usa si SQL Server todavía no cuenta con un catálogo
+    // disponible ni con una última lectura válida en caché.
     'company_classifications' => [
         'merida' => [
             'payroll_folders' => [

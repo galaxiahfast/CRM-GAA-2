@@ -7,6 +7,7 @@ use App\Services\Backups\ContpaqiBackupCatalog;
 use App\Services\Backups\ContpaqiBackupExport;
 use App\Services\Backups\ContpaqiBackupProcessLauncher;
 use App\Services\Backups\ContpaqiBackupProfile;
+use App\Services\Backups\ContpaqiSqlCompanyCatalog;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
@@ -286,13 +287,14 @@ class BackupStorageManager extends Component
         $this->exportStatus = $active;
     }
 
-    public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
+    public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles, ContpaqiSqlCompanyCatalog $sqlCatalog): void
     {
         Gate::authorize('access-system-backups');
 
         try {
             $catalog->forget();
             $export->forgetDetectedVolumes();
+            $sqlCatalog->forget((string) ($profiles->profile($this->backupProfile)['site'] ?? 'merida'));
 
             if ($this->selectedDate === now()->toDateString()) {
                 $catalog->refreshToday();
