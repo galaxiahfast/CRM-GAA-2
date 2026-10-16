@@ -25,8 +25,7 @@
         async toggleFullscreen() { if (document.fullscreenElement) await document.exitFullscreen(); else await $root.requestFullscreen() }
     }"
     x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
-    wire:poll.60s>
-    <span class="hidden" wire:poll.1s="refreshSharedExportStatus" aria-hidden="true"></span>
+    wire:poll.1s="refreshSharedExportStatus">
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }

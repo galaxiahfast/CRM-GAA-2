@@ -253,7 +253,7 @@ class ContpaqiBackupExport
             }
         } catch (Throwable $exception) {
             $latestState = $this->find($id);
-            if (($latestState['status'] ?? null) === 'cancelling') {
+            if (in_array($latestState['status'] ?? null, ['cancelling', 'cancelled'], true)) {
                 $this->completeCancellation($id, $latestState);
 
                 return;
@@ -380,6 +380,12 @@ class ContpaqiBackupExport
         $state = $this->find($id);
         if ($state === null || ! in_array($state['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
             return $state;
+        }
+
+        if (($state['status'] ?? null) === 'queued') {
+            $this->completeCancellation($id, $state);
+
+            return $this->find($id);
         }
 
         $state['status'] = 'cancelling';
@@ -760,7 +766,7 @@ POWERSHELL;
 
     private function throwIfCancellationRequested(string $id): void
     {
-        if (($this->find($id)['status'] ?? null) === 'cancelling') {
+        if (in_array($this->find($id)['status'] ?? null, ['cancelling', 'cancelled'], true)) {
             throw new RuntimeException('El respaldo fue cancelado.');
         }
     }

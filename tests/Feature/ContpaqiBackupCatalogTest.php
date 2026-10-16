@@ -205,7 +205,7 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertStringContainsString('srvcontpaq', strtolower((string) $destination['root']));
     }
 
-    public function test_cancelling_a_queued_export_keeps_it_locked_until_the_worker_stops(): void
+    public function test_cancelling_a_queued_export_finishes_without_waiting_for_a_worker(): void
     {
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Demo/Respaldo/ctEmpresa_Demo-{$date}-1715.bak", 'database-content');
@@ -218,8 +218,8 @@ class ContpaqiBackupCatalogTest extends TestCase
         $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog);
         $this->exportIds[] = $state['id'];
 
-        $this->assertSame('cancelling', $export->cancel($state['id'])['status']);
-        $this->assertSame($state['id'], $export->latestActive()['id']);
+        $this->assertSame('cancelled', $export->cancel($state['id'])['status']);
+        $this->assertNull($export->latestActive());
 
         $export->execute($state['id'], $catalog);
 

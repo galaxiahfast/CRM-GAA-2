@@ -271,6 +271,8 @@ class BackupStorageManager extends Component
                     return;
                 }
             }
+
+            $this->currentExportId = null;
         }
 
         $this->adoptActiveExport($export);

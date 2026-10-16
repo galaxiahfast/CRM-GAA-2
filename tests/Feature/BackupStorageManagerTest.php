@@ -85,6 +85,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertOk()
             ->assertSee('Gestión de Respaldos')
             ->assertSee('Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.')
+            ->assertSee('wire:poll.1s="refreshSharedExportStatus"', false)
             ->assertDontSee('Generar respaldo de la empresa')
             ->assertDontSee('Configura y genera los respaldos fácilmente.')
             ->assertDontSee('Servidor conectado')
@@ -350,7 +351,7 @@ class BackupStorageManagerTest extends TestCase
         Bus::assertNotDispatched(CopyContpaqiBackups::class);
     }
 
-    public function test_all_users_see_the_same_active_export_and_cannot_start_another_one(): void
+    public function test_all_users_see_the_same_active_export_and_queued_cancellation_releases_it(): void
     {
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", str_repeat('b', 1024));
@@ -378,13 +379,15 @@ class BackupStorageManagerTest extends TestCase
 
         $viewerComponent
             ->call('cancelExport')
-            ->assertSet('exportStatus.status', 'cancelling')
-            ->assertSee('Cancelando respaldo');
+            ->assertSet('exportStatus.status', 'cancelled')
+            ->assertDontSee('Cancelando respaldo')
+            ->call('refreshSharedExportStatus')
+            ->assertSet('currentExportId', null);
 
         Livewire::actingAs($owner)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->call('startExport')
-            ->assertSet('exportMessage', 'Espera a que termine la copia actual antes de iniciar otra.');
+            ->assertSet('currentExportId', null)
+            ->assertDontSee('Respaldo en espera');
     }
 
     public function test_backup_products_are_restricted_by_site(): void
