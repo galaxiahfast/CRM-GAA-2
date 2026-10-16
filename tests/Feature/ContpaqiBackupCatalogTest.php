@@ -19,12 +19,16 @@ class ContpaqiBackupCatalogTest extends TestCase
         $profiles = app(ContpaqiBackupProfile::class);
         $accounting = ['company_folder' => 'ctEMPRESA_CONTABLE', 'company_raw' => 'EMPRESA CONTABLE', 'company' => 'EMPRESA CONTABLE', 'stem' => 'EMPRESA CONTABLE-20261016-0900'];
         $payrollByFolder = ['company_folder' => 'ct1_EMPRESA_NOMINA', 'company_raw' => 'EMPRESA NOMINA', 'company' => 'EMPRESA NOMINA', 'stem' => 'EMPRESA NOMINA-20261016-0900'];
+        $payrollByNtFolder = ['company_folder' => 'NtALMACEN_DE_PINT', 'company_raw' => 'ALMACEN DE PINTURAS', 'company' => 'ALMACEN DE PINTURAS', 'stem' => 'ALMACEN DE PINTURAS-20261016-0900'];
         $payrollByPeriod = ['company_folder' => null, 'company_raw' => 'EMPRESA Q19 2026', 'company' => 'EMPRESA Q19 2026', 'stem' => 'EMPRESA Q19 2026-20261016-0900'];
+        $payrollByWeek = ['company_folder' => null, 'company_raw' => 'ALMACEN DE PINTURAS S#42 16 oct', 'company' => 'ALMACEN DE PINTURAS S#42 16 oct', 'stem' => 'ALMACEN DE PINTURAS S#42 16 oct-20261016-1204'];
 
         $this->assertTrue($profiles->matches($accounting, $profiles->profile('merida-contabilidad')));
         $this->assertFalse($profiles->matches($accounting, $profiles->profile('merida-nominas')));
         $this->assertTrue($profiles->matches($payrollByFolder, $profiles->profile('merida-nominas')));
+        $this->assertTrue($profiles->matches($payrollByNtFolder, $profiles->profile('merida-nominas')));
         $this->assertTrue($profiles->matches($payrollByPeriod, $profiles->profile('merida-nominas')));
+        $this->assertTrue($profiles->matches($payrollByWeek, $profiles->profile('merida-nominas')));
     }
 
     use RefreshDatabase;

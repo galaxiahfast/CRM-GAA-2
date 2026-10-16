@@ -204,11 +204,11 @@ class BackupStorageManagerTest extends TestCase
     {
         $date = now()->format('Ymd');
         File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEMPRESA_CONTABLE');
-        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/ctEMPRESA_NOMINA');
+        File::ensureDirectoryExists($this->catalogRoot.'/Empresas/NtALMACEN_DE_PINT');
         File::put($this->catalogRoot."/Empresas/ctEMPRESA_CONTABLE/EMPRESA CONTABLE-{$date}-0900.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/EMPRESA CONTABLE-{$date}-0900.zip", 'archive');
-        File::put($this->catalogRoot."/Empresas/ctEMPRESA_NOMINA/EMPRESA NOMINA Q19-{$date}-0910.bak", 'database');
-        File::put($this->catalogRoot."/Index/respaldos/EMPRESA NOMINA Q19-{$date}-0910.zip", 'archive');
+        File::put($this->catalogRoot."/Empresas/NtALMACEN_DE_PINT/ALMACEN DE PINTURAS ZONA MERIDA SA DE CV S#42 16 oct-{$date}-0910.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ALMACEN DE PINTURAS ZONA MERIDA SA DE CV S#42 16 oct-{$date}-0910.zip", 'archive');
         config()->set('backup-storage.export.destination_root', $this->exportRoot);
         config()->set('backup-storage.backup_profiles.merida-nominas.destination_root', $this->exportRoot);
         $admin = $this->user('Administrador', 'admin-backup-profiles@datamid.test');
@@ -216,12 +216,12 @@ class BackupStorageManagerTest extends TestCase
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
             ->assertSee('EMPRESA CONTABLE')
-            ->assertDontSee('EMPRESA NOMINA Q19')
+            ->assertDontSee('ALMACEN DE PINTURAS ZONA MERIDA')
             ->set('backupProfile', 'merida-nominas')
             ->assertSet('destinationKey', 'merida-nominas')
             ->assertSet('destinationFolder', '')
             ->assertSee('Mérida · Nóminas')
-            ->assertSee('EMPRESA NOMINA Q19')
+            ->assertSee('ALMACEN DE PINTURAS ZONA MERIDA')
             ->assertDontSee('EMPRESA CONTABLE');
     }
 

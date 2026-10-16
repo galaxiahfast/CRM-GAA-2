@@ -75,8 +75,9 @@ class ContpaqiBackupProfile
             $record['company'] ?? '',
             $record['stem'] ?? '',
         ]));
-        $isPayroll = preg_match('/^ct\d+_/i', $folder) === 1
-            || preg_match('/(?:^|[\s_-])(?:Q\d+|QUINCEN\w*|MENSUAL\w*|SEMANAL\w*|PTU)(?:[\s_-]|$)/i', $text) === 1;
+        $isPayroll = preg_match('/^nt/i', $folder) === 1
+            || preg_match('/^ct\d+_/i', $folder) === 1
+            || preg_match('/(?:^|[\s_-])(?:Q\d+|S\s*#?\s*\d+|SEM(?:ANA|ANAL)?\w*\s*#?\s*\d*|QUINCEN\w*|MENSUAL\w*|PTU)(?:[\s_-]|$)/i', $text) === 1;
 
         return $classification === 'payroll' ? $isPayroll : ! $isPayroll;
     }
