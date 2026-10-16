@@ -32,6 +32,8 @@ class BackupStorageManagerTest extends TestCase
 
     private array $exportStateIds = [];
 
+    private array $backupEventIds = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,6 +53,9 @@ class BackupStorageManagerTest extends TestCase
         File::deleteDirectory($this->exportRoot);
         foreach ($this->exportStateIds as $id) {
             File::delete(storage_path("app/private/backup-exports/{$id}.json"));
+        }
+        foreach ($this->backupEventIds as $id) {
+            File::delete(storage_path("app/private/backup-events/{$id}.json"));
         }
         parent::tearDown();
     }
@@ -390,6 +395,21 @@ class BackupStorageManagerTest extends TestCase
         $this->assertDirectoryDoesNotExist($destination);
         $this->assertSame('database', File::get($databasePath));
         $this->assertSame('archive', File::get($archivePath));
+
+        $deletion = collect($export->history())->first(fn (array $movement): bool =>
+            $movement['type'] === 'deleted' && in_array('Empresa Prueba', $movement['companies'], true)
+        );
+        $this->assertNotNull($deletion);
+        $this->assertSame($admin->id, $deletion['user_id']);
+        $this->assertSame('ANGEL MOO', $deletion['destination_folder']);
+        $this->backupEventIds[] = $deletion['id'];
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class, ['activeView' => 'history'])
+            ->assertSee('Historial de movimientos')
+            ->assertSee('Respaldo eliminado')
+            ->assertSee('Empresa Prueba')
+            ->assertSee('Administrador Prueba');
     }
 
     public function test_backup_deletion_is_blocked_until_two_factor_is_configured(): void

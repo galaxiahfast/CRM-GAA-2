@@ -363,6 +363,55 @@ class ContpaqiBackupExport
         return $destinations;
     }
 
+    /** @return array<int, array<string, mixed>> */
+    public function history(int $limit = 250): array
+    {
+        $movements = collect();
+
+        if (is_dir($this->stateDirectory())) {
+            foreach (File::glob($this->stateDirectory().DIRECTORY_SEPARATOR.'*.json') as $path) {
+                $state = $this->find(pathinfo($path, PATHINFO_FILENAME));
+                if ($state === null) {
+                    continue;
+                }
+
+                $status = (string) ($state['status'] ?? 'unknown');
+                $replaced = collect($state['items'] ?? [])->flatMap(fn (array $item): array => $item['files'] ?? [])
+                    ->contains(fn (array $file): bool => ($file['status'] ?? null) === 'replaced');
+                $movements->push([
+                    'id' => (string) ($state['id'] ?? pathinfo($path, PATHINFO_FILENAME)),
+                    'type' => $status === 'completed' ? ($replaced ? 'replacement' : 'backup') : $status,
+                    'status' => $status,
+                    'occurred_at' => $state['completed_at'] ?? $state['started_at'] ?? $state['created_at'] ?? null,
+                    'backup_date' => $state['date'] ?? null,
+                    'user_id' => isset($state['user_id']) ? (int) $state['user_id'] : null,
+                    'destination_label' => (string) ($state['destination_label'] ?? 'Memoria externa'),
+                    'destination_folder' => (string) ($state['destination_folder'] ?? ''),
+                    'companies' => collect($state['items'] ?? [])->pluck('company')->filter()->unique()->values()->all(),
+                    'item_count' => collect($state['items'] ?? [])->where('status', 'completed')->count()
+                        ?: count($state['items'] ?? []),
+                    'error' => $state['error'] ?? null,
+                ]);
+            }
+        }
+
+        if (is_dir($this->eventDirectory())) {
+            foreach (File::glob($this->eventDirectory().DIRECTORY_SEPARATOR.'*.json') as $path) {
+                $event = json_decode((string) File::get($path), true);
+                if (is_array($event)) {
+                    $movements->push($event);
+                }
+            }
+        }
+
+        return $movements
+            ->filter(fn (array $movement): bool => filled($movement['occurred_at'] ?? null))
+            ->sortByDesc('occurred_at')
+            ->take(max(1, $limit))
+            ->values()
+            ->all();
+    }
+
     public function markFailed(string $id, string $message): void
     {
         $state = $this->find($id);
@@ -402,8 +451,9 @@ class ContpaqiBackupExport
         array $records,
         string $destinationFolder,
         ?string $destinationKey,
+        int $userId,
     ): int {
-        return Cache::lock('contpaqi-backup-export:delete', 30)->block(5, function () use ($date, $records, $destinationFolder, $destinationKey): int {
+        return Cache::lock('contpaqi-backup-export:delete', 30)->block(5, function () use ($date, $records, $destinationFolder, $destinationKey, $userId): int {
             if ($this->latestActive() !== null) {
                 throw new RuntimeException('No se puede eliminar mientras hay un respaldo en proceso.');
             }
@@ -433,6 +483,20 @@ class ContpaqiBackupExport
             if ($deleted === 0) {
                 throw new RuntimeException('No se encontraron respaldos en la memoria para eliminar.');
             }
+
+            $this->writeEvent([
+                'id' => (string) Str::uuid(),
+                'type' => 'deleted',
+                'status' => 'completed',
+                'occurred_at' => now()->toIso8601String(),
+                'backup_date' => $date,
+                'user_id' => $userId,
+                'destination_label' => (string) $destination['label'],
+                'destination_folder' => $this->relativeDestinationFolder($baseDirectory, $destination['root']),
+                'companies' => collect($records)->pluck('company')->filter()->unique()->values()->all(),
+                'item_count' => $deleted,
+                'error' => null,
+            ]);
 
             return $deleted;
         });
@@ -976,6 +1040,23 @@ POWERSHELL;
     private function stateDirectory(): string
     {
         return storage_path('app/private/backup-exports');
+    }
+
+    private function eventDirectory(): string
+    {
+        return storage_path('app/private/backup-events');
+    }
+
+    private function writeEvent(array $event): void
+    {
+        File::ensureDirectoryExists($this->eventDirectory());
+        $path = $this->eventDirectory().DIRECTORY_SEPARATOR.$event['id'].'.json';
+        $temporary = $path.'.tmp';
+        File::put($temporary, json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), true);
+        if (! File::move($temporary, $path)) {
+            File::delete($temporary);
+            throw new RuntimeException('El respaldo se eliminó, pero no fue posible registrar el movimiento.');
+        }
     }
 
     private function statePath(string $id): string
