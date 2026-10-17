@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BackupUploadController;
 use App\Http\Controllers\BackupInfrastructureGuideController;
+use App\Http\Controllers\BankReconciliationToolController;
 use App\Http\Controllers\ContpaqiBackupDownloadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
@@ -263,6 +264,18 @@ Route::middleware([
             Route::get('/files/{upload}/{index}/download', [BackupUploadController::class, 'downloadFile'])
                 ->whereNumber('index')->name('files.download');
         });
+
+    // ==========================================
+    // CONCILIACION BANCARIA (todos los usuarios autenticados)
+    // ==========================================
+    Route::prefix('conciliacion-bancaria')->name('bank-reconciliation.')->group(function () {
+        Route::get('/{tool}', [BankReconciliationToolController::class, 'show'])
+            ->whereIn('tool', ['ocr', 'bancaria'])
+            ->name('show');
+        Route::get('/{tool}/contenido', [BankReconciliationToolController::class, 'content'])
+            ->whereIn('tool', ['ocr', 'bancaria'])
+            ->name('content');
+    });
 
     // ==========================================
     // SOPORTE (Disponible para todos los usuarios autenticados)
