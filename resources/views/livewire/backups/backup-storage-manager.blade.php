@@ -25,7 +25,11 @@
         async toggleFullscreen() { if (document.fullscreenElement) await document.exitFullscreen(); else await $root.requestFullscreen() }
     }"
     x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
-    wire:poll.1s="refreshSharedExportStatus">
+    @if($exportIsActive)
+        wire:poll.1s="refreshSharedExportStatus"
+    @else
+        wire:poll.15s="refreshSharedExportStatus"
+    @endif>
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
@@ -224,7 +228,7 @@
                                 <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700"><span class="truncate font-semibold">Fecha de respaldos</span></div>
                                 <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
                                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
-                                @forelse ($catalog['dates'] as $day)
+                                @forelse ($visibleBackupDates as $day)
                                     @php
                                         $dayDate = \Carbon\CarbonImmutable::parse($day['date']);
                                         $fullDayLabel = ucfirst($dayDate->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
@@ -237,6 +241,12 @@
                                 @empty
                                     <p class="truncate p-[20px] text-zinc-400" title="No se encontraron respaldos con fecha válida.">No se encontraron respaldos con fecha válida.</p>
                                 @endforelse
+                                @if($hasMoreBackupDates)
+                                    <button type="button" wire:click="loadMoreDates" wire:loading.attr="disabled" wire:target="loadMoreDates" class="flex min-h-[60px] w-full items-center justify-center border-b border-zinc-200 bg-white px-[20px] py-[15px] font-medium text-[#1A3A6B] transition hover:bg-zinc-50 disabled:text-zinc-400">
+                                        <span wire:loading.remove wire:target="loadMoreDates">Mostrar fechas anteriores</span>
+                                        <span wire:loading wire:target="loadMoreDates">Cargando…</span>
+                                    </button>
+                                @endif
                                     </div>
                                     <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                 </div>
@@ -439,7 +449,8 @@
                                             $destinationText = trim(($movement['destination_label'] ?? 'Memoria externa').' · '.str_replace('/', '\\', $movement['destination_folder'] ?? ''), ' ·');
                                         @endphp
                                         <tr wire:key="history-{{ $movement['id'] }}" class="h-[82px] {{ $loop->odd ? 'bg-zinc-50' : 'bg-white' }}">
-                                            <td class="border-r border-zinc-200 px-[20px] py-[15px]"><p class="font-medium text-black">{{ \Carbon\CarbonImmutable::parse($movement['occurred_at'])->locale('es')->translatedFormat('d M Y') }}</p><p class="mt-[3px] font-mono text-zinc-500">{{ \Carbon\CarbonImmutable::parse($movement['occurred_at'])->format('H:i:s') }}</p></td>
+                                            @php($movementAt = \Carbon\CarbonImmutable::parse($movement['occurred_at'])->setTimezone(config('backup-storage.display_timezone'))->locale('es'))
+                                            <td class="border-r border-zinc-200 px-[20px] py-[15px]"><p class="font-medium text-black">{{ $movementAt->translatedFormat('d M Y') }}</p><p class="mt-[3px] font-mono text-zinc-500">{{ $movementAt->format('H:i:s') }}</p></td>
                                             <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="font-medium {{ $movementColor }}">{{ $movementLabel }}</p><p class="mt-[3px] text-zinc-500">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[3px] truncate text-red-700" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
                                             <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="truncate text-black" title="{{ $companyNames }}">{{ $companyNames !== '' ? $companyNames : 'Sin empresas registradas' }}</p>@if($movement['backup_date'])<p class="mt-[3px] text-zinc-500">Respaldo del {{ \Carbon\CarbonImmutable::parse($movement['backup_date'])->locale('es')->translatedFormat('d \d\e F \d\e Y') }}</p>@endif</td>
                                             <td class="border-r border-zinc-200 px-[15px] py-[15px]"><p class="truncate text-black" title="{{ $destinationText }}">{{ $movement['destination_label'] ?? 'Memoria externa' }}</p><p class="mt-[3px] truncate text-zinc-500" title="{{ $movement['destination_folder'] }}">{{ str_replace('/', '\\', $movement['destination_folder'] ?? '') ?: 'Carpeta no registrada' }}</p></td>

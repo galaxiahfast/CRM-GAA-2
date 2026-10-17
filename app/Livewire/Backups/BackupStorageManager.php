@@ -63,6 +63,8 @@ class BackupStorageManager extends Component
 
     public ?string $actionMessage = null;
 
+    public int $visibleDateLimit = 30;
+
     public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
         Gate::authorize('access-system-backups');
@@ -115,6 +117,11 @@ class BackupStorageManager extends Component
         $this->exportMessage = null;
         $this->syncResult = null;
         $this->selectionNotice = null;
+    }
+
+    public function loadMoreDates(): void
+    {
+        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 30);
     }
 
     public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
@@ -591,13 +598,15 @@ class BackupStorageManager extends Component
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
             'movementHistory' => $movementHistory,
+            'visibleBackupDates' => collect($data['dates'])->take($this->visibleDateLimit)->all(),
+            'hasMoreBackupDates' => count($data['dates']) > $this->visibleDateLimit,
         ])->layout('layouts.app');
     }
 
     private function profileDashboard(ContpaqiBackupCatalog $catalog, ContpaqiBackupProfile $profiles): array
     {
         $dashboard = $catalog->dashboard($this->selectedDate);
-        $dashboard['all_records'] = $catalog->catalog()['records'];
+        $dashboard['all_records'] = $catalog->summaryRecords();
 
         return $profiles->dashboard($dashboard, $this->backupProfile);
     }

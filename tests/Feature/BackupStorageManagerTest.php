@@ -91,7 +91,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertOk()
             ->assertSee('Gestión de Respaldos')
             ->assertSee('Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.')
-            ->assertSee('wire:poll.1s="refreshSharedExportStatus"', false)
+            ->assertSee('wire:poll.15s="refreshSharedExportStatus"', false)
             ->assertDontSee('Generar respaldo de la empresa')
             ->assertDontSee('Configura y genera los respaldos fácilmente.')
             ->assertDontSee('Servidor conectado')

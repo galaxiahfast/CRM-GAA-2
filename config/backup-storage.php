@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'display_timezone' => env('BACKUP_DISPLAY_TIMEZONE', 'America/Mexico_City'),
     'server' => [
         // Catálogo de solo lectura de CONTPAQi. La aplicación nunca crea,
         // mueve, renombra ni elimina archivos dentro de esta ubicación.

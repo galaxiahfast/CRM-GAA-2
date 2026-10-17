@@ -45,15 +45,59 @@ class ContpaqiBackupCatalog
         if (! is_array($metadata)) {
             throw new RuntimeException('No fue posible preparar el catálogo de respaldos.');
         }
+        Cache::forever($this->metadataCacheKey(), $metadata);
 
         $today = now()->toDateString();
 
         return $metadata + [
-            'records' => $this->recordsForDate($selectedDate, $metadata['generation'], $fullCatalog),
+            'records' => $this->recordsForDate($selectedDate, $metadata['generation'], $fullCatalog, $metadata['companies']),
             'today_records' => $selectedDate === $today
-                ? $this->recordsForDate($selectedDate, $metadata['generation'], $fullCatalog)
-                : $this->recordsForDate($today, $metadata['generation'], $fullCatalog),
+                ? $this->recordsForDate($selectedDate, $metadata['generation'], $fullCatalog, $metadata['companies'])
+                : $this->recordsForDate($today, $metadata['generation'], $fullCatalog, $metadata['companies']),
         ];
+    }
+
+    /**
+     * Returns the compact records needed to build profile/date summaries.
+     * Older caches are rebuilt from their already-preloaded daily entries so
+     * opening the page never forces another recursive network scan.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function summaryRecords(): array
+    {
+        $metadata = Cache::get($this->metadataCacheKey());
+        if (! is_array($metadata)) {
+            $this->dashboard(now()->toDateString());
+            $metadata = Cache::get($this->metadataCacheKey());
+        }
+
+        if (! is_array($metadata)) {
+            return [];
+        }
+        if (is_array($metadata['summary_records'] ?? null)) {
+            return $metadata['summary_records'];
+        }
+
+        $fullCatalog = null;
+        $records = collect($metadata['dates'] ?? [])
+            ->take(self::PRELOADED_DAYS)
+            ->flatMap(function (array $day) use ($metadata, &$fullCatalog): array {
+                return $this->recordsForDate(
+                    (string) $day['date'],
+                    (string) $metadata['generation'],
+                    $fullCatalog,
+                    $metadata['companies'],
+                );
+            })
+            ->map(fn (array $record): array => $this->summaryRecord($record))
+            ->values()
+            ->all();
+
+        $metadata['summary_records'] = $records;
+        Cache::forever($this->metadataCacheKey(), $metadata);
+
+        return $records;
     }
 
     public function refreshToday(): array
@@ -91,10 +135,15 @@ class ContpaqiBackupCatalog
                     $metadata['last_by_company'][$record['company_key']] = $record;
                 }
             }
+            $metadata['summary_records'] = collect($metadata['summary_records'] ?? [])
+                ->reject(fn (array $record): bool => ($record['date'] ?? null) === $today)
+                ->concat(collect($records)->map(fn (array $record): array => $this->summaryRecord($record)))
+                ->values()
+                ->all();
 
             $metadata['scanned_at'] = now()->toIso8601String();
             $metadata['scan_seconds'] = round(microtime(true) - $startedAt, 2);
-            Cache::put($this->metadataCacheKey(), $metadata, $expiresAt);
+            Cache::forever($this->metadataCacheKey(), $metadata);
 
             return $records;
         });
@@ -351,10 +400,14 @@ class ContpaqiBackupCatalog
         $generation = hash('sha256', $catalog['scanned_at'].$this->rootPath());
         $expiresAt = $this->dashboardCacheExpiration();
         $metadata = $catalog;
+        $metadata['summary_records'] = collect($catalog['records'])
+            ->map(fn (array $record): array => $this->summaryRecord($record))
+            ->values()
+            ->all();
         unset($metadata['records']);
         $metadata['generation'] = $generation;
 
-        Cache::put($this->metadataCacheKey(), $metadata, $expiresAt);
+        Cache::forever($this->metadataCacheKey(), $metadata);
 
         $preloadedDates = collect($catalog['dates'])
             ->take(self::PRELOADED_DAYS)
@@ -373,7 +426,21 @@ class ContpaqiBackupCatalog
         }
     }
 
-    private function recordsForDate(string $date, string $generation, ?array &$fullCatalog): array
+    /** @return array<string, mixed> */
+    private function summaryRecord(array $record): array
+    {
+        return [
+            'company_key' => $record['company_key'] ?? null,
+            'company_folder' => $record['company_folder'] ?? null,
+            'source_classification' => $record['source_classification'] ?? null,
+            'date' => $record['date'],
+            'complete' => (bool) $record['complete'],
+            'total_size' => (int) $record['total_size'],
+            'occurred_at' => $record['occurred_at'],
+        ];
+    }
+
+    private function recordsForDate(string $date, string $generation, ?array &$fullCatalog, ?array $companies = null): array
     {
         $cacheKey = $this->dateCacheKey($generation, $date);
         $records = Cache::get($cacheKey);
@@ -382,11 +449,12 @@ class ContpaqiBackupCatalog
             return $records;
         }
 
-        $fullCatalog ??= $this->catalog();
-        $records = collect($fullCatalog['records'])
-            ->where('date', $date)
-            ->values()
-            ->all();
+        $records = $companies !== null
+            ? $this->scanDate($date, $companies)
+            : collect(($fullCatalog ??= $this->catalog())['records'])
+                ->where('date', $date)
+                ->values()
+                ->all();
         Cache::put($cacheKey, $records, $this->dashboardCacheExpiration());
 
         return $records;
