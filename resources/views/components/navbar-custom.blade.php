@@ -422,6 +422,40 @@
                     <div class="border-t border-zinc-200"></div>
                 </li>
 
+                <li x-data="{ openBankReconciliation: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <button type="button" @click="openBankReconciliation = !openBankReconciliation"
+                        :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
+                        class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                        <span class="flex items-center">
+                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M6 10h12M5 14h5m4 0h5M5 18h5m4 0h5M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+                            </svg>
+                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
+                        </span>
+                        <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openBankReconciliation ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
+                        <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <ul class="w-full">
+                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
+                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
+                                </a>
+                            </li>
+                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
+                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
                 <!-- ========================================================== -->
@@ -634,40 +668,6 @@
                         </a>
                     </li>
                 @endcan
-
-                <li x-data="{ openBankReconciliation: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
-                    <button type="button" @click="openBankReconciliation = !openBankReconciliation"
-                        :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                        class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                        <span class="flex items-center">
-                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M6 10h12M5 14h5m4 0h5M5 18h5m4 0h5M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-                            </svg>
-                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
-                        </span>
-                        <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openBankReconciliation ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
-                        </svg>
-                    </button>
-
-                    <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
-                        <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
-                        <ul class="w-full">
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
-                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
-                                </a>
-                            </li>
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
-                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
 
                 @canany(['manage-delivery-notes', 'manage-backup-reports'])
                     <li x-data="{ openDocuments: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
