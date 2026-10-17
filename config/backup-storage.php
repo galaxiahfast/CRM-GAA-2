@@ -2,6 +2,10 @@
 
 return [
     'display_timezone' => env('BACKUP_DISPLAY_TIMEZONE', 'America/Mexico_City'),
+    'infrastructure' => [
+        'application_host' => env('BACKUP_APPLICATION_HOST', '192.168.2.249'),
+        'source_host' => env('BACKUP_SOURCE_HOST', '192.168.2.210'),
+    ],
     'server' => [
         // Catálogo de solo lectura de CONTPAQi. La aplicación nunca crea,
         // mueve, renombra ni elimina archivos dentro de esta ubicación.

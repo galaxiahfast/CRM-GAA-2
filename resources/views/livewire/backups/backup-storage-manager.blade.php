@@ -194,11 +194,17 @@
             </div>
 
             <div class="flex flex-col items-end gap-[5px]">
+                <div class="flex items-center gap-[20px]">
+                <a href="{{ route('activity-backups.infrastructure-guide') }}" class="inline-flex items-center gap-[8px] font-medium text-black transition hover:text-zinc-600" title="Descargar guía técnica de configuración">
+                    <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 2h8l4 4v16H6zM14 2v5h5M12 10v7m0 0 3-3m-3 3-3-3"/></svg>
+                    <span>Guía PDF</span>
+                </a>
                 <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="inline-flex items-center gap-[8px] bg-transparent p-0 font-medium text-black transition hover:text-zinc-600 disabled:opacity-50">
                     <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
                     <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
                     <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
                 </button>
+                </div>
                 <span class="inline-flex items-center gap-[7px] {{ $bothLocationsOnline ? 'text-emerald-700' : 'text-red-700' }}" title="Origen: {{ ($catalog['connected'] ?? false) ? 'en línea' : 'fuera de línea' }} · Memoria: {{ ($exportDestination['connected'] ?? false) ? 'en línea' : 'fuera de línea' }}"><span class="h-1.5 w-1.5 rounded-full {{ $bothLocationsOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></span>{{ $bothLocationsOnline ? 'En línea' : 'Fuera de línea' }}</span>
             </div>
         </section>

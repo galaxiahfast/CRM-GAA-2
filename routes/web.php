@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BackupUploadController;
+use App\Http\Controllers\BackupInfrastructureGuideController;
 use App\Http\Controllers\ContpaqiBackupDownloadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
@@ -246,6 +247,7 @@ Route::middleware([
         ->name('activity-backups.')
         ->group(function () {
             Route::get('/', BackupStorageManager::class)->name('index');
+            Route::get('/guia-configuracion.pdf', BackupInfrastructureGuideController::class)->name('infrastructure-guide');
             Route::get('/servidor/{kind}/{token}', ContpaqiBackupDownloadController::class)
                 ->whereIn('kind', ['database', 'archive'])
                 ->where('token', '[A-Za-z0-9_-]+')

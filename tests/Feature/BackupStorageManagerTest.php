@@ -151,6 +151,22 @@ class BackupStorageManagerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_authorized_user_can_download_the_infrastructure_guide_without_secrets(): void
+    {
+        $admin = $this->user('Administrador', 'admin-backup-guide@datamid.test');
+
+        $this->actingAs($admin)->get(route('activity-backups.index'))
+            ->assertOk()
+            ->assertSee('Guía PDF');
+
+        $response = $this->get(route('activity-backups.infrastructure-guide'));
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="guia-configuracion-respaldos.pdf"');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $this->assertStringNotContainsString((string) config('backup-storage.sql_catalog.password'), $response->getContent());
+    }
+
     public function test_interface_keeps_server_and_memory_states_separate_and_can_verify_synchronization(): void
     {
         $date = now()->format('Ymd');
