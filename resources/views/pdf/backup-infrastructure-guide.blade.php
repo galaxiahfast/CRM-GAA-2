@@ -1,116 +1,33 @@
 <!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <style>
-        @page { margin: 34pt 38pt 42pt; }
-        * { box-sizing: border-box; }
-        body { margin: 0; color: #202124; font-family: DejaVu Sans, sans-serif; font-size: 8.6pt; line-height: 1.42; }
-        h1, h2, p { margin: 0; }
-        h1 { color: #173a68; font-size: 19pt; line-height: 1.15; }
-        h2 { margin: 17pt 0 7pt; color: #173a68; font-size: 11pt; }
-        .eyebrow { margin-bottom: 5pt; color: #667085; font-size: 7.5pt; font-weight: bold; letter-spacing: .8pt; text-transform: uppercase; }
-        .subtitle { margin-top: 7pt; color: #667085; }
-        .rule { margin: 13pt 0; border-top: 1.4pt solid #173a68; }
-        .summary { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .summary td { width: 50%; padding: 9pt 10pt; vertical-align: top; border: .6pt solid #d7dce3; }
-        .summary .label { display: block; margin-bottom: 2pt; color: #667085; font-size: 7.2pt; text-transform: uppercase; }
-        table.data { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .data th { padding: 6pt 7pt; color: #fff; background: #173a68; font-size: 7.5pt; text-align: left; }
-        .data td { padding: 7pt; vertical-align: top; border-bottom: .6pt solid #d7dce3; word-wrap: break-word; }
-        .data tr:nth-child(even) td { background: #f7f8fa; }
-        .tag { display: inline-block; padding: 2pt 5pt; color: #176b52; background: #e9f7f1; font-size: 7.2pt; font-weight: bold; }
-        .note { margin-top: 8pt; padding: 8pt 10pt; border-left: 3pt solid #d89a20; background: #fff9ec; }
-        .ok { margin-top: 8pt; padding: 8pt 10pt; border-left: 3pt solid #21845f; background: #eef9f5; }
-        ul { margin: 5pt 0 0; padding-left: 15pt; } li { margin-bottom: 3pt; }
-        code, pre { font-family: DejaVu Sans Mono, monospace; }
-        code { color: #173a68; font-size: 8pt; }
-        pre { margin: 5pt 0 0; padding: 8pt; white-space: pre-wrap; border: .6pt solid #d7dce3; background: #f6f7f9; font-size: 6.9pt; line-height: 1.35; }
-        .page-break { page-break-before: always; }
-        .footer { position: fixed; right: 0; bottom: -24pt; left: 0; color: #8a9099; font-size: 7pt; text-align: center; }
-    </style>
-</head>
-<body>
-    <div class="footer">Gestión de Respaldos · Documento de continuidad técnica · No contiene contraseñas</div>
+<html lang="es"><head><meta charset="utf-8"><style>
+@page{margin:28pt 36pt 32pt}*{box-sizing:border-box;font-family:"Courier New",Courier,monospace;font-size:7.5pt;line-height:1.28;color:#000}body{margin:0;background:#fff}p,h1,h2{margin:0;font-size:inherit;line-height:inherit}.center{text-align:center}.strong{font-weight:bold}.separator{height:0;margin:6pt 0;border-top:.65pt solid #000}.double-separator{height:2pt;margin:6pt 0;border-top:1.1pt solid #000;border-bottom:.55pt solid #000}.section{margin-top:10pt;page-break-inside:avoid}.section-title{margin-bottom:5pt;font-weight:bold}.row{width:100%;border-collapse:collapse;table-layout:fixed}.row td{padding:2pt 0;vertical-align:top;word-wrap:break-word}.row .key{width:31%;padding-right:8pt;white-space:nowrap}.row .sep{width:3%}.grid{width:100%;border-collapse:collapse;table-layout:fixed}.grid th,.grid td{padding:3pt 4pt;vertical-align:top;text-align:left;border-bottom:.45pt solid #777;word-wrap:break-word}.grid th{font-weight:bold;border-top:.65pt solid #000;border-bottom:.65pt solid #000}.command{margin-top:4pt;padding:4pt 6pt;white-space:pre-wrap;border:.55pt solid #777;page-break-inside:avoid}.item{margin:0 0 2pt 16pt;text-indent:-16pt}.page-break{page-break-before:always}.footer{position:fixed;right:0;bottom:-20pt;left:0;text-align:center}
+</style></head><body>
+<div class="footer">GESTION DE RESPALDOS  |  CONTINUIDAD TECNICA  |  SIN CONTRASEÑAS</div>
+<p class="center strong">CONFIGURACION TECNICA - GESTION DE RESPALDOS</p><p class="center">DATAMID / INFRAESTRUCTURA MERIDA</p><div class="double-separator"></div>
+<table class="row"><tr><td class="key">FECHA DE EMISION</td><td class="sep">:</td><td>{{ $generatedAt->format('Y-m-d H:i:s') }} CST</td></tr><tr><td class="key">OBJETIVO</td><td class="sep">:</td><td>Referencia para diagnostico, mantenimiento o recuperacion de la integracion.</td></tr><tr><td class="key">ALCANCE</td><td class="sep">:</td><td>Aplicacion, rutas SMB, memorias USB y acceso SQL de solo lectura.</td></tr></table>
 
-    <p class="eyebrow">DataMID · Continuidad técnica</p>
-    <h1>Guía de configuración<br>Gestión de Respaldos</h1>
-    <p class="subtitle">Configuración necesaria para que otro programador pueda diagnosticar o restablecer la integración.</p>
-    <div class="rule"></div>
+<div class="section"><p class="section-title">[01] TOPOLOGIA</p><div class="separator"></div><table class="row">
+<tr><td class="key">SERVIDOR APLICACION</td><td class="sep">:</td><td>{{ $applicationHost }}</td></tr><tr><td class="key">FUNCION</td><td class="sep">:</td><td>Laravel, PHP y proceso de copia de respaldos.</td></tr><tr><td class="key">SERVIDOR CONTPAQI</td><td class="sep">:</td><td>{{ $sourceHost }} / SRVCONTPAQ</td></tr><tr><td class="key">FUNCION</td><td class="sep">:</td><td>Archivos de origen, instancias SQL y memorias externas.</td></tr></table></div>
 
-    <table class="summary">
-        <tr>
-            <td><span class="label">Aplicación web</span><strong>{{ $applicationHost }}</strong><br>Servidor donde se ejecutan Laravel, PHP y el proceso de copia.</td>
-            <td><span class="label">Servidor CONTPAQi</span><strong>{{ $sourceHost }}</strong><br>Archivos de origen, memorias externas e instancias SQL.</td>
-        </tr>
-        <tr>
-            <td><span class="label">Origen</span><code>{{ $sourceRoot }}</code><br><span class="tag">SOLO LECTURA</span></td>
-            <td><span class="label">Cuenta SQL</span><code>{{ $sqlUsername }}</code><br>Contraseña únicamente en el archivo <code>.env</code>.</td>
-        </tr>
-    </table>
+<div class="section"><p class="section-title">[02] RUTAS Y PERMISOS DE ARCHIVOS</p><div class="separator"></div><table class="grid"><thead><tr><th style="width:23%">USO</th><th style="width:31%">RUTA UNC</th><th style="width:18%">UNIDAD 210</th><th>PERMISO DESDE 249</th></tr></thead><tbody>
+<tr><td>ORIGEN CONTPAQI</td><td>{{ $sourceRoot }}</td><td>CARPETA LOCAL</td><td>LECTURA Y LISTADO. SIN ESCRITURA NI ELIMINACION.</td></tr>
+@foreach($profiles as $profile)<tr><td>{{ mb_strtoupper($profile['label']) }}</td><td>{{ $profile['destination_root'] }}</td><td>{{ str_ends_with(strtolower($profile['destination_root']), '\\e') ? 'E: / USB CONTABILIDAD' : (str_ends_with(strtolower($profile['destination_root']), '\\f') ? 'F: / USB NOMINAS' : 'SEGUN CONFIG.') }}</td><td>LECTURA, CREACION, MODIFICACION Y ELIMINACION EN EL DESTINO.</td></tr>@endforeach
+</tbody></table><p style="margin-top:7pt">NOTA: LA APLICACION USA RUTAS UNC (\\SRVCONTPAQ\...), NO UNIDADES MAPEADAS EN EL SERVIDOR 249. SI CAMBIA LA LETRA DE UNA USB EN EL SERVIDOR 210, EL RECURSO COMPARTIDO DEBE CONSERVAR LAS RUTAS \\SRVCONTPAQ\e Y \\SRVCONTPAQ\f.</p></div>
 
-    <h2>1. Rutas y permisos de archivos</h2>
-    <table class="data">
-        <thead><tr><th style="width:24%">Uso</th><th style="width:31%">Ruta UNC estable</th><th style="width:17%">Unidad en 210</th><th>Permiso requerido desde 249</th></tr></thead>
-        <tbody>
-            <tr><td>Origen CONTPAQi</td><td><code>{{ $sourceRoot }}</code></td><td>Carpeta local del servidor</td><td>Lectura y listado. Nunca escritura ni eliminación.</td></tr>
-            @foreach($profiles as $profile)
-                <tr><td>{{ $profile['label'] }}</td><td><code>{{ $profile['destination_root'] }}</code></td><td>{{ str_ends_with(strtolower($profile['destination_root']), '\\e') ? 'E: · USB Contabilidad' : (str_ends_with(strtolower($profile['destination_root']), '\\f') ? 'F: · USB Nóminas' : 'Según configuración') }}</td><td>Lectura, creación, modificación y eliminación únicamente dentro del destino.</td></tr>
-            @endforeach
-        </tbody>
-    </table>
-    <div class="note"><strong>Importante:</strong> la aplicación usa rutas UNC (<code>\\SRVCONTPAQ\...</code>), no letras mapeadas en el servidor 249. Si Windows cambia la letra de una USB en el servidor 210, se debe corregir el recurso compartido para que las rutas UNC <code>\e</code> y <code>\f</code> continúen apuntando a la memoria correcta.</div>
+<div class="section"><p class="section-title">[03] CONECTIVIDAD REQUERIDA</p><div class="separator"></div>
+<p class="item">01. {{ $applicationHost }} DEBE RESOLVER SRVCONTPAQ Y ALCANZAR {{ $sourceHost }}.</p><p class="item">02. SMB: TCP 445 PARA LAS RUTAS DE ARCHIVOS.</p><p class="item">03. SQL SERVER: PUERTOS CONFIGURADOS PARA CONTABILIDAD Y NOMINAS.</p><p class="item">04. LA IDENTIDAD DE PHP/LARAVEL REQUIERE LECTURA EN EL ORIGEN Y ESCRITURA EN LOS DESTINOS.</p><p class="item">05. NO CONCEDER ELIMINACION NI MODIFICACION SOBRE {{ $sourceRoot }}.</p></div>
 
-    <h2>2. Acceso desde el servidor de la aplicación</h2>
-    <ul>
-        <li>El servidor <strong>{{ $applicationHost }}</strong> debe resolver <code>SRVCONTPAQ</code> y alcanzar a <strong>{{ $sourceHost }}</strong> por SMB y SQL Server.</li>
-        <li>La identidad que ejecuta PHP/Laravel necesita lectura en <code>{{ $sourceRoot }}</code> y escritura en los destinos de las memorias.</li>
-        <li>El firewall debe permitir SMB (TCP 445) y los puertos configurados para las instancias <code>CONTABILIDAD</code> y <code>NOMINAS</code>.</li>
-        <li>No se deben conceder permisos de eliminación sobre la carpeta de origen.</li>
-    </ul>
+<div class="page-break"></div><p class="center strong">CONFIGURACION SQL - ACCESO DE SOLO LECTURA</p><div class="double-separator"></div>
+<div class="section"><p class="section-title">[04] INSTANCIAS Y OBJETOS CONSULTADOS</p><div class="separator"></div><table class="grid"><thead><tr><th style="width:27%">INSTANCIA</th><th style="width:20%">BASE</th><th style="width:22%">OBJETO</th><th>LECTURA</th></tr></thead><tbody><tr><td>SRVCONTPAQ\NOMINAS</td><td>nomGenerales</td><td>dbo.nom10000</td><td>RutaEmpresa; DatosVigente = 1</td></tr><tr><td>SRVCONTPAQ\CONTABILIDAD</td><td>GeneralesSQL</td><td>dbo.ListaEmpresas</td><td>AliasBDD</td></tr></tbody></table>
+<table class="row" style="margin-top:7pt"><tr><td class="key">LOGIN CONFIGURADO</td><td class="sep">:</td><td>{{ $sqlUsername }}</td></tr><tr><td class="key">SECRETO</td><td class="sep">:</td><td>ALMACENADO SOLO EN .env; NO SE INCLUYE EN ESTE DOCUMENTO.</td></tr><tr><td class="key">PRIVILEGIOS</td><td class="sep">:</td><td>CONNECT + SELECT SOBRE LOS DOS OBJETOS INDICADOS.</td></tr></table></div>
 
-    <div class="page-break"></div>
-    <p class="eyebrow">Configuración SQL y aplicación</p>
-    <h1>Acceso de solo lectura</h1>
-    <p class="subtitle">Las consultas sirven únicamente para identificar las empresas registradas en cada sistema.</p>
+<div class="section"><p class="section-title">[05] COMANDOS SQL DE REFERENCIA</p><div class="separator"></div><p>LOGIN / EJECUTAR EN CADA INSTANCIA SOLO SI NO EXISTE:</p><div class="command">{{ $sqlCommands['login'] }}</div><p style="margin-top:7pt">INSTANCIA NOMINAS:</p><div class="command">{{ $sqlCommands['payroll'] }}</div><p style="margin-top:7pt">INSTANCIA CONTABILIDAD:</p><div class="command">{{ $sqlCommands['accounting'] }}</div><p style="margin-top:7pt">NO REQUIERE: db_owner, INSERT, UPDATE O DELETE.</p></div>
 
-    <h2>3. Instancias y objetos consultados</h2>
-    <table class="data">
-        <thead><tr><th>Instancia</th><th>Base</th><th>Objeto</th><th>Uso</th></tr></thead>
-        <tbody>
-            <tr><td><code>SRVCONTPAQ\NOMINAS</code></td><td><code>nomGenerales</code></td><td><code>dbo.nom10000</code></td><td>Lee <code>RutaEmpresa</code> con <code>DatosVigente = 1</code>.</td></tr>
-            <tr><td><code>SRVCONTPAQ\CONTABILIDAD</code></td><td><code>GeneralesSQL</code></td><td><code>dbo.ListaEmpresas</code></td><td>Lee <code>AliasBDD</code>.</td></tr>
-        </tbody>
-    </table>
+<p class="center strong" style="margin-top:18pt">VARIABLES Y COMPROBACION</p><div class="double-separator"></div>
+<div class="section"><p class="section-title">[06] VARIABLES DE CONFIGURACION</p><div class="separator"></div><table class="grid"><thead><tr><th style="width:55%">VARIABLE</th><th>PROPOSITO</th></tr></thead><tbody><tr><td>CONTPAQ_BACKUP_ROOT</td><td>ORIGEN GENERAL {{ $sourceRoot }}</td></tr><tr><td>CONTPAQ_MERIDA_CONTABILIDAD_EXPORT_ROOT</td><td>DESTINO USB CONTABILIDAD</td></tr><tr><td>CONTPAQ_MERIDA_NOMINAS_EXPORT_ROOT</td><td>DESTINO USB NOMINAS</td></tr><tr><td>CONTPAQ_SQL_USERNAME / CONTPAQ_SQL_PASSWORD</td><td>CREDENCIALES SQL; NO GUARDAR EN GIT</td></tr><tr><td>CONTPAQ_MERIDA_NOMINAS_SQL_INSTANCE</td><td>INSTANCIA DE NOMINAS</td></tr><tr><td>CONTPAQ_MERIDA_CONTABILIDAD_SQL_INSTANCE</td><td>INSTANCIA DE CONTABILIDAD</td></tr></tbody></table></div>
 
-    <h2>4. Comandos SQL documentados</h2>
-    <p>Ejecutar el bloque de creación del login en cada instancia solamente si el login no existe. La contraseña real no debe escribirse en este PDF.</p>
-    <pre>{{ $sqlCommands['login'] }}</pre>
-    <p style="margin-top:8pt"><strong>Instancia NOMINAS:</strong></p><pre>{{ $sqlCommands['payroll'] }}</pre>
-    <p style="margin-top:8pt"><strong>Instancia CONTABILIDAD:</strong></p><pre>{{ $sqlCommands['accounting'] }}</pre>
-    <div class="ok">Permisos mínimos: <strong>CONNECT</strong> a cada base y <strong>SELECT</strong> únicamente sobre la tabla utilizada. No requiere <code>db_owner</code>, <code>INSERT</code>, <code>UPDATE</code> ni <code>DELETE</code>.</div>
+<div class="section"><p class="section-title">[07] COMPROBACION ANTE CAMBIOS</p><div class="separator"></div><p class="item">01. CONFIRMAR CONECTIVIDAD DE {{ $applicationHost }} HACIA {{ $sourceHost }}.</p><p class="item">02. ABRIR LAS TRES RUTAS UNC Y VALIDAR LOS PERMISOS INDICADOS.</p><p class="item">03. PROBAR SELECT DE SOLO LECTURA EN AMBAS INSTANCIAS SQL.</p><p class="item">04. REVISAR VARIABLES CONTPAQ_* EN .env.</p><p class="item">05. SI CAMBIO .env, LIMPIAR LA CACHE DE CONFIGURACION DE LARAVEL.</p><p class="item">06. EN GESTION DE RESPALDOS, EJECUTAR "ACTUALIZAR Y COMPROBAR".</p></div>
 
-    <h2>5. Variables de configuración</h2>
-    <table class="data">
-        <thead><tr><th>Variable</th><th>Propósito</th></tr></thead>
-        <tbody>
-            <tr><td><code>CONTPAQ_BACKUP_ROOT</code></td><td>Origen general <code>{{ $sourceRoot }}</code>.</td></tr>
-            <tr><td><code>CONTPAQ_MERIDA_CONTABILIDAD_EXPORT_ROOT</code></td><td>Destino USB Contabilidad.</td></tr>
-            <tr><td><code>CONTPAQ_MERIDA_NOMINAS_EXPORT_ROOT</code></td><td>Destino USB Nóminas.</td></tr>
-            <tr><td><code>CONTPAQ_SQL_USERNAME</code> / <code>CONTPAQ_SQL_PASSWORD</code></td><td>Credenciales SQL. El secreto nunca debe guardarse en Git ni en documentos.</td></tr>
-            <tr><td><code>CONTPAQ_MERIDA_NOMINAS_SQL_INSTANCE</code></td><td>Instancia de Nóminas.</td></tr>
-            <tr><td><code>CONTPAQ_MERIDA_CONTABILIDAD_SQL_INSTANCE</code></td><td>Instancia de Contabilidad.</td></tr>
-        </tbody>
-    </table>
-
-    <h2>6. Comprobación rápida ante cambios</h2>
-    <ol>
-        <li>Confirmar conectividad desde {{ $applicationHost }} hacia {{ $sourceHost }}.</li>
-        <li>Abrir las tres rutas UNC y comprobar permisos según la tabla de la primera página.</li>
-        <li>Probar conexión de solo lectura a ambas instancias SQL.</li>
-        <li>Revisar las variables <code>CONTPAQ_*</code> del <code>.env</code> y limpiar la caché de configuración si cambiaron.</li>
-        <li>En Gestión de Respaldos usar “Actualizar y comprobar”.</li>
-    </ol>
-    <p style="margin-top:14pt;color:#667085">Generado el {{ $generatedAt->locale('es')->translatedFormat('d \d\e F \d\e Y') }} a las {{ $generatedAt->format('H:i:s') }}.</p>
-</body>
-</html>
+<div class="section"><p class="section-title">[08] REGLAS DE SEGURIDAD</p><div class="separator"></div><p class="item">- EL SERVIDOR CONTPAQI ES ORIGEN DE SOLO LECTURA.</p><p class="item">- LAS ELIMINACIONES SOLO AFECTAN COPIAS EN LAS MEMORIAS EXTERNAS.</p><p class="item">- LA ELIMINACION DESDE LA APLICACION EXIGE CONTRASEÑA Y CODIGO 2FA.</p><p class="item">- NUNCA INCLUIR CONTRASEÑAS SQL O DE WINDOWS EN ESTE DOCUMENTO.</p></div>
+<div class="double-separator" style="margin-top:18pt"></div><p class="center strong">FIN DEL DOCUMENTO</p>
+</body></html>
