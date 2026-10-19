@@ -118,6 +118,7 @@
                         type="search"
                         x-model.debounce.120ms="query"
                         class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0"
+                        style="border-color: #e4e4e7 !important; outline: none !important; box-shadow: none !important; --tw-ring-color: transparent !important; --tw-ring-offset-shadow: 0 0 #0000 !important; --tw-ring-shadow: 0 0 #0000 !important;"
                         :placeholder="`Buscar en ${activeCatalog.label.toLocaleLowerCase()}...`"
                         autocomplete="off"
                     >

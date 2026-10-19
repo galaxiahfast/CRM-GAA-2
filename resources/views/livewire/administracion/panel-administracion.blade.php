@@ -33,14 +33,68 @@
     style="background-color: #ffffff !important;"
 >
     <style hidden>
+        .administration-monochrome,
+        .administration-monochrome > section,
+        .administration-monochrome > section > div {
+            background-color: #ffffff !important;
+        }
+        .administration-monochrome .bg-white,
+        .administration-monochrome .bg-white\/55,
+        .administration-monochrome .bg-white\/60,
+        .administration-monochrome .bg-white\/70,
+        .administration-monochrome .bg-white\/75,
+        .administration-monochrome .bg-white\/80 {
+            background-color: #ffffff !important;
+        }
+        .administration-monochrome button,
+        .administration-monochrome input,
+        .administration-monochrome select,
+        .administration-monochrome textarea {
+            box-shadow: none;
+        }
+        .administration-monochrome button:focus,
+        .administration-monochrome button:focus-visible,
+        .administration-monochrome input:focus,
+        .administration-monochrome input:focus-visible,
+        .administration-monochrome select:focus,
+        .administration-monochrome select:focus-visible,
+        .administration-monochrome textarea:focus,
+        .administration-monochrome textarea:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+            --tw-ring-offset-shadow: 0 0 #0000 !important;
+        }
+        .administration-monochrome input:focus,
+        .administration-monochrome input:focus-visible,
+        .administration-monochrome select:focus,
+        .administration-monochrome select:focus-visible,
+        .administration-monochrome textarea:focus,
+        .administration-monochrome textarea:focus-visible {
+            border-color: #e4e4e7 !important;
+        }
+        html body div.administration-monochrome input:focus,
+        html body div.administration-monochrome input:focus-visible,
+        html body div.administration-monochrome select:focus,
+        html body div.administration-monochrome select:focus-visible,
+        html body div.administration-monochrome textarea:focus,
+        html body div.administration-monochrome textarea:focus-visible {
+            border-color: #e4e4e7 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-color: transparent !important;
+            --tw-ring-offset-shadow: 0 0 #0000 !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+        }
         .unassigned-users-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #18181b transparent;
+            scrollbar-color: #1A3A6B transparent;
+            overscroll-behavior: contain;
         }
-        .unassigned-users-scrollbar::-webkit-scrollbar { width: 6px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
         .unassigned-users-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #18181b !important; border-radius: 9999px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46 !important; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3A6B !important; }
 
         .administration-modal-scrollbar {
             scrollbar-width: thin;
@@ -224,7 +278,7 @@
             <div class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10M17 16v6m-3-3h6" /></svg>
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
                     </span>
                     <div class="min-w-0">
                         <h1 class="text-xl font-semibold tracking-tight text-black">Administración</h1>
