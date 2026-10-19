@@ -85,6 +85,12 @@ return [
                 'payroll' => env('CONTPAQ_MERIDA_NOMINAS_SQL_INSTANCE', 'SRVCONTPAQ\\NOMINAS'),
                 'accounting' => env('CONTPAQ_MERIDA_CONTABILIDAD_SQL_INSTANCE', 'SRVCONTPAQ\\CONTABILIDAD'),
             ],
+            // Cada instancia de Tulum es opcional. El catálogo consulta solo
+            // las que estén configuradas y nunca ejecuta escrituras.
+            'tulum' => [
+                'payroll' => env('CONTPAQ_TULUM_NOMINAS_SQL_INSTANCE', ''),
+                'accounting' => env('CONTPAQ_TULUM_CONTABILIDAD_SQL_INSTANCE', ''),
+            ],
         ],
     ],
     // Catálogo confirmado de las bases que pertenecen a Nóminas. La

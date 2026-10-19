@@ -10,6 +10,38 @@ use Tests\TestCase;
 
 class ContpaqiSqlCompanyCatalogTest extends TestCase
 {
+    public function test_site_can_use_only_the_configured_read_only_instance(): void
+    {
+        config()->set('backup-storage.sql_catalog', [
+            'enabled' => true,
+            'username' => 'readonly',
+            'password' => 'secret',
+            'sqlcmd_path' => 'sqlcmd',
+            'timeout_seconds' => 15,
+            'cache_seconds' => 300,
+            'databases' => [
+                'payroll' => 'nomGenerales',
+                'accounting' => 'GeneralesSQL',
+            ],
+            'sites' => [
+                'tulum' => [
+                    'payroll' => '',
+                    'accounting' => 'SRVAUDI2\\CONTABILIDAD',
+                ],
+            ],
+        ]);
+        Cache::flush();
+        Process::fake([
+            '*CONTABILIDAD*' => ['ctEMPRESA_TULUM'],
+        ]);
+
+        $catalog = app(ContpaqiSqlCompanyCatalog::class)->catalog('tulum');
+
+        $this->assertSame([], $catalog['payroll']);
+        $this->assertArrayHasKey('ctempresa_tulum', $catalog['accounting']);
+        Process::assertRanTimes(fn ($process): bool => str_contains(implode(' ', $process->command), 'CONTABILIDAD'), 1);
+    }
+
     public function test_physical_bak_path_disambiguates_a_company_registered_in_both_systems(): void
     {
         config()->set('backup-storage.sql_catalog', [

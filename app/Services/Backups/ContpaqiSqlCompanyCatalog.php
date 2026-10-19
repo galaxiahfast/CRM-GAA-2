@@ -34,8 +34,12 @@ class ContpaqiSqlCompanyCatalog
         try {
             $instances = (array) config("backup-storage.sql_catalog.sites.{$site}", []);
             $catalog = [
-                'payroll' => $this->readInstance((string) $instances['payroll'], 'payroll'),
-                'accounting' => $this->readInstance((string) $instances['accounting'], 'accounting'),
+                'payroll' => filled($instances['payroll'] ?? null)
+                    ? $this->readInstance((string) $instances['payroll'], 'payroll')
+                    : [],
+                'accounting' => filled($instances['accounting'] ?? null)
+                    ? $this->readInstance((string) $instances['accounting'], 'accounting')
+                    : [],
             ];
 
             Cache::put($cacheKey, $catalog, max(1, (int) config('backup-storage.sql_catalog.cache_seconds', 300)));
@@ -65,8 +69,7 @@ class ContpaqiSqlCompanyCatalog
         return (bool) config('backup-storage.sql_catalog.enabled', true)
             && filled(config('backup-storage.sql_catalog.username'))
             && filled(config('backup-storage.sql_catalog.password'))
-            && filled($instances['payroll'] ?? null)
-            && filled($instances['accounting'] ?? null);
+            && (filled($instances['payroll'] ?? null) || filled($instances['accounting'] ?? null));
     }
 
     /** @return array<string, true> */
