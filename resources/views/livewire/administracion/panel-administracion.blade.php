@@ -221,27 +221,28 @@
     <!-- Centro de gestión siempre visible -->
     <section class="m-0 w-full bg-white pt-0">
         <div class="m-0 w-full bg-white pt-0">
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10M17 16v6m-3-3h6" /></svg>
                     </span>
                     <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-[10px]">
-                            <h1 class="text-xl font-semibold tracking-tight text-black">Administración</h1>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
-                        </div>
-                        <p class="mt-[5px] max-w-3xl text-[15px] text-zinc-500">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
+                        <h1 class="text-xl font-semibold tracking-tight text-black">Administración</h1>
+                        <p class="mt-[4px] max-w-3xl text-zinc-500">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
                     </div>
+                </div>
+                <div class="flex flex-col items-end gap-[5px]">
+                    <span class="font-medium text-black">Organización</span>
+                    <span class="inline-flex items-center gap-[7px] text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
                 </div>
             </div>
 
-            <nav class="mt-[20px] grid grid-cols-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]" aria-label="Vistas del centro de organización">
-                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-black text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-black'" class="flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[20px] py-[15px] text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
+            <nav class="!mt-[8px] flex items-center gap-[5px] border-b border-zinc-200" aria-label="Vistas del centro de organización">
+                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black'" class="flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
                     <span>Listado general</span>
                 </button>
-                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'bg-black text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-black'" class="flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[20px] py-[15px] text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
+                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black'" class="flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
                     <span>Organigrama</span>
                 </button>

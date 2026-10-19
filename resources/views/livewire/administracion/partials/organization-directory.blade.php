@@ -58,28 +58,27 @@
     }"
     x-show="administrationView === 'directory'"
     x-cloak
-    class="mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
+    class="mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none"
     aria-label="Directorio de administración"
 >
-    <div class="grid min-h-[620px] grid-cols-[230px_minmax(0,1fr)]">
-        <aside class="border-r border-zinc-200 bg-zinc-50 p-[20px]">
-            <div class="mb-4 px-3 pt-2">
-                <span class="text-[10px] font-bold uppercase tracking-[.16em] text-zinc-700">Catálogos</span>
-                <p class="mt-[5px] text-[12px] leading-5 text-zinc-500">Selecciona una sección para consultar sus registros.</p>
+    <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
+        <aside class="min-h-0 overflow-hidden border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r">
+            <div class="flex h-[70px] items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700">
+                <span class="truncate font-semibold">Secciones administrativas</span>
             </div>
 
-            <nav class="space-y-1.5" aria-label="Catálogos organizacionales">
+            <nav class="unassigned-users-scrollbar max-h-[550px] overflow-y-auto" aria-label="Catálogos organizacionales">
                 @foreach ($organizationDirectory as $catalogKey => $catalog)
                     <button
                         type="button"
                         @click="selectCatalog(@js($catalogKey))"
-                        :class="selectedCatalog === @js($catalogKey) ? 'bg-black text-white' : 'text-zinc-700 hover:bg-white hover:text-black'"
-                        class="flex w-full items-center gap-[10px] rounded-lg px-[15px] py-[15px] text-left transition-colors focus:outline-none focus:ring-0"
+                        :class="selectedCatalog === @js($catalogKey) ? 'bg-black text-white' : (@js($loop->odd) ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100' : 'bg-white text-zinc-700 hover:bg-zinc-100')"
+                        class="flex min-h-[70px] w-full items-center gap-[10px] border-b border-zinc-200 px-[20px] py-[12px] text-left transition-colors focus:outline-none focus:ring-0"
                         :aria-current="selectedCatalog === @js($catalogKey) ? 'page' : null"
                     >
                         <span
-                            :class="selectedCatalog === @js($catalogKey) ? 'border-white/20 bg-white/10' : 'border-zinc-200 bg-white'"
-                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+                            :class="selectedCatalog === @js($catalogKey) ? 'text-white' : 'text-zinc-500'"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center"
                         >
                             @switch($catalogKey)
                                 @case('users') <x-feathericon-users class="h-[17px] w-[17px]" /> @break
@@ -94,22 +93,22 @@
                         </span>
                         <span class="min-w-0 flex-1 truncate text-[13px] font-semibold">{{ $catalog['label'] }}</span>
                         <span
-                            :class="selectedCatalog === @js($catalogKey) ? 'bg-white/15 text-white' : 'bg-zinc-200 text-zinc-700'"
-                            class="inline-flex min-w-7 items-center justify-center rounded-full px-2 py-1 text-[10px] font-bold"
+                            :class="selectedCatalog === @js($catalogKey) ? 'text-white/70' : 'text-zinc-500'"
+                            class="inline-flex min-w-7 items-center justify-end tabular-nums"
                         >{{ count($catalog['items']) }}</span>
                     </button>
                 @endforeach
             </nav>
         </aside>
 
-        <div class="min-w-0 p-[20px]">
-            <header class="flex flex-wrap items-start justify-between gap-[20px] border-b border-zinc-200 pb-[20px]">
+        <div class="relative flex min-h-0 min-w-0 flex-col">
+            <header class="flex min-h-[70px] flex-wrap items-center justify-between gap-[15px] border-b border-zinc-300 bg-zinc-100 px-[20px] py-[12px]">
                 <div class="min-w-0">
                     <div class="flex items-center gap-3">
-                        <h2 class="text-xl font-semibold text-black" x-text="activeCatalog.label"></h2>
-                        <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-bold text-zinc-700" x-text="`${filteredItems.length} registros`"></span>
+                        <h2 class="font-semibold text-black" x-text="activeCatalog.label"></h2>
+                        <span class="text-zinc-500" x-text="`(${filteredItems.length})`"></span>
                     </div>
-                    <p class="mt-[5px] text-[12px] text-zinc-500" x-text="activeCatalog.description"></p>
+                    <p class="mt-[3px] text-[12px] text-zinc-500" x-text="activeCatalog.description"></p>
                 </div>
 
                 <label class="relative block w-full max-w-[330px]">
@@ -118,20 +117,20 @@
                     <input
                         type="search"
                         x-model.debounce.120ms="query"
-                        class="h-11 w-full rounded-lg border border-zinc-200 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0"
+                        class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0"
                         :placeholder="`Buscar en ${activeCatalog.label.toLocaleLowerCase()}...`"
                         autocomplete="off"
                     >
                 </label>
             </header>
 
-            <div class="unassigned-users-scrollbar mt-4 max-h-[535px] space-y-2 overflow-y-auto pr-2">
+            <div class="unassigned-users-scrollbar max-h-[550px] overflow-y-auto">
                 <template x-for="item in filteredItems" :key="`${selectedCatalog}-${item.id}`">
                     <article
-                        :class="expandedItem === item.id ? 'border-zinc-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,.05)]' : 'border-zinc-200 bg-white hover:border-zinc-300'"
-                        class="overflow-hidden rounded-lg border transition-colors"
+                        :class="expandedItem === item.id ? 'bg-zinc-50' : 'bg-white hover:bg-zinc-50'"
+                        class="overflow-hidden border-b border-zinc-200 transition-colors"
                     >
-                        <div class="flex min-w-0 items-center gap-3 px-4 py-3">
+                        <div class="flex min-h-[70px] min-w-0 items-center gap-[15px] px-[20px] py-[12px]">
                             <button
                                 type="button"
                                 @click="expandedItem = expandedItem === item.id ? null : item.id"
@@ -139,7 +138,7 @@
                                 :aria-expanded="expandedItem === item.id"
                             >
                                 <span
-                                    :class="expandedItem === item.id ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-700'"
+                                    :class="expandedItem === item.id ? 'bg-black text-white' : 'border border-zinc-200 bg-white text-zinc-700'"
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors"
                                     x-text="initials(item.title)"
                                 ></span>
@@ -187,7 +186,7 @@
                             x-transition:leave="transition ease-in duration-100"
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 -translate-y-1"
-                            class="border-t border-zinc-200 bg-zinc-50 px-4 py-4"
+                            class="border-t border-zinc-200 bg-zinc-50 px-[20px] py-[15px]"
                         >
                             <dl class="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
                                 <template x-for="detail in item.details" :key="detail.label">
@@ -201,7 +200,7 @@
                     </article>
                 </template>
 
-                <div x-show="filteredItems.length === 0" class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 text-center">
+                <div x-show="filteredItems.length === 0" class="flex min-h-[420px] flex-col items-center justify-center text-center">
                     <span class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                     </span>
