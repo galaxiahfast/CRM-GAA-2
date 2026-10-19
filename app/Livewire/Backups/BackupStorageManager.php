@@ -230,7 +230,7 @@ class BackupStorageManager extends Component
             : '';
     }
 
-    public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProcessLauncher $launcher): void
+    public function startExport(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProcessLauncher $launcher, ContpaqiBackupProfile $profiles): void
     {
         Gate::authorize('upload-system-backups');
         $this->exportMessage = null;
@@ -247,7 +247,7 @@ class BackupStorageManager extends Component
                 $this->selectedRecords,
                 (int) auth()->id(),
                 $this->destinationFolder,
-                $catalog,
+                $this->profileCatalog($catalog, $profiles),
                 $this->destinationKey,
             );
             $this->destinationKey = (string) $state['destination_key'];
@@ -433,6 +433,7 @@ class BackupStorageManager extends Component
         Gate::authorize('access-system-backups');
 
         try {
+            $catalog = $this->profileCatalog($catalog, $profiles);
             $catalog->forget();
             $export->forgetDetectedVolumes();
             $sqlCatalog->forget((string) ($profiles->profile($this->backupProfile)['site'] ?? 'merida'));
@@ -493,7 +494,7 @@ class BackupStorageManager extends Component
         } catch (Throwable $exception) {
             $data = [
                 'connected' => false,
-                'root' => config('backup-storage.server.root'),
+                'root' => (string) ($profiles->profile($this->backupProfile)['source_root'] ?? config('backup-storage.server.root')),
                 'scanned_at' => null,
                 'scan_seconds' => null,
                 'companies' => [],
@@ -605,10 +606,16 @@ class BackupStorageManager extends Component
 
     private function profileDashboard(ContpaqiBackupCatalog $catalog, ContpaqiBackupProfile $profiles): array
     {
+        $catalog = $this->profileCatalog($catalog, $profiles);
         $dashboard = $catalog->dashboard($this->selectedDate);
         $dashboard['all_records'] = $catalog->summaryRecords();
 
         return $profiles->dashboard($dashboard, $this->backupProfile);
+    }
+
+    private function profileCatalog(ContpaqiBackupCatalog $catalog, ContpaqiBackupProfile $profiles): ContpaqiBackupCatalog
+    {
+        return $catalog->forRoot((string) ($profiles->profile($this->backupProfile)['source_root'] ?? ''));
     }
 
     private function destinationKeyForProfile(ContpaqiBackupProfile $profiles): string

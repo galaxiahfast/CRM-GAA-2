@@ -14,9 +14,24 @@ use Throwable;
 
 class ContpaqiBackupCatalog
 {
-    private const CACHE_VERSION = 4;
+    private const CACHE_VERSION = 5;
 
     private const PRELOADED_DAYS = 60;
+
+    private ?string $rootOverride = null;
+
+    public function forRoot(?string $root): self
+    {
+        $catalog = clone $this;
+        $catalog->rootOverride = filled($root) ? rtrim((string) $root, '\\/') : null;
+
+        return $catalog;
+    }
+
+    public function sourceRoot(): string
+    {
+        return $this->rootPath();
+    }
 
     public function catalog(bool $fresh = false): array
     {
@@ -166,6 +181,22 @@ class ContpaqiBackupCatalog
         };
 
         $relativePath = $this->decodeToken($token);
+        if (preg_match('/^([a-f0-9]{64})\|(.*)$/s', $relativePath, $matches) === 1) {
+            $rootHash = $matches[1];
+            $relativePath = $matches[2];
+            if (! hash_equals($rootHash, $this->rootHash())) {
+                $root = collect((array) config('backup-storage.backup_profiles', []))
+                    ->pluck('source_root')
+                    ->push((string) config('backup-storage.server.root'))
+                    ->filter()
+                    ->first(fn (string $candidate): bool => hash_equals($rootHash, $this->rootHash($candidate)));
+                if (! is_string($root)) {
+                    throw new RuntimeException('El origen del archivo ya no está configurado.');
+                }
+
+                return $this->forRoot($root)->resolveDownload($kind, $this->encodeToken($relativePath));
+            }
+        }
         $extension = Str::lower(pathinfo($relativePath, PATHINFO_EXTENSION));
         $allowedExtensions = $kind === 'database' ? ['bak'] : ['zip', 'rar'];
 
@@ -192,7 +223,17 @@ class ContpaqiBackupCatalog
 
     public function token(string $relativePath): string
     {
-        return rtrim(strtr(base64_encode($relativePath), '+/', '-_'), '=');
+        return $this->encodeToken($this->rootHash().'|'.$relativePath);
+    }
+
+    private function encodeToken(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function rootHash(?string $root = null): string
+    {
+        return hash('sha256', $this->normalizeAbsolutePath($root ?? $this->rootPath()));
     }
 
     private function scan(): array
@@ -637,7 +678,8 @@ class ContpaqiBackupCatalog
 
     private function rootPath(): string
     {
-        return rtrim((string) config('backup-storage.server.root'), '\\/');
+        return $this->rootOverride
+            ?? rtrim((string) config('backup-storage.server.root'), '\\/');
     }
 
     private function companiesPath(): string

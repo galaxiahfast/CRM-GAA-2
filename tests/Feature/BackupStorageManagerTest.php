@@ -30,6 +30,8 @@ class BackupStorageManagerTest extends TestCase
 
     private string $exportRoot;
 
+    private ?string $tulumCatalogRoot = null;
+
     private array $exportStateIds = [];
 
     private array $backupEventIds = [];
@@ -45,12 +47,19 @@ class BackupStorageManagerTest extends TestCase
         File::ensureDirectoryExists($this->exportRoot);
         File::ensureDirectoryExists($this->exportRoot.'/ANGEL MOO');
         config()->set('backup-storage.server.root', $this->catalogRoot);
+        config()->set('backup-storage.sql_catalog.enabled', false);
+        config()->set('backup-storage.backup_profiles.merida-contabilidad.source_root', $this->catalogRoot);
+        config()->set('backup-storage.backup_profiles.merida-nominas.source_root', $this->catalogRoot);
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.enabled', false);
     }
 
     protected function tearDown(): void
     {
         File::deleteDirectory($this->catalogRoot);
         File::deleteDirectory($this->exportRoot);
+        if ($this->tulumCatalogRoot !== null) {
+            File::deleteDirectory($this->tulumCatalogRoot);
+        }
         foreach ($this->exportStateIds as $id) {
             File::delete(storage_path("app/private/backup-exports/{$id}.json"));
         }
@@ -269,6 +278,32 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('EMPRESA CONTABLE');
     }
 
+    public function test_tulum_uses_its_own_physical_source_and_does_not_mix_merida_companies(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/MERIDA CONTABILIDAD-{$date}-0900.bak", 'merida-database');
+        File::put($this->catalogRoot."/Index/respaldos/MERIDA CONTABILIDAD-{$date}-0900.zip", 'merida-index');
+
+        $this->tulumCatalogRoot = storage_path('framework/testing/backup-manager-tulum-'.uniqid());
+        File::ensureDirectoryExists($this->tulumCatalogRoot.'/Empresas/ctTULUM_CONTABILIDAD');
+        File::ensureDirectoryExists($this->tulumCatalogRoot.'/Index/respaldos');
+        File::put($this->tulumCatalogRoot."/Empresas/ctTULUM_CONTABILIDAD/TULUM CONTABILIDAD-{$date}-0910.bak", 'tulum-database');
+        File::put($this->tulumCatalogRoot."/Index/respaldos/TULUM CONTABILIDAD-{$date}-0910.zip", 'tulum-index');
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.enabled', true);
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.source_root', $this->tulumCatalogRoot);
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.destination_root', $this->exportRoot);
+        $admin = $this->user('Administrador', 'admin-tulum-separation@datamid.test');
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSee('MERIDA CONTABILIDAD')
+            ->assertDontSee('TULUM CONTABILIDAD')
+            ->set('backupProfile', 'tulum-contabilidad')
+            ->assertSet('destinationKey', 'tulum-contabilidad')
+            ->assertSee('TULUM CONTABILIDAD')
+            ->assertDontSee('MERIDA CONTABILIDAD');
+    }
+
     public function test_empty_status_filter_explains_that_other_records_exist(): void
     {
         $date = now()->format('Ymd');
@@ -413,8 +448,7 @@ class BackupStorageManagerTest extends TestCase
         $this->assertSame('database', File::get($databasePath));
         $this->assertSame('archive', File::get($archivePath));
 
-        $deletion = collect($export->history())->first(fn (array $movement): bool =>
-            $movement['type'] === 'deleted' && in_array('Empresa Prueba', $movement['companies'], true)
+        $deletion = collect($export->history())->first(fn (array $movement): bool => $movement['type'] === 'deleted' && in_array('Empresa Prueba', $movement['companies'], true)
         );
         $this->assertNotNull($deletion);
         $this->assertSame($admin->id, $deletion['user_id']);

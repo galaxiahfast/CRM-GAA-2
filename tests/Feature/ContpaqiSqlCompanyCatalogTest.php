@@ -93,9 +93,23 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
         $this->assertTrue($profiles->matches($accounting, $profiles->profile('merida-contabilidad')));
         $this->assertFalse($profiles->matches($accounting, $profiles->profile('merida-nominas')));
         $physicalAccounting = ['company_folder' => 'ctSOLO_NOMINAS', 'source_classification' => 'accounting'];
-        $this->assertTrue($profiles->matches($physicalAccounting, $profiles->profile('merida-contabilidad')));
+        $this->assertFalse($profiles->matches($physicalAccounting, $profiles->profile('merida-contabilidad')));
         $this->assertFalse($profiles->matches($physicalAccounting, $profiles->profile('merida-nominas')));
         $this->assertFalse($profiles->matches(['company_folder' => 'ctNO_EXISTE'], $profiles->profile('merida-contabilidad')));
+
+        $dashboard = [
+            'records' => [], 'today_records' => [], 'all_records' => [], 'dates' => [], 'last_by_company' => [],
+            'companies' => [
+                ['key' => 'solo-contabilidad', 'folder' => 'ctSOLO_CONTABILIDAD', 'name' => 'Solo Contabilidad'],
+                ['key' => 'solo-nominas', 'folder' => 'ctSOLO_NOMINAS', 'name' => 'Solo Nóminas'],
+                ['key' => 'ambas', 'folder' => 'ctEN_AMBAS', 'name' => 'En ambas'],
+                ['key' => 'antigua', 'folder' => 'ctNO_EXISTE', 'name' => 'Antigua'],
+            ],
+        ];
+        $accountingCompanies = collect($profiles->dashboard($dashboard, 'merida-contabilidad')['companies'])->pluck('folder');
+        $payrollCompanies = collect($profiles->dashboard($dashboard, 'merida-nominas')['companies'])->pluck('folder');
+        $this->assertEqualsCanonicalizing(['ctSOLO_CONTABILIDAD', 'ctEN_AMBAS'], $accountingCompanies->all());
+        $this->assertEqualsCanonicalizing(['ctSOLO_NOMINAS', 'ctEN_AMBAS'], $payrollCompanies->all());
 
         Process::assertRan(function ($process): bool {
             $command = is_array($process->command)

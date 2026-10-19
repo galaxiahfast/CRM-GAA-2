@@ -46,8 +46,9 @@ class ContpaqiBackupProfile
             $allRecords = $allRecords->filter(fn (array $record): bool => $this->matches($record, $profile))->values();
         }
 
-        $companyKeys = $allRecords->pluck('company_key')->filter()->unique();
-        $companies = collect($dashboard['companies'] ?? [])->whereIn('key', $companyKeys)->values();
+        $companies = collect($dashboard['companies'] ?? [])
+            ->filter(fn (array $company): bool => $this->matchesCompany($company, $profile))
+            ->values();
         $dates = $allRecords->groupBy('date')->map(function ($items, string $date): array {
             return [
                 'date' => $date,
@@ -78,13 +79,17 @@ class ContpaqiBackupProfile
         }
 
         $sourceClassification = (string) ($record['source_classification'] ?? '');
-        if (in_array($sourceClassification, ['payroll', 'accounting'], true)) {
-            return $sourceClassification === $classification;
-        }
-
         $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
         $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
+        if (in_array($sourceClassification, ['payroll', 'accounting'], true)) {
+            if ($sourceClassification !== $classification) {
+                return false;
+            }
+
+            return $sqlCatalog === null || isset($sqlCatalog[$classification][$folder]);
+        }
+
         if ($sqlCatalog !== null) {
             $inPayroll = isset($sqlCatalog['payroll'][$folder]);
             $inAccounting = isset($sqlCatalog['accounting'][$folder]);
@@ -92,6 +97,25 @@ class ContpaqiBackupProfile
                 return false;
             }
 
+            return isset($sqlCatalog[$classification][$folder]);
+        }
+
+        $isPayroll = isset($this->payrollFolders($site)[$folder]);
+
+        return $classification === 'payroll' ? $isPayroll : ! $isPayroll;
+    }
+
+    private function matchesCompany(array $company, array $profile): bool
+    {
+        $classification = (string) ($profile['classification'] ?? 'all');
+        if ($classification === 'all') {
+            return true;
+        }
+
+        $folder = Str::lower(trim((string) ($company['folder'] ?? '')));
+        $site = (string) ($profile['site'] ?? 'merida');
+        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
+        if ($sqlCatalog !== null) {
             return isset($sqlCatalog[$classification][$folder]);
         }
 

@@ -148,6 +148,7 @@ class ContpaqiBackupExport
                 'destination_key' => $destination['key'],
                 'destination_label' => $destination['label'],
                 'destination_folder' => $this->relativeDestinationFolder($folderPath, $destination['root']),
+                'source_root' => $catalog->sourceRoot(),
                 'destination_path' => null,
                 'total_files' => count($records) * 2,
                 'completed_files' => 0,
@@ -189,6 +190,7 @@ class ContpaqiBackupExport
 
         try {
             $destination = $this->destinationFromState($state);
+            $catalog = $catalog->forRoot((string) ($state['source_root'] ?? ''));
 
             $records = $this->selectedRecords($catalog->dashboard($state['date'])['records'], $state['date'], $state['record_ids']);
             $baseDirectory = $this->requireDestinationFolder($state['destination_folder'], $destination['root']);
