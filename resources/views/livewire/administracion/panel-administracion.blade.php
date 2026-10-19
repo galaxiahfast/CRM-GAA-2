@@ -21,13 +21,11 @@
 
 <div
     x-data="{
-        administrationView: 'carousel',
+        administrationView: 'directory',
         selectAdministrationView(view) {
             this.administrationView = view;
-            if (view === 'organization' || view === 'carousel') {
-                this.$nextTick(() => window.dispatchEvent(new CustomEvent(
-                    view === 'organization' ? 'organization-chart-shown' : 'organization-carousel-shown',
-                )));
+            if (view === 'organization') {
+                this.$nextTick(() => window.dispatchEvent(new CustomEvent('organization-chart-shown')));
             }
         },
     }"
@@ -234,22 +232,19 @@
                 </div>
             </div>
 
-            <nav class="mt-[50px] grid grid-cols-3 overflow-hidden rounded-xl border border-[#CAD7E7] bg-white/55 p-1.5" aria-label="Vistas del centro de organización">
-                <button type="button" @click="selectAdministrationView('carousel')" :class="administrationView === 'carousel' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'carousel' ? 'page' : null">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h13v12H4zM17 9h3v6h-3M7 9h7m-7 3h7m-7 3h4" /></svg>
-                    <span>Carrusel</span>
+            <nav class="mt-[50px] grid grid-cols-2 overflow-hidden rounded-xl border border-[#CAD7E7] bg-white/55 p-1.5" aria-label="Vistas del centro de organización">
+                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+                    <span>Listado general</span>
                 </button>
                 <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
                     <span>Organigrama</span>
                 </button>
-                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
-                    <span>Listado general</span>
-                </button>
             </nav>
         </div>
 
+        @if (false)
         <div x-show="administrationView === 'carousel'" class="organization-carousel-frame relative mt-[36px] flex w-full items-center" x-data="{ move(direction) { window.organizationCarouselMove($refs.track, direction) } }">
             <button type="button" @click="move(-1)" class="absolute left-0 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[#1A3A6B] text-white focus:outline-none focus:ring-0" aria-label="Ver tarjetas anteriores">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" /></svg>
@@ -433,6 +428,7 @@
             <div class="flex flex-wrap items-center gap-4"><span class="inline-flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Centro organizacional activo</span><span class="text-[#A8BAD2]">•</span><span>Sincronización en tiempo real</span><span class="text-[#A8BAD2]">•</span><span>Última validación RBAC: {{ now()->format('H:i') }}</span></div>
             <span class="font-semibold text-[#102A52]">Protocolo de seguridad: RBAC</span>
         </div>
+        @endif
     </section>
 
     {{-- La información jerárquica solamente se entrega a administradores. --}}

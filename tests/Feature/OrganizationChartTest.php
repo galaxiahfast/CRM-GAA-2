@@ -249,7 +249,7 @@ class OrganizationChartTest extends TestCase
         $this->actingAs($admin)
             ->get('/administracion')
             ->assertOk()
-            ->assertSee('Carrusel')
+            ->assertDontSee('Carrusel')
             ->assertSee('Organigrama')
             ->assertSee('Listado general')
             ->assertSee('Directorio de colaboradores y su perfil organizacional.')
