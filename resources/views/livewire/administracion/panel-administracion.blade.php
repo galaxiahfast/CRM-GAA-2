@@ -105,6 +105,25 @@
         .unassigned-users-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
         .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3A6B !important; }
+        .administration-record-scroll {
+            scrollbar-width: none !important;
+            overscroll-behavior: contain;
+        }
+        .administration-record-scroll::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .administration-record-scroll-thumb {
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 20;
+            width: 3px;
+            min-height: 32px;
+            border-radius: 9999px;
+            background: #1A3A6B;
+            pointer-events: none;
+        }
         .administration-monochrome * {
             scrollbar-width: thin;
             scrollbar-color: #1A3A6B transparent;

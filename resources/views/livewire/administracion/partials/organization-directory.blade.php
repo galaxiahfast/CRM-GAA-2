@@ -61,13 +61,13 @@
     class="mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-none"
     aria-label="Directorio de administración"
 >
-    <div class="grid min-h-[520px] xl:grid-cols-[260px_minmax(0,1fr)]">
+    <div class="grid min-h-[630px] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside class="min-h-0 overflow-hidden border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r">
             <div class="flex h-[70px] items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700">
                 <span class="truncate font-semibold">Secciones administrativas</span>
             </div>
 
-            <nav class="unassigned-users-scrollbar max-h-[550px] overflow-y-auto" aria-label="Catálogos organizacionales">
+            <nav aria-label="Catálogos organizacionales">
                 @foreach ($organizationDirectory as $catalogKey => $catalog)
                     <button
                         type="button"
@@ -125,7 +125,8 @@
                 </label>
             </header>
 
-            <div class="unassigned-users-scrollbar max-h-[550px] overflow-y-auto">
+            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative h-[560px] min-h-0">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-record-scroll h-full overflow-y-auto">
                 <template x-for="item in filteredItems" :key="`${selectedCatalog}-${item.id}`">
                     <article
                         :class="expandedItem === item.id ? 'bg-zinc-50' : 'bg-white hover:bg-zinc-50'"
@@ -208,6 +209,8 @@
                     <p class="mt-3 text-[13px] font-semibold text-black">No encontramos registros</p>
                     <p class="mt-[5px] text-[11px] text-zinc-500">Prueba con otro nombre, correo o dato.</p>
                 </div>
+                </div>
+                <span x-show="visible" x-cloak class="administration-record-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
         </div>
     </div>
