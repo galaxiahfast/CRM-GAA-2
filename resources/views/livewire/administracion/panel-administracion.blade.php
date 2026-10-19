@@ -38,6 +38,16 @@
         .administration-monochrome > section > div {
             background-color: #ffffff !important;
         }
+        .administration-monochrome {
+            color: #3f3f46;
+            font-size: 15px;
+        }
+        .administration-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
+            font-size: 15px !important;
+        }
+        .administration-monochrome h1 {
+            font-size: 20px !important;
+        }
         .administration-monochrome .bg-white,
         .administration-monochrome .bg-white\/55,
         .administration-monochrome .bg-white\/60,
@@ -95,6 +105,42 @@
         .unassigned-users-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
         .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3A6B !important; }
+        .administration-monochrome * {
+            scrollbar-width: thin;
+            scrollbar-color: #1A3A6B transparent;
+        }
+        .administration-monochrome *::-webkit-scrollbar,
+        html:has(.administration-monochrome)::-webkit-scrollbar,
+        body:has(.administration-monochrome)::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
+        }
+        .administration-monochrome *::-webkit-scrollbar-track,
+        html:has(.administration-monochrome)::-webkit-scrollbar-track,
+        body:has(.administration-monochrome)::-webkit-scrollbar-track {
+            border: 0;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .administration-monochrome *::-webkit-scrollbar-thumb,
+        html:has(.administration-monochrome)::-webkit-scrollbar-thumb,
+        body:has(.administration-monochrome)::-webkit-scrollbar-thumb {
+            border: 0;
+            border-radius: 9999px;
+            background: #1A3A6B !important;
+        }
+        .administration-monochrome *::-webkit-scrollbar-button,
+        html:has(.administration-monochrome)::-webkit-scrollbar-button,
+        body:has(.administration-monochrome)::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+        .administration-monochrome *::-webkit-scrollbar-corner,
+        html:has(.administration-monochrome)::-webkit-scrollbar-corner,
+        body:has(.administration-monochrome)::-webkit-scrollbar-corner {
+            background: transparent;
+        }
 
         .administration-modal-scrollbar {
             scrollbar-width: thin;
