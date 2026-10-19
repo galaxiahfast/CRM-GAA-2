@@ -14,7 +14,7 @@
 
     $editingDisabled = $managementTab === 'editar' && ! filled($managementUserId);
     $deleteDisabled = $managementTab === 'eliminar' && ! filled($managementUserId);
-    $inputClasses = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:bg-transparent focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3]';
+    $inputClasses = 'mt-[10px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400';
 @endphp
 
 <x-administration-form-modal
@@ -27,7 +27,7 @@
 >
     <x-slot name="icon">
         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3M13 7a4 4 0 11-8 0 4 4 0 018 0zM3 21a6 6 0 0112 0" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM5 21a7 7 0 0 1 14 0" />
         </svg>
     </x-slot>
 
@@ -46,8 +46,8 @@
 
     <x-slot name="form">
         @if ($managementTab === 'editar')
-            <section class="mb-5 rounded-xl border border-[#CAD7E7] p-5">
-                <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar usuario</h2>
+            <section class="mb-[20px] border-b border-zinc-200 pb-[20px]">
+                <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
                 <x-administration-search-picker input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
                     :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
@@ -58,8 +58,8 @@
 
         @if (in_array($managementTab, ['crear', 'editar'], true))
         <div class="flex flex-col gap-5 {{ $editingDisabled ? 'opacity-75' : '' }}">
-            <section class="rounded-xl border border-[#CAD7E7] p-5">
-                <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Datos personales</h2>
+            <section class="border-b border-zinc-200 pb-[20px]">
+                <h2 class="mb-[15px] font-semibold text-black">Datos personales</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0">
@@ -99,8 +99,8 @@
                 </div>
             </section>
 
-            <section class="rounded-xl border border-[#CAD7E7] p-5">
-                <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Perfil organizacional</h2>
+            <section class="border-b border-zinc-200 pb-[20px]">
+                <h2 class="mb-[15px] font-semibold text-black">Perfil organizacional</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -129,8 +129,8 @@
                 </div>
             </section>
 
-            <section class="rounded-xl border border-[#CAD7E7] p-5">
-                <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Configuración del checador y nómina</h2>
+            <section>
+                <h2 class="mb-[15px] font-semibold text-black">Configuración del checador y nómina</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -199,7 +199,7 @@
         <button
             type="button"
             wire:click="cancel"
-            class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
+            class="inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0"
         >
             Cancelar
         </button>
@@ -209,7 +209,7 @@
             wire:loading.attr="disabled"
             wire:target="save"
             @disabled($editingDisabled)
-            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
+            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-xl bg-black px-[20px] py-[12px] text-[15px] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
         >
             <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -219,7 +219,7 @@
             <span wire:loading wire:target="save">Guardando...</span>
         </button>
         @else
-            <button type="button" wire:click="cancel" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">Cancelar</button>
+            <button type="button" wire:click="cancel" class="inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">Cancelar</button>
             <button type="button" wire:click="deleteManagedUser" wire:loading.attr="disabled" wire:target="deleteManagedUser" @disabled($deleteDisabled) class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">Eliminar</button>
         @endif
     </x-slot>

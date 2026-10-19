@@ -7,6 +7,7 @@
     'carouselStyle' => false,
 ])
 
+@teleport('body')
 <div
     x-data="{ visible: true }"
     x-show="visible"
@@ -14,25 +15,37 @@
     @click.self="visible = false"
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($cancelAction)) visible = false"
     @keydown.escape.window="visible = false; $wire.{{ $cancelAction }}()"
-    class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
+    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-[2px]"
     role="dialog"
     aria-modal="true"
     aria-labelledby="{{ $modalId }}-title"
     data-administration-modal="{{ $modalId }}"
 >
     <style>
+        [data-administration-modal] {
+            font-size: 15px;
+        }
+        [data-administration-modal] :where(p, span, button, input, select, option, label, h1, h2, h3, small) {
+            font-size: 15px !important;
+        }
+        [data-administration-modal] .administration-form-panel,
+        [data-administration-modal] .administration-form-panel > form,
+        [data-administration-modal] .administration-form-panel header,
+        [data-administration-modal] .administration-form-panel footer,
+        [data-administration-modal] .administration-form-panel .bg-white {
+            background-color: #ffffff !important;
+        }
         .administration-form-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #1A3A6B #F3F3F3;
+            scrollbar-color: #1A3A6B transparent;
         }
 
         .administration-form-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 3px;
         }
 
         .administration-form-scrollbar::-webkit-scrollbar-track {
-            background: #F3F3F3;
-            border-radius: 9999px;
+            background: transparent;
         }
 
         .administration-form-scrollbar::-webkit-scrollbar-thumb {
@@ -40,54 +53,63 @@
             border-radius: 9999px;
         }
 
-        .administration-form-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #15305a;
+        .administration-form-scrollbar::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         [data-administration-modal] textarea {
             resize: none;
         }
 
-        .organization-card-surface {
-            background-color: rgba(255, 255, 255, 0.48);
-            background-image:
-                linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.24) 48%, rgba(255, 255, 255, 0.5)),
-                radial-gradient(circle, rgba(26, 58, 107, 0.13) 0.7px, transparent 0.8px);
-            background-position: 0 0;
-            background-size: 100% 100%, 11px 11px;
+        [data-administration-modal] input:focus,
+        [data-administration-modal] input:focus-visible,
+        [data-administration-modal] select:focus,
+        [data-administration-modal] select:focus-visible,
+        [data-administration-modal] textarea:focus,
+        [data-administration-modal] textarea:focus-visible {
+            border-color: #e4e4e7 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+            --tw-ring-offset-shadow: 0 0 #0000 !important;
+        }
+        [data-administration-modal] footer button {
+            min-height: 44px;
+            border: 1px solid #e4e4e7 !important;
+            border-radius: 0.75rem !important;
+            background: #ffffff !important;
+            color: #18181b !important;
+            box-shadow: none !important;
+        }
+        [data-administration-modal] footer button:last-child {
+            border-color: #18181b !important;
+            background: #18181b !important;
+            color: #ffffff !important;
         }
     </style>
 
     <div
         @class([
-            'relative flex w-full max-w-3xl flex-col overflow-hidden border shadow-2xl',
-            'rounded-[22px] border-[#1A3A6B] bg-[#F7FAFE]' => $carouselStyle,
-            'rounded-2xl border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle,
+            'administration-form-panel relative flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl',
         ])
-        style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;"
+        style="height: min(760px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
     >
         <form wire:submit.prevent="{{ $submit }}" class="flex min-h-0 flex-1 flex-col">
-            <header @class([
-                'flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-5',
-                'border-white/10 bg-[#1A3A6B]' => $carouselStyle,
-                'border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle,
-            ])>
+            <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
                 <div class="flex min-w-0 items-center gap-[15px]">
-                    <div @class([
-                        'flex h-12 w-12 shrink-0 items-center justify-center text-white',
-                        'rounded-2xl border border-white/15 bg-white/10' => $carouselStyle,
-                        'rounded-full bg-[#1A3A6B] shadow-sm' => ! $carouselStyle,
-                    ])>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                         {{ $icon }}
                     </div>
 
                     <div class="flex min-w-0 flex-col gap-[10px]">
-                        <h1 id="{{ $modalId }}-title" @class(['truncate text-[15px] font-semibold leading-none', 'text-white' => $carouselStyle, 'text-gray-900' => ! $carouselStyle]) style="margin: 0;">
+                        <h1 id="{{ $modalId }}-title" class="truncate text-[15px] font-semibold leading-none text-black" style="margin: 0;">
                             {{ $title }}
                         </h1>
 
                         @if ($subtitle)
-                            <p @class(['truncate text-[15px] leading-none', 'text-[#C9E1FF]' => $carouselStyle, 'text-gray-500' => ! $carouselStyle]) style="margin: 0;">
+                            <p class="truncate text-[15px] leading-none text-zinc-500" style="margin: 0;">
                                 {{ $subtitle }}
                             </p>
                         @endif
@@ -97,11 +119,7 @@
                 <button
                     type="button"
                     wire:click="{{ $cancelAction }}"
-                    @class([
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-xl leading-none transition focus:outline-none focus:ring-0',
-                        'border-white/20 bg-white/10 text-white hover:bg-white/20' => $carouselStyle,
-                        'border-gray-300 bg-white text-gray-500 hover:border-[#1A3A6B] hover:text-[#1A3A6B]' => ! $carouselStyle,
-                    ])
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-xl leading-none text-zinc-500 transition hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
                     aria-label="Cerrar"
                 >
                     &times;
@@ -114,23 +132,16 @@
                 </nav>
             @endif
 
-            <div @class(['administration-form-scrollbar min-h-0 flex-1 overflow-y-auto', 'organization-card-surface' => $carouselStyle]) style="overscroll-behavior: contain;">
-                <div @class([
-                    'text-[15px]',
-                    'm-0 p-6' => $carouselStyle,
-                    'm-5 rounded-xl border border-dashed border-gray-300 bg-white p-5 shadow-sm' => ! $carouselStyle,
-                ])>
+            <div class="administration-form-scrollbar min-h-0 flex-1 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
+                <div class="p-[20px] text-[15px]">
                     {{ $form }}
                 </div>
             </div>
 
-            <footer @class([
-                'flex flex-shrink-0 justify-end gap-[15px] border-t p-5',
-                'border-white/10 bg-[#1A3A6B]' => $carouselStyle,
-                'border-gray-300 bg-[#F3F3F3]' => ! $carouselStyle,
-            ])>
+            <footer class="flex flex-shrink-0 justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
                 {{ $actions }}
             </footer>
         </form>
     </div>
 </div>
+@endteleport
