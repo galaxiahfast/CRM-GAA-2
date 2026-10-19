@@ -199,6 +199,7 @@ class BackupStorageManagerTest extends TestCase
 
     public function test_user_can_choose_a_folder_from_the_fixed_backup_memory(): void
     {
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.enabled', false);
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
         File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
