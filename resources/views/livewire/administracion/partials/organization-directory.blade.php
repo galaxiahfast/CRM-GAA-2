@@ -58,14 +58,14 @@
     }"
     x-show="administrationView === 'directory'"
     x-cloak
-    class="mt-[36px] overflow-hidden rounded-2xl border border-[#CAD7E7] bg-white/55"
+    class="mt-[20px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
     aria-label="Directorio de administración"
 >
     <div class="grid min-h-[620px] grid-cols-[230px_minmax(0,1fr)]">
-        <aside class="border-r border-[#CAD7E7] bg-[#EAF1FA]/65 p-4">
+        <aside class="border-r border-zinc-200 bg-zinc-50 p-[20px]">
             <div class="mb-4 px-3 pt-2">
-                <span class="text-[10px] font-bold uppercase tracking-[.16em] text-[#55749D]">Catálogos</span>
-                <p class="mt-1 text-[12px] leading-5 text-[#7892B3]">Selecciona una sección para consultar sus registros.</p>
+                <span class="text-[10px] font-bold uppercase tracking-[.16em] text-zinc-700">Catálogos</span>
+                <p class="mt-[5px] text-[12px] leading-5 text-zinc-500">Selecciona una sección para consultar sus registros.</p>
             </div>
 
             <nav class="space-y-1.5" aria-label="Catálogos organizacionales">
@@ -73,12 +73,12 @@
                     <button
                         type="button"
                         @click="selectCatalog(@js($catalogKey))"
-                        :class="selectedCatalog === @js($catalogKey) ? 'bg-[#1A3A6B] text-white shadow-[0_8px_20px_rgba(26,58,107,.16)]' : 'text-[#1F4677] hover:bg-white/80'"
-                        class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors focus:outline-none focus:ring-0"
+                        :class="selectedCatalog === @js($catalogKey) ? 'bg-black text-white' : 'text-zinc-700 hover:bg-white hover:text-black'"
+                        class="flex w-full items-center gap-[10px] rounded-lg px-[15px] py-[15px] text-left transition-colors focus:outline-none focus:ring-0"
                         :aria-current="selectedCatalog === @js($catalogKey) ? 'page' : null"
                     >
                         <span
-                            :class="selectedCatalog === @js($catalogKey) ? 'border-white/15 bg-white/10' : 'border-[#CAD7E7] bg-white/70'"
+                            :class="selectedCatalog === @js($catalogKey) ? 'border-white/20 bg-white/10' : 'border-zinc-200 bg-white'"
                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
                         >
                             @switch($catalogKey)
@@ -94,7 +94,7 @@
                         </span>
                         <span class="min-w-0 flex-1 truncate text-[13px] font-semibold">{{ $catalog['label'] }}</span>
                         <span
-                            :class="selectedCatalog === @js($catalogKey) ? 'bg-white/15 text-white' : 'bg-[#DCEAFF] text-[#1A3A6B]'"
+                            :class="selectedCatalog === @js($catalogKey) ? 'bg-white/15 text-white' : 'bg-zinc-200 text-zinc-700'"
                             class="inline-flex min-w-7 items-center justify-center rounded-full px-2 py-1 text-[10px] font-bold"
                         >{{ count($catalog['items']) }}</span>
                     </button>
@@ -102,23 +102,23 @@
             </nav>
         </aside>
 
-        <div class="min-w-0 p-6">
-            <header class="flex flex-wrap items-start justify-between gap-5 border-b border-[#DCE6F2] pb-5">
+        <div class="min-w-0 p-[20px]">
+            <header class="flex flex-wrap items-start justify-between gap-[20px] border-b border-zinc-200 pb-[20px]">
                 <div class="min-w-0">
                     <div class="flex items-center gap-3">
-                        <h2 class="text-[22px] font-bold text-[#102A52]" x-text="activeCatalog.label"></h2>
-                        <span class="rounded-full bg-[#EAF2FC] px-2.5 py-1 text-[10px] font-bold text-[#1A3A6B]" x-text="`${filteredItems.length} registros`"></span>
+                        <h2 class="text-xl font-semibold text-black" x-text="activeCatalog.label"></h2>
+                        <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-bold text-zinc-700" x-text="`${filteredItems.length} registros`"></span>
                     </div>
-                    <p class="mt-1 text-[12px] text-[#6E88AA]" x-text="activeCatalog.description"></p>
+                    <p class="mt-[5px] text-[12px] text-zinc-500" x-text="activeCatalog.description"></p>
                 </div>
 
                 <label class="relative block w-full max-w-[330px]">
                     <span class="sr-only">Buscar en el catálogo seleccionado</span>
-                    <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6E88AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                    <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                     <input
                         type="search"
                         x-model.debounce.120ms="query"
-                        class="h-11 w-full rounded-xl border border-[#B7CEEA] bg-white/75 pl-10 pr-4 text-[13px] text-[#102A52] shadow-none outline-none placeholder:text-[#8CA2BE] focus:border-[#B7CEEA] focus:outline-none focus:ring-0"
+                        class="h-11 w-full rounded-lg border border-zinc-200 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0"
                         :placeholder="`Buscar en ${activeCatalog.label.toLocaleLowerCase()}...`"
                         autocomplete="off"
                     >
@@ -128,8 +128,8 @@
             <div class="unassigned-users-scrollbar mt-4 max-h-[535px] space-y-2 overflow-y-auto pr-2">
                 <template x-for="item in filteredItems" :key="`${selectedCatalog}-${item.id}`">
                     <article
-                        :class="expandedItem === item.id ? 'border-[#B7CEEA] bg-white shadow-[0_8px_24px_rgba(26,58,107,.06)]' : 'border-transparent bg-white/60 hover:border-[#D6E1EF] hover:bg-white'"
-                        class="overflow-hidden rounded-xl border transition-colors"
+                        :class="expandedItem === item.id ? 'border-zinc-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,.05)]' : 'border-zinc-200 bg-white hover:border-zinc-300'"
+                        class="overflow-hidden rounded-lg border transition-colors"
                     >
                         <div class="flex min-w-0 items-center gap-3 px-4 py-3">
                             <button
@@ -139,21 +139,21 @@
                                 :aria-expanded="expandedItem === item.id"
                             >
                                 <span
-                                    :class="expandedItem === item.id ? 'bg-[#1A3A6B] text-white' : 'bg-[#DCEAFF] text-[#1A3A6B]'"
+                                    :class="expandedItem === item.id ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-700'"
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors"
                                     x-text="initials(item.title)"
                                 ></span>
                                 <span class="min-w-0 flex-1">
-                                    <span class="block truncate text-[13px] font-bold text-[#183D70]" x-text="item.title" :title="item.title"></span>
-                                    <span class="mt-1 block truncate text-[11px] text-[#7892B3]" x-text="item.subtitle" :title="item.subtitle"></span>
+                                    <span class="block truncate text-[13px] font-bold text-black" x-text="item.title" :title="item.title"></span>
+                                    <span class="mt-[5px] block truncate text-[11px] text-zinc-500" x-text="item.subtitle" :title="item.subtitle"></span>
                                 </span>
                             </button>
 
-                            <div class="flex shrink-0 items-center gap-1.5 border-l border-[#DCE6F2] pl-3">
+                            <div class="flex shrink-0 items-center gap-1.5 border-l border-zinc-200 pl-3">
                                 <button
                                     type="button"
                                     @click.stop="manage('editar', item)"
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg text-[#356398] transition-colors hover:bg-[#EAF2FC] hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
                                     :aria-label="`Editar ${item.title}`"
                                     :title="`Editar ${item.title}`"
                                 >
@@ -162,7 +162,7 @@
                                 <button
                                     type="button"
                                     @click.stop="manage('eliminar', item)"
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg text-[#7D8FA8] transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-0"
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-0"
                                     :aria-label="`Eliminar ${item.title}`"
                                     :title="`Eliminar ${item.title}`"
                                 >
@@ -171,7 +171,7 @@
                                 <button
                                     type="button"
                                     @click="expandedItem = expandedItem === item.id ? null : item.id"
-                                    class="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-[#55749D] hover:bg-[#EAF2FC] focus:outline-none focus:ring-0"
+                                    class="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
                                     :aria-label="expandedItem === item.id ? `Ocultar datos de ${item.title}` : `Mostrar datos de ${item.title}`"
                                 >
                                     <svg :class="expandedItem === item.id ? 'rotate-180' : ''" class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
@@ -187,13 +187,13 @@
                             x-transition:leave="transition ease-in duration-100"
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 -translate-y-1"
-                            class="border-t border-[#DCE6F2] bg-[#F7FAFE]/75 px-4 py-4"
+                            class="border-t border-zinc-200 bg-zinc-50 px-4 py-4"
                         >
                             <dl class="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
                                 <template x-for="detail in item.details" :key="detail.label">
-                                    <div class="min-w-0 rounded-lg border border-[#DCE6F2] bg-white/75 px-3 py-2.5">
-                                        <dt class="truncate text-[9px] font-bold uppercase tracking-[.1em] text-[#7892B3]" x-text="detail.label"></dt>
-                                        <dd class="mt-1.5 break-words text-[11px] font-semibold leading-5 text-[#1F4677]" x-text="detail.value"></dd>
+                                    <div class="min-w-0 rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+                                        <dt class="truncate text-[9px] font-bold uppercase tracking-[.1em] text-zinc-500" x-text="detail.label"></dt>
+                                        <dd class="mt-[5px] break-words text-[11px] font-semibold leading-5 text-zinc-700" x-text="detail.value"></dd>
                                     </div>
                                 </template>
                             </dl>
@@ -201,12 +201,12 @@
                     </article>
                 </template>
 
-                <div x-show="filteredItems.length === 0" class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-[#CAD7E7] text-center">
-                    <span class="flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF2FC] text-[#1A3A6B]">
+                <div x-show="filteredItems.length === 0" class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 text-center">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                     </span>
-                    <p class="mt-3 text-[13px] font-semibold text-[#1F4677]">No encontramos registros</p>
-                    <p class="mt-1 text-[11px] text-[#7892B3]">Prueba con otro nombre, correo o dato.</p>
+                    <p class="mt-3 text-[13px] font-semibold text-black">No encontramos registros</p>
+                    <p class="mt-[5px] text-[11px] text-zinc-500">Prueba con otro nombre, correo o dato.</p>
                 </div>
             </div>
         </div>

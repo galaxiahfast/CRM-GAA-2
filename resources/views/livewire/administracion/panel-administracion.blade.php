@@ -29,18 +29,18 @@
             }
         },
     }"
-    class="w-full min-w-0 space-y-[20px] p-[50px]"
-    style="font-size: 15px; background-color: #F3F3F3;"
+    class="administration-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full min-w-0 overflow-hidden bg-white p-[50px] text-[15px] text-zinc-700"
+    style="background-color: #ffffff !important;"
 >
     <style hidden>
         .unassigned-users-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #1A3A6B #F3F3F3;
+            scrollbar-color: #18181b transparent;
         }
         .unassigned-users-scrollbar::-webkit-scrollbar { width: 6px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #15305a !important; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #18181b !important; border-radius: 9999px; }
+        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46 !important; }
 
         .administration-modal-scrollbar {
             scrollbar-width: thin;
@@ -219,25 +219,29 @@
     </style>
 
     <!-- Centro de gestión siempre visible -->
-    <section class="m-0 w-full bg-[#F3F3F3] pt-0">
-        <div class="m-0 w-full bg-[#F3F3F3] pt-0">
+    <section class="m-0 w-full bg-white pt-0">
+        <div class="m-0 w-full bg-white pt-0">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div class="min-w-0">
-                    <div class="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#1A3A6B]"><span class="h-[2px] w-7 bg-[#1A3A6B]"></span>Administración organizacional</div>
-                    <div class="flex flex-wrap items-center gap-[10px]">
-                        <h1 class="text-[26px] font-bold tracking-tight text-[#102A52]">Centro de organización</h1>
-                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
+                <div class="flex min-w-0 items-center gap-[15px]">
+                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10M17 16v6m-3-3h6" /></svg>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-[10px]">
+                            <h1 class="text-xl font-semibold tracking-tight text-black">Administración</h1>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
+                        </div>
+                        <p class="mt-[5px] max-w-3xl text-[15px] text-zinc-500">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
                     </div>
-                    <p class="mt-2 max-w-3xl text-[13px] leading-6 text-[#55749D]">Administra colaboradores, roles, permisos y dependencias operativas desde un mismo espacio.</p>
                 </div>
             </div>
 
-            <nav class="mt-[50px] grid grid-cols-2 overflow-hidden rounded-xl border border-[#CAD7E7] bg-white/55 p-1.5" aria-label="Vistas del centro de organización">
-                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
+            <nav class="mt-[20px] grid grid-cols-2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]" aria-label="Vistas del centro de organización">
+                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'bg-black text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-black'" class="flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[20px] py-[15px] text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
                     <span>Listado general</span>
                 </button>
-                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'bg-[#1A3A6B] text-white shadow-[0_8px_22px_rgba(26,58,107,.18)]' : 'text-[#55749D] hover:bg-white/80 hover:text-[#1A3A6B]'" class="flex min-w-0 items-center justify-center gap-3 rounded-lg px-4 py-3 text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
+                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'bg-black text-white' : 'text-zinc-600 hover:bg-zinc-100 hover:text-black'" class="flex min-w-0 items-center justify-center gap-[10px] rounded-lg px-[20px] py-[15px] text-[13px] font-semibold transition-colors focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
                     <span>Organigrama</span>
                 </button>
@@ -478,7 +482,7 @@
     @endif
 
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[36px] scroll-mt-5 overflow-hidden rounded-2xl border border-gray-200 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" style="padding: 20px; background-color: #F3F3F3;">
+    <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[20px] scroll-mt-5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="padding: 20px; background-color: #ffffff;">
 
         <!-- Encabezado -->
         <div style="padding: 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
