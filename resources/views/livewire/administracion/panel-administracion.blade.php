@@ -576,55 +576,10 @@
         </div>
         @endif
     </section>
-    </main>
 
     {{-- La información jerárquica solamente se entrega a administradores. --}}
     @if ($canManageOrganization)
 
-    @if ($showUserManagementModal)
-        <livewire:administracion.users.form
-            :embedded="true"
-            :initial-tab="$userManagementInitialTab"
-            :initial-user-id="$userManagementInitialUserId"
-            :key="'organization-user-management-'.$userManagementInitialTab.'-'.($userManagementInitialUserId ?? 'list')"
-        />
-    @endif
-
-    @if ($showRoleManagementModal)
-        @if ($roleManagementInitialTab === 'crear')
-            <livewire:administracion.roles.form
-                :embedded="true"
-                :key="'organization-role-create'"
-            />
-        @else
-            <livewire:administracion.roles.gestion-roles
-                :embedded="true"
-                :initial-tab="$roleManagementInitialTab"
-                :initial-role-id="$roleManagementInitialRoleId"
-                :key="'organization-role-management-'.$roleManagementInitialTab.'-'.($roleManagementInitialRoleId ?? 'list')"
-            />
-        @endif
-    @endif
-
-    @if ($showAssignmentModal)
-        <x-administration-panel-modal
-            title="{{ ucfirst($assignmentModalTab) }} asignación"
-            subtitle="Relaciona clientes, responsables y auxiliares sin salir del centro de organización."
-            modal-id="assignment-management"
-            cancel-action="closeAssignmentModal"
-            :carousel-style="true"
-        >
-            <x-slot name="icon"><x-feathericon-git-merge class="h-6 w-6" /></x-slot>
-            <x-slot name="content">
-                <livewire:administracion.relationship.gestion-relaciones-jerarquicas :embedded="true" :mode="$assignmentModalTab" :key="'organization-relationships-form-'.$assignmentModalTab" />
-            </x-slot>
-            <x-slot name="actions">
-                <button type="button" wire:click="closeAssignmentModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white hover:bg-white/20">Cerrar</button>
-            </x-slot>
-        </x-administration-panel-modal>
-    @endif
-
-    <main class="w-full origin-top space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
     <!-- Organigrama con padding de 80px en todos los lados -->
     <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[20px] scroll-mt-5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="padding: 20px; background-color: #ffffff;">
 
@@ -900,6 +855,49 @@
 
     @include('livewire.administracion.partials.organization-directory')
     </main>
+
+    @if ($showUserManagementModal)
+        <livewire:administracion.users.form
+            :embedded="true"
+            :initial-tab="$userManagementInitialTab"
+            :initial-user-id="$userManagementInitialUserId"
+            :key="'organization-user-management-'.$userManagementInitialTab.'-'.($userManagementInitialUserId ?? 'list')"
+        />
+    @endif
+
+    @if ($showRoleManagementModal)
+        @if ($roleManagementInitialTab === 'crear')
+            <livewire:administracion.roles.form
+                :embedded="true"
+                :key="'organization-role-create'"
+            />
+        @else
+            <livewire:administracion.roles.gestion-roles
+                :embedded="true"
+                :initial-tab="$roleManagementInitialTab"
+                :initial-role-id="$roleManagementInitialRoleId"
+                :key="'organization-role-management-'.$roleManagementInitialTab.'-'.($roleManagementInitialRoleId ?? 'list')"
+            />
+        @endif
+    @endif
+
+    @if ($showAssignmentModal)
+        <x-administration-panel-modal
+            title="{{ ucfirst($assignmentModalTab) }} asignación"
+            subtitle="Relaciona clientes, responsables y auxiliares sin salir del centro de organización."
+            modal-id="assignment-management"
+            cancel-action="closeAssignmentModal"
+            :carousel-style="true"
+        >
+            <x-slot name="icon"><x-feathericon-git-merge class="h-6 w-6" /></x-slot>
+            <x-slot name="content">
+                <livewire:administracion.relationship.gestion-relaciones-jerarquicas :embedded="true" :mode="$assignmentModalTab" :key="'organization-relationships-form-'.$assignmentModalTab" />
+            </x-slot>
+            <x-slot name="actions">
+                <button type="button" wire:click="closeAssignmentModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white hover:bg-white/20">Cerrar</button>
+            </x-slot>
+        </x-administration-panel-modal>
+    @endif
 
     {{-- ============================================================ --}}
     {{-- MODAL PARA AGREGAR PUESTO DE TRABAJO                        --}}
