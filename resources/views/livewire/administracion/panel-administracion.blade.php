@@ -576,6 +576,7 @@
         </div>
         @endif
     </section>
+    </main>
 
     {{-- La información jerárquica solamente se entrega a administradores. --}}
     @if ($canManageOrganization)
@@ -623,6 +624,7 @@
         </x-administration-panel-modal>
     @endif
 
+    <main class="w-full origin-top space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
     <!-- Organigrama con padding de 80px en todos los lados -->
     <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[20px] scroll-mt-5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="padding: 20px; background-color: #ffffff;">
 

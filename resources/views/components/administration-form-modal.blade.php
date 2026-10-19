@@ -7,7 +7,6 @@
     'carouselStyle' => false,
 ])
 
-@teleport('body')
 <div
     x-data="{ visible: true }"
     x-show="visible"
@@ -144,4 +143,3 @@
         </form>
     </div>
 </div>
-@endteleport
