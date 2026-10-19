@@ -63,7 +63,7 @@
 >
     <div class="grid min-h-[630px] xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside class="min-h-0 overflow-hidden border-b border-zinc-200 bg-white xl:border-b-0 xl:border-r">
-            <div class="flex h-[70px] items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700">
+            <div class="flex h-[70px] shrink-0 items-center justify-center border-b border-zinc-300 bg-zinc-100 px-[20px] text-center text-zinc-700">
                 <span class="truncate font-semibold">Secciones administrativas</span>
             </div>
 
@@ -102,7 +102,7 @@
         </aside>
 
         <div class="relative flex min-h-0 min-w-0 flex-col">
-            <header class="flex min-h-[70px] flex-wrap items-center justify-between gap-[15px] border-b border-zinc-300 bg-zinc-100 px-[20px] py-[12px]">
+            <header class="flex h-[70px] shrink-0 flex-nowrap items-center justify-between gap-[15px] border-b border-zinc-300 bg-zinc-100 px-[20px] py-[12px]">
                 <div class="min-w-0">
                     <div class="flex items-center gap-3">
                         <h2 class="font-semibold text-black" x-text="activeCatalog.label"></h2>
