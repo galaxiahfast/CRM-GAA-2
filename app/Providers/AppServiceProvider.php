@@ -44,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->restoreTulumBackupDefaultsFromStaleConfigCache();
+
         User::observe(UserHierarchyObserver::class);
         UserOrganizationalProfile::observe(UserOrganizationalProfileHierarchyObserver::class);
 
@@ -119,6 +121,35 @@ class AppServiceProvider extends ServiceProvider
 
             return $user->isAdmin() || str_contains($roleName, 'contador');
         });
+    }
+
+    private function restoreTulumBackupDefaultsFromStaleConfigCache(): void
+    {
+        $profileKey = 'backup-storage.backup_profiles.tulum-contabilidad';
+        $profile = (array) config($profileKey, []);
+        $wasUnconfigured = blank($profile['source_root'] ?? null)
+            && blank($profile['destination_root'] ?? null);
+
+        if ($wasUnconfigured) {
+            config()->set($profileKey, array_replace([
+                'label' => 'Tulum · Contabilidad',
+                'site' => 'tulum',
+                'department' => 'contabilidad',
+                'source_root' => '\\\\192.168.1.2\\Compac',
+                'destination_root' => '\\\\192.168.1.2\\E\\RESPALDOS CONTPAQ TULUM',
+                'destination_label' => 'TULUM CONTABILIDAD',
+                'classification' => 'accounting',
+                'enabled' => true,
+            ], $profile, [
+                'source_root' => '\\\\192.168.1.2\\Compac',
+                'destination_root' => '\\\\192.168.1.2\\E\\RESPALDOS CONTPAQ TULUM',
+                'enabled' => true,
+            ]));
+        }
+
+        if (blank(config('backup-storage.sql_catalog.sites.tulum.accounting'))) {
+            config()->set('backup-storage.sql_catalog.sites.tulum.accounting', '192.168.1.2\\CONTABILIDAD');
+        }
     }
 
     private function registerSystemNotificationListeners(): void
