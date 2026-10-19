@@ -43,12 +43,13 @@ class ContpaqiBackupExport
         $configuredPath = trim((string) ($definition['root'] ?? ''));
         $volumeLabel = trim((string) ($definition['label'] ?? 'Memoria externa'));
         $key = (string) ($definition['key'] ?? '');
+        $containerFolder = trim((string) ($definition['container_folder'] ?? ''));
         if ($configuredPath === '') {
-            return ['key' => $key, 'configured' => false, 'connected' => false, 'writable' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
+            return ['key' => $key, 'configured' => false, 'connected' => false, 'writable' => false, 'root' => null, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null, 'container_folder' => $containerFolder];
         }
 
         if (! $this->isAbsolutePath($configuredPath)) {
-            return ['key' => $key, 'configured' => true, 'connected' => false, 'writable' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null];
+            return ['key' => $key, 'configured' => true, 'connected' => false, 'writable' => false, 'root' => $configuredPath, 'free_bytes' => null, 'label' => $volumeLabel, 'type' => $definition['type'] ?? null, 'container_folder' => $containerFolder];
         }
 
         $realPath = realpath($configuredPath);
@@ -63,6 +64,7 @@ class ContpaqiBackupExport
             'free_bytes' => $connected ? (@disk_free_space($realPath) ?: null) : null,
             'label' => $volumeLabel,
             'type' => $definition['type'] ?? null,
+            'container_folder' => $containerFolder,
         ];
     }
 
@@ -148,6 +150,7 @@ class ContpaqiBackupExport
                 'destination_key' => $destination['key'],
                 'destination_label' => $destination['label'],
                 'destination_folder' => $this->relativeDestinationFolder($folderPath, $destination['root']),
+                'container_folder' => (string) ($destination['container_folder'] ?? ''),
                 'source_root' => $catalog->sourceRoot(),
                 'destination_path' => null,
                 'total_files' => count($records) * 2,
@@ -193,7 +196,8 @@ class ContpaqiBackupExport
             $catalog = $catalog->forRoot((string) ($state['source_root'] ?? ''));
 
             $records = $this->selectedRecords($catalog->dashboard($state['date'])['records'], $state['date'], $state['record_ids']);
-            $baseDirectory = $this->requireDestinationFolder($state['destination_folder'], $destination['root']);
+            $selectedDirectory = $this->requireDestinationFolder($state['destination_folder'], $destination['root']);
+            $baseDirectory = $this->backupBaseDirectory($selectedDirectory, $destination, true);
             $dateDirectory = $this->join($baseDirectory, $this->dateFolder($state['date']));
             File::ensureDirectoryExists($dateDirectory);
 
@@ -464,7 +468,8 @@ class ContpaqiBackupExport
             }
 
             $destination = $this->requireDestination($destinationKey);
-            $baseDirectory = $this->requireDestinationFolder($destinationFolder, $destination['root']);
+            $selectedDirectory = $this->requireDestinationFolder($destinationFolder, $destination['root']);
+            $baseDirectory = $this->backupBaseDirectory($selectedDirectory, $destination);
             $dateDirectory = $this->join($baseDirectory, $this->dateFolder($date));
             $deleted = 0;
 
@@ -513,14 +518,17 @@ class ContpaqiBackupExport
             ->groupBy(fn (array $record): string => $this->companyKey($record))
             ->map(fn ($companyRecords): array => $companyRecords->sortByDesc('occurred_at')->first());
         $latestIds = $latestCompleteByCompany->pluck('id')->flip();
-        $folderPath = $destination['connected'] && filled($destinationFolder)
+        $selectedFolderPath = $destination['connected'] && filled($destinationFolder)
             ? $this->resolveDestinationFolder((string) $destinationFolder, $destination['root'])
+            : null;
+        $folderPath = $selectedFolderPath !== null
+            ? $this->backupBaseDirectory($selectedFolderPath, $destination)
             : null;
         $destinationCopies = $folderPath !== null
             ? $this->destinationCopies($date, collect($records)->where('complete', true)->values()->all(), $folderPath)
             : ['record_ids' => [], 'company_keys' => []];
-        $copyingCompanies = $folderPath !== null
-            ? $this->activeCompanyKeys($date, $destination['root'], $this->relativeDestinationFolder($folderPath, $destination['root']))
+        $copyingCompanies = $selectedFolderPath !== null
+            ? $this->activeCompanyKeys($date, $destination['root'], $this->relativeDestinationFolder($selectedFolderPath, $destination['root']))
             : [];
 
         return collect($records)->mapWithKeys(function (array $record) use ($destination, $folderPath, $latestIds, $destinationCopies, $copyingCompanies): array {
@@ -806,6 +814,7 @@ class ContpaqiBackupExport
             'label' => (string) ($state['destination_label'] ?? 'Memoria externa'),
             'root' => $storedRoot,
             'type' => 'queued',
+            'container_folder' => (string) ($state['container_folder'] ?? ''),
         ]);
 
         if (! $destination['configured'] || ! $destination['connected']) {
@@ -853,6 +862,7 @@ class ContpaqiBackupExport
                 'label' => (string) ($profile['destination_label'] ?? $profile['label'] ?? $key),
                 'root' => (string) ($profile['destination_root'] ?? ''),
                 'type' => 'profile',
+                'container_folder' => (string) ($profile['container_folder'] ?? ''),
             ];
         }
 
@@ -998,6 +1008,21 @@ POWERSHELL;
         $folder = str_replace('\\', '/', (string) realpath($folderPath));
 
         return ltrim(substr($folder, strlen($root)), '/');
+    }
+
+    private function backupBaseDirectory(string $selectedDirectory, array $destination, bool $create = false): string
+    {
+        $container = trim((string) ($destination['container_folder'] ?? ''));
+        if ($container === '' || strcasecmp(basename(str_replace('\\', '/', $selectedDirectory)), $container) === 0) {
+            return $selectedDirectory;
+        }
+
+        $baseDirectory = $this->join($selectedDirectory, $this->safeSegment($container));
+        if ($create) {
+            File::ensureDirectoryExists($baseDirectory);
+        }
+
+        return $baseDirectory;
     }
 
     private function hasChildDirectories(string $path): bool

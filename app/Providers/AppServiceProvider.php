@@ -129,22 +129,28 @@ class AppServiceProvider extends ServiceProvider
         $profile = (array) config($profileKey, []);
         $wasUnconfigured = blank($profile['source_root'] ?? null)
             && blank($profile['destination_root'] ?? null);
+        $destinationRoot = (string) ($profile['destination_root'] ?? '');
+        $usesOldContainerAsRoot = preg_match('~[\\\\/]+RESPALDOS CONTPAQ TULUM$~i', $destinationRoot) === 1;
 
-        if ($wasUnconfigured) {
+        if ($wasUnconfigured || $usesOldContainerAsRoot) {
             config()->set($profileKey, array_replace([
                 'label' => 'Tulum · Contabilidad',
                 'site' => 'tulum',
                 'department' => 'contabilidad',
                 'source_root' => '\\\\192.168.1.2\\Compac',
-                'destination_root' => '\\\\192.168.1.2\\E\\RESPALDOS CONTPAQ TULUM',
+                'destination_root' => '\\\\192.168.1.2\\E',
+                'container_folder' => 'RESPALDOS CONTPAQ TULUM',
                 'destination_label' => 'TULUM CONTABILIDAD',
                 'classification' => 'accounting',
                 'enabled' => true,
             ], $profile, [
                 'source_root' => '\\\\192.168.1.2\\Compac',
-                'destination_root' => '\\\\192.168.1.2\\E\\RESPALDOS CONTPAQ TULUM',
+                'destination_root' => '\\\\192.168.1.2\\E',
+                'container_folder' => 'RESPALDOS CONTPAQ TULUM',
                 'enabled' => true,
             ]));
+        } elseif (blank($profile['container_folder'] ?? null)) {
+            config()->set($profileKey.'.container_folder', 'RESPALDOS CONTPAQ TULUM');
         }
 
         if (blank(config('backup-storage.sql_catalog.sites.tulum.accounting'))) {

@@ -224,6 +224,33 @@ class ContpaqiBackupCatalogTest extends TestCase
         $this->assertFileExists($this->exportRoot.'/ANGEL MOO/'.now()->format('d-m-Y').'/ctEmpresa_Demo/BAK/ctEmpresa_Demo-'.$date.'-1715.bak');
     }
 
+    public function test_tulum_creates_one_container_inside_the_selected_usb_folder(): void
+    {
+        $date = now()->format('Ymd');
+        $databasePath = $this->catalogRoot."/Empresas/ctEmpresa_Pendiente/ctEmpresa_Pendiente-{$date}-1720.bak";
+        $archivePath = $this->catalogRoot."/Index/respaldos/ctEmpresa_Pendiente-{$date}-1720.zip";
+        File::put($databasePath, 'tulum-database');
+        File::put($archivePath, 'tulum-index');
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.enabled', true);
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.destination_root', $this->exportRoot);
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.container_folder', 'RESPALDOS CONTPAQ TULUM');
+
+        $catalog = app(ContpaqiBackupCatalog::class);
+        $record = collect($catalog->catalog(true)['records'])->firstWhere('date', now()->toDateString());
+        $export = app(ContpaqiBackupExport::class);
+        $state = $export->create(now()->toDateString(), [$record['id']], 1, 'ANGEL MOO', $catalog, 'tulum-contabilidad');
+        $this->exportIds[] = $state['id'];
+        $export->execute($state['id'], $catalog);
+
+        $container = $this->exportRoot.'/ANGEL MOO/RESPALDOS CONTPAQ TULUM';
+        $destination = $container.'/'.now()->format('d-m-Y').'/ctEmpresa_Pendiente';
+        $this->assertDirectoryExists($container);
+        $this->assertFileExists($destination.'/BAK/'.basename($databasePath));
+        $this->assertFileExists($destination.'/INDEX/'.basename($archivePath));
+        $this->assertDirectoryDoesNotExist($container.'/RESPALDOS CONTPAQ TULUM');
+        $this->assertSame('backed_up', $export->recordAvailability(now()->toDateString(), [$record], 'ANGEL MOO', 'tulum-contabilidad')[$record['id']]);
+    }
+
     public function test_empty_cached_destination_configuration_uses_the_fixed_server_share(): void
     {
         config()->set('backup-storage.export.destination_root', '');
