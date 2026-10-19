@@ -22,6 +22,14 @@
 <div
     x-data="{
         administrationView: 'directory',
+        viewScale: 90,
+        isFullscreen: false,
+        zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5) },
+        zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5) },
+        async toggleFullscreen() {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await this.$root.requestFullscreen();
+        },
         selectAdministrationView(view) {
             this.administrationView = view;
             if (view === 'organization') {
@@ -29,7 +37,8 @@
             }
         },
     }"
-    class="administration-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full min-w-0 overflow-hidden bg-white p-[50px] text-[15px] text-zinc-700"
+    x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
+    class="administration-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
     style="background-color: #ffffff !important;"
 >
     <style hidden>
@@ -337,6 +346,19 @@
         }
     </style>
 
+    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+        <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
+        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Administración">
+        <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
+        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">90%</span>
+        <span class="h-5 w-px bg-zinc-200"></span>
+        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
+            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
+        </button>
+    </div>
+
+    <main class="w-full origin-top space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
     <!-- Centro de gestión siempre visible -->
     <section class="m-0 w-full bg-white pt-0">
         <div class="m-0 w-full bg-white pt-0">
@@ -875,6 +897,7 @@
     </div>
 
     @include('livewire.administracion.partials.organization-directory')
+    </main>
 
     {{-- ============================================================ --}}
     {{-- MODAL PARA AGREGAR PUESTO DE TRABAJO                        --}}

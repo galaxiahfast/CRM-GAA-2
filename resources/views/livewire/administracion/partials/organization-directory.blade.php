@@ -73,7 +73,7 @@
                         type="button"
                         @click="selectCatalog(@js($catalogKey))"
                         :class="selectedCatalog === @js($catalogKey) ? 'bg-black text-white' : (@js($loop->odd) ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100' : 'bg-white text-zinc-700 hover:bg-zinc-100')"
-                        class="flex min-h-[70px] w-full items-center gap-[10px] border-b border-zinc-200 px-[20px] py-[12px] text-left transition-colors focus:outline-none focus:ring-0"
+                        class="flex min-h-[70px] w-full items-center gap-[10px] border-b border-zinc-200 px-[20px] py-[12px] text-left transition-colors last:border-b-0 focus:outline-none focus:ring-0"
                         :aria-current="selectedCatalog === @js($catalogKey) ? 'page' : null"
                     >
                         <span
@@ -129,8 +129,8 @@
                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-record-scroll h-full overflow-y-auto">
                 <template x-for="item in filteredItems" :key="`${selectedCatalog}-${item.id}`">
                     <article
-                        :class="expandedItem === item.id ? 'bg-zinc-50' : 'bg-white hover:bg-zinc-50'"
-                        class="overflow-hidden border-b border-zinc-200 transition-colors"
+                        :class="expandedItem === item.id ? 'bg-white' : 'bg-white hover:bg-zinc-50'"
+                        class="overflow-hidden border-b border-zinc-200 transition-colors last:border-b-0"
                     >
                         <div class="flex min-h-[70px] min-w-0 items-center gap-[15px] px-[20px] py-[12px]">
                             <button
@@ -188,13 +188,13 @@
                             x-transition:leave="transition ease-in duration-100"
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 -translate-y-1"
-                            class="border-t border-zinc-200 bg-zinc-50 px-[20px] py-[15px]"
+                            class="border-t border-zinc-200 bg-white"
                         >
-                            <dl class="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
+                            <dl class="grid min-w-0 grid-cols-2 xl:grid-cols-4">
                                 <template x-for="detail in item.details" :key="detail.label">
-                                    <div class="min-w-0 rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-                                        <dt class="truncate text-[9px] font-bold uppercase tracking-[.1em] text-zinc-500" x-text="detail.label"></dt>
-                                        <dd class="mt-[5px] break-words text-[11px] font-semibold leading-5 text-zinc-700" x-text="detail.value"></dd>
+                                    <div class="flex min-h-[78px] min-w-0 flex-col justify-center border-r border-zinc-200 px-[20px] py-[15px] last:border-r-0">
+                                        <dt class="truncate font-medium text-black" x-text="detail.label"></dt>
+                                        <dd class="mt-[3px] truncate text-zinc-500" x-text="detail.value" :title="detail.value"></dd>
                                     </div>
                                 </template>
                             </dl>
