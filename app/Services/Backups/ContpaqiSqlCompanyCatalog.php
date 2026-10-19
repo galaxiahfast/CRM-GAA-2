@@ -33,12 +33,14 @@ class ContpaqiSqlCompanyCatalog
 
         try {
             $instances = (array) config("backup-storage.sql_catalog.sites.{$site}", []);
+            $username = (string) ($instances['username'] ?? config('backup-storage.sql_catalog.username', ''));
+            $password = (string) ($instances['password'] ?? config('backup-storage.sql_catalog.password', ''));
             $catalog = [
                 'payroll' => filled($instances['payroll'] ?? null)
-                    ? $this->readInstance((string) $instances['payroll'], 'payroll')
+                    ? $this->readInstance((string) $instances['payroll'], 'payroll', $username, $password)
                     : [],
                 'accounting' => filled($instances['accounting'] ?? null)
-                    ? $this->readInstance((string) $instances['accounting'], 'accounting')
+                    ? $this->readInstance((string) $instances['accounting'], 'accounting', $username, $password)
                     : [],
             ];
 
@@ -65,15 +67,17 @@ class ContpaqiSqlCompanyCatalog
     private function configured(string $site): bool
     {
         $instances = (array) config("backup-storage.sql_catalog.sites.{$site}", []);
+        $username = (string) ($instances['username'] ?? config('backup-storage.sql_catalog.username', ''));
+        $password = (string) ($instances['password'] ?? config('backup-storage.sql_catalog.password', ''));
 
         return (bool) config('backup-storage.sql_catalog.enabled', true)
-            && filled(config('backup-storage.sql_catalog.username'))
-            && filled(config('backup-storage.sql_catalog.password'))
+            && filled($username)
+            && filled($password)
             && (filled($instances['payroll'] ?? null) || filled($instances['accounting'] ?? null));
     }
 
     /** @return array<string, true> */
-    private function readInstance(string $instance, string $classification): array
+    private function readInstance(string $instance, string $classification, string $username, string $password): array
     {
         [$database, $query] = match ($classification) {
             'payroll' => [
@@ -87,12 +91,12 @@ class ContpaqiSqlCompanyCatalog
             default => throw new \InvalidArgumentException("Clasificación SQL no compatible: {$classification}."),
         };
         $result = Process::env([
-            'SQLCMDPASSWORD' => (string) config('backup-storage.sql_catalog.password'),
+            'SQLCMDPASSWORD' => $password,
         ])->timeout(max(5, (int) config('backup-storage.sql_catalog.timeout_seconds', 15)))
             ->run([
                 (string) config('backup-storage.sql_catalog.sqlcmd_path', 'sqlcmd'),
                 '-S', $instance,
-                '-U', (string) config('backup-storage.sql_catalog.username'),
+                '-U', $username,
                 '-d', $database,
                 '-l', '8',
                 '-b',

@@ -25,6 +25,8 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
             ],
             'sites' => [
                 'tulum' => [
+                    'username' => 'tulum_readonly',
+                    'password' => 'tulum_secret',
                     'payroll' => '',
                     'accounting' => 'SRVAUDI2\\CONTABILIDAD',
                 ],
@@ -39,7 +41,13 @@ class ContpaqiSqlCompanyCatalogTest extends TestCase
 
         $this->assertSame([], $catalog['payroll']);
         $this->assertArrayHasKey('ctempresa_tulum', $catalog['accounting']);
-        Process::assertRanTimes(fn ($process): bool => str_contains(implode(' ', $process->command), 'CONTABILIDAD'), 1);
+        Process::assertRanTimes(function ($process): bool {
+            $command = implode(' ', $process->command);
+
+            return str_contains($command, 'CONTABILIDAD')
+                && str_contains($command, 'tulum_readonly')
+                && ($process->environment['SQLCMDPASSWORD'] ?? null) === 'tulum_secret';
+        }, 1);
     }
 
     public function test_physical_bak_path_disambiguates_a_company_registered_in_both_systems(): void
