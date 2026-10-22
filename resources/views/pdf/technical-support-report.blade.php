@@ -26,9 +26,8 @@
         .body-copy { margin: 0 0 18pt; text-align: justify; }
         .section-title { margin: 0; }
         .support-list { margin: 0 0 18pt; padding: 0 0 0 24pt; list-style: decimal; }
-        .version-list { margin: 0; padding: 0; list-style: none; }
-        .support-list li, .version-list li { margin: 0; text-align: justify; }
-        .version-page { page-break-before: always; }
+        .version-sublist { margin: 0; padding: 0 0 0 24pt; list-style: disc; }
+        .support-list li, .version-sublist li { margin: 0; text-align: justify; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
         .signature-image { position: absolute; top: -32pt; left: -22pt; width: 240pt; height: auto; }
@@ -55,7 +54,14 @@
             <ol class="support-list">
                 @foreach ($supports as $support)
                     @php($quantity = (int) ($support['quantity'] ?? 1))
-                    <li>{{ $support['title'] }} ({{ $quantity }} {{ $quantity === 1 ? 'vez' : 'veces' }})</li>
+                    <li>
+                        {{ $support['title'] }} ({{ $quantity }} {{ $quantity === 1 ? 'vez' : 'veces' }})
+                        @if (str_ends_with((string) ($support['key'] ?? ''), '_server_update') && $versions->isNotEmpty())
+                            <ul class="version-sublist">
+                                @foreach ($versions as $version)<li>{{ $version }}</li>@endforeach
+                            </ul>
+                        @endif
+                    </li>
                 @endforeach
             </ol>
         @endif
@@ -66,14 +72,5 @@
         </div>
     </main>
 
-    @if ($versions->isNotEmpty())
-        <main class="version-page">
-            <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
-            <p class="document-title">Versiones aplicadas en el servidor</p>
-            <ul class="version-list">
-                @foreach ($versions as $version)<li>{{ $version }}</li>@endforeach
-            </ul>
-        </main>
-    @endif
 </body>
 </html>
