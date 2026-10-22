@@ -675,13 +675,12 @@
                     </li>
                 @endcan
 
-                @canany(['manage-delivery-notes', 'manage-backup-reports'])
                     <li x-data="{ openDocuments: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button type="button" @click="openDocuments = !openDocuments"
                             :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                            class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <span class="flex items-center">
-                                <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 3h7l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 3v5h5M10 12h6M10 16h6" />
                                 </svg>
@@ -711,10 +710,15 @@
                                         </a>
                                     </li>
                                 @endcan
+                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('soporte.reportes-tecnicos') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
+                                        <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </li>
-                @endcanany
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->

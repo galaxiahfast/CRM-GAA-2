@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\TimeEntryController;
+use App\Http\Controllers\TechnicalSupportReportController;
 // Modelos
 use App\Livewire\Administracion\Interns\GestionAuxiliares;
 use App\Livewire\Administracion\PanelAdministracion;
@@ -293,5 +294,13 @@ Route::middleware([
         Route::get('/reportes-respaldos', ServerBackupReports::class)
             ->middleware('can:manage-backup-reports')
             ->name('reportes-respaldos');
+        Route::get('/reportes-tecnicos', [TechnicalSupportReportController::class, 'index'])
+            ->name('reportes-tecnicos');
+        Route::get('/reportes-tecnicos/historial', [TechnicalSupportReportController::class, 'history'])
+            ->name('reportes-tecnicos.history');
+        Route::post('/reportes-tecnicos', [TechnicalSupportReportController::class, 'store'])
+            ->name('reportes-tecnicos.store');
+        Route::get('/reportes-tecnicos/{report:folio}.pdf', [TechnicalSupportReportController::class, 'pdf'])
+            ->name('reportes-tecnicos.pdf');
     });
 });
