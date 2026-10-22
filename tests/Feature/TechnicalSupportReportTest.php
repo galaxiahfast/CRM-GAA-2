@@ -33,7 +33,8 @@ class TechnicalSupportReportTest extends TestCase
             ->get(route('soporte.reportes-tecnicos.history'))
             ->assertOk()
             ->assertSee('Historial de reportes')
-            ->assertSee('ST-20261022-0001');
+            ->assertSee('ST-20261022-0005')
+            ->assertDontSee('Soporte técnico general');
 
         $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.pdf', $report))
