@@ -93,4 +93,31 @@ class TechnicalSupportReportTest extends TestCase
             'support_quantities' => ['contpaqi_nominas_server_update' => 1],
         ])->assertSessionHasErrors('versions_applied');
     }
+
+    public function test_microsoft_365_and_claude_services_can_be_reported(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'supports' => [
+                'microsoft_365_refresh',
+                'claude_addin_setup',
+                'microsoft_store_compatibility_update',
+            ],
+            'support_quantities' => [
+                'microsoft_365_refresh' => 2,
+                'claude_addin_setup' => 2,
+                'microsoft_store_compatibility_update' => 1,
+            ],
+        ])->assertRedirect();
+
+        $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(2, $report->supports[0]['quantity']);
+        $this->assertSame('Configuración del complemento de Claude en Microsoft 365', $report->supports[1]['title']);
+        $this->assertSame(
+            $report->folio.'-m365-claude-act-store.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }
