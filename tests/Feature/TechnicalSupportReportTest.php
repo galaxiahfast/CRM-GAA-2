@@ -120,4 +120,35 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
+
+    public function test_sql_and_intern_email_services_can_be_reported(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'supports' => [
+                'sql_server_2012_restore',
+                'sql_terminal_access_setup',
+                'intern_email_creation',
+                'email_setup',
+                'email_web_access_limits',
+            ],
+            'support_quantities' => [
+                'sql_server_2012_restore' => 1,
+                'sql_terminal_access_setup' => 1,
+                'intern_email_creation' => 2,
+                'email_setup' => 2,
+                'email_web_access_limits' => 2,
+            ],
+        ])->assertRedirect();
+
+        $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('Restauración de base de datos empresarial en SQL Server 2012', $report->supports[0]['title']);
+        $this->assertSame(2, $report->supports[2]['quantity']);
+        $this->assertSame(
+            $report->folio.'-restaurar-sql2012-acceso-sql-correos-becarios-config-correo-limites-correo.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }

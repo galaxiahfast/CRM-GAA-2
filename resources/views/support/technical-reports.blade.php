@@ -134,7 +134,7 @@
                                 <p class="mt-[5px] text-zinc-500">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
                             </div>
                             <div class="min-w-0">
-                                <p class="font-semibold text-black">{{ collect($report->supports)->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')->join(', ') }}</p>
+                                <p class="font-semibold text-black [text-align:justify]">{{ collect($report->supports)->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')->join(', ') }}</p>
                                 <p class="mt-[5px] text-zinc-500">{{ $report->responsible }}</p>
                             </div>
                             <div class="flex items-center gap-[10px]">
