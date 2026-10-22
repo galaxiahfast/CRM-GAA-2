@@ -26,7 +26,7 @@
         .body-copy { margin: 0 0 18pt; text-align: justify; }
         .section-title { margin: 0; }
         .support-list { margin: 0 0 18pt; padding: 0 0 0 24pt; list-style: decimal; }
-        .version-sublist { margin: 0; padding: 0 0 0 24pt; list-style: disc; }
+        .version-sublist { margin: 0; padding: 0 0 0 24pt; list-style: none; }
         .support-list li, .version-sublist li { margin: 0; text-align: justify; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
@@ -58,7 +58,7 @@
                         {{ $support['title'] }} ({{ $quantity }} {{ $quantity === 1 ? 'vez' : 'veces' }})
                         @if (str_ends_with((string) ($support['key'] ?? ''), '_server_update') && $versions->isNotEmpty())
                             <ul class="version-sublist">
-                                @foreach ($versions as $version)<li>{{ $version }}</li>@endforeach
+                                @foreach ($versions as $version)<li>{{ $loop->parent->iteration }}.{{ $loop->iteration }} {{ $version }}</li>@endforeach
                             </ul>
                         @endif
                     </li>

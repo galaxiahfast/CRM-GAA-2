@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\TechnicalSupportReport;
 use App\Models\User;
+use App\Services\Support\TechnicalSupportReportPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -63,6 +64,10 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame(2, $report->supports[1]['quantity']);
         $this->assertSame(['18.3.1 - Solución fuera de versión', '19.4.0 - Versión final'], $report->details['versions_applied']);
         $this->assertStringStartsWith('ST-', $report->folio);
+        $this->assertSame(
+            $report->folio.'-act-srv-cont-inst-office.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
 
         $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.pdf', $report))

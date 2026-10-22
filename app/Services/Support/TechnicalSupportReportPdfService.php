@@ -48,7 +48,7 @@ class TechnicalSupportReportPdfService
             'addressee' => 'Atención: A quién corresponda',
             'supports' => $report->supports ?? [],
             'details' => $report->details ?? [],
-            'filename' => 'reporte-soporte-tecnico-'.$report->folio.'.pdf',
+            'filename' => $this->filename($report),
         ];
     }
 
@@ -71,6 +71,36 @@ class TechnicalSupportReportPdfService
         $dompdf->add_info('Subject', 'Formato membretado de soporte técnico');
 
         return $pdf->output();
+    }
+
+    private function filename(TechnicalSupportReport $report): string
+    {
+        $serviceNames = collect($report->supports ?? [])
+            ->map(fn (array $support): string => match ($support['key'] ?? '') {
+                'contpaqi_contabilidad_install' => 'inst-cont',
+                'contpaqi_contabilidad_reinstall' => 'reinst-cont',
+                'contpaqi_nominas_install' => 'inst-nom',
+                'contpaqi_nominas_reinstall' => 'reinst-nom',
+                'contpaqi_errors' => 'errores-contpaqi',
+                'contpaqi_contabilidad_update' => 'act-cont',
+                'contpaqi_contabilidad_server_update' => 'act-srv-cont',
+                'contpaqi_nominas_update' => 'act-nom',
+                'contpaqi_nominas_server_update' => 'act-srv-nom',
+                'contpaqi_backup_restore' => 'respaldo-contpaqi',
+                'office_install' => 'inst-office',
+                'email_setup' => 'config-correo',
+                'printer_setup' => 'config-impresora',
+                'network_setup' => 'config-red',
+                'windows_setup' => 'config-windows',
+                'antivirus_install' => 'antivirus',
+                'data_migration' => 'migracion-datos',
+                'general_diagnosis' => 'diagnostico',
+                default => 'soporte',
+            })
+            ->unique()
+            ->implode('-');
+
+        return $report->folio.($serviceNames !== '' ? '-'.$serviceNames : '').'.pdf';
     }
 
     private function dataUri(string $path): ?string
