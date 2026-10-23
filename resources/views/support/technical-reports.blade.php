@@ -172,13 +172,18 @@
                 <div x-data="backupOverlayScroll()" class="relative max-h-[440px]">
                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll max-h-[440px] divide-y divide-zinc-200 overflow-y-auto">
                         @forelse ($reports as $report)
-                            <article class="grid min-h-[110px] grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)_190px]">
+                            @php
+                                $supportSummary = collect($report->supports)
+                                    ->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')
+                                    ->join(', ');
+                            @endphp
+                            <article class="grid min-h-[110px] grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)_240px]">
                                 <div class="flex flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
                                     <p class="font-semibold text-black">{{ $report->folio }}</p>
                                     <p class="mt-[5px] text-zinc-500">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
                                 </div>
                                 <div class="flex min-w-0 flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
-                                    <p class="font-semibold text-black [text-align:justify]">{{ collect($report->supports)->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')->join(', ') }}</p>
+                                    <p class="truncate font-semibold text-black" title="{{ $supportSummary }}">{{ $supportSummary }}</p>
                                     <p class="mt-[5px] text-zinc-500">{{ $report->responsible }}</p>
                                 </div>
                                 <div class="flex items-center justify-center gap-[10px] px-[20px] py-[15px]">
