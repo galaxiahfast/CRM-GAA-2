@@ -35,6 +35,9 @@ class TechnicalSupportReportTest extends TestCase
             ->get(route('soporte.reportes-tecnicos.history'))
             ->assertOk()
             ->assertSee('Historial de reportes')
+            ->assertSee('ST-20261023-0007')
+            ->assertSee('Respaldo local de correo, configuración, contactos y calendario')
+            ->assertSee('Departamento o cliente: Auditoría')
             ->assertSee('ST-20261022-0005')
             ->assertSee('Departamento o cliente: Contabilidad')
             ->assertDontSee('Soporte técnico general');
@@ -181,6 +184,39 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame('Conexión de computadora a impresora', $report->supports[0]['title']);
         $this->assertStringContainsString(
             'conexion-impresora',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
+
+    public function test_audit_email_backup_and_migration_services_can_be_reported(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('soporte.reportes-tecnicos.store'), [
+                'service_recipient' => 'Auditoría',
+                'supports' => [
+                    'email_local_backup',
+                    'email_data_migration',
+                    'email_pop_to_imap',
+                    'windows_startup_ini_removal',
+                ],
+                'support_quantities' => [
+                    'email_local_backup' => 1,
+                    'email_data_migration' => 1,
+                    'email_pop_to_imap' => 1,
+                    'windows_startup_ini_removal' => 1,
+                ],
+            ])
+            ->assertRedirect();
+
+        $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('Auditoría', $report->service_recipient);
+        $this->assertSame('email_local_backup', $report->supports[0]['key']);
+        $this->assertSame('Cambio de cuenta de correo de POP a IMAP y sincronización inicial', $report->supports[2]['title']);
+        $this->assertSame(
+            $report->folio.'-respaldo-correo-migracion-correo-pop-imap-quitar-ini.pdf',
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
