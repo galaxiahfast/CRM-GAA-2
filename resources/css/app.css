@@ -186,6 +186,37 @@ div.dataTables_filter {
     opacity: 1;
 }
 
+.sidebar-collapsed-tooltip {
+    position: fixed;
+    z-index: 250;
+    display: none;
+    max-width: 260px;
+    padding: 10px 12px;
+    border: 1px solid #d4d4d8;
+    border-radius: 10px;
+    background: #fff;
+    color: #18181b;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 14%);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.25;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.sidebar-collapsed-tooltip::before {
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    border-bottom: 1px solid #d4d4d8;
+    border-left: 1px solid #d4d4d8;
+    background: #fff;
+    content: '';
+    transform: translateY(-50%) rotate(45deg);
+}
+
 /* El listado del buscador conserva el mismo trazo fino del menú lateral. */
 .sidebar-search-results-scrollbar {
     scrollbar-width: none;

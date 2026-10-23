@@ -147,22 +147,31 @@ HTML);
         }
     }
 
-    public function test_delivery_notes_and_backup_reports_are_listed_under_activities(): void
+    public function test_backup_management_and_document_links_are_grouped_in_sidebar_order(): void
     {
         $admin = $this->userWithRole('Administrador', 'admin-menu@datamid.test');
         $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
 
         $activitiesPosition = strpos($html, '>Actividades<');
+        $managementPosition = strpos($html, '>Gestión de Respaldos<');
+        $documentsPosition = strpos($html, '>Documentos<');
         $deliveryPosition = strpos($html, '>Hoja de Entrega<');
         $backupPosition = strpos($html, '>Reporte de Respaldos<');
+        $technicalPosition = strpos($html, '>Reportes de Soporte<');
         $supportPosition = strpos($html, '>Soporte<');
         $this->assertNotFalse($activitiesPosition);
+        $this->assertNotFalse($managementPosition);
+        $this->assertNotFalse($documentsPosition);
         $this->assertNotFalse($deliveryPosition);
         $this->assertNotFalse($backupPosition);
+        $this->assertNotFalse($technicalPosition);
         $this->assertNotFalse($supportPosition);
-        $this->assertGreaterThan($activitiesPosition, $deliveryPosition);
+        $this->assertGreaterThan($activitiesPosition, $managementPosition);
+        $this->assertGreaterThan($managementPosition, $documentsPosition);
+        $this->assertGreaterThan($documentsPosition, $deliveryPosition);
         $this->assertGreaterThan($deliveryPosition, $backupPosition);
-        $this->assertGreaterThan($backupPosition, $supportPosition);
+        $this->assertGreaterThan($backupPosition, $technicalPosition);
+        $this->assertGreaterThan($technicalPosition, $supportPosition);
     }
 
     public function test_pdf_service_generates_a_valid_pdf(): void

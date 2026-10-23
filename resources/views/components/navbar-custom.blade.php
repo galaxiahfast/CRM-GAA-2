@@ -299,6 +299,7 @@
     <!-- ============================================================ -->
     <aside
         id="logo-sidebar"
+        :data-collapsed="collapsed ? 'true' : 'false'"
         class="fixed left-0 top-0 z-[100] h-screen
             flex flex-col bg-zinc-100 shadow-sm
             overflow-hidden"
@@ -681,50 +682,32 @@
                     </li>
                 @endcan
 
-                    <li x-data="{ openDocuments: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
-                        <button type="button" @click="openDocuments = !openDocuments"
-                            :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                            class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                            <span class="flex items-center">
-                                <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*', 'soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 3h7l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 3v5h5M10 12h6M10 16h6" />
-                                </svg>
-                                <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Documentos</span>
-                            </span>
-                            <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openDocuments ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
-                            </svg>
-                        </button>
+                    <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                        <span class="flex h-[15px] items-center text-[15px] font-medium leading-none text-black">Documentos</span>
+                    </li>
 
-                        <div x-show="openDocuments" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
-                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
-                            <ul class="w-full">
                                 @can('manage-delivery-notes')
-                                    <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                        <a href="{{ route('soporte.hoja-entrega') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                        <a href="{{ route('soporte.hoja-entrega') }}" data-sidebar-label="Hoja de Entrega" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
                                         </a>
                                     </li>
                                 @endcan
                                 @can('manage-backup-reports')
-                                    <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                        <a href="{{ route('soporte.reportes-respaldos') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                        <a href="{{ route('soporte.reportes-respaldos') }}" data-sidebar-label="Reporte de Respaldos" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
                                         </a>
                                     </li>
                                 @endcan
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('soporte.reportes-tecnicos') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                    <a href="{{ route('soporte.reportes-tecnicos') }}" data-sidebar-label="Reportes de Soporte" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                                         <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
                                     </a>
                                 </li>
-                            </ul>
-                        </div>
-                    </li>
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
@@ -892,6 +875,79 @@
                     attributes: true,
                 });
                 requestAnimationFrame(updateOverlayScrollbar);
+            }
+
+            if (sidebar && !document.querySelector('.sidebar-collapsed-tooltip')) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'sidebar-collapsed-tooltip';
+                tooltip.setAttribute('role', 'tooltip');
+                document.body.appendChild(tooltip);
+
+                let activeTrigger = null;
+
+                const hideCollapsedTooltip = () => {
+                    activeTrigger = null;
+                    tooltip.style.display = 'none';
+                };
+
+                const tooltipLabel = (trigger) => {
+                    const explicitLabel = trigger.dataset.sidebarLabel
+                        || trigger.getAttribute('aria-label')
+                        || trigger.getAttribute('title');
+
+                    if (explicitLabel) return explicitLabel.trim();
+
+                    return Array.from(trigger.querySelectorAll('span'))
+                        .map((span) => span.textContent.replace(/\s+/g, ' ').trim())
+                        .find((label) => label.length > 1) || '';
+                };
+
+                const showCollapsedTooltip = (trigger) => {
+                    if (sidebar.dataset.collapsed !== 'true') {
+                        hideCollapsedTooltip();
+                        return;
+                    }
+
+                    const label = tooltipLabel(trigger);
+                    if (!label) return;
+
+                    activeTrigger = trigger;
+                    tooltip.textContent = label;
+                    tooltip.style.display = 'block';
+
+                    const triggerRect = trigger.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    const top = Math.min(
+                        window.innerHeight - tooltipRect.height - 10,
+                        Math.max(10, triggerRect.top + ((triggerRect.height - tooltipRect.height) / 2)),
+                    );
+
+                    tooltip.style.left = `${Math.round(sidebar.getBoundingClientRect().right + 10)}px`;
+                    tooltip.style.top = `${Math.round(top)}px`;
+                };
+
+                sidebar.addEventListener('pointerover', (event) => {
+                    const trigger = event.target.closest('a[href], button');
+                    if (!trigger || !sidebar.contains(trigger) || trigger === activeTrigger) return;
+                    showCollapsedTooltip(trigger);
+                });
+
+                sidebar.addEventListener('pointerout', (event) => {
+                    if (!activeTrigger || activeTrigger.contains(event.relatedTarget)) return;
+                    hideCollapsedTooltip();
+                });
+
+                sidebar.addEventListener('focusin', (event) => {
+                    const trigger = event.target.closest('a[href], button');
+                    if (trigger && sidebar.contains(trigger)) showCollapsedTooltip(trigger);
+                });
+                sidebar.addEventListener('focusout', hideCollapsedTooltip);
+                menuScroller?.addEventListener('scroll', hideCollapsedTooltip, { passive: true });
+                window.addEventListener('resize', hideCollapsedTooltip, { passive: true });
+
+                new MutationObserver(() => {
+                    if (sidebar.dataset.collapsed !== 'true') hideCollapsedTooltip();
+                }).observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
             }
 
             Alpine.effect(() => {
