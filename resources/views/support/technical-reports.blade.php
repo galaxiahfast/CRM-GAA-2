@@ -1,28 +1,25 @@
 <x-app-layout>
     <style>
         .support-service-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: #214574 transparent;
+            scrollbar-width: none;
+            overscroll-behavior: contain;
         }
 
         .support-service-scroll::-webkit-scrollbar {
-            width: 3px;
-            height: 3px;
-        }
-
-        .support-service-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .support-service-scroll::-webkit-scrollbar-thumb {
-            border-radius: 9999px;
-            background: #214574;
-        }
-
-        .support-service-scroll::-webkit-scrollbar-button {
-            display: none;
             width: 0;
             height: 0;
+        }
+
+        .support-service-scroll-thumb {
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 20;
+            width: 3px;
+            min-height: 32px;
+            border-radius: 9999px;
+            background: #1A3A6B;
+            pointer-events: none;
         }
 
         .support-service-checkbox:focus,
@@ -124,20 +121,23 @@
                         <p class="mt-[10px] text-red-600">{{ $message }}</p>
                     @enderror
 
-                    <div class="support-service-scroll -mr-[20px] mt-[20px] grid max-h-[390px] grid-cols-1 gap-[10px] overflow-y-auto pr-[20px] lg:grid-cols-2">
-                        <template x-for="item in catalog" :key="item.key">
-                            <label x-show="matches(item)" class="flex cursor-pointer items-center gap-[15px] rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
-                                <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
-                                <span class="min-w-0 flex-1">
-                                    <span class="block font-semibold text-black" x-text="item.title"></span>
-                                    <span class="mt-[4px] block text-zinc-500" x-text="item.description"></span>
-                                </span>
-                                <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
-                                    <span class="mb-[5px] block text-zinc-500">Cantidad</span>
-                                    <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-center text-[15px] text-black focus:border-zinc-200 focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                </span>
-                            </label>
-                        </template>
+                    <div x-data="backupOverlayScroll()" x-effect="query; selected.length; $nextTick(() => update())" class="-mr-[20px] mt-[20px] max-h-[390px] relative">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll grid max-h-[390px] grid-cols-1 gap-[10px] overflow-y-auto pr-[20px] lg:grid-cols-2">
+                            <template x-for="item in catalog" :key="item.key">
+                                <label x-show="matches(item)" class="flex cursor-pointer items-center gap-[15px] rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
+                                    <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block font-semibold text-black" x-text="item.title"></span>
+                                        <span class="mt-[4px] block text-zinc-500" x-text="item.description"></span>
+                                    </span>
+                                    <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
+                                        <span class="mb-[5px] block text-zinc-500">Cantidad</span>
+                                        <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-center text-[15px] text-black focus:border-zinc-200 focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                    </span>
+                                </label>
+                            </template>
+                        </div>
+                        <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
 
                     <div x-show="hasServerUpdate()" x-cloak class="mt-[20px] rounded-xl border border-zinc-200 bg-zinc-50 p-[20px]">
@@ -169,25 +169,28 @@
                     <span class="text-zinc-500">{{ $reports->total() }} en total</span>
                 </div>
 
-                <div class="divide-y divide-zinc-200">
-                    @forelse ($reports as $report)
-                        <article class="grid grid-cols-1 items-center gap-[20px] p-[20px] lg:grid-cols-[190px_minmax(0,1fr)_auto]">
-                            <div>
-                                <p class="font-semibold text-black">{{ $report->folio }}</p>
-                                <p class="mt-[5px] text-zinc-500">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="font-semibold text-black [text-align:justify]">{{ collect($report->supports)->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')->join(', ') }}</p>
-                                <p class="mt-[5px] text-zinc-500">{{ $report->responsible }}</p>
-                            </div>
-                            <div class="flex items-center gap-[10px]">
-                                <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-zinc-50">Ver</a>
-                                <a href="{{ route('soporte.reportes-tecnicos.pdf', ['report' => $report, 'download' => 1]) }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800">Descargar</a>
-                            </div>
-                        </article>
-                    @empty
-                        <div class="p-[40px] text-center text-zinc-500">Todavía no hay reportes generados.</div>
-                    @endforelse
+                <div x-data="backupOverlayScroll()" class="relative max-h-[440px]">
+                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll max-h-[440px] divide-y divide-zinc-200 overflow-y-auto">
+                        @forelse ($reports as $report)
+                            <article class="grid min-h-[110px] grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)_190px]">
+                                <div class="flex flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
+                                    <p class="font-semibold text-black">{{ $report->folio }}</p>
+                                    <p class="mt-[5px] text-zinc-500">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
+                                </div>
+                                <div class="flex min-w-0 flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
+                                    <p class="font-semibold text-black [text-align:justify]">{{ collect($report->supports)->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')->join(', ') }}</p>
+                                    <p class="mt-[5px] text-zinc-500">{{ $report->responsible }}</p>
+                                </div>
+                                <div class="flex items-center justify-center gap-[10px] px-[20px] py-[15px]">
+                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-zinc-50">Ver</a>
+                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', ['report' => $report, 'download' => 1]) }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800">Descargar</a>
+                                </div>
+                            </article>
+                        @empty
+                            <div class="p-[40px] text-center text-zinc-500">Todavía no hay reportes generados.</div>
+                        @endforelse
+                    </div>
+                    <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
 
                 @if ($reports->hasPages())
