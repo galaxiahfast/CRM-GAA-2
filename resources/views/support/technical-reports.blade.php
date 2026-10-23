@@ -50,26 +50,29 @@
     </style>
 
     <div class="min-h-[calc(100dvh-100px)] bg-white text-[15px] text-zinc-700">
-        <header class="border-b border-zinc-200 bg-white p-[30px] lg:p-[50px]">
-            <div class="flex items-center gap-[15px] text-zinc-500">
-                <span class="font-medium">Documentos</span>
-                <span class="text-zinc-300">&gt;</span>
-                <span class="font-semibold text-black">Reportes de soporte</span>
-            </div>
-        </header>
+        <main class="w-full space-y-[20px] p-[30px] lg:p-[50px]">
+            <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
+                <div class="flex min-w-0 items-center gap-[15px]">
+                    <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-black">
+                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
+                    </span>
+                    <div class="min-w-0">
+                        <h1 class="text-xl font-semibold tracking-tight text-black">Reportes de soporte</h1>
+                        <p class="mt-[4px] text-zinc-500">Genera y consulta los documentos de los servicios técnicos realizados.</p>
+                    </div>
+                </div>
+            </section>
 
-        <nav class="flex items-center gap-[30px] border-b border-zinc-200 bg-white px-[30px] lg:px-[50px]" aria-label="Secciones de reportes de soporte">
-            <a href="{{ route('soporte.reportes-tecnicos') }}" class="flex h-[58px] items-center gap-[10px] border-b-2 font-medium transition {{ $activeTab === 'generate' ? 'border-[#214574] text-[#214574]' : 'border-transparent text-zinc-500 hover:text-black' }}">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/></svg>
-                Generar reporte
-            </a>
-            <a href="{{ route('soporte.reportes-tecnicos.history') }}" class="flex h-[58px] items-center gap-[10px] border-b-2 font-medium transition {{ $activeTab === 'history' ? 'border-[#214574] text-[#214574]' : 'border-transparent text-zinc-500 hover:text-black' }}">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                Historial
-            </a>
-        </nav>
+            <nav class="!mt-[8px] flex items-center gap-[5px] border-b border-zinc-200" aria-label="Secciones de reportes de soporte">
+                <a href="{{ route('soporte.reportes-tecnicos') }}" class="inline-flex min-h-[44px] items-center border-b-2 px-[15px] font-medium transition {{ $activeTab === 'generate' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black' }}">
+                    Generar reporte
+                </a>
+                <a href="{{ route('soporte.reportes-tecnicos.history') }}" class="inline-flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition {{ $activeTab === 'history' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black' }}">
+                    <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg>
+                    <span>Historial</span>
+                </a>
+            </nav>
 
-        <main class="space-y-[20px] p-[30px] lg:p-[50px]">
             @if (session('status'))
                 <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-[15px] text-emerald-800">{{ session('status') }}</div>
             @endif

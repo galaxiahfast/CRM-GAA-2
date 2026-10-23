@@ -136,7 +136,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*') ? 'px-[50px]' : 'px-[20px]' }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*', 'soporte.reportes-tecnicos*') ? 'px-[50px]' : 'px-[20px]' }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
@@ -163,6 +163,12 @@
                     <span>Información</span>
                     <span class="text-white/40">›</span>
                     <span class="text-white">Administración</span>
+                </div>
+            @elseif (request()->routeIs('soporte.reportes-tecnicos*'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                    <span>Documentos</span>
+                    <span class="text-white/40">›</span>
+                    <span class="text-white">Reportes de soporte</span>
                 </div>
             @endif
 
