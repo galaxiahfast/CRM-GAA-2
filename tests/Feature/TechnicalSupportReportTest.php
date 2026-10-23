@@ -154,4 +154,25 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
+
+    public function test_computer_printer_connection_can_be_reported(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('soporte.reportes-tecnicos.store'), [
+                'supports' => ['computer_printer_connection'],
+                'support_quantities' => ['computer_printer_connection' => 1],
+            ])
+            ->assertRedirect();
+
+        $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('computer_printer_connection', $report->supports[0]['key']);
+        $this->assertSame('Conexión de computadora a impresora', $report->supports[0]['title']);
+        $this->assertStringContainsString(
+            'conexion-impresora',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }
