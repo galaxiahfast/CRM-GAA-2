@@ -21,13 +21,17 @@
         .meta td { padding: 0; vertical-align: top; }
         .meta td:first-child { width: 37%; }
         .meta td:last-child { width: 63%; text-align: right; }
-        .document-title { margin: 0 0 18pt; text-align: center; }
+        .document-heading { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
+        .document-heading td { width: 50%; padding: 0; vertical-align: top; }
+        .document-heading td:first-child { text-align: left; }
+        .document-heading td:last-child { text-align: right; }
         .addressee { margin: 0 0 18pt; text-align: justify; }
         .body-copy { margin: 0 0 18pt; text-align: justify; }
         .section-title { margin: 0; }
         .support-list { margin: 0 0 18pt; padding: 0 0 0 24pt; list-style: decimal; }
         .version-sublist { margin: 0; padding: 0 0 0 24pt; list-style: none; }
         .support-list li, .version-sublist li { margin: 0; text-align: justify; }
+        .version-sublist li { line-height: 1.75; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
         .signature-image { position: absolute; top: -32pt; left: -22pt; width: 240pt; height: auto; }
@@ -45,7 +49,7 @@
 
     <main>
         <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
-        <p class="document-title">{{ $title }}</p>
+        <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>Departamento o cliente: {{ $serviceRecipient }}</td></tr></table>
         <p class="addressee">{{ $addressee }}</p>
         <p class="body-copy">Por medio de la presente nos permitimos informarle del soporte solicitado.</p>
 

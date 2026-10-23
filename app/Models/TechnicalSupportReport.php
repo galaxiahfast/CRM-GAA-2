@@ -11,6 +11,7 @@ class TechnicalSupportReport extends Model
         'folio',
         'issued_at',
         'responsible',
+        'service_recipient',
         'supports',
         'details',
         'created_by',

@@ -36,6 +36,7 @@ class TechnicalSupportReportTest extends TestCase
             ->assertOk()
             ->assertSee('Historial de reportes')
             ->assertSee('ST-20261022-0005')
+            ->assertSee('Departamento o cliente: Contabilidad')
             ->assertDontSee('Soporte técnico general');
 
         $this->actingAs($user)
@@ -49,6 +50,7 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'service_recipient' => 'Cliente Externo Ejemplo',
             'supports' => ['contpaqi_contabilidad_server_update', 'office_install'],
             'support_quantities' => [
                 'contpaqi_contabilidad_server_update' => 4,
@@ -61,6 +63,7 @@ class TechnicalSupportReportTest extends TestCase
 
         $response->assertRedirect(route('soporte.reportes-tecnicos.history', ['created' => $report->folio]));
         $this->assertSame($user->id, $report->created_by);
+        $this->assertSame('Cliente Externo Ejemplo', $report->service_recipient);
         $this->assertSame('Actualización de servidor de CONTPAQi Contabilidad', $report->supports[0]['title']);
         $this->assertSame(4, $report->supports[0]['quantity']);
         $this->assertSame('Instalación de Microsoft Office', $report->supports[1]['title']);
@@ -83,6 +86,7 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'service_recipient' => 'Nóminas',
             'supports' => ['contpaqi_nominas_update'],
             'support_quantities' => ['contpaqi_nominas_update' => 2],
             'versions_applied' => "19.0.1\n19.4.0",
@@ -92,6 +96,7 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame([], $normalUpdate->details['versions_applied']);
 
         $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'service_recipient' => 'Nóminas',
             'supports' => ['contpaqi_nominas_server_update'],
             'support_quantities' => ['contpaqi_nominas_server_update' => 1],
         ])->assertSessionHasErrors('versions_applied');
@@ -102,6 +107,7 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'service_recipient' => 'Contabilidad',
             'supports' => [
                 'microsoft_365_refresh',
                 'claude_addin_setup',
@@ -129,6 +135,7 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('soporte.reportes-tecnicos.store'), [
+            'service_recipient' => 'Auditoría',
             'supports' => [
                 'sql_server_2012_restore',
                 'sql_terminal_access_setup',
@@ -161,6 +168,7 @@ class TechnicalSupportReportTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('soporte.reportes-tecnicos.store'), [
+                'service_recipient' => 'Jurídico',
                 'supports' => ['computer_printer_connection'],
                 'support_quantities' => ['computer_printer_connection' => 1],
             ])
@@ -169,6 +177,7 @@ class TechnicalSupportReportTest extends TestCase
         $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
 
         $this->assertSame('computer_printer_connection', $report->supports[0]['key']);
+        $this->assertSame('Jurídico', $report->service_recipient);
         $this->assertSame('Conexión de computadora a impresora', $report->supports[0]['title']);
         $this->assertStringContainsString(
             'conexion-impresora',

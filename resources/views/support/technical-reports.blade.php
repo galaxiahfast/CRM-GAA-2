@@ -100,6 +100,21 @@
                 <form method="POST" action="{{ route('soporte.reportes-tecnicos.store') }}" class="p-[20px]">
                     @csrf
 
+                    <label class="mb-[20px] block">
+                        <span class="mb-[7px] block font-medium text-black">Departamento o cliente</span>
+                        <input name="service_recipient" value="{{ old('service_recipient') }}" list="support-recipient-options" maxlength="180" required placeholder="Ej. Contabilidad, Jurídico o nombre del cliente externo" class="h-12 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0">
+                        <datalist id="support-recipient-options">
+                            <option value="Administración"></option>
+                            <option value="Auditoría"></option>
+                            <option value="Contabilidad"></option>
+                            <option value="Jurídico"></option>
+                            <option value="Nóminas"></option>
+                            <option value="Nóminas y Contabilidad"></option>
+                        </datalist>
+                        <span class="mt-[5px] block text-zinc-500">Puedes escribir un departamento interno o el nombre de un cliente externo.</span>
+                        @error('service_recipient')<span class="mt-[5px] block text-red-600">{{ $message }}</span>@enderror
+                    </label>
+
                     <div class="mb-[15px] flex flex-col items-start justify-between gap-[10px] sm:flex-row sm:items-center">
                         <div>
                             <h2 class="font-semibold text-black">Servicios incluidos</h2>
@@ -184,7 +199,8 @@
                                 </div>
                                 <div class="flex min-w-0 flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
                                     <p class="truncate font-semibold text-black" title="{{ $supportSummary }}">{{ $supportSummary }}</p>
-                                    <p class="mt-[5px] text-zinc-500">{{ $report->responsible }}</p>
+                                    <p class="mt-[5px] truncate text-zinc-500" title="Departamento o cliente: {{ $report->service_recipient }}">Departamento o cliente: {{ $report->service_recipient }}</p>
+                                    <p class="mt-[3px] text-zinc-500">{{ $report->responsible }}</p>
                                 </div>
                                 <div class="flex items-center justify-center gap-[10px] px-[20px] py-[15px]">
                                     <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-zinc-50">Ver</a>

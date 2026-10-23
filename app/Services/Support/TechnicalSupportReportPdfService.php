@@ -52,6 +52,7 @@ class TechnicalSupportReportPdfService
             'issuedAt' => $issuedAt,
             'issuedAtLong' => ucfirst($issuedAt->isoFormat('dddd, D [de] MMMM [de] YYYY, HH:mm:ss')).' '.$issuedAt->format('T'),
             'responsible' => $report->responsible,
+            'serviceRecipient' => $report->service_recipient,
             'title' => 'Soporte técnico',
             'addressee' => 'Atención: A quién corresponda',
             'supports' => $report->supports ?? [],

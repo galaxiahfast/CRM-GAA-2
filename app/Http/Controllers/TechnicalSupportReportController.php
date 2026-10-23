@@ -42,6 +42,7 @@ class TechnicalSupportReportController extends Controller
     {
         $catalog = $pdf->catalog();
         $validated = $request->validate([
+            'service_recipient' => ['required', 'string', 'max:180'],
             'supports' => ['required', 'array', 'min:1', 'max:8'],
             'supports.*' => ['required', 'string', 'distinct', Rule::in(array_keys($catalog))],
             'support_quantities' => ['required', 'array'],
@@ -81,12 +82,13 @@ class TechnicalSupportReportController extends Controller
             'versions_applied' => $hasServerUpdate ? $versions : [],
         ];
 
-        $report = DB::transaction(function () use ($selectedSupports, $details): TechnicalSupportReport {
+        $report = DB::transaction(function () use ($selectedSupports, $details, $validated): TechnicalSupportReport {
             $localIssuedAt = now(config('support.timezone', 'America/Mexico_City'));
             $report = TechnicalSupportReport::create([
                 'folio' => 'PENDING-'.Str::uuid(),
                 'issued_at' => $localIssuedAt->clone()->utc(),
                 'responsible' => 'Julian Emiliano Ortiz Rivero',
+                'service_recipient' => trim($validated['service_recipient']),
                 'supports' => $selectedSupports,
                 'details' => $details,
                 'created_by' => auth()->id(),
