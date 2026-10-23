@@ -26,7 +26,9 @@ class TechnicalSupportReportTest extends TestCase
             ->get(route('soporte.reportes-tecnicos'))
             ->assertOk()
             ->assertSee('Reportes de soporte')
-            ->assertSee('Generar reporte de soporte')
+            ->assertSee('Servicios incluidos')
+            ->assertDontSee('Generar reporte de soporte')
+            ->assertDontSee('Selecciona servicios e indica cuántas veces se realizó cada uno.')
             ->assertDontSee('Historial de reportes');
 
         $this->actingAs($user)

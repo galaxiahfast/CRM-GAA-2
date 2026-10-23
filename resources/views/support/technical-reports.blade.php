@@ -100,25 +100,15 @@
                     }
                 }"
             >
-                <div class="flex flex-col items-start justify-between gap-[20px] border-b border-zinc-200 p-[20px] lg:flex-row lg:items-center">
-                    <div class="flex items-center gap-[15px]">
-                        <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
-                            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
-                        </span>
-                        <div>
-                            <h1 class="text-xl font-semibold text-black">Generar reporte de soporte</h1>
-                            <p class="mt-[5px] text-zinc-500">Selecciona servicios e indica cuántas veces se realizó cada uno.</p>
-                        </div>
-                    </div>
-                    <span class="text-zinc-500"><span x-text="selected.length">0</span> de 8 seleccionados</span>
-                </div>
-
                 <form method="POST" action="{{ route('soporte.reportes-tecnicos.store') }}" class="p-[20px]">
                     @csrf
 
-                    <div class="mb-[15px]">
-                        <h2 class="font-semibold text-black">Servicios incluidos</h2>
-                        <p class="mt-[5px] text-zinc-500">Selecciona los conceptos e indica en cuántos equipos se realizó cada uno.</p>
+                    <div class="mb-[15px] flex flex-col items-start justify-between gap-[10px] sm:flex-row sm:items-center">
+                        <div>
+                            <h2 class="font-semibold text-black">Servicios incluidos</h2>
+                            <p class="mt-[5px] text-zinc-500">Selecciona los conceptos e indica en cuántos equipos se realizó cada uno.</p>
+                        </div>
+                        <span class="shrink-0 text-zinc-500"><span x-text="selected.length">0</span> de 8 seleccionados</span>
                     </div>
 
                     <label class="relative block">
