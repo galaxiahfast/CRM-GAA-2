@@ -1,4 +1,54 @@
 <x-app-layout>
+    <style>
+        .support-service-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #214574 transparent;
+        }
+
+        .support-service-scroll::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
+        }
+
+        .support-service-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .support-service-scroll::-webkit-scrollbar-thumb {
+            border-radius: 9999px;
+            background: #214574;
+        }
+
+        .support-service-scroll::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+
+        .support-service-checkbox:focus,
+        .support-service-checkbox:focus-visible,
+        .support-quantity-input:focus,
+        .support-quantity-input:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-offset-shadow: 0 0 #0000 !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+        }
+
+        .support-quantity-input {
+            appearance: textfield;
+            -moz-appearance: textfield;
+            text-align: center;
+        }
+
+        .support-quantity-input::-webkit-inner-spin-button,
+        .support-quantity-input::-webkit-outer-spin-button {
+            margin: 0;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+    </style>
+
     <div class="min-h-[calc(100dvh-100px)] bg-white text-[15px] text-zinc-700">
         <header class="border-b border-zinc-200 bg-white p-[30px] lg:p-[50px]">
             <div class="flex items-center gap-[15px] text-zinc-500">
@@ -81,17 +131,17 @@
                         <p class="mt-[10px] text-red-600">{{ $message }}</p>
                     @enderror
 
-                    <div class="mt-[20px] grid max-h-[390px] grid-cols-1 gap-[10px] overflow-y-auto pr-[5px] [scrollbar-color:#214574_transparent] [scrollbar-width:thin] lg:grid-cols-2">
+                    <div class="support-service-scroll -mr-[20px] mt-[20px] grid max-h-[390px] grid-cols-1 gap-[10px] overflow-y-auto pr-[20px] lg:grid-cols-2">
                         <template x-for="item in catalog" :key="item.key">
-                            <label x-show="matches(item)" class="flex cursor-pointer items-start gap-[15px] rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-black bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
-                                <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="mt-[3px] h-4 w-4 rounded border-zinc-300 text-black focus:ring-0 disabled:opacity-40">
+                            <label x-show="matches(item)" class="flex cursor-pointer items-center gap-[15px] rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
+                                <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
                                 <span class="min-w-0 flex-1">
                                     <span class="block font-semibold text-black" x-text="item.title"></span>
                                     <span class="mt-[4px] block text-zinc-500" x-text="item.description"></span>
                                 </span>
                                 <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
                                     <span class="mb-[5px] block text-zinc-500">Cantidad</span>
-                                    <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-[15px] text-black focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                    <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-center text-[15px] text-black focus:border-zinc-200 focus:outline-none focus:ring-0 focus:ring-offset-0">
                                 </span>
                             </label>
                         </template>
@@ -110,7 +160,7 @@
                         </label>
                     </div>
 
-                    <div class="mt-[20px] flex flex-col items-start justify-between gap-[15px] border-t border-zinc-200 pt-[20px] sm:flex-row sm:items-center">
+                    <div class="-mx-[20px] mt-[20px] flex flex-col items-start justify-between gap-[15px] border-t border-zinc-200 px-[20px] pt-[20px] sm:flex-row sm:items-center">
                         <p class="text-zinc-500">El folio y la fecha se asignarán automáticamente.</p>
                         <button type="submit" :disabled="selected.length === 0" class="inline-flex h-11 items-center justify-center rounded-xl bg-black px-[20px] font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">Generar PDF</button>
                     </div>
