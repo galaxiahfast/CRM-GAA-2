@@ -77,6 +77,23 @@
             padding: 0 !important;
         }
 
+        /* Línea divisoria entre secciones: 20px de aire arriba y abajo (la última sección no lleva). */
+        [data-administration-modal] section:not([class*="bg-blue-50"]):not(:last-child) {
+            border-bottom: 1px solid #e4e4e7 !important;
+            padding-bottom: 20px !important;
+        }
+
+        /* Botón cerrar (×) en rojo. */
+        [data-administration-modal] header button[aria-label="Cerrar"] {
+            border-color: #fecaca !important;
+            color: #dc2626 !important;
+        }
+
+        [data-administration-modal] header button[aria-label="Cerrar"]:hover {
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+        }
+
         /* Cajas de texto sin aire interno (line-height: 1): la separación entre elementos es exacta
            y no depende del tamaño de letra ni de si es título, etiqueta o párrafo. */
         [data-administration-modal] section h2 {
