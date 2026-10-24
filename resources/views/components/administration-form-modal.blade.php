@@ -83,15 +83,17 @@
             padding-bottom: 20px !important;
         }
 
-        /* Botón cerrar (×) en rojo. */
+        /* Botón cerrar (×) relleno de rojo. */
         [data-administration-modal] header button[aria-label="Cerrar"] {
-            border-color: #fecaca !important;
-            color: #dc2626 !important;
+            border-color: #dc2626 !important;
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
         }
 
         [data-administration-modal] header button[aria-label="Cerrar"]:hover {
-            background-color: #fef2f2 !important;
-            color: #b91c1c !important;
+            border-color: #b91c1c !important;
+            background-color: #b91c1c !important;
+            color: #ffffff !important;
         }
 
         /* Cajas de texto sin aire interno (line-height: 1): la separación entre elementos es exacta
