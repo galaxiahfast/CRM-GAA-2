@@ -136,9 +136,18 @@
             --tw-ring-shadow: 0 0 #0000 !important;
             --tw-ring-offset-shadow: 0 0 #0000 !important;
         }
+        /* Mismo gris intermedio (#d4d4d8) en bordes de campos, botones e icono del encabezado. */
+        [data-administration-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]) {
+            border-color: #d4d4d8 !important;
+        }
+
+        [data-administration-modal] header div.border {
+            border-color: #d4d4d8 !important;
+        }
+
         [data-administration-modal] footer button {
             min-height: 44px;
-            border: 1px solid #e4e4e7 !important;
+            border: 1px solid #d4d4d8 !important;
             border-radius: 0.75rem !important;
             background: #ffffff !important;
             color: #18181b !important;
