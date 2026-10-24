@@ -30,6 +30,9 @@ class Form extends Component
 
     public $password_confirmation;
 
+    /** true cuando la persona escribió su propia contraseña (no se sobrescribe al cambiar el apellido). */
+    public bool $passwordTouched = false;
+
     public $roles;
 
     public $role_id = '';
@@ -146,8 +149,53 @@ class Form extends Component
         $this->isHourlyPosition = $this->isHourlyJobPosition($this->job_position_id);
         if ($this->mode === 'create') {
             $this->email = '';
-            $this->generateRandomPassword();
+            $this->password = '';
+            $this->password_confirmation = '';
+            $this->passwordTouched = false;
         }
+    }
+
+    /** Contraseña por defecto: primer apellido + año actual + punto (ej. "Ortiz2026."). */
+    private function defaultPassword(): string
+    {
+        $firstSurname = preg_split('/\s+/', trim((string) $this->last_name))[0] ?? '';
+        $firstSurname = preg_replace('/[^A-Za-z0-9]/', '', Str::ascii($firstSurname));
+
+        if ($firstSurname === '') {
+            return '';
+        }
+
+        return Str::ucfirst(Str::lower($firstSurname)).now()->year.'.';
+    }
+
+    /** Pone la contraseña por defecto (o una aleatoria si aún no hay apellido). */
+    public function restoreDefaultPassword(): void
+    {
+        $default = $this->defaultPassword();
+
+        if ($default === '') {
+            $this->generateRandomPassword();
+        } else {
+            $this->password = $default;
+            $this->password_confirmation = $default;
+            $this->resetValidation(['password', 'password_confirmation']);
+        }
+
+        $this->passwordTouched = false;
+    }
+
+    public function updatedLastName(): void
+    {
+        if ($this->mode === 'create' && ! $this->passwordTouched) {
+            $default = $this->defaultPassword();
+            $this->password = $default;
+            $this->password_confirmation = $default;
+        }
+    }
+
+    public function updatedPassword(): void
+    {
+        $this->passwordTouched = filled($this->password);
     }
 
     public function generateRandomPassword(): void
@@ -468,8 +516,9 @@ class Form extends Component
         $this->name = '';
         $this->last_name = '';
         $this->email = '';
-        $this->password = Str::password(14, true, true, true, false);
+        $this->password = '';
         $this->password_confirmation = '';
+        $this->passwordTouched = false;
         $this->role_id = '';
         $this->employee_id = '';
         $this->hourly_rate = 25.00;

@@ -125,6 +125,7 @@
         [data-administration-modal] header h1,
         [data-administration-modal] header p {
             line-height: 1 !important;
+            color: #000000 !important;
         }
 
         [data-administration-modal] label {
