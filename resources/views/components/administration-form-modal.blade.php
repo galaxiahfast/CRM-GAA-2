@@ -75,6 +75,12 @@
             }
         }
 
+        /* Refuerzo: el scroll del cuerpo del formulario siempre en negro, sin borde. */
+        [data-administration-modal] .administration-form-scrollbar::-webkit-scrollbar-thumb {
+            border: 0 !important;
+            background: #000000 !important;
+        }
+
         /* Secciones sin cajas ni líneas divisorias; mismo espacio título → etiqueta → campo (10px). */
         [data-administration-modal] section:not([class*="bg-blue-50"]) {
             border: 0 !important;

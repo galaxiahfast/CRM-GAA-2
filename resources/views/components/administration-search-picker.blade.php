@@ -70,10 +70,16 @@
         },
         positionList() {
             const rect = this.$refs.input.getBoundingClientRect();
-            const opensAbove = this.preferredPlacement === 'top' || (this.preferredPlacement === 'auto' && window.innerHeight - rect.bottom < 280 && rect.top > 280);
-            const top = opensAbove ? Math.max(8, rect.top - 264 - 8) : rect.bottom + 8;
-            const availableHeight = opensAbove ? rect.top - 16 : window.innerHeight - top - 8;
-            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; max-height: ${Math.max(72, Math.min(256, availableHeight))}px; z-index: 200100;`;
+            const gap = 20;
+            const itemHeight = this.$refs.results?.querySelector('[role=option]')?.offsetHeight || 55;
+            const wanted = Math.max(1, Math.min(this.filteredOptions.length, 5)) * itemHeight;
+            const below = window.innerHeight - rect.bottom - gap - 8;
+            const above = rect.top - gap - 8;
+            const opensAbove = this.preferredPlacement === 'top' || (this.preferredPlacement === 'auto' && below < Math.min(wanted, itemHeight * 3) && above > below);
+            const space = opensAbove ? above : below;
+            const height = Math.min(wanted, Math.max(1, Math.floor(space / itemHeight)) * itemHeight);
+            const top = opensAbove ? rect.top - gap - height - 2 : rect.bottom + gap;
+            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; max-height: ${height + 2}px; z-index: 200100;`;
         },
         closeList() {
             this.query = '';
@@ -101,7 +107,7 @@
         :value="open ? query : selectedLabel"
         @focus="openList()"
         @click="openList()"
-        @input="query = $event.target.value; open = true"
+        @input="query = $event.target.value; open = true; $nextTick(() => positionList())"
         @keydown.enter.prevent="if (filteredOptions.length) choose(filteredOptions[0])"
         @keydown.arrow-down.prevent="open = true; $nextTick(() => $refs.results?.querySelector('[role=option]')?.focus())"
         @disabled($disabled)
