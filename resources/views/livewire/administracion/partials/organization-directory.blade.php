@@ -117,14 +117,6 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14M5 12h14" /></svg>
                         <span>Agregar</span>
                     </button>
-                    <button type="button" @click="manage('editar')" class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-[20px] py-[15px] leading-none text-[12px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-black focus:outline-none focus:ring-0" :title="`Editar en ${activeCatalog.label}`">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
-                        <span>Editar</span>
-                    </button>
-                    <button type="button" @click="manage('eliminar')" class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-[20px] py-[15px] leading-none text-[12px] font-semibold text-zinc-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-0" :title="`Eliminar en ${activeCatalog.label}`">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
-                        <span>Eliminar</span>
-                    </button>
                 </div>
 
                 <label class="relative block w-full max-w-[280px]">
