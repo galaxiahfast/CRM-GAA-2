@@ -166,7 +166,7 @@
         @class([
             'administration-form-panel relative flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl',
         ])
-        style="height: min(760px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
+        style="max-width: 680px; height: min(680px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
     >
         <form wire:submit.prevent="{{ $submit }}" class="flex min-h-0 flex-1 flex-col">
             <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
