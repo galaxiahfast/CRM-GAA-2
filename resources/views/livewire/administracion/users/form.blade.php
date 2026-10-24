@@ -64,26 +64,26 @@
                 <div x-data="{ showPassword: @js($managementTab === 'crear') }" class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0">
                         <label for="name" class="block text-[15px] font-medium text-gray-700">Nombres</label>
-                        <input id="name" type="text" maxlength="255" wire:model="name" class="{{ $inputClasses }}" @disabled($editingDisabled)>
+                        <input id="name" type="text" maxlength="255" wire:model="name" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Nombre...">
                         <x-input-error for="name" class="mt-2 text-[15px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="last_name" class="block text-[15px] font-medium text-gray-700">Apellidos</label>
-                        <input id="last_name" type="text" maxlength="255" wire:model="last_name" class="{{ $inputClasses }}" @disabled($editingDisabled)>
+                        <input id="last_name" type="text" maxlength="255" wire:model="last_name" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Apellidos...">
                         <x-input-error for="last_name" class="mt-2 text-[15px]" />
                     </div>
 
                     <div class="min-w-0 sm:col-span-2">
                         <label for="email" class="block text-[15px] font-medium text-gray-700">Correo electrónico</label>
-                        <input id="email" type="email" maxlength="255" wire:model="email" class="{{ $inputClasses }}" autocomplete="off" @disabled($editingDisabled)>
+                        <input id="email" type="email" maxlength="255" wire:model="email" class="{{ $inputClasses }}" autocomplete="off" @disabled($editingDisabled) placeholder="Correo electrónico...">
                         <x-input-error for="email" class="mt-2 text-[15px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="password" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
                         <div class="relative mt-[20px]">
-                            <input id="password" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : '' }}" @if ($managementTab === 'crear') @blur="if ($event.target.value === '') $wire.generateRandomPassword()" @endif @disabled($editingDisabled)>
+                            <input id="password" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : 'Contraseña...' }}" @if ($managementTab === 'crear') @blur="if ($event.target.value === '') $wire.generateRandomPassword()" @endif @disabled($editingDisabled)>
                             <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
                                 <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
@@ -95,7 +95,7 @@
                     <div class="min-w-0">
                         <label for="password_confirmation" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Confirmar nueva contraseña' : 'Confirmar contraseña' }}</label>
                         <div class="relative mt-[20px]">
-                            <input id="password_confirmation" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" @disabled($editingDisabled)>
+                            <input id="password_confirmation" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" @disabled($editingDisabled) placeholder="{{ $managementTab === 'editar' ? 'Confirmar nueva contraseña...' : 'Confirmar contraseña...' }}">
                             <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
                                 <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
@@ -151,13 +151,13 @@
                     @if ($isHourlyPosition)
                         <div class="min-w-0">
                             <label for="hourly_rate" class="block text-[15px] font-medium text-gray-700">Precio por hora ($)</label>
-                            <input id="hourly_rate" type="number" step="0.01" min="0" wire:model="hourly_rate" class="{{ $inputClasses }}" @disabled($editingDisabled)>
+                            <input id="hourly_rate" type="number" step="0.01" min="0" wire:model="hourly_rate" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Precio por hora...">
                             <x-input-error for="hourly_rate" class="mt-2 text-[15px]" />
                         </div>
 
                         <div class="min-w-0">
                             <label for="food_allowance" class="block text-[15px] font-medium text-gray-700">Apoyo económico por día ($)</label>
-                            <input id="food_allowance" type="number" step="0.01" min="0" wire:model="food_allowance" class="{{ $inputClasses }}" @disabled($editingDisabled)>
+                            <input id="food_allowance" type="number" step="0.01" min="0" wire:model="food_allowance" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Apoyo económico por día...">
                             <x-input-error for="food_allowance" class="mt-2 text-[15px]" />
                         </div>
                     @endif

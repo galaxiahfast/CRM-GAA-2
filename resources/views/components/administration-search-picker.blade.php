@@ -29,6 +29,7 @@
 
 <style>
     /* Mismo scroll del formulario (3px, azul, sin flechas, siempre visible); el borde global de 2px lo ocultaba. */
+    body [role="listbox"].administration-picker-scrollbar { background-color: #ffffff !important; }
     .administration-picker-scrollbar { scrollbar-width: thin; scrollbar-color: #1a3a6b transparent; }
     @supports selector(::-webkit-scrollbar) {
         .administration-picker-scrollbar { scrollbar-width: auto; scrollbar-color: auto; }
@@ -117,7 +118,7 @@
     </button>
 
     <template x-teleport="body">
-        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-picker-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-[#d4d4d8] bg-white shadow-lg" role="listbox">
+        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle + ' background-color: #ffffff;'" class="administration-picker-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-[#d4d4d8] bg-white shadow-lg" role="listbox">
             @foreach ($normalizedItems as $option)
                 <button type="button"
                     data-item-id="{{ $option['id'] }}"
