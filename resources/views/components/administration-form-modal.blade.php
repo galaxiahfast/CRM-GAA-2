@@ -14,7 +14,7 @@
     @click.self="visible = false"
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($cancelAction)) visible = false"
     @keydown.escape.window="visible = false; $wire.{{ $cancelAction }}()"
-    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-[2px]"
+    class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
     aria-labelledby="{{ $modalId }}-title"

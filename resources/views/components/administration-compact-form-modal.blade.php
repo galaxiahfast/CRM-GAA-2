@@ -15,20 +15,20 @@
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($closeAction)) visible = false"
     @keydown.escape.window="$wire.{{ $closeAction }}()"
     @keyup.escape.window="visible = false"
-    class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
+    class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
     aria-labelledby="{{ $modalId }}-title"
     data-administration-modal="{{ $modalId }}"
 >
     <div
-        class="relative w-full max-w-xl overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl"
+        class="relative w-full max-w-xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl"
         style="font-size: 15px;"
     >
         <form wire:submit.prevent="{{ $submit }}">
-            <header class="flex items-center justify-between gap-[15px] border-b border-gray-300 p-5">
+            <header class="flex items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
                 <div class="flex min-w-0 items-center gap-[15px]">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white shadow-sm">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
                         {{ $icon }}
                     </div>
 
@@ -45,7 +45,7 @@
                 <button
                     type="button"
                     wire:click="{{ $closeAction }}"
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-xl leading-none text-gray-500 transition hover:border-[#1A3A6B] hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-xl leading-none text-zinc-500 transition hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
                     aria-label="Cerrar"
                 >
                     &times;
@@ -53,18 +53,18 @@
             </header>
 
             @if (isset($navigation))
-                <nav class="flex border-b border-gray-300 bg-[#F3F3F3] px-5" aria-label="Gestión del catálogo">
+                <nav class="flex border-b border-zinc-200 bg-white px-[20px]" aria-label="Gestión del catálogo">
                     {{ $navigation }}
                 </nav>
             @endif
 
-            <div class="p-5">
-                <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="bg-white p-[20px]">
+                <div class="rounded-xl border border-zinc-200 bg-white p-[20px] shadow-none">
                     {{ $form }}
                 </div>
             </div>
 
-            <footer class="flex justify-end gap-[15px] border-t border-gray-300 p-5">
+            <footer class="flex justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
                 {{ $actions }}
             </footer>
         </form>

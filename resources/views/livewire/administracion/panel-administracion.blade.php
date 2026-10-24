@@ -38,7 +38,7 @@
         },
     }"
     x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
-    class="administration-monochrome relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
+    class="administration-monochrome relative min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
     style="background-color: #ffffff !important;"
 >
     <style hidden>
@@ -50,6 +50,26 @@
         .administration-monochrome {
             color: #3f3f46;
             font-size: 15px;
+        }
+        .administration-monochrome:has([data-administration-modal]) {
+            z-index: 200000;
+            overflow: visible !important;
+        }
+        .administration-monochrome main:has([data-administration-modal]) {
+            width: 100% !important;
+            margin-left: 0 !important;
+            transform: none !important;
+        }
+        html:has(.administration-monochrome [data-administration-modal]),
+        body:has(.administration-monochrome [data-administration-modal]) {
+            overflow: hidden !important;
+        }
+        .administration-monochrome [data-administration-modal] :where(section, fieldset, article) {
+            border-color: #e4e4e7 !important;
+            background-color: #ffffff !important;
+        }
+        .administration-monochrome [data-administration-modal] :where(h1, h2, h3, label, strong, legend) {
+            color: #18181b !important;
         }
         .administration-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
             font-size: 15px !important;
@@ -1185,7 +1205,7 @@
             @click.self="visible = false"
             @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closePermissionsModal') visible = false"
             @keydown.escape.window="visible = false; $wire.closePermissionsModal()"
-            class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]"
+            class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
             aria-labelledby="permissions-modal-title"
@@ -1304,7 +1324,7 @@
 {{-- MODAL DE USUARIO --}}
 {{-- ============================================================ --}}
 @if ($selectedUserDetails)
-    <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/55 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+    <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
         <!-- Contenedor principal: altura fija de 80vh -->
         <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-300 bg-[#F3F3F3] shadow-2xl" style="height: min(86vh, 820px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;">
             
