@@ -57,6 +57,7 @@
 
             .administration-form-scrollbar::-webkit-scrollbar-thumb {
                 min-height: 32px;
+                border: 0;
                 background: #1a3a6b;
                 border-radius: 9999px;
             }
@@ -83,17 +84,17 @@
             padding-bottom: 20px !important;
         }
 
-        /* Botón cerrar (×): siempre relleno de rojo, con la × en negro. */
+        /* Botón cerrar (×): siempre relleno de rojo, con la × en blanco. */
         [data-administration-modal] .administration-form-panel header button[aria-label="Cerrar"] {
             border-color: #dc2626 !important;
             background-color: #dc2626 !important;
-            color: #000000 !important;
+            color: #ffffff !important;
         }
 
         [data-administration-modal] .administration-form-panel header button[aria-label="Cerrar"]:hover {
             border-color: #b91c1c !important;
             background-color: #b91c1c !important;
-            color: #000000 !important;
+            color: #ffffff !important;
         }
 
         /* Cajas de texto sin aire interno (line-height: 1): la separación entre elementos es exacta

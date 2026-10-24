@@ -27,6 +27,18 @@
     $pickerWireKey = $pickerId;
 @endphp
 
+<style>
+    /* Mismo scroll del formulario (3px, azul, sin flechas, siempre visible); el borde global de 2px lo ocultaba. */
+    .administration-picker-scrollbar { scrollbar-width: thin; scrollbar-color: #1a3a6b transparent; }
+    @supports selector(::-webkit-scrollbar) {
+        .administration-picker-scrollbar { scrollbar-width: auto; scrollbar-color: auto; }
+        .administration-picker-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
+        .administration-picker-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .administration-picker-scrollbar::-webkit-scrollbar-thumb { min-height: 32px; border: 0; border-radius: 9999px; background: #1a3a6b; }
+        .administration-picker-scrollbar::-webkit-scrollbar-button, .administration-picker-scrollbar::-webkit-scrollbar-corner { display: none; width: 0; height: 0; }
+    }
+</style>
+
 <div
     wire:key="{{ $pickerWireKey }}"
     class="relative mt-[10px]"
@@ -105,7 +117,7 @@
     </button>
 
     <template x-teleport="body">
-        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-form-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white shadow-lg" role="listbox">
+        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-picker-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white shadow-lg" role="listbox">
             @foreach ($normalizedItems as $option)
                 <button type="button"
                     data-item-id="{{ $option['id'] }}"
