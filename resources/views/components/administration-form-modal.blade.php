@@ -34,9 +34,14 @@
         [data-administration-modal] .administration-form-panel .bg-white {
             background-color: #ffffff !important;
         }
+        /* Scroll igual al del menú principal: delgado (3px) y visible solo al pasar el cursor. */
         .administration-form-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #1A3A6B transparent;
+            scrollbar-color: transparent transparent;
+        }
+
+        .administration-form-scrollbar:hover {
+            scrollbar-color: #1a3a6b transparent;
         }
 
         .administration-form-scrollbar::-webkit-scrollbar {
@@ -48,14 +53,36 @@
         }
 
         .administration-form-scrollbar::-webkit-scrollbar-thumb {
-            background: #1A3A6B;
+            background: transparent;
             border-radius: 9999px;
+        }
+
+        .administration-form-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: #1a3a6b;
         }
 
         .administration-form-scrollbar::-webkit-scrollbar-button {
             display: none;
             width: 0;
             height: 0;
+        }
+
+        /* Secciones sin cajas ni líneas divisorias; mismo espacio título → etiqueta → campo (10px). */
+        [data-administration-modal] section:not([class*="bg-blue-50"]) {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        [data-administration-modal] section h2 {
+            margin: 0 0 10px !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0 !important;
+            line-height: 1.25 !important;
+            text-transform: none !important;
+            color: #000 !important;
         }
 
         [data-administration-modal] textarea {

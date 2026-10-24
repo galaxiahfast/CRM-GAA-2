@@ -46,7 +46,7 @@
 
     <x-slot name="form">
         @if ($managementTab === 'editar')
-            <section class="mb-[20px] border-b border-zinc-200 pb-[20px]">
+            <section class="mb-[30px]">
                 <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
                 <x-administration-search-picker input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
@@ -57,9 +57,9 @@
         @endif
 
         @if (in_array($managementTab, ['crear', 'editar'], true))
-        <div class="flex flex-col gap-5 {{ $editingDisabled ? 'opacity-75' : '' }}">
-            <section class="border-b border-zinc-200 pb-[20px]">
-                <h2 class="mb-[15px] font-semibold text-black">Datos personales</h2>
+        <div class="flex flex-col gap-[30px] {{ $editingDisabled ? 'opacity-75' : '' }}">
+            <section>
+                <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0">
@@ -99,8 +99,8 @@
                 </div>
             </section>
 
-            <section class="border-b border-zinc-200 pb-[20px]">
-                <h2 class="mb-[15px] font-semibold text-black">Perfil organizacional</h2>
+            <section>
+                <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -130,7 +130,7 @@
             </section>
 
             <section>
-                <h2 class="mb-[15px] font-semibold text-black">Configuración del checador y nómina</h2>
+                <h2 class="mb-[10px] font-semibold text-black">Configuración del checador y nómina</h2>
 
                 <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -158,8 +158,8 @@
             </section>
         </div>
         @else
-            <div class="flex flex-col gap-5">
-                <section class="rounded-xl border border-[#CAD7E7] p-5">
+            <div class="flex flex-col gap-[30px]">
+                <section>
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar usuario</h2>
                     <label for="management-delete-user" class="block text-[15px] font-medium text-gray-700">Usuario a eliminar</label>
                     <x-administration-search-picker input-id="management-delete-user" model="managementUserId" :selected="$managementUserId"
