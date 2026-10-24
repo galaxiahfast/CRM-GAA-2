@@ -131,7 +131,7 @@
                     class="flex w-full min-w-0 items-center justify-between gap-[20px] px-[20px] py-[20px] text-left text-[15px] leading-none focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-zinc-100 focus:bg-zinc-100' }}"
                     role="option"
                     :aria-selected="String(selectedId) === @js($option['id'])">
-                    <span class="min-w-0 flex-1 truncate text-[15px] font-medium leading-none text-black" style="text-overflow: ellipsis;">{{ $option['label'] }}</span>
+                    <span class="min-w-0 flex-1 truncate text-[15px] font-normal leading-none text-black" style="text-overflow: ellipsis;">{{ $option['label'] }}</span>
                     @if ($option['meta'] !== '')
                         <span class="max-w-[45%] shrink-0 truncate text-[15px] leading-none text-zinc-500" style="text-overflow: ellipsis;">{{ $option['meta'] }}</span>
                     @endif
