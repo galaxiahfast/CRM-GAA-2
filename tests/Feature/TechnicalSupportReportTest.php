@@ -248,4 +248,23 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
+
+    public function test_microsoft_report_lists_people_by_service(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261022-0003')
+            ->firstOrFail();
+
+        $this->assertSame([
+            'Lizet Nayeli Pool Chin',
+            'Anastacio May Ku',
+        ], $report->supports[0]['targets']);
+        $this->assertSame([
+            'Lizet Nayeli Pool Chin',
+            'Anastacio May Ku',
+        ], $report->supports[1]['targets']);
+        $this->assertSame(['Josué Ricardo Puc Pech'], $report->supports[2]['targets']);
+        $this->assertSame(['Josué Ricardo Puc Pech'], $report->supports[3]['targets']);
+        $this->assertSame(['Anastacio May Ku'], $report->supports[4]['targets']);
+    }
 }
