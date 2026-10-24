@@ -34,6 +34,8 @@
         }
 
         /* Encabezado y pie en gris claro para distinguirlos del cuerpo blanco, con líneas más marcadas. */
+        [data-administration-modal] .administration-form-panel header.bg-white,
+        [data-administration-modal] .administration-form-panel footer.bg-white,
         [data-administration-modal] .administration-form-panel header,
         [data-administration-modal] .administration-form-panel footer {
             background-color: #fafafa !important;
