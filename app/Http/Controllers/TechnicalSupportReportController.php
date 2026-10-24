@@ -47,6 +47,8 @@ class TechnicalSupportReportController extends Controller
             'supports.*' => ['required', 'string', 'distinct', Rule::in(array_keys($catalog))],
             'support_quantities' => ['required', 'array'],
             'support_quantities.*' => ['required', 'integer', 'min:1', 'max:999'],
+            'support_targets' => ['nullable', 'array'],
+            'support_targets.*' => ['nullable', 'string', 'max:3000'],
             'versions_applied' => ['nullable', 'string', 'max:2000'],
         ], [
             'supports.required' => 'Selecciona al menos un servicio de soporte.',
@@ -54,11 +56,22 @@ class TechnicalSupportReportController extends Controller
         ]);
 
         $selectedSupports = collect($validated['supports'])
-            ->map(fn (string $key): array => [
-                'key' => $key,
-                ...$catalog[$key],
-                'quantity' => (int) data_get($validated, 'support_quantities.'.$key, 1),
-            ])
+            ->map(function (string $key) use ($catalog, $validated): array {
+                $targets = collect(preg_split('/\r\n|\r|\n/', (string) data_get($validated, 'support_targets.'.$key, '')))
+                    ->map(fn (string $target): string => trim($target))
+                    ->filter()
+                    ->unique()
+                    ->take(50)
+                    ->values()
+                    ->all();
+
+                return [
+                    'key' => $key,
+                    ...$catalog[$key],
+                    'quantity' => (int) data_get($validated, 'support_quantities.'.$key, 1),
+                    'targets' => $targets,
+                ];
+            })
             ->values()
             ->all();
 

@@ -81,6 +81,7 @@
                     query: '',
                     selected: @js(old('supports', [])),
                     quantities: @js(old('support_quantities', [])),
+                    targets: @js(old('support_targets', [])),
                     catalog: @js($catalog),
                     normalize(value) {
                         return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -139,15 +140,21 @@
                     <div x-data="backupOverlayScroll()" x-effect="query; selected.length; $nextTick(() => update())" class="-mr-[20px] mt-[20px] max-h-[390px] relative">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll grid max-h-[390px] grid-cols-1 gap-[10px] overflow-y-auto pr-[20px] lg:grid-cols-2">
                             <template x-for="item in catalog" :key="item.key">
-                                <label x-show="matches(item)" class="flex cursor-pointer items-center gap-[15px] rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
-                                    <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block font-semibold text-black" x-text="item.title"></span>
-                                        <span class="mt-[4px] block text-zinc-500" x-text="item.description"></span>
+                                <label x-show="matches(item)" class="block cursor-pointer rounded-xl border p-[15px] transition" :class="selected.includes(item.key) ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'">
+                                    <span class="flex items-center gap-[15px]">
+                                        <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block font-semibold text-black" x-text="item.title"></span>
+                                            <span class="mt-[4px] block text-zinc-500" x-text="item.description"></span>
+                                        </span>
+                                        <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
+                                            <span class="mb-[5px] block text-zinc-500">Cantidad</span>
+                                            <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-center text-[15px] text-black focus:border-zinc-200 focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                        </span>
                                     </span>
-                                    <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
-                                        <span class="mb-[5px] block text-zinc-500">Cantidad</span>
-                                        <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input h-10 w-full rounded-xl border border-zinc-200 bg-white px-[12px] text-center text-[15px] text-black focus:border-zinc-200 focus:outline-none focus:ring-0 focus:ring-offset-0">
+                                    <span x-show="selected.includes(item.key)" x-cloak class="mt-[15px] block border-t border-zinc-200 pt-[15px]" @click.stop>
+                                        <span class="mb-[7px] block font-medium text-black">Personas o equipos atendidos</span>
+                                        <textarea :name="`support_targets[${item.key}]`" x-model="targets[item.key]" :disabled="!selected.includes(item.key)" rows="2" placeholder="Un nombre por línea" class="w-full resize-y rounded-xl border border-zinc-200 bg-white px-[15px] py-[10px] text-[15px] text-black placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0"></textarea>
                                     </span>
                                 </label>
                             </template>

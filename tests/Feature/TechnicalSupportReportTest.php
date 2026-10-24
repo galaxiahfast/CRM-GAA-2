@@ -59,6 +59,10 @@ class TechnicalSupportReportTest extends TestCase
                 'contpaqi_contabilidad_server_update' => 4,
                 'office_install' => 2,
             ],
+            'support_targets' => [
+                'contpaqi_contabilidad_server_update' => "Equipo servidor\nTerminal de pruebas",
+                'office_install' => 'María Sinaí Campos Caamal',
+            ],
             'versions_applied' => "18.3.1 - Solución fuera de versión\n19.4.0 - Versión final",
         ]);
 
@@ -69,8 +73,10 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame('Cliente Externo Ejemplo', $report->service_recipient);
         $this->assertSame('Actualización de servidor de CONTPAQi Contabilidad', $report->supports[0]['title']);
         $this->assertSame(4, $report->supports[0]['quantity']);
+        $this->assertSame(['Equipo servidor', 'Terminal de pruebas'], $report->supports[0]['targets']);
         $this->assertSame('Instalación de Microsoft Office', $report->supports[1]['title']);
         $this->assertSame(2, $report->supports[1]['quantity']);
+        $this->assertSame(['María Sinaí Campos Caamal'], $report->supports[1]['targets']);
         $this->assertSame(['18.3.1 - Solución fuera de versión', '19.4.0 - Versión final'], $report->details['versions_applied']);
         $this->assertStringStartsWith('ST-', $report->folio);
         $this->assertSame(
@@ -217,6 +223,28 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame('Cambio de cuenta de correo de POP a IMAP y sincronización inicial', $report->supports[2]['title']);
         $this->assertSame(
             $report->folio.'-respaldo-correo-migracion-correo-pop-imap-quitar-ini.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
+
+    public function test_payroll_update_report_lists_people_by_service(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261022-0002')
+            ->firstOrFail();
+
+        $this->assertSame(3, $report->supports[1]['quantity']);
+        $this->assertSame([
+            'Martín Geovany Polanco Pineda',
+            'Axel Bladimir Dzul Pat',
+            'Carlos Jesús Campos Yah',
+        ], $report->supports[1]['targets']);
+        $this->assertSame(4, $report->supports[2]['quantity']);
+        $this->assertSame('María Sinaí Campos Caamal', $report->supports[2]['targets'][0]);
+        $this->assertSame('linked_spreadsheets_correction', $report->supports[3]['key']);
+        $this->assertSame('office_license_activation', $report->supports[4]['key']);
+        $this->assertSame(
+            $report->folio.'-act-srv-nom-act-nom-act-cont-hojas-vinculadas-act-office.pdf',
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
