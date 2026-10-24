@@ -34,37 +34,39 @@
         [data-administration-modal] .administration-form-panel .bg-white {
             background-color: #ffffff !important;
         }
-        /* Scroll igual al del menú principal: delgado (3px) y visible solo al pasar el cursor. */
+        /* Scroll igual al del menú principal: delgado (3px), azul #1A3A6B, sin flechas y siempre visible. */
         .administration-form-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
-        }
-
-        .administration-form-scrollbar:hover {
             scrollbar-color: #1a3a6b transparent;
         }
 
-        .administration-form-scrollbar::-webkit-scrollbar {
-            width: 3px;
-        }
+        @supports selector(::-webkit-scrollbar) {
+            .administration-form-scrollbar {
+                scrollbar-width: auto;
+                scrollbar-color: auto;
+            }
 
-        .administration-form-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
+            .administration-form-scrollbar::-webkit-scrollbar {
+                width: 3px;
+                height: 3px;
+            }
 
-        .administration-form-scrollbar::-webkit-scrollbar-thumb {
-            background: transparent;
-            border-radius: 9999px;
-        }
+            .administration-form-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
 
-        .administration-form-scrollbar:hover::-webkit-scrollbar-thumb {
-            background: #1a3a6b;
-        }
+            .administration-form-scrollbar::-webkit-scrollbar-thumb {
+                min-height: 32px;
+                background: #1a3a6b;
+                border-radius: 9999px;
+            }
 
-        .administration-form-scrollbar::-webkit-scrollbar-button {
-            display: none;
-            width: 0;
-            height: 0;
+            .administration-form-scrollbar::-webkit-scrollbar-button,
+            .administration-form-scrollbar::-webkit-scrollbar-corner {
+                display: none;
+                width: 0;
+                height: 0;
+            }
         }
 
         /* Secciones sin cajas ni líneas divisorias; mismo espacio título → etiqueta → campo (10px). */
@@ -83,6 +85,10 @@
             line-height: 1.25 !important;
             text-transform: none !important;
             color: #000 !important;
+        }
+
+        [data-administration-modal] label {
+            line-height: 1.25 !important;
         }
 
         [data-administration-modal] textarea {

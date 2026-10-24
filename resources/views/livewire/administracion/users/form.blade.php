@@ -46,7 +46,7 @@
 
     <x-slot name="form">
         @if ($managementTab === 'editar')
-            <section class="mb-[30px]">
+            <section class="mb-[10px]">
                 <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
                 <x-administration-search-picker input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
@@ -57,11 +57,11 @@
         @endif
 
         @if (in_array($managementTab, ['crear', 'editar'], true))
-        <div class="flex flex-col gap-[30px] {{ $editingDisabled ? 'opacity-75' : '' }}">
+        <div class="flex flex-col gap-[10px] {{ $editingDisabled ? 'opacity-75' : '' }}">
             <section>
                 <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
 
-                <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                     <div class="min-w-0">
                         <label for="name" class="block text-[15px] font-medium text-gray-700">Nombres</label>
                         <input id="name" type="text" maxlength="255" wire:model="name" class="{{ $inputClasses }}" @disabled($editingDisabled)>
@@ -102,7 +102,7 @@
             <section>
                 <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
 
-                <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
                         <label for="role_id" class="block text-[15px] font-medium text-gray-700">Rol</label>
                         <x-administration-search-picker input-id="role_id" model="role_id" :selected="$role_id"
@@ -132,7 +132,7 @@
             <section>
                 <h2 class="mb-[10px] font-semibold text-black">Configuración del checador y nómina</h2>
 
-                <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
                         <label for="employee_id" class="block text-[15px] font-medium text-gray-700">ID Checador (Hikvision)</label>
                         <x-administration-search-picker input-id="employee_id" model="employee_id" :selected="$employee_id"
@@ -158,7 +158,7 @@
             </section>
         </div>
         @else
-            <div class="flex flex-col gap-[30px]">
+            <div class="flex flex-col gap-[10px]">
                 <section>
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar usuario</h2>
                     <label for="management-delete-user" class="block text-[15px] font-medium text-gray-700">Usuario a eliminar</label>
@@ -170,7 +170,7 @@
 
                 <section class="rounded-xl border p-5 transition-colors {{ $deleteDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $deleteDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
-                    <div class="grid grid-cols-1 gap-[15px]">
+                    <div class="grid grid-cols-1 gap-[10px]">
                     <div>
                         <label for="delete-confirmation-name" class="block text-[15px] font-medium text-gray-700">Repite el nombre completo</label>
                         <input id="delete-confirmation-name" type="text" wire:model.defer="deleteConfirmationName" class="{{ $inputClasses }}" placeholder="{{ $deleteDisabled ? 'Selecciona primero un usuario' : 'Escribe manualmente el nombre completo' }}" @disabled($deleteDisabled) autocomplete="off">
