@@ -59,7 +59,7 @@
             const opensAbove = this.preferredPlacement === 'top' || (this.preferredPlacement === 'auto' && window.innerHeight - rect.bottom < 280 && rect.top > 280);
             const top = opensAbove ? Math.max(8, rect.top - 264 - 8) : rect.bottom + 8;
             const availableHeight = opensAbove ? rect.top - 16 : window.innerHeight - top - 8;
-            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; max-height: ${Math.max(72, Math.min(256, availableHeight))}px; z-index: 10050;`;
+            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; max-height: ${Math.max(72, Math.min(256, availableHeight))}px; z-index: 200100;`;
         },
         closeList() {
             this.query = '';
