@@ -8,10 +8,10 @@
 ])
 
 <div
-    x-data="{ visible: true }"
+    x-data="{ visible: true, pressedOnBackdrop: false }"
     x-show="visible"
-    wire:click.self="{{ $cancelAction }}"
-    @click.self="visible = false"
+    @pointerdown="pressedOnBackdrop = ($event.target === $el)"
+    @click.self="if (pressedOnBackdrop) { visible = false; $wire.{{ $cancelAction }}() } pressedOnBackdrop = false"
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($cancelAction)) visible = false"
     @keydown.escape.window="visible = false; $wire.{{ $cancelAction }}()"
     class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
