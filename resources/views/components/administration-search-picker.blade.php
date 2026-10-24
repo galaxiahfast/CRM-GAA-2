@@ -30,6 +30,7 @@
 <div
     wire:key="{{ $pickerWireKey }}"
     class="relative mt-[10px]"
+    {{ $attributes->only('style') }}
     x-data="{
         open: false,
         query: '',

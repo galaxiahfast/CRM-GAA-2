@@ -14,7 +14,7 @@
 
     $editingDisabled = $managementTab === 'editar' && ! filled($managementUserId);
     $deleteDisabled = $managementTab === 'eliminar' && ! filled($managementUserId);
-    $inputClasses = 'mt-[10px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400';
+    $inputClasses = 'mt-[20px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400';
 @endphp
 
 <x-administration-form-modal
@@ -46,10 +46,10 @@
 
     <x-slot name="form">
         @if ($managementTab === 'editar')
-            <section class="mb-[10px]">
+            <section class="mb-[20px]" style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
-                <x-administration-search-picker input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
+                <x-administration-search-picker style="margin-top: 20px;" input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
                     :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
                     placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
                 <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
@@ -57,11 +57,11 @@
         @endif
 
         @if (in_array($managementTab, ['crear', 'editar'], true))
-        <div class="flex flex-col gap-[10px] {{ $editingDisabled ? 'opacity-75' : '' }}">
-            <section>
+        <div class="flex flex-col gap-[20px] {{ $editingDisabled ? 'opacity-75' : '' }}">
+            <section style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
 
-                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0">
                         <label for="name" class="block text-[15px] font-medium text-gray-700">Nombres</label>
                         <input id="name" type="text" maxlength="255" wire:model="name" class="{{ $inputClasses }}" @disabled($editingDisabled)>
@@ -82,7 +82,7 @@
 
                     <div class="min-w-0">
                         <label for="password" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
-                        <div class="relative mt-[10px]">
+                        <div class="relative mt-[20px]">
                             <input id="password" type="text" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : '' }}" @disabled($editingDisabled)>
                             <button type="button" wire:click="generateRandomPassword" @disabled($editingDisabled) class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-[#55749D] transition hover:bg-[#E7F0FB] hover:text-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" title="Generar otra contraseña" aria-label="Generar otra contraseña aleatoria">
                                 <svg class="h-[19px] w-[19px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke-width="1.7"/><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1" fill="currentColor" stroke="none"/></svg>
@@ -99,13 +99,13 @@
                 </div>
             </section>
 
-            <section>
+            <section style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
 
-                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
                         <label for="role_id" class="block text-[15px] font-medium text-gray-700">Rol</label>
-                        <x-administration-search-picker input-id="role_id" model="role_id" :selected="$role_id"
+                        <x-administration-search-picker style="margin-top: 20px;" input-id="role_id" model="role_id" :selected="$role_id"
                             :items="$roles->map(fn ($role) => ['id' => $role->id, 'label' => $role->role])"
                             placeholder="Buscar rol..." empty-message="No se encontraron roles." :disabled="$editingDisabled" />
                         <x-input-error for="role_id" class="mt-2 text-[15px]" />
@@ -113,7 +113,7 @@
 
                     <div class="min-w-0">
                         <label for="job_position_id" class="block text-[15px] font-medium text-gray-700">Puesto de trabajo</label>
-                        <x-administration-search-picker input-id="job_position_id" model="job_position_id" :selected="$job_position_id"
+                        <x-administration-search-picker style="margin-top: 20px;" input-id="job_position_id" model="job_position_id" :selected="$job_position_id"
                             :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
                             placeholder="Buscar puesto..." empty-message="No se encontraron puestos." :disabled="$editingDisabled" />
                         <x-input-error for="job_position_id" class="mt-2 text-[15px]" />
@@ -121,7 +121,7 @@
 
                     <div class="min-w-0">
                         <label for="physical_area_id" class="block text-[15px] font-medium text-gray-700">Área / Departamento</label>
-                        <x-administration-search-picker input-id="physical_area_id" model="physical_area_id" :selected="$physical_area_id"
+                        <x-administration-search-picker style="margin-top: 20px;" input-id="physical_area_id" model="physical_area_id" :selected="$physical_area_id"
                             :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
                             placeholder="Buscar área o departamento..." empty-message="No se encontraron áreas." :disabled="$editingDisabled" />
                         <x-input-error for="physical_area_id" class="mt-2 text-[15px]" />
@@ -129,13 +129,13 @@
                 </div>
             </section>
 
-            <section>
+            <section style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Configuración del checador y nómina</h2>
 
-                <div class="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
                         <label for="employee_id" class="block text-[15px] font-medium text-gray-700">ID Checador (Hikvision)</label>
-                        <x-administration-search-picker input-id="employee_id" model="employee_id" :selected="$employee_id"
+                        <x-administration-search-picker style="margin-top: 20px;" input-id="employee_id" model="employee_id" :selected="$employee_id"
                             :items="$employeeIdSuggestions->map(fn ($suggestion) => ['id' => $suggestion->employeeID, 'label' => $suggestion->employeeID, 'meta' => trim((string) ($suggestion->personName ?: 'Nombre no disponible'))])"
                             placeholder="Buscar ID o persona..." empty-message="No hay IDs registrados en el checador." placement="bottom" results-id="create-employee-id-suggestions" :disabled="$editingDisabled" />
                         <x-input-error for="employee_id" class="mt-2 text-[15px]" />
@@ -158,19 +158,19 @@
             </section>
         </div>
         @else
-            <div class="flex flex-col gap-[10px]">
-                <section>
+            <div class="flex flex-col gap-[20px]">
+                <section style="--admin-form-gap: 20px;">
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar usuario</h2>
                     <label for="management-delete-user" class="block text-[15px] font-medium text-gray-700">Usuario a eliminar</label>
-                    <x-administration-search-picker input-id="management-delete-user" model="managementUserId" :selected="$managementUserId"
+                    <x-administration-search-picker style="margin-top: 20px;" input-id="management-delete-user" model="managementUserId" :selected="$managementUserId"
                         :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
                         placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
                     <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
                 </section>
 
-                <section class="rounded-xl border p-5 transition-colors {{ $deleteDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
+                <section style="--admin-form-gap: 20px;" class="rounded-xl border p-5 transition-colors {{ $deleteDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $deleteDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
-                    <div class="grid grid-cols-1 gap-[10px]">
+                    <div class="grid grid-cols-1 gap-[20px]">
                     <div>
                         <label for="delete-confirmation-name" class="block text-[15px] font-medium text-gray-700">Repite el nombre completo</label>
                         <input id="delete-confirmation-name" type="text" wire:model.defer="deleteConfirmationName" class="{{ $inputClasses }}" placeholder="{{ $deleteDisabled ? 'Selecciona primero un usuario' : 'Escribe manualmente el nombre completo' }}" @disabled($deleteDisabled) autocomplete="off">

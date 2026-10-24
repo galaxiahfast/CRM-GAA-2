@@ -77,18 +77,25 @@
             padding: 0 !important;
         }
 
+        /* Cajas de texto sin aire interno (line-height: 1): la separación entre elementos es exacta
+           y no depende del tamaño de letra ni de si es título, etiqueta o párrafo. */
         [data-administration-modal] section h2 {
-            margin: 0 0 10px !important;
+            margin: 0 0 var(--admin-form-gap, 10px) !important;
             font-size: 15px !important;
             font-weight: 600 !important;
             letter-spacing: 0 !important;
-            line-height: 1.25 !important;
+            line-height: 1 !important;
             text-transform: none !important;
             color: #000 !important;
         }
 
+        [data-administration-modal] header h1,
+        [data-administration-modal] header p {
+            line-height: 1 !important;
+        }
+
         [data-administration-modal] label {
-            line-height: 1.25 !important;
+            line-height: 1 !important;
         }
 
         [data-administration-modal] textarea {
