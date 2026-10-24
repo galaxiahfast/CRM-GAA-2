@@ -31,12 +31,10 @@
         .support-list { margin: 0 0 18pt; padding: 0 0 0 24pt; list-style: decimal; }
         .detail-sublist { margin: 0; padding: 0 0 0 24pt; list-style: none; }
         .support-list li, .detail-sublist li { margin: 0; text-align: justify; }
-        .detail-sublist li { line-height: 1.75; }
-        .dense-report { margin-top: -6pt; }
-        .dense-report .meta, .dense-report .document-heading, .dense-report .addressee, .dense-report .body-copy, .dense-report .support-list { margin-bottom: 9pt; }
-        .dense-report .support-list > li { line-height: 1.25; }
-        .dense-report .detail-sublist li { line-height: 1.05; }
-        .dense-report .signature-space { height: 50pt; }
+        .support-list > li { page-break-inside: avoid; }
+        .detail-sublist li { position: relative; padding-left: 18pt; line-height: 2; }
+        .detail-sublist li::before { position: absolute; top: 9pt; left: 0; width: 11pt; border-top: 0.75pt solid #000000; content: ""; }
+        .closing-block { page-break-inside: avoid; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
         .signature-image { position: absolute; top: -32pt; left: -22pt; width: 240pt; height: auto; }
@@ -50,11 +48,9 @@
 
     @php
         $versions = collect(data_get($details, 'versions_applied', []))->filter()->values();
-        $targetCount = collect($supports)->sum(fn ($support) => count($support['targets'] ?? []));
-        $denseReport = $versions->count() + $targetCount > 14;
     @endphp
 
-    <main class="{{ $denseReport ? 'dense-report' : '' }}">
+    <main>
         <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
         <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>Departamento o cliente: {{ $serviceRecipient }}</td></tr></table>
         <p class="addressee">{{ $addressee }}</p>
@@ -70,23 +66,24 @@
                         {{ $support['title'] }} ({{ $quantity }} {{ $quantity === 1 ? 'vez' : 'veces' }})
                         @if (str_ends_with((string) ($support['key'] ?? ''), '_server_update') && $versions->isNotEmpty())
                             <ul class="detail-sublist">
-                                @foreach ($versions as $version)<li>{{ $loop->parent->iteration }}.{{ $loop->iteration }} {{ $version }}</li>@endforeach
+                                @foreach ($versions as $version)<li>{{ $version }}</li>@endforeach
                             </ul>
                         @endif
                         @if ($targets->isNotEmpty())
-                            @php($detailOffset = str_ends_with((string) ($support['key'] ?? ''), '_server_update') ? $versions->count() : 0)
                             <ul class="detail-sublist">
-                                @foreach ($targets as $target)<li>{{ $loop->parent->iteration }}.{{ $detailOffset + $loop->iteration }} {{ $target }}</li>@endforeach
+                                @foreach ($targets as $target)<li>{{ $target }}</li>@endforeach
                             </ul>
                         @endif
                     </li>
                 @endforeach
             </ol>
         @endif
-        <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>
-        <div class="signature">
-            <div class="signature-space">@if ($signatureImage)<img class="signature-image" src="{{ $signatureImage }}" alt="Firma">@endif</div>
-            <div class="signature-name">{{ $responsible }} · Soporte técnico</div>
+        <div class="closing-block">
+            <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>
+            <div class="signature">
+                <div class="signature-space">@if ($signatureImage)<img class="signature-image" src="{{ $signatureImage }}" alt="Firma">@endif</div>
+                <div class="signature-name">{{ $responsible }} · Soporte técnico</div>
+            </div>
         </div>
     </main>
 
