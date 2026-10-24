@@ -37,7 +37,7 @@
         [data-administration-modal] .administration-form-panel header,
         [data-administration-modal] .administration-form-panel footer {
             background-color: #f4f4f5 !important;
-            border-color: #a1a1aa !important;
+            border-color: #d4d4d8 !important;
         }
         /* Scroll igual al del menú principal: delgado (3px), azul #1A3A6B, sin flechas y siempre visible. */
         .administration-form-scrollbar {
@@ -85,7 +85,7 @@
 
         /* Línea divisoria entre secciones: 20px de aire arriba y abajo (la última sección no lleva). */
         [data-administration-modal] section:not([class*="bg-blue-50"]):not(:last-child) {
-            border-bottom: 1px solid #a1a1aa !important;
+            border-bottom: 1px solid #d4d4d8 !important;
             padding-bottom: 20px !important;
         }
 
