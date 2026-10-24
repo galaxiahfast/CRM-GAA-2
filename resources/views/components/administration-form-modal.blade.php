@@ -36,7 +36,7 @@
         /* Encabezado y pie en gris claro para distinguirlos del cuerpo blanco, con líneas más marcadas. */
         [data-administration-modal] .administration-form-panel header,
         [data-administration-modal] .administration-form-panel footer {
-            background-color: #f4f4f5 !important;
+            background-color: #fafafa !important;
             border-color: #d4d4d8 !important;
         }
         /* Scroll igual al del menú principal: delgado (3px), azul #1A3A6B, sin flechas y siempre visible. */
