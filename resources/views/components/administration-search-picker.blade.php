@@ -77,7 +77,7 @@
     }"
     @click.outside="closeList()"
     @keydown.escape.window="closeList()"
-    @scroll.window="if (open) positionList()"
+    @scroll.window.capture="if (open && ! ($refs.results && $refs.results.contains($event.target))) closeList()"
     @resize.window="if (open) positionList()"
 >
     <input
@@ -105,7 +105,7 @@
     </button>
 
     <template x-teleport="body">
-        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-form-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg" role="listbox">
+        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-form-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white py-[10px] shadow-lg" role="listbox">
             @foreach ($normalizedItems as $option)
                 <button type="button"
                     data-item-id="{{ $option['id'] }}"
@@ -115,16 +115,16 @@
                     @click="choose(@js($option))"
                     @keydown.enter.prevent="choose(@js($option))"
                     @disabled($option['disabled'])
-                    class="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-4 py-3 text-left focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-zinc-100 focus:bg-zinc-100' }}"
+                    class="flex w-full min-w-0 items-center justify-between gap-[20px] px-[20px] py-[10px] text-left text-[15px] leading-none focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-zinc-100 focus:bg-zinc-100' }}"
                     role="option"
                     :aria-selected="String(selectedId) === @js($option['id'])">
-                    <span class="min-w-0 flex-1 truncate text-[15px] font-medium text-[#102A52]">{{ $option['label'] }}</span>
+                    <span class="min-w-0 flex-1 truncate text-[15px] font-medium leading-none text-black" style="text-overflow: ellipsis;">{{ $option['label'] }}</span>
                     @if ($option['meta'] !== '')
-                        <span class="max-w-[45%] shrink-0 truncate text-[12px] text-[#55749D]">{{ $option['meta'] }}</span>
+                        <span class="max-w-[45%] shrink-0 truncate text-[15px] leading-none text-zinc-500" style="text-overflow: ellipsis;">{{ $option['meta'] }}</span>
                     @endif
                 </button>
             @endforeach
-            <p x-show="filteredOptions.length === 0" class="px-4 py-4 text-center text-[14px] text-[#55749D]">{{ $emptyMessage }}</p>
+            <p x-show="filteredOptions.length === 0" class="truncate px-[20px] py-[10px] text-center text-[15px] leading-none text-zinc-500">{{ $emptyMessage }}</p>
         </div>
     </template>
 </div>
