@@ -92,7 +92,7 @@
         @keydown.arrow-down.prevent="open = true; $nextTick(() => $refs.results?.querySelector('[role=option]')?.focus())"
         @disabled($disabled)
         placeholder="{{ $placeholder }}"
-        class="block h-11 w-full rounded-lg border bg-transparent px-3 pr-11 text-[15px] text-gray-800 shadow-none outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3] {{ $danger ? 'border-red-300 focus:border-red-300' : 'border-[#B7CEEA] focus:border-[#B7CEEA]' }}"
+        class="block h-11 w-full rounded-xl border bg-white px-[15px] pr-11 text-[15px] text-gray-800 shadow-none outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3] {{ $danger ? 'border-red-300' : 'border-zinc-200' }}"
         role="combobox"
         aria-autocomplete="list"
         aria-controls="{{ $pickerResultsId }}"
@@ -104,7 +104,7 @@
     </button>
 
     <template x-teleport="body">
-        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-form-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-[#CAD7E7] bg-white p-1.5 shadow-xl" role="listbox">
+        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" class="administration-form-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg" role="listbox">
             @foreach ($normalizedItems as $option)
                 <button type="button"
                     data-item-id="{{ $option['id'] }}"
@@ -114,7 +114,7 @@
                     @click="choose(@js($option))"
                     @keydown.enter.prevent="choose(@js($option))"
                     @disabled($option['disabled'])
-                    class="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-4 py-3 text-left focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-[#EEF5FF] focus:bg-[#EEF5FF]' }}"
+                    class="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-4 py-3 text-left focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-zinc-100 focus:bg-zinc-100' }}"
                     role="option"
                     :aria-selected="String(selectedId) === @js($option['id'])">
                     <span class="min-w-0 flex-1 truncate text-[15px] font-medium text-[#102A52]">{{ $option['label'] }}</span>

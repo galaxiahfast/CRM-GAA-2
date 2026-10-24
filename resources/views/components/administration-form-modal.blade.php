@@ -62,13 +62,10 @@
             resize: none;
         }
 
-        [data-administration-modal] input:focus,
-        [data-administration-modal] input:focus-visible,
-        [data-administration-modal] select:focus,
-        [data-administration-modal] select:focus-visible,
-        [data-administration-modal] textarea:focus,
-        [data-administration-modal] textarea:focus-visible {
-            border-color: #e4e4e7 !important;
+        /* Sin borde ni halo morado al enfocar: el campo conserva su borde gris. */
+        [data-administration-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus,
+        [data-administration-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus-visible {
+            border-color: #d4d4d8 !important;
             outline: none !important;
             box-shadow: none !important;
             --tw-ring-shadow: 0 0 #0000 !important;
