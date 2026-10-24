@@ -369,8 +369,9 @@ class CatalogManagementModalTest extends TestCase
 
         Livewire::actingAs($administrator)
             ->test(PanelAdministracion::class)
-            ->assertSee('Agregar Cliente')
-            ->assertSee('Agregar Actividad');
+            ->assertSee('Clientes')
+            ->assertSee('Actividades')
+            ->assertSeeHtml('@click="manage(\'crear\')"');
 
         $activeCustomer->update(['deleted_at' => now()]);
         $activity->delete();

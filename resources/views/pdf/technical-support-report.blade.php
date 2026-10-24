@@ -29,11 +29,12 @@
         .body-copy { margin: 0 0 18pt; text-align: justify; }
         .section-title { margin: 0; }
         .support-list { margin: 0 0 18pt; padding: 0 0 0 24pt; list-style: decimal; }
-        .detail-sublist { margin: 0; padding: 0 0 0 24pt; list-style: none; }
-        .support-list li, .detail-sublist li { margin: 0; text-align: justify; }
+        .detail-sublist { width: calc(100% - 24pt); margin: 0 0 0 24pt; border-collapse: collapse; }
+        .support-list li { margin: 0; text-align: justify; }
         .support-list > li { page-break-inside: avoid; }
-        .detail-sublist li { position: relative; padding-left: 18pt; line-height: 2; }
-        .detail-sublist li::before { position: absolute; top: 9pt; left: 0; width: 11pt; border-top: 0.75pt solid #000000; content: ""; }
+        .detail-marker-cell { width: 18pt; padding: 0; vertical-align: middle; }
+        .detail-marker { display: block; width: 11pt; border-top: 0.75pt solid #000000; }
+        .detail-text { padding: 0; line-height: 2; text-align: justify; }
         .closing-block { page-break-inside: avoid; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
@@ -65,14 +66,14 @@
                     <li>
                         {{ $support['title'] }} ({{ $quantity }} {{ $quantity === 1 ? 'vez' : 'veces' }})
                         @if (str_ends_with((string) ($support['key'] ?? ''), '_server_update') && $versions->isNotEmpty())
-                            <ul class="detail-sublist">
-                                @foreach ($versions as $version)<li>{{ $version }}</li>@endforeach
-                            </ul>
+                            <table class="detail-sublist" role="presentation">
+                                @foreach ($versions as $version)<tr><td class="detail-marker-cell"><span class="detail-marker"></span></td><td class="detail-text">{{ $version }}</td></tr>@endforeach
+                            </table>
                         @endif
                         @if ($targets->isNotEmpty())
-                            <ul class="detail-sublist">
-                                @foreach ($targets as $target)<li>{{ $target }}</li>@endforeach
-                            </ul>
+                            <table class="detail-sublist" role="presentation">
+                                @foreach ($targets as $target)<tr><td class="detail-marker-cell"><span class="detail-marker"></span></td><td class="detail-text">{{ $target }}</td></tr>@endforeach
+                            </table>
                         @endif
                     </li>
                 @endforeach

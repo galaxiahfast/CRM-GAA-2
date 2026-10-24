@@ -14,13 +14,21 @@ use Livewire\Component;
 class GestionRelacionesJerarquicas extends Component
 {
     public bool $embedded = false;
+
     public bool $cardActions = false;
+
     public bool $showModal = false;
+
     public string $mode = 'crear';
+
     public ?int $selectedCustomer = null;
+
     public ?int $selectedAccountantId = null;
+
     public array $assignedInterns = [];
+
     public string $deleteConfirmation = '';
+
     public ?string $notice = null;
 
     public function mount(bool $embedded = false, bool $cardActions = false, string $mode = 'crear'): void
@@ -41,10 +49,12 @@ class GestionRelacionesJerarquicas extends Component
     }
 
     #[On('open-assignment-catalog-from-directory')]
-    public function openFromDirectory(string $mode, int $recordId): void
+    public function openFromDirectory(string $mode, ?int $recordId = null): void
     {
         $this->openModal($mode);
-        $this->updatedSelectedCustomer($recordId);
+        if ($recordId !== null) {
+            $this->updatedSelectedCustomer($recordId);
+        }
     }
 
     public function closeModal(): void
@@ -61,7 +71,9 @@ class GestionRelacionesJerarquicas extends Component
         $this->deleteConfirmation = '';
         $this->resetValidation();
 
-        if (! $this->selectedCustomer || $this->mode === 'crear') return;
+        if (! $this->selectedCustomer || $this->mode === 'crear') {
+            return;
+        }
 
         $customer = Customer::query()->findOrFail($this->selectedCustomer);
         $this->selectedAccountantId = $customer->accountants()->wherePivot('status', true)->value('users.id');
@@ -84,14 +96,18 @@ class GestionRelacionesJerarquicas extends Component
             $expected = trim($customer->name.' '.$customer->last_name.' '.$customer->maternal_last_name);
             if (mb_strtolower(trim($data['deleteConfirmation'])) !== mb_strtolower($expected)) {
                 $this->addError('deleteConfirmation', 'Escribe exactamente el nombre completo del cliente.');
+
                 return;
             }
             DB::transaction(function () use ($customer): void {
                 CustomerInterns::query()->where('customer_id', $customer->id)->delete();
                 $accountantIds = $customer->accountants()->pluck('users.id');
-                if ($accountantIds->isNotEmpty()) $customer->accountants()->updateExistingPivot($accountantIds, ['status' => false]);
+                if ($accountantIds->isNotEmpty()) {
+                    $customer->accountants()->updateExistingPivot($accountantIds, ['status' => false]);
+                }
             });
             $this->finish('Asignaciones eliminadas correctamente.');
+
             return;
         }
 
@@ -101,10 +117,14 @@ class GestionRelacionesJerarquicas extends Component
 
         DB::transaction(function () use ($customer, $data, $validInternIds): void {
             $accountantIds = $customer->accountants()->pluck('users.id');
-            if ($accountantIds->isNotEmpty()) $customer->accountants()->updateExistingPivot($accountantIds, ['status' => false]);
+            if ($accountantIds->isNotEmpty()) {
+                $customer->accountants()->updateExistingPivot($accountantIds, ['status' => false]);
+            }
             $customer->accountants()->syncWithoutDetaching([(int) $data['selectedAccountantId'] => ['status' => true]]);
             CustomerInterns::query()->where('customer_id', $customer->id)->delete();
-            foreach ($validInternIds as $internId) CustomerInterns::create(['customer_id' => $customer->id, 'intern_id' => $internId]);
+            foreach ($validInternIds as $internId) {
+                CustomerInterns::create(['customer_id' => $customer->id, 'intern_id' => $internId]);
+            }
         });
         $this->finish($this->mode === 'crear' ? 'Asignación creada correctamente.' : 'Asignación actualizada correctamente.');
     }

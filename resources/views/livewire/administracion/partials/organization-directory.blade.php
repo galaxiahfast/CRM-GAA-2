@@ -19,23 +19,24 @@
             this.expandedItem = null;
             this.query = '';
         },
-        manage(action, item) {
+        manage(action, item = null) {
+            const recordId = item?.id ?? null;
             if (this.selectedCatalog === 'users') {
-                this.$wire.openUserManagement(action, item.id);
+                this.$wire.openUserManagement(action, recordId);
             } else if (this.selectedCatalog === 'roles') {
-                this.$wire.openRoleManagement(action, item.id);
+                this.$wire.openRoleManagement(action, recordId);
             } else if (this.selectedCatalog === 'positions') {
-                this.$wire.openJobPositionModal(action, item.id);
+                this.$wire.openJobPositionModal(action, recordId);
             } else if (this.selectedCatalog === 'areas') {
-                this.$wire.openPhysicalAreaModal(action, item.id);
+                this.$wire.openPhysicalAreaModal(action, recordId);
             } else if (this.selectedCatalog === 'permissions') {
-                Livewire.dispatch('open-permission-catalog-from-directory', { tab: action, recordId: item.id });
+                Livewire.dispatch('open-permission-catalog-from-directory', { tab: action, recordId });
             } else if (this.selectedCatalog === 'customers') {
-                Livewire.dispatch('open-customer-catalog-from-directory', { tab: action, recordId: item.id });
+                Livewire.dispatch('open-customer-catalog-from-directory', { tab: action, recordId });
             } else if (this.selectedCatalog === 'assignments') {
-                Livewire.dispatch('open-assignment-catalog-from-directory', { mode: action, recordId: item.id });
+                Livewire.dispatch('open-assignment-catalog-from-directory', { mode: action, recordId });
             } else if (this.selectedCatalog === 'activities') {
-                Livewire.dispatch('open-activity-catalog-from-directory', { tab: action, recordId: item.id });
+                Livewire.dispatch('open-activity-catalog-from-directory', { tab: action, recordId });
             }
         },
         get activeCatalog() {
@@ -111,7 +112,22 @@
                     <p class="mt-[3px] text-[12px] text-zinc-500" x-text="activeCatalog.description"></p>
                 </div>
 
-                <label class="relative block w-full max-w-[330px]">
+                <div class="ml-auto flex shrink-0 items-center gap-1.5" aria-label="Acciones del catálogo seleccionado">
+                    <button type="button" @click="manage('crear')" class="inline-flex h-[40px] items-center gap-1.5 rounded-lg bg-black px-3 text-[12px] font-semibold text-white transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-0" :title="`Agregar en ${activeCatalog.label}`">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14M5 12h14" /></svg>
+                        <span>Agregar</span>
+                    </button>
+                    <button type="button" @click="manage('editar')" class="inline-flex h-[40px] items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 text-[12px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-black focus:outline-none focus:ring-0" :title="`Editar en ${activeCatalog.label}`">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
+                        <span>Editar</span>
+                    </button>
+                    <button type="button" @click="manage('eliminar')" class="inline-flex h-[40px] items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 text-[12px] font-semibold text-zinc-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-0" :title="`Eliminar en ${activeCatalog.label}`">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
+                        <span>Eliminar</span>
+                    </button>
+                </div>
+
+                <label class="relative block w-full max-w-[280px]">
                     <span class="sr-only">Buscar en el catálogo seleccionado</span>
                     <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                     <input

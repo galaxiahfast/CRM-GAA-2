@@ -13,14 +13,23 @@ use Livewire\Component;
 class CatalogManager extends Component
 {
     public bool $cardActions = false;
+
     public bool $autoOpen = false;
+
     public bool $showModal = false;
+
     public string $activeTab = 'crear';
+
     public ?int $selectedGroupId = null;
+
     public string $name = '';
+
     public string $description = '';
+
     public array $permissionIds = [];
+
     public string $deleteConfirmation = '';
+
     public ?string $notice = null;
 
     public function mount(bool $cardActions = false, bool $autoOpen = false): void
@@ -41,10 +50,12 @@ class CatalogManager extends Component
     }
 
     #[On('open-permission-catalog-from-directory')]
-    public function openFromDirectory(string $tab, int $recordId): void
+    public function openFromDirectory(string $tab, ?int $recordId = null): void
     {
         $this->openModal($tab);
-        $this->updatedSelectedGroupId($recordId);
+        if ($recordId !== null) {
+            $this->updatedSelectedGroupId($recordId);
+        }
     }
 
     public function closeModal(): void
@@ -59,7 +70,9 @@ class CatalogManager extends Component
         $this->clearFields();
         $this->resetValidation();
 
-        if (! $this->selectedGroupId) return;
+        if (! $this->selectedGroupId) {
+            return;
+        }
 
         $group = PermissionGroup::query()->with('permissions:id')->findOrFail($this->selectedGroupId);
         if (in_array($this->activeTab, ['editar', 'eliminar'], true)) {
@@ -81,25 +94,31 @@ class CatalogManager extends Component
             $group = PermissionGroup::query()->withCount('roles')->findOrFail($data['selectedGroupId']);
             if ($group->is_system) {
                 $this->addError('selectedGroupId', 'Los grupos base del sistema no se pueden eliminar.');
+
                 return;
             }
             if ($group->roles_count > 0) {
                 $this->addError('selectedGroupId', 'Desasigna este grupo de todos los roles antes de eliminarlo.');
+
                 return;
             }
             if (mb_strtolower(trim($data['deleteConfirmation'])) !== mb_strtolower($group->name)) {
                 $this->addError('deleteConfirmation', 'Escribe exactamente el nombre del grupo de permisos.');
+
                 return;
             }
             $group->delete();
             $this->finish('Grupo de permisos eliminado correctamente.');
+
             return;
         }
 
         $this->name = trim((string) preg_replace('/\s+/u', ' ', $this->name));
         $this->description = trim($this->description);
         $uniqueName = Rule::unique('permission_groups', 'name');
-        if ($this->selectedGroupId) $uniqueName->ignore($this->selectedGroupId);
+        if ($this->selectedGroupId) {
+            $uniqueName->ignore($this->selectedGroupId);
+        }
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255', $uniqueName],
             'description' => ['nullable', 'string', 'max:255'],
@@ -111,7 +130,7 @@ class CatalogManager extends Component
         DB::transaction(function () use ($data): void {
             $group = $this->activeTab === 'editar'
                 ? PermissionGroup::query()->findOrFail((int) $data['selectedGroupId'])
-                : new PermissionGroup();
+                : new PermissionGroup;
             $group->fill(['name' => $data['name'], 'description' => $data['description'] ?: null]);
             $group->save();
             $group->permissions()->sync($data['permissionIds']);

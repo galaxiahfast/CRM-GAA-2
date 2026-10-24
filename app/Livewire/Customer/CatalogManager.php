@@ -59,10 +59,12 @@ class CatalogManager extends Component
     }
 
     #[On('open-customer-catalog-from-directory')]
-    public function openFromDirectory(string $tab, int $recordId): void
+    public function openFromDirectory(string $tab, ?int $recordId = null): void
     {
         $this->openModal($tab);
-        $this->updatedSelectedCustomerId($recordId);
+        if ($recordId !== null) {
+            $this->updatedSelectedCustomerId($recordId);
+        }
     }
 
     public function closeModal(): void

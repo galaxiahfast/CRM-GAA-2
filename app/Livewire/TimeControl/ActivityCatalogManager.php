@@ -45,10 +45,12 @@ class ActivityCatalogManager extends Component
     }
 
     #[On('open-activity-catalog-from-directory')]
-    public function openFromDirectory(string $tab, int $recordId): void
+    public function openFromDirectory(string $tab, ?int $recordId = null): void
     {
         $this->openModal($tab);
-        $this->updatedSelectedActivityId($recordId);
+        if ($recordId !== null) {
+            $this->updatedSelectedActivityId($recordId);
+        }
     }
 
     public function closeModal(): void
