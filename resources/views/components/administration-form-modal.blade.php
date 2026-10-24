@@ -39,10 +39,10 @@
             background-color: #ffffff !important;
             border-color: #d4d4d8 !important;
         }
-        /* Scroll igual al del menú principal: delgado (3px), azul #1A3A6B, sin flechas y siempre visible. */
+        /* Scroll igual al del menú principal: delgado (3px), negro, sin flechas y siempre visible. */
         .administration-form-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #1a3a6b transparent;
+            scrollbar-color: #000000 transparent;
         }
 
         @supports selector(::-webkit-scrollbar) {
@@ -63,7 +63,7 @@
             .administration-form-scrollbar::-webkit-scrollbar-thumb {
                 min-height: 32px;
                 border: 0;
-                background: #1a3a6b;
+                background: #000000;
                 border-radius: 9999px;
             }
 

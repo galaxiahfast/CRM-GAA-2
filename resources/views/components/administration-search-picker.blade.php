@@ -28,14 +28,14 @@
 @endphp
 
 <style>
-    /* Mismo scroll del formulario (3px, azul, sin flechas, siempre visible); el borde global de 2px lo ocultaba. */
+    /* Mismo scroll del formulario (3px, negro, sin flechas, siempre visible); el borde global de 2px lo ocultaba. */
     body [role="listbox"].administration-picker-scrollbar { background-color: #ffffff !important; }
-    .administration-picker-scrollbar { scrollbar-width: thin; scrollbar-color: #1a3a6b transparent; }
+    .administration-picker-scrollbar { scrollbar-width: thin; scrollbar-color: #000000 transparent; }
     @supports selector(::-webkit-scrollbar) {
         .administration-picker-scrollbar { scrollbar-width: auto; scrollbar-color: auto; }
         .administration-picker-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
         .administration-picker-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .administration-picker-scrollbar::-webkit-scrollbar-thumb { min-height: 32px; border: 0; border-radius: 9999px; background: #1a3a6b; }
+        .administration-picker-scrollbar::-webkit-scrollbar-thumb { min-height: 32px; border: 0; border-radius: 9999px; background: #000000; }
         .administration-picker-scrollbar::-webkit-scrollbar-button, .administration-picker-scrollbar::-webkit-scrollbar-corner { display: none; width: 0; height: 0; }
     }
 </style>
