@@ -61,7 +61,7 @@
             <section style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
 
-                <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
+                <div x-data="{ showPassword: @js($managementTab === 'crear') }" class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0">
                         <label for="name" class="block text-[15px] font-medium text-gray-700">Nombres</label>
                         <input id="name" type="text" maxlength="255" wire:model="name" class="{{ $inputClasses }}" @disabled($editingDisabled)>
@@ -83,9 +83,10 @@
                     <div class="min-w-0">
                         <label for="password" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
                         <div class="relative mt-[20px]">
-                            <input id="password" type="text" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : '' }}" @disabled($editingDisabled)>
-                            <button type="button" wire:click="generateRandomPassword" @disabled($editingDisabled) class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-[#55749D] transition hover:bg-[#E7F0FB] hover:text-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" title="Generar otra contraseña" aria-label="Generar otra contraseña aleatoria">
-                                <svg class="h-[19px] w-[19px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke-width="1.7"/><circle cx="9" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1" fill="currentColor" stroke="none"/></svg>
+                            <input id="password" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : '' }}" @if ($managementTab === 'crear') @blur="if ($event.target.value === '') $wire.generateRandomPassword()" @endif @disabled($editingDisabled)>
+                            <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
+                                <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                             </button>
                         </div>
                         <x-input-error for="password" class="mt-2 text-[15px]" />
@@ -93,7 +94,13 @@
 
                     <div class="min-w-0">
                         <label for="password_confirmation" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Confirmar nueva contraseña' : 'Confirmar contraseña' }}</label>
-                        <input id="password_confirmation" type="password" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }}" autocomplete="new-password" @copy.prevent @cut.prevent @paste.prevent @disabled($editingDisabled)>
+                        <div class="relative mt-[20px]">
+                            <input id="password_confirmation" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" @disabled($editingDisabled)>
+                            <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
+                                <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                            </button>
+                        </div>
                         <x-input-error for="password_confirmation" class="mt-2 text-[15px]" />
                     </div>
                 </div>
