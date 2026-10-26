@@ -62,6 +62,7 @@
         openList() {
             if (this.$refs.input.disabled) return;
             this.query = '';
+            this.$refs.input.value = '';
             this.open = true;
             this.$nextTick(() => {
                 this.$refs.input.focus();
@@ -70,7 +71,7 @@
         },
         positionList() {
             const rect = this.$refs.input.getBoundingClientRect();
-            const gap = 20;
+            const gap = 10;
             const itemHeight = this.$refs.results?.querySelector('[role=option]')?.offsetHeight || 55;
             const wanted = Math.max(1, Math.min(this.filteredOptions.length, 5)) * itemHeight;
             const below = window.innerHeight - rect.bottom - gap - 8;
@@ -84,6 +85,7 @@
         closeList() {
             this.query = '';
             this.open = false;
+            this.$nextTick(() => this.$refs.input.value = this.selectedLabel);
         },
         choose(option) {
             if (option.disabled) return;

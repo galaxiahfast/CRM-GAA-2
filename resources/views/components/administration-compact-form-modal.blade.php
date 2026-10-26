@@ -15,6 +15,8 @@
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($closeAction)) visible = false"
     @keydown.escape.window="$wire.{{ $closeAction }}()"
     @keyup.escape.window="visible = false"
+    @wheel.self.prevent
+    @touchmove.self.prevent
     class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
     role="dialog"
     aria-modal="true"

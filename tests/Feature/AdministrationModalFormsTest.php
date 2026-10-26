@@ -64,7 +64,7 @@ class AdministrationModalFormsTest extends TestCase
         Livewire::actingAs($administrator)
             ->test(UserForm::class)
             ->assertSeeHtml('data-administration-modal="user-form"')
-            ->assertSeeHtml('wire:click.self="cancel"')
+            ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
             ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->count() === 2)
             ->assertSeeHtml('id="create-employee-id-suggestions"')
             ->assertSeeHtml('data-employee-id="BIO-900"')
@@ -98,6 +98,25 @@ class AdministrationModalFormsTest extends TestCase
         ]);
     }
 
+    public function test_create_user_password_suggestion_can_be_restored_and_cleared(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $administrator = $this->createUser($administratorRole, 'admin-password-suggestion@test.mx');
+        $suggestedPassword = 'Ortiz'.now()->year.'.';
+
+        Livewire::actingAs($administrator)
+            ->test(UserForm::class)
+            ->assertSeeHtml("new Event('input', { bubbles: true })")
+            ->set('last_name', 'Ortiz Rivero')
+            ->call('restoreDefaultPassword')
+            ->assertSet('password', $suggestedPassword)
+            ->assertSet('password_confirmation', $suggestedPassword)
+            ->set('last_name', '')
+            ->call('restoreDefaultPassword')
+            ->assertSet('password', '')
+            ->assertSet('password_confirmation', '');
+    }
+
     public function test_administrator_can_create_job_positions_and_physical_areas_from_independent_modals(): void
     {
         $administratorRole = Role::create(['role' => 'Administrador']);
@@ -115,7 +134,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showJobPositionModal', true)
             ->assertSet('showPhysicalAreaModal', false)
             ->assertSeeHtml('data-administration-modal="job-position-form"')
-            ->assertSeeHtml('wire:click.self="closeJobPositionModal"')
+            ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
             ->assertSeeHtml('@keydown.escape.window="visible = false; $wire.closeJobPositionModal()"')
             ->set('newJobPositionName', '  Auditor   de Calidad  ')
             ->set('newJobPositionPaymentType', JobPosition::PAYMENT_HOURLY)
@@ -134,7 +153,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showPhysicalAreaModal', true)
             ->assertSet('showJobPositionModal', false)
             ->assertSeeHtml('data-administration-modal="physical-area-form"')
-            ->assertSeeHtml('wire:click.self="closePhysicalAreaModal"')
+            ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
             ->assertSeeHtml('@keydown.escape.window="visible = false; $wire.closePhysicalAreaModal()"')
             ->set('newPhysicalAreaName', '  Control   Interno  ')
             ->call('savePhysicalArea')
@@ -410,7 +429,7 @@ class AdministrationModalFormsTest extends TestCase
         Livewire::actingAs($administrator)
             ->test(RoleForm::class)
             ->assertSeeHtml('data-administration-modal="role-form"')
-            ->assertSeeHtml('wire:click.self="cancel"')
+            ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
             ->assertSee('Crear Rol')
             ->assertSee('Editar Rol')
             ->assertSee('Eliminar Roles')

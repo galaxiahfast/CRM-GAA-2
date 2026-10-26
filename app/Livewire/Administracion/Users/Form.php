@@ -3,7 +3,6 @@
 namespace App\Livewire\Administracion\Users;
 
 use App\Models\JobPosition;
-use App\Models\PhysicalArea;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInterns;
@@ -168,29 +167,16 @@ class Form extends Component
         return Str::ucfirst(Str::lower($firstSurname)).now()->year.'.';
     }
 
-    /** Pone la contraseña por defecto (o una aleatoria si aún no hay apellido). */
+    /** Restaura la contraseña sugerida o vacía ambos campos si aún no puede generarse. */
     public function restoreDefaultPassword(): void
     {
         $default = $this->defaultPassword();
 
-        if ($default === '') {
-            $this->generateRandomPassword();
-        } else {
-            $this->password = $default;
-            $this->password_confirmation = $default;
-            $this->resetValidation(['password', 'password_confirmation']);
-        }
+        $this->password = $default;
+        $this->password_confirmation = $default;
+        $this->resetValidation(['password', 'password_confirmation']);
 
         $this->passwordTouched = false;
-    }
-
-    public function updatedLastName(): void
-    {
-        if ($this->mode === 'create' && ! $this->passwordTouched) {
-            $default = $this->defaultPassword();
-            $this->password = $default;
-            $this->password_confirmation = $default;
-        }
     }
 
     public function updatedPassword(): void

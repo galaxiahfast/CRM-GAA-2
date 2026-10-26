@@ -14,6 +14,8 @@
     @click.self="if (pressedOnBackdrop) { visible = false; $wire.{{ $cancelAction }}() } pressedOnBackdrop = false"
     @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === @js($cancelAction)) visible = false"
     @keydown.escape.window="visible = false; $wire.{{ $cancelAction }}()"
+    @wheel.self.prevent
+    @touchmove.self.prevent
     class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
@@ -73,6 +75,17 @@
                 width: 0;
                 height: 0;
             }
+        }
+
+        /* El scroll (3px) siempre reserva su carril, y se descuenta del relleno derecho (20px - 3px):
+           así el contenido queda con 20px a cada lado, centrado y alineado con el encabezado y el pie,
+           haya o no scroll. */
+        [data-administration-modal] .administration-form-scrollbar {
+            scrollbar-gutter: stable;
+        }
+
+        [data-administration-modal] .administration-form-scrollbar > div {
+            padding-right: 17px !important;
         }
 
         /* Refuerzo: el scroll del cuerpo del formulario siempre en negro, sin borde. */
@@ -179,7 +192,7 @@
         @class([
             'administration-form-panel relative flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl',
         ])
-        style="max-width: 680px; height: min(680px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
+        style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
     >
         <form wire:submit.prevent="{{ $submit }}" class="flex min-h-0 flex-1 flex-col">
             <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">

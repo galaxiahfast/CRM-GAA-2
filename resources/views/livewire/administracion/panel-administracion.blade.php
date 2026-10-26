@@ -60,10 +60,6 @@
             margin-left: 0 !important;
             transform: none !important;
         }
-        html:has(.administration-monochrome [data-administration-modal]),
-        body:has(.administration-monochrome [data-administration-modal]) {
-            overflow: hidden !important;
-        }
         .administration-monochrome [data-administration-modal] :where(section, fieldset, article) {
             border-color: #e4e4e7 !important;
             background-color: #ffffff !important;
