@@ -497,13 +497,22 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('editingEmployeeId', 'EMP-OLD')
             ->call('loadEmployeeIdSuggestions')
             ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->pluck('employeeID')->contains('EMP-NEW')
-                && ! $suggestions->pluck('employeeID')->contains('EMP-TAKEN'))
+                && $suggestions->pluck('employeeID')->contains('EMP-TAKEN'))
             ->set('editingEmployeeId', 'EMP-NOT-REGISTERED')
             ->call('saveEmployeeId')
             ->assertHasErrors(['editingEmployeeId' => 'exists'])
             ->set('editingEmployeeId', 'EMP-TAKEN')
+            ->set('editingHourlyRate', 37.50)
+            ->set('editingFoodAllowance', 62.25)
             ->call('saveEmployeeId')
-            ->assertHasErrors(['editingEmployeeId' => 'unique'])
+            ->assertHasNoErrors()
+            ->assertSet('showEmployeeIdModal', false);
+
+        $this->assertSame('EMP-TAKEN', $aux->fresh()->employee_id);
+        $this->assertSame('EMP-TAKEN', $other->fresh()->employee_id);
+
+        $component
+            ->call('openEmployeeIdModal', $aux->id)
             ->set('editingEmployeeId', 'EMP-NEW')
             ->set('editingHourlyRate', 37.50)
             ->set('editingFoodAllowance', 62.25)

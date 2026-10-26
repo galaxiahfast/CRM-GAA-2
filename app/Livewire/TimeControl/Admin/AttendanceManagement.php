@@ -237,14 +237,12 @@ class AttendanceManagement extends Component
                 'string',
                 'max:50',
                 Rule::exists('control_de_horas', 'employeeID'),
-                Rule::unique('users', 'employee_id')->ignore($this->editingEmployeeUserId),
             ],
             'editingHourlyRate' => ['required', 'numeric', 'min:0'],
             'editingFoodAllowance' => ['required', 'numeric', 'min:0'],
         ], [
             'editingEmployeeId.required' => 'Selecciona o escribe el ID del checador.',
             'editingEmployeeId.exists' => 'El ID indicado no existe en los registros del checador.',
-            'editingEmployeeId.unique' => 'Este ID de checador ya está relacionado con otra persona.',
             'editingHourlyRate.required' => 'Indica el pago por hora.',
             'editingHourlyRate.numeric' => 'El pago por hora debe ser un número válido.',
             'editingHourlyRate.min' => 'El pago por hora no puede ser menor a 0.',
@@ -794,15 +792,7 @@ class AttendanceManagement extends Component
         // cuando el editor realmente está abierto.
         $employeeIdSuggestions = collect();
         if ($this->showEmployeeIdModal && $this->employeeIdSuggestionsRequested) {
-            $assignedEmployeeIds = $reportUsers
-                ->reject(fn (User $user): bool => $user->id === $this->editingEmployeeUserId)
-                ->pluck('employee_id')
-                ->filter()
-                ->map(fn ($employeeId): string => (string) $employeeId)
-                ->flip();
-
             $employeeIdSuggestions = $references->employeeSuggestions()
-                ->reject(fn ($suggestion): bool => $assignedEmployeeIds->has((string) $suggestion->employeeID))
                 ->values();
         }
 

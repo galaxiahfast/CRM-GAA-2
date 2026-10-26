@@ -57,6 +57,7 @@ class TimeEntryController extends Controller
     {
         $data = $request->validate([
             'employee_id' => ['required', 'string'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'inicio' => ['required', 'date'],
             'fin' => ['required', 'date'],
             'pago' => ['nullable', 'numeric', 'min:0'],
@@ -64,6 +65,7 @@ class TimeEntryController extends Controller
         ]);
 
         $employeeId = $this->resolveEmployeeId($request, $data['employee_id']);
+        $user = $this->resolveAttendanceUser($request, $employeeId, $data['user_id'] ?? null);
 
         try {
             $resultado = $this->buildPayrollResult(
@@ -72,6 +74,7 @@ class TimeEntryController extends Controller
                 $data['fin'],
                 isset($data['pago']) ? (float) $data['pago'] : null,
                 isset($data['bono']) ? (float) $data['bono'] : null,
+                $user,
             );
 
             return response()->json($resultado, 200);
@@ -92,14 +95,15 @@ class TimeEntryController extends Controller
     {
         $data = $request->validate([
             'employee_id' => ['required', 'string'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'inicio' => ['required', 'date'],
             'fin' => ['required', 'date'],
         ]);
 
         $employeeId = $this->resolveEmployeeId($request, $data['employee_id']);
-        $user = User::where('employee_id', $employeeId)->first();
+        $user = $this->resolveAttendanceUser($request, $employeeId, $data['user_id'] ?? null);
 
-        $resultado = $this->buildPayrollResult($employeeId, $data['inicio'], $data['fin']);
+        $resultado = $this->buildPayrollResult($employeeId, $data['inicio'], $data['fin'], user: $user);
 
         $meta = [
             'Colaborador' => $user ? trim($user->name.' '.$user->last_name) : 'ID '.$employeeId,
@@ -188,8 +192,8 @@ class TimeEntryController extends Controller
         string $to,
         ?float $overrideHourly = null,
         ?float $overrideBonus = null,
+        ?User $user = null,
     ): array {
-        $user = User::where('employee_id', $employeeId)->first();
         $profile = $user?->activeOrganizationalProfile;
 
         $profileHourly = $profile ? (float) $profile->hourly_rate : null;
@@ -207,5 +211,30 @@ class TimeEntryController extends Controller
         $records = $this->attendanceService->fetchRecords($employeeId, $from, $to);
 
         return $this->attendanceService->processPayroll($records, $settings);
+    }
+
+    private function resolveAttendanceUser(Request $request, string $employeeId, ?int $requestedUserId = null): ?User
+    {
+        $authenticatedUser = $request->user();
+
+        if (! $authenticatedUser->isAdmin()) {
+            return $authenticatedUser->loadMissing('activeOrganizationalProfile');
+        }
+
+        $users = User::query()
+            ->with('activeOrganizationalProfile')
+            ->where('employee_id', $employeeId);
+
+        if ($requestedUserId !== null) {
+            $selectedUser = (clone $users)->find($requestedUserId);
+            abort_unless($selectedUser, 422, 'El usuario seleccionado no corresponde al ID del checador.');
+
+            return $selectedUser;
+        }
+
+        $matches = $users->limit(2)->get();
+        abort_if($matches->count() > 1, 422, 'Este ID de checador pertenece a varias personas. Selecciona el usuario para continuar.');
+
+        return $matches->first();
     }
 }

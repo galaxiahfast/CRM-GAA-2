@@ -164,6 +164,7 @@
         <p class="mx-[50px] mt-[20px] max-w-2xl text-[15px] leading-6 text-zinc-500">Visualiza las marcas registradas por día, con cálculo de tiempo y acumulados durante el periodo seleccionado.</p>
 
         <input type="hidden" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}">
+        <input type="hidden" id="attendance_user_id" value="{{ auth()->id() }}">
 
         <div class="attendance-filters mx-[50px] mb-[20px] mt-[20px] flex flex-wrap items-end gap-[20px] rounded-xl border border-zinc-200 bg-white/65 p-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
             <div class="w-[180px] shrink-0">
@@ -786,6 +787,7 @@ function revisarHorasChecador() {
 
     const payload = {
         employee_id: employeeId,
+        user_id: document.getElementById('attendance_user_id')?.value,
         inicio: fechaInicio,
         fin: fechaFin,
     };
@@ -872,6 +874,7 @@ function exportarChecador(format) {
 
     const params = new URLSearchParams({
         employee_id: employeeId,
+        user_id: document.getElementById('attendance_user_id')?.value,
         inicio: fechaInicio,
         fin: fechaFin,
     });

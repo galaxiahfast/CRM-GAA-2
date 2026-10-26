@@ -13,6 +13,7 @@ use App\Services\TimeControl\AttendanceSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Form extends Component
@@ -57,6 +58,10 @@ class Form extends Component
 
     public ?int $managementUserId = null;
 
+    /** Usuario fijo cuando el formulario se abre desde un registro (editar/eliminar): no se puede cambiar. */
+    #[Locked]
+    public ?int $lockedUserId = null;
+
     public string $deleteConfirmationName = '';
 
     public string $deleteConfirmationEmail = '';
@@ -83,7 +88,6 @@ class Form extends Component
         'role_id.required' => 'El rol es obligatorio.',
         'role_id.exists' => 'El rol seleccionado no es válido.',
         // Mensajes para los nuevos campos
-        'employee_id.unique' => 'Este ID de checador ya está asignado a otro usuario.',
         'hourly_rate.numeric' => 'El precio por hora debe ser un número válido.',
         'hourly_rate.min' => 'El precio por hora no puede ser menor a 0.',
         'food_allowance.numeric' => 'El apoyo de comida debe ser un número válido.',
@@ -112,6 +116,7 @@ class Form extends Component
             $this->mode = 'edit';
             $this->managementTab = 'editar';
             $this->managementUserId = (int) $user->id;
+            $this->lockedUserId = (int) $user->id;
 
             // 👈 Carga los valores monetarios actuales del perfil activo
             $profile = $user->activeOrganizationalProfile;
@@ -140,6 +145,7 @@ class Form extends Component
         if ($initialUserId !== null && $this->managementTab !== 'crear') {
             $managedUser = User::query()->with('activeOrganizationalProfile')->findOrFail($initialUserId);
             $this->managementUserId = (int) $managedUser->id;
+            $this->lockedUserId = (int) $managedUser->id;
             if ($this->managementTab === 'editar') {
                 $this->fillFromManagedUser($managedUser);
             }
@@ -206,7 +212,14 @@ class Form extends Component
         }
 
         $this->managementTab = $tab;
-        $this->managementUserId = null;
+        $this->managementUserId = in_array($tab, ['editar', 'eliminar'], true)
+            ? $this->lockedUserId
+            : null;
+
+        if ($tab === 'editar' && $this->lockedUserId !== null) {
+            $lockedUser = User::query()->with('activeOrganizationalProfile')->findOrFail($this->lockedUserId);
+            $this->fillFromManagedUser($lockedUser);
+        }
         $this->deleteConfirmationName = '';
         $this->deleteConfirmationEmail = '';
         $this->deleteConfirmationPhrase = '';
@@ -220,6 +233,8 @@ class Form extends Component
 
     public function editManagedUser()
     {
+        $this->restoreLockedManagementUser();
+
         $data = $this->validate([
             'managementUserId' => ['required', 'integer', 'exists:users,id'],
         ]);
@@ -248,6 +263,12 @@ class Form extends Component
 
     public function updatedManagementUserId($userId): void
     {
+        if ($this->lockedUserId !== null && (int) $userId !== $this->lockedUserId) {
+            $this->managementUserId = $this->lockedUserId;
+
+            return;
+        }
+
         $this->deleteConfirmationName = '';
         $this->deleteConfirmationEmail = '';
         $this->deleteConfirmationPhrase = '';
@@ -285,6 +306,7 @@ class Form extends Component
     public function deleteManagedUser(OrganizationChartService $chartService)
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
+        $this->restoreLockedManagementUser();
 
         $data = $this->validate([
             'managementUserId' => ['required', 'integer', 'exists:users,id'],
@@ -351,7 +373,8 @@ class Form extends Component
             'email' => 'bail|required|email|max:255|unique:users,email'.($this->user ? ','.$this->user->id : ''),
             'role_id' => 'bail|required|exists:roles,id',
             // 🆕 Reglas de validación añadidas
-            'employee_id' => 'nullable|string|max:50|unique:users,employee_id'.($this->user ? ','.$this->user->id : ''),
+            // El ID del checador puede repetirse entre personas.
+            'employee_id' => 'nullable|string|max:50',
             'job_position_id' => 'bail|required|exists:job_positions,id',
             'physical_area_id' => 'bail|required|exists:physical_areas,id',
         ];
@@ -515,5 +538,12 @@ class Form extends Component
         $this->deleteConfirmationName = '';
         $this->deleteConfirmationEmail = '';
         $this->deleteConfirmationPhrase = '';
+    }
+
+    private function restoreLockedManagementUser(): void
+    {
+        if ($this->lockedUserId !== null) {
+            $this->managementUserId = $this->lockedUserId;
+        }
     }
 }

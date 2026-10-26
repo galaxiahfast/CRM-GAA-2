@@ -685,7 +685,7 @@ class PanelAdministracion extends Component
             'userForm.last_name' => ['nullable', 'string', 'max:255'],
             'userForm.email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'userForm.role_id' => ['required', 'exists:roles,id'],
-            'userForm.employee_id' => ['nullable', 'string', 'max:50', 'unique:users,employee_id,'.$user->id],
+            'userForm.employee_id' => ['nullable', 'string', 'max:50'],
             'userForm.job_position_id' => ['required', 'exists:job_positions,id'],
             'userForm.physical_area_id' => ['required', 'exists:physical_areas,id'],
             'userForm.hourly_rate' => ['nullable', 'numeric', 'min:0'],

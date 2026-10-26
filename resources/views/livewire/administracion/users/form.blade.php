@@ -49,7 +49,7 @@
             <section class="mb-[20px]" style="--admin-form-gap: 20px;">
                 <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
-                <x-administration-search-picker style="margin-top: 20px;" input-id="management-edit-user" model="managementUserId" :selected="$managementUserId"
+                <x-administration-search-picker style="margin-top: 20px;" input-id="management-edit-user" model="managementUserId" :selected="$managementUserId" :disabled="$lockedUserId !== null"
                     :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
                     placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
                 <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
@@ -191,7 +191,7 @@
                 <section style="--admin-form-gap: 20px;">
                     <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Seleccionar usuario</h2>
                     <label for="management-delete-user" class="block text-[15px] font-medium text-gray-700">Usuario a eliminar</label>
-                    <x-administration-search-picker style="margin-top: 20px;" input-id="management-delete-user" model="managementUserId" :selected="$managementUserId"
+                    <x-administration-search-picker style="margin-top: 20px;" input-id="management-delete-user" model="managementUserId" :selected="$managementUserId" :disabled="$lockedUserId !== null"
                         :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => $manageableUser->email])"
                         placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
                     <x-input-error for="managementUserId" class="mt-2 text-[15px]" />

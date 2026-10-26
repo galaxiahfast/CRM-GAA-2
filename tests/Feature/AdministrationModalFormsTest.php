@@ -202,7 +202,20 @@ class AdministrationModalFormsTest extends TestCase
                 'initialUserId' => $collaborator->id,
             ])
             ->assertSet('managementUserId', $collaborator->id)
+            ->assertSet('lockedUserId', $collaborator->id)
+            ->assertSet('name', $collaborator->name)
+            ->set('managementUserId', $administrator->id)
+            ->assertSet('managementUserId', $collaborator->id)
+            ->call('setManagementTab', 'eliminar')
+            ->assertSet('managementUserId', $collaborator->id)
+            ->call('setManagementTab', 'editar')
+            ->assertSet('managementUserId', $collaborator->id)
             ->assertSet('name', $collaborator->name);
+
+        Livewire::actingAs($administrator)
+            ->test(UserForm::class, ['user' => $collaborator])
+            ->assertSet('managementUserId', $collaborator->id)
+            ->assertSet('lockedUserId', $collaborator->id);
 
         Livewire::actingAs($administrator)
             ->test(PermissionCatalogManager::class, ['cardActions' => true])
