@@ -27,7 +27,7 @@ class ReferenceDataCache
 
     private const ORGANIZATION_DASHBOARD_KEY = 'reference-data:organization-dashboard:v1';
 
-    private const ORGANIZATION_DIRECTORY_KEY = 'reference-data:organization-directory:v2';
+    private const ORGANIZATION_DIRECTORY_KEY = 'reference-data:organization-directory:v3';
 
     private const MANAGEABLE_USERS_KEY = 'administration:manageable-users:v1';
 
@@ -233,7 +233,7 @@ class ReferenceDataCache
                         return [
                             'id' => (int) $user->id,
                             'title' => mb_strtoupper(trim($user->name.' '.$user->last_name)),
-                            'subtitle' => mb_strtoupper((string) $user->email),
+                            'subtitle' => mb_strtolower((string) $user->email),
                             'details' => [
                                 ['label' => 'Rol', 'value' => mb_strtoupper($user->role?->role ?? 'SIN ROL')],
                                 ['label' => 'Puesto', 'value' => mb_strtoupper($profile?->jobPosition?->name ?? 'SIN PUESTO')],
@@ -250,7 +250,7 @@ class ReferenceDataCache
                         $mapUser = fn (User $user): array => [
                             'id' => (int) $user->id,
                             'title' => mb_strtoupper(trim($user->name.' '.$user->last_name)),
-                            'email' => mb_strtoupper((string) $user->email),
+                            'email' => mb_strtolower((string) $user->email),
                             'current_role' => mb_strtoupper($user->role?->role ?? 'SIN ROL'),
                         ];
 
@@ -322,7 +322,9 @@ class ReferenceDataCache
                     'items' => $customers->map(fn (Customer $customer): array => [
                         'id' => (int) $customer->id,
                         'title' => mb_strtoupper(trim($customer->name.' '.$customer->last_name.' '.$customer->maternal_last_name)),
-                        'subtitle' => mb_strtoupper((string) ($customer->email ?: 'SIN CORREO REGISTRADO')),
+                        'subtitle' => $customer->email
+                            ? mb_strtolower((string) $customer->email)
+                            : 'SIN CORREO REGISTRADO',
                         'details' => [
                             ['label' => 'RFC', 'value' => mb_strtoupper((string) ($customer->rfc ?: 'SIN RFC'))],
                             ['label' => 'Teléfono', 'value' => trim(($customer->codePhone ? '+'.$customer->codePhone.' ' : '').($customer->phone ?: 'SIN TELÉFONO'))],

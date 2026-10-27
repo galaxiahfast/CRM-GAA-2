@@ -704,7 +704,7 @@ class PanelAdministracion extends Component
         $this->userForm = [
             'name' => $user->name,
             'last_name' => $user->last_name,
-            'email' => $user->email,
+            'email' => mb_strtolower((string) $user->email),
             'role_id' => $user->role_id,
             'employee_id' => $user->employee_id,
             'job_position_id' => $profile?->job_position_id,
@@ -721,7 +721,7 @@ class PanelAdministracion extends Component
         $this->selectedUserDetails = [
             'id' => $user->id,
             'name' => trim("{$user->name} {$user->last_name}"),
-            'email' => $user->email,
+            'email' => mb_strtolower((string) $user->email),
             'role' => $role,
             'employee_id' => $user->employee_id,
             'created_at' => optional($user->created_at)->format('d/m/Y H:i'),
@@ -828,6 +828,7 @@ class PanelAdministracion extends Component
         abort_unless($this->selectedUserId, 404);
 
         $user = User::findOrFail($this->selectedUserId);
+        $this->userForm['email'] = mb_strtolower(trim((string) ($this->userForm['email'] ?? '')));
         $isHourlyPosition = JobPosition::query()
             ->whereKey((int) ($this->userForm['job_position_id'] ?? 0))
             ->where('payment_type', JobPosition::PAYMENT_HOURLY)

@@ -757,10 +757,19 @@ class AdministrationModalFormsTest extends TestCase
     {
         $administratorRole = Role::create(['role' => 'Administrador']);
         Role::create(['role' => 'Auxiliar']);
-        $administrator = $this->createUser($administratorRole, 'admin-stable-directory@test.mx');
+        $administrator = $this->createUser($administratorRole, 'Admin.Stable.Directory@TEST.MX');
 
         Livewire::actingAs($administrator)
             ->test(PanelAdministracion::class)
+            ->assertViewHas('organizationDirectory', function (array $directory): bool {
+                $user = collect($directory['users']['items'])->first();
+                $roleUser = collect($directory['roles']['items'])
+                    ->flatMap(fn (array $role): array => $role['assigned_users'])
+                    ->first();
+
+                return $user['subtitle'] === 'admin.stable.directory@test.mx'
+                    && $roleUser['email'] === 'admin.stable.directory@test.mx';
+            })
             ->assertSeeHtml('wire:key="administration-organization-directory"')
             ->assertSeeHtml("sessionStorage.getItem('administration-directory-catalog')")
             ->assertSeeHtml("if (this.selectedCatalog === 'users')")

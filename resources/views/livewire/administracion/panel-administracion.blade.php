@@ -831,7 +831,7 @@
 
 
                                                 {{--  --}}
-                                                <p class="truncate text-[15px] text-gray-500" title="{{ $user['email'] }}" style="line-height: 1; margin: 0; padding: 0;">{{ $user['email'] }}</p>
+                                                <p class="truncate text-[15px] text-gray-500" title="{{ mb_strtolower((string) $user['email']) }}" style="line-height: 1; margin: 0; padding: 0;">{{ mb_strtolower((string) $user['email']) }}</p>
 
                                                 <div class="flex min-w-0 items-center gap-2" title="{{ $user['presence_label'] ?? 'Sin actividad registrada' }}" style="line-height: 1; margin: 0; padding: 0;">
                                                     <span @class([
@@ -1473,9 +1473,9 @@
                                     @forelse ($superiorCandidates as $superiorCandidate)
                                         <label wire:key="superior-candidate-{{ $superiorCandidate->id }}" class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
                                             <input type="radio" name="edit-superior" value="{{ $superiorCandidate->id }}" wire:click="selectSuperior({{ $superiorCandidate->id }})" @checked(in_array($superiorCandidate->id, $userForm['superior_ids'] ?? [])) class="h-4 w-4 shrink-0 border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                            <span class="min-w-0 flex-1" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ $superiorCandidate->email }}">
+                                            <span class="min-w-0 flex-1" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ mb_strtolower((string) $superiorCandidate->email) }}">
                                                 <span class="block truncate text-[15px] font-medium text-gray-800">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
-                                                <span class="block truncate text-[15px] text-gray-500">{{ $superiorCandidate->email }}</span>
+                                                <span class="block truncate text-[15px] text-gray-500">{{ mb_strtolower((string) $superiorCandidate->email) }}</span>
                                             </span>
                                         </label>
                                     @empty
@@ -1495,9 +1495,9 @@
                                     @forelse ($subordinateCandidates as $subordinateCandidate)
                                         <label wire:key="subordinate-candidate-{{ $subordinateCandidate->id }}" class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-100">
                                             <input type="checkbox" value="{{ $subordinateCandidate->id }}" wire:model.live="userForm.subordinate_ids" class="h-4 w-4 shrink-0 rounded border-gray-300 text-[#1A3A6B] focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                            <span class="min-w-0 flex-1" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ $subordinateCandidate->email }}">
+                                            <span class="min-w-0 flex-1" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ mb_strtolower((string) $subordinateCandidate->email) }}">
                                                 <span class="block truncate text-[15px] font-medium text-gray-800">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span>
-                                                <span class="block truncate text-[15px] text-gray-500">{{ $subordinateCandidate->email }}</span>
+                                                <span class="block truncate text-[15px] text-gray-500">{{ mb_strtolower((string) $subordinateCandidate->email) }}</span>
                                             </span>
                                         </label>
                                     @empty
@@ -1559,7 +1559,7 @@
                                     <!-- Correo electrónico -->
                                     <div style="display: flex; flex-direction: column;">
                                         <span class="text-[15px] text-gray-500" style="margin-bottom: 10px;">Correo electrónico</span>
-                                        <p class="text-[15px] font-medium text-gray-800 leading-tight truncate" style="margin: 0;">{{ $selectedUserDetails['email'] ?? 'N/A' }}</p>
+                                        <p class="text-[15px] font-medium text-gray-800 leading-tight truncate" style="margin: 0;">{{ isset($selectedUserDetails['email']) ? mb_strtolower((string) $selectedUserDetails['email']) : 'N/A' }}</p>
                                     </div>
                                     <!-- Rol + ID checador (2 columnas) -->
                                     <div class="grid grid-cols-1 gap-[15px] sm:grid-cols-2">

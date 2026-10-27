@@ -110,7 +110,7 @@ class Form extends Component
             $this->user = $user;
             $this->name = $user->name;
             $this->last_name = $user->last_name;
-            $this->email = $user->email;
+            $this->email = mb_strtolower((string) $user->email);
             $this->role_id = $user->role_id;
             $this->employee_id = $user->employee_id; // 👈 Carga el ID de Hikvision
             $this->mode = 'edit';
@@ -244,7 +244,7 @@ class Form extends Component
             $this->user = $user;
             $this->name = $user->name;
             $this->last_name = $user->last_name;
-            $this->email = $user->email;
+            $this->email = mb_strtolower((string) $user->email);
             $this->role_id = $user->role_id;
             $this->employee_id = $user->employee_id;
             $this->mode = 'edit';
@@ -288,7 +288,7 @@ class Form extends Component
         $this->user = $user;
         $this->name = $user->name;
         $this->last_name = $user->last_name;
-        $this->email = $user->email;
+        $this->email = mb_strtolower((string) $user->email);
         $this->password = '';
         $this->password_confirmation = '';
         $this->role_id = $user->role_id;
@@ -365,6 +365,8 @@ class Form extends Component
 
     public function save(Request $request)
     {
+        $this->email = mb_strtolower(trim((string) $this->email));
+
         $rules = [
             'name' => 'bail|required|string|max:255',
             'last_name' => 'nullable|string|max:255',

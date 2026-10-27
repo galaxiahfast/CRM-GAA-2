@@ -32,7 +32,7 @@
                         {{ $user['name'] }}</td>
                     <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
                         {{ $user['last_name'] }}</td>
-                    <td class="px-6 py-4">{{ Str::limit($user['email'], 25) }}</td>
+                    <td class="px-6 py-4">{{ Str::limit(mb_strtolower((string) $user['email']), 25) }}</td>
                     <td class="px-6 py-4">{{ $user->role->role }}</td>
                     <td class="px-6 py-4">{{ Str::limit($user['created_at'], 10) }}</td>
                     <td class="px-6 py-4">{{ Str::limit($user['updated_at'], 10) }}</td>

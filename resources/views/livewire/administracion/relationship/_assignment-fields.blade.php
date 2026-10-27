@@ -1,6 +1,6 @@
 @php
     $customerOptions = $customers->map(fn ($customer) => ['id' => $customer->id, 'label' => mb_strtoupper(trim($customer->name.' '.$customer->last_name.' '.$customer->maternal_last_name)), 'meta' => mb_strtoupper((string) $customer->rfc)]);
-    $accountantOptions = $accountants->map(fn ($accountant) => ['id' => $accountant->id, 'label' => mb_strtoupper(trim($accountant->name.' '.$accountant->last_name)), 'meta' => mb_strtoupper((string) $accountant->email)]);
+    $accountantOptions = $accountants->map(fn ($accountant) => ['id' => $accountant->id, 'label' => mb_strtoupper(trim($accountant->name.' '.$accountant->last_name)), 'meta' => mb_strtolower((string) $accountant->email)]);
     $assignmentDisabled = ! $selectedCustomer;
     $customerFullName = $selectedCustomerModel ? trim($selectedCustomerModel->name.' '.$selectedCustomerModel->last_name.' '.$selectedCustomerModel->maternal_last_name) : '';
 @endphp
@@ -26,7 +26,7 @@
         <fieldset class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2" @disabled($assignmentDisabled || $mode === 'eliminar')>
             @forelse ($interns as $intern)
                 <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-[#B7CEEA] bg-white/45 p-3 text-[#102A52] hover:bg-[#EEF5FF]">
-                    <span class="min-w-0"><span class="block truncate text-[14px] font-semibold">{{ mb_strtoupper(trim($intern->name.' '.$intern->last_name)) }}</span><span class="mt-1 block truncate text-[12px] text-[#55749D]">{{ mb_strtoupper($intern->email) }}</span></span>
+                    <span class="min-w-0"><span class="block truncate text-[14px] font-semibold">{{ mb_strtoupper(trim($intern->name.' '.$intern->last_name)) }}</span><span class="mt-1 block truncate text-[12px] text-[#55749D]">{{ mb_strtolower((string) $intern->email) }}</span></span>
                     <input type="checkbox" value="{{ $intern->id }}" wire:model="assignedInterns" class="h-4 w-4 shrink-0 rounded border-[#B7CEEA] text-[#1A3A6B] focus:ring-0">
                 </label>
             @empty
