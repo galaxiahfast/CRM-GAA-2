@@ -766,8 +766,11 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml("if (this.selectedCatalog === 'users')")
             ->assertSeeHtml("x-show=\"selectedCatalog !== 'users'\"")
             ->assertSeeHtml("x-show=\"selectedCatalog !== 'users' && expandedItem === item.id\"")
-            ->assertSeeHtml('zoom:${viewScale / 100}')
-            ->assertDontSeeHtml('transform:scale(${viewScale / 100})');
+            ->assertSeeHtml('x-ref="scaledMain"')
+            ->assertSeeHtml('scaledContentHeight = Math.ceil')
+            ->assertSeeHtml('transform:scale(${viewScale / 100})')
+            ->assertSeeHtml('style="height: 76px;"')
+            ->assertDontSeeHtml('zoom:${viewScale / 100}');
     }
 
     public function test_permission_catalog_can_reopen_and_manage_groups_without_opening_roles(): void

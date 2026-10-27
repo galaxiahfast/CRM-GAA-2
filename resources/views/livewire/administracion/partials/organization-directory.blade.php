@@ -163,7 +163,7 @@
                         @click="selectCatalog(@js($catalogKey))"
                         :class="selectedCatalog === @js($catalogKey) ? 'bg-white text-[#1A3A6B]' : 'bg-white text-black'"
                         class="flex w-full items-center gap-[10px] border-b border-zinc-300 px-[20px] text-left transition-colors last:border-b-0 focus:outline-none focus:ring-0"
-                        style="height: 77px;"
+                        style="height: 76px;"
                         :aria-current="selectedCatalog === @js($catalogKey) ? 'page' : null"
                     >
                         <span

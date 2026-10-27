@@ -24,8 +24,37 @@
         administrationView: 'directory',
         viewScale: 90,
         isFullscreen: false,
-        zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5) },
-        zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5) },
+        scaledContentHeight: null,
+        scaleObserver: null,
+        fullscreenHandler: null,
+        init() {
+            this.fullscreenHandler = () => { this.isFullscreen = Boolean(document.fullscreenElement); };
+            document.addEventListener('fullscreenchange', this.fullscreenHandler);
+            this.$nextTick(() => {
+                this.scaleObserver = new ResizeObserver(() => this.syncScaledContentHeight());
+                this.scaleObserver.observe(this.$refs.scaledMain);
+                this.syncScaledContentHeight();
+            });
+        },
+        destroy() {
+            this.scaleObserver?.disconnect();
+            document.removeEventListener('fullscreenchange', this.fullscreenHandler);
+        },
+        syncScaledContentHeight() {
+            this.$nextTick(() => {
+                if (this.$refs.scaledMain) {
+                    this.scaledContentHeight = Math.ceil(this.$refs.scaledMain.offsetHeight * (this.viewScale / 100));
+                }
+            });
+        },
+        zoomOut() {
+            this.viewScale = Math.max(70, this.viewScale - 5);
+            this.syncScaledContentHeight();
+        },
+        zoomIn() {
+            this.viewScale = Math.min(100, this.viewScale + 5);
+            this.syncScaledContentHeight();
+        },
         async toggleFullscreen() {
             if (document.fullscreenElement) await document.exitFullscreen();
             else await this.$root.requestFullscreen();
@@ -37,7 +66,6 @@
             }
         },
     }"
-    x-init="document.addEventListener('fullscreenchange', () => isFullscreen = Boolean(document.fullscreenElement))"
     class="administration-monochrome relative min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
     style="background-color: #ffffff !important;"
 >
@@ -366,7 +394,7 @@
 
     <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
         <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
-        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Administración">
+        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="syncScaledContentHeight()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Administración">
         <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
         <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">90%</span>
         <span class="h-5 w-px bg-zinc-200"></span>
@@ -376,7 +404,8 @@
         </button>
     </div>
 
-    <main class="w-full space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;zoom:${viewScale / 100};`">
+    <div class="w-full" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : null">
+    <main x-ref="scaledMain" class="w-full origin-top-left space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
     <!-- Centro de gestión siempre visible -->
     <section class="m-0 w-full bg-white pt-0">
         <div class="m-0 w-full bg-white pt-0">
@@ -873,6 +902,7 @@
 
     @include('livewire.administracion.partials.organization-directory')
     </main>
+    </div>
 
     @if ($showUserManagementModal)
         <livewire:administracion.users.form
