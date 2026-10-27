@@ -41,6 +41,8 @@
     class="administration-monochrome relative min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
     style="background-color: #ffffff !important;"
 >
+    <x-administration-modal-styles />
+
     <style hidden>
         .administration-monochrome,
         .administration-monochrome > section,
@@ -374,7 +376,7 @@
         </button>
     </div>
 
-    <main class="w-full origin-top space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
+    <main class="w-full space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;zoom:${viewScale / 100};`">
     <!-- Centro de gestión siempre visible -->
     <section class="m-0 w-full bg-white pt-0">
         <div class="m-0 w-full bg-white pt-0">
@@ -384,22 +386,22 @@
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
                     </span>
                     <div class="min-w-0">
-                        <h1 class="text-xl font-semibold tracking-tight text-black">Administración</h1>
-                        <p class="mt-[4px] max-w-3xl text-zinc-500">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
+                        <h1 class="text-xl font-normal leading-none tracking-tight text-[#1A3A6B]">Administración</h1>
+                        <p class="mt-[10px] max-w-3xl leading-none text-black">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
                     </div>
                 </div>
-                <div class="flex flex-col items-end gap-[5px]">
-                    <span class="font-medium text-black">Organización</span>
-                    <span class="inline-flex items-center gap-[7px] text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
+                <div class="flex flex-col items-end gap-[10px]">
+                    <span class="font-normal leading-none text-black">Organización</span>
+                    <span class="inline-flex items-center gap-[7px] leading-none text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
                 </div>
             </div>
 
-            <nav class="!mt-[8px] flex items-center gap-[5px] border-b border-zinc-200" aria-label="Vistas del centro de organización">
-                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black'" class="flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+            <nav class="!mt-[8px] flex items-center gap-[20px]" aria-label="Vistas del centro de organización">
+                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'font-normal text-[#1A3A6B]' : 'font-normal text-black'" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
                     <span>Listado general</span>
                 </button>
-                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'border-[#1A3A6B] text-[#1A3A6B]' : 'border-transparent text-zinc-500 hover:text-black'" class="flex min-h-[44px] items-center gap-[8px] border-b-2 px-[15px] font-medium transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
+                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'font-normal text-[#1A3A6B]' : 'font-normal text-black'" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
                     <span>Organigrama</span>
                 </button>

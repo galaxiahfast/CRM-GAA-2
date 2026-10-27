@@ -753,6 +753,23 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showAssignmentModal', false);
     }
 
+    public function test_administration_directory_keeps_its_state_and_users_cannot_expand(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        Role::create(['role' => 'Auxiliar']);
+        $administrator = $this->createUser($administratorRole, 'admin-stable-directory@test.mx');
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->assertSeeHtml('wire:key="administration-organization-directory"')
+            ->assertSeeHtml("sessionStorage.getItem('administration-directory-catalog')")
+            ->assertSeeHtml("if (this.selectedCatalog === 'users')")
+            ->assertSeeHtml("x-show=\"selectedCatalog !== 'users'\"")
+            ->assertSeeHtml("x-show=\"selectedCatalog !== 'users' && expandedItem === item.id\"")
+            ->assertSeeHtml('zoom:${viewScale / 100}')
+            ->assertDontSeeHtml('transform:scale(${viewScale / 100})');
+    }
+
     public function test_permission_catalog_can_reopen_and_manage_groups_without_opening_roles(): void
     {
         $administratorRole = Role::create(['role' => 'Administrador']);

@@ -141,11 +141,11 @@
                     :aria-selected="String(selectedId) === @js($option['id'])">
                     <span class="min-w-0 flex-1 truncate text-[15px] font-normal leading-none text-black" style="text-overflow: ellipsis;">{{ $option['label'] }}</span>
                     @if ($option['meta'] !== '')
-                        <span class="max-w-[45%] shrink-0 truncate text-[15px] leading-none text-zinc-500" style="text-overflow: ellipsis;">{{ $option['meta'] }}</span>
+                        <span class="max-w-[45%] shrink-0 truncate text-[15px] leading-none text-black" style="text-overflow: ellipsis;">{{ $option['meta'] }}</span>
                     @endif
                 </button>
             @endforeach
-            <p x-show="filteredOptions.length === 0" class="truncate px-[20px] py-[20px] text-center text-[15px] leading-none text-zinc-500">{{ $emptyMessage }}</p>
+            <p x-show="filteredOptions.length === 0" class="truncate px-[20px] py-[20px] text-center text-[15px] leading-none text-black">{{ $emptyMessage }}</p>
         </div>
     </template>
 </div>

@@ -1,3 +1,4 @@
+@once
 <style>
     [data-administration-modal] {
         font-size: 15px;
@@ -176,12 +177,12 @@
     }
 
     [data-administration-modal] :is(input, select, textarea)::placeholder {
-        color: #71717a;
+        color: #1A3A6B;
     }
 
     [data-administration-modal] :is(input, select, textarea):disabled {
         background-color: #f4f4f5 !important;
-        color: #71717a !important;
+        color: #000000 !important;
         cursor: not-allowed;
     }
 
@@ -216,8 +217,8 @@
         color: #000000 !important;
     }
 
-    [data-administration-modal] :is([class*="text-[#55749D]"], [class*="text-[#8290A3]"], [class*="text-gray-500"], [class*="text-gray-400"]) {
-        color: #71717a !important;
+    [data-administration-modal] :is([class*="text-[#55749D]"], [class*="text-[#8290A3]"], [class*="text-gray-500"], [class*="text-gray-400"], [class*="text-zinc-500"], [class*="text-zinc-400"]) {
+        color: #000000 !important;
     }
 
     [data-administration-modal] :is([class*="border-[#CAD7E7]"], [class*="border-[#B7CEEA]"], [class*="border-[#D7E2F0]"], [class*="border-[#D5DDE8]"], [class*="border-[#AFC7E3]"], [class*="border-gray-200"], [class*="border-gray-300"]) {
@@ -274,3 +275,4 @@
         line-height: 1 !important;
     }
 </style>
+@endonce
