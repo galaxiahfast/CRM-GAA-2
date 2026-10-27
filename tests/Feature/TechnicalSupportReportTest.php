@@ -267,4 +267,22 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame(['Josué Ricardo Puc Pech'], $report->supports[3]['targets']);
         $this->assertSame(['Anastacio May Ku'], $report->supports[4]['targets']);
     }
+
+    public function test_existing_reports_list_the_people_who_received_each_service(): void
+    {
+        $expectedTargets = [
+            'ST-20261022-0004' => ['Noh Chan Claudia Alejandra'],
+            'ST-20261022-0005' => ['Perla Naomy Rivero Couoh', 'Josue Ricardo Puc Pech'],
+            'ST-20261023-0006' => ['Victor Gabriel Tapia Hernandez'],
+            'ST-20261023-0007' => ['Sanchez Coba Caridad Iliana'],
+        ];
+
+        foreach ($expectedTargets as $folio => $targets) {
+            $report = TechnicalSupportReport::query()->where('folio', $folio)->firstOrFail();
+
+            foreach ($report->supports as $support) {
+                $this->assertSame($targets, $support['targets']);
+            }
+        }
+    }
 }
