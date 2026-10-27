@@ -373,25 +373,25 @@ class BackupStorageManagerTest extends TestCase
         $component->assertDontSee('Se deseleccionó 1 empresa');
     }
 
-    public function test_initial_view_loads_two_backup_days_and_reveals_older_dates_in_two_day_steps(): void
+    public function test_initial_view_loads_three_backup_days_and_reveals_older_dates_in_three_day_steps(): void
     {
-        foreach (range(0, 3) as $daysAgo) {
+        foreach (range(0, 5) as $daysAgo) {
             $date = now()->subDays($daysAgo)->format('Ymd');
             File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
             File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
         }
 
         $admin = $this->user('Administrador', 'admin-progressive-dates@datamid.test');
-        $thirdDayLabel = ucfirst(now()->subDays(2)->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
+        $fourthDayLabel = ucfirst(now()->subDays(3)->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->assertSet('visibleDateLimit', 2)
-            ->assertDontSee($thirdDayLabel)
+            ->assertSet('visibleDateLimit', 3)
+            ->assertDontSee($fourthDayLabel)
             ->assertSee('Mostrar fechas anteriores')
             ->call('loadMoreDates')
-            ->assertSet('visibleDateLimit', 4)
-            ->assertSee($thirdDayLabel);
+            ->assertSet('visibleDateLimit', 6)
+            ->assertSee($fourthDayLabel);
     }
 
     public function test_clicking_a_backup_row_toggles_its_selection_and_memory_precedes_server_files(): void

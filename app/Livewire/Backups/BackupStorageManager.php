@@ -63,7 +63,7 @@ class BackupStorageManager extends Component
 
     public ?string $actionMessage = null;
 
-    public int $visibleDateLimit = 2;
+    public int $visibleDateLimit = 3;
 
     public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
@@ -121,7 +121,7 @@ class BackupStorageManager extends Component
 
     public function loadMoreDates(): void
     {
-        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 2);
+        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 3);
     }
 
     public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
@@ -610,10 +610,24 @@ class BackupStorageManager extends Component
     {
         $catalog = $this->profileCatalog($catalog, $profiles);
         $dashboard = $catalog->dashboard($this->selectedDate);
-        $dashboard['has_more_dates'] = count($dashboard['dates']) > $this->visibleDateLimit;
-        $dashboard['all_records'] = $catalog->summaryRecords($this->visibleDateLimit);
+        $sourceDateCount = count($dashboard['dates']);
+        $targetDateCount = $this->visibleDateLimit + 1;
+        $summaryDayLimit = min($sourceDateCount, max(1, $targetDateCount));
 
-        return $profiles->dashboard($dashboard, $this->backupProfile);
+        do {
+            $dashboard['all_records'] = $catalog->summaryRecords($summaryDayLimit);
+            $profileDashboard = $profiles->dashboard($dashboard, $this->backupProfile);
+
+            if (count($profileDashboard['dates']) >= $targetDateCount || $summaryDayLimit >= $sourceDateCount) {
+                break;
+            }
+
+            $summaryDayLimit = min($sourceDateCount, $summaryDayLimit + $this->visibleDateLimit);
+        } while (true);
+
+        $profileDashboard['has_more_dates'] = count($profileDashboard['dates']) > $this->visibleDateLimit;
+
+        return $profileDashboard;
     }
 
     private function profileCatalog(ContpaqiBackupCatalog $catalog, ContpaqiBackupProfile $profiles): ContpaqiBackupCatalog

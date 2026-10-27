@@ -18,6 +18,8 @@ class ContpaqiBackupCatalog
 
     private const PRELOADED_DAYS = 60;
 
+    private const MAX_SUMMARY_DAYS = 180;
+
     private ?string $rootOverride = null;
 
     public function forRoot(?string $root): self
@@ -81,7 +83,7 @@ class ContpaqiBackupCatalog
      */
     public function summaryRecords(int $dayLimit = self::PRELOADED_DAYS): array
     {
-        $dayLimit = max(1, min(self::PRELOADED_DAYS, $dayLimit));
+        $dayLimit = max(1, min(self::MAX_SUMMARY_DAYS, $dayLimit));
         $metadata = Cache::get($this->metadataCacheKey());
         if (! is_array($metadata)) {
             $this->dashboard(now()->toDateString());
