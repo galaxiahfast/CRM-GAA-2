@@ -33,15 +33,15 @@
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
-        .backup-catalog-scroll-thumb { position: absolute; right: 0; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: #1A3A6B; opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
+        .backup-catalog-scroll-thumb { position: absolute; right: 0; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: #000000; opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x { position: absolute; bottom: 0; left: 0; z-index: 21; height: 14px; min-width: 48px; background: transparent; opacity: 0; cursor: ew-resize; touch-action: none; transition: opacity 140ms ease; }
-        .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: #1A3A6B; }
+        .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: #000000; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-region:hover > .backup-catalog-scroll-thumb-x { opacity: 1; }
         .backup-catalog-scroll-vertical-visible > .backup-catalog-scroll-thumb { opacity: 1; }
         .backup-catalog-scroll-horizontal-visible > .backup-catalog-scroll-thumb-x { opacity: 1; }
-        html.module-dark-theme .backup-catalog-scroll-thumb { background: #a9a4cf; }
-        html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #a9a4cf; }
+        html.module-dark-theme .backup-catalog-scroll-thumb { background: #000000; }
+        html.module-dark-theme .backup-catalog-scroll-thumb-x::after { background: #000000; }
         .backup-record-group > tr { background: inherit; }
         .backup-record-gray > tr > td { background-color: #f4f4f5; }
         .backup-record-white > tr > td { background-color: #fff; }
