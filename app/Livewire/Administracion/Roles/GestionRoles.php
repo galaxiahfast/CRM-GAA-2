@@ -8,6 +8,7 @@ use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Throwable;
@@ -24,6 +25,10 @@ class GestionRoles extends Component
     public bool $embedded = false;
 
     public ?int $editingRoleId = null;
+
+    /** Rol fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedRoleId = null;
 
     public string $editingRoleName = '';
 
@@ -51,6 +56,9 @@ class GestionRoles extends Component
         $this->loadRoles();
         if ($initialRoleId && Role::whereKey($initialRoleId)->exists()) {
             $this->selectRole($initialRoleId);
+            if ($embedded && (int) $this->editingRoleId === (int) $initialRoleId) {
+                $this->lockedRoleId = (int) $initialRoleId;
+            }
         }
     }
 
@@ -62,6 +70,11 @@ class GestionRoles extends Component
     public function deleteRole($id)
     {
         try {
+            if ($this->lockedRoleId !== null) {
+                $id = $this->lockedRoleId;
+                $this->editingRoleId = $this->lockedRoleId;
+            }
+
             $role_id = Role::find($id);
 
             if (! $role_id) {
@@ -131,6 +144,12 @@ class GestionRoles extends Component
 
     public function updatedEditingRoleId($roleId): void
     {
+        if ($this->lockedRoleId !== null && (int) $roleId !== $this->lockedRoleId) {
+            $this->editingRoleId = $this->lockedRoleId;
+
+            return;
+        }
+
         if (filled($roleId)) {
             $this->selectRole((int) $roleId);
         } else {
@@ -140,6 +159,10 @@ class GestionRoles extends Component
 
     public function selectRole(int $roleId): void
     {
+        if ($this->lockedRoleId !== null && $roleId !== $this->lockedRoleId) {
+            $roleId = $this->lockedRoleId;
+        }
+
         $role = Role::query()->with('accessPermissions:id')->withCount('users')->findOrFail($roleId);
 
         if ($this->activeTab === 'delete'
@@ -171,6 +194,10 @@ class GestionRoles extends Component
 
     public function saveEditedRole(PermissionAccessService $permissions): void
     {
+        if ($this->lockedRoleId !== null) {
+            $this->editingRoleId = $this->lockedRoleId;
+        }
+
         abort_unless($this->editingRoleId, 404);
 
         $role = Role::query()->findOrFail($this->editingRoleId);

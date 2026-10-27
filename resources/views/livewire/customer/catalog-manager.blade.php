@@ -149,6 +149,7 @@
                                     >
                                         <input
                                             id="managed-customer-id"
+                                            @disabled($lockedRecordId !== null)
                                             x-ref="customerSearchInput"
                                             data-catalog-search="customer"
                                             type="text"
@@ -171,6 +172,7 @@
                                             type="button"
                                             class="absolute right-0 top-0 flex h-11 w-12 items-center justify-center text-gray-500 hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
                                             @click="open ? (open = false, query = '') : openList(); if (open) $nextTick(() => $refs.customerSearchInput.focus())"
+                                            @disabled($lockedRecordId !== null)
                                             aria-label="Mostrar clientes"
                                         >
                                             <svg class="h-4 w-4" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

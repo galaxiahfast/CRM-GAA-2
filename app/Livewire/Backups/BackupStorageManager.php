@@ -63,7 +63,7 @@ class BackupStorageManager extends Component
 
     public ?string $actionMessage = null;
 
-    public int $visibleDateLimit = 30;
+    public int $visibleDateLimit = 2;
 
     public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
@@ -121,7 +121,7 @@ class BackupStorageManager extends Component
 
     public function loadMoreDates(): void
     {
-        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 30);
+        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 2);
     }
 
     public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
@@ -436,7 +436,9 @@ class BackupStorageManager extends Component
             $catalog = $this->profileCatalog($catalog, $profiles);
             $catalog->forget();
             $export->forgetDetectedVolumes();
-            $sqlCatalog->forget((string) ($profiles->profile($this->backupProfile)['site'] ?? 'merida'));
+            $site = (string) ($profiles->profile($this->backupProfile)['site'] ?? 'merida');
+            $sqlCatalog->forget($site);
+            $sqlCatalog->catalog($site, true);
 
             if ($this->selectedDate === now()->toDateString()) {
                 $catalog->refreshToday();
@@ -600,7 +602,7 @@ class BackupStorageManager extends Component
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
             'movementHistory' => $movementHistory,
             'visibleBackupDates' => collect($data['dates'])->take($this->visibleDateLimit)->all(),
-            'hasMoreBackupDates' => count($data['dates']) > $this->visibleDateLimit,
+            'hasMoreBackupDates' => (bool) ($data['has_more_dates'] ?? false),
         ])->layout('layouts.app');
     }
 
@@ -608,7 +610,8 @@ class BackupStorageManager extends Component
     {
         $catalog = $this->profileCatalog($catalog, $profiles);
         $dashboard = $catalog->dashboard($this->selectedDate);
-        $dashboard['all_records'] = $catalog->summaryRecords();
+        $dashboard['has_more_dates'] = count($dashboard['dates']) > $this->visibleDateLimit;
+        $dashboard['all_records'] = $catalog->summaryRecords($this->visibleDateLimit);
 
         return $profiles->dashboard($dashboard, $this->backupProfile);
     }

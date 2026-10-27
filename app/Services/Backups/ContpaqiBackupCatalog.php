@@ -79,8 +79,9 @@ class ContpaqiBackupCatalog
      *
      * @return array<int, array<string, mixed>>
      */
-    public function summaryRecords(): array
+    public function summaryRecords(int $dayLimit = self::PRELOADED_DAYS): array
     {
+        $dayLimit = max(1, min(self::PRELOADED_DAYS, $dayLimit));
         $metadata = Cache::get($this->metadataCacheKey());
         if (! is_array($metadata)) {
             $this->dashboard(now()->toDateString());
@@ -90,13 +91,20 @@ class ContpaqiBackupCatalog
         if (! is_array($metadata)) {
             return [];
         }
+        $visibleDates = collect($metadata['dates'] ?? [])
+            ->take($dayLimit)
+            ->pluck('date');
+
         if (is_array($metadata['summary_records'] ?? null)) {
-            return $metadata['summary_records'];
+            return collect($metadata['summary_records'])
+                ->whereIn('date', $visibleDates)
+                ->values()
+                ->all();
         }
 
         $fullCatalog = null;
         $records = collect($metadata['dates'] ?? [])
-            ->take(self::PRELOADED_DAYS)
+            ->take($dayLimit)
             ->flatMap(function (array $day) use ($metadata, &$fullCatalog): array {
                 return $this->recordsForDate(
                     (string) $day['date'],
@@ -108,9 +116,6 @@ class ContpaqiBackupCatalog
             ->map(fn (array $record): array => $this->summaryRecord($record))
             ->values()
             ->all();
-
-        $metadata['summary_records'] = $records;
-        Cache::forever($this->metadataCacheKey(), $metadata);
 
         return $records;
     }

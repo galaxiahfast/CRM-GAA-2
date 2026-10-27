@@ -16,7 +16,7 @@ class ContpaqiSqlCompanyCatalog
     /**
      * @return array{payroll: array<string, true>, accounting: array<string, true>}|null
      */
-    public function catalog(string $site, bool $refresh = false): ?array
+    public function catalog(string $site, bool $refresh = false, bool $allowNetwork = true): ?array
     {
         if (! $this->configured($site)) {
             return null;
@@ -29,6 +29,13 @@ class ContpaqiSqlCompanyCatalog
         $cacheKey = $this->cacheKey($site);
         if (! $refresh && Cache::has($cacheKey)) {
             return $this->requestCache[$site] = Cache::get($cacheKey);
+        }
+
+        // La vista de respaldos no debe esperar una conexión SQL remota. Si
+        // existe una lectura anterior se reutiliza; de lo contrario el perfil
+        // usa su clasificación local hasta que el usuario pulse actualizar.
+        if (! $refresh && ! $allowNetwork) {
+            return $this->requestCache[$site] = Cache::get($cacheKey.':last-known');
         }
 
         try {

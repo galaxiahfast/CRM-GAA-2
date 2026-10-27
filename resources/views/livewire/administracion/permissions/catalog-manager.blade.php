@@ -33,7 +33,7 @@
                             <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
                                 <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">Seleccionar grupo de permisos</h2>
                                 <label class="block text-[15px] font-medium text-gray-700">Grupo</label>
-                                <x-administration-search-picker input-id="permission-group-picker" model="selectedGroupId" :selected="$selectedGroupId" :items="$groupOptions" placeholder="Buscar grupo por nombre..." empty-message="No se encontraron grupos." placement="bottom" />
+                                <x-administration-search-picker input-id="permission-group-picker" model="selectedGroupId" :selected="$selectedGroupId" :disabled="$lockedRecordId !== null" :items="$groupOptions" placeholder="Buscar grupo por nombre..." empty-message="No se encontraron grupos." placement="bottom" />
                                 <x-input-error for="selectedGroupId" class="mt-2" />
                             </section>
                         @endif

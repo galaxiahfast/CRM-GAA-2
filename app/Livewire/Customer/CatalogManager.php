@@ -8,6 +8,7 @@ use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Throwable;
@@ -21,6 +22,10 @@ class CatalogManager extends Component
     public string $activeTab = 'crear';
 
     public ?int $selectedCustomerId = null;
+
+    /** Registro fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedRecordId = null;
 
     public ?int $principalAccountantId = null;
 
@@ -44,13 +49,18 @@ class CatalogManager extends Component
 
     public ?string $notice = null;
 
-    public function mount(): void
+    public function mount(bool $autoOpen = false, string $initialTab = 'crear', ?int $initialRecordId = null): void
     {
         $this->ensureCanManageCustomers();
+
+        if ($autoOpen) {
+            $this->openFromDirectory($initialTab, $initialRecordId);
+        }
     }
 
     public function openModal(string $tab = 'crear'): void
     {
+        $this->lockedRecordId = null;
         $this->ensureCanManageCustomers();
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         $this->activeTab = $tab;
@@ -63,12 +73,14 @@ class CatalogManager extends Component
     {
         $this->openModal($tab);
         if ($recordId !== null) {
+            $this->lockedRecordId = in_array($tab, ['editar', 'eliminar'], true) ? (int) $recordId : null;
             $this->updatedSelectedCustomerId($recordId);
         }
     }
 
     public function closeModal(): void
     {
+        $this->lockedRecordId = null;
         $this->showModal = false;
         $this->activeTab = 'crear';
         $this->resetManagementState();
@@ -81,10 +93,20 @@ class CatalogManager extends Component
 
         $this->activeTab = $tab;
         $this->resetManagementState();
+
+        if ($this->lockedRecordId !== null && $tab !== 'crear') {
+            $this->updatedSelectedCustomerId($this->lockedRecordId);
+        }
     }
 
     public function updatedSelectedCustomerId($customerId): void
     {
+        if ($this->lockedRecordId !== null && (int) $customerId !== $this->lockedRecordId) {
+            $this->selectedCustomerId = $this->lockedRecordId;
+
+            return;
+        }
+
         $this->ensureCanManageCustomers();
         $this->selectedCustomerId = filled($customerId) ? (int) $customerId : null;
         $this->resetCustomerFields();
@@ -112,6 +134,10 @@ class CatalogManager extends Component
 
     public function save(): void
     {
+        if ($this->lockedRecordId !== null && in_array($this->activeTab, ['editar', 'eliminar'], true)) {
+            $this->selectedCustomerId = $this->lockedRecordId;
+        }
+
         match ($this->activeTab) {
             'crear' => $this->createCustomer(),
             'editar' => $this->updateCustomer(),
@@ -214,6 +240,10 @@ class CatalogManager extends Component
         $deletedCustomerId = (int) $data['selectedCustomerId'];
         app(ReferenceDataCache::class)->forgetCustomerCatalog();
         $this->resetManagementState();
+        if ($this->lockedRecordId !== null) {
+            $this->lockedRecordId = null;
+            $this->showModal = false;
+        }
         $this->notice = 'Cliente eliminado. Su historial y relaciones se conservaron.';
         $this->dispatch('customer-catalog-updated', customerId: $deletedCustomerId, action: 'deleted');
     }

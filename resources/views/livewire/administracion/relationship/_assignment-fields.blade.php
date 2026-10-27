@@ -10,7 +10,7 @@
     <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
         <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">{{ $mode === 'crear' ? 'Cliente de la nueva asignación' : 'Seleccionar asignación' }}</h2>
         <label class="block text-[15px] font-medium text-gray-700">Cliente</label>
-        <x-administration-search-picker input-id="assignment-customer" model="selectedCustomer" :selected="$selectedCustomer" :items="$customerOptions" placeholder="Buscar cliente por nombre o RFC..." empty-message="No se encontraron clientes." placement="bottom" />
+        <x-administration-search-picker input-id="assignment-customer" model="selectedCustomer" :selected="$selectedCustomer" :items="$customerOptions" placeholder="Buscar cliente por nombre o RFC..." empty-message="No se encontraron clientes." :disabled="! $embedded && $lockedCustomerId !== null" placement="bottom" />
         <x-input-error for="selectedCustomer" class="mt-2" />
     </section>
 

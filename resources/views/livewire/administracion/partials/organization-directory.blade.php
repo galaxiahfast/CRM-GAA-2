@@ -30,13 +30,13 @@
             } else if (this.selectedCatalog === 'areas') {
                 this.$wire.openPhysicalAreaModal(action, recordId);
             } else if (this.selectedCatalog === 'permissions') {
-                Livewire.dispatch('open-permission-catalog-from-directory', { tab: action, recordId });
+                this.$wire.openPermissionsModal(action, recordId);
             } else if (this.selectedCatalog === 'customers') {
-                Livewire.dispatch('open-customer-catalog-from-directory', { tab: action, recordId });
+                this.$wire.openCustomerManagement(action, recordId);
             } else if (this.selectedCatalog === 'assignments') {
-                Livewire.dispatch('open-assignment-catalog-from-directory', { mode: action, recordId });
+                this.$wire.openAssignmentModal(action, recordId);
             } else if (this.selectedCatalog === 'activities') {
-                Livewire.dispatch('open-activity-catalog-from-directory', { tab: action, recordId });
+                this.$wire.openActivityManagement(action, recordId);
             }
         },
         get activeCatalog() {

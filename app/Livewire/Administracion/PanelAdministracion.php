@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Administracion;
 
+use App\Models\Customer;
 use App\Models\JobPosition;
+use App\Models\PermissionGroup;
 use App\Models\PhysicalArea;
 use App\Models\Role;
+use App\Models\SubService;
 use App\Models\User;
 use App\Models\UserHierarchyRelation;
 use App\Models\UserInterns;
@@ -15,6 +18,7 @@ use App\Services\TimeControl\AttendanceSettingsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -62,7 +66,33 @@ class PanelAdministracion extends Component
 
     public string $assignmentModalTab = 'crear';
 
+    public ?int $assignmentModalCustomerId = null;
+
+    public int $assignmentModalInstance = 0;
+
     public bool $showPermissionsModal = false;
+
+    public string $permissionCatalogInitialTab = 'crear';
+
+    public ?int $permissionCatalogInitialRecordId = null;
+
+    public int $permissionCatalogModalInstance = 0;
+
+    public bool $showCustomerManagementModal = false;
+
+    public string $customerManagementInitialTab = 'crear';
+
+    public ?int $customerManagementInitialRecordId = null;
+
+    public int $customerManagementModalInstance = 0;
+
+    public bool $showActivityManagementModal = false;
+
+    public string $activityManagementInitialTab = 'crear';
+
+    public ?int $activityManagementInitialRecordId = null;
+
+    public int $activityManagementModalInstance = 0;
 
     public bool $showJobPositionModal = false;
 
@@ -78,6 +108,10 @@ class PanelAdministracion extends Component
 
     public ?int $selectedJobPositionId = null;
 
+    /** Puesto fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedJobPositionId = null;
+
     public string $editJobPositionName = '';
 
     public string $editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
@@ -87,6 +121,10 @@ class PanelAdministracion extends Component
     public string $physicalAreaModalTab = 'crear';
 
     public ?int $selectedPhysicalAreaManagementId = null;
+
+    /** Área fija cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedPhysicalAreaId = null;
 
     public string $editPhysicalAreaName = '';
 
@@ -153,12 +191,17 @@ class PanelAdministracion extends Component
         $this->showRoleManagementModal = false;
     }
 
-    public function openAssignmentModal(string $tab = 'crear'): void
+    public function openAssignmentModal(string $tab = 'crear', ?int $customerId = null): void
     {
         abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
             ->allows(auth()->user(), 'administration.assignments.manage'), 403);
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar', 'relationships', 'interns'], true), 404);
+        if ($customerId !== null) {
+            abort_unless($tab !== 'crear' && Customer::whereKey($customerId)->exists(), 404);
+        }
         $this->assignmentModalTab = $tab;
+        $this->assignmentModalCustomerId = $customerId;
+        $this->assignmentModalInstance++;
         $this->showAssignmentModal = true;
     }
 
@@ -171,6 +214,7 @@ class PanelAdministracion extends Component
     public function closeAssignmentModal(): void
     {
         $this->showAssignmentModal = false;
+        $this->assignmentModalCustomerId = null;
     }
 
     #[On('customer-catalog-updated')]
@@ -194,15 +238,49 @@ class PanelAdministracion extends Component
         }
     }
 
-    public function openPermissionsModal(): void
+    public function openPermissionsModal(string $tab = 'crear', ?int $recordId = null): void
     {
         $this->ensureOrganizationAdministrator();
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        if ($recordId !== null) {
+            abort_unless($tab !== 'crear' && PermissionGroup::whereKey($recordId)->exists(), 404);
+        }
+        $this->permissionCatalogInitialTab = $tab;
+        $this->permissionCatalogInitialRecordId = $recordId;
+        $this->permissionCatalogModalInstance++;
         $this->showPermissionsModal = true;
     }
 
     public function closePermissionsModal(): void
     {
         $this->showPermissionsModal = false;
+        $this->permissionCatalogInitialRecordId = null;
+    }
+
+    public function openCustomerManagement(string $tab = 'crear', ?int $recordId = null): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        if ($recordId !== null) {
+            abort_unless($tab !== 'crear' && Customer::whereKey($recordId)->exists(), 404);
+        }
+        $this->customerManagementInitialTab = $tab;
+        $this->customerManagementInitialRecordId = $recordId;
+        $this->customerManagementModalInstance++;
+        $this->showCustomerManagementModal = true;
+    }
+
+    public function openActivityManagement(string $tab = 'crear', ?int $recordId = null): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
+        if ($recordId !== null) {
+            abort_unless($tab !== 'crear' && SubService::whereKey($recordId)->exists(), 404);
+        }
+        $this->activityManagementInitialTab = $tab;
+        $this->activityManagementInitialRecordId = $recordId;
+        $this->activityManagementModalInstance++;
+        $this->showActivityManagementModal = true;
     }
 
     public function openJobPositionModal(string $tab = 'crear', ?int $positionId = null): void
@@ -215,12 +293,14 @@ class PanelAdministracion extends Component
         $this->newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->jobPositionModalTab = $tab;
         $this->selectedJobPositionId = null;
+        $this->lockedJobPositionId = null;
         $this->editJobPositionName = '';
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->deleteJobPositionConfirmation = '';
         $this->resetValidation(['newJobPositionName', 'selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
         if ($positionId !== null) {
             abort_unless($tab !== 'crear' && JobPosition::whereKey($positionId)->exists(), 404);
+            $this->lockedJobPositionId = (int) $positionId;
             $this->updatedSelectedJobPositionId($positionId);
         }
         $this->showJobPositionModal = true;
@@ -229,6 +309,7 @@ class PanelAdministracion extends Component
     public function closeJobPositionModal(): void
     {
         $this->showJobPositionModal = false;
+        $this->lockedJobPositionId = null;
         $this->newJobPositionName = '';
         $this->newJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->selectedJobPositionId = null;
@@ -275,10 +356,20 @@ class PanelAdministracion extends Component
         $this->editJobPositionPaymentType = JobPosition::PAYMENT_FULL_TIME;
         $this->deleteJobPositionConfirmation = '';
         $this->resetValidation(['selectedJobPositionId', 'editJobPositionName', 'deleteJobPositionConfirmation']);
+
+        if ($this->lockedJobPositionId !== null && $tab !== 'crear') {
+            $this->updatedSelectedJobPositionId($this->lockedJobPositionId);
+        }
     }
 
     public function updatedSelectedJobPositionId($positionId): void
     {
+        if ($this->lockedJobPositionId !== null && (int) $positionId !== $this->lockedJobPositionId) {
+            $this->selectedJobPositionId = $this->lockedJobPositionId;
+
+            return;
+        }
+
         $this->ensureOrganizationAdministrator();
 
         $this->selectedJobPositionId = filled($positionId) ? (int) $positionId : null;
@@ -294,6 +385,9 @@ class PanelAdministracion extends Component
     public function updateJobPosition(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
+        if ($this->lockedJobPositionId !== null) {
+            $this->selectedJobPositionId = $this->lockedJobPositionId;
+        }
         $this->editJobPositionName = $this->normalizeCatalogName($this->editJobPositionName);
 
         $data = $this->validate([
@@ -324,6 +418,9 @@ class PanelAdministracion extends Component
     public function deleteJobPosition(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
+        if ($this->lockedJobPositionId !== null) {
+            $this->selectedJobPositionId = $this->lockedJobPositionId;
+        }
 
         $data = $this->validate([
             'selectedJobPositionId' => ['required', 'integer', 'exists:job_positions,id'],
@@ -371,11 +468,13 @@ class PanelAdministracion extends Component
         $this->newPhysicalAreaName = '';
         $this->physicalAreaModalTab = $tab;
         $this->selectedPhysicalAreaManagementId = null;
+        $this->lockedPhysicalAreaId = null;
         $this->editPhysicalAreaName = '';
         $this->deletePhysicalAreaConfirmation = '';
         $this->resetValidation('newPhysicalAreaName');
         if ($areaId !== null) {
             abort_unless($tab !== 'crear' && PhysicalArea::whereKey($areaId)->exists(), 404);
+            $this->lockedPhysicalAreaId = (int) $areaId;
             $this->updatedSelectedPhysicalAreaManagementId($areaId);
         }
         $this->showPhysicalAreaModal = true;
@@ -384,6 +483,7 @@ class PanelAdministracion extends Component
     public function closePhysicalAreaModal(): void
     {
         $this->showPhysicalAreaModal = false;
+        $this->lockedPhysicalAreaId = null;
         $this->newPhysicalAreaName = '';
         $this->selectedPhysicalAreaManagementId = null;
         $this->editPhysicalAreaName = '';
@@ -423,11 +523,21 @@ class PanelAdministracion extends Component
         $this->editPhysicalAreaName = '';
         $this->deletePhysicalAreaConfirmation = '';
         $this->resetValidation(['selectedPhysicalAreaManagementId', 'editPhysicalAreaName', 'deletePhysicalAreaConfirmation']);
+
+        if ($this->lockedPhysicalAreaId !== null && $tab !== 'crear') {
+            $this->updatedSelectedPhysicalAreaManagementId($this->lockedPhysicalAreaId);
+        }
     }
 
     public function updatedSelectedPhysicalAreaManagementId($areaId): void
     {
         $this->ensureOrganizationAdministrator();
+
+        if ($this->lockedPhysicalAreaId !== null && (int) $areaId !== $this->lockedPhysicalAreaId) {
+            $this->selectedPhysicalAreaManagementId = $this->lockedPhysicalAreaId;
+
+            return;
+        }
 
         $this->selectedPhysicalAreaManagementId = filled($areaId) ? (int) $areaId : null;
         $this->editPhysicalAreaName = $this->selectedPhysicalAreaManagementId
@@ -440,6 +550,9 @@ class PanelAdministracion extends Component
     public function updatePhysicalArea(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
+        if ($this->lockedPhysicalAreaId !== null) {
+            $this->selectedPhysicalAreaManagementId = $this->lockedPhysicalAreaId;
+        }
         $this->editPhysicalAreaName = $this->normalizeCatalogName($this->editPhysicalAreaName);
 
         $data = $this->validate([
@@ -457,6 +570,9 @@ class PanelAdministracion extends Component
     public function deletePhysicalArea(OrganizationChartService $chartService): void
     {
         $this->ensureOrganizationAdministrator();
+        if ($this->lockedPhysicalAreaId !== null) {
+            $this->selectedPhysicalAreaManagementId = $this->lockedPhysicalAreaId;
+        }
 
         $data = $this->validate([
             'selectedPhysicalAreaManagementId' => ['required', 'integer', 'exists:physical_areas,id'],
@@ -667,8 +783,7 @@ class PanelAdministracion extends Component
     public function saveSelectedUser(
         OrganizationChartService $chartService,
         AttendanceSettingsService $settingsService,
-    ): void
-    {
+    ): void {
         $this->ensureOrganizationAdministrator();
         abort_unless($this->selectedUserId, 404);
 

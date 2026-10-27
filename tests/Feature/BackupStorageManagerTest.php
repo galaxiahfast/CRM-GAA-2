@@ -373,6 +373,51 @@ class BackupStorageManagerTest extends TestCase
         $component->assertDontSee('Se deseleccionó 1 empresa');
     }
 
+    public function test_initial_view_loads_two_backup_days_and_reveals_older_dates_in_two_day_steps(): void
+    {
+        foreach (range(0, 3) as $daysAgo) {
+            $date = now()->subDays($daysAgo)->format('Ymd');
+            File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+            File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        }
+
+        $admin = $this->user('Administrador', 'admin-progressive-dates@datamid.test');
+        $thirdDayLabel = ucfirst(now()->subDays(2)->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSet('visibleDateLimit', 2)
+            ->assertDontSee($thirdDayLabel)
+            ->assertSee('Mostrar fechas anteriores')
+            ->call('loadMoreDates')
+            ->assertSet('visibleDateLimit', 4)
+            ->assertSee($thirdDayLabel);
+    }
+
+    public function test_clicking_a_backup_row_toggles_its_selection_and_memory_precedes_server_files(): void
+    {
+        $date = now()->format('Ymd');
+        File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
+        File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+
+        $record = collect(app(ContpaqiBackupCatalog::class)->dashboard(now()->toDateString())['records'])->firstOrFail();
+        $admin = $this->user('Administrador', 'admin-row-selection@datamid.test');
+
+        $component = Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertSeeHtml('@click="$refs.rowCheckbox.click()"')
+            ->assertSeeHtml('x-ref="rowCheckbox"')
+            ->set('selectedRecords', [$record['id']])
+            ->assertSet('selectedRecords', [$record['id']]);
+
+        $html = $component->html();
+        $this->assertLessThan(
+            strpos($html, '>Archivos del servidor<'),
+            strpos($html, '>Respaldo en memoria<'),
+        );
+    }
+
     public function test_an_already_backed_up_company_remains_selectable_for_replacement(): void
     {
         $date = now()->format('Ymd');

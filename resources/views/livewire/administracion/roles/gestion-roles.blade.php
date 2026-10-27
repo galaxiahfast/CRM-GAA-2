@@ -33,7 +33,7 @@
 
             <section class="rounded-xl border border-[#CAD7E7] bg-white/45 p-5">
                 <h2 class="text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">Seleccionar rol</h2>
-                <x-administration-search-picker input-id="role-management-picker" model="editingRoleId" :selected="$editingRoleId" :items="$roleOptions" placeholder="Buscar rol por nombre..." empty-message="No se encontraron roles." placement="bottom" />
+                <x-administration-search-picker input-id="role-management-picker" model="editingRoleId" :selected="$editingRoleId" :disabled="$lockedRoleId !== null" :items="$roleOptions" placeholder="Buscar rol por nombre..." empty-message="No se encontraron roles." placement="bottom" />
                 <x-input-error for="editingRoleId" class="mt-2 text-[14px]" />
             </section>
 

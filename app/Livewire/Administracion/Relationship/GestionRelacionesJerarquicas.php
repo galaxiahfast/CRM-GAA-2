@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -23,6 +24,10 @@ class GestionRelacionesJerarquicas extends Component
 
     public ?int $selectedCustomer = null;
 
+    /** Cliente fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedCustomerId = null;
+
     public ?int $selectedAccountantId = null;
 
     public array $assignedInterns = [];
@@ -31,12 +36,19 @@ class GestionRelacionesJerarquicas extends Component
 
     public ?string $notice = null;
 
-    public function mount(bool $embedded = false, bool $cardActions = false, string $mode = 'crear'): void
+    public function mount(bool $embedded = false, bool $cardActions = false, bool $autoOpen = false, string $mode = 'crear', ?int $initialCustomerId = null): void
     {
         $this->embedded = $embedded;
         $this->cardActions = $cardActions;
         $this->mode = in_array($mode, ['relationships', 'interns'], true) ? 'editar' : $mode;
         $this->authorizeManagement();
+
+        if ($initialCustomerId !== null) {
+            $this->lockedCustomerId = in_array($this->mode, ['editar', 'eliminar'], true) ? $initialCustomerId : null;
+            $this->updatedSelectedCustomer($initialCustomerId);
+        }
+
+        $this->showModal = $autoOpen;
     }
 
     public function openModal(string $mode): void
@@ -44,6 +56,7 @@ class GestionRelacionesJerarquicas extends Component
         abort_unless(in_array($mode, ['crear', 'editar', 'eliminar'], true), 404);
         $this->authorizeManagement();
         $this->mode = $mode;
+        $this->lockedCustomerId = null;
         $this->resetAssignmentState();
         $this->showModal = true;
     }
@@ -53,18 +66,26 @@ class GestionRelacionesJerarquicas extends Component
     {
         $this->openModal($mode);
         if ($recordId !== null) {
+            $this->lockedCustomerId = in_array($mode, ['editar', 'eliminar'], true) ? (int) $recordId : null;
             $this->updatedSelectedCustomer($recordId);
         }
     }
 
     public function closeModal(): void
     {
+        $this->lockedCustomerId = null;
         $this->showModal = false;
         $this->resetAssignmentState();
     }
 
     public function updatedSelectedCustomer($customerId): void
     {
+        if ($this->lockedCustomerId !== null && (int) $customerId !== $this->lockedCustomerId) {
+            $this->selectedCustomer = $this->lockedCustomerId;
+
+            return;
+        }
+
         $this->selectedCustomer = filled($customerId) ? (int) $customerId : null;
         $this->selectedAccountantId = null;
         $this->assignedInterns = [];
@@ -83,6 +104,9 @@ class GestionRelacionesJerarquicas extends Component
     public function save(): void
     {
         $this->authorizeManagement();
+        if ($this->lockedCustomerId !== null && in_array($this->mode, ['editar', 'eliminar'], true)) {
+            $this->selectedCustomer = $this->lockedCustomerId;
+        }
         $data = $this->validate([
             'selectedCustomer' => ['required', 'integer', 'exists:customers,id'],
             'selectedAccountantId' => [$this->mode === 'eliminar' ? 'nullable' : 'required', 'nullable', 'integer', 'exists:users,id'],
@@ -143,8 +167,13 @@ class GestionRelacionesJerarquicas extends Component
 
     private function finish(string $message): void
     {
+        $lockedCustomerId = $this->lockedCustomerId;
         app(ReferenceDataCache::class)->forgetAssignmentCatalog();
         $this->resetAssignmentState();
+
+        if ($lockedCustomerId !== null) {
+            $this->updatedSelectedCustomer($lockedCustomerId);
+        }
         $this->notice = $message;
         $this->dispatch('assignments-updated');
     }

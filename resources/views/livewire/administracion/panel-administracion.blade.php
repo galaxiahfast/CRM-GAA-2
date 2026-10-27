@@ -898,21 +898,12 @@
     @endif
 
     @if ($showAssignmentModal)
-        <x-administration-panel-modal
-            title="{{ ucfirst($assignmentModalTab) }} asignación"
-            subtitle="Relaciona clientes, responsables y auxiliares sin salir del centro de organización."
-            modal-id="assignment-management"
-            cancel-action="closeAssignmentModal"
-            :carousel-style="true"
-        >
-            <x-slot name="icon"><x-feathericon-git-merge class="h-6 w-6" /></x-slot>
-            <x-slot name="content">
-                <livewire:administracion.relationship.gestion-relaciones-jerarquicas :embedded="true" :mode="$assignmentModalTab" :key="'organization-relationships-form-'.$assignmentModalTab" />
-            </x-slot>
-            <x-slot name="actions">
-                <button type="button" wire:click="closeAssignmentModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white hover:bg-white/20">Cerrar</button>
-            </x-slot>
-        </x-administration-panel-modal>
+        <livewire:administracion.relationship.gestion-relaciones-jerarquicas
+            :auto-open="true"
+            :mode="$assignmentModalTab"
+            :initial-customer-id="$assignmentModalCustomerId"
+            :key="'organization-relationships-form-'.$assignmentModalInstance"
+        />
     @endif
 
     {{-- ============================================================ --}}
@@ -969,6 +960,7 @@
                             <label for="edit-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
                             <x-administration-search-picker
                                 input-id="edit-job-position-id"
+                                :disabled="$lockedJobPositionId !== null"
                                 model="selectedJobPositionId"
                                 :selected="$selectedJobPositionId"
                                 :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
@@ -1006,6 +998,7 @@
                             <label for="delete-job-position-id" class="block text-[15px] font-medium text-gray-700">Puesto operativo</label>
                             <x-administration-search-picker
                                 input-id="delete-job-position-id"
+                                :disabled="$lockedJobPositionId !== null"
                                 model="selectedJobPositionId"
                                 :selected="$selectedJobPositionId"
                                 :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
@@ -1103,6 +1096,7 @@
                             <label for="edit-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
                             <x-administration-search-picker
                                 input-id="edit-physical-area-id"
+                                :disabled="$lockedPhysicalAreaId !== null"
                                 model="selectedPhysicalAreaManagementId"
                                 :selected="$selectedPhysicalAreaManagementId"
                                 :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
@@ -1125,6 +1119,7 @@
                             <label for="delete-physical-area-id" class="block text-[15px] font-medium text-gray-700">Área o departamento</label>
                             <x-administration-search-picker
                                 input-id="delete-physical-area-id"
+                                :disabled="$lockedPhysicalAreaId !== null"
                                 model="selectedPhysicalAreaManagementId"
                                 :selected="$selectedPhysicalAreaManagementId"
                                 :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
@@ -1183,10 +1178,18 @@
     {{-- MODAL INFORMATIVO DE PERMISOS VIGENTES --}}
     {{-- ============================================================ --}}
     @if ($showPermissionsModal)
-        <livewire:administracion.permissions.catalog-manager :auto-open="true" :key="'permission-catalog-direct'" />
+        <livewire:administracion.permissions.catalog-manager :auto-open="true" :initial-tab="$permissionCatalogInitialTab" :initial-record-id="$permissionCatalogInitialRecordId" :key="'permission-catalog-direct-'.$permissionCatalogModalInstance" />
         <span class="hidden" data-administration-modal="permissions" wire:click.self="closePermissionsModal" aria-hidden="true"></span>
         <span class="hidden" data-permission-role="Administrador" aria-hidden="true"></span>
         <span class="hidden" data-permission-role="Auxiliar" aria-hidden="true"></span>
+    @endif
+
+    @if ($showCustomerManagementModal)
+        <livewire:customer.catalog-manager :auto-open="true" :initial-tab="$customerManagementInitialTab" :initial-record-id="$customerManagementInitialRecordId" :key="'customer-catalog-direct-'.$customerManagementModalInstance" />
+    @endif
+
+    @if ($showActivityManagementModal)
+        <livewire:time-control.activity-catalog-manager :auto-open="true" :initial-tab="$activityManagementInitialTab" :initial-record-id="$activityManagementInitialRecordId" :key="'activity-catalog-direct-'.$activityManagementModalInstance" />
     @endif
 
     @if (false && $showPermissionsModal)

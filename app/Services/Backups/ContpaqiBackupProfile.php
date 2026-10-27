@@ -81,7 +81,7 @@ class ContpaqiBackupProfile
         $sourceClassification = (string) ($record['source_classification'] ?? '');
         $folder = Str::lower(trim((string) ($record['company_folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
-        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
+        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site, false, false);
         if (in_array($sourceClassification, ['payroll', 'accounting'], true)) {
             if ($sourceClassification !== $classification) {
                 return false;
@@ -114,7 +114,7 @@ class ContpaqiBackupProfile
 
         $folder = Str::lower(trim((string) ($company['folder'] ?? '')));
         $site = (string) ($profile['site'] ?? 'merida');
-        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site);
+        $sqlCatalog = $this->sqlCatalogBySite[$site] ??= $this->sqlCatalog->catalog($site, false, false);
         if ($sqlCatalog !== null) {
             return isset($sqlCatalog[$classification][$folder]);
         }

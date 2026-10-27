@@ -7,6 +7,7 @@ use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -22,6 +23,10 @@ class CatalogManager extends Component
 
     public ?int $selectedGroupId = null;
 
+    /** Registro fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedRecordId = null;
+
     public string $name = '';
 
     public string $description = '';
@@ -32,16 +37,20 @@ class CatalogManager extends Component
 
     public ?string $notice = null;
 
-    public function mount(bool $cardActions = false, bool $autoOpen = false): void
+    public function mount(bool $cardActions = false, bool $autoOpen = false, string $initialTab = 'crear', ?int $initialRecordId = null): void
     {
         $this->cardActions = $cardActions;
         $this->autoOpen = $autoOpen;
-        $this->showModal = $autoOpen;
         $this->authorizeManagement();
+
+        if ($autoOpen) {
+            $this->openFromDirectory($initialTab, $initialRecordId);
+        }
     }
 
     public function openModal(string $tab = 'crear'): void
     {
+        $this->lockedRecordId = null;
         $this->authorizeManagement();
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         $this->activeTab = $tab;
@@ -54,18 +63,26 @@ class CatalogManager extends Component
     {
         $this->openModal($tab);
         if ($recordId !== null) {
+            $this->lockedRecordId = in_array($tab, ['editar', 'eliminar'], true) ? (int) $recordId : null;
             $this->updatedSelectedGroupId($recordId);
         }
     }
 
     public function closeModal(): void
     {
+        $this->lockedRecordId = null;
         $this->showModal = false;
         $this->resetFormState();
     }
 
     public function updatedSelectedGroupId($value): void
     {
+        if ($this->lockedRecordId !== null && (int) $value !== $this->lockedRecordId) {
+            $this->selectedGroupId = $this->lockedRecordId;
+
+            return;
+        }
+
         $this->selectedGroupId = filled($value) ? (int) $value : null;
         $this->clearFields();
         $this->resetValidation();
@@ -85,6 +102,9 @@ class CatalogManager extends Component
     public function save(): void
     {
         $this->authorizeManagement();
+        if ($this->lockedRecordId !== null && in_array($this->activeTab, ['editar', 'eliminar'], true)) {
+            $this->selectedGroupId = $this->lockedRecordId;
+        }
 
         if ($this->activeTab === 'eliminar') {
             $data = $this->validate([
@@ -168,8 +188,18 @@ class CatalogManager extends Component
 
     private function finish(string $message): void
     {
+        $lockedRecordId = $this->lockedRecordId;
+        $completedTab = $this->activeTab;
         app(ReferenceDataCache::class)->forgetPermissionCatalog();
         $this->resetFormState();
+
+        if ($lockedRecordId !== null && $completedTab === 'editar') {
+            $this->updatedSelectedGroupId($lockedRecordId);
+        } elseif ($lockedRecordId !== null) {
+            $this->lockedRecordId = null;
+            $this->showModal = false;
+        }
+
         $this->notice = $message;
         $this->dispatch('permission-catalog-updated');
     }

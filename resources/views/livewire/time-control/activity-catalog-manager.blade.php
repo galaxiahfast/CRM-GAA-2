@@ -148,6 +148,7 @@
                                     >
                                         <input
                                             id="managed-activity-id"
+                                            @disabled($lockedRecordId !== null)
                                             x-ref="searchInput"
                                             type="text"
                                             autocomplete="off"
@@ -169,6 +170,7 @@
                                             type="button"
                                             class="absolute right-0 top-0 flex h-11 w-12 items-center justify-center text-gray-500 hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
                                             @click="open ? closeList() : openList()"
+                                            @disabled($lockedRecordId !== null)
                                             aria-label="Mostrar todas las actividades"
                                             x-bind:aria-expanded="open"
                                         >

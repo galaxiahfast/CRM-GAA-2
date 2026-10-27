@@ -8,6 +8,7 @@ use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Throwable;
@@ -22,6 +23,10 @@ class ActivityCatalogManager extends Component
 
     public ?int $selectedActivityId = null;
 
+    /** Registro fijo cuando el formulario se abre desde un registro (editar/eliminar). */
+    #[Locked]
+    public ?int $lockedRecordId = null;
+
     public ?int $serviceId = null;
 
     public string $name = '';
@@ -30,13 +35,18 @@ class ActivityCatalogManager extends Component
 
     public ?string $notice = null;
 
-    public function mount(): void
+    public function mount(bool $autoOpen = false, string $initialTab = 'crear', ?int $initialRecordId = null): void
     {
         $this->ensureCanManageActivities();
+
+        if ($autoOpen) {
+            $this->openFromDirectory($initialTab, $initialRecordId);
+        }
     }
 
     public function openModal(string $tab = 'crear'): void
     {
+        $this->lockedRecordId = null;
         $this->ensureCanManageActivities();
         abort_unless(in_array($tab, ['crear', 'editar', 'eliminar'], true), 404);
         $this->activeTab = $tab;
@@ -49,12 +59,14 @@ class ActivityCatalogManager extends Component
     {
         $this->openModal($tab);
         if ($recordId !== null) {
+            $this->lockedRecordId = in_array($tab, ['editar', 'eliminar'], true) ? (int) $recordId : null;
             $this->updatedSelectedActivityId($recordId);
         }
     }
 
     public function closeModal(): void
     {
+        $this->lockedRecordId = null;
         $this->showModal = false;
         $this->activeTab = 'crear';
         $this->resetManagementState();
@@ -67,10 +79,20 @@ class ActivityCatalogManager extends Component
 
         $this->activeTab = $tab;
         $this->resetManagementState();
+
+        if ($this->lockedRecordId !== null && $tab !== 'crear') {
+            $this->updatedSelectedActivityId($this->lockedRecordId);
+        }
     }
 
     public function updatedSelectedActivityId($activityId): void
     {
+        if ($this->lockedRecordId !== null && (int) $activityId !== $this->lockedRecordId) {
+            $this->selectedActivityId = $this->lockedRecordId;
+
+            return;
+        }
+
         $this->ensureCanManageActivities();
         $this->selectedActivityId = filled($activityId) ? (int) $activityId : null;
         $this->resetActivityFields();
@@ -89,6 +111,10 @@ class ActivityCatalogManager extends Component
 
     public function save(): void
     {
+        if ($this->lockedRecordId !== null && in_array($this->activeTab, ['editar', 'eliminar'], true)) {
+            $this->selectedActivityId = $this->lockedRecordId;
+        }
+
         match ($this->activeTab) {
             'crear' => $this->createActivity(),
             'editar' => $this->updateActivity(),
@@ -214,6 +240,10 @@ class ActivityCatalogManager extends Component
         $deletedActivityId = (int) $data['selectedActivityId'];
         app(ReferenceDataCache::class)->forgetActivityCatalog();
         $this->resetManagementState();
+        if ($this->lockedRecordId !== null) {
+            $this->lockedRecordId = null;
+            $this->showModal = false;
+        }
         $this->notice = 'Actividad eliminada correctamente.';
         $this->dispatch('activity-catalog-updated', activityId: $deletedActivityId, action: 'deleted');
     }
