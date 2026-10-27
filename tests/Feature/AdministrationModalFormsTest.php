@@ -535,13 +535,9 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('data-administration-modal="roles-management"')
             ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
             ->assertSee('Seleccionar rol')
-            ->assertSee('Usuarios del rol')
             ->assertSee('Verificación')
             ->call('selectRole', $assignedRole->id)
-            ->assertSet('editingRoleId', $assignedRole->id)
-            ->assertSee('assigned-role@test.mx')
-            ->assertSee('Mueve todos los usuarios a otro rol')
-            ->call('clearRoleSelection')
+            ->assertSet('editingRoleId', null)
             ->call('selectRole', $temporaryRole->id)
             ->call('deleteRole', $temporaryRole->id)
             ->assertHasErrors(['deleteConfirmationName'])
@@ -573,78 +569,6 @@ class AdministrationModalFormsTest extends TestCase
             ->test(GestionRoles::class)
             ->call('cancel')
             ->assertRedirect(route('administracion.index'));
-    }
-
-    public function test_role_management_can_assign_users_and_move_them_to_another_role(): void
-    {
-        $administratorRole = Role::create(['role' => 'Administrador']);
-        $salesRole = Role::create(['role' => 'Ventas']);
-        $supportRole = Role::create(['role' => 'Soporte']);
-        $administrator = $this->createUser($administratorRole, 'admin-role-users@test.mx');
-        $salesUser = $this->createUser($salesRole, 'sales-role-user@test.mx');
-        $supportUser = $this->createUser($supportRole, 'support-role-user@test.mx');
-
-        Livewire::actingAs($administrator)
-            ->test(GestionRoles::class)
-            ->call('selectRole', $salesRole->id)
-            ->assertSee('sales-role-user@test.mx')
-            ->assertSee('support-role-user@test.mx')
-            ->set('selectedAvailableUserIds', [$supportUser->id])
-            ->call('assignUsersToRole')
-            ->assertHasNoErrors()
-            ->assertSee('2 usuarios');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $supportUser->id,
-            'role_id' => $salesRole->id,
-        ]);
-
-        Livewire::actingAs($administrator)
-            ->test(GestionRoles::class)
-            ->call('selectRole', $salesRole->id)
-            ->set('selectedAssignedUserIds', [$salesUser->id, $supportUser->id])
-            ->set('replacementRoleId', $supportRole->id)
-            ->call('moveUsersToAnotherRole')
-            ->assertHasNoErrors()
-            ->assertSee('Este rol no tiene usuarios asignados.');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $salesUser->id,
-            'role_id' => $supportRole->id,
-        ]);
-        $this->assertDatabaseHas('users', [
-            'id' => $supportUser->id,
-            'role_id' => $supportRole->id,
-        ]);
-    }
-
-    public function test_assigned_custom_role_can_move_its_users_and_then_be_deleted(): void
-    {
-        $administratorRole = Role::create(['role' => 'Administrador']);
-        $temporaryRole = Role::create(['role' => 'Temporal']);
-        $destinationRole = Role::create(['role' => 'Destino']);
-        $administrator = $this->createUser($administratorRole, 'admin-delete-role-users@test.mx');
-        $temporaryUser = $this->createUser($temporaryRole, 'temporary-role-user@test.mx');
-
-        Livewire::actingAs($administrator)
-            ->withQueryParams(['tab' => 'delete'])
-            ->test(GestionRoles::class)
-            ->call('selectRole', $temporaryRole->id)
-            ->assertSet('editingRoleId', $temporaryRole->id)
-            ->set('selectedAssignedUserIds', [$temporaryUser->id])
-            ->set('replacementRoleId', $destinationRole->id)
-            ->call('moveUsersToAnotherRole')
-            ->assertHasNoErrors()
-            ->set('deleteConfirmationName', 'Temporal')
-            ->set('deleteConfirmationWord', 'ELIMINAR')
-            ->call('deleteRole', $temporaryRole->id)
-            ->assertRedirect(route('administracion.role', ['tab' => 'delete']));
-
-        $this->assertDatabaseHas('users', [
-            'id' => $temporaryUser->id,
-            'role_id' => $destinationRole->id,
-        ]);
-        $this->assertDatabaseMissing('roles', ['id' => $temporaryRole->id]);
     }
 
     public function test_embedded_role_editor_updates_the_selected_role_without_mounting_a_second_livewire_form(): void
@@ -741,6 +665,71 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('data-administration-modal="roles-management"')
             ->dispatch('role-management-closed')
             ->assertSet('showRoleManagementModal', false);
+    }
+
+    public function test_expanded_role_directory_assigns_and_moves_users_between_its_two_columns(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $salesRole = Role::create(['role' => 'Ventas']);
+        $supportRole = Role::create(['role' => 'Soporte']);
+        $administrator = $this->createUser($administratorRole, 'admin-role-directory@test.mx');
+        $salesUser = $this->createUser($salesRole, 'sales-role-directory@test.mx');
+        $supportUser = $this->createUser($supportRole, 'support-role-directory@test.mx');
+
+        $component = Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->assertSee('Usuarios asignados')
+            ->assertSee('Usuarios disponibles')
+            ->assertSeeHtml('this.$wire.assignDirectoryRoleUsers')
+            ->assertSeeHtml('this.$wire.moveDirectoryRoleUsers')
+            ->assertViewHas('organizationDirectory', function (array $directory) use ($salesRole, $salesUser, $supportUser): bool {
+                $role = collect($directory['roles']['items'])->firstWhere('id', $salesRole->id);
+
+                return collect($role['assigned_users'])->pluck('id')->contains($salesUser->id)
+                    && collect($role['available_users'])->pluck('id')->contains($supportUser->id);
+            })
+            ->call('assignDirectoryRoleUsers', $salesRole->id, [$supportUser->id])
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $supportUser->id,
+            'role_id' => $salesRole->id,
+        ]);
+
+        $component
+            ->call('moveDirectoryRoleUsers', $salesRole->id, [$salesUser->id, $supportUser->id], $supportRole->id)
+            ->assertHasNoErrors()
+            ->assertViewHas('organizationDirectory', function (array $directory) use ($salesRole): bool {
+                $role = collect($directory['roles']['items'])->firstWhere('id', $salesRole->id);
+
+                return $role['assigned_users'] === [];
+            });
+
+        $this->assertDatabaseHas('users', [
+            'id' => $salesUser->id,
+            'role_id' => $supportRole->id,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'id' => $supportUser->id,
+            'role_id' => $supportRole->id,
+        ]);
+    }
+
+    public function test_role_directory_does_not_allow_the_current_user_to_change_its_own_role(): void
+    {
+        $administratorRole = Role::create(['role' => 'Administrador']);
+        $supportRole = Role::create(['role' => 'Soporte']);
+        $administrator = $this->createUser($administratorRole, 'admin-protected-role@test.mx');
+
+        Livewire::actingAs($administrator)
+            ->test(PanelAdministracion::class)
+            ->call('assignDirectoryRoleUsers', $supportRole->id, [$administrator->id])
+            ->assertHasErrors(['userIds']);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $administrator->id,
+            'role_id' => $administratorRole->id,
+        ]);
     }
 
     public function test_organization_assignment_actions_use_an_inline_modal(): void

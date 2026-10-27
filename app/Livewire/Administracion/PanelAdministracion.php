@@ -17,7 +17,9 @@ use App\Services\ReferenceDataCache;
 use App\Services\TimeControl\AttendanceSettingsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -181,6 +183,44 @@ class PanelAdministracion extends Component
         $this->roleManagementInitialTab = 'editar';
         $this->roleManagementInitialRoleId = $roleId;
         $this->showRoleManagementModal = true;
+    }
+
+    /** @param  list<int|string>  $userIds */
+    public function assignDirectoryRoleUsers(int $roleId, array $userIds): array
+    {
+        $this->ensureCanManageRoles();
+        $role = Role::query()->findOrFail($roleId);
+        $validatedUserIds = $this->validatedDirectoryRoleUserIds($userIds);
+
+        User::query()
+            ->whereKey($validatedUserIds)
+            ->where('role_id', '<>', $role->id)
+            ->update(['role_id' => $role->id]);
+
+        return $this->freshRoleDirectoryCatalog();
+    }
+
+    /** @param  list<int|string>  $userIds */
+    public function moveDirectoryRoleUsers(int $roleId, array $userIds, int $destinationRoleId): array
+    {
+        $this->ensureCanManageRoles();
+        $role = Role::query()->findOrFail($roleId);
+        $destinationRole = Role::query()->findOrFail($destinationRoleId);
+
+        if ((int) $role->id === (int) $destinationRole->id) {
+            throw ValidationException::withMessages([
+                'destinationRoleId' => 'Selecciona un rol de destino diferente.',
+            ]);
+        }
+
+        $validatedUserIds = $this->validatedDirectoryRoleUserIds($userIds);
+
+        User::query()
+            ->whereKey($validatedUserIds)
+            ->where('role_id', $role->id)
+            ->update(['role_id' => $destinationRole->id]);
+
+        return $this->freshRoleDirectoryCatalog();
     }
 
     #[On('role-management-closed')]
@@ -954,6 +994,50 @@ class PanelAdministracion extends Component
         $references = app(ReferenceDataCache::class);
         $references->forgetAdministration();
         $references->forgetOrganizationDashboard();
+    }
+
+    private function ensureCanManageRoles(): void
+    {
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.roles.manage'), 403);
+    }
+
+    /**
+     * @param  list<int|string>  $userIds
+     * @return list<int>
+     */
+    private function validatedDirectoryRoleUserIds(array $userIds): array
+    {
+        $validated = Validator::make(['userIds' => $userIds], [
+            'userIds' => ['required', 'array', 'min:1'],
+            'userIds.*' => ['required', 'integer', 'distinct', 'exists:users,id'],
+        ], [
+            'userIds.required' => 'Selecciona al menos un usuario.',
+            'userIds.min' => 'Selecciona al menos un usuario.',
+        ])->validate();
+
+        $normalizedUserIds = collect($validated['userIds'])
+            ->map(fn ($userId): int => (int) $userId)
+            ->unique()
+            ->values();
+
+        if ($normalizedUserIds->contains((int) auth()->id())) {
+            throw ValidationException::withMessages([
+                'userIds' => 'No puedes cambiar tu propio rol desde esta pantalla.',
+            ]);
+        }
+
+        return $normalizedUserIds->all();
+    }
+
+    private function freshRoleDirectoryCatalog(): array
+    {
+        $references = app(ReferenceDataCache::class);
+        $references->forgetAdministration();
+        $references->forgetOrganizationDashboard();
+        $references->forgetManageableUsers();
+
+        return $references->organizationDirectory()['roles'];
     }
 
     public function render()

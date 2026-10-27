@@ -246,16 +246,35 @@ class ReferenceDataCache
                 'roles' => [
                     'label' => 'Roles',
                     'description' => 'Perfiles asignables a los colaboradores.',
-                    'items' => $roles->map(fn (Role $role): array => [
-                        'id' => (int) $role->id,
-                        'title' => mb_strtoupper($role->role),
-                        'subtitle' => mb_strtoupper((string) ($role->description ?: 'ROL ORGANIZACIONAL')),
-                        'details' => [
-                            ['label' => 'Usuarios', 'value' => (string) $role->users_count],
-                            ['label' => 'Grupo de permisos', 'value' => mb_strtoupper($role->permissionGroup?->name ?? 'SIN GRUPO')],
-                            ['label' => 'Perfil', 'value' => $profileLabels[$role->permission_profile] ?? 'PERSONALIZADO'],
-                        ],
-                    ])->values()->all(),
+                    'items' => $roles->map(function (Role $role) use ($users, $profileLabels): array {
+                        $mapUser = fn (User $user): array => [
+                            'id' => (int) $user->id,
+                            'title' => mb_strtoupper(trim($user->name.' '.$user->last_name)),
+                            'email' => mb_strtoupper((string) $user->email),
+                            'current_role' => mb_strtoupper($user->role?->role ?? 'SIN ROL'),
+                        ];
+
+                        return [
+                            'id' => (int) $role->id,
+                            'title' => mb_strtoupper($role->role),
+                            'subtitle' => mb_strtoupper((string) ($role->description ?: 'ROL ORGANIZACIONAL')),
+                            'details' => [
+                                ['label' => 'Usuarios', 'value' => (string) $role->users_count],
+                                ['label' => 'Grupo de permisos', 'value' => mb_strtoupper($role->permissionGroup?->name ?? 'SIN GRUPO')],
+                                ['label' => 'Perfil', 'value' => $profileLabels[$role->permission_profile] ?? 'PERSONALIZADO'],
+                            ],
+                            'assigned_users' => $users
+                                ->filter(fn (User $user): bool => (int) $user->role_id === (int) $role->id)
+                                ->map($mapUser)
+                                ->values()
+                                ->all(),
+                            'available_users' => $users
+                                ->reject(fn (User $user): bool => (int) $user->role_id === (int) $role->id)
+                                ->map($mapUser)
+                                ->values()
+                                ->all(),
+                        ];
+                    })->values()->all(),
                 ],
                 'positions' => [
                     'label' => 'Puestos',

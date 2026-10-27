@@ -8,6 +8,14 @@
         selectedCatalog: @js($initialCatalog),
         expandedItem: null,
         query: '',
+        roleUserQuery: '',
+        assignedRoleUserIds: [],
+        availableRoleUserIds: [],
+        destinationRoleId: null,
+        roleAssignmentBusy: false,
+        roleAssignmentStatus: '',
+        roleAssignmentError: false,
+        currentUserId: @js((int) auth()->id()),
         normalize(value) {
             return String(value ?? '')
                 .normalize('NFD')
@@ -18,6 +26,74 @@
             this.selectedCatalog = catalog;
             this.expandedItem = null;
             this.query = '';
+            this.resetRoleAssignment();
+        },
+        toggleItem(item) {
+            this.expandedItem = this.expandedItem === item.id ? null : item.id;
+            this.resetRoleAssignment();
+        },
+        resetRoleAssignment() {
+            this.roleUserQuery = '';
+            this.assignedRoleUserIds = [];
+            this.availableRoleUserIds = [];
+            this.destinationRoleId = null;
+            this.roleAssignmentStatus = '';
+            this.roleAssignmentError = false;
+        },
+        filteredRoleUsers(users) {
+            const term = this.normalize(this.roleUserQuery.trim());
+            if (!term) return users ?? [];
+            return (users ?? []).filter((user) => this.normalize(`${user.title} ${user.email} ${user.current_role}`).includes(term));
+        },
+        otherRoles(item) {
+            return (this.catalogs.roles?.items ?? []).filter((role) => role.id !== item.id);
+        },
+        async assignRoleUsers(item) {
+            if (this.availableRoleUserIds.length === 0) {
+                this.roleAssignmentError = true;
+                this.roleAssignmentStatus = 'Selecciona al menos un usuario disponible.';
+                return;
+            }
+
+            this.roleAssignmentBusy = true;
+            this.roleAssignmentStatus = '';
+            try {
+                const catalog = await this.$wire.assignDirectoryRoleUsers(item.id, this.availableRoleUserIds);
+                this.catalogs = { ...this.catalogs, roles: catalog };
+                this.availableRoleUserIds = [];
+                this.roleAssignmentError = false;
+                this.roleAssignmentStatus = 'Usuarios asignados correctamente.';
+                this.expandedItem = item.id;
+            } catch (error) {
+                this.roleAssignmentError = true;
+                this.roleAssignmentStatus = 'No se pudieron asignar los usuarios seleccionados.';
+            } finally {
+                this.roleAssignmentBusy = false;
+            }
+        },
+        async moveRoleUsers(item) {
+            if (this.assignedRoleUserIds.length === 0 || !this.destinationRoleId) {
+                this.roleAssignmentError = true;
+                this.roleAssignmentStatus = 'Selecciona usuarios y el rol al que se moverán.';
+                return;
+            }
+
+            this.roleAssignmentBusy = true;
+            this.roleAssignmentStatus = '';
+            try {
+                const catalog = await this.$wire.moveDirectoryRoleUsers(item.id, this.assignedRoleUserIds, Number(this.destinationRoleId));
+                this.catalogs = { ...this.catalogs, roles: catalog };
+                this.assignedRoleUserIds = [];
+                this.destinationRoleId = null;
+                this.roleAssignmentError = false;
+                this.roleAssignmentStatus = 'Usuarios cambiados de rol correctamente.';
+                this.expandedItem = item.id;
+            } catch (error) {
+                this.roleAssignmentError = true;
+                this.roleAssignmentStatus = 'No se pudieron cambiar los usuarios de rol.';
+            } finally {
+                this.roleAssignmentBusy = false;
+            }
         },
         manage(action, item = null) {
             const recordId = item?.id ?? null;
@@ -143,7 +219,7 @@
                         <div class="flex min-h-[70px] min-w-0 items-center gap-[15px] px-[20px] py-[12px]">
                             <button
                                 type="button"
-                                @click="expandedItem = expandedItem === item.id ? null : item.id"
+                                @click="toggleItem(item)"
                                 class="flex min-w-0 flex-1 items-center gap-3 text-left focus:outline-none focus:ring-0"
                                 :aria-expanded="expandedItem === item.id"
                             >
@@ -179,7 +255,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    @click="expandedItem = expandedItem === item.id ? null : item.id"
+                                    @click="toggleItem(item)"
                                     class="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
                                     :aria-label="expandedItem === item.id ? `Ocultar datos de ${item.title}` : `Mostrar datos de ${item.title}`"
                                 >
@@ -198,14 +274,86 @@
                             x-transition:leave-end="opacity-0 -translate-y-1"
                             class="border-t border-zinc-200 bg-white"
                         >
-                            <dl class="grid min-w-0 grid-cols-2 xl:grid-cols-4">
-                                <template x-for="detail in item.details" :key="detail.label">
-                                    <div class="flex min-h-[78px] min-w-0 flex-col justify-center border-r border-zinc-200 px-[20px] py-[15px] last:border-r-0">
-                                        <dt class="truncate font-medium text-black" x-text="detail.label"></dt>
-                                        <dd class="mt-[3px] truncate text-zinc-500" x-text="detail.value" :title="detail.value"></dd>
+                            <template x-if="selectedCatalog !== 'roles'">
+                                <dl class="grid min-w-0 grid-cols-2 xl:grid-cols-4">
+                                    <template x-for="detail in item.details" :key="detail.label">
+                                        <div class="flex min-h-[78px] min-w-0 flex-col justify-center border-r border-zinc-200 px-[20px] py-[15px] last:border-r-0">
+                                            <dt class="truncate font-medium text-black" x-text="detail.label"></dt>
+                                            <dd class="mt-[3px] truncate text-zinc-500" x-text="detail.value" :title="detail.value"></dd>
+                                        </div>
+                                    </template>
+                                </dl>
+                            </template>
+
+                            <template x-if="selectedCatalog === 'roles'">
+                                <div class="p-[20px]">
+                                    <label class="relative block w-full">
+                                        <span class="sr-only">Buscar usuarios del rol</span>
+                                        <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                                        <input type="search" x-model.debounce.120ms="roleUserQuery" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Buscar usuario por nombre o correo..." autocomplete="off">
+                                    </label>
+
+                                    <div class="mt-[15px] grid min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-zinc-200 lg:grid-cols-2">
+                                        <section class="min-w-0 border-b border-zinc-200 bg-white lg:border-b-0 lg:border-r">
+                                            <header class="flex min-h-[54px] items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-[15px]">
+                                                <div>
+                                                    <h3 class="text-[13px] font-semibold text-black">Usuarios asignados</h3>
+                                                    <p class="text-[11px] text-zinc-500">Selecciona para mover a otro rol.</p>
+                                                </div>
+                                                <span class="shrink-0 rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] tabular-nums text-zinc-700" x-text="item.assigned_users.length"></span>
+                                            </header>
+                                            <div class="administration-record-scroll max-h-[230px] min-h-[150px] overflow-y-auto">
+                                                <template x-for="user in filteredRoleUsers(item.assigned_users)" :key="`assigned-${item.id}-${user.id}`">
+                                                    <label :class="user.id === currentUserId ? 'cursor-not-allowed bg-zinc-50' : 'cursor-pointer hover:bg-zinc-50'" class="flex min-h-[58px] items-center gap-3 border-b border-zinc-100 px-[15px] py-[10px] last:border-b-0">
+                                                        <input type="checkbox" x-model.number="assignedRoleUserIds" :value="user.id" :disabled="user.id === currentUserId || roleAssignmentBusy" class="h-4 w-4 rounded border-zinc-300 text-black shadow-none focus:ring-0">
+                                                        <span class="min-w-0 flex-1">
+                                                            <strong class="block truncate text-[12px] font-semibold text-black" x-text="user.title"></strong>
+                                                            <span class="mt-[2px] block truncate text-[10px] text-zinc-500" x-text="user.id === currentUserId ? `${user.email} · TU USUARIO` : user.email"></span>
+                                                        </span>
+                                                    </label>
+                                                </template>
+                                                <p x-show="filteredRoleUsers(item.assigned_users).length === 0" class="px-[15px] py-8 text-center text-[12px] text-zinc-500">No hay usuarios asignados.</p>
+                                            </div>
+                                            <div class="grid grid-cols-1 gap-[10px] border-t border-zinc-200 bg-zinc-50 p-[15px] sm:grid-cols-[minmax(0,1fr)_auto]">
+                                                <select x-model.number="destinationRoleId" :disabled="roleAssignmentBusy" class="h-[42px] min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] text-black shadow-none outline-none focus:border-zinc-300 focus:ring-0">
+                                                    <option value="">Mover al rol...</option>
+                                                    <template x-for="roleOption in otherRoles(item)" :key="`destination-${item.id}-${roleOption.id}`">
+                                                        <option :value="roleOption.id" x-text="roleOption.title"></option>
+                                                    </template>
+                                                </select>
+                                                <button type="button" @click="moveRoleUsers(item)" :disabled="roleAssignmentBusy || assignedRoleUserIds.length === 0 || !destinationRoleId" class="h-[42px] rounded-lg bg-black px-4 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Cambiar rol</button>
+                                            </div>
+                                        </section>
+
+                                        <section class="min-w-0 bg-white">
+                                            <header class="flex min-h-[54px] items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-[15px]">
+                                                <div>
+                                                    <h3 class="text-[13px] font-semibold text-black">Usuarios disponibles</h3>
+                                                    <p class="text-[11px] text-zinc-500">Usuarios que actualmente tienen otro rol.</p>
+                                                </div>
+                                                <span class="shrink-0 rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] tabular-nums text-zinc-700" x-text="item.available_users.length"></span>
+                                            </header>
+                                            <div class="administration-record-scroll max-h-[230px] min-h-[150px] overflow-y-auto">
+                                                <template x-for="user in filteredRoleUsers(item.available_users)" :key="`available-${item.id}-${user.id}`">
+                                                    <label :class="user.id === currentUserId ? 'cursor-not-allowed bg-zinc-50' : 'cursor-pointer hover:bg-zinc-50'" class="flex min-h-[58px] items-center gap-3 border-b border-zinc-100 px-[15px] py-[10px] last:border-b-0">
+                                                        <input type="checkbox" x-model.number="availableRoleUserIds" :value="user.id" :disabled="user.id === currentUserId || roleAssignmentBusy" class="h-4 w-4 rounded border-zinc-300 text-black shadow-none focus:ring-0">
+                                                        <span class="min-w-0 flex-1">
+                                                            <strong class="block truncate text-[12px] font-semibold text-black" x-text="user.title"></strong>
+                                                            <span class="mt-[2px] block truncate text-[10px] text-zinc-500" x-text="`${user.email} · ${user.current_role}${user.id === currentUserId ? ' · TU USUARIO' : ''}`"></span>
+                                                        </span>
+                                                    </label>
+                                                </template>
+                                                <p x-show="filteredRoleUsers(item.available_users).length === 0" class="px-[15px] py-8 text-center text-[12px] text-zinc-500">No hay usuarios disponibles.</p>
+                                            </div>
+                                            <div class="flex min-h-[73px] items-center justify-end border-t border-zinc-200 bg-zinc-50 p-[15px]">
+                                                <button type="button" @click="assignRoleUsers(item)" :disabled="roleAssignmentBusy || availableRoleUserIds.length === 0" class="h-[42px] rounded-lg bg-black px-4 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Asignar al rol</button>
+                                            </div>
+                                        </section>
                                     </div>
-                                </template>
-                            </dl>
+
+                                    <p x-show="roleAssignmentStatus" x-cloak :class="roleAssignmentError ? 'text-red-600' : 'text-emerald-700'" class="mt-[10px] text-[12px]" x-text="roleAssignmentStatus"></p>
+                                </div>
+                            </template>
                         </div>
                     </article>
                 </template>
