@@ -770,6 +770,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('scaledContentHeight = Math.ceil')
             ->assertSeeHtml('transform:scale(${viewScale / 100})')
             ->assertSeeHtml('style="height: 76px;"')
+            ->assertSeeHtml('style="height: 75px;"')
             ->assertDontSeeHtml('zoom:${viewScale / 100}');
     }
 

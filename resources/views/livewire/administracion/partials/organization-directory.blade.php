@@ -225,7 +225,9 @@
                         :class="expandedItem === item.id ? 'bg-white' : 'bg-white hover:bg-zinc-50'"
                         class="overflow-hidden border-b border-zinc-300 transition-colors last:border-b-0"
                     >
-                        <div class="flex min-w-0 items-center gap-[20px] p-[20px]" style="height: 76px;">
+                        {{-- El artículo aporta el borde inferior de 1 px; 75 + 1 mantiene
+                             cada renglón alineado con los botones laterales de 76 px. --}}
+                        <div class="flex min-w-0 items-center gap-[20px] p-[20px]" style="height: 75px;">
                             <button
                                 type="button"
                                 @click="toggleItem(item)"
