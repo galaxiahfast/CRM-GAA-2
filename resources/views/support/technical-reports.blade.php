@@ -68,6 +68,15 @@
             appearance: none;
             -webkit-appearance: none;
         }
+
+        /* En pantallas con altura suficiente, el módulo cabe completo y solo usa sus scrolls internos. */
+        @media (min-height: 760px) {
+            .support-report-page {
+                height: calc(100dvh - 100px);
+                min-height: 0 !important;
+                overflow-y: hidden;
+            }
+        }
     </style>
 
     <div
