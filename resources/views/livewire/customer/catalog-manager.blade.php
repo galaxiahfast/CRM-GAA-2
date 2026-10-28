@@ -75,22 +75,6 @@
                         </svg>
                     </x-slot>
 
-                    @if (! $cardActions)
-                    <x-slot name="navigation">
-                        @foreach (['crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar'] as $tab => $label)
-                            <button
-                                type="button"
-                                wire:click="setActiveTab('{{ $tab }}')"
-                                class="border-b-2 px-4 py-3 text-[15px] font-medium transition focus:outline-none focus:ring-0 {{ $activeTab === $tab ? ($tab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-[#1A3A6B] text-[#1A3A6B]') : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}"
-                            >
-                                {{ $label }}
-                            </button>
-                        @endforeach
-                    </x-slot>
-                    @else
-                        <span class="sr-only">Crear Editar Eliminar</span>
-                    @endif
-
                     <x-slot name="form">
                         <div class="space-y-5">
                             @if ($notice)

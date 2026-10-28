@@ -133,34 +133,43 @@
 </div>
 
 <script>
-    document.addEventListener('livewire:navigated', () => {
-        equalizeNodeHeights();
-    });
-
-    document.addEventListener('livewire:update', () => {
-        equalizeNodeHeights();
-    });
-
-    function equalizeNodeHeights() {
+    // Iguala el alto de las tarjetas. Si el organigrama está oculto (x-show) la medición da 0 y
+    // dejaba todas las tarjetas en 0px (contenido desbordado); ahora no se fija nada en ese caso
+    // y se vuelve a calcular en cuanto el organigrama se muestra o cambia de tamaño.
+    window.equalizeNodeHeights = window.equalizeNodeHeights || function () {
         const cards = document.querySelectorAll('.js-org-card');
         if (cards.length === 0) return;
 
-        cards.forEach(card => {
-            card.style.height = 'auto';
-        });
+        cards.forEach(card => { card.style.height = 'auto'; });
 
         let maxHeight = 0;
-        cards.forEach(card => {
-            const cardHeight = card.offsetHeight;
-            if (cardHeight > maxHeight) {
-                maxHeight = cardHeight;
-            }
-        });
+        cards.forEach(card => { maxHeight = Math.max(maxHeight, card.offsetHeight); });
 
-        cards.forEach(card => {
-            card.style.height = `${maxHeight}px`;
+        if (maxHeight === 0) return;
+
+        cards.forEach(card => { card.style.height = `${maxHeight}px`; });
+    };
+
+    window.bindOrgEqualizer = window.bindOrgEqualizer || function () {
+        const container = document.getElementById('organigrama-principal');
+        window.orgEqualizerObserver?.disconnect();
+        if (!container) return;
+
+        let scheduled = false;
+        window.orgEqualizerObserver = new ResizeObserver(() => {
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(() => { scheduled = false; window.equalizeNodeHeights(); });
         });
+        window.orgEqualizerObserver.observe(container);
+        window.equalizeNodeHeights();
+    };
+
+    if (!window.orgEqualizerReady) {
+        window.orgEqualizerReady = true;
+        document.addEventListener('livewire:navigated', () => window.bindOrgEqualizer());
+        document.addEventListener('livewire:initialized', () => window.bindOrgEqualizer());
+        window.addEventListener('DOMContentLoaded', () => window.bindOrgEqualizer());
+        if (document.readyState !== 'loading') window.bindOrgEqualizer();
     }
-
-    window.addEventListener('DOMContentLoaded', equalizeNodeHeights);
 </script>

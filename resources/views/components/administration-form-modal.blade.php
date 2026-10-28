@@ -66,10 +66,13 @@
                 </nav>
             @endif
 
-            <div class="administration-form-scrollbar min-h-0 flex-1 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
+            <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
+            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar absolute inset-0 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
                 <div class="p-[20px] text-[15px]">
                     {{ $form }}
                 </div>
+            </div>
+            <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
 
             <footer class="flex flex-shrink-0 justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">

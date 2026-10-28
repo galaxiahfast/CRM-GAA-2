@@ -17,57 +17,45 @@
         background-color: #ffffff !important;
         border-color: #d4d4d8 !important;
     }
-    /* Scroll igual al del menú principal: delgado (3px), negro, sin flechas y siempre visible. */
+    /* Scroll igual al del menú principal: delgado (3px), azul fuerte, sin flechas y siempre visible. */
     .administration-form-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #000000 transparent;
+        scrollbar-width: none !important;
+        overscroll-behavior: contain;
     }
 
-    @supports selector(::-webkit-scrollbar) {
-        .administration-form-scrollbar {
-            scrollbar-width: auto;
-            scrollbar-color: auto;
-        }
+    .administration-form-scrollbar::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        display: none;
+    }
 
-        .administration-form-scrollbar::-webkit-scrollbar {
-            width: 3px;
-            height: 3px;
-        }
-
-        .administration-form-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .administration-form-scrollbar::-webkit-scrollbar-thumb {
-            min-height: 32px;
-            border: 0;
-            background: #000000;
-            border-radius: 9999px;
-        }
-
-        .administration-form-scrollbar::-webkit-scrollbar-button,
-        .administration-form-scrollbar::-webkit-scrollbar-corner {
-            display: none;
-            width: 0;
-            height: 0;
-        }
+    .administration-form-thumb {
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 20;
+        width: 3px;
+        min-height: 32px;
+        border-radius: 9999px;
+        background: #1A3A6B;
+        pointer-events: none;
     }
 
     /* El scroll (3px) siempre reserva su carril, y se descuenta del relleno derecho (20px - 3px):
        así el contenido queda con 20px a cada lado, centrado y alineado con el encabezado y el pie,
        haya o no scroll. */
-    [data-administration-modal] .administration-form-scrollbar {
-        scrollbar-gutter: stable;
-    }
-
     [data-administration-modal] .administration-form-scrollbar > div {
         padding-right: 17px !important;
     }
 
-    /* Refuerzo: el scroll del cuerpo del formulario siempre en negro, sin borde. */
-    [data-administration-modal] .administration-form-scrollbar::-webkit-scrollbar-thumb {
-        border: 0 !important;
-        background: #000000 !important;
+    /* Títulos de sección iguales en todos los formularios (como Usuarios): sin mayúsculas forzadas,
+       sin espaciado entre letras y con el mismo tamaño que el resto del texto. */
+    [data-administration-modal] :is(h2, h3) {
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        font-size: inherit !important;
+        line-height: inherit !important;
+        font-weight: 400 !important;
     }
 
     /* Secciones sin cajas ni líneas divisorias; mismo espacio título → etiqueta → campo (10px). */
@@ -177,7 +165,8 @@
     }
 
     [data-administration-modal] :is(input, select, textarea)::placeholder {
-        color: #1A3A6B;
+        color: #71717a;
+        opacity: 1;
     }
 
     [data-administration-modal] :is(input, select, textarea):disabled {

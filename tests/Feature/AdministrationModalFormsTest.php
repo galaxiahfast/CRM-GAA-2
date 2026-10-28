@@ -667,7 +667,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showRoleManagementModal', false);
     }
 
-    public function test_expanded_role_directory_assigns_and_moves_users_between_its_two_columns(): void
+    public function test_role_assignment_service_assigns_and_moves_users_without_table_expansion(): void
     {
         $administratorRole = Role::create(['role' => 'Administrador']);
         $salesRole = Role::create(['role' => 'Ventas']);
@@ -678,8 +678,7 @@ class AdministrationModalFormsTest extends TestCase
 
         $component = Livewire::actingAs($administrator)
             ->test(PanelAdministracion::class)
-            ->assertSee('Usuarios asignados')
-            ->assertSee('Usuarios disponibles')
+            ->assertDontSeeHtml('@click="toggleItem(item)"')
             ->assertSeeHtml('this.$wire.assignDirectoryRoleUsers')
             ->assertSeeHtml('this.$wire.moveDirectoryRoleUsers')
             ->assertViewHas('organizationDirectory', function (array $directory) use ($salesRole, $salesUser, $supportUser): bool {
@@ -753,7 +752,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSet('showAssignmentModal', false);
     }
 
-    public function test_administration_directory_keeps_its_state_and_users_cannot_expand(): void
+    public function test_administration_directory_keeps_its_state_and_rows_do_not_expand(): void
     {
         $administratorRole = Role::create(['role' => 'Administrador']);
         Role::create(['role' => 'Auxiliar']);
@@ -773,8 +772,8 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('wire:key="administration-organization-directory"')
             ->assertSeeHtml("sessionStorage.getItem('administration-directory-catalog')")
             ->assertSeeHtml("if (this.selectedCatalog === 'users')")
-            ->assertSeeHtml("x-show=\"selectedCatalog !== 'users'\"")
-            ->assertSeeHtml("x-show=\"selectedCatalog !== 'users' && expandedItem === item.id\"")
+            ->assertDontSeeHtml('@click="toggleItem(item)"')
+            ->assertDontSeeHtml("x-show=\"selectedCatalog !== 'users' && expandedItem === item.id\"")
             ->assertSeeHtml('x-ref="scaledMain"')
             ->assertSeeHtml('scaledContentHeight = Math.ceil')
             ->assertSeeHtml('transform:scale(${viewScale / 100})')

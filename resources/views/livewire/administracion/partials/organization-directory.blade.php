@@ -222,31 +222,24 @@
                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-record-scroll absolute inset-x-0 top-0 overflow-y-auto" style="bottom: -1px;">
                 <template x-for="item in filteredItems" :key="`${selectedCatalog}-${item.id}`">
                     <article
-                        :class="expandedItem === item.id ? 'bg-white' : 'bg-white hover:bg-zinc-50'"
-                        class="overflow-hidden border-b border-zinc-300 transition-colors last:border-b-0"
+                        :class="'bg-white hover:bg-zinc-50'"
+                        class="overflow-hidden border-b border-[#d4d4d8] transition-colors last:border-b-0"
                     >
                         {{-- El artículo aporta el borde inferior de 1 px; 75 + 1 mantiene
                              cada renglón alineado con los botones laterales de 76 px. --}}
                         <div class="flex min-w-0 items-center gap-[20px] p-[20px]" style="height: 75px;">
-                            <button
-                                type="button"
-                                @click="toggleItem(item)"
-                                :class="selectedCatalog === 'users' ? 'cursor-default' : 'cursor-pointer'"
-                                class="flex min-w-0 flex-1 items-center gap-[10px] text-left focus:outline-none focus:ring-0"
-                                :aria-expanded="selectedCatalog === 'users' ? null : expandedItem === item.id"
-                            >
+                            <div class="flex min-w-0 flex-1 items-center gap-[10px] text-left">
                                 <span
-                                    :class="expandedItem === item.id ? 'bg-black text-white' : 'border border-zinc-300 bg-white text-black'"
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-normal transition-colors"
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-300 bg-white text-[11px] font-normal text-black"
                                     x-text="initials(item.title)"
                                 ></span>
                                 <span class="min-w-0 flex-1">
                                     <span class="block truncate text-[13px] font-normal leading-none text-[#1A3A6B]" x-text="item.title" :title="item.title"></span>
                                     <span class="mt-[10px] block truncate text-[11px] leading-none text-black" x-text="item.subtitle" :title="item.subtitle"></span>
                                 </span>
-                            </button>
+                            </div>
 
-                            <div class="flex shrink-0 items-center gap-[20px] self-stretch border-l border-zinc-300 pl-[20px]">
+                            <div class="flex shrink-0 items-center gap-[20px] self-stretch border-l border-[#d4d4d8] pl-[20px]">
                                 <button
                                     type="button"
                                     @click.stop="manage('editar', item)"
@@ -265,109 +258,7 @@
                                 >
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
                                 </button>
-                                <button
-                                    x-show="selectedCatalog !== 'users'"
-                                    x-cloak
-                                    type="button"
-                                    @click="toggleItem(item)"
-                                    class="flex h-4 w-4 items-center justify-center text-black transition-colors hover:text-[#1A3A6B] focus:outline-none focus:ring-0"
-                                    :aria-label="expandedItem === item.id ? `Ocultar datos de ${item.title}` : `Mostrar datos de ${item.title}`"
-                                >
-                                    <svg :class="expandedItem === item.id ? 'rotate-180' : ''" class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
-                                </button>
                             </div>
-                        </div>
-
-                        <div
-                            x-show="selectedCatalog !== 'users' && expandedItem === item.id"
-                            x-transition:enter="transition ease-out duration-150"
-                            x-transition:enter-start="opacity-0 -translate-y-1"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-100"
-                            x-transition:leave-start="opacity-100 translate-y-0"
-                            x-transition:leave-end="opacity-0 -translate-y-1"
-                            class="border-t border-zinc-300 bg-white"
-                        >
-                            <template x-if="selectedCatalog !== 'roles'">
-                                <dl class="grid min-w-0 grid-cols-2 xl:grid-cols-4">
-                                    <template x-for="detail in item.details" :key="detail.label">
-                                        <div class="flex min-h-[78px] min-w-0 flex-col justify-center border-r border-zinc-300 px-[20px] py-[15px] last:border-r-0">
-                                            <dt class="truncate font-medium text-black" x-text="detail.label"></dt>
-                                            <dd class="mt-[3px] truncate text-zinc-500" x-text="detail.value" :title="detail.value"></dd>
-                                        </div>
-                                    </template>
-                                </dl>
-                            </template>
-
-                            <template x-if="selectedCatalog === 'roles'">
-                                <div class="p-[20px]">
-                                    <label class="relative block w-full">
-                                        <span class="sr-only">Buscar usuarios del rol</span>
-                                        <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                                        <input type="search" x-model.debounce.120ms="roleUserQuery" class="h-[44px] w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-[13px] text-black shadow-none outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0" placeholder="Buscar usuario por nombre o correo..." autocomplete="off">
-                                    </label>
-
-                                    <div class="mt-[15px] grid min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-zinc-300 lg:grid-cols-2">
-                                        <section class="min-w-0 border-b border-zinc-300 bg-white lg:border-b-0 lg:border-r">
-                                            <header class="flex min-h-[54px] items-center justify-between gap-3 border-b border-zinc-300 bg-zinc-50 px-[15px]">
-                                                <div>
-                                                    <h3 class="text-[13px] font-semibold text-black">Usuarios asignados</h3>
-                                                    <p class="text-[11px] text-zinc-500">Selecciona para mover a otro rol.</p>
-                                                </div>
-                                                <span class="shrink-0 rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] tabular-nums text-zinc-700" x-text="item.assigned_users.length"></span>
-                                            </header>
-                                            <div class="administration-record-scroll max-h-[230px] min-h-[150px] overflow-y-auto">
-                                                <template x-for="user in filteredRoleUsers(item.assigned_users)" :key="`assigned-${item.id}-${user.id}`">
-                                                    <label :class="user.id === currentUserId ? 'cursor-not-allowed bg-zinc-50' : 'cursor-pointer hover:bg-zinc-50'" class="flex min-h-[58px] items-center gap-3 border-b border-zinc-100 px-[15px] py-[10px] last:border-b-0">
-                                                        <input type="checkbox" x-model.number="assignedRoleUserIds" :value="user.id" :disabled="user.id === currentUserId || roleAssignmentBusy" class="h-4 w-4 rounded border-zinc-300 text-black shadow-none focus:ring-0">
-                                                        <span class="min-w-0 flex-1">
-                                                            <strong class="block truncate text-[12px] font-semibold text-black" x-text="user.title"></strong>
-                                                            <span class="mt-[2px] block truncate text-[10px] text-zinc-500" x-text="user.id === currentUserId ? `${user.email} · TU USUARIO` : user.email"></span>
-                                                        </span>
-                                                    </label>
-                                                </template>
-                                                <p x-show="filteredRoleUsers(item.assigned_users).length === 0" class="px-[15px] py-8 text-center text-[12px] text-zinc-500">No hay usuarios asignados.</p>
-                                            </div>
-                                            <div class="grid grid-cols-1 gap-[10px] border-t border-zinc-300 bg-zinc-50 p-[15px] sm:grid-cols-[minmax(0,1fr)_auto]">
-                                                <select x-model.number="destinationRoleId" :disabled="roleAssignmentBusy" class="h-[42px] min-w-0 rounded-lg border border-zinc-300 bg-white px-3 text-[12px] text-black shadow-none outline-none focus:border-zinc-300 focus:ring-0">
-                                                    <option value="">Mover al rol...</option>
-                                                    <template x-for="roleOption in otherRoles(item)" :key="`destination-${item.id}-${roleOption.id}`">
-                                                        <option :value="roleOption.id" x-text="roleOption.title"></option>
-                                                    </template>
-                                                </select>
-                                                <button type="button" @click="moveRoleUsers(item)" :disabled="roleAssignmentBusy || assignedRoleUserIds.length === 0 || !destinationRoleId" class="h-[42px] rounded-lg bg-black px-4 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Cambiar rol</button>
-                                            </div>
-                                        </section>
-
-                                        <section class="min-w-0 bg-white">
-                                            <header class="flex min-h-[54px] items-center justify-between gap-3 border-b border-zinc-300 bg-zinc-50 px-[15px]">
-                                                <div>
-                                                    <h3 class="text-[13px] font-semibold text-black">Usuarios disponibles</h3>
-                                                    <p class="text-[11px] text-zinc-500">Usuarios que actualmente tienen otro rol.</p>
-                                                </div>
-                                                <span class="shrink-0 rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] tabular-nums text-zinc-700" x-text="item.available_users.length"></span>
-                                            </header>
-                                            <div class="administration-record-scroll max-h-[230px] min-h-[150px] overflow-y-auto">
-                                                <template x-for="user in filteredRoleUsers(item.available_users)" :key="`available-${item.id}-${user.id}`">
-                                                    <label :class="user.id === currentUserId ? 'cursor-not-allowed bg-zinc-50' : 'cursor-pointer hover:bg-zinc-50'" class="flex min-h-[58px] items-center gap-3 border-b border-zinc-100 px-[15px] py-[10px] last:border-b-0">
-                                                        <input type="checkbox" x-model.number="availableRoleUserIds" :value="user.id" :disabled="user.id === currentUserId || roleAssignmentBusy" class="h-4 w-4 rounded border-zinc-300 text-black shadow-none focus:ring-0">
-                                                        <span class="min-w-0 flex-1">
-                                                            <strong class="block truncate text-[12px] font-semibold text-black" x-text="user.title"></strong>
-                                                            <span class="mt-[2px] block truncate text-[10px] text-zinc-500" x-text="`${user.email} · ${user.current_role}${user.id === currentUserId ? ' · TU USUARIO' : ''}`"></span>
-                                                        </span>
-                                                    </label>
-                                                </template>
-                                                <p x-show="filteredRoleUsers(item.available_users).length === 0" class="px-[15px] py-8 text-center text-[12px] text-zinc-500">No hay usuarios disponibles.</p>
-                                            </div>
-                                            <div class="flex min-h-[73px] items-center justify-end border-t border-zinc-300 bg-zinc-50 p-[15px]">
-                                                <button type="button" @click="assignRoleUsers(item)" :disabled="roleAssignmentBusy || availableRoleUserIds.length === 0" class="h-[42px] rounded-lg bg-black px-4 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">Asignar al rol</button>
-                                            </div>
-                                        </section>
-                                    </div>
-
-                                    <p x-show="roleAssignmentStatus" x-cloak :class="roleAssignmentError ? 'text-red-600' : 'text-emerald-700'" class="mt-[10px] text-[12px]" x-text="roleAssignmentStatus"></p>
-                                </div>
-                            </template>
                         </div>
                     </article>
                 </template>
@@ -376,8 +267,8 @@
                     <span class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-700">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                     </span>
-                    <p class="mt-3 text-[13px] font-semibold text-black">No encontramos registros</p>
-                    <p class="mt-[5px] text-[11px] text-zinc-500">Prueba con otro nombre, correo o dato.</p>
+                    <p class="mt-[20px] text-[13px] font-normal leading-none text-[#1A3A6B]">No encontramos registros</p>
+                    <p class="mt-[10px] text-[11px] leading-none text-black">Prueba con otro nombre, correo o dato.</p>
                 </div>
                 </div>
                 <span x-show="visible" x-cloak class="administration-record-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
