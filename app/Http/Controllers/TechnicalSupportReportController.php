@@ -8,10 +8,14 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use PharData;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class TechnicalSupportReportController extends Controller
 {
@@ -27,14 +31,47 @@ class TechnicalSupportReportController extends Controller
         ]);
     }
 
-    public function history(): View
+    public function history(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+        $recipient = trim((string) $request->query('recipient', ''));
+        $target = trim((string) $request->query('target', ''));
+
+        $reportsQuery = TechnicalSupportReport::query()
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('folio', 'like', '%'.$search.'%')
+                        ->orWhere('service_recipient', 'like', '%'.$search.'%')
+                        ->orWhere('responsible', 'like', '%'.$search.'%')
+                        ->orWhere('supports', 'like', '%'.$search.'%');
+                });
+            })
+            ->when($recipient !== '', fn ($query) => $query->where('service_recipient', $recipient))
+            ->when($target !== '', fn ($query) => $query->where('supports', 'like', '%'.$target.'%'))
+            ->latest('issued_at')
+            ->latest('id');
+
+        $filterReports = TechnicalSupportReport::query()
+            ->get(['service_recipient', 'supports']);
+
         return view('support.technical-reports', [
             'activeTab' => 'history',
-            'reports' => TechnicalSupportReport::query()
-                ->latest('issued_at')
-                ->latest('id')
-                ->paginate(20),
+            'reports' => $reportsQuery->paginate(20)->withQueryString(),
+            'filters' => compact('search', 'recipient', 'target'),
+            'recipientOptions' => $filterReports
+                ->pluck('service_recipient')
+                ->filter()
+                ->unique()
+                ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                ->values(),
+            'targetOptions' => $filterReports
+                ->flatMap(fn (TechnicalSupportReport $report) => collect($report->supports ?? [])
+                    ->flatMap(fn (array $support) => $support['targets'] ?? []))
+                ->map(fn (string $name): string => trim($name))
+                ->filter()
+                ->unique()
+                ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                ->values(),
         ]);
     }
 
@@ -133,5 +170,57 @@ class TechnicalSupportReportController extends Controller
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    public function downloadSelection(
+        Request $request,
+        TechnicalSupportReportPdfService $pdf,
+    ): BinaryFileResponse {
+        $validated = $request->validate([
+            'report_folios' => ['required', 'array', 'min:1', 'max:50'],
+            'report_folios.*' => ['required', 'string', 'distinct', 'exists:technical_support_reports,folio'],
+        ]);
+
+        $reports = TechnicalSupportReport::query()
+            ->whereIn('folio', $validated['report_folios'])
+            ->get()
+            ->keyBy('folio');
+
+        $temporaryDirectory = storage_path('app/tmp/support-report-zips');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $temporaryBase = tempnam($temporaryDirectory, 'support-reports-');
+
+        if ($temporaryBase === false) {
+            abort(500, 'No se pudo preparar la descarga de reportes.');
+        }
+
+        File::delete($temporaryBase);
+        $archivePath = $temporaryBase.'.zip';
+
+        try {
+            $archive = new PharData($archivePath);
+
+            foreach ($validated['report_folios'] as $folio) {
+                $report = $reports->get($folio);
+                $archive->addFromString($pdf->data($report)['filename'], $pdf->generate($report));
+            }
+
+            unset($archive);
+        } catch (Throwable $exception) {
+            File::delete($archivePath);
+            throw $exception;
+        }
+
+        $downloadName = 'reportes-soporte-seleccion-'
+            .now(config('support.timezone', 'America/Mexico_City'))->format('Ymd-His')
+            .'.zip';
+
+        return response()
+            ->download($archivePath, $downloadName, [
+                'Content-Type' => 'application/zip',
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'X-Content-Type-Options' => 'nosniff',
+            ])
+            ->deleteFileAfterSend(true);
     }
 }

@@ -48,6 +48,57 @@ class TechnicalSupportReportTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_history_can_be_searched_and_filtered(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['q' => 'Crystal Reports']))
+            ->assertOk()
+            ->assertSee('ST-20261028-0012')
+            ->assertDontSee('ST-20261028-0010');
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['recipient' => 'Auditoría']))
+            ->assertOk()
+            ->assertSee('ST-20261028-0012')
+            ->assertSee('ST-20261028-0011')
+            ->assertDontSee('ST-20261028-0010');
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['target' => 'Noh Chan Claudia Alejandra']))
+            ->assertOk()
+            ->assertSee('ST-20261028-0011')
+            ->assertDontSee('ST-20261028-0010');
+    }
+
+    public function test_selected_reports_can_be_downloaded_in_one_zip(): void
+    {
+        $user = User::factory()->create();
+        $reports = TechnicalSupportReport::query()
+            ->whereIn('folio', ['ST-20261028-0011', 'ST-20261028-0012'])
+            ->get()
+            ->keyBy('folio');
+
+        $response = $this->actingAs($user)->post(route('soporte.reportes-tecnicos.download-selection'), [
+            'report_folios' => $reports->keys()->all(),
+        ]);
+
+        $response->assertOk()->assertHeader('content-type', 'application/zip');
+        $this->assertStringContainsString('attachment;', (string) $response->headers->get('content-disposition'));
+
+        $archivePath = $response->baseResponse->getFile()->getPathname();
+        $archive = new \PharData($archivePath);
+
+        foreach ($reports as $report) {
+            $filename = app(TechnicalSupportReportPdfService::class)->data($report)['filename'];
+            $this->assertTrue(isset($archive[$filename]));
+        }
+
+        unset($archive);
+        @unlink($archivePath);
+    }
+
     public function test_authenticated_user_can_generate_a_report_from_selected_supports(): void
     {
         $user = User::factory()->create();

@@ -300,6 +300,8 @@ Route::middleware([
             ->name('reportes-tecnicos.history');
         Route::post('/reportes-tecnicos', [TechnicalSupportReportController::class, 'store'])
             ->name('reportes-tecnicos.store');
+        Route::post('/reportes-tecnicos/descargar-seleccion', [TechnicalSupportReportController::class, 'downloadSelection'])
+            ->name('reportes-tecnicos.download-selection');
         Route::get('/reportes-tecnicos/{report:folio}.pdf', [TechnicalSupportReportController::class, 'pdf'])
             ->name('reportes-tecnicos.pdf');
     });

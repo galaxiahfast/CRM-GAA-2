@@ -182,47 +182,149 @@
                 </form>
             </section>
             @else
-            <section class="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-                <div class="flex items-center justify-between gap-[20px] border-b border-zinc-200 p-[20px]">
-                    <div>
-                        <h2 class="text-xl font-semibold text-black">Historial de reportes</h2>
-                        <p class="mt-[5px] text-zinc-500">Consulta o descarga cualquier documento generado.</p>
+            <section
+                x-data="{
+                    selectedReports: [],
+                    pageFolios: @js($reports->pluck('folio')->values()),
+                    allPageSelected() {
+                        return this.pageFolios.length > 0 && this.pageFolios.every(folio => this.selectedReports.includes(folio));
+                    },
+                    togglePage() {
+                        if (this.allPageSelected()) {
+                            this.selectedReports = this.selectedReports.filter(folio => !this.pageFolios.includes(folio));
+                            return;
+                        }
+
+                        this.selectedReports = [...new Set([...this.selectedReports, ...this.pageFolios])];
+                    },
+                    toggleReport(folio) {
+                        this.selectedReports = this.selectedReports.includes(folio)
+                            ? this.selectedReports.filter(selected => selected !== folio)
+                            : [...this.selectedReports, folio];
+                    }
+                }"
+                class="flex h-[calc(100dvh-210px)] min-h-[610px] max-h-[820px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white"
+            >
+                <div class="shrink-0 border-b border-zinc-200 p-[20px]">
+                    <div class="flex flex-col gap-[15px] xl:flex-row xl:items-center xl:justify-between">
+                        <div class="shrink-0">
+                            <h2 class="text-xl font-semibold text-black">Historial de reportes</h2>
+                            <p class="mt-[5px] text-zinc-500">Consulta, filtra o descarga los documentos generados.</p>
+                        </div>
+
+                        <div class="flex min-w-0 flex-1 flex-col gap-[10px] xl:items-end">
+                            <span class="text-zinc-500">{{ $reports->total() }} en total</span>
+                            <form method="GET" action="{{ route('soporte.reportes-tecnicos.history') }}" class="flex w-full flex-wrap items-center justify-end gap-[10px]">
+                                <label class="relative min-w-[220px] flex-1 xl:max-w-[300px]">
+                                    <span class="sr-only">Buscar reportes</span>
+                                    <svg class="pointer-events-none absolute left-[12px] top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                                    <input type="search" name="q" value="{{ $filters['search'] }}" placeholder="Buscar folio o servicio..." class="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-[38px] pr-[12px] text-[14px] text-black placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                </label>
+
+                                <label>
+                                    <span class="sr-only">Filtrar por departamento o cliente</span>
+                                    <select name="recipient" class="h-10 min-w-[170px] rounded-xl border border-zinc-200 bg-white px-[12px] text-[14px] text-black focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                        <option value="">Todos los departamentos</option>
+                                        @foreach ($recipientOptions as $option)
+                                            <option value="{{ $option }}" @selected($filters['recipient'] === $option)>{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label>
+                                    <span class="sr-only">Filtrar por persona o equipo</span>
+                                    <select name="target" class="h-10 min-w-[190px] rounded-xl border border-zinc-200 bg-white px-[12px] text-[14px] text-black focus:border-zinc-300 focus:outline-none focus:ring-0">
+                                        <option value="">Todas las personas</option>
+                                        @foreach ($targetOptions as $option)
+                                            <option value="{{ $option }}" @selected($filters['target'] === $option)>{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <button type="submit" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800">Filtrar</button>
+                                @if ($filters['search'] !== '' || $filters['recipient'] !== '' || $filters['target'] !== '')
+                                    <a href="{{ route('soporte.reportes-tecnicos.history') }}" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-zinc-50">Limpiar</a>
+                                @endif
+                            </form>
+                        </div>
                     </div>
-                    <span class="text-zinc-500">{{ $reports->total() }} en total</span>
                 </div>
 
-                <div x-data="backupOverlayScroll()" class="relative max-h-[440px]">
-                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll max-h-[440px] divide-y divide-zinc-200 overflow-y-auto">
+                <div class="flex shrink-0 flex-wrap items-center justify-between gap-[10px] border-b border-zinc-200 bg-zinc-50 px-[20px] py-[12px]">
+                    <label class="inline-flex cursor-pointer items-center gap-[10px] text-black">
+                        <input type="checkbox" :checked="allPageSelected()" @change="togglePage()" class="h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
+                        <span>Seleccionar página</span>
+                    </label>
+
+                    <form method="POST" action="{{ route('soporte.reportes-tecnicos.download-selection') }}">
+                        @csrf
+                        <template x-for="folio in selectedReports" :key="folio">
+                            <input type="hidden" name="report_folios[]" :value="folio">
+                        </template>
+                        <button type="submit" :disabled="selectedReports.length === 0" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">
+                            Descargar selección (<span x-text="selectedReports.length">0</span>)
+                        </button>
+                    </form>
+                </div>
+
+                <div class="hidden shrink-0 grid-cols-[48px_60px_210px_minmax(0,1fr)_220px] border-b border-zinc-200 bg-white text-[13px] text-zinc-500 lg:grid">
+                    <div class="px-[10px] py-[10px] text-center"><span class="sr-only">Seleccionar</span></div>
+                    <div class="border-r border-zinc-200 px-[10px] py-[10px] text-center">N.º</div>
+                    <div class="border-r border-zinc-200 px-[15px] py-[10px] text-center">Folio y fecha</div>
+                    <div class="border-r border-zinc-200 px-[20px] py-[10px]">Servicios y destinatario</div>
+                    <div class="px-[20px] py-[10px] text-center">Acciones</div>
+                </div>
+
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-[300px] flex-1">
+                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll h-full divide-y divide-zinc-200 overflow-y-auto">
                         @forelse ($reports as $report)
                             @php
                                 $supportSummary = collect($report->supports)
                                     ->map(fn ($support) => $support['title'].' ('.((int) ($support['quantity'] ?? 1)).')')
                                     ->join(', ');
+                                $targetSummary = collect($report->supports)
+                                    ->flatMap(fn ($support) => $support['targets'] ?? [])
+                                    ->filter()
+                                    ->unique()
+                                    ->join(', ');
+                                $rowNumber = ($reports->firstItem() ?? 1) + $loop->index;
                             @endphp
-                            <article class="grid min-h-[110px] grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)_240px]">
-                                <div class="flex flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
+                            <article
+                                @click="if (!$event.target.closest('a, button, input, label')) toggleReport('{{ $report->folio }}')"
+                                class="grid min-h-[110px] cursor-pointer grid-cols-[48px_60px_minmax(0,1fr)] transition hover:bg-zinc-50 lg:grid-cols-[48px_60px_210px_minmax(0,1fr)_220px]"
+                                :class="selectedReports.includes('{{ $report->folio }}') ? 'bg-zinc-50' : 'bg-white'"
+                            >
+                                <div class="row-span-3 flex items-center justify-center px-[10px] py-[15px] lg:row-span-1">
+                                    <input type="checkbox" value="{{ $report->folio }}" x-model="selectedReports" @click.stop class="h-4 w-4 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0" aria-label="Seleccionar {{ $report->folio }}">
+                                </div>
+                                <div class="row-span-3 flex items-center justify-center border-x border-zinc-200 px-[10px] py-[15px] text-center text-zinc-500 lg:row-span-1 lg:border-l-0">
+                                    {{ $rowNumber }}
+                                </div>
+                                <div class="col-start-3 flex min-w-0 flex-col justify-center border-b border-zinc-200 px-[15px] py-[12px] text-center lg:col-start-auto lg:border-b-0 lg:border-r">
                                     <p class="font-semibold text-black">{{ $report->folio }}</p>
                                     <p class="mt-[5px] text-zinc-500">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
                                 </div>
-                                <div class="flex min-w-0 flex-col justify-center px-[20px] py-[15px] lg:border-r lg:border-zinc-200">
+                                <div class="col-start-3 flex min-w-0 flex-col justify-center border-b border-zinc-200 px-[20px] py-[12px] lg:col-start-auto lg:border-b-0 lg:border-r">
                                     <p class="truncate font-semibold text-black" title="{{ $supportSummary }}">{{ $supportSummary }}</p>
                                     <p class="mt-[5px] truncate text-zinc-500" title="Departamento o cliente: {{ $report->service_recipient }}">Departamento o cliente: {{ $report->service_recipient }}</p>
-                                    <p class="mt-[3px] text-zinc-500">{{ $report->responsible }}</p>
+                                    @if ($targetSummary !== '')
+                                        <p class="mt-[3px] truncate text-zinc-500" title="Personas o equipos: {{ $targetSummary }}">Personas o equipos: {{ $targetSummary }}</p>
+                                    @endif
                                 </div>
-                                <div class="flex items-center justify-center gap-[10px] px-[20px] py-[15px]">
-                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-zinc-50">Ver</a>
-                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', ['report' => $report, 'download' => 1]) }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800">Descargar</a>
+                                <div class="col-start-3 flex items-center justify-center gap-[10px] px-[20px] py-[12px] lg:col-start-auto">
+                                    <a @click.stop href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 px-[15px] font-semibold text-black transition hover:bg-white">Ver</a>
+                                    <a @click.stop href="{{ route('soporte.reportes-tecnicos.pdf', ['report' => $report, 'download' => 1]) }}" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-[15px] font-semibold text-white transition hover:bg-zinc-800">Descargar</a>
                                 </div>
                             </article>
                         @empty
-                            <div class="p-[40px] text-center text-zinc-500">Todavía no hay reportes generados.</div>
+                            <div class="grid h-full min-h-[300px] place-items-center p-[40px] text-center text-zinc-500">No hay reportes que coincidan con los filtros.</div>
                         @endforelse
                     </div>
                     <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
 
                 @if ($reports->hasPages())
-                    <div class="border-t border-zinc-200 p-[20px]">{{ $reports->links() }}</div>
+                    <div class="shrink-0 border-t border-zinc-200 p-[15px]">{{ $reports->links() }}</div>
                 @endif
             </section>
             @endif
