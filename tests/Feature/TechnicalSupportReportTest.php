@@ -285,4 +285,35 @@ class TechnicalSupportReportTest extends TestCase
             }
         }
     }
+
+    public function test_accounting_relocation_and_ssd_reports_are_available(): void
+    {
+        $relocation = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261028-0008')
+            ->firstOrFail();
+        $ssdMigration = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261028-0009')
+            ->firstOrFail();
+
+        $this->assertSame('Contabilidad', $relocation->service_recipient);
+        $this->assertSame('computer_relocation', $relocation->supports[0]['key']);
+        $this->assertSame('contpaqi_contabilidad_install', $relocation->supports[1]['key']);
+        $this->assertSame('contpaqi_nominas_install', $relocation->supports[2]['key']);
+        $this->assertSame('windows_contpaqi_compatibility_update', $relocation->supports[3]['key']);
+        $this->assertSame(['Carlos Rafael De Jesús Diaz Ruiz'], $relocation->supports[0]['targets']);
+        $this->assertSame(
+            'ST-20261028-0008-reubicar-equipo-inst-cont-inst-nom-act-windows-contpaqi.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($relocation)['filename'],
+        );
+
+        $this->assertSame('Contabilidad', $ssdMigration->service_recipient);
+        $this->assertSame('ssd_full_backup', $ssdMigration->supports[0]['key']);
+        $this->assertSame('ssd_corrected_system_migration', $ssdMigration->supports[1]['key']);
+        $this->assertSame('ssd_diagnosis_repair', $ssdMigration->supports[2]['key']);
+        $this->assertSame(['Carlos Rafael De Jesús Diaz Ruiz'], $ssdMigration->supports[2]['targets']);
+        $this->assertSame(
+            'ST-20261028-0009-respaldo-ssd-migracion-ssd-reparar-ssd.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($ssdMigration)['filename'],
+        );
+    }
 }
