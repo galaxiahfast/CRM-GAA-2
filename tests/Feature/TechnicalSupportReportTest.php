@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\TechnicalSupportReport;
+use App\Models\TechnicalSupportReportMovement;
 use App\Models\User;
 use App\Services\Support\TechnicalSupportReportPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,12 +37,17 @@ class TechnicalSupportReportTest extends TestCase
             ->get(route('soporte.reportes-tecnicos.history'))
             ->assertOk()
             ->assertSee('Historial de reportes')
-            ->assertSee('ST-20261023-0007')
-            ->assertSee('Respaldo local de correo, configuración, contactos y calendario')
+            ->assertSee('ST-20261028-0012')
             ->assertSee('Departamento o cliente: Auditoría')
-            ->assertSee('ST-20261022-0005')
-            ->assertSee('Departamento o cliente: Contabilidad')
+            ->assertDontSee('ST-20261023-0007')
             ->assertDontSee('Soporte técnico general');
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.movements'))
+            ->assertOk()
+            ->assertSee('Historial de movimientos')
+            ->assertSee('Reporte generado')
+            ->assertSee('ST-20261028-0012');
 
         $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.pdf', $report))
@@ -52,24 +59,76 @@ class TechnicalSupportReportTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)
+        $searchResponse = $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.history', ['q' => 'Crystal Reports']))
-            ->assertOk()
-            ->assertSee('ST-20261028-0012')
-            ->assertDontSee('ST-20261028-0010');
+            ->assertOk();
+        $this->assertSame(['ST-20261028-0012'], $searchResponse->viewData('reports')->pluck('folio')->all());
 
-        $this->actingAs($user)
+        $recipientResponse = $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.history', ['recipient' => 'Auditoría']))
-            ->assertOk()
-            ->assertSee('ST-20261028-0012')
-            ->assertSee('ST-20261028-0011')
-            ->assertDontSee('ST-20261028-0010');
+            ->assertOk();
+        $this->assertContains('ST-20261028-0012', $recipientResponse->viewData('reports')->pluck('folio'));
+        $this->assertContains('ST-20261028-0011', $recipientResponse->viewData('reports')->pluck('folio'));
+        $this->assertNotContains('ST-20261028-0010', $recipientResponse->viewData('reports')->pluck('folio'));
 
-        $this->actingAs($user)
+        $targetResponse = $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.history', ['target' => 'Noh Chan Claudia Alejandra']))
+            ->assertOk();
+        $this->assertSame(
+            ['ST-20261028-0011'],
+            $targetResponse->viewData('reports')->pluck('folio')->all(),
+        );
+
+        $dateResponse = $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['date' => '2026-10-23']))
             ->assertOk()
-            ->assertSee('ST-20261028-0011')
-            ->assertDontSee('ST-20261028-0010');
+            ->assertSee('Fecha de soportes')
+            ->assertDontSee('N.º');
+        $this->assertSame(
+            ['ST-20261023-0007', 'ST-20261023-0006'],
+            $dateResponse->viewData('reports')->pluck('folio')->all(),
+        );
+    }
+
+    public function test_report_can_only_be_deleted_by_its_creator_or_an_administrator(): void
+    {
+        $administratorRole = Role::query()->create([
+            'role' => 'Administrador',
+            'permission_profile' => Role::PROFILE_ADMINISTRATOR,
+        ]);
+        $creator = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $administrator = User::factory()->create(['role_id' => $administratorRole->id]);
+
+        $creatorReport = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0012')->firstOrFail();
+        $creatorReport->update(['created_by' => $creator->id]);
+
+        $this->actingAs($otherUser)
+            ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('technical_support_reports', ['id' => $creatorReport->id]);
+
+        $this->actingAs($creator)
+            ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('technical_support_reports', ['id' => $creatorReport->id]);
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'folio' => 'ST-20261028-0012',
+            'action' => TechnicalSupportReportMovement::ACTION_DELETED,
+            'user_id' => $creator->id,
+            'user_name' => $creator->name,
+            'user_email' => $creator->email,
+        ]);
+
+        $adminReport = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0011')->firstOrFail();
+
+        $this->actingAs($administrator)
+            ->delete(route('soporte.reportes-tecnicos.destroy', $adminReport))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('technical_support_reports', ['id' => $adminReport->id]);
     }
 
     public function test_selected_reports_can_be_downloaded_in_one_zip(): void
@@ -130,6 +189,12 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertSame(['María Sinaí Campos Caamal'], $report->supports[1]['targets']);
         $this->assertSame(['18.3.1 - Solución fuera de versión', '19.4.0 - Versión final'], $report->details['versions_applied']);
         $this->assertStringStartsWith('ST-', $report->folio);
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'technical_support_report_id' => $report->id,
+            'folio' => $report->folio,
+            'action' => TechnicalSupportReportMovement::ACTION_CREATED,
+            'user_id' => $user->id,
+        ]);
         $this->assertSame(
             $report->folio.'-act-srv-cont-inst-office.pdf',
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],

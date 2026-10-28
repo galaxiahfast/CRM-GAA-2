@@ -298,11 +298,15 @@ Route::middleware([
             ->name('reportes-tecnicos');
         Route::get('/reportes-tecnicos/historial', [TechnicalSupportReportController::class, 'history'])
             ->name('reportes-tecnicos.history');
+        Route::get('/reportes-tecnicos/historial-movimientos', [TechnicalSupportReportController::class, 'movementHistory'])
+            ->name('reportes-tecnicos.movements');
         Route::post('/reportes-tecnicos', [TechnicalSupportReportController::class, 'store'])
             ->name('reportes-tecnicos.store');
         Route::post('/reportes-tecnicos/descargar-seleccion', [TechnicalSupportReportController::class, 'downloadSelection'])
             ->name('reportes-tecnicos.download-selection');
         Route::get('/reportes-tecnicos/{report:folio}.pdf', [TechnicalSupportReportController::class, 'pdf'])
             ->name('reportes-tecnicos.pdf');
+        Route::delete('/reportes-tecnicos/{report:folio}', [TechnicalSupportReportController::class, 'destroy'])
+            ->name('reportes-tecnicos.destroy');
     });
 });
