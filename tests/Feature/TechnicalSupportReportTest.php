@@ -316,4 +316,21 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($ssdMigration)['filename'],
         );
     }
+
+    public function test_accounting_email_setup_report_is_available(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261028-0010')
+            ->firstOrFail();
+
+        $this->assertSame('Contabilidad', $report->service_recipient);
+        $this->assertSame('email_installation', $report->supports[0]['key']);
+        $this->assertSame('Instalación de correo electrónico', $report->supports[0]['title']);
+        $this->assertSame(1, $report->supports[0]['quantity']);
+        $this->assertSame(['Carlos Rafael De Jesús Diaz Ruiz'], $report->supports[0]['targets']);
+        $this->assertSame(
+            'ST-20261028-0010-inst-correo.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }
