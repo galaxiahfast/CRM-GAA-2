@@ -75,7 +75,24 @@
         x-data="{
             viewScale: Number(localStorage.getItem('support-reports-view-scale') || 90),
             isFullscreen: false,
-            saveScale() { localStorage.setItem('support-reports-view-scale', String(this.viewScale)) },
+            scaledContentHeight: null,
+            resizeObserver: null,
+            init() {
+                if (this.viewScale < 70 || this.viewScale > 100) this.viewScale = 90;
+                this.$nextTick(() => {
+                    this.resizeObserver = new ResizeObserver(() => this.syncScaledContentHeight());
+                    this.resizeObserver.observe(this.$refs.scaledMain);
+                    this.syncScaledContentHeight();
+                });
+            },
+            syncScaledContentHeight() {
+                if (!this.$refs.scaledMain) return;
+                this.scaledContentHeight = Math.ceil(this.$refs.scaledMain.offsetHeight * (this.viewScale / 100));
+            },
+            saveScale() {
+                localStorage.setItem('support-reports-view-scale', String(this.viewScale));
+                this.$nextTick(() => this.syncScaledContentHeight());
+            },
             zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale() },
             zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.saveScale() },
             async toggleFullscreen() {
@@ -84,7 +101,6 @@
                 await this.$root.requestFullscreen();
             }
         }"
-        x-init="if (viewScale < 70 || viewScale > 100) viewScale = 90"
         @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
     >
         <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
@@ -99,7 +115,8 @@
             </button>
         </div>
 
-        <main class="w-full space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;zoom:${viewScale / 100};`">
+        <div class="relative w-full overflow-x-hidden" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : ''">
+        <main x-ref="scaledMain" class="w-full origin-top-left space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
             <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-black">
@@ -509,5 +526,6 @@
             </section>
             @endif
         </main>
+        </div>
     </div>
 </x-app-layout>
