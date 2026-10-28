@@ -69,38 +69,21 @@
             -webkit-appearance: none;
         }
 
-        /* En pantallas con altura suficiente, el módulo cabe completo y solo usa sus scrolls internos. */
-        @media (min-height: 760px) {
-            .support-report-page {
-                height: calc(100dvh - 100px);
-                min-height: 0 !important;
-                overflow-y: hidden;
-            }
+        .support-report-page:fullscreen {
+            height: 100dvh;
         }
     </style>
 
     <div
-        class="support-report-page min-h-[calc(100dvh-100px)] bg-white text-[15px] text-black"
+        class="support-report-page h-[calc(100dvh-100px)] overflow-hidden bg-white text-[15px] text-black"
         x-data="{
             viewScale: Number(localStorage.getItem('support-reports-view-scale') || 90),
             isFullscreen: false,
-            scaledContentHeight: null,
-            resizeObserver: null,
             init() {
                 if (this.viewScale < 70 || this.viewScale > 100) this.viewScale = 90;
-                this.$nextTick(() => {
-                    this.resizeObserver = new ResizeObserver(() => this.syncScaledContentHeight());
-                    this.resizeObserver.observe(this.$refs.scaledMain);
-                    this.syncScaledContentHeight();
-                });
-            },
-            syncScaledContentHeight() {
-                if (!this.$refs.scaledMain) return;
-                this.scaledContentHeight = Math.ceil(this.$refs.scaledMain.offsetHeight * (this.viewScale / 100));
             },
             saveScale() {
                 localStorage.setItem('support-reports-view-scale', String(this.viewScale));
-                this.$nextTick(() => this.syncScaledContentHeight());
             },
             zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale() },
             zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.saveScale() },
@@ -124,9 +107,9 @@
             </button>
         </div>
 
-        <div class="relative w-full overflow-x-hidden" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : ''">
-        <main x-ref="scaledMain" class="w-full origin-top-left space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
-            <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
+        <div class="relative h-full w-full overflow-hidden">
+        <main x-ref="scaledMain" class="flex w-full origin-top-left flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;height:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
+            <section class="flex shrink-0 flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-black">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
@@ -138,7 +121,7 @@
                 </div>
             </section>
 
-            <nav class="!mt-[8px] flex items-center gap-[20px]" aria-label="Secciones de reportes de soporte">
+            <nav class="flex shrink-0 items-center gap-[20px]" aria-label="Secciones de reportes de soporte">
                 <a href="{{ route('soporte.reportes-tecnicos') }}" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0 {{ $activeTab === 'generate' ? 'text-[#1A3A6B]' : 'text-black' }}">
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4"/></svg>
                     <span>Generar reporte</span>
@@ -159,7 +142,7 @@
 
             @if ($activeTab === 'generate')
             <section
-                class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
+                class="min-h-0 flex-1 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
                 x-data="{
                     query: '',
                     selected: @js(old('supports', [])),
@@ -300,7 +283,7 @@
                             : [...this.selectedReports, folio];
                     }
                 }"
-                class="flex h-[calc(100dvh-210px)] min-h-[610px] max-h-[820px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
+                class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
             >
                 <div class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                     <div>
@@ -483,7 +466,7 @@
                 </template>
             </section>
             @else
-            <section class="flex h-[calc(100dvh-250px)] min-h-[520px] max-h-[820px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+            <section class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                 <div class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                     <div>
                         <div class="flex items-center gap-[10px]">
