@@ -333,4 +333,25 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
+
+    public function test_audit_microsoft_365_report_is_available(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261028-0011')
+            ->firstOrFail();
+
+        $this->assertSame('Auditoría', $report->service_recipient);
+        $this->assertSame('microsoft_365_install', $report->supports[0]['key']);
+        $this->assertSame('office_license_activation', $report->supports[1]['key']);
+        $this->assertSame('claude_addin_activation', $report->supports[2]['key']);
+
+        foreach ($report->supports as $support) {
+            $this->assertSame(['Noh Chan Claudia Alejandra'], $support['targets']);
+        }
+
+        $this->assertSame(
+            'ST-20261028-0011-inst-m365-act-office-act-claude.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }
