@@ -99,7 +99,7 @@
             </button>
         </div>
 
-        <main class="w-full origin-top-left space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
+        <main class="w-full space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;zoom:${viewScale / 100};`">
             <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-black">
@@ -194,7 +194,7 @@
                     @enderror
 
                     <div x-data="backupOverlayScroll()" x-effect="query; selected.length; $nextTick(() => update())" class="-mr-[20px] mt-[20px] max-h-[390px] relative">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll grid max-h-[390px] grid-cols-1 gap-[20px] overflow-y-auto pr-[20px] lg:grid-cols-2">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll grid max-h-[390px] grid-cols-1 gap-[20px] overflow-y-auto pr-[20px] min-[900px]:grid-cols-2">
                             <template x-for="item in catalog" :key="item.key">
                                 <label x-show="matches(item)" class="block cursor-pointer rounded-xl border bg-white p-[20px] transition" :class="selected.includes(item.key) ? 'border-[#1A3A6B]' : 'border-[#d4d4d8] hover:bg-zinc-50'">
                                     <span class="flex items-center gap-[20px]">
@@ -302,8 +302,8 @@
                     </div>
                 </div>
 
-                <div class="grid min-h-0 flex-1 xl:grid-cols-[260px_minmax(0,1fr)]">
-                    <aside class="flex h-[230px] min-h-0 flex-col overflow-hidden border-b border-[#d4d4d8] bg-white xl:h-auto xl:border-b-0 xl:border-r" aria-label="Fechas de reportes de soporte">
+                <div class="grid min-h-0 flex-1 min-[900px]:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <aside class="flex h-[230px] min-h-0 flex-col overflow-hidden border-b border-[#d4d4d8] bg-white min-[900px]:h-auto min-[900px]:border-b-0 min-[900px]:border-r" aria-label="Fechas de reportes de soporte">
                         <div class="flex h-[85px] shrink-0 items-center justify-center border-b border-[#d4d4d8] bg-zinc-100 px-[20px] text-center text-[#1A3A6B]">
                             <span class="truncate">Fecha de soportes</span>
                         </div>
@@ -324,7 +324,7 @@
                     </aside>
 
                     <div class="flex min-h-0 min-w-0 flex-col">
-                        <div class="flex shrink-0 items-center border-b border-[#d4d4d8] bg-zinc-100 p-[20px] xl:h-[85px]">
+                        <div class="flex shrink-0 items-center border-b border-[#d4d4d8] bg-zinc-100 p-[20px] min-[900px]:h-[85px]">
                             <form method="GET" action="{{ route('soporte.reportes-tecnicos.history') }}" class="flex w-full min-w-0 flex-wrap items-center gap-[20px]">
                                 @if ($filters['date'] !== '')
                                     <input type="hidden" name="date" value="{{ $filters['date'] }}">
@@ -341,14 +341,14 @@
                             </form>
                         </div>
 
-                        <div class="flex shrink-0 items-center border-b border-[#d4d4d8] bg-white px-[20px] lg:hidden">
+                        <div class="flex shrink-0 items-center border-b border-[#d4d4d8] bg-white px-[20px] min-[900px]:hidden">
                             <label class="inline-flex cursor-pointer items-center gap-[10px] py-[20px] leading-none text-black">
                                 <input type="checkbox" :checked="allPageSelected()" @change="togglePage()" class="h-4 w-4 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
                                 <span>Seleccionar página</span>
                             </label>
                         </div>
 
-                        <div class="hidden shrink-0 grid-cols-[60px_210px_minmax(0,1fr)_200px] border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] lg:grid">
+                        <div class="hidden shrink-0 border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] min-[900px]:grid min-[900px]:grid-cols-[50px_185px_minmax(0,1fr)_150px] lg:grid-cols-[60px_210px_minmax(0,1fr)_200px]">
                             <label class="flex cursor-pointer items-center justify-center border-r border-[#d4d4d8] p-[20px]" title="Seleccionar página">
                                 <input type="checkbox" :checked="allPageSelected()" @change="togglePage()" class="h-4 w-4 shrink-0 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0" aria-label="Seleccionar página">
                             </label>
@@ -370,22 +370,22 @@
                                             ->unique()
                                             ->join(', ');
                                     @endphp
-                                    <article @click="if (!$event.target.closest('a, button, input, label')) toggleReport('{{ $report->folio }}')" class="grid min-h-[77px] cursor-pointer grid-cols-[60px_minmax(0,1fr)] bg-white transition hover:bg-zinc-50 lg:grid-cols-[60px_210px_minmax(0,1fr)_200px]">
-                                        <div class="row-span-3 flex items-center justify-center border-r border-[#d4d4d8] p-[20px] lg:row-span-1">
+                                    <article @click="if (!$event.target.closest('a, button, input, label')) toggleReport('{{ $report->folio }}')" class="grid min-h-[77px] cursor-pointer grid-cols-[60px_minmax(0,1fr)] bg-white transition hover:bg-zinc-50 min-[900px]:grid-cols-[50px_185px_minmax(0,1fr)_150px] lg:grid-cols-[60px_210px_minmax(0,1fr)_200px]">
+                                        <div class="row-span-3 flex items-center justify-center border-r border-[#d4d4d8] p-[20px] min-[900px]:row-span-1">
                                             <input type="checkbox" value="{{ $report->folio }}" x-model="selectedReports" @click.stop class="h-4 w-4 shrink-0 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0" aria-label="Seleccionar {{ $report->folio }}">
                                         </div>
-                                        <div class="col-start-2 flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] text-center lg:col-start-auto lg:border-b-0 lg:border-r">
+                                        <div class="col-start-2 flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] text-center min-[900px]:col-start-auto min-[900px]:border-b-0 min-[900px]:border-r">
                                             <p class="leading-none text-[#1A3A6B]">{{ $report->folio }}</p>
                                             <p class="mt-[10px] leading-none text-black">{{ $report->issued_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i') }}</p>
                                         </div>
-                                        <div class="col-start-2 flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] lg:col-start-auto lg:border-b-0 lg:border-r">
+                                        <div class="col-start-2 flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] min-[900px]:col-start-auto min-[900px]:border-b-0 min-[900px]:border-r">
                                             <p class="truncate leading-none text-[#1A3A6B]" title="{{ $supportSummary }}">{{ $supportSummary }}</p>
                                             <p class="mt-[10px] truncate leading-none text-black" title="Departamento o cliente: {{ $report->service_recipient }}">Departamento o cliente: {{ $report->service_recipient }}</p>
                                             @if ($targetSummary !== '')
                                                 <p class="mt-[10px] truncate leading-none text-black" title="Personas o equipos: {{ $targetSummary }}">Personas o equipos: {{ $targetSummary }}</p>
                                             @endif
                                         </div>
-                                        <div class="col-start-2 flex items-center justify-center gap-[10px] p-[20px] lg:col-start-auto">
+                                        <div class="col-start-2 flex items-center justify-center gap-[10px] p-[20px] min-[900px]:col-start-auto min-[900px]:gap-[5px] min-[900px]:px-[10px] lg:gap-[10px] lg:p-[20px]">
                                             <a @click.stop href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-black transition-colors hover:bg-zinc-100 hover:text-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Ver {{ $report->folio }}" title="Ver"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg></a>
                                             <a @click.stop href="{{ route('soporte.reportes-tecnicos.pdf', ['report' => $report, 'download' => 1]) }}" class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-black transition-colors hover:bg-zinc-100 hover:text-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Descargar {{ $report->folio }}" title="Descargar"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4"/></svg></a>
                                             @if (auth()->user()?->isAdmin() || (int) $report->created_by === (int) auth()->id())
@@ -468,7 +468,7 @@
                     </div>
                 </div>
 
-                <div class="hidden shrink-0 grid-cols-[190px_220px_minmax(0,1fr)_220px] border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] lg:grid">
+                <div class="hidden shrink-0 border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] min-[900px]:grid min-[900px]:grid-cols-[170px_190px_minmax(0,1fr)_190px] lg:grid-cols-[190px_220px_minmax(0,1fr)_220px]">
                     <div class="border-r border-[#d4d4d8] p-[20px] text-center">Movimiento</div>
                     <div class="border-r border-[#d4d4d8] p-[20px] text-center">Folio</div>
                     <div class="border-r border-[#d4d4d8] p-[20px]">Usuario</div>
@@ -483,12 +483,12 @@
                                 $actorName = $movement->user_name ?: $movement->user?->name ?: 'Usuario no disponible';
                                 $actorEmail = $movement->user_email ?: $movement->user?->email;
                             @endphp
-                            <article class="grid min-h-[77px] grid-cols-1 bg-white lg:grid-cols-[190px_220px_minmax(0,1fr)_220px]">
-                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center lg:border-b-0 lg:border-r">
+                            <article class="grid min-h-[77px] grid-cols-1 bg-white min-[900px]:grid-cols-[170px_190px_minmax(0,1fr)_190px] lg:grid-cols-[190px_220px_minmax(0,1fr)_220px]">
+                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center min-[900px]:border-b-0 min-[900px]:border-r">
                                     <span class="{{ $isDeleted ? 'text-red-600' : 'text-[#1A3A6B]' }}">{{ $isDeleted ? 'Reporte eliminado' : 'Reporte generado' }}</span>
                                 </div>
-                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center text-[#1A3A6B] lg:border-b-0 lg:border-r">{{ $movement->folio }}</div>
-                                <div class="flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] lg:border-b-0 lg:border-r">
+                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center text-[#1A3A6B] min-[900px]:border-b-0 min-[900px]:border-r">{{ $movement->folio }}</div>
+                                <div class="flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] min-[900px]:border-b-0 min-[900px]:border-r">
                                     <p class="truncate leading-none text-black" title="{{ $actorName }}">{{ $actorName }}</p>
                                     @if ($actorEmail)
                                         <p class="mt-[10px] truncate lowercase leading-none text-black" title="{{ $actorEmail }}">{{ $actorEmail }}</p>
