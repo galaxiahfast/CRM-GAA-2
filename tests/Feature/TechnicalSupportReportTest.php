@@ -354,4 +354,23 @@ class TechnicalSupportReportTest extends TestCase
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
     }
+
+    public function test_audit_audictamen_crystal_report_is_available(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261028-0012')
+            ->firstOrFail();
+
+        $this->assertSame('Auditoría', $report->service_recipient);
+        $this->assertSame('audictamen_crystal_reports_install', $report->supports[0]['key']);
+        $this->assertSame(
+            'Instalación del componente de Crystal Reports para AUDICTAMEN',
+            $report->supports[0]['title'],
+        );
+        $this->assertSame(['Sanchez Coba Caridad Iliana'], $report->supports[0]['targets']);
+        $this->assertSame(
+            'ST-20261028-0012-inst-crystal-audictamen.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+    }
 }
