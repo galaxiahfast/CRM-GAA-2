@@ -106,13 +106,13 @@
     @resize.window="if (open) position()"
     {{ $attributes->class(['relative min-w-0']) }}
 >
-    <button x-ref="trigger" type="button" @click="show()" :disabled="! selected.includes(item.key)" :style="over ? 'border-color: #dc2626;' : ''" class="flex h-[44px] w-full items-center justify-between gap-[10px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-left font-normal leading-none text-black outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" aria-haspopup="listbox" :aria-expanded="open">
+    <button x-ref="trigger" type="button" @click="show()" :disabled="! selected.includes(item.key)" :style="over ? 'border-color: #dc2626 !important;' : ''" class="flex h-[44px] w-full items-center justify-between gap-[10px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-left font-normal leading-none text-black outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" aria-haspopup="listbox" :aria-expanded="open">
         <span class="min-w-0 flex-1 truncate" :class="list.length === 0 ? 'text-zinc-500' : 'text-black'" x-text="list.length === 0 ? 'Elegir personas o clientes...' : list.join(', ')"></span>
         <svg class="h-4 w-4 shrink-0 text-black transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
     </button>
 
     <template x-teleport="body">
-        <div x-ref="list" data-support-modal x-cloak x-show="open" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black" role="listbox" aria-multiselectable="true">
+        <div x-ref="list" data-support-dropdown data-support-modal x-cloak x-show="open" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black" role="listbox" aria-multiselectable="true">
             <div class="flex items-center border-b border-[#d4d4d8] bg-white" style="height: 62px;">
                 <input x-ref="search" x-model="q" @input="$nextTick(() => { if (open) position(); })" type="search" autocomplete="off" :placeholder="tab === 'user' ? 'Buscar colaborador...' : 'Buscar o agregar...'" @keydown.enter.prevent="enter()" class="block h-full min-w-0 flex-1 border-0 bg-white px-[20px] font-normal text-black outline-none placeholder:text-zinc-500 focus:outline-none focus:ring-0" style="box-shadow: none !important; outline: none !important;">
                 <div class="flex shrink-0 items-center gap-[20px] pr-[20px]">
@@ -125,7 +125,7 @@
                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px;`">
                     <template x-for="person in shown" :key="person.name">
                         <button type="button" role="option" :aria-selected="has(person.name)" :disabled="full && ! has(person.name)" @click="toggle(person.name)" class="flex w-full items-center gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px] text-left font-normal leading-none hover:bg-zinc-50 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white">
-                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-[#d4d4d8]" :style="has(person.name) ? 'background: #000000; border-color: #000000; color: #ffffff;' : 'background: #ffffff;'">
+                            <span class="support-check flex h-4 w-4 shrink-0 items-center justify-center rounded border" :class="has(person.name) ? 'support-check-on' : ''">
                                 <svg x-show="has(person.name)" class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m5 13 4 4L19 7" /></svg>
                             </span>
                             <span class="min-w-0 flex-1 truncate" :class="has(person.name) ? 'text-[#1A3A6B]' : 'text-black'" x-text="person.name"></span>

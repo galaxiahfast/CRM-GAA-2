@@ -125,6 +125,234 @@
             -webkit-appearance: none;
         }
 
+        /* Casilla de la lista de personas (claro). */
+        .support-check {
+            border-color: #d4d4d8;
+            background-color: #ffffff;
+            color: #ffffff;
+        }
+
+        .support-check-on {
+            border-color: #000000;
+            background-color: #000000;
+        }
+
+        /* ===== Tema oscuro del módulo de Soporte =====
+           Paleta: superficie #18181b, encabezados #202023, líneas #3f3f46, texto #e4e4e7 y azul claro
+           #6aa9ff para lo que en el tema claro va en azul fuerte. Cubre la página y también los
+           desplegables y ventanas que se montan fuera de ella. */
+        html.module-dark-theme {
+            --support-accent: #6aa9ff;
+            --support-check: #3b82f6;
+            --support-border: #3f3f46;
+            --support-surface: #18181b;
+            --support-header: #202023;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="bg-white"],
+        html.module-dark-theme [data-support-modal][class~="bg-white"],
+        html.module-dark-theme [data-support-modal] [class~="bg-white"],
+        html.module-dark-theme [data-support-dropdown][class~="bg-white"],
+        html.module-dark-theme [data-support-dropdown] [class~="bg-white"] {
+            background-color: var(--support-surface) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="bg-zinc-100"],
+        html.module-dark-theme [data-support-modal][class~="bg-zinc-100"],
+        html.module-dark-theme [data-support-modal] [class~="bg-zinc-100"],
+        html.module-dark-theme [data-support-dropdown][class~="bg-zinc-100"],
+        html.module-dark-theme [data-support-dropdown] [class~="bg-zinc-100"] {
+            background-color: var(--support-header) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="bg-zinc-50"],
+        html.module-dark-theme [data-support-modal][class~="bg-zinc-50"],
+        html.module-dark-theme [data-support-modal] [class~="bg-zinc-50"],
+        html.module-dark-theme [data-support-dropdown][class~="bg-zinc-50"],
+        html.module-dark-theme [data-support-dropdown] [class~="bg-zinc-50"] {
+            background-color: #1d1d21 !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page .support-row-selected,
+        html.module-dark-theme [data-support-modal].support-row-selected,
+        html.module-dark-theme [data-support-modal] .support-row-selected,
+        html.module-dark-theme [data-support-dropdown].support-row-selected,
+        html.module-dark-theme [data-support-dropdown] .support-row-selected {
+            background-color: rgba(106, 169, 255, 0.1) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:bg-zinc-50"]:hover,
+        html.module-dark-theme [data-support-modal][class*="hover:bg-zinc-50"]:hover,
+        html.module-dark-theme [data-support-modal] [class*="hover:bg-zinc-50"]:hover,
+        html.module-dark-theme [data-support-dropdown][class*="hover:bg-zinc-50"]:hover,
+        html.module-dark-theme [data-support-dropdown] [class*="hover:bg-zinc-50"]:hover {
+            background-color: #26262b !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:bg-zinc-100"]:hover,
+        html.module-dark-theme [data-support-modal][class*="hover:bg-zinc-100"]:hover,
+        html.module-dark-theme [data-support-modal] [class*="hover:bg-zinc-100"]:hover,
+        html.module-dark-theme [data-support-dropdown][class*="hover:bg-zinc-100"]:hover,
+        html.module-dark-theme [data-support-dropdown] [class*="hover:bg-zinc-100"]:hover {
+            background-color: #26262b !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-modal][class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-modal] [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-dropdown][class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-dropdown] [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover) {
+            background-color: transparent !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-modal][class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-modal] [class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-dropdown][class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-support-dropdown] [class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover) {
+            background-color: transparent !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="bg-[#1A3A6B]"],
+        html.module-dark-theme [data-support-modal][class~="bg-[#1A3A6B]"],
+        html.module-dark-theme [data-support-modal] [class~="bg-[#1A3A6B]"],
+        html.module-dark-theme [data-support-dropdown][class~="bg-[#1A3A6B]"],
+        html.module-dark-theme [data-support-dropdown] [class~="bg-[#1A3A6B]"] {
+            background-color: #1f4a8a !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="border-[#d4d4d8]"],
+        html.module-dark-theme [data-support-modal][class*="border-[#d4d4d8]"],
+        html.module-dark-theme [data-support-modal] [class*="border-[#d4d4d8]"],
+        html.module-dark-theme [data-support-dropdown][class*="border-[#d4d4d8]"],
+        html.module-dark-theme [data-support-dropdown] [class*="border-[#d4d4d8]"] {
+            border-color: var(--support-border) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="text-black"],
+        html.module-dark-theme [data-support-modal][class~="text-black"],
+        html.module-dark-theme [data-support-modal] [class~="text-black"],
+        html.module-dark-theme [data-support-dropdown][class~="text-black"],
+        html.module-dark-theme [data-support-dropdown] [class~="text-black"] {
+            color: #e4e4e7 !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="text-[#1A3A6B]"],
+        html.module-dark-theme [data-support-modal][class~="text-[#1A3A6B]"],
+        html.module-dark-theme [data-support-modal] [class~="text-[#1A3A6B]"],
+        html.module-dark-theme [data-support-dropdown][class~="text-[#1A3A6B]"],
+        html.module-dark-theme [data-support-dropdown] [class~="text-[#1A3A6B]"] {
+            color: var(--support-accent) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:text-[#1A3A6B]"]:hover,
+        html.module-dark-theme [data-support-modal][class*="hover:text-[#1A3A6B]"]:hover,
+        html.module-dark-theme [data-support-modal] [class*="hover:text-[#1A3A6B]"]:hover,
+        html.module-dark-theme [data-support-dropdown][class*="hover:text-[#1A3A6B]"]:hover,
+        html.module-dark-theme [data-support-dropdown] [class*="hover:text-[#1A3A6B]"]:hover {
+            color: var(--support-accent) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+        html.module-dark-theme [data-support-modal][class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+        html.module-dark-theme [data-support-modal] [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+        html.module-dark-theme [data-support-dropdown][class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+        html.module-dark-theme [data-support-dropdown] [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover {
+            color: #fafafa !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="text-red-600"],
+        html.module-dark-theme [data-support-modal][class~="text-red-600"],
+        html.module-dark-theme [data-support-modal] [class~="text-red-600"],
+        html.module-dark-theme [data-support-dropdown][class~="text-red-600"],
+        html.module-dark-theme [data-support-dropdown] [class~="text-red-600"] {
+            color: #f87171 !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class*="hover:text-red-600"]:hover,
+        html.module-dark-theme [data-support-modal][class*="hover:text-red-600"]:hover,
+        html.module-dark-theme [data-support-modal] [class*="hover:text-red-600"]:hover,
+        html.module-dark-theme [data-support-dropdown][class*="hover:text-red-600"]:hover,
+        html.module-dark-theme [data-support-dropdown] [class*="hover:text-red-600"]:hover {
+            color: #f87171 !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="text-zinc-500"],
+        html.module-dark-theme [data-support-modal][class~="text-zinc-500"],
+        html.module-dark-theme [data-support-modal] [class~="text-zinc-500"],
+        html.module-dark-theme [data-support-dropdown][class~="text-zinc-500"],
+        html.module-dark-theme [data-support-dropdown] [class~="text-zinc-500"] {
+            color: #a1a1aa !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page :is(input:not([type="checkbox"]):not([type="radio"]), textarea),
+        html.module-dark-theme [data-support-modal]:is(input:not([type="checkbox"]):not([type="radio"]), textarea),
+        html.module-dark-theme [data-support-modal] :is(input:not([type="checkbox"]):not([type="radio"]), textarea),
+        html.module-dark-theme [data-support-dropdown]:is(input:not([type="checkbox"]):not([type="radio"]), textarea),
+        html.module-dark-theme [data-support-dropdown] :is(input:not([type="checkbox"]):not([type="radio"]), textarea) {
+            border-color: var(--support-border) !important;
+            background-color: var(--support-surface) !important;
+            color: #fafafa !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page :is(input, textarea)::placeholder,
+        html.module-dark-theme [data-support-modal]:is(input, textarea)::placeholder,
+        html.module-dark-theme [data-support-modal] :is(input, textarea)::placeholder,
+        html.module-dark-theme [data-support-dropdown]:is(input, textarea)::placeholder,
+        html.module-dark-theme [data-support-dropdown] :is(input, textarea)::placeholder {
+            color: #71717a !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus,
+        html.module-dark-theme [data-support-modal]:is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus,
+        html.module-dark-theme [data-support-modal] :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus,
+        html.module-dark-theme [data-support-dropdown]:is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus,
+        html.module-dark-theme [data-support-dropdown] :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus {
+            border-color: var(--support-border) !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page [class~="bg-black"],
+        html.module-dark-theme [data-support-modal][class~="bg-black"],
+        html.module-dark-theme [data-support-modal] [class~="bg-black"],
+        html.module-dark-theme [data-support-dropdown][class~="bg-black"],
+        html.module-dark-theme [data-support-dropdown] [class~="bg-black"] {
+            border-color: #fafafa !important;
+            background-color: #fafafa !important;
+            color: #09090b !important;
+        }
+
+        html.module-dark-theme #main-content .support-report-page input[type="checkbox"]:checked {
+            border-color: var(--support-check) !important;
+            background-color: var(--support-check) !important;
+        }
+
+        html.module-dark-theme .support-service-grid > .support-people-cell {
+            border-color: var(--support-border);
+        }
+
+        html.module-dark-theme .support-report-list > article {
+            border-bottom-color: var(--support-border);
+        }
+
+        html.module-dark-theme .support-service-scroll-thumb {
+            background: var(--support-accent);
+        }
+
+        html.module-dark-theme #main-content .support-report-page .support-row-selected:hover {
+            background-color: rgba(106, 169, 255, 0.14) !important;
+        }
+
+        html.module-dark-theme .support-check {
+            border-color: #52525b;
+            background-color: var(--support-surface);
+        }
+
+        html.module-dark-theme .support-check-on {
+            border-color: var(--support-check);
+            background-color: var(--support-check);
+            color: #ffffff;
+        }
+
         .support-report-page:fullscreen {
             height: 100dvh;
         }
@@ -340,7 +568,7 @@
                                 @endforeach
 
                                 <template x-for="item in catalog" :key="item.key">
-                                    <div x-show="matches(item)" style="min-height: 85px;" class="support-service-grid border-b border-[#d4d4d8] transition hover:bg-zinc-50" :class="selected.includes(item.key) ? 'bg-zinc-50' : 'bg-white'">
+                                    <div x-show="matches(item)" style="min-height: 85px;" class="support-service-grid border-b border-[#d4d4d8] transition hover:bg-zinc-50" :class="selected.includes(item.key) ? 'bg-zinc-50 support-row-selected' : 'bg-white'">
                                         <label class="flex cursor-pointer items-center justify-center border-r border-[#d4d4d8] p-[20px]">
                                             <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => syncRow(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" :aria-label="item.title" class="support-service-checkbox h-4 w-4 shrink-0 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
                                         </label>
@@ -358,7 +586,7 @@
                                         <div class="flex items-center justify-center p-[20px]">
                                             <div class="flex items-center justify-center gap-[10px] leading-none" :style="selected.includes(item.key) ? '' : 'opacity: 0.4;'">
                                                 <span class="shrink-0" :class="overLimit(item.key) ? 'text-red-600' : 'text-[#1A3A6B]'" x-text="`${people(item.key).length} de`">0 de</span>
-                                                <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" :style="overLimit(item.key) ? 'border-color: #dc2626;' : ''" aria-label="Cantidad" title="Cantidad: máximo de personas atendidas" class="support-quantity-input h-[44px] w-[56px] shrink-0 rounded-xl border border-[#d4d4d8] bg-white px-[10px] text-center text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed">
+                                                <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" :style="overLimit(item.key) ? 'border-color: #dc2626 !important;' : ''" aria-label="Cantidad" title="Cantidad: máximo de personas atendidas" class="support-quantity-input h-[44px] w-[56px] shrink-0 rounded-xl border border-[#d4d4d8] bg-white px-[10px] text-center text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed">
                                             </div>
                                         </div>
                                     </div>

@@ -262,6 +262,11 @@ html.module-dark-theme #main-nav {
     border-bottom: 1px solid #27272a;
 }
 
+/* El aro del contador de notificaciones toma el color de la barra: en oscuro ya no se ve un círculo azul. */
+html.module-dark-theme [aria-label$="notificaciones sin leer"] {
+    --tw-ring-color: #09090b !important;
+}
+
 html.module-dark-theme #logo-sidebar {
     background: #111113 !important;
     border-right: 1px solid #27272a;

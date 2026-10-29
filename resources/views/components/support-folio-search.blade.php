@@ -79,7 +79,7 @@
     >
 
     <template x-teleport="body">
-        <div x-ref="list" x-cloak x-show="open && filtered.length > 0" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white" role="listbox">
+        <div x-ref="list" data-support-dropdown x-cloak x-show="open && filtered.length > 0" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white" role="listbox">
             <div x-data="backupOverlayScroll()" x-effect="open; filtered; $nextTick(() => update())" class="relative">
                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px; scrollbar-width: none;`">
                     <template x-for="option in filtered" :key="option">
