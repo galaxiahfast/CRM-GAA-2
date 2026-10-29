@@ -28,7 +28,8 @@ class TechnicalSupportReportTest extends TestCase
             ->get(route('soporte.reportes-tecnicos'))
             ->assertOk()
             ->assertSee('Reportes de soporte')
-            ->assertSee('Servicios incluidos')
+            ->assertSee('Personas o equipos atendidos')
+            ->assertSee('Generar PDF')
             ->assertDontSee('Generar reporte de soporte')
             ->assertDontSee('Selecciona servicios e indica cuántas veces se realizó cada uno.')
             ->assertDontSee('Historial de reportes');
@@ -240,7 +241,7 @@ class TechnicalSupportReportTest extends TestCase
 
         $response->assertRedirect(route('soporte.reportes-tecnicos.history', ['created' => $report->folio]));
         $this->assertSame($user->id, $report->created_by);
-        $this->assertSame('Cliente Externo Ejemplo', $report->service_recipient);
+        $this->assertSame('Equipo servidor, María Sinaí Campos Caamal y Terminal de pruebas', $report->service_recipient);
         $this->assertSame('Actualización de servidor de CONTPAQi Contabilidad', $report->supports[0]['title']);
         $this->assertSame(4, $report->supports[0]['quantity']);
         $this->assertSame(['Equipo servidor', 'Terminal de pruebas'], $report->supports[0]['targets']);
@@ -274,6 +275,7 @@ class TechnicalSupportReportTest extends TestCase
             'service_recipient' => 'Nóminas',
             'supports' => ['contpaqi_nominas_update'],
             'support_quantities' => ['contpaqi_nominas_update' => 2],
+            'support_targets' => ['contpaqi_nominas_update' => "Equipo Nóminas 1\nEquipo Nóminas 2"],
             'versions_applied' => "19.0.1\n19.4.0",
         ])->assertRedirect();
 
@@ -284,6 +286,7 @@ class TechnicalSupportReportTest extends TestCase
             'service_recipient' => 'Nóminas',
             'supports' => ['contpaqi_nominas_server_update'],
             'support_quantities' => ['contpaqi_nominas_server_update' => 1],
+            'support_targets' => ['contpaqi_nominas_server_update' => 'Servidor de Nóminas'],
         ])->assertSessionHasErrors('versions_applied');
     }
 
@@ -302,6 +305,11 @@ class TechnicalSupportReportTest extends TestCase
                 'microsoft_365_refresh' => 2,
                 'claude_addin_setup' => 2,
                 'microsoft_store_compatibility_update' => 1,
+            ],
+            'support_targets' => [
+                'microsoft_365_refresh' => "Equipo Contabilidad 1\nEquipo Contabilidad 2",
+                'claude_addin_setup' => "Equipo Contabilidad 1\nEquipo Contabilidad 2",
+                'microsoft_store_compatibility_update' => 'Equipo Contabilidad 1',
             ],
         ])->assertRedirect();
 
@@ -335,6 +343,13 @@ class TechnicalSupportReportTest extends TestCase
                 'email_setup' => 2,
                 'email_web_access_limits' => 2,
             ],
+            'support_targets' => [
+                'sql_server_2012_restore' => 'Servidor SQL',
+                'sql_terminal_access_setup' => 'Terminal Auditoría',
+                'intern_email_creation' => "Becario Auditoría 1\nBecario Auditoría 2",
+                'email_setup' => "Becario Auditoría 1\nBecario Auditoría 2",
+                'email_web_access_limits' => "Becario Auditoría 1\nBecario Auditoría 2",
+            ],
         ])->assertRedirect();
 
         $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
@@ -356,13 +371,14 @@ class TechnicalSupportReportTest extends TestCase
                 'service_recipient' => 'Jurídico',
                 'supports' => ['computer_printer_connection'],
                 'support_quantities' => ['computer_printer_connection' => 1],
+                'support_targets' => ['computer_printer_connection' => 'Equipo Jurídico'],
             ])
             ->assertRedirect();
 
         $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
 
         $this->assertSame('computer_printer_connection', $report->supports[0]['key']);
-        $this->assertSame('Jurídico', $report->service_recipient);
+        $this->assertSame('Equipo Jurídico', $report->service_recipient);
         $this->assertSame('Conexión de computadora a impresora', $report->supports[0]['title']);
         $this->assertStringContainsString(
             'conexion-impresora',
@@ -389,12 +405,18 @@ class TechnicalSupportReportTest extends TestCase
                     'email_pop_to_imap' => 1,
                     'windows_startup_ini_removal' => 1,
                 ],
+                'support_targets' => [
+                    'email_local_backup' => 'Equipo Auditoría',
+                    'email_data_migration' => 'Equipo Auditoría',
+                    'email_pop_to_imap' => 'Equipo Auditoría',
+                    'windows_startup_ini_removal' => 'Equipo Auditoría',
+                ],
             ])
             ->assertRedirect();
 
         $report = TechnicalSupportReport::query()->latest('id')->firstOrFail();
 
-        $this->assertSame('Auditoría', $report->service_recipient);
+        $this->assertSame('Equipo Auditoría', $report->service_recipient);
         $this->assertSame('email_local_backup', $report->supports[0]['key']);
         $this->assertSame('Cambio de cuenta de correo de POP a IMAP y sincronización inicial', $report->supports[2]['title']);
         $this->assertSame(

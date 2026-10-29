@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\TechnicalSupportReport;
 use App\Models\TechnicalSupportReportMovement;
+use App\Models\User;
 use App\Services\Support\TechnicalSupportReportPdfService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -30,6 +32,7 @@ class TechnicalSupportReportController extends Controller
         return view('support.technical-reports', [
             'activeTab' => 'generate',
             'catalog' => $catalog,
+            'peopleDirectory' => $this->peopleDirectory(),
             'trashedReports' => $this->trashedReports(),
         ]);
     }
@@ -219,7 +222,6 @@ class TechnicalSupportReportController extends Controller
     {
         $catalog = $pdf->catalog();
         $validated = $request->validate([
-            'service_recipient' => ['required', 'string', 'max:180'],
             'supports' => ['required', 'array', 'min:1', 'max:8'],
             'supports.*' => ['required', 'string', 'distinct', Rule::in(array_keys($catalog))],
             'support_quantities' => ['required', 'array'],
@@ -252,6 +254,9 @@ class TechnicalSupportReportController extends Controller
             ->values()
             ->all();
 
+        $this->validateTargets($selectedSupports);
+        $serviceRecipient = $this->resolveRecipient($selectedSupports);
+
         $hasServerUpdate = collect($validated['supports'])
             ->contains(fn (string $key): bool => str_ends_with($key, '_server_update'));
 
@@ -274,13 +279,13 @@ class TechnicalSupportReportController extends Controller
 
         $actor = $request->user();
 
-        $report = DB::transaction(function () use ($selectedSupports, $details, $validated, $actor): TechnicalSupportReport {
+        $report = DB::transaction(function () use ($selectedSupports, $details, $serviceRecipient, $actor): TechnicalSupportReport {
             $localIssuedAt = now(config('support.timezone', 'America/Mexico_City'));
             $report = TechnicalSupportReport::create([
                 'folio' => 'PENDING-'.Str::uuid(),
                 'issued_at' => $localIssuedAt->clone()->utc(),
                 'responsible' => 'Julian Emiliano Ortiz Rivero',
-                'service_recipient' => trim($validated['service_recipient']),
+                'service_recipient' => $serviceRecipient,
                 'supports' => $selectedSupports,
                 'details' => $details,
                 'created_by' => auth()->id(),
@@ -411,6 +416,117 @@ class TechnicalSupportReportController extends Controller
             ->latest('deleted_at')
             ->limit(200)
             ->get();
+    }
+
+    /**
+     * Directorio para elegir a quién se atendió: colaboradores con su departamento actual y
+     * clientes externos (los registrados más los nombres usados antes en otros reportes).
+     *
+     * @return \Illuminate\Support\Collection<int, array{name: string, group: string, type: string}>
+     */
+    private function peopleDirectory()
+    {
+        $users = User::query()
+            ->with('activeOrganizationalProfile.physicalArea:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'last_name'])
+            ->map(fn (User $user): array => [
+                'name' => trim($user->name.' '.$user->last_name),
+                'group' => (string) ($user->activeOrganizationalProfile?->physicalArea?->name ?? ''),
+                'type' => 'user',
+            ]);
+
+        $customers = Customer::query()
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get(['name', 'last_name', 'maternal_last_name'])
+            ->map(fn (Customer $customer): array => [
+                'name' => trim(implode(' ', array_filter([$customer->name, $customer->last_name, $customer->maternal_last_name]))),
+                'group' => '',
+                'type' => 'client',
+            ]);
+
+        $previous = TechnicalSupportReport::query()
+            ->get(['supports'])
+            ->flatMap(fn (TechnicalSupportReport $report) => collect($report->supports ?? [])
+                ->flatMap(fn (array $support) => $support['targets'] ?? []))
+            ->map(fn ($name): array => ['name' => trim((string) $name), 'group' => '', 'type' => 'client']);
+
+        return $users
+            ->merge($customers)
+            ->merge($previous)
+            ->filter(fn (array $person): bool => $person['name'] !== '')
+            ->unique(fn (array $person): string => mb_strtolower($person['name']))
+            ->sortBy(fn (array $person): string => mb_strtolower($person['name']), SORT_NATURAL)
+            ->values();
+    }
+
+    /**
+     * Cada servicio necesita, como máximo, tantas personas como la cantidad indicada, y el
+     * reporte al menos una persona o cliente (de ahí sale el destinatario).
+     *
+     * @param  array<int, array<string, mixed>>  $selectedSupports
+     */
+    private function validateTargets(array $selectedSupports): void
+    {
+        $errors = [];
+
+        foreach ($selectedSupports as $support) {
+            $quantity = max(1, (int) $support['quantity']);
+
+            if (count($support['targets']) > $quantity) {
+                $errors['support_targets.'.$support['key']] = sprintf(
+                    '«%s»: la cantidad es %d, así que puedes elegir como máximo %d %s.',
+                    $support['title'] ?? $support['key'],
+                    $quantity,
+                    $quantity,
+                    $quantity === 1 ? 'persona' : 'personas',
+                );
+            }
+        }
+
+        if ($errors === [] && collect($selectedSupports)->every(fn (array $support): bool => $support['targets'] === [])) {
+            $errors['support_targets'] = 'Elige al menos una persona o cliente atendido.';
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * El destinatario del reporte sale de quienes se atendieron: el departamento de cada
+     * colaborador (puede haber varios) y el nombre de los clientes externos.
+     *
+     * @param  array<int, array<string, mixed>>  $selectedSupports
+     */
+    private function resolveRecipient(array $selectedSupports): string
+    {
+        $directory = $this->peopleDirectory()
+            ->keyBy(fn (array $person): string => mb_strtolower($person['name']));
+
+        $groups = [];
+        $clients = [];
+
+        foreach (collect($selectedSupports)->flatMap(fn (array $support) => $support['targets'])->unique() as $name) {
+            $person = $directory->get(mb_strtolower($name));
+
+            if ($person !== null && $person['type'] === 'user' && $person['group'] !== '') {
+                $groups[mb_strtolower($person['group'])] = $person['group'];
+            } else {
+                $clients[mb_strtolower($name)] = $name;
+            }
+        }
+
+        $parts = collect($groups)->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->merge(collect($clients)->sort(SORT_NATURAL | SORT_FLAG_CASE))
+            ->values();
+
+        $text = $parts->count() > 1
+            ? $parts->slice(0, -1)->implode(', ').' y '.$parts->last()
+            : (string) $parts->first();
+
+        return Str::limit($text, 180, '');
     }
 
     private function authorizeTrashAction($user, TechnicalSupportReport $report): void

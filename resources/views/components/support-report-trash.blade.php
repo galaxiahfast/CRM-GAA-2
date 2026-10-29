@@ -24,14 +24,14 @@
     @keydown.escape.window="if (purge) { purge = null } else { open = false }"
     {{ $attributes->class(['shrink-0']) }}
 >
-    <button type="button" @click="open = true" class="inline-flex items-center gap-[10px] bg-transparent px-[20px] py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0" title="Papelera de reciclaje">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
+    <button type="button" @click="open = true" class="flex items-center gap-[10px] bg-transparent py-[20px] leading-none text-black transition-colors hover:text-[#1A3A6B] focus:outline-none focus:ring-0" title="Papelera de reciclaje">
+        <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
         <span>Papelera de reciclaje ({{ $reports->count() }})</span>
     </button>
 
     <template x-teleport="body">
-        <div x-cloak x-show="open" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-trash-title">
-            <div @click.outside="if (! purge) open = false" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
+        <div data-support-modal x-cloak x-show="open" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-trash-title">
+            <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="if (! purge) open = false" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
                 <header class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
                     <div class="flex min-w-0 items-center gap-[20px]">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
@@ -88,8 +88,8 @@
 
     {{-- Segunda confirmación para borrar de forma permanente. --}}
     <template x-teleport="body">
-        <div x-cloak x-show="purge" class="fixed inset-0 z-[200010] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-purge-title">
-            <div @click.outside="purge = null" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl">
+        <div data-support-modal x-cloak x-show="purge" class="fixed inset-0 z-[200010] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-purge-title">
+            <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="purge = null" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl">
                 <header class="flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
                     <div class="flex min-w-0 items-center gap-[20px]">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">

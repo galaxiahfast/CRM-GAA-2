@@ -3,6 +3,9 @@
     'value' => '',
     'options' => [],
     'placeholder' => 'Buscar...',
+    'autosubmit' => true,
+    'required' => false,
+    'maxlength' => null,
 ])
 
 @php
@@ -27,15 +30,16 @@
         },
         position() {
             const rect = this.$refs.input.getBoundingClientRect();
-            const gap = 10;
-            const wanted = Math.max(1, Math.min(this.filtered.length, 5)) * 55 + 2;
+            const k = (typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100 || 1;
+            const gap = 10 * k;
+            const wanted = (Math.max(1, Math.min(this.filtered.length, 5)) * 55 + 2) * k;
             const below = window.innerHeight - rect.bottom - gap - 8;
             const above = rect.top - gap - 8;
-            const up = below < Math.min(wanted, 165) && above > below;
+            const up = below < Math.min(wanted, 165 * k) && above > below;
             const height = Math.min(wanted, up ? above : below);
             const top = up ? rect.top - gap - height : rect.bottom + gap;
-            this.listHeight = Math.max(1, height - 2);
-            this.listStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; z-index: 200100;`;
+            this.listHeight = Math.max(1, height / k - 2);
+            this.listStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width / k}px; z-index: 200100; transform: scale(${k}); transform-origin: top left;`;
         },
         show() {
             this.open = true;
@@ -44,7 +48,9 @@
         choose(option) {
             this.query = option;
             this.open = false;
+            @if ($autosubmit)
             this.$nextTick(() => this.$refs.input.closest('form')?.requestSubmit());
+            @endif
         }
     }"
     @click.outside="open = false"
@@ -60,9 +66,12 @@
         x-model="query"
         autocomplete="off"
         placeholder="{{ $placeholder }}"
+        @if ($required) required @endif
+        @if ($maxlength) maxlength="{{ $maxlength }}" @endif
         @focus="show()"
         @click="show()"
         @input="show()"
+        @keydown.escape.prevent="open = false"
         class="h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0"
         role="combobox"
         aria-autocomplete="list"

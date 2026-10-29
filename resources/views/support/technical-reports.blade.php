@@ -39,6 +39,14 @@
             font-size: 15px;
         }
 
+        /* Los formularios emergentes salen fuera de la página: sin borde morado al enfocar. */
+        [data-support-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+        [data-support-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+            border-color: #d4d4d8 !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
         .support-report-page input[type="checkbox"] {
             accent-color: #000000;
         }
@@ -54,6 +62,54 @@
         /* Cada fila lleva su línea inferior, también la última. */
         .support-report-list > article {
             border-bottom: 1px solid #d4d4d8;
+        }
+
+        /* Tabla de servicios: casilla, servicio, personas y cantidad (en pantallas angostas las personas pasan a una segunda línea). */
+        .support-service-grid {
+            display: grid;
+            grid-template-columns: 60px minmax(0, 1fr) 150px;
+        }
+
+        .support-service-grid > .support-people-cell {
+            grid-column: 1 / -1;
+            order: 5;
+            border-top: 1px solid #d4d4d8;
+        }
+
+        .support-people-head {
+            display: none;
+        }
+
+        .support-versions-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .support-service-grid {
+                grid-template-columns: 60px minmax(0, 1fr) 340px 150px;
+            }
+
+            .support-service-grid > .support-people-cell {
+                grid-column: auto;
+                order: 0;
+                border-top: 0;
+                border-right: 1px solid #d4d4d8;
+            }
+
+            .support-people-head {
+                display: block;
+            }
+
+            .support-versions-grid {
+                grid-template-columns: 300px minmax(0, 1fr);
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .support-service-grid {
+                grid-template-columns: 60px minmax(0, 1fr) 480px 170px;
+            }
         }
 
         .support-quantity-input {
@@ -119,7 +175,6 @@
                         <p class="mt-[10px] leading-none text-black">Genera y consulta los documentos de los servicios técnicos realizados.</p>
                     </div>
                 </div>
-                <x-support-report-trash :reports="$trashedReports" />
             </section>
 
             <nav class="flex shrink-0 items-center gap-[20px]" aria-label="Secciones de reportes de soporte">
@@ -135,6 +190,7 @@
                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10M18 16v5m0 0 2-2m-2 2-2-2"/></svg>
                     <span>Historial de movimientos</span>
                 </a>
+                <x-support-report-trash :reports="$trashedReports" class="ml-auto" />
             </nav>
 
             @if (session('status'))
@@ -143,112 +199,224 @@
 
             @if ($activeTab === 'generate')
             <section
-                class="min-h-0 flex-1 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
+                class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white"
+                @keydown.escape.window="summaryOpen = false"
                 x-data="{
                     query: '',
+                    summaryOpen: false,
                     selected: @js(old('supports', [])),
                     quantities: @js(old('support_quantities', [])),
                     targets: @js(old('support_targets', [])),
                     catalog: @js($catalog),
+                    directory: @js($peopleDirectory->values()->all()),
+                    init() {
+                        this.directory = this.directory.map(person => ({ ...person, norm: this.normalize(person.name) }));
+                        this.quantities = Object.assign({}, this.quantities);
+                        this.targets = Object.assign({}, this.targets);
+                        this.catalog.forEach(item => {
+                            if (! this.selected.includes(item.key)) this.quantities[item.key] = 0;
+                        });
+                    },
                     normalize(value) {
-                        return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        return value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
                     },
                     matches(item) {
                         const term = this.normalize(this.query.trim());
                         return !term || this.normalize(item.title + ' ' + item.description).includes(term);
                     },
-                    ensureQuantity(key) {
-                        if (this.selected.includes(key) && !this.quantities[key]) this.quantities[key] = 1;
+                    syncRow(key) {
+                        if (this.selected.includes(key)) {
+                            if (! this.quantities[key]) this.quantities[key] = 1;
+                        } else {
+                            this.quantities[key] = 0;
+                            this.targets[key] = '';
+                        }
                     },
                     hasServerUpdate() {
                         return this.selected.some(key => key.endsWith('_server_update'));
+                    },
+                    itemFor(key) {
+                        return this.catalog.find(item => item.key === key) || { key: key, title: key, description: '' };
+                    },
+                    people(key) {
+                        return String(this.targets[key] ?? '').split(/\r\n|\r|\n/).map(value => value.trim()).filter(Boolean);
+                    },
+                    maxPeople(key) {
+                        return Math.max(1, parseInt(this.quantities[key], 10) || 1);
+                    },
+                    overLimit(key) {
+                        return this.people(key).length > this.maxPeople(key);
+                    },
+                    hasOverLimit() {
+                        return this.selected.some(key => this.overLimit(key));
+                    },
+                    hasPeople() {
+                        return this.selected.some(key => this.people(key).length > 0);
+                    },
+                    canSubmit() {
+                        return this.selected.length > 0 && this.hasPeople() && ! this.hasOverLimit();
+                    },
+                    recipient() {
+                        const byName = new Map(this.directory.map(person => [person.norm, person]));
+                        const groups = new Map();
+                        const clients = new Map();
+                        this.selected.flatMap(key => this.people(key)).forEach(name => {
+                            const person = byName.get(this.normalize(name));
+                            if (person && person.type === 'user' && person.group) groups.set(this.normalize(person.group), person.group);
+                            else clients.set(this.normalize(name), name);
+                        });
+                        const sorter = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true });
+                        const parts = [...[...groups.values()].sort(sorter), ...[...clients.values()].sort(sorter)];
+                        return parts.length > 1 ? parts.slice(0, -1).join(', ') + ' y ' + parts[parts.length - 1] : (parts[0] || '');
                     }
                 }"
             >
-                <form method="POST" action="{{ route('soporte.reportes-tecnicos.store') }}" class="p-[20px]">
+                <form method="POST" action="{{ route('soporte.reportes-tecnicos.store') }}" class="flex min-h-0 flex-1 flex-col">
                     @csrf
 
-                    <label class="block">
-                        <span class="block leading-none text-black">Departamento o cliente</span>
-                        <input name="service_recipient" value="{{ old('service_recipient') }}" list="support-recipient-options" maxlength="180" required placeholder="Ej. Contabilidad, Jurídico o nombre del cliente externo" class="mt-[20px] h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0">
-                        <datalist id="support-recipient-options">
-                            <option value="Administración"></option>
-                            <option value="Auditoría"></option>
-                            <option value="Contabilidad"></option>
-                            <option value="Jurídico"></option>
-                            <option value="Nóminas"></option>
-                            <option value="Nóminas y Contabilidad"></option>
-                        </datalist>
-                        <span class="mt-[20px] block leading-none text-black">Puedes escribir un departamento interno o el nombre de un cliente externo.</span>
-                        @error('service_recipient')<span class="mt-[20px] block leading-none text-red-600">{{ $message }}</span>@enderror
-                    </label>
-
-                    <div class="mt-[20px] flex flex-col items-start justify-between gap-[20px] border-t border-[#d4d4d8] pt-[20px] sm:flex-row sm:items-center">
-                        <div>
-                            <h2 class="leading-none text-[#1A3A6B]">Servicios incluidos</h2>
-                            <p class="mt-[10px] leading-none text-black">Selecciona los conceptos e indica en cuántos equipos se realizó cada uno.</p>
+                    <div class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-[10px]">
+                                <h2 class="leading-none text-[#1A3A6B]">Generar reporte</h2>
+                                <span class="leading-none text-[#1A3A6B]">(<span x-text="selected.length">0</span>)</span>
+                            </div>
+                            <p class="mt-[10px] leading-none" :class="hasOverLimit() ? 'text-red-600' : 'text-black'" x-text="hasOverLimit() ? 'Hay servicios con más personas que su cantidad.' : (selected.length > 0 && ! hasPeople() ? 'Elige al menos una persona o cliente para generar el PDF.' : 'El folio y la fecha se asignarán automáticamente.')">El folio y la fecha se asignarán automáticamente.</p>
                         </div>
-                        <span class="shrink-0 leading-none text-black"><span x-text="selected.length">0</span> de 8 seleccionados</span>
+                        <div class="flex shrink-0 items-center gap-0">
+                            <button type="button" @click="summaryOpen = true" class="inline-flex items-center gap-[10px] bg-transparent py-[15px] pl-[20px] pr-[10px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>
+                                <span>Ver resumen</span>
+                            </button>
+                            <button type="submit" :disabled="! canSubmit()" class="inline-flex items-center gap-[10px] bg-transparent py-[15px] pl-[10px] pr-[20px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4"/></svg>
+                                <span>Generar PDF</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <label class="relative mt-[20px] block">
-                        <span class="sr-only">Buscar servicios de soporte</span>
-                        <input x-model="query" type="search" placeholder="Buscar instalación, CONTPAQi, correo, Office..." class="h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0">
-                    </label>
+                    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+                        <div class="flex shrink-0 items-center gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px] min-[900px]:h-[85px]">
+                            <label class="relative block min-w-0 flex-1">
+                                <span class="sr-only">Buscar servicios de soporte</span>
+                                <input x-model="query" type="search" placeholder="Buscar instalación, CONTPAQi, correo, Office..." class="h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0">
+                            </label>
+                            <span class="shrink-0 leading-none text-black"><span x-text="selected.length">0</span> de 8 seleccionados</span>
+                        </div>
 
-                    @error('supports')
-                        <p class="mt-[20px] leading-none text-red-600">{{ $message }}</p>
-                    @enderror
-                    @error('supports.*')
-                        <p class="mt-[20px] leading-none text-red-600">{{ $message }}</p>
-                    @enderror
+                        <div x-show="hasServerUpdate()" x-cloak class="support-versions-grid shrink-0 border-b border-[#d4d4d8] bg-white p-[20px]">
+                            <div>
+                                <h2 class="leading-none text-[#1A3A6B]">Versiones aplicadas</h2>
+                                <p class="mt-[10px] leading-[20px] text-black">Solo aparece al seleccionar una actualización de servidor.</p>
+                            </div>
+                            <label class="block min-w-0">
+                                <span class="sr-only">Todas las versiones utilizadas</span>
+                                <textarea name="versions_applied" rows="3" placeholder="Una versión por línea:&#10;18.3.1&#10;19.0.1&#10;19.4.0" class="w-full resize-y rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[15px] text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0">{{ old('versions_applied') }}</textarea>
+                                @error('versions_applied')<span class="mt-[10px] block leading-none text-red-600">{{ $message }}</span>@enderror
+                            </label>
+                        </div>
 
-                    <div x-data="backupOverlayScroll()" x-effect="query; selected.length; $nextTick(() => update())" class="-mr-[20px] mt-[20px] max-h-[390px] relative">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll grid max-h-[390px] grid-cols-1 gap-[20px] overflow-y-auto pr-[20px] min-[900px]:grid-cols-2">
-                            <template x-for="item in catalog" :key="item.key">
-                                <label x-show="matches(item)" class="block cursor-pointer rounded-xl border bg-white p-[20px] transition" :class="selected.includes(item.key) ? 'border-[#1A3A6B]' : 'border-[#d4d4d8] hover:bg-zinc-50'">
-                                    <span class="flex items-center gap-[20px]">
-                                        <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => ensureQuantity(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" class="support-service-checkbox h-4 w-4 shrink-0 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
-                                        <span class="min-w-0 flex-1">
+                        <div class="support-service-grid shrink-0 border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B]">
+                            <div class="border-r border-[#d4d4d8] p-[20px]"><span class="sr-only">Seleccionar</span></div>
+                            <div class="border-r border-[#d4d4d8] p-[20px]">Servicio</div>
+                            <div class="support-people-head border-r border-[#d4d4d8] p-[20px]">Personas o equipos atendidos</div>
+                            <div class="p-[20px] text-center">Cantidad</div>
+                        </div>
+
+                        <div x-data="backupOverlayScroll()" x-effect="query; selected.length; hasServerUpdate(); $nextTick(() => update())" class="relative min-h-[260px] flex-1">
+                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll h-full overflow-y-auto">
+                                @error('supports')
+                                    <p class="border-b border-[#d4d4d8] p-[20px] leading-none text-red-600">{{ $message }}</p>
+                                @enderror
+                                @error('supports.*')
+                                    <p class="border-b border-[#d4d4d8] p-[20px] leading-none text-red-600">{{ $message }}</p>
+                                @enderror
+                                @foreach ($errors->get('support_targets') as $message)
+                                    <p class="border-b border-[#d4d4d8] p-[20px] leading-none text-red-600">{{ $message }}</p>
+                                @endforeach
+                                @foreach ($errors->get('support_targets.*') as $messages)
+                                    @foreach ($messages as $message)
+                                        <p class="border-b border-[#d4d4d8] p-[20px] leading-none text-red-600">{{ $message }}</p>
+                                    @endforeach
+                                @endforeach
+
+                                <template x-for="item in catalog" :key="item.key">
+                                    <div x-show="matches(item)" style="min-height: 85px;" class="support-service-grid border-b border-[#d4d4d8] transition hover:bg-zinc-50" :class="selected.includes(item.key) ? 'bg-zinc-50' : 'bg-white'">
+                                        <label class="flex cursor-pointer items-center justify-center border-r border-[#d4d4d8] p-[20px]">
+                                            <input type="checkbox" name="supports[]" :value="item.key" x-model="selected" @change="$nextTick(() => syncRow(item.key))" :disabled="selected.length >= 8 && !selected.includes(item.key)" :aria-label="item.title" class="support-service-checkbox h-4 w-4 shrink-0 rounded border-[#d4d4d8] text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-40">
+                                        </label>
+
+                                        <div class="flex min-w-0 flex-col justify-center border-r border-[#d4d4d8] p-[20px]">
                                             <span class="block leading-none text-[#1A3A6B]" x-text="item.title"></span>
                                             <span class="mt-[10px] block leading-[20px] text-black" x-text="item.description"></span>
-                                        </span>
-                                        <span x-show="selected.includes(item.key)" class="w-[95px] shrink-0" @click.stop>
-                                            <span class="block leading-none text-black">Cantidad</span>
-                                            <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" class="support-quantity-input mt-[20px] h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[10px] text-center text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                        </span>
-                                    </span>
-                                    <span x-show="selected.includes(item.key)" x-cloak class="mt-[20px] block border-t border-[#d4d4d8] pt-[20px]" @click.stop>
-                                        <span class="block leading-none text-black">Personas o equipos atendidos</span>
-                                        <textarea :name="`support_targets[${item.key}]`" x-model="targets[item.key]" :disabled="!selected.includes(item.key)" rows="2" placeholder="Un nombre por línea" class="mt-[20px] w-full resize-y rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[15px] text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0"></textarea>
-                                    </span>
-                                </label>
-                            </template>
+                                        </div>
+
+                                        <div class="support-people-cell flex min-w-0 items-center p-[20px]">
+                                            <textarea hidden :name="`support_targets[${item.key}]`" x-model="targets[item.key]" :disabled="!selected.includes(item.key)"></textarea>
+                                            <x-support-people-picker class="w-full" />
+                                        </div>
+
+                                        <div class="flex items-center justify-center p-[20px]">
+                                            <div class="flex items-center justify-center gap-[10px] leading-none" :style="selected.includes(item.key) ? '' : 'opacity: 0.4;'">
+                                                <span class="shrink-0" :class="overLimit(item.key) ? 'text-red-600' : 'text-[#1A3A6B]'" x-text="`${people(item.key).length} de`">0 de</span>
+                                                <input type="number" min="1" max="999" :name="`support_quantities[${item.key}]`" x-model.number="quantities[item.key]" :disabled="!selected.includes(item.key)" :style="overLimit(item.key) ? 'border-color: #dc2626;' : ''" aria-label="Cantidad" title="Cantidad: máximo de personas atendidas" class="support-quantity-input h-[44px] w-[56px] shrink-0 rounded-xl border border-[#d4d4d8] bg-white px-[10px] text-center text-black focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                         </div>
-                        <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
-                    </div>
-
-                    <div x-show="hasServerUpdate()" x-cloak class="mt-[20px] border-t border-[#d4d4d8] pt-[20px]">
-                        <div>
-                            <h2 class="leading-none text-[#1A3A6B]">Versiones aplicadas en el servidor</h2>
-                            <p class="mt-[10px] leading-none text-black">Solo aparece al seleccionar una actualización de servidor.</p>
-                        </div>
-
-                        <label class="mt-[20px] block">
-                            <span class="block leading-none text-black">Todas las versiones utilizadas</span>
-                            <textarea name="versions_applied" rows="5" placeholder="Una versión por línea:&#10;18.3.1&#10;19.0.1&#10;19.4.0" class="mt-[20px] w-full resize-y rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[15px] text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0">{{ old('versions_applied') }}</textarea>
-                            @error('versions_applied')<span class="mt-[20px] block leading-none text-red-600">{{ $message }}</span>@enderror
-                        </label>
-                    </div>
-
-                    <div class="-mx-[20px] -mb-[20px] mt-[20px] flex flex-col items-start justify-between gap-[20px] border-t border-[#d4d4d8] px-[20px] sm:flex-row sm:items-center">
-                        <p class="leading-none text-black">El folio y la fecha se asignarán automáticamente.</p>
-                        <button type="submit" :disabled="selected.length === 0" class="inline-flex items-center gap-[10px] bg-transparent px-[20px] py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4"/></svg>
-                            <span>Generar PDF</span>
-                        </button>
                     </div>
                 </form>
+
+                {{-- Resumen del reporte: destinatario calculado y servicios elegidos, antes de generar el PDF. --}}
+                <template x-teleport="body">
+                    <div data-support-modal x-cloak x-show="summaryOpen" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-summary-title">
+                        <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="summaryOpen = false" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
+                            <header class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
+                                <div class="flex min-w-0 items-center gap-[20px]">
+                                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <h1 id="support-summary-title" class="font-semibold leading-none text-black">Resumen del reporte</h1>
+                                        <p class="mt-[10px] truncate leading-none text-black">Revisa el destinatario y los servicios antes de generar el PDF.</p>
+                                    </div>
+                                </div>
+                                <button type="button" @click="summaryOpen = false" aria-label="Cerrar" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600 leading-none text-white focus:outline-none focus:ring-0">×</button>
+                            </header>
+
+                            <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="summaryOpen; selected.length; $nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
+                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll absolute inset-0 overflow-y-auto">
+                                    <div class="border-b border-[#d4d4d8] p-[20px]">
+                                        <span class="block leading-none text-black">Destinatario del reporte</span>
+                                        <span x-show="recipient() !== ''" x-cloak class="mt-[10px] block leading-[20px] text-[#1A3A6B]" x-text="recipient()"></span>
+                                        <span x-show="recipient() === ''" class="mt-[10px] block leading-[20px] text-black">Se llenará al elegir personas.</span>
+                                        <span class="mt-[20px] block leading-[20px] text-black">Se toma del departamento de cada colaborador elegido o del nombre del cliente externo.</span>
+                                    </div>
+
+                                    <div class="flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px] leading-none text-[#1A3A6B]">
+                                        <span>Servicios seleccionados (<span x-text="selected.length">0</span>)</span>
+                                    </div>
+
+                                    <p x-show="selected.length === 0" class="p-[20px] leading-[20px] text-black">Aún no hay servicios seleccionados. Marca los de la tabla y aquí verás cuántos y para quién.</p>
+                                    <template x-for="key in selected" :key="key">
+                                        <div class="border-b border-[#d4d4d8] p-[20px]">
+                                            <span class="block truncate leading-none text-[#1A3A6B]" x-text="itemFor(key).title"></span>
+                                            <span class="mt-[10px] block truncate leading-none text-black" x-text="`Cantidad: ${quantities[key] || 1}`"></span>
+                                            <span class="mt-[10px] block leading-[20px]" :class="overLimit(key) ? 'text-red-600' : 'text-black'" x-text="people(key).length ? (overLimit(key) ? `Personas: ${people(key).length} de ${maxPeople(key)} permitidas` : `Personas: ${people(key).join(', ')}`) : 'Personas: sin elegir'"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                            </div>
+
+                            <footer class="flex shrink-0 justify-end gap-[10px] border-t border-[#d4d4d8] bg-white p-[20px]">
+                                <button type="button" @click="summaryOpen = false" class="h-[44px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] leading-none text-black focus:outline-none focus:ring-0">Cerrar</button>
+                            </footer>
+                        </div>
+                    </div>
+                </template>
             </section>
             @elseif ($activeTab === 'history')
             <section
@@ -417,8 +585,8 @@
                 </div>
 
                 <template x-teleport="body">
-                    <div x-cloak x-show="confirmDelete" @keydown.escape.window="confirmDelete = null" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-delete-title">
-                        <div @click.outside="confirmDelete = null" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl">
+                    <div data-support-modal x-cloak x-show="confirmDelete" @keydown.escape.window="confirmDelete = null" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-delete-title">
+                        <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="confirmDelete = null" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl">
                             <header class="flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
                                 <div class="flex min-w-0 items-center gap-[20px]">
                                     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
