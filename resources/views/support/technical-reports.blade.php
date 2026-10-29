@@ -411,11 +411,11 @@
                     <span>Generar reporte</span>
                 </a>
                 <a href="{{ route('soporte.reportes-tecnicos.history') }}" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0 {{ $activeTab === 'history' ? 'text-[#1A3A6B]' : 'text-black' }}">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg>
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     <span>Historial</span>
                 </a>
                 <a href="{{ route('soporte.reportes-tecnicos.movements') }}" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0 {{ $activeTab === 'movements' ? 'text-[#1A3A6B]' : 'text-black' }}">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10M18 16v5m0 0 2-2m-2 2-2-2"/></svg>
+                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
                     <span>Historial de movimientos</span>
                 </a>
                 <x-support-report-trash :reports="$trashedReports" class="ml-auto" />

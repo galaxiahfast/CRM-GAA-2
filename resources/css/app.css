@@ -279,6 +279,119 @@ html.module-dark-theme .notification-panel {
     color: #d4d4d8 !important;
 }
 
+/* Panel de notificaciones en tema oscuro: misma paleta que Reportes de soporte
+   (azul claro en lugar del azul fuerte, líneas suaves y jerarquía entre superficies). */
+html.module-dark-theme {
+    --support-accent: #6aa9ff;
+    --support-check: #3b82f6;
+    --support-border: #3f3f46;
+    --support-surface: #18181b;
+    --support-header: #202023;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="bg-white"],
+html.module-dark-theme #main-nav .notification-panel [class~="bg-white"] {
+    background-color: var(--support-surface) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="bg-zinc-100"],
+html.module-dark-theme #main-nav .notification-panel [class~="bg-zinc-100"] {
+    background-color: var(--support-header) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="bg-zinc-50"],
+html.module-dark-theme #main-nav .notification-panel [class~="bg-zinc-50"] {
+    background-color: #1d1d21 !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel.notification-row-selected,
+html.module-dark-theme #main-nav .notification-panel .notification-row-selected {
+    background-color: rgba(106, 169, 255, 0.1) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:bg-zinc-50"]:hover,
+html.module-dark-theme #main-nav .notification-panel [class*="hover:bg-zinc-50"]:hover {
+    background-color: #26262b !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:bg-zinc-100"]:hover,
+html.module-dark-theme #main-nav .notification-panel [class*="hover:bg-zinc-100"]:hover {
+    background-color: #26262b !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+html.module-dark-theme #main-nav .notification-panel [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover) {
+    background-color: transparent !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+html.module-dark-theme #main-nav .notification-panel [class*="hover:bg-zinc-100"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover) {
+    background-color: transparent !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="bg-[#1A3A6B]"],
+html.module-dark-theme #main-nav .notification-panel [class~="bg-[#1A3A6B]"] {
+    background-color: var(--support-accent) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="border-[#d4d4d8]"],
+html.module-dark-theme #main-nav .notification-panel [class*="border-[#d4d4d8]"] {
+    border-color: var(--support-border) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="border-t-[#1A3A6B]"],
+html.module-dark-theme #main-nav .notification-panel [class~="border-t-[#1A3A6B]"] {
+    border-top-color: var(--support-accent) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="text-black"],
+html.module-dark-theme #main-nav .notification-panel [class~="text-black"] {
+    color: #e4e4e7 !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="text-[#1A3A6B]"],
+html.module-dark-theme #main-nav .notification-panel [class~="text-[#1A3A6B]"] {
+    color: var(--support-accent) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:text-[#1A3A6B]"]:hover,
+html.module-dark-theme #main-nav .notification-panel [class*="hover:text-[#1A3A6B]"]:hover {
+    color: var(--support-accent) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+html.module-dark-theme #main-nav .notification-panel [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover {
+    color: #fafafa !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class~="text-red-600"],
+html.module-dark-theme #main-nav .notification-panel [class~="text-red-600"] {
+    color: #f87171 !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="hover:text-red-600"]:hover,
+html.module-dark-theme #main-nav .notification-panel [class*="hover:text-red-600"]:hover {
+    color: #f87171 !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel input[type="checkbox"]:checked {
+    border-color: var(--support-check) !important;
+    background-color: var(--support-check) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel[class*="shadow-"],
+html.module-dark-theme #main-nav .notification-panel [class*="shadow-"] {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.module-dark-theme #main-nav .notification-panel input[type="checkbox"]:not(:checked) {
+    background-color: var(--support-surface) !important;
+}
+
+html.module-dark-theme .notification-scroll-thumb {
+    background: var(--support-accent) !important;
+}
+
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-white"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#f4f4f4]"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#F4F4F4]"],

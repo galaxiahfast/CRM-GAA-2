@@ -39,6 +39,53 @@ class NotificationCenter extends Component
         if ($notification && ! $notification->read_at) {
             $notification->markAsRead();
             $this->forgetNotificationCounts();
+
+            if ($this->filter === 'unread') {
+                $this->selected = array_values(array_diff($this->selected, [$notificationId]));
+            }
+        }
+    }
+
+    /**
+     * Clic en una notificación: se selecciona (o se quita de la selección) y, al seleccionarla,
+     * se marca como leída. En el filtro "No leídas" no se marca para que la fila no desaparezca
+     * de la lista en cuanto se toca.
+     */
+    public function toggleNotification(string $notificationId): void
+    {
+        $this->loadNotifications();
+        $notification = $this->ownedNotification($notificationId);
+
+        if (! $notification) {
+            return;
+        }
+
+        if (in_array($notificationId, $this->selected, true)) {
+            $this->selected = array_values(array_diff($this->selected, [$notificationId]));
+
+            return;
+        }
+
+        $this->selected = array_values(array_unique([...$this->selected, $notificationId]));
+
+        if ($this->filter !== 'unread' && ! $notification->read_at) {
+            $notification->markAsRead();
+            $this->forgetNotificationCounts();
+        }
+    }
+
+    public function markAsUnread(string $notificationId): void
+    {
+        $this->loadNotifications();
+        $notification = $this->ownedNotification($notificationId);
+
+        if ($notification && $notification->read_at) {
+            $notification->markAsUnread();
+            $this->forgetNotificationCounts();
+
+            if ($this->filter === 'read') {
+                $this->selected = array_values(array_diff($this->selected, [$notificationId]));
+            }
         }
     }
 

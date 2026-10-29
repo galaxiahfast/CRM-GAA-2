@@ -174,6 +174,36 @@ class NotificationCenterTest extends TestCase
             ->assertSee('Acceso reciente');
     }
 
+    public function test_row_selection_and_read_status_keep_filtered_selection_consistent(): void
+    {
+        $user = User::factory()->create();
+        $user->notify(new SystemEventNotification([
+            'category' => 'operation',
+            'severity' => 'info',
+            'title' => 'Aviso seleccionable',
+            'message' => 'Detalle',
+        ]));
+        $notification = $user->notifications()->firstOrFail();
+        $id = (string) $notification->id;
+
+        Livewire::actingAs($user)
+            ->test(NotificationCenter::class)
+            ->call('loadNotifications')
+            ->call('toggleNotification', $id)
+            ->assertSet('selected', [$id]);
+
+        $this->assertNotNull($notification->fresh()->read_at);
+
+        Livewire::actingAs($user)
+            ->test(NotificationCenter::class)
+            ->call('setFilter', 'read')
+            ->set('selected', [$id])
+            ->call('markAsUnread', $id)
+            ->assertSet('selected', []);
+
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
     public function test_individual_and_bulk_deletion_cannot_delete_another_users_notifications(): void
     {
         $user = User::factory()->create();
@@ -281,7 +311,7 @@ class NotificationCenterTest extends TestCase
             ->test(NotificationCenter::class)
             ->call('loadNotifications')
             ->assertSee('Aceptar')
-            ->assertSee('Cancelar')
+            ->assertSee('Rechazar')
             ->call('acceptFriendRequest', (string) $notification->id);
 
         $this->assertSame(Friendship::ACCEPTED, $friendship->fresh()->status);
