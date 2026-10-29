@@ -435,7 +435,7 @@
                     <div class="border-t border-zinc-200"></div>
                 </li>
 
-                <li x-data="{ openBankReconciliation: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openBankReconciliation: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                     <button type="button" @click="openBankReconciliation = !openBankReconciliation"
                         :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -516,7 +516,7 @@
                 <!-- ========================================================== -->
                 @if ($canTimeControl && $canTimeSupervision)
                     <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
-                    <li x-data="{ openTimeControl: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -582,7 +582,7 @@
                     </li>
                 @elseif ($canTimeControl)
                     <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
-                    <li x-data="{ openTimeControl: true }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -694,20 +694,39 @@
                                         </a>
                                     </li>
                                 @endcan
+                    <li x-data="{ openReports: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                        <button type="button" @click="openReports = !openReports" :aria-expanded="openReports" data-sidebar-label="Reportes"
+                            :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
+                            class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <span class="flex min-w-0 items-center">
+                                <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
+                                <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes</span>
+                            </span>
+                            <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openReports ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="openReports" x-transition class="relative" style="display: none;">
+                            <div class="absolute bottom-0 left-[22px] top-[15px] w-[2px] bg-gray-200"></div>
+                            <ul class="w-full">
                                 @can('manage-backup-reports')
-                                    <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                    <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[15px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                         <a href="{{ route('soporte.reportes-respaldos') }}" data-sidebar-label="Reporte de Respaldos" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
                                         </a>
                                     </li>
                                 @endcan
-                                <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[15px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('soporte.reportes-tecnicos') }}" data-sidebar-label="Reportes de Soporte" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                                         <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
                                     </a>
                                 </li>
+                            </ul>
+                        </div>
+                    </li>
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
@@ -719,7 +738,7 @@
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Centro de ayuda (con flecha siempre visible)      -->
                 <!-- ========================================================== -->
-                <li x-data="{ openSoporte: true }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openSoporte: false }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
                     <button @click="openSoporte = !openSoporte" 
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
