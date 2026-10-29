@@ -90,6 +90,78 @@ return [
                 ],
             ],
         ],
+        'conciliacion' => [
+            'label' => 'Conciliación bancaria',
+            'icon' => 'conciliacion',
+            'items' => [
+                'conciliacion_ocr' => [
+                    'question' => '¿Dónde utilizo la conciliación OCR?',
+                    'answer' => 'Entra a General > Conciliación Bancaria > Conciliación OCR. Carga o selecciona los archivos solicitados y revisa la información detectada antes de continuar con la conciliación.',
+                ],
+                'conciliacion_bancaria' => [
+                    'question' => '¿Cómo realizo una conciliación bancaria?',
+                    'answer' => 'Ve a General > Conciliación Bancaria > Conciliación Bancaria. Selecciona el periodo y los filtros necesarios, compara los movimientos y confirma únicamente las coincidencias que hayas revisado.',
+                ],
+            ],
+        ],
+        'respaldos' => [
+            'label' => 'Gestión de respaldos',
+            'icon' => 'respaldo',
+            'items' => [
+                'comprobar_respaldos' => [
+                    'question' => '¿Cómo compruebo los respaldos?',
+                    'answer' => 'Entra a Actividades > Gestión de Respaldos. Selecciona la ubicación, la carpeta y las empresas que deseas revisar. Después utiliza los estados Todos, Completos, Por respaldar, Ya respaldadas e Incompletos para consultar el resultado.',
+                ],
+                'historial_respaldos' => [
+                    'question' => '¿Dónde consulto respaldos anteriores?',
+                    'answer' => 'En Gestión de Respaldos abre la pestaña Historial y selecciona una fecha. La pantalla carga primero los días recientes; desde el listado de fechas puedes consultar periodos anteriores.',
+                ],
+            ],
+        ],
+        'documentos' => [
+            'label' => 'Documentos y soporte',
+            'icon' => 'documento',
+            'items' => [
+                'hoja_entrega' => [
+                    'question' => '¿Cómo genero una hoja de entrega?',
+                    'answer' => 'Entra a Documentos > Hoja de Entrega, completa los datos solicitados y revisa la información antes de generar el documento.',
+                ],
+                'reporte_soporte' => [
+                    'question' => '¿Cómo genero un reporte de soporte?',
+                    'answer' => 'Ve a Documentos > Reportes > Reportes de Soporte. Indica el departamento o cliente, selecciona los servicios, captura las cantidades y agrega las personas o equipos atendidos. Revisa el resumen antes de generar el PDF.',
+                ],
+                'historial_soporte' => [
+                    'question' => '¿Cómo busco o descargo reportes de soporte?',
+                    'answer' => 'En Reportes de Soporte abre Historial. Puedes buscar por folio o servicio, filtrar por departamento y persona, abrir o descargar un reporte y seleccionar varios registros para realizar acciones en grupo.',
+                ],
+                'papelera_soporte' => [
+                    'question' => '¿Cómo recupero un reporte eliminado?',
+                    'answer' => 'Abre la papelera del historial de reportes, localiza el documento y utiliza Restaurar. La eliminación definitiva solo está disponible para usuarios con los permisos correspondientes.',
+                ],
+                'reporte_respaldos' => [
+                    'question' => '¿Dónde genero el reporte de respaldos?',
+                    'answer' => 'Entra a Documentos > Reportes > Reporte de Respaldos. Selecciona la información solicitada, revisa los resultados y genera o descarga el documento desde las acciones disponibles.',
+                ],
+            ],
+        ],
+        'herramientas' => [
+            'label' => 'Menú y notificaciones',
+            'icon' => 'herramientas',
+            'items' => [
+                'buscar_menu' => [
+                    'question' => '¿Cómo encuentro una opción del menú?',
+                    'answer' => 'Utiliza el buscador de la parte superior del menú lateral. Escribe el nombre del módulo o apartado y selecciona el resultado para abrirlo directamente.',
+                ],
+                'menu_compacto' => [
+                    'question' => '¿Cómo contraigo o despliego el menú?',
+                    'answer' => 'Presiona el botón del menú lateral para cambiar entre la vista completa y la compacta. En la vista compacta, coloca el puntero sobre un icono para consultar el nombre del apartado.',
+                ],
+                'notificaciones' => [
+                    'question' => '¿Cómo reviso mis notificaciones?',
+                    'answer' => 'Selecciona la campana del encabezado para abrir las notificaciones. Desde ahí puedes consultar los avisos disponibles y usar las acciones permitidas para marcarlos o administrarlos.',
+                ],
+            ],
+        ],
         'reportes' => [
             'label' => 'Reportes y exportación',
             'icon' => 'reporte',

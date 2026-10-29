@@ -54,11 +54,11 @@ class SupportModuleTest extends TestCase
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
             ->assertSeeText('Preguntas')
-            ->assertSee('min-w-[1200px]', false)
             ->assertSee('p-[50px]', false)
-            ->assertSee('xl:grid-cols-[340px_420px_minmax(0,1fr)]', false)
-            ->assertSee('group flex w-full items-center gap-[15px]', false)
-            ->assertDontSee('group flex w-full items-start gap-3', false);
+            ->assertSee('support-questions-card', false)
+            ->assertSee('support-questions-grid', false)
+            ->assertSee('grid-template-columns: 240px 350px minmax(440px, 1fr)', false)
+            ->assertSee('support-questions-thumb', false);
     }
 
     public function test_authenticated_user_can_download_the_daily_conversation_as_pdf(): void
@@ -701,5 +701,17 @@ class SupportModuleTest extends TestCase
             ->assertSet('conversation', [])
             ->assertSet('selectedQuestion', null)
             ->assertSet('selectedAnswer', null);
+    }
+
+    public function test_questions_bot_includes_the_expanded_support_reports_help(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(QuestionsBot::class)
+            ->call('ask', 'documentos', 'reporte_soporte')
+            ->assertSet('selectedQuestion', '¿Cómo genero un reporte de soporte?')
+            ->assertSee('Reportes de Soporte')
+            ->assertSee('personas o equipos');
     }
 }
