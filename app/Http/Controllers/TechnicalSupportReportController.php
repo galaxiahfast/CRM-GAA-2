@@ -30,6 +30,7 @@ class TechnicalSupportReportController extends Controller
         return view('support.technical-reports', [
             'activeTab' => 'generate',
             'catalog' => $catalog,
+            'trashedReports' => $this->trashedReports(),
         ]);
     }
 
@@ -87,6 +88,7 @@ class TechnicalSupportReportController extends Controller
 
         return view('support.technical-reports', [
             'activeTab' => 'history',
+            'trashedReports' => $this->trashedReports(),
             'reports' => $reportsQuery->paginate(20)->withQueryString(),
             'filters' => compact('search', 'recipient', 'target', 'date'),
             'dateOptions' => $dateOptions,
@@ -116,15 +118,100 @@ class TechnicalSupportReportController extends Controller
         ]);
     }
 
-    public function movementHistory(): View
+    public function movementHistory(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+        $action = trim((string) $request->query('action', ''));
+        $actor = trim((string) $request->query('user', ''));
+        $requestedDate = trim((string) $request->query('date', ''));
+        $timezone = config('support.timezone', 'America/Mexico_City');
+
+        if (! in_array($action, [
+            TechnicalSupportReportMovement::ACTION_CREATED,
+            TechnicalSupportReportMovement::ACTION_DELETED,
+            TechnicalSupportReportMovement::ACTION_RESTORED,
+            TechnicalSupportReportMovement::ACTION_PURGED,
+        ], true)) {
+            $action = '';
+        }
+
+        $allMovements = TechnicalSupportReportMovement::query()
+            ->with('user:id,name')
+            ->get(['id', 'folio', 'action', 'user_id', 'user_name', 'occurred_at']);
+
+        $dateOptions = $allMovements
+            ->groupBy(fn (TechnicalSupportReportMovement $movement): string => $movement->occurred_at->timezone($timezone)->format('Y-m-d'))
+            ->map(function ($movements, string $date) use ($timezone): array {
+                $localDate = CarbonImmutable::createFromFormat('Y-m-d', $date, $timezone)->locale('es');
+
+                return [
+                    'date' => $date,
+                    'label' => ucfirst($localDate->translatedFormat('l, d \d\e F \d\e Y')),
+                    'count' => $movements->count(),
+                ];
+            })
+            ->sortByDesc('date')
+            ->values();
+
+        $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedDate) === 1
+            && $dateOptions->contains('date', $requestedDate)
+                ? $requestedDate
+                : (string) ($dateOptions->first()['date'] ?? '');
+
+        $localDateStart = $date !== ''
+            ? CarbonImmutable::createFromFormat('Y-m-d H:i:s', $date.' 00:00:00', $timezone)
+            : null;
+
+        $inSelectedDate = fn ($query) => $query->when($localDateStart !== null, fn ($query) => $query->whereBetween('occurred_at', [
+            $localDateStart->utc(),
+            $localDateStart->endOfDay()->utc(),
+        ]));
+
+        $movementsQuery = TechnicalSupportReportMovement::query()
+            ->with('user:id,name,email')
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('folio', 'like', '%'.$search.'%')
+                        ->orWhere('user_name', 'like', '%'.$search.'%')
+                        ->orWhere('user_email', 'like', '%'.$search.'%');
+                });
+            })
+            ->when($action !== '', fn ($query) => $query->where('action', $action))
+            ->when($actor !== '', function ($query) use ($actor): void {
+                $query->where(function ($query) use ($actor): void {
+                    $query->where('user_name', $actor)
+                        ->orWhereHas('user', fn ($user) => $user->where('name', $actor));
+                });
+            });
+
+        $movementsQuery = $inSelectedDate($movementsQuery)
+            ->latest('occurred_at')
+            ->latest('id');
+
         return view('support.technical-reports', [
             'activeTab' => 'movements',
-            'movements' => TechnicalSupportReportMovement::query()
-                ->with('user:id,name,email')
+            'trashedReports' => $this->trashedReports(),
+            'movements' => $movementsQuery->paginate(30)->withQueryString(),
+            'filters' => compact('search', 'action', 'date') + ['user' => $actor],
+            'dateOptions' => $dateOptions,
+            'folioOptions' => $inSelectedDate(TechnicalSupportReportMovement::query())
                 ->latest('occurred_at')
                 ->latest('id')
-                ->paginate(30),
+                ->pluck('folio')
+                ->unique()
+                ->values(),
+            'actionOptions' => [
+                ['value' => TechnicalSupportReportMovement::ACTION_CREATED, 'label' => 'Reporte generado'],
+                ['value' => TechnicalSupportReportMovement::ACTION_DELETED, 'label' => 'Reporte eliminado'],
+                ['value' => TechnicalSupportReportMovement::ACTION_RESTORED, 'label' => 'Reporte restaurado'],
+                ['value' => TechnicalSupportReportMovement::ACTION_PURGED, 'label' => 'Borrado definitivo'],
+            ],
+            'userOptions' => $allMovements
+                ->map(fn (TechnicalSupportReportMovement $movement): string => trim((string) ($movement->user_name ?: $movement->user?->name)))
+                ->filter()
+                ->unique()
+                ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                ->values(),
         ]);
     }
 
@@ -257,10 +344,83 @@ class TechnicalSupportReportController extends Controller
                 'occurred_at' => now(),
             ]);
 
+            $report->forceFill(['deleted_by' => $user->id])->save();
             $report->delete();
         });
 
-        return back()->with('status', 'Reporte '.$folio.' eliminado correctamente.');
+        return back()->with('status', 'Reporte '.$folio.' enviado a la papelera.');
+    }
+
+    public function restore(Request $request, TechnicalSupportReport $report): RedirectResponse
+    {
+        $user = $request->user();
+        $this->authorizeTrashAction($user, $report);
+
+        DB::transaction(function () use ($report, $user): void {
+            $report->restore();
+            $report->forceFill(['deleted_by' => null])->save();
+
+            $report->movements()->create([
+                'folio' => $report->folio,
+                'action' => TechnicalSupportReportMovement::ACTION_RESTORED,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'report_snapshot' => $report->toArray(),
+                'occurred_at' => now(),
+            ]);
+        });
+
+        return back()->with('status', 'Reporte '.$report->folio.' restaurado correctamente.');
+    }
+
+    public function purge(Request $request, TechnicalSupportReport $report): RedirectResponse
+    {
+        $user = $request->user();
+        $this->authorizeTrashAction($user, $report);
+
+        $folio = $report->folio;
+
+        DB::transaction(function () use ($report, $user): void {
+            $report->movements()->create([
+                'folio' => $report->folio,
+                'action' => TechnicalSupportReportMovement::ACTION_PURGED,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'report_snapshot' => $report->toArray(),
+                'occurred_at' => now(),
+            ]);
+
+            $report->forceDelete();
+        });
+
+        return back()->with('status', 'Reporte '.$folio.' eliminado de forma permanente.');
+    }
+
+    /**
+     * Reportes en la papelera que el usuario puede gestionar: el administrador ve todos;
+     * los demás, solo los que generaron.
+     */
+    private function trashedReports()
+    {
+        $user = auth()->user();
+
+        return TechnicalSupportReport::onlyTrashed()
+            ->when($user !== null && ! $user->isAdmin(), fn ($query) => $query->where('created_by', $user->id))
+            ->latest('deleted_at')
+            ->limit(200)
+            ->get();
+    }
+
+    private function authorizeTrashAction($user, TechnicalSupportReport $report): void
+    {
+        abort_unless(
+            $user !== null
+            && $report->trashed()
+            && ($user->isAdmin() || (int) $report->created_by === (int) $user->id),
+            403,
+        );
     }
 
     public function downloadSelection(
@@ -269,7 +429,7 @@ class TechnicalSupportReportController extends Controller
     ): BinaryFileResponse {
         $validated = $request->validate([
             'report_folios' => ['required', 'array', 'min:1', 'max:50'],
-            'report_folios.*' => ['required', 'string', 'distinct', 'exists:technical_support_reports,folio'],
+            'report_folios.*' => ['required', 'string', 'distinct', Rule::exists('technical_support_reports', 'folio')->whereNull('deleted_at')],
         ]);
 
         $reports = TechnicalSupportReport::query()

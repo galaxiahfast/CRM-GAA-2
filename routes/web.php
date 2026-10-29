@@ -305,7 +305,14 @@ Route::middleware([
         Route::post('/reportes-tecnicos/descargar-seleccion', [TechnicalSupportReportController::class, 'downloadSelection'])
             ->name('reportes-tecnicos.download-selection');
         Route::get('/reportes-tecnicos/{report:folio}.pdf', [TechnicalSupportReportController::class, 'pdf'])
+            ->withTrashed()
             ->name('reportes-tecnicos.pdf');
+        Route::post('/reportes-tecnicos/{report:folio}/restaurar', [TechnicalSupportReportController::class, 'restore'])
+            ->withTrashed()
+            ->name('reportes-tecnicos.restore');
+        Route::delete('/reportes-tecnicos/{report:folio}/definitivo', [TechnicalSupportReportController::class, 'purge'])
+            ->withTrashed()
+            ->name('reportes-tecnicos.purge');
         Route::delete('/reportes-tecnicos/{report:folio}', [TechnicalSupportReportController::class, 'destroy'])
             ->name('reportes-tecnicos.destroy');
     });

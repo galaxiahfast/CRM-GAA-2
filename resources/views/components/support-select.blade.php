@@ -7,7 +7,7 @@
 
 @php
     $list = collect([['value' => '', 'label' => $allLabel]])
-        ->concat(collect($options)->map(fn ($option) => ['value' => (string) $option, 'label' => (string) $option]))
+        ->concat(collect($options)->map(fn ($option) => is_array($option) ? ['value' => (string) $option['value'], 'label' => (string) $option['label']] : ['value' => (string) $option, 'label' => (string) $option]))
         ->values()
         ->all();
 @endphp

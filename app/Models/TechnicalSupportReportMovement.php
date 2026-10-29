@@ -11,6 +11,10 @@ class TechnicalSupportReportMovement extends Model
 
     public const ACTION_DELETED = 'deleted';
 
+    public const ACTION_RESTORED = 'restored';
+
+    public const ACTION_PURGED = 'purged';
+
     protected $fillable = [
         'technical_support_report_id',
         'folio',

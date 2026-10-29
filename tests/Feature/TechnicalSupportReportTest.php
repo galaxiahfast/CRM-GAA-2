@@ -113,7 +113,10 @@ class TechnicalSupportReportTest extends TestCase
             ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
             ->assertRedirect();
 
-        $this->assertDatabaseMissing('technical_support_reports', ['id' => $creatorReport->id]);
+        $this->assertSoftDeleted('technical_support_reports', [
+            'id' => $creatorReport->id,
+            'deleted_by' => $creator->id,
+        ]);
         $this->assertDatabaseHas('technical_support_report_movements', [
             'folio' => 'ST-20261028-0012',
             'action' => TechnicalSupportReportMovement::ACTION_DELETED,
@@ -128,7 +131,64 @@ class TechnicalSupportReportTest extends TestCase
             ->delete(route('soporte.reportes-tecnicos.destroy', $adminReport))
             ->assertRedirect();
 
-        $this->assertDatabaseMissing('technical_support_reports', ['id' => $adminReport->id]);
+        $this->assertSoftDeleted('technical_support_reports', [
+            'id' => $adminReport->id,
+            'deleted_by' => $administrator->id,
+        ]);
+    }
+
+    public function test_a_deleted_report_is_counted_and_can_be_restored(): void
+    {
+        $creator = User::factory()->create();
+        $report = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0012')->firstOrFail();
+        $report->update(['created_by' => $creator->id]);
+
+        $this->actingAs($creator)
+            ->delete(route('soporte.reportes-tecnicos.destroy', $report))
+            ->assertRedirect();
+
+        $trashResponse = $this->actingAs($creator)
+            ->get(route('soporte.reportes-tecnicos.history'))
+            ->assertOk()
+            ->assertSee('Papelera de reciclaje (1)')
+            ->assertSee($report->folio);
+
+        $trashedReport = TechnicalSupportReport::onlyTrashed()->whereKey($report->id)->firstOrFail();
+
+        $this->actingAs($creator)
+            ->post(route('soporte.reportes-tecnicos.restore', $trashedReport))
+            ->assertRedirect();
+
+        $this->assertNotSoftDeleted('technical_support_reports', ['id' => $report->id]);
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'folio' => $report->folio,
+            'action' => TechnicalSupportReportMovement::ACTION_RESTORED,
+            'user_id' => $creator->id,
+        ]);
+
+        $this->actingAs($creator)
+            ->get(route('soporte.reportes-tecnicos.history'))
+            ->assertOk()
+            ->assertSee('Papelera de reciclaje (0)');
+    }
+
+    public function test_a_trashed_report_can_be_deleted_permanently(): void
+    {
+        $creator = User::factory()->create();
+        $report = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0012')->firstOrFail();
+        $report->update(['created_by' => $creator->id]);
+        $report->delete();
+
+        $this->actingAs($creator)
+            ->delete(route('soporte.reportes-tecnicos.purge', $report))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('technical_support_reports', ['id' => $report->id]);
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'folio' => $report->folio,
+            'action' => TechnicalSupportReportMovement::ACTION_PURGED,
+            'user_id' => $creator->id,
+        ]);
     }
 
     public function test_selected_reports_can_be_downloaded_in_one_zip(): void

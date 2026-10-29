@@ -119,6 +119,7 @@
                         <p class="mt-[10px] leading-none text-black">Genera y consulta los documentos de los servicios técnicos realizados.</p>
                     </div>
                 </div>
+                <x-support-report-trash :reports="$trashedReports" />
             </section>
 
             <nav class="flex shrink-0 items-center gap-[20px]" aria-label="Secciones de reportes de soporte">
@@ -425,7 +426,7 @@
                                     </span>
                                     <div class="min-w-0">
                                         <h1 id="support-delete-title" class="font-semibold leading-none text-black">Eliminar reporte</h1>
-                                        <p class="mt-[10px] leading-none text-black">Confirma para eliminarlo del historial. No se puede deshacer.</p>
+                                        <p class="mt-[10px] leading-none text-black">Se enviará a la papelera de reciclaje.</p>
                                     </div>
                                 </div>
                                 <button type="button" @click="confirmDelete = null" aria-label="Cerrar" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600 leading-none text-white focus:outline-none focus:ring-0">×</button>
@@ -477,44 +478,93 @@
                     </div>
                 </div>
 
-                <div class="hidden shrink-0 border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] min-[900px]:grid min-[900px]:grid-cols-[170px_190px_minmax(0,1fr)_190px] lg:grid-cols-[190px_220px_minmax(0,1fr)_220px]">
-                    <div class="border-r border-[#d4d4d8] p-[20px] text-center">Movimiento</div>
-                    <div class="border-r border-[#d4d4d8] p-[20px] text-center">Folio</div>
-                    <div class="border-r border-[#d4d4d8] p-[20px]">Usuario</div>
-                    <div class="p-[20px] text-center">Fecha y hora</div>
-                </div>
+                <div class="grid min-h-0 flex-1 min-[900px]:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <aside class="flex h-[230px] min-h-0 flex-col overflow-hidden border-b border-[#d4d4d8] bg-white min-[900px]:h-auto min-[900px]:border-b-0 min-[900px]:border-r" aria-label="Fechas de movimientos de reportes de soporte">
+                        <div class="flex h-[85px] shrink-0 items-center justify-center border-b border-[#d4d4d8] bg-zinc-100 px-[20px] text-center text-[#1A3A6B]">
+                            <span class="truncate">Fecha de movimientos</span>
+                        </div>
+                        <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1">
+                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll h-full overflow-y-auto">
+                                @php
+                                    $dateQuery = request()->except('page', 'date');
+                                @endphp
+                                @foreach ($dateOptions as $day)
+                                    <a href="{{ route('soporte.reportes-tecnicos.movements', array_merge($dateQuery, ['date' => $day['date']])) }}" class="flex min-h-[90px] w-full flex-col justify-center border-b border-[#d4d4d8] px-[20px] py-[12px] transition {{ $filters['date'] === $day['date'] ? 'bg-[#1A3A6B] text-white' : ($loop->odd ? 'bg-zinc-50 text-black hover:bg-zinc-100' : 'bg-white text-black hover:bg-zinc-50') }}">
+                                        <span class="block w-full truncate leading-[20px]" title="{{ $day['label'] }}">{{ $day['label'] }}</span>
+                                        <span class="mt-[6px] leading-none {{ $filters['date'] === $day['date'] ? 'text-white/70' : 'text-black' }}">{{ $day['count'] }} {{ $day['count'] === 1 ? 'movimiento' : 'movimientos' }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                            <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
+                    </aside>
 
-                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1">
-                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll support-report-list h-full overflow-y-auto">
-                        @forelse ($movements as $movement)
-                            @php
-                                $isDeleted = $movement->action === \App\Models\TechnicalSupportReportMovement::ACTION_DELETED;
-                                $actorName = $movement->user_name ?: $movement->user?->name ?: 'Usuario no disponible';
-                                $actorEmail = $movement->user_email ?: $movement->user?->email;
-                            @endphp
-                            <article class="grid min-h-[77px] grid-cols-1 bg-white min-[900px]:grid-cols-[170px_190px_minmax(0,1fr)_190px] lg:grid-cols-[190px_220px_minmax(0,1fr)_220px]">
-                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center min-[900px]:border-b-0 min-[900px]:border-r">
-                                    <span class="{{ $isDeleted ? 'text-red-600' : 'text-[#1A3A6B]' }}">{{ $isDeleted ? 'Reporte eliminado' : 'Reporte generado' }}</span>
-                                </div>
-                                <div class="flex items-center justify-center border-b border-[#d4d4d8] p-[20px] text-center text-[#1A3A6B] min-[900px]:border-b-0 min-[900px]:border-r">{{ $movement->folio }}</div>
-                                <div class="flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] min-[900px]:border-b-0 min-[900px]:border-r">
-                                    <p class="truncate leading-none text-black" title="{{ $actorName }}">{{ $actorName }}</p>
-                                    @if ($actorEmail)
-                                        <p class="mt-[10px] truncate lowercase leading-none text-black" title="{{ $actorEmail }}">{{ $actorEmail }}</p>
-                                    @endif
-                                </div>
-                                <div class="flex items-center justify-center p-[20px] text-center text-black">{{ $movement->occurred_at->timezone(config('support.timezone', 'America/Mexico_City'))->translatedFormat('d M Y · H:i:s') }}</div>
-                            </article>
-                        @empty
-                            <div class="grid h-full min-h-[260px] place-items-center p-[20px] text-center text-black">Todavía no hay movimientos registrados.</div>
-                        @endforelse
+                    <div class="flex min-h-0 min-w-0 flex-col">
+                        <div class="flex shrink-0 items-center border-b border-[#d4d4d8] bg-zinc-100 p-[20px] min-[900px]:h-[85px]">
+                            <form method="GET" action="{{ route('soporte.reportes-tecnicos.movements') }}" class="flex w-full min-w-0 flex-wrap items-center gap-[20px]">
+                                @if ($filters['date'] !== '')
+                                    <input type="hidden" name="date" value="{{ $filters['date'] }}">
+                                @endif
+                                <x-support-folio-search name="q" :value="$filters['search']" :options="$folioOptions" placeholder="Buscar folio o usuario..." class="min-w-[220px] flex-1" />
+                                <x-support-select name="action" :value="$filters['action']" :options="$actionOptions" all-label="Todos los movimientos" class="w-[220px]" />
+                                <x-support-select name="user" :value="$filters['user']" :options="$userOptions" all-label="Todos los usuarios" class="w-[220px]" />
+                                @if ($filters['search'] !== '' || $filters['action'] !== '' || $filters['user'] !== '')
+                                    <a href="{{ route('soporte.reportes-tecnicos.movements', $filters['date'] !== '' ? ['date' => $filters['date']] : []) }}" class="inline-flex items-center gap-[10px] bg-transparent px-[20px] py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18"/></svg>
+                                        <span>Limpiar</span>
+                                    </a>
+                                @endif
+                            </form>
+                        </div>
+
+                        <div class="hidden shrink-0 border-b border-[#d4d4d8] bg-zinc-100 leading-none text-[#1A3A6B] min-[900px]:grid min-[900px]:grid-cols-[190px_190px_minmax(0,1fr)_120px]">
+                            <div class="border-r border-[#d4d4d8] p-[20px]">Movimiento</div>
+                            <div class="border-r border-[#d4d4d8] p-[20px]">Folio</div>
+                            <div class="border-r border-[#d4d4d8] p-[20px]">Usuario</div>
+                            <div class="p-[20px] text-center">Hora</div>
+                        </div>
+
+                        <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-[260px] flex-1">
+                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll support-report-list h-full overflow-y-auto">
+                                @forelse ($movements as $movement)
+                                    @php
+                                        $isDeleted = in_array($movement->action, [\App\Models\TechnicalSupportReportMovement::ACTION_DELETED, \App\Models\TechnicalSupportReportMovement::ACTION_PURGED], true);
+                                        $movementLabel = match ($movement->action) {
+                                            \App\Models\TechnicalSupportReportMovement::ACTION_DELETED => 'Reporte eliminado',
+                                            \App\Models\TechnicalSupportReportMovement::ACTION_RESTORED => 'Reporte restaurado',
+                                            \App\Models\TechnicalSupportReportMovement::ACTION_PURGED => 'Borrado definitivo',
+                                            default => 'Reporte generado',
+                                        };
+                                        $actorName = $movement->user_name ?: $movement->user?->name ?: 'Usuario no disponible';
+                                        $actorEmail = $movement->user_email ?: $movement->user?->email;
+                                    @endphp
+                                    <article class="grid min-h-[77px] grid-cols-1 bg-white min-[900px]:grid-cols-[190px_190px_minmax(0,1fr)_120px]">
+                                        <div class="flex min-w-0 items-center border-b border-[#d4d4d8] p-[20px] min-[900px]:border-b-0 min-[900px]:border-r">
+                                            <span class="block min-w-0 truncate whitespace-nowrap leading-none {{ $isDeleted ? 'text-red-600' : 'text-[#1A3A6B]' }}" title="{{ $movementLabel }}">{{ $movementLabel }}</span>
+                                        </div>
+                                        <div class="flex min-w-0 items-center border-b border-[#d4d4d8] p-[20px] min-[900px]:border-b-0 min-[900px]:border-r">
+                                            <span class="block min-w-0 truncate whitespace-nowrap leading-none tabular-nums text-[#1A3A6B]" title="{{ $movement->folio }}">{{ $movement->folio }}</span>
+                                        </div>
+                                        <div class="flex min-w-0 flex-col justify-center border-b border-[#d4d4d8] p-[20px] min-[900px]:border-b-0 min-[900px]:border-r">
+                                            <p class="truncate leading-none text-[#1A3A6B]" title="{{ $actorName }}">{{ $actorName }}</p>
+                                            @if ($actorEmail)
+                                                <p class="mt-[10px] truncate lowercase leading-none text-black" title="{{ $actorEmail }}">{{ $actorEmail }}</p>
+                                            @endif
+                                        </div>
+                                        <div class="flex items-center justify-center p-[20px] text-center leading-none tabular-nums text-black">{{ $movement->occurred_at->timezone(config('support.timezone', 'America/Mexico_City'))->format('H:i:s') }}</div>
+                                    </article>
+                                @empty
+                                    <div class="grid h-full min-h-[260px] place-items-center p-[20px] text-center leading-none text-black">No hay movimientos que coincidan con los filtros.</div>
+                                @endforelse
+                            </div>
+                            <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
+
+                        @if ($movements->hasPages())
+                            <div class="shrink-0 border-t border-[#d4d4d8] p-[20px]">{{ $movements->links() }}</div>
+                        @endif
                     </div>
-                    <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
-
-                @if ($movements->hasPages())
-                    <div class="shrink-0 border-t border-[#d4d4d8] p-[20px]">{{ $movements->links() }}</div>
-                @endif
             </section>
             @endif
         </main>

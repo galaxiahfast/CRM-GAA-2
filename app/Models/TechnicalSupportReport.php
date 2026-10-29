@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TechnicalSupportReport extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'folio',
         'issued_at',
@@ -16,12 +19,14 @@ class TechnicalSupportReport extends Model
         'supports',
         'details',
         'created_by',
+        'deleted_by',
     ];
 
     protected $casts = [
         'issued_at' => 'datetime',
         'supports' => 'array',
         'details' => 'array',
+        'deleted_at' => 'datetime',
     ];
 
     public function creator(): BelongsTo
