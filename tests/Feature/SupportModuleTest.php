@@ -680,7 +680,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
-            ->call('ask', 'horas', 'reloj_checador')
+            ->call('ask', 'actividades', 'reloj_checador')
             ->assertSet('selectedQuestion', '¿Cómo consulto mis marcas del reloj checador?')
             ->assertSee('Revisar Horas')
             ->assertSee('opciones de exportación');
@@ -693,7 +693,7 @@ class SupportModuleTest extends TestCase
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
             ->call('ask', 'general', 'navegar')
-            ->call('ask', 'horas', 'reloj_checador')
+            ->call('ask', 'actividades', 'reloj_checador')
             ->assertCount('conversation', 2)
             ->assertSee('¿Cómo navego por la aplicación?')
             ->assertSee('¿Cómo consulto mis marcas del reloj checador?')
@@ -713,5 +713,20 @@ class SupportModuleTest extends TestCase
             ->assertSet('selectedQuestion', '¿Cómo genero un reporte de soporte?')
             ->assertSee('Reportes de Soporte')
             ->assertSee('personas o equipos');
+    }
+
+    public function test_questions_bot_categories_follow_the_menu_and_have_five_to_seven_questions(): void
+    {
+        $categories = config('support.questions');
+
+        $this->assertSame(
+            ['general', 'informacion', 'actividades', 'documentos', 'soporte'],
+            array_keys($categories)
+        );
+
+        foreach ($categories as $category) {
+            $this->assertGreaterThanOrEqual(5, count($category['items']));
+            $this->assertLessThanOrEqual(7, count($category['items']));
+        }
     }
 }

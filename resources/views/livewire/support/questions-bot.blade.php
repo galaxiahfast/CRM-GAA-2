@@ -156,7 +156,7 @@
                 </section>
 
                 {{-- Conversación --}}
-                <section class="support-questions-col" aria-label="Conversación con {{ $botName }}" x-on:pageshow.window="if ($event.persisted) $wire.resetConversation()">
+                <section class="support-questions-col" aria-label="Conversación con {{ $botName }}" x-on:livewire:navigating.window="$wire.resetConversation()" x-on:pageshow.window="if ($event.persisted) $wire.resetConversation()">
                     <div class="flex h-[85px] shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                         <div class="flex min-w-0 items-center gap-[20px]">
                             <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
@@ -170,14 +170,6 @@
                                 <span class="h-[10px] w-[10px] shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>
                                 <span>Disponible</span>
                             </p>
-                            @if (count($conversation) > 0)
-                                <div class="mt-[10px] flex">
-                                    <button wire:click="resetConversation" type="button" class="inline-flex items-center gap-[10px] bg-transparent leading-none text-[#1A3A6B] transition-colors hover:text-red-600 focus:outline-none focus:ring-0" style="margin: -10px 0; padding: 10px 0;">
-                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
-                                        <span>Limpiar historial</span>
-                                    </button>
-                                </div>
-                            @endif
                         </div>
                     </div>
 
@@ -212,7 +204,7 @@
                     >
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" aria-live="polite" class="support-questions-scroll h-full space-y-[20px] overflow-y-auto p-[20px]">
                             <div class="flex items-start gap-[20px]">
-                                <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
+                                <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="mt-[10px] h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
                                 <div class="min-w-0 flex-1 rounded-xl border border-[#d4d4d8] bg-white p-[20px] leading-[25px] text-black">
                                     ¡Hola! Soy {{ $botName }}, la asistente de ayuda. Elige una de las preguntas disponibles y te explicaré cómo realizar esa acción.
                                 </div>
@@ -222,18 +214,18 @@
                                 <div wire:key="support-exchange-{{ $conversationIndex }}" class="space-y-[20px]">
                                     <div class="flex items-start justify-end gap-[20px]">
                                         <div class="max-w-[82%] rounded-xl border border-[#d4d4d8] bg-zinc-100 p-[20px] leading-[25px] text-[#1A3A6B]">{{ $exchange['question'] }}</div>
-                                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4d4d8] bg-zinc-100 text-[#1A3A6B]">
+                                        <span class="mt-[10px] flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4d4d8] bg-zinc-100 text-[#1A3A6B]">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg>
                                         </span>
                                     </div>
 
                                     <div x-show="answerVisible({{ $conversationIndex }})" class="flex items-start gap-[20px]">
-                                        <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
+                                        <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="mt-[10px] h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
                                         <div class="min-w-0 flex-1 rounded-xl border border-[#d4d4d8] bg-white p-[20px] leading-[25px] text-black">{{ $exchange['answer'] }}</div>
                                     </div>
 
                                     <div x-show="typingFor({{ $conversationIndex }})" style="display: none;" class="flex items-start gap-[20px]" role="status">
-                                        <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
+                                        <img src="{{ $botAvatar }}" alt="{{ $botName }}" class="mt-[10px] h-11 w-11 shrink-0 rounded-full border border-[#d4d4d8] object-cover">
                                         <div class="rounded-xl border border-[#d4d4d8] bg-white p-[20px] text-[#1A3A6B]">
                                             <span class="flex h-[25px] items-center gap-[10px]" aria-hidden="true">
                                                 <span class="support-typing-dot"></span>
