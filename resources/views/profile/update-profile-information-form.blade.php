@@ -49,12 +49,11 @@
         $allFriends = $this->user->friends()->orderBy('name')->orderBy('last_name')->get();
         $friends = $allFriends->take(8);
         $actionButton = 'inline-flex items-center gap-[10px] whitespace-nowrap bg-transparent py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
-        $boxButton = 'inline-flex items-center gap-[10px] whitespace-nowrap rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[10px] leading-none text-[#1A3A6B] transition-colors hover:border-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
         $primaryButton = 'profile-primary inline-flex items-center gap-[10px] whitespace-nowrap rounded-xl border border-[#1A3A6B] bg-[#1A3A6B] px-[20px] py-[10px] leading-none text-white transition-colors focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
         $fieldClass = 'h-11 w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-black';
     @endphp
 
-    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+    <div class="profile-zoom no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
         <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
         <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="syncScaledContentHeight()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de la vista de Ajustes">
         <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
@@ -98,17 +97,17 @@
                                 <span>Aceptar solicitud</span>
                             </button>
                         @elseif ($friendship->status === \App\Models\Friendship::PENDING)
-                            <button type="button" disabled class="{{ str_replace(['text-[#1A3A6B]', 'hover:border-[#1A3A6B]', 'disabled:opacity-40'], ['text-black', '', ''], $boxButton) }} cursor-not-allowed">
+                            <button type="button" disabled class="{{ str_replace(['text-[#1A3A6B]', 'hover:text-black', 'disabled:cursor-wait', 'disabled:opacity-40'], ['text-black', '', '', ''], $actionButton) }} cursor-not-allowed">
                                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 <span>Solicitud enviada</span>
                             </button>
                         @else
-                            <button type="button" wire:click="removeFriendship" wire:confirm="¿Quieres dejar de seguir a esta persona y eliminarla de tus amigos?" class="{{ $boxButton }}">
+                            <button type="button" wire:click="removeFriendship" wire:confirm="¿Quieres dejar de seguir a esta persona y eliminarla de tus amigos?" class="{{ $actionButton }}">
                                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
-                                <span>Amigos</span>
+                                <span>Amigo</span>
                             </button>
                         @endif
-                        <a href="{{ route('profile.show') }}" class="{{ $boxButton }}">
+                        <a href="{{ route('profile.show') }}" class="{{ $actionButton }}">
                             <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5m0 0 6-6m-6 6 6 6" /></svg>
                             <span>Regresar a mi perfil</span>
                         </a>
@@ -139,7 +138,7 @@
                 </div>
             </section>
 
-            <section class="grid min-h-[650px] min-w-[1000px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+            <section class="profile-grid grid {{ $this->isOwnProfile ? 'min-h-[650px]' : '' }} min-w-[1000px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                 <aside class="flex h-0 min-h-full flex-col overflow-hidden border-r border-[#d4d4d8] bg-white">
                     <div class="relative h-[150px] shrink-0 overflow-hidden bg-gradient-to-br from-black via-zinc-800 to-zinc-600">
                         @if ($editing)
@@ -225,7 +224,7 @@
                             @else
                                 <div class="flex items-center gap-[10px] leading-none text-black">
                                     <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                    <span class="profile-lines min-w-0 break-all" title="{{ $this->user->email }}">{{ $this->user->email }}</span>
+                                    <span class="profile-lines min-w-0 truncate" title="{{ $this->user->email }}">{{ $this->user->email }}</span>
                                 </div>
                             @endif
                             <div class="flex items-center gap-[10px] leading-none text-black">
@@ -238,7 +237,9 @@
                             </div>
                         </div>
                     </div>
-                    @livewire('profile.people-sidebar')
+                    @if ($this->isOwnProfile)
+                        @livewire('profile.people-sidebar')
+                    @endif
                 </aside>
 
                 <div class="min-w-0 bg-white">
@@ -247,7 +248,7 @@
                             <h2 class="leading-none text-[#1A3A6B]">Información del perfil</h2>
                             <p class="mt-[10px] leading-none text-black">Resumen del colaborador</p>
                         </div>
-                        <div class="flex shrink-0 items-center gap-[20px] leading-none text-black">
+                        <div class="profile-stats flex shrink-0 items-center gap-[20px] leading-none text-black">
                             <span>{{ number_format($activityCount) }} actividades</span>
                             <span>{{ number_format($friendCount) }} amigos</span>
                             <span>Actualizado {{ $this->user->updated_at->locale('es')->diffForHumans() }}</span>
@@ -255,7 +256,8 @@
                     </header>
 
                     <div class="flex flex-col gap-[20px] p-[20px]">
-                        <div class="grid gap-[20px] 2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]">
+                        <div class="grid gap-[20px] {{ $this->isOwnProfile ? '2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]' : '' }}">
+                            @if ($this->isOwnProfile)
                             <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                                 <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                                     <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg></span>
@@ -271,13 +273,22 @@
                                     @endif
                                 </div>
                             </article>
+                            @else
+                            <article class="min-w-0 rounded-xl border border-[#d4d4d8] bg-white p-[20px]">
+                                <div class="flex flex-wrap items-center gap-x-[30px] gap-y-[15px] text-black">
+                                    <span class="flex min-w-0 items-center gap-[10px] break-all"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 6h18v12H3zM3 7l9 7 9-7" /></svg>{{ $this->user->email }}</span>
+                                    <span class="flex items-center gap-[10px]"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0zM12 10h.01" /></svg>Mérida, Yucatán, México</span>
+                                    <span class="flex items-center gap-[10px]"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5h18v16H3zM7 3v4m10-4v4M3 10h18" /></svg>{{ (int) $this->user->created_at->diffInDays(now()) }} días con la cuenta</span>
+                                </div>
+                            </article>
+                            @endif
 
                             <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                                 <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                                     <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg></span>
                                     <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Información organizacional</h3><p class="mt-[10px] leading-none text-black">Posición dentro de la empresa</p></div>
                                 </header>
-                                <dl class="grid grid-cols-2 gap-[20px] p-[20px]">
+                                <dl class="profile-info-grid grid grid-cols-2 gap-[20px] p-[20px]">
                                     <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Área</dt><dd class="mt-[10px] truncate leading-none text-black" title="{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}</dd></div>
                                     <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Puesto</dt><dd class="mt-[10px] truncate leading-none text-black" title="{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}</dd></div>
                                     <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Colaboradores</dt><dd class="mt-[10px] leading-none text-black">{{ $subordinates->isEmpty() ? 'No tiene colaboradores' : $subordinates->count() }}</dd></div>
@@ -308,8 +319,8 @@
                                         <span class="min-w-0 truncate leading-none text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
                                     </a>
                                 @empty
-                                    <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center leading-none text-black">
-                                        <span>Todavía no tienes amigos agregados.</span>
+                                    <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center text-black">
+                                        <span class="profile-lines">Todavía no tienes amigos agregados.</span>
                                     </div>
                                 @endforelse
                             </div>
@@ -398,6 +409,10 @@
                 </div>
             </section>
 
+            @if (! $this->isOwnProfile)
+                @livewire('profile.people-sidebar', ['wide' => true])
+            @endif
+
             <x-action-message on="saved" class="profile-message text-emerald-600">Perfil actualizado correctamente.</x-action-message>
     @if ($this->isOwnProfile)
         </form>
@@ -448,7 +463,7 @@
                             <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
                         </a>
                     @empty
-                        <div class="rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center leading-none text-black">Todavía no tienes amigos agregados.</div>
+                        <div class="flex flex-col rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center text-black"><p class="profile-lines">Todavía no tienes amigos agregados.</p></div>
                     @endforelse
                 </div>
                 <span x-show="visible" x-cloak class="profile-line-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
@@ -529,6 +544,28 @@
         .profile-page .profile-strip.justify-between > :nth-child(2),
         [data-profile-overlay] .profile-strip.justify-between > :nth-child(2) {
             margin-left: auto;
+        }
+
+        /* Títulos y descripciones de las franjas: si se parten en varias líneas, 25px por línea (10px entre líneas). Con una sola línea queda exactamente igual que antes. */
+        .profile-page .profile-strip :is(h2, h3),
+        [data-profile-overlay] .profile-strip :is(h2, h3) {
+            line-height: 25px;
+            margin-top: -5px;
+            margin-bottom: -5px;
+        }
+
+        .profile-page .profile-strip :is(h2, h3) + p,
+        [data-profile-overlay] .profile-strip :is(h2, h3) + p {
+            line-height: 25px;
+            margin-top: 5px;
+            margin-bottom: -5px;
+        }
+
+        /* Resumen de la franja (actividades, amigos, actualización): si no cabe, sus textos bajan en vez de salirse. */
+        .profile-page .profile-stats {
+            flex-wrap: wrap;
+            max-width: 100%;
+            row-gap: 10px;
         }
 
         /* Mensajes de error de los campos: 10px debajo del campo y 25px por línea (10px entre líneas si se parten). El componente trae text-sm con interlineado de 20px. */
@@ -796,6 +833,137 @@
 
         html.module-dark-theme [data-profile-overlay] [class~="ring-zinc-200"] {
             --tw-ring-color: var(--support-border);
+        }
+
+        /* El componente de la lista tiene un solo contenedor raíz (requisito de Livewire) que no debe afectar el diseño: sus hijos se acomodan como si no existiera. */
+        .profile-page .people-root {
+            display: contents;
+        }
+
+        /* Lista de "Conectar con personas": nunca más baja de 320px (unas 4 filas). Si el resto de la página es corta, la tarjeta del perfil crece en vez de apretar la lista. */
+        .profile-page .profile-grid > aside {
+            height: auto;
+            min-height: 0;
+        }
+
+        .profile-page .people-list {
+            flex: 1 1 320px;
+            min-height: 320px;
+        }
+
+        /* El área con scroll se ajusta a la caja de la lista (no a su contenido), para que la altura mínima y el crecimiento funcionen igual en todos los casos. */
+        .profile-page .people-list > .profile-line-scroll {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            height: auto;
+        }
+
+        /* Perfil de otra persona: "Conectar con personas" va debajo, a lo ancho, en columnas (en horizontal) para no dejar un hueco en blanco ni apretar la lista. */
+        .profile-page .people-wide-grid {
+            --people-row: 112px;
+            --people-gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+            grid-auto-rows: var(--people-row);
+            align-content: start;
+            gap: var(--people-gap);
+            /* Se ven exactamente tres filas (nombre de 1 línea + correo de hasta 2 líneas caben en cada una) y al desplazar la lista se detiene siempre al inicio de una fila, para que nunca quede una fila cortada. */
+            max-height: calc(var(--people-row) * 3 + var(--people-gap) * 2);
+            scroll-snap-type: y mandatory;
+        }
+
+        .profile-page .people-wide-grid > * {
+            scroll-snap-align: start;
+        }
+
+        .profile-page .people-wide-empty {
+            grid-column: 1 / -1;
+            justify-content: center;
+        }
+
+        .profile-page .people-wide-search {
+            width: 360px;
+            max-width: 100%;
+        }
+
+        /* ===== Responsive: cuando el contenido mide menos de 1000px (ventana angosta, tableta, celular) ===== */
+        /* El contenedor es la propia página (ya escalada por el zoom), así la medida es la real del contenido y no la de la ventana. */
+        .profile-page .profile-main {
+            container: profile / inline-size;
+        }
+
+        /* El botón de hamburguesa de "Conectar con personas" solo existe en pantallas angostas. */
+        .profile-page .profile-people-toggle {
+            display: none;
+        }
+
+        @media screen {
+            @container profile (max-width: 999px) {
+                /* Una sola columna: primero la tarjeta del perfil y su lista de personas, después la información. Sin ancho mínimo ni scroll horizontal. */
+                .profile-page .profile-grid {
+                    min-width: 0;
+                    min-height: 0;
+                    grid-template-columns: minmax(0, 1fr);
+                }
+
+                .profile-page .profile-grid > aside {
+                    height: auto;
+                    min-height: 0;
+                    border-right-width: 0;
+                    border-bottom-width: 1px;
+                }
+
+                /* La lista de personas se abre y se cierra con el botón de hamburguesa; abierta mide 420px con su propio scroll. */
+                .profile-page .profile-people-toggle {
+                    display: inline-flex;
+                    margin-left: auto;
+                }
+
+                .profile-page .people-panel:not([data-people-open="true"]) .people-collapsible {
+                    display: none;
+                }
+
+                .profile-page .people-list {
+                    flex: none;
+                    height: 420px;
+                }
+            }
+
+            @container profile (max-width: 520px) {
+                /* Información organizacional: una sola columna para que Área, Puesto y Supervisor se lean completos. */
+                .profile-page .profile-info-grid {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+            }
+
+            @container profile (max-width: 640px) {
+                /* Sesiones: el botón baja debajo del texto (alineado con él) en vez de apretarlo. 5px de separación + 15px de aire del botón = 20px visibles. */
+                .profile-page .profile-session {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 5px;
+                }
+
+                .profile-page .profile-session > :last-child {
+                    margin-left: 55px;
+                    margin-bottom: -15px;
+                }
+            }
+        }
+
+        /* Celulares: el control de zoom se acerca al borde y su barra se acorta para que quepa completo. */
+        @media (max-width: 480px) {
+            .profile-page .profile-zoom {
+                right: 10px;
+                bottom: 10px;
+            }
+
+            .profile-page .profile-zoom input[type="range"] {
+                width: 60px;
+            }
         }
 
         @media print {

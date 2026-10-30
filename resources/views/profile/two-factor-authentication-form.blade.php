@@ -19,7 +19,7 @@
     </header>
 
     <div class="flex flex-col gap-[10px] p-[20px]">
-        <p class="leading-none text-[#1A3A6B]">
+        <p class="profile-lines text-[#1A3A6B]">
             @if ($this->enabled)
                 @if ($showingConfirmation)
                     Termina de habilitar la autenticación de dos factores.

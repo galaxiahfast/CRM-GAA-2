@@ -6,12 +6,22 @@ use App\Models\Friendship;
 use App\Models\User;
 use App\Services\Notifications\SystemNotificationService;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class PeopleSidebar extends Component
 {
     public string $search = '';
+
+    /** Perfil de otra persona: la lista se muestra a lo ancho, debajo del perfil, en vez de la barra lateral. */
+    #[Locked]
+    public bool $wide = false;
+
+    public function mount(bool $wide = false): void
+    {
+        $this->wide = $wide;
+    }
 
     #[On('friendship-updated')]
     public function refreshFriendships(): void
