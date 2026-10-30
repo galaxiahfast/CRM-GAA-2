@@ -35,6 +35,18 @@ class LogoutOtherBrowserSessionsForm extends JetstreamLogoutOtherBrowserSessions
 
     public function getSessionsProperty()
     {
+        // Si las sesiones no se guardan en base de datos (por ejemplo, SESSION_DRIVER=file) no hay registro de dispositivos:
+        // se muestra al menos el equipo desde el que se está viendo esta pantalla.
+        if (config('session.driver') !== 'database') {
+            return collect([(object) [
+                'agent' => $this->createAgent((object) ['user_agent' => request()->userAgent()]),
+                'ip_address' => request()->ip(),
+                'is_current_device' => true,
+                'last_active' => '',
+                'id' => request()->hasSession() ? request()->session()->getId() : 'current-device',
+            ]]);
+        }
+
         return parent::getSessionsProperty()->map(function ($session, $index) {
             $record = DB::connection(config('session.connection'))
                 ->table(config('session.table', 'sessions'))

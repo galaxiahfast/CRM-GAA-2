@@ -169,9 +169,9 @@ HTML);
         $this->assertGreaterThan($activitiesPosition, $managementPosition);
         $this->assertGreaterThan($managementPosition, $documentsPosition);
         $this->assertGreaterThan($documentsPosition, $deliveryPosition);
-        $this->assertGreaterThan($deliveryPosition, $backupPosition);
-        $this->assertGreaterThan($backupPosition, $technicalPosition);
-        $this->assertGreaterThan($technicalPosition, $supportPosition);
+        $this->assertGreaterThan($deliveryPosition, $technicalPosition);
+        $this->assertGreaterThan($technicalPosition, $backupPosition);
+        $this->assertGreaterThan($backupPosition, $supportPosition);
     }
 
     public function test_pdf_service_generates_a_valid_pdf(): void

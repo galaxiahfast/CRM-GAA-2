@@ -1,4 +1,46 @@
-<section class="profile-monochrome min-h-[calc(100dvh-90px)] bg-white text-[15px] text-zinc-900" x-data="{ profilePhotoOpen: false, friendsDirectoryOpen: false, coverDragging: false, photoDragging: false }" x-on:keydown.escape.window="profilePhotoOpen = false; friendsDirectoryOpen = false">
+<section
+    class="profile-page relative min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-x-auto bg-white text-[15px] text-black"
+    x-data="{
+        profilePhotoOpen: false,
+        friendsDirectoryOpen: false,
+        coverDragging: false,
+        photoDragging: false,
+        viewScale: 90,
+        isFullscreen: false,
+        scaledContentHeight: null,
+        scaleObserver: null,
+        fullscreenHandler: null,
+        init() {
+            this.fullscreenHandler = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
+            document.addEventListener('fullscreenchange', this.fullscreenHandler);
+            this.$nextTick(() => {
+                this.scaleObserver = new ResizeObserver(() => this.syncScaledContentHeight());
+                this.scaleObserver.observe(this.$refs.scaledMain);
+                this.syncScaledContentHeight();
+            });
+        },
+        destroy() {
+            this.scaleObserver?.disconnect();
+            document.removeEventListener('fullscreenchange', this.fullscreenHandler);
+        },
+        syncScaledContentHeight() {
+            this.$nextTick(() => {
+                if (this.$refs.scaledMain) {
+                    this.scaledContentHeight = Math.ceil(this.$refs.scaledMain.offsetHeight * (this.viewScale / 100));
+                }
+            });
+        },
+        zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.syncScaledContentHeight(); },
+        zoomIn() { this.viewScale = Math.min(100, this.viewScale + 5); this.syncScaledContentHeight(); },
+        async toggleFullscreen() {
+            if (document.fullscreenElement === this.$root) return document.exitFullscreen();
+            if (document.fullscreenElement) await document.exitFullscreen();
+            await this.$root.requestFullscreen();
+        }
+    }"
+    x-on:keydown.escape.window="profilePhotoOpen = false; friendsDirectoryOpen = false"
+    x-effect="if ((friendsDirectoryOpen || profilePhotoOpen) && document.fullscreenElement) document.exitFullscreen()"
+>
     @php
         $organizationalProfile = $this->user->activeOrganizationalProfile()->with(['physicalArea', 'jobPosition'])->first();
         $supervisors = $this->user->superiors()->get();
@@ -6,88 +48,100 @@
         $totalFriends = $this->user->friends()->count();
         $allFriends = $this->user->friends()->orderBy('name')->orderBy('last_name')->get();
         $friends = $allFriends->take(8);
+        $actionButton = 'inline-flex items-center gap-[10px] whitespace-nowrap bg-transparent py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
+        $boxButton = 'inline-flex items-center gap-[10px] whitespace-nowrap rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[10px] leading-none text-[#1A3A6B] transition-colors hover:border-[#1A3A6B] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
+        $primaryButton = 'profile-primary inline-flex items-center gap-[10px] whitespace-nowrap rounded-xl border border-[#1A3A6B] bg-[#1A3A6B] px-[20px] py-[10px] leading-none text-white transition-colors focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
+        $fieldClass = 'h-11 w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-black';
     @endphp
 
-    @if ($standalone)
-        <header class="no-print flex items-center justify-between gap-20 whitespace-nowrap border-b border-zinc-200 p-[40px]">
-            <nav class="flex min-w-0 items-center gap-3 text-zinc-500" aria-label="Ruta de navegación">
-                <span class="font-medium">Centro de Información</span>
-                <span class="text-zinc-300">&gt;</span>
-                <span class="font-medium text-zinc-500">Perfiles</span>
-                <span class="text-zinc-300">&gt;</span>
-                <span class="max-w-[320px] truncate font-semibold text-black" title="{{ trim($this->user->name.' '.$this->user->last_name) }}">{{ trim($this->user->name.' '.$this->user->last_name) }}</span>
-            </nav>
+    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+        <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
+        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="syncScaledContentHeight()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de la vista de Ajustes">
+        <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
+        <span class="w-[42px] text-right tabular-nums text-black" x-text="viewScale + '%'">90%</span>
+        <span class="h-5 w-px bg-zinc-200"></span>
+        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver Ajustes en pantalla completa'">
+            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
+            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
+        </button>
+    </div>
 
-            <div class="flex shrink-0 items-center gap-[30px]">
-                <button type="button" aria-label="Descargar perfil en PDF" title="Descargar PDF" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 font-medium text-zinc-500 transition-colors hover:text-black">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    <span>Descargar PDF</span>
-                </button>
-                <button type="button" onclick="window.print()" aria-label="Imprimir perfil" class="inline-flex items-center gap-[15px] border-0 bg-transparent p-0 font-medium text-zinc-500 transition-colors hover:text-black">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" /></svg>
-                    <span>Imprimir</span>
-                </button>
-            </div>
-        </header>
-    @endif
-
+    <div class="w-full" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : null">
+    <main x-ref="scaledMain" class="profile-main flex w-full origin-top-left flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
     @if ($this->isOwnProfile)
-        <form wire:submit="updateProfileInformation">
+        <form wire:submit="updateProfileInformation" class="flex flex-col gap-[20px]">
     @else
-        <div>
+        <div class="flex flex-col gap-[20px]">
     @endif
-        <main class="mx-auto w-full max-w-[1500px] space-y-[25px] p-[40px]">
-            <section class="flex items-end justify-between gap-[20px]">
-                <div class="flex items-start gap-[15px]">
-                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-black">
-                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg>
+            <section class="profile-head flex shrink-0 flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
+                <div class="profile-head-title flex min-w-0 items-center gap-[15px]">
+                    <span class="profile-head-icon grid shrink-0 place-items-center rounded-xl border border-[#d4d4d8] bg-white text-black">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg>
                     </span>
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-gray-900">Perfil de usuario</h1>
-                        <p class="mt-1 text-gray-500">Consulta y administra tu información personal y organizacional.</p>
+                    <div class="min-w-0">
+                        <h1 class="text-xl font-normal leading-none tracking-tight text-[#1A3A6B]">Perfil de usuario</h1>
+                        <div class="mt-[10px] flex flex-col"><p class="profile-lines text-black">{{ $this->isOwnProfile ? 'Consulta y administra tu información personal y organizacional.' : 'Información personal y organizacional del colaborador.' }}</p></div>
                     </div>
                 </div>
 
-                <div class="no-print flex items-center gap-[15px]">
+                <div class="no-print ml-auto flex shrink-0 flex-wrap items-center gap-x-[20px]">
                     @if (! $this->isOwnProfile)
                         @php($friendship = $this->friendship)
                         @if (! $friendship)
-                            <button type="button" wire:click="requestFriendship" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm8 3h-6m3-3v6" /></svg>
-                                Seguir
+                            <button type="button" wire:click="requestFriendship" class="{{ $primaryButton }}">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
+                                <span>Seguir</span>
                             </button>
                         @elseif ($friendship->status === \App\Models\Friendship::PENDING && $friendship->addressee_id === auth()->id())
-                            <button type="button" wire:click="acceptFriendship" class="inline-flex h-10 items-center justify-center rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">Aceptar solicitud</button>
+                            <button type="button" wire:click="acceptFriendship" class="{{ $primaryButton }}">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" /></svg>
+                                <span>Aceptar solicitud</span>
+                            </button>
                         @elseif ($friendship->status === \App\Models\Friendship::PENDING)
-                            <button type="button" disabled class="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-100 px-5 font-semibold text-zinc-500">Solicitud enviada</button>
+                            <button type="button" disabled class="{{ str_replace(['text-[#1A3A6B]', 'hover:border-[#1A3A6B]', 'disabled:opacity-40'], ['text-black', '', ''], $boxButton) }} cursor-not-allowed">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span>Solicitud enviada</span>
+                            </button>
                         @else
-                            <button type="button" wire:click="removeFriendship" wire:confirm="¿Quieres dejar de seguir a esta persona y eliminarla de tus amigos?" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm8 2h-6" /></svg>
-                                Amigos
+                            <button type="button" wire:click="removeFriendship" wire:confirm="¿Quieres dejar de seguir a esta persona y eliminarla de tus amigos?" class="{{ $boxButton }}">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
+                                <span>Amigos</span>
                             </button>
                         @endif
-                        <a href="{{ route('profile.show') }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 font-semibold text-black transition hover:bg-zinc-100">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6" /></svg>
-                            Regresar a mi perfil
+                        <a href="{{ route('profile.show') }}" class="{{ $boxButton }}">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5m0 0 6-6m-6 6 6 6" /></svg>
+                            <span>Regresar a mi perfil</span>
                         </a>
                     @elseif ($editing)
-                        <button type="button" wire:click="cancelEditing" class="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-5 font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50">Cancelar</button>
-                        <button type="submit" wire:loading.attr="disabled" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-60">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h12l2 2v14H5V4zm3 0v6h8V4M8 20v-6h8v6" /></svg>
-                            Guardar cambios
+                        <button type="button" wire:click="cancelEditing" class="{{ $actionButton }}">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18" /></svg>
+                            <span>Cancelar</span>
+                        </button>
+                        <button type="submit" wire:loading.attr="disabled" class="{{ $actionButton }}">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h12l2 2v14H5V4zm3 0v6h8V4M8 20v-6h8v6" /></svg>
+                            <span>Guardar cambios</span>
                         </button>
                     @else
-                        <button type="button" wire:click="startEditing" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-black px-5 font-semibold text-white transition hover:bg-zinc-800">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16.9 3.6a2.1 2.1 0 013 3L9 17.5 4 19l1.5-5L16.9 3.6z" /></svg>
-                            Editar perfil
+                        <button type="button" wire:click="startEditing" class="{{ $actionButton }}">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16.9 3.6a2.1 2.1 0 013 3L9 17.5 4 19l1.5-5L16.9 3.6z" /></svg>
+                            <span>Editar perfil</span>
                         </button>
                     @endif
+
+                    <button type="button" aria-label="Descargar perfil en PDF" title="Descargar PDF" class="{{ $actionButton }}">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4" /></svg>
+                        <span>Descargar PDF</span>
+                    </button>
+                    <button type="button" onclick="window.print()" aria-label="Imprimir perfil" class="{{ $actionButton }}">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" /></svg>
+                        <span>Imprimir</span>
+                    </button>
                 </div>
             </section>
 
-            <section class="grid min-h-[650px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_12px_32px_rgba(0,0,0,0.04)]">
-                <aside class="flex h-0 min-h-full flex-col overflow-hidden border-r border-zinc-200 bg-white">
-                    <div class="relative h-[150px] overflow-hidden bg-gradient-to-br from-black via-zinc-800 to-zinc-600">
+            <section class="grid min-h-[650px] min-w-[1000px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                <aside class="flex h-0 min-h-full flex-col overflow-hidden border-r border-[#d4d4d8] bg-white">
+                    <div class="relative h-[150px] shrink-0 overflow-hidden bg-gradient-to-br from-black via-zinc-800 to-zinc-600">
                         @if ($editing)
                             <label for="cover" class="group absolute inset-0 cursor-pointer" x-on:dragenter.prevent="coverDragging = true" x-on:dragover.prevent="coverDragging = true" x-on:dragleave.prevent="coverDragging = false" x-on:drop.prevent="coverDragging = false; $refs.coverInput.files = $event.dataTransfer.files; $refs.coverInput.dispatchEvent(new Event('change', { bubbles: true }))">
                                 <input x-ref="coverInput" id="cover" type="file" accept="image/png,image/jpeg" wire:model="cover" class="sr-only">
@@ -97,7 +151,7 @@
                                     <img src="{{ Storage::url($this->user->profile_cover_path) }}" alt="Portada actual" class="h-full w-full object-cover">
                                 @endif
                                 <span class="absolute inset-0 grid place-items-center bg-black/45 text-center text-white transition group-hover:bg-black/60" :class="coverDragging ? 'bg-black/65' : ''">
-                                    <span class="px-5 text-[12px] font-semibold leading-5">Arrastra o selecciona una portada</span>
+                                    <span class="profile-lines px-5">Arrastra o selecciona una portada</span>
                                 </span>
                             </label>
                         @elseif ($this->user->profile_cover_path)
@@ -109,238 +163,253 @@
                         @endif
                     </div>
 
-                    <div class="shrink-0 px-[25px] pb-[20px] text-center">
+                    <div class="shrink-0 px-[20px] pb-[20px] text-center">
                         <div class="relative mx-auto -mt-[58px] h-[116px] w-[116px]">
                             @if ($editing)
-                                <label for="photo" class="group block h-full w-full cursor-pointer overflow-hidden rounded-full border-[5px] border-gray-100 bg-white shadow-md" x-on:dragenter.prevent="photoDragging = true" x-on:dragover.prevent="photoDragging = true" x-on:dragleave.prevent="photoDragging = false" x-on:drop.prevent="photoDragging = false; $refs.photoInput.files = $event.dataTransfer.files; $refs.photoInput.dispatchEvent(new Event('change', { bubbles: true }))">
+                                <label for="photo" class="profile-avatar-ring group block h-full w-full cursor-pointer overflow-hidden rounded-full bg-white" x-on:dragenter.prevent="photoDragging = true" x-on:dragover.prevent="photoDragging = true" x-on:dragleave.prevent="photoDragging = false" x-on:drop.prevent="photoDragging = false; $refs.photoInput.files = $event.dataTransfer.files; $refs.photoInput.dispatchEvent(new Event('change', { bubbles: true }))">
                                     <input x-ref="photoInput" id="photo" type="file" accept="image/png,image/jpeg" wire:model="photo" class="sr-only">
                                     @if ($photo)
                                         <img src="{{ $photo->temporaryUrl() }}" alt="Vista previa de la foto" class="h-full w-full object-cover">
                                     @elseif ($this->user->profile_photo_path)
                                         <img src="{{ $this->user->profile_photo_url }}" alt="Foto actual" class="h-full w-full object-cover">
                                     @else
-                                        <span class="grid h-full w-full place-items-center bg-zinc-100 text-3xl font-bold text-black">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
+                                        <span class="profile-initials grid h-full w-full place-items-center bg-zinc-100 text-black">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
                                     @endif
-                                    <span class="absolute inset-[5px] grid place-items-center rounded-full bg-black/60 px-3 text-[11px] font-semibold text-white opacity-0 transition group-hover:opacity-100" :class="photoDragging ? 'opacity-100' : ''">Cambiar foto</span>
+                                    <span class="absolute inset-[5px] grid place-items-center rounded-full bg-black/60 px-3 text-white opacity-0 transition group-hover:opacity-100" :class="photoDragging ? 'opacity-100' : ''">Cambiar foto</span>
                                 </label>
                             @else
-                                <button type="button" @click="profilePhotoOpen = true" class="block h-full w-full cursor-zoom-in overflow-hidden rounded-full border-[5px] border-gray-100 bg-white shadow-md" aria-label="Ampliar foto de perfil">
+                                <button type="button" @click="profilePhotoOpen = true" class="profile-avatar-ring block h-full w-full cursor-zoom-in overflow-hidden rounded-full bg-white" aria-label="Ampliar foto de perfil">
                                     @if ($this->user->profile_photo_path)
                                         <img src="{{ $this->user->profile_photo_url }}" alt="Foto de {{ $this->user->name }}" class="h-full w-full object-cover">
                                     @else
-                                        <span class="grid h-full w-full place-items-center bg-zinc-100 text-3xl font-bold text-black">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
+                                        <span class="profile-initials grid h-full w-full place-items-center bg-zinc-100 text-black">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
                                     @endif
                                 </button>
                             @endif
-                            <span class="absolute bottom-2 right-2 h-4 w-4 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-gray-400' }} ring-[3px] ring-gray-100" title="{{ $isOnline ? 'Activo' : 'Inactivo' }}"></span>
+                            <span class="profile-status-dot absolute bottom-2 right-2 h-4 w-4 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-gray-400' }}" title="{{ $isOnline ? 'Activo' : 'Inactivo' }}"></span>
                         </div>
 
-                        <x-input-error for="photo" class="mt-2" />
-                        <x-input-error for="cover" class="mt-2" />
+                        <x-input-error for="photo" class="mt-[10px]" />
+                        <x-input-error for="cover" class="mt-[10px]" />
 
-                        <div class="mt-[15px]">
+                        <div class="mt-[20px]">
                             @if ($editing)
-                                <div class="space-y-[15px] text-left">
+                                <div class="flex flex-col gap-[20px] text-left">
                                     <div>
-                                        <label for="profile-name" class="mb-2 block font-semibold text-black">Nombres</label>
-                                        <input id="profile-name" type="text" wire:model="state.name" autocomplete="given-name" placeholder="Escribe tus nombres" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                        <x-input-error for="name" class="mt-2" />
+                                        <label for="profile-name" class="mb-[10px] block leading-none text-[#1A3A6B]">Nombres</label>
+                                        <input id="profile-name" type="text" wire:model="state.name" autocomplete="given-name" placeholder="Escribe tus nombres" class="{{ $fieldClass }}">
+                                        <x-input-error for="name" class="mt-[10px]" />
                                     </div>
                                     <div>
-                                        <label for="profile-last-name" class="mb-2 block font-semibold text-black">Apellidos</label>
-                                        <input id="profile-last-name" type="text" wire:model="state.last_name" autocomplete="family-name" placeholder="Escribe tus apellidos" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                        <x-input-error for="last_name" class="mt-2" />
+                                        <label for="profile-last-name" class="mb-[10px] block leading-none text-[#1A3A6B]">Apellidos</label>
+                                        <input id="profile-last-name" type="text" wire:model="state.last_name" autocomplete="family-name" placeholder="Escribe tus apellidos" class="{{ $fieldClass }}">
+                                        <x-input-error for="last_name" class="mt-[10px]" />
                                     </div>
                                 </div>
                             @else
-                                <h2 class="text-xl font-bold text-gray-900">{{ $this->user->name }} {{ $this->user->last_name }}</h2>
+                                <h2 class="leading-none text-[#1A3A6B]">{{ $this->user->name }} {{ $this->user->last_name }}</h2>
                             @endif
-                            <p class="{{ $editing ? 'mt-[20px]' : 'mt-1' }} text-[12px] text-gray-500">González Alonzo y Asociados S.C.P.</p>
-                            <span class="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-medium {{ $isOnline ? 'border-emerald-200 text-emerald-700' : 'border-gray-200 text-gray-500' }}">
+                            <p class="{{ $editing ? 'mt-[20px]' : 'mt-[10px]' }} leading-none text-black">González Alonzo y Asociados S.C.P.</p>
+                            <span class="mt-[20px] inline-flex items-center gap-[10px] leading-none text-black {{ $isOnline ? 'rounded-full border border-[#d4d4d8] px-[20px] py-[10px]' : '' }}">
                                 <span class="h-2 w-2 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>{{ $isOnline ? 'Disponible' : 'Desconectado' }}
                             </span>
                         </div>
 
-                        <div class="mt-[20px] space-y-[6px] border-t border-zinc-200 pt-[15px] text-left">
-                            <div class="flex items-start gap-3 rounded-xl px-3 py-2 text-gray-600">
-                                @if ($editing)
-                                    <div class="min-w-0 flex-1">
-                                        <label for="profile-email" class="mb-2 block font-semibold text-black">Correo electrónico</label>
-                                        <input id="profile-email" type="email" wire:model="state.email" autocomplete="email" placeholder="nombre@empresa.com" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                        <x-input-error for="email" class="mt-2" />
-                                    </div>
-                                @else
-                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                    <span class="min-w-0 truncate text-[13px]" title="{{ $this->user->email }}">{{ $this->user->email }}</span>
-                                @endif
+                        <div class="mt-[20px] flex flex-col gap-[20px] border-t border-[#d4d4d8] pt-[20px] text-left">
+                            @if ($editing)
+                                <div class="min-w-0">
+                                    <label for="profile-email" class="mb-[10px] block leading-none text-[#1A3A6B]">Correo electrónico</label>
+                                    <input id="profile-email" type="email" wire:model="state.email" autocomplete="email" placeholder="nombre@empresa.com" class="{{ $fieldClass }}">
+                                    <x-input-error for="email" class="mt-[10px]" />
+                                </div>
+                            @else
+                                <div class="flex items-center gap-[10px] leading-none text-black">
+                                    <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                    <span class="profile-lines min-w-0 break-all" title="{{ $this->user->email }}">{{ $this->user->email }}</span>
+                                </div>
+                            @endif
+                            <div class="flex items-center gap-[10px] leading-none text-black">
+                                <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657 13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <span class="min-w-0 truncate" title="Mérida, Yucatán, México">Mérida, Yucatán, México</span>
                             </div>
-                            <div class="flex items-start gap-3 rounded-xl px-3 py-2 text-gray-600">
-                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657 13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                <span class="min-w-0 truncate text-[13px]" title="Mérida, Yucatán, México">Mérida, Yucatán, México</span>
-                            </div>
-                            <div class="flex items-start gap-3 rounded-xl px-3 py-2 text-gray-600">
-                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <span class="text-[13px]">{{ (int) $this->user->created_at->diffInDays(now()) }} días con la cuenta</span>
+                            <div class="flex items-center gap-[10px] leading-none text-black">
+                                <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span>{{ (int) $this->user->created_at->diffInDays(now()) }} días con la cuenta</span>
                             </div>
                         </div>
                     </div>
                     @livewire('profile.people-sidebar')
                 </aside>
 
-                <div class="min-w-0 bg-white p-[25px]">
-                    <header class="flex items-center justify-between border-b border-gray-200 pb-[20px]">
-                        <div>
-                            <p class="text-[12px] font-semibold uppercase tracking-[0.08em] text-gray-400">Resumen del colaborador</p>
-                            <h2 class="mt-1 font-semibold text-gray-800">Información del perfil</h2>
+                <div class="min-w-0 bg-white">
+                    <header class="profile-strip flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                        <div class="min-w-0">
+                            <h2 class="leading-none text-[#1A3A6B]">Información del perfil</h2>
+                            <p class="mt-[10px] leading-none text-black">Resumen del colaborador</p>
                         </div>
-                        <div class="flex items-center gap-5 text-[12px] text-gray-400">
+                        <div class="flex shrink-0 items-center gap-[20px] leading-none text-black">
                             <span>{{ number_format($activityCount) }} actividades</span>
                             <span>{{ number_format($friendCount) }} amigos</span>
                             <span>Actualizado {{ $this->user->updated_at->locale('es')->diffForHumans() }}</span>
                         </div>
                     </header>
 
-                    <div class="mt-[25px] grid gap-[25px] 2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]">
-                        <article class="rounded-2xl border border-zinc-200 bg-white p-[25px] shadow-[0_4px_14px_rgba(0,0,0,0.025)]">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-[#cbd9ed] text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg></span>
-                                <div><p class="font-semibold text-gray-800">Acerca de mí</p><p class="text-[12px] text-gray-400">Presentación personal y profesional</p></div>
-                            </div>
-                            @if ($editing)
-                                <label for="profile-description" class="mb-2 mt-[20px] block font-semibold text-black">Descripción del perfil</label>
-                                <textarea id="profile-description" wire:model="state.profile_description" rows="7" maxlength="500" class="block w-full resize-none rounded-xl border-zinc-200 bg-white text-[15px] leading-7 text-zinc-700 focus:border-black focus:ring-black/10" placeholder="Cuéntanos sobre tu experiencia, funciones o intereses profesionales..."></textarea>
-                                <x-input-error for="profile_description" class="mt-2" />
-                            @else
-                                <p class="mt-[20px] text-justify leading-7 text-gray-600">{{ $this->user->profile_description ?: 'Colaborador de González Alonzo y Asociados S.C.P., ubicado en Mérida, Yucatán, México. Este perfil reúne información profesional y organizacional para facilitar la comunicación, la colaboración y el contacto con otros integrantes del equipo.' }}</p>
-                            @endif
-                        </article>
-
-                        <article class="rounded-2xl border border-zinc-200 bg-white p-[25px] shadow-[0_4px_14px_rgba(0,0,0,0.025)]">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-black"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg></span>
-                                <div><p class="font-semibold text-gray-800">Información organizacional</p><p class="text-[12px] text-gray-400">Posición dentro de la empresa</p></div>
-                            </div>
-                            <dl class="mt-[20px] grid grid-cols-2 gap-[12px]">
-                                <div class="min-w-0 rounded-xl border border-zinc-200 bg-white p-[15px]"><dt class="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-400">Área</dt><dd class="mt-2 truncate font-semibold text-black" title="{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}</dd></div>
-                                <div class="min-w-0 rounded-xl border border-zinc-200 bg-white p-[15px]"><dt class="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-400">Puesto</dt><dd class="mt-2 truncate font-semibold text-black" title="{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}</dd></div>
-                                <div class="rounded-xl border border-zinc-200 bg-white p-[15px]"><dt class="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-400">Colaboradores</dt><dd class="mt-2 font-semibold text-black">{{ $subordinates->isEmpty() ? 'No tiene colaboradores' : $subordinates->count() }}</dd></div>
-                                <div class="min-w-0 rounded-xl border border-zinc-200 bg-white p-[15px]"><dt class="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-400">Supervisor</dt><dd class="mt-2 truncate font-semibold text-black" title="{{ $supervisors->map(fn ($user) => trim($user->name.' '.$user->last_name))->join(', ') ?: 'Sin supervisor' }}">{{ $supervisors->map(fn ($user) => trim($user->name.' '.$user->last_name))->join(', ') ?: 'Sin supervisor' }}</dd></div>
-                            </dl>
-                        </article>
-                    </div>
-
-                    <article class="mt-[25px] rounded-2xl border border-zinc-200 bg-white p-[25px] shadow-[0_4px_14px_rgba(0,0,0,0.025)]">
-                        <header class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-black"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm9 1v6m3-3h-6" /></svg></span>
-                                <div><p class="font-semibold text-gray-800">Amigos</p><p class="text-[12px] text-gray-400">{{ $totalFriends }} contactos agregados</p></div>
-                            </div>
-                            <button type="button" @click="friendsDirectoryOpen = true" class="font-semibold text-black hover:underline">Ver directorio</button>
-                        </header>
-                        <div class="mt-[20px] flex min-w-0 flex-wrap gap-[12px]">
-                            @forelse ($friends as $friend)
-                                <a href="{{ route('profiles.show', $friend) }}" class="group flex w-[145px] items-center gap-3 rounded-xl border border-zinc-200 p-3 transition hover:border-zinc-400 hover:bg-zinc-50">
-                                    @if ($friend->profile_photo_path)
-                                        <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
+                    <div class="flex flex-col gap-[20px] p-[20px]">
+                        <div class="grid gap-[20px] 2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]">
+                            <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                                <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                    <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg></span>
+                                    <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Acerca de mí</h3><p class="mt-[10px] leading-none text-black">Presentación personal y profesional</p></div>
+                                </header>
+                                <div class="p-[20px]">
+                                    @if ($editing)
+                                        <label for="profile-description" class="mb-[10px] block leading-none text-[#1A3A6B]">Descripción del perfil</label>
+                                        <textarea id="profile-description" wire:model="state.profile_description" rows="7" maxlength="500" class="block w-full resize-none rounded-xl border border-[#d4d4d8] bg-white px-[20px] py-[10px] text-black profile-field-lines" placeholder="Cuéntanos sobre tu experiencia, funciones o intereses profesionales..."></textarea>
+                                        <x-input-error for="profile_description" class="mt-[10px]" />
                                     @else
-                                        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 font-semibold text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
+                                        <p class="profile-lines text-justify text-black">{{ $this->user->profile_description ?: 'Colaborador de González Alonzo y Asociados S.C.P., ubicado en Mérida, Yucatán, México. Este perfil reúne información profesional y organizacional para facilitar la comunicación, la colaboración y el contacto con otros integrantes del equipo.' }}</p>
                                     @endif
-                                    <span class="min-w-0 truncate text-[12px] font-semibold text-zinc-600 group-hover:text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
-                                </a>
-                            @empty
-                                <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-gray-200 px-5 py-8 text-center text-gray-400">
-                                    <span>Todavía no tienes amigos agregados.</span>
                                 </div>
-                            @endforelse
+                            </article>
+
+                            <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                                <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                    <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg></span>
+                                    <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Información organizacional</h3><p class="mt-[10px] leading-none text-black">Posición dentro de la empresa</p></div>
+                                </header>
+                                <dl class="grid grid-cols-2 gap-[20px] p-[20px]">
+                                    <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Área</dt><dd class="mt-[10px] truncate leading-none text-black" title="{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->physicalArea?->name ?? 'Sin asignar' }}</dd></div>
+                                    <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Puesto</dt><dd class="mt-[10px] truncate leading-none text-black" title="{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}">{{ $organizationalProfile?->jobPosition?->name ?? 'Sin asignar' }}</dd></div>
+                                    <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Colaboradores</dt><dd class="mt-[10px] leading-none text-black">{{ $subordinates->isEmpty() ? 'No tiene colaboradores' : $subordinates->count() }}</dd></div>
+                                    <div class="min-w-0"><dt class="leading-none text-[#1A3A6B]">Supervisor</dt><dd class="mt-[10px] truncate leading-none text-black" title="{{ $supervisors->map(fn ($user) => trim($user->name.' '.$user->last_name))->join(', ') ?: 'Sin supervisor' }}">{{ $supervisors->map(fn ($user) => trim($user->name.' '.$user->last_name))->join(', ') ?: 'Sin supervisor' }}</dd></div>
+                                </dl>
+                            </article>
                         </div>
-                    </article>
 
-                    @if ($editing)
-                        <article class="mt-[25px] rounded-2xl border border-zinc-200 bg-white p-[25px] shadow-[0_4px_14px_rgba(0,0,0,0.025)]">
-                            <header class="flex items-center justify-between gap-3">
-                                <div class="flex items-center gap-3">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-black">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                </span>
-                                <div>
-                                    <h3 class="font-semibold text-black">Seguridad y contraseña</h3>
-                                    <p class="text-zinc-500">Este cambio requiere comprobar tu contraseña actual y repetir la nueva.</p>
+                        <article class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                            <header class="profile-strip flex items-center justify-between gap-[20px] gap-y-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                <div class="flex min-w-0 items-center gap-[10px]">
+                                    <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm9 1v6m3-3h-6" /></svg></span>
+                                    <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Amigos</h3><p class="mt-[10px] leading-none text-black">{{ $totalFriends }} contactos agregados</p></div>
                                 </div>
-                                </div>
-                                <span class="shrink-0 rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1 font-semibold text-black">Verificación doble</span>
-                            </header>
-
-                            <div class="mt-[20px] grid gap-[20px] xl:grid-cols-3">
-                                <div>
-                                    <label for="current-password" class="mb-2 block font-semibold text-black">1. Contraseña actual</label>
-                                    <input id="current-password" type="password" wire:model="currentPassword" autocomplete="current-password" placeholder="Escribe tu contraseña actual" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                    <x-input-error for="currentPassword" class="mt-2" />
-                                </div>
-                                <div>
-                                    <label for="new-password" class="mb-2 block font-semibold text-black">2. Nueva contraseña</label>
-                                    <input id="new-password" type="password" wire:model="newPassword" autocomplete="new-password" placeholder="Escribe la nueva contraseña" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                    <x-input-error for="newPassword" class="mt-2" />
-                                </div>
-                                <div>
-                                    <label for="new-password-confirmation" class="mb-2 block font-semibold text-black">3. Repite la nueva contraseña</label>
-                                    <input id="new-password-confirmation" type="password" wire:model="newPasswordConfirmation" autocomplete="new-password" placeholder="Repite la nueva contraseña" class="h-11 w-full rounded-xl border-zinc-200 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                    <x-input-error for="newPasswordConfirmation" class="mt-2" />
-                                </div>
-                            </div>
-                            <p class="mt-[15px] text-zinc-500">La nueva contraseña debe coincidir en los dos últimos campos. Se actualizará cuando presiones “Guardar cambios”.</p>
-                        </article>
-                    @endif
-
-                    @if ($this->isOwnProfile)
-                        @livewire('profile.logout-other-browser-sessions-form')
-                    @endif
-
-                    @if ($editing)
-                        <article class="mt-[25px] rounded-2xl border border-red-200 bg-red-50/60 p-[20px]">
-                            <header class="flex items-center justify-between gap-[20px]">
-                                <div class="flex min-w-0 items-start gap-3">
-                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-700">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </span>
-                                    <div>
-                                        <h3 class="font-semibold text-red-800">Zona de peligro: eliminar perfil</h3>
-                                        <p class="mt-1 text-red-700">No es un cambio de contraseña. Esta acción es permanente y eliminará tu cuenta junto con sus datos asociados.</p>
-                                    </div>
-                                </div>
-                                <button type="button" wire:click="deleteAccount" wire:confirm="¿Estás seguro de que deseas eliminar tu perfil? Esta acción no se puede deshacer." class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-red-700 px-5 font-semibold whitespace-nowrap text-white transition hover:bg-red-800 disabled:opacity-50" wire:loading.attr="disabled" wire:target="deleteAccount">
-                                    Eliminar mi perfil
+                                <button type="button" @click="friendsDirectoryOpen = true" class="{{ str_replace('py-[15px]', 'py-[10px]', $actionButton) }} shrink-0">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10" /></svg>
+                                    <span>Ver directorio</span>
                                 </button>
                             </header>
-
-                            <div class="mt-[15px] grid gap-[15px] xl:grid-cols-2">
-                                <div>
-                                    <label for="deletion-name" class="mb-2 block font-semibold text-black">Escribe tu nombre completo para confirmar</label>
-                                    <input id="deletion-name" type="text" wire:model="deletionName" autocomplete="off" placeholder="{{ trim($this->user->name.' '.$this->user->last_name) }}" class="h-11 w-full rounded-xl border-zinc-300 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                    <p class="mt-2 text-zinc-500">Debes escribir exactamente: <span class="font-semibold text-black">{{ trim($this->user->name.' '.$this->user->last_name) }}</span></p>
-                                    <x-input-error for="deletionName" class="mt-2" />
-                                </div>
-                                <div>
-                                    <label for="deletion-password" class="mb-2 block font-semibold text-black">Contraseña actual</label>
-                                    <input id="deletion-password" type="password" wire:model="deletionPassword" autocomplete="current-password" placeholder="Confirma tu contraseña actual" class="h-11 w-full rounded-xl border-zinc-300 bg-white px-3 text-black focus:border-black focus:ring-black/10">
-                                    <x-input-error for="deletionPassword" class="mt-2" />
-                                </div>
+                            <div class="profile-chip-grid min-w-0 p-[20px]">
+                                @forelse ($friends as $friend)
+                                    <a href="{{ route('profiles.show', $friend) }}" class="flex min-w-0 items-center gap-[10px] rounded-xl border border-[#d4d4d8] px-[20px] py-[10px] transition hover:bg-zinc-50">
+                                        @if ($friend->profile_photo_path)
+                                            <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
+                                        @else
+                                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
+                                        @endif
+                                        <span class="min-w-0 truncate leading-none text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
+                                    </a>
+                                @empty
+                                    <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center leading-none text-black">
+                                        <span>Todavía no tienes amigos agregados.</span>
+                                    </div>
+                                @endforelse
                             </div>
-
                         </article>
-                    @endif
+
+                        @if ($editing)
+                            <article class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                                <header class="profile-strip flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                    <div class="flex min-w-0 items-center gap-[10px]">
+                                        <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <h3 class="leading-none text-[#1A3A6B]">Seguridad y contraseña</h3>
+                                            <p class="mt-[10px] leading-none text-black">Requiere tu contraseña actual y repetir la nueva.</p>
+                                        </div>
+                                    </div>
+                                    <span class="shrink-0 rounded-full border border-[#d4d4d8] bg-white px-[20px] py-[10px] leading-none text-black">Verificación doble</span>
+                                </header>
+
+                                <div class="p-[20px]">
+                                    <div class="grid gap-[20px] xl:grid-cols-3">
+                                        <div>
+                                            <label for="current-password" class="mb-[10px] block leading-none text-[#1A3A6B]">1. Contraseña actual</label>
+                                            <input id="current-password" type="password" wire:model="currentPassword" autocomplete="current-password" placeholder="Tu contraseña" class="{{ $fieldClass }}">
+                                            <x-input-error for="currentPassword" class="mt-[10px]" />
+                                        </div>
+                                        <div>
+                                            <label for="new-password" class="mb-[10px] block leading-none text-[#1A3A6B]">2. Nueva contraseña</label>
+                                            <input id="new-password" type="password" wire:model="newPassword" autocomplete="new-password" placeholder="Escribe la nueva" class="{{ $fieldClass }}">
+                                            <x-input-error for="newPassword" class="mt-[10px]" />
+                                        </div>
+                                        <div>
+                                            <label for="new-password-confirmation" class="mb-[10px] block leading-none text-[#1A3A6B]">3. Repite la contraseña</label>
+                                            <input id="new-password-confirmation" type="password" wire:model="newPasswordConfirmation" autocomplete="new-password" placeholder="Repite la nueva" class="{{ $fieldClass }}">
+                                            <x-input-error for="newPasswordConfirmation" class="mt-[10px]" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-[20px] flex flex-col"><p class="profile-lines text-black">La nueva contraseña debe coincidir en los dos últimos campos. Se actualizará cuando presiones “Guardar cambios”.</p></div>
+                                </div>
+                            </article>
+                        @endif
+
+                        @if ($this->isOwnProfile)
+                            @livewire('profile.logout-other-browser-sessions-form')
+                        @endif
+
+                        @if ($this->isOwnProfile && ! $standalone && \Laravel\Fortify\Features::canManageTwoFactorAuthentication())
+                            @livewire('profile.two-factor-authentication-form')
+                        @endif
+
+                        @if ($editing)
+                            <article class="profile-danger overflow-hidden rounded-xl border bg-white">
+                                <header class="profile-danger-strip profile-strip flex items-center justify-between gap-[20px] gap-y-[10px] border-b p-[20px]">
+                                    <div class="flex min-w-0 items-center gap-[10px]">
+                                        <span class="profile-danger-icon profile-icon-box flex shrink-0 items-center justify-center rounded-lg border bg-white">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <h3 class="profile-danger-text leading-none">Zona de peligro: eliminar perfil</h3>
+                                            <p class="mt-[10px] leading-none text-black">Acción permanente: elimina tu cuenta y sus datos asociados.</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" wire:click="deleteAccount" wire:confirm="¿Estás seguro de que deseas eliminar tu perfil? Esta acción no se puede deshacer." class="profile-danger-text inline-flex shrink-0 items-center gap-[10px] whitespace-nowrap bg-transparent py-[10px] leading-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50" wire:loading.attr="disabled" wire:target="deleteAccount">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        <span>Eliminar mi perfil</span>
+                                    </button>
+                                </header>
+
+                                <div class="grid gap-[20px] p-[20px] xl:grid-cols-2">
+                                    <div>
+                                        <label for="deletion-name" class="mb-[10px] block leading-none text-[#1A3A6B]">Escribe tu nombre para confirmar</label>
+                                        <input id="deletion-name" type="text" wire:model="deletionName" autocomplete="off" placeholder="{{ trim($this->user->name.' '.$this->user->last_name) }}" class="{{ $fieldClass }}">
+                                        <div class="mt-[10px] flex flex-col"><p class="profile-lines text-black">Debes escribir exactamente: <span class="text-[#1A3A6B]">{{ trim($this->user->name.' '.$this->user->last_name) }}</span></p></div>
+                                        <x-input-error for="deletionName" class="mt-[10px]" />
+                                    </div>
+                                    <div>
+                                        <label for="deletion-password" class="mb-[10px] block leading-none text-[#1A3A6B]">Contraseña actual</label>
+                                        <input id="deletion-password" type="password" wire:model="deletionPassword" autocomplete="current-password" placeholder="Confirma tu contraseña actual" class="{{ $fieldClass }}">
+                                        <x-input-error for="deletionPassword" class="mt-[10px]" />
+                                    </div>
+                                </div>
+                            </article>
+                        @endif
+                    </div>
                 </div>
             </section>
 
-            <x-action-message on="saved" class="text-sm font-medium text-emerald-600">Perfil actualizado correctamente.</x-action-message>
-        </main>
+            <x-action-message on="saved" class="profile-message text-emerald-600">Perfil actualizado correctamente.</x-action-message>
     @if ($this->isOwnProfile)
         </form>
     @else
         </div>
     @endif
 
+    </main>
+    </div>
+
     <template x-teleport="body">
-        <div x-cloak x-show="friendsDirectoryOpen" class="fixed inset-x-0 bottom-0 top-[90px] z-[100]" role="dialog" aria-modal="true" aria-label="Directorio de amigos">
+        <div data-profile-overlay x-cloak x-show="friendsDirectoryOpen" class="fixed inset-x-0 bottom-0 z-[100]" style="top: 100px;" role="dialog" aria-modal="true" aria-label="Directorio de amigos">
             <button type="button" x-show="friendsDirectoryOpen" x-transition.opacity @click="friendsDirectoryOpen = false" class="absolute inset-0 bg-black/25 backdrop-blur-md" aria-label="Cerrar directorio"></button>
             <aside
                 x-show="friendsDirectoryOpen"
@@ -350,35 +419,39 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="translate-x-0"
                 x-transition:leave-end="-translate-x-full"
-                class="absolute inset-y-0 left-0 flex w-[420px] max-w-full flex-col border-r border-zinc-200 bg-white shadow-2xl"
+                class="absolute inset-y-0 left-0 flex w-[420px] max-w-full flex-col border-r border-[#d4d4d8] bg-white shadow-2xl"
             >
-                <header class="flex shrink-0 items-center justify-between border-b border-zinc-200 px-[25px] py-[20px]">
-                    <div>
-                        <h2 class="text-[20px] font-bold text-black">Directorio de amigos</h2>
-                        <p class="mt-1 text-zinc-500">{{ $totalFriends }} {{ $totalFriends === 1 ? 'amigo agregado' : 'amigos agregados' }}</p>
+                <header class="profile-strip flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                    <div class="min-w-0">
+                        <h2 class="leading-none text-[#1A3A6B]">Directorio de amigos</h2>
+                        <p class="mt-[10px] leading-none text-black">{{ $totalFriends }} {{ $totalFriends === 1 ? 'amigo agregado' : 'amigos agregados' }}</p>
                     </div>
-                    <button type="button" @click="friendsDirectoryOpen = false" class="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 text-black transition hover:bg-zinc-100" aria-label="Cerrar">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18" /></svg>
+                    <button type="button" @click="friendsDirectoryOpen = false" class="{{ $actionButton }} shrink-0" aria-label="Cerrar">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18" /></svg>
+                        <span>Cerrar</span>
                     </button>
                 </header>
 
-                <div class="profile-people-scrollbar min-h-0 flex-1 space-y-[10px] overflow-y-auto px-[25px] py-[20px]">
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="profile-line-scroll flex h-full flex-col gap-[20px] overflow-y-auto p-[20px]">
                     @forelse ($allFriends as $friend)
-                        <a href="{{ route('profiles.show', $friend) }}" class="flex items-center gap-3 rounded-xl border border-zinc-200 p-3 transition hover:bg-zinc-50">
+                        <a href="{{ route('profiles.show', $friend) }}" class="flex shrink-0 items-center gap-[10px] rounded-xl border border-[#d4d4d8] p-[20px] transition hover:bg-zinc-50">
                             @if ($friend->profile_photo_path)
-                                <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
+                                <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
                             @else
-                                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-100 font-semibold text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
                             @endif
                             <span class="min-w-0 flex-1">
-                                <span class="block truncate font-semibold text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }} {{ $friend->last_name }}</span>
-                                <span class="mt-1 block truncate text-zinc-500" title="{{ $friend->email }}">{{ $friend->email }}</span>
+                                <span class="block truncate leading-none text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }} {{ $friend->last_name }}</span>
+                                <span class="mt-[10px] block truncate leading-none text-black" title="{{ $friend->email }}">{{ $friend->email }}</span>
                             </span>
-                            <svg class="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
+                            <svg class="h-4 w-4 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" /></svg>
                         </a>
                     @empty
-                        <div class="rounded-xl border border-dashed border-zinc-200 px-5 py-10 text-center text-zinc-500">Todavía no tienes amigos agregados.</div>
+                        <div class="rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center leading-none text-black">Todavía no tienes amigos agregados.</div>
                     @endforelse
+                </div>
+                <span x-show="visible" x-cloak class="profile-line-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
             </aside>
         </div>
@@ -391,18 +464,346 @@
                 @if ($this->user->profile_photo_path)
                     <img src="{{ $this->user->profile_photo_url }}" alt="Foto ampliada de {{ $this->user->name }}" class="max-h-[82vh] max-w-[82vw] rounded-full border-[6px] border-[#e7e7e7] object-contain shadow-2xl">
                 @else
-                    <span class="grid h-[min(70vw,420px)] w-[min(70vw,420px)] place-items-center rounded-full border-[6px] border-zinc-200 bg-white text-8xl font-bold text-black shadow-2xl">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
+                    <span class="grid h-[min(70vw,420px)] w-[min(70vw,420px)] place-items-center rounded-full border-[6px] border-zinc-200 bg-white text-8xl text-black shadow-2xl">{{ mb_strtoupper(mb_substr($this->user->name, 0, 1).mb_substr($this->user->last_name ?? '', 0, 1)) }}</span>
                 @endif
             </div>
         </div>
     </template>
+
     <style>
-        .profile-monochrome [class*="text-[#1A3A6B]"] { color: #000 !important; }
-        .profile-monochrome { font-size: 15px; }
-        .profile-monochrome :is([class*="text-2xl"], [class*="text-xl"], [class*="text-3xl"]) { font-size: 20px !important; }
-        .profile-monochrome :is([class*="text-[10px]"], [class*="text-[11px]"], [class*="text-[12px]"], [class*="text-[13px]"]) { font-size: 15px !important; }
-        .profile-monochrome :is([class*="text-sm"], [class*="text-base"], [class*="text-lg"]) { font-size: 15px !important; }
-        .profile-monochrome .uppercase { text-transform: none !important; }
-        .profile-monochrome [class*="tracking-"] { letter-spacing: normal !important; }
+        /* Un solo tamaño y peso de letra en toda la página; solo el título principal (20px) es más grande. */
+        .profile-page *,
+        [data-profile-overlay] * {
+            font-weight: 400;
+        }
+
+        .profile-page :is(p, span, label, button, a, input, textarea, select, h2, h3, dt, dd),
+        [data-profile-overlay] :is(p, span, label, button, a, input, textarea, select, h2, h3) {
+            font-size: 15px;
+            letter-spacing: normal;
+            text-transform: none;
+        }
+
+        .profile-page .profile-initials {
+            font-size: 20px;
+        }
+
+        /* Caja del icono de cada subtítulo: cuadrada y del alto completo del título con su descripción (mínimo 44px). */
+        /* Texto de varias líneas: 25px por línea, o sea 10px entre una línea y la siguiente (igual que entre título y descripción). */
+        .profile-lines {
+            line-height: 25px;
+            margin-top: -5px;
+            margin-bottom: -5px;
+        }
+
+        .profile-field-lines {
+            line-height: 25px;
+        }
+
+        /* Título principal: el icono mide lo mismo que título + descripción (20 + 10 + 15) para que la distancia al contenedor sea de 20px. */
+        .profile-head-icon {
+            width: 45px;
+            height: 45px;
+        }
+
+        /* Máximo dos líneas; si hay más, la segunda termina en "…". */
+        .profile-clamp-2 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        /* Fila de botones de texto: se le quita el margen invisible de arriba y abajo para que la distancia visible sea la del resto del bloque. */
+        .profile-actions {
+            margin-top: -5px;
+            margin-bottom: -15px;
+        }
+
+        /* Responsive: si lo de la derecha de una franja no cabe en la misma línea, baja (alineado a la derecha) en vez de apretar o cortar el texto. */
+        .profile-page .profile-strip.justify-between,
+        [data-profile-overlay] .profile-strip.justify-between {
+            flex-wrap: wrap;
+        }
+
+        .profile-page .profile-strip.justify-between > :nth-child(2),
+        [data-profile-overlay] .profile-strip.justify-between > :nth-child(2) {
+            margin-left: auto;
+        }
+
+        /* Mensajes de error de los campos: 10px debajo del campo y 25px por línea (10px entre líneas si se parten). El componente trae text-sm con interlineado de 20px. */
+        .profile-page p.text-red-600,
+        [data-profile-overlay] p.text-red-600 {
+            line-height: 25px;
+            margin-top: 5px;
+            margin-bottom: -5px;
+        }
+
+        /* Mensajes de confirmación: el componente trae text-sm y text-gray-600; aquí se fuerzan a 15px y verde. */
+        .profile-page .profile-message {
+            color: #059669;
+            font-size: 15px;
+            line-height: 15px;
+        }
+
+        /* Si el título y los botones no caben en una línea, los botones bajan en vez de apretar el texto. */
+        @media (min-width: 1024px) {
+            .profile-page .profile-head {
+                flex-wrap: wrap;
+            }
+
+            /* Los botones de texto miden 46px por su margen invisible; el título se pega abajo para que su distancia al contenedor sea exactamente de 20px. */
+            .profile-page .profile-head > .profile-head-title {
+                align-self: flex-end;
+            }
+        }
+
+        /* Botón principal (Seguir / Aceptar): azul fuerte con letra blanca. */
+        .profile-page .profile-primary:hover {
+            background-color: #14305a;
+            border-color: #14305a;
+            color: #ffffff;
+        }
+
+        /* Con interlineado 1 y texto cortado con "...", la parte baja de letras como g, y, p se recortaba: se amplía el área visible sin mover nada. */
+        .profile-page .truncate,
+        [data-profile-overlay] .truncate {
+            padding-bottom: 3px;
+            margin-bottom: -3px;
+        }
+
+        /* Amigos: cuadrícula de recuadros con 20px entre ellos. */
+        .profile-chip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 20px;
+        }
+
+        .profile-chip-grid > div {
+            grid-column: 1 / -1;
+        }
+
+        /* Buscador: icono y texto a 20px del borde. */
+        .profile-search-icon {
+            left: 20px;
+        }
+
+        .profile-search-input {
+            padding-left: 46px;
+            padding-right: 20px;
+        }
+
+        .profile-icon-box {
+            align-self: stretch;
+            aspect-ratio: 1 / 1;
+            min-height: 44px;
+        }
+
+        /* Franja de título de cada tarjeta: 85px de alto, y crece si la descripción ocupa dos líneas. */
+        .profile-page .profile-strip,
+        [data-profile-overlay] .profile-strip {
+            min-height: 85px;
+        }
+
+        /* El código QR siempre va sobre blanco para que se pueda escanear, también en tema oscuro. */
+        .profile-qr {
+            background-color: #ffffff;
+        }
+
+        /* Sin borde morado al enfocar: el borde se queda igual que en reposo. */
+        .profile-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+        .profile-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible,
+        [data-profile-overlay] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+        [data-profile-overlay] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+            border-color: #d4d4d8 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+        }
+
+        .profile-page :is(button, a):focus,
+        .profile-page :is(button, a):focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .profile-page input[type="range"] {
+            accent-color: #000000;
+        }
+
+        /* El texto de relleno es lo único en gris. */
+        .profile-page ::placeholder {
+            color: #a1a1aa;
+            opacity: 1;
+        }
+
+        /* Anillo del avatar: del color de la tarjeta, para separarlo de la portada. */
+        .profile-page .profile-avatar-ring {
+            border: 5px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .profile-page .profile-status-dot {
+            box-shadow: 0 0 0 3px #ffffff;
+        }
+
+        /* Zona de peligro: rojo suave, sin negritas. */
+        .profile-page .profile-danger { border-color: #fecaca; }
+        .profile-page .profile-danger-strip { background-color: #fef2f2; border-bottom-color: #fecaca; }
+        .profile-page .profile-danger-icon { border-color: #fecaca; color: #b91c1c; }
+        .profile-page .profile-danger-text { color: #b91c1c; }
+        .profile-page button.profile-danger-text:hover { color: #7f1d1d; }
+
+        /* Scroll de las listas: sin barra nativa; solo una línea azul delgada (igual que en Preguntas). */
+        .profile-line-scroll {
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+        }
+
+        .profile-line-scroll::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+
+        .profile-line-thumb {
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 20;
+            width: 3px;
+            min-height: 32px;
+            border-radius: 9999px;
+            background: #1A3A6B;
+            pointer-events: none;
+        }
+
+        .profile-page:fullscreen {
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        /* ===== Tema oscuro (misma paleta que Reportes de soporte y Notificaciones) ===== */
+        html.module-dark-theme {
+            --support-accent: #6aa9ff;
+            --support-border: #3f3f46;
+            --support-surface: #18181b;
+            --support-header: #202023;
+        }
+
+        html.module-dark-theme #main-content .profile-page,
+        html.module-dark-theme [data-profile-overlay] {
+            color: #e4e4e7;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="bg-white"],
+        html.module-dark-theme [data-profile-overlay] [class~="bg-white"] {
+            background-color: var(--support-surface) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="bg-zinc-100"],
+        html.module-dark-theme [data-profile-overlay] [class~="bg-zinc-100"] {
+            background-color: var(--support-header) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="bg-zinc-50"] {
+            background-color: #1d1d21 !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="hover:bg-zinc-50"]:hover,
+        html.module-dark-theme [data-profile-overlay] [class*="hover:bg-zinc-50"]:hover {
+            background-color: #26262b !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-50"]):not([class~="bg-zinc-100"]):not(:hover),
+        html.module-dark-theme [data-profile-overlay] [class*="hover:bg-zinc-50"]:not([class~="bg-white"]):not([class~="bg-zinc-100"]):not(:hover) {
+            background-color: transparent !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="border-[#d4d4d8]"],
+        html.module-dark-theme [data-profile-overlay] [class*="border-[#d4d4d8]"] {
+            border-color: var(--support-border) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="text-black"],
+        html.module-dark-theme [data-profile-overlay] [class~="text-black"] {
+            color: #e4e4e7 !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="text-[#1A3A6B]"],
+        html.module-dark-theme [data-profile-overlay] [class~="text-[#1A3A6B]"] {
+            color: var(--support-accent) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover,
+        html.module-dark-theme [data-profile-overlay] [class~="text-[#1A3A6B]"][class*="hover:text-black"]:hover {
+            color: #fafafa !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page ::placeholder {
+            color: #71717a;
+        }
+
+        html.module-dark-theme #main-content .profile-page input[type="range"] {
+            accent-color: var(--support-accent);
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="bg-white/95"] {
+            background-color: rgba(24, 24, 27, 0.95) !important;
+            border-color: var(--support-border) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="bg-zinc-200"] {
+            background-color: var(--support-border) !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page .profile-avatar-ring {
+            border-color: var(--support-surface);
+        }
+
+        html.module-dark-theme #main-content .profile-page .profile-status-dot {
+            box-shadow: 0 0 0 3px var(--support-surface);
+        }
+
+        html.module-dark-theme .profile-qr {
+            background-color: #ffffff !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class~="ring-zinc-200"] {
+            --tw-ring-color: var(--support-border);
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="text-emerald-6"] {
+            color: #34d399 !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page [class*="text-red-6"] {
+            color: #f87171 !important;
+        }
+
+        html.module-dark-theme #main-content .profile-page .profile-danger { border-color: rgba(248, 113, 113, 0.4); }
+        html.module-dark-theme #main-content .profile-page .profile-danger-strip { background-color: rgba(248, 113, 113, 0.08) !important; border-bottom-color: rgba(248, 113, 113, 0.4) !important; }
+        html.module-dark-theme #main-content .profile-page .profile-danger-icon { border-color: rgba(248, 113, 113, 0.4) !important; color: #f87171; }
+        html.module-dark-theme #main-content .profile-page .profile-danger-text { color: #f87171 !important; }
+        html.module-dark-theme #main-content .profile-page button.profile-danger-text:hover { color: #fecaca !important; }
+
+        html.module-dark-theme .profile-line-thumb {
+            background: var(--support-accent);
+        }
+
+        html.module-dark-theme [data-profile-overlay] aside {
+            background-color: var(--support-surface);
+        }
+
+        html.module-dark-theme [data-profile-overlay] [class~="ring-zinc-200"] {
+            --tw-ring-color: var(--support-border);
+        }
+
+        @media print {
+            #main-nav, #logo-sidebar, .no-print { display: none !important; }
+            #main-content { margin-left: 0 !important; padding-top: 0 !important; }
+            .profile-page { min-height: 0 !important; overflow: visible !important; }
+            .profile-page > div { height: auto !important; }
+            .profile-main { width: 100% !important; transform: none !important; padding: 0 !important; }
+        }
     </style>
 </section>

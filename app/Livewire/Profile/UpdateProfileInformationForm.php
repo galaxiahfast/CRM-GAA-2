@@ -52,7 +52,7 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
         $this->isOwnProfile = $this->viewedUser === null || $this->viewedUser->is(auth()->user());
         $this->state['last_name'] = auth()->user()->last_name ?? '';
         $profileUser = $this->viewedUser ?? auth()->user();
-        $this->isOnline = DB::table((string) config('session.table', 'sessions'))
+        $this->isOnline = $this->isOwnProfile || DB::table((string) config('session.table', 'sessions'))
             ->where('user_id', $profileUser->id)
             ->where('last_activity', '>=', now()->subMinutes(2)->timestamp)
             ->exists();

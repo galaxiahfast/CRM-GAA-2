@@ -361,7 +361,7 @@
     <div
         class="support-report-page h-[calc(100dvh-100px)] overflow-hidden bg-white text-[15px] text-black"
         x-data="{
-            viewScale: Number(localStorage.getItem('support-reports-view-scale') || 90),
+            viewScale: 90,
             isFullscreen: false,
             init() {
                 if (this.viewScale < 70 || this.viewScale > 100) this.viewScale = 90;

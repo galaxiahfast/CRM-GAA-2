@@ -2,17 +2,11 @@
     data-clock-particle-network
     class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
-        viewScale: 100,
+        viewScale: 90,
         isFullscreen: false,
         profilePhotoOpen: false,
         profilePhotoUrl: '',
         profilePhotoName: '',
-        init() {
-            const savedScale = Number(localStorage.getItem('support-ticket-view-scale'));
-            if (savedScale >= 70 && savedScale <= 100) {
-                this.viewScale = savedScale;
-            }
-        },
         saveScale() {
             localStorage.setItem('support-ticket-view-scale', String(this.viewScale));
         },
@@ -51,7 +45,7 @@
             class="h-1.5 w-[130px] cursor-pointer accent-black"
             aria-label="Ajustar tamaño de la vista del Ticket"
         >
-        <span class="w-[42px] text-right text-[15px] font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
+        <span class="w-[42px] text-right text-[15px] font-semibold tabular-nums text-black" x-text="viewScale + '%'">90%</span>
         <span class="h-5 w-px bg-zinc-200" aria-hidden="true"></span>
         <button
             type="button"

@@ -1,7 +1,7 @@
 <div
     class="support-questions-page h-[calc(100dvh-100px)] overflow-hidden bg-white text-[15px] text-black"
     x-data="{
-        viewScale: Number(localStorage.getItem('support-questions-view-scale') || 90),
+        viewScale: 90,
         isFullscreen: false,
         init() {
             if (this.viewScale < 70 || this.viewScale > 100) this.viewScale = 90;
@@ -39,7 +39,7 @@
             'preguntas' => 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         ];
         $questionIconPath = 'M8.4 8.2a3.8 3.8 0 1 1 5.5 3.4c-1.2.6-1.9 1.4-1.9 2.8M12 19.4h.01';
-        $pageIconPath = 'M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14ZM20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z';
+        $pageIconPath = 'M12 3.5a8.5 8.5 0 1 1-4.2 15.9L3.5 20.5l1.2-4A8.5 8.5 0 0 1 12 3.5ZM9.7 9.7a2.4 2.4 0 1 1 3.6 2.1c-.8.5-1.3.9-1.3 1.8M12 16.6h.01';
         $botName = (string) config('support.automated_user.name', 'Sofia');
         $botAvatar = asset(ltrim((string) config('support.automated_user.avatar', 'img/support/sofia-avatar.svg'), '/'));
         $currentCategory = $questionBank[$category] ?? null;

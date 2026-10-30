@@ -47,7 +47,7 @@
             <span
                 wire:key="notification-badge-{{ $unreadCount }}"
                 @class([
-                    'absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 text-center text-[9px] font-bold leading-none text-white ring-2 ring-[#1a3a6b] tabular-nums',
+                    'absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 text-center text-[9px] font-bold leading-none text-white ring-2 ring-[#1a3a6b] tabular-nums',
                     'w-5 p-0' => $unreadCount < 10,
                     'px-1' => $unreadCount >= 10,
                 ])
@@ -90,12 +90,12 @@
         @endphp
 
         <header class="flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
-            <div class="flex min-w-0 items-center gap-[15px]">
-                <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $bellPath }}" /></svg>
+            <div class="flex min-w-0 items-center gap-[10px]">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $bellPath }}" /></svg>
                 </span>
                 <div class="min-w-0">
-                    <h2 class="notification-title leading-none text-[#1A3A6B]">Notificaciones</h2>
+                    <h2 class="leading-none text-[#1A3A6B]">Notificaciones</h2>
                     <p class="mt-[10px] leading-none text-black">Eventos recientes del sistema</p>
                 </div>
             </div>
@@ -309,14 +309,6 @@
         }
 
         /* Mensaje de cada notificación: siempre el mismo alto (2 líneas), "..." al final si no cabe y texto justificado. */
-        /* Título del panel: igual que el de la página (20px), único texto más grande. */
-        .notification-panel h2.notification-title {
-            font-size: 20px;
-            font-weight: 400;
-            letter-spacing: -0.025em;
-            line-height: 1;
-        }
-
         .notification-panel .notification-message {
             display: -webkit-box;
             -webkit-box-orient: vertical;
