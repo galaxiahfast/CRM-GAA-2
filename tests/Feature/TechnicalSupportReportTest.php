@@ -35,7 +35,7 @@ class TechnicalSupportReportTest extends TestCase
             ->assertDontSee('Historial de reportes');
 
         $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.history'))
+            ->get(route('soporte.reportes-tecnicos.history', ['date' => '2026-10-28']))
             ->assertOk()
             ->assertSee('Historial de reportes')
             ->assertSee('ST-20261028-0012')
@@ -44,7 +44,7 @@ class TechnicalSupportReportTest extends TestCase
             ->assertDontSee('Soporte técnico general');
 
         $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.movements'))
+            ->get(route('soporte.reportes-tecnicos.movements', ['date' => '2026-10-28']))
             ->assertOk()
             ->assertSee('Historial de movimientos')
             ->assertSee('Reporte generado')
@@ -61,19 +61,19 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $searchResponse = $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.history', ['q' => 'Crystal Reports']))
+            ->get(route('soporte.reportes-tecnicos.history', ['q' => 'Crystal Reports', 'date' => '2026-10-28']))
             ->assertOk();
         $this->assertSame(['ST-20261028-0012'], $searchResponse->viewData('reports')->pluck('folio')->all());
 
         $recipientResponse = $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.history', ['recipient' => 'Auditoría']))
+            ->get(route('soporte.reportes-tecnicos.history', ['recipient' => 'Auditoría', 'date' => '2026-10-28']))
             ->assertOk();
         $this->assertContains('ST-20261028-0012', $recipientResponse->viewData('reports')->pluck('folio'));
         $this->assertContains('ST-20261028-0011', $recipientResponse->viewData('reports')->pluck('folio'));
         $this->assertNotContains('ST-20261028-0010', $recipientResponse->viewData('reports')->pluck('folio'));
 
         $targetResponse = $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.history', ['target' => 'Noh Chan Claudia Alejandra']))
+            ->get(route('soporte.reportes-tecnicos.history', ['target' => 'Noh Chan Claudia Alejandra', 'date' => '2026-10-28']))
             ->assertOk();
         $this->assertSame(
             ['ST-20261028-0011'],
@@ -570,5 +570,57 @@ class TechnicalSupportReportTest extends TestCase
             'ST-20261028-0012-inst-crystal-audictamen.pdf',
             app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
         );
+    }
+
+    public function test_accounting_nominas_and_office_report_is_available(): void
+    {
+        $report = TechnicalSupportReport::query()
+            ->where('folio', 'ST-20261030-0013')
+            ->firstOrFail();
+
+        $this->assertSame('Contabilidad', $report->service_recipient);
+        $this->assertSame(
+            [
+                'linked_spreadsheets_correction',
+                'contpaqi_nominas_reinstall',
+                'office_2013_uninstall',
+                'office_2019_install',
+                'office_2019_activation',
+                'excel_addin_persistence',
+                'report_linked_files_bug_fix',
+            ],
+            collect($report->supports)->pluck('key')->all(),
+        );
+
+        $catalog = app(TechnicalSupportReportPdfService::class)->catalog();
+
+        foreach ($report->supports as $support) {
+            $this->assertSame(1, $support['quantity']);
+            $this->assertSame(['Carlos Rafael De Jesús Diaz Ruiz'], $support['targets']);
+            $this->assertSame($catalog[$support['key']]['title'], $support['title']);
+        }
+
+        $this->assertSame(
+            'ST-20261030-0013-hojas-vinculadas-reinst-nom-desinst-office-2013-inst-office-2019-act-office-2019-complemento-excel-archivos-enlazados.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($report)['filename'],
+        );
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'technical_support_report_id' => $report->id,
+            'folio' => 'ST-20261030-0013',
+            'action' => TechnicalSupportReportMovement::ACTION_CREATED,
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history'))
+            ->assertOk()
+            ->assertSee('ST-20261030-0013')
+            ->assertSee('Departamento o cliente: Contabilidad');
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.pdf', $report))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 }

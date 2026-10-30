@@ -25,6 +25,11 @@ class TechnicalSupportReportPdfService
             'office_install' => ['title' => 'Instalación de Microsoft Office', 'description' => 'Instalación, activación autorizada y pruebas de las aplicaciones.'],
             'office_license_activation' => ['title' => 'Activación de licencia de Microsoft Office', 'description' => 'Activación y comprobación de la licencia de Microsoft Office en el equipo.'],
             'linked_spreadsheets_correction' => ['title' => 'Corrección de hojas de cálculo vinculadas', 'description' => 'Revisión y corrección de vínculos entre hojas de cálculo.'],
+            'office_2013_uninstall' => ['title' => 'Desinstalación de Microsoft Office 2013', 'description' => 'Retiro completo de Microsoft Office 2013 antes de instalar la versión nueva.'],
+            'office_2019_install' => ['title' => 'Instalación de Microsoft Office 2019', 'description' => 'Instalación y comprobación de las aplicaciones de Microsoft Office 2019.'],
+            'office_2019_activation' => ['title' => 'Activación de Microsoft Office 2019 y corrección de errores de activación', 'description' => 'Activación de la licencia y corrección de los errores que impedían completarla.'],
+            'excel_addin_persistence' => ['title' => 'Configuración del complemento de hoja de cálculo de Excel para mantenerlo activo', 'description' => 'Configuración de Excel para que el complemento de hoja de cálculo permanezca activo al abrir el programa.'],
+            'report_linked_files_bug_fix' => ['title' => 'Corrección de error en los archivos enlazados del sistema de reportes', 'description' => 'Diagnóstico y corrección del error al enlazar archivos en el sistema de reportes.'],
             'microsoft_365_install' => ['title' => 'Instalación de Microsoft 365', 'description' => 'Instalación y comprobación de las aplicaciones de Microsoft 365.'],
             'microsoft_365_refresh' => ['title' => 'Desinstalación e instalación actualizada de Microsoft 365', 'description' => 'Retiro de la instalación anterior, instalación de la versión vigente y comprobación de funcionamiento.'],
             'claude_addin_setup' => ['title' => 'Configuración del complemento de Claude en Microsoft 365', 'description' => 'Instalación, configuración y validación del complemento de Claude.'],
@@ -94,6 +99,21 @@ class TechnicalSupportReportPdfService
         $dompdf->add_info('Author', $report->responsible);
         $dompdf->add_info('Subject', 'Formato membretado de soporte técnico');
 
+        $pdf->render();
+        $headerPath = public_path('img/delivery-notes/datamid-header.png');
+        $logoPath = public_path('img/delivery-notes/datamid-logo.png');
+        $footerPath = public_path('img/delivery-notes/datamid-footer.png');
+
+        $dompdf->getCanvas()->page_script(static function ($pageNumber, $pageCount, $canvas) use ($headerPath, $logoPath, $footerPath): void {
+            if ($pageNumber === 1) {
+                return;
+            }
+
+            $canvas->image($headerPath, 0, 0, 108, 107);
+            $canvas->image($logoPath, 438, 28, 120, 36);
+            $canvas->image($footerPath, 0, 611, 612, 181);
+        });
+
         return $pdf->output();
     }
 
@@ -114,6 +134,11 @@ class TechnicalSupportReportPdfService
                 'office_install' => 'inst-office',
                 'office_license_activation' => 'act-office',
                 'linked_spreadsheets_correction' => 'hojas-vinculadas',
+                'office_2013_uninstall' => 'desinst-office-2013',
+                'office_2019_install' => 'inst-office-2019',
+                'office_2019_activation' => 'act-office-2019',
+                'excel_addin_persistence' => 'complemento-excel',
+                'report_linked_files_bug_fix' => 'archivos-enlazados',
                 'microsoft_365_install' => 'inst-m365',
                 'microsoft_365_refresh' => 'm365',
                 'claude_addin_setup' => 'claude',
