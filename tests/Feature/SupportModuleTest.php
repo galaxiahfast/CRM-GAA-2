@@ -8,11 +8,11 @@ use App\Models\Role;
 use App\Models\SupportChatMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -90,7 +90,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
-            ->call('ask', 'general', 'perfil')
+            ->call('ask', 'inicio', 'que_es')
             ->call('downloadPdf')
             ->assertFileDownloaded('conversacion-asistente-2026-08-20-143015.pdf');
 
@@ -680,10 +680,10 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
-            ->call('ask', 'actividades', 'reloj_checador')
+            ->call('ask', 'control_horas', 'reloj_checador')
             ->assertSet('selectedQuestion', '¿Cómo consulto mis marcas del reloj checador?')
             ->assertSee('Revisar Horas')
-            ->assertSee('opciones de exportación');
+            ->assertSee('últimos 15 días');
     }
 
     public function test_questions_bot_keeps_only_a_temporary_conversation_history(): void
@@ -692,10 +692,10 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
-            ->call('ask', 'general', 'navegar')
-            ->call('ask', 'actividades', 'reloj_checador')
+            ->call('ask', 'inicio', 'tarjetas')
+            ->call('ask', 'control_horas', 'reloj_checador')
             ->assertCount('conversation', 2)
-            ->assertSee('¿Cómo navego por la aplicación?')
+            ->assertSee('¿A dónde llevan las tarjetas de Inicio?')
             ->assertSee('¿Cómo consulto mis marcas del reloj checador?')
             ->call('resetConversation')
             ->assertSet('conversation', [])
@@ -709,24 +709,44 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(QuestionsBot::class)
-            ->call('ask', 'documentos', 'reporte_soporte')
+            ->call('ask', 'reportes_soporte', 'generar')
             ->assertSet('selectedQuestion', '¿Cómo genero un reporte de soporte?')
             ->assertSee('Reportes de Soporte')
             ->assertSee('personas o equipos');
     }
 
-    public function test_questions_bot_categories_follow_the_menu_and_have_five_to_seven_questions(): void
+    public function test_questions_bot_categories_follow_the_menu_and_have_five_questions_each(): void
     {
         $categories = config('support.questions');
 
         $this->assertSame(
-            ['general', 'informacion', 'actividades', 'documentos', 'soporte'],
+            [
+                'inicio', 'panel_general', 'conciliacion_ocr', 'conciliacion_bancaria', 'administracion', 'clientes',
+                'control_horas', 'gestion_respaldos', 'hoja_entrega', 'reportes_soporte', 'reporte_respaldos',
+                'chat_soporte', 'preguntas',
+            ],
             array_keys($categories)
         );
 
         foreach ($categories as $category) {
-            $this->assertGreaterThanOrEqual(5, count($category['items']));
-            $this->assertLessThanOrEqual(7, count($category['items']));
+            $this->assertCount(5, $category['items']);
+
+            foreach ($category['items'] as $item) {
+                $this->assertNotEmpty($item['question']);
+                $this->assertNotEmpty($item['answer']);
+                $this->assertNotEmpty($item['steps']);
+            }
         }
+    }
+
+    public function test_questions_bot_downloads_a_pdf_guide_for_the_selected_section(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(QuestionsBot::class)
+            ->call('selectCategory', 'conciliacion_ocr')
+            ->call('downloadGuide')
+            ->assertFileDownloaded();
     }
 }

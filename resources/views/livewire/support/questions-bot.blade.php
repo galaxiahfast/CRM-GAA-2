@@ -30,6 +30,13 @@
             'respaldo' => 'M4 5c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3Zm0 0v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5m-16 7v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7',
             'documento' => 'M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5',
             'herramientas' => 'M4 6h10m4 0h2M4 12h2m4 0h10M4 18h8m4 0h4M14 4v4M8 10v4m6 2v4',
+            'panel' => 'M5 4h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm10 0h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1ZM5 14h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Zm10 0h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z',
+            'ocr' => 'M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8',
+            'bancaria' => 'M3 6h18M6 10h12M5 14h5m4 0h5M5 18h5m4 0h5M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z',
+            'hoja' => 'M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5',
+            'reporte_respaldos' => 'M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18',
+            'chat' => 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z',
+            'preguntas' => 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         ];
         $questionIconPath = 'M8.4 8.2a3.8 3.8 0 1 1 5.5 3.4c-1.2.6-1.9 1.4-1.9 2.8M12 19.4h.01';
         $pageIconPath = 'M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14ZM20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z';
@@ -120,14 +127,21 @@
 
                 {{-- Preguntas de la categoría --}}
                 <section class="support-questions-col" aria-label="Preguntas disponibles">
-                    <div class="flex h-[85px] shrink-0 items-center gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                    <div class="flex h-[85px] shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
                         <div class="min-w-0">
                             <div class="flex items-center gap-[10px]">
-                                <h2 class="leading-none text-[#1A3A6B]">{{ $currentCategory['label'] ?? 'Ayuda' }}</h2>
-                                <span class="leading-none text-[#1A3A6B]">({{ count($currentItems) }})</span>
+                                <h2 class="truncate leading-none text-[#1A3A6B]">{{ $currentCategory['label'] ?? 'Ayuda' }}</h2>
+                                <span class="shrink-0 leading-none text-[#1A3A6B]">({{ count($currentItems) }})</span>
                             </div>
                             <p class="mt-[10px] leading-none text-black">Preguntas disponibles</p>
                         </div>
+                        @if ($currentCategory)
+                            <button type="button" wire:click="downloadGuide" wire:loading.attr="disabled" wire:target="downloadGuide" title="Descargar la guía de {{ $currentCategory['label'] }} en PDF" class="no-print inline-flex shrink-0 items-center gap-[10px] whitespace-nowrap bg-transparent leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40">
+                                <svg wire:loading.remove wire:target="downloadGuide" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5"/></svg>
+                                <svg wire:loading wire:target="downloadGuide" class="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                                <span>Guía PDF</span>
+                            </button>
+                        @endif
                     </div>
 
                     <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="$wire.category; $nextTick(() => update())" class="relative min-h-0 flex-1">

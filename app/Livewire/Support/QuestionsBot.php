@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Support;
 
+use App\Services\Support\SupportGuidePdfService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -10,7 +11,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionsBot extends Component
 {
-    public string $category = 'general';
+    public string $category = 'inicio';
 
     public ?string $selectedQuestion = null;
 
@@ -72,6 +73,20 @@ class QuestionsBot extends Component
         return response()->streamDownload(
             static fn () => print $pdf->output(),
             'conversacion-asistente-'.$generatedAt->format('Y-m-d-His').'.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    public function downloadGuide(?string $category = null): StreamedResponse
+    {
+        abort_unless(auth()->check(), 403);
+
+        $guide = app(SupportGuidePdfService::class)->generate($category ?? $this->category);
+        abort_if($guide === null, 404);
+
+        return response()->streamDownload(
+            static fn () => print $guide['content'],
+            $guide['filename'],
             ['Content-Type' => 'application/pdf']
         );
     }
