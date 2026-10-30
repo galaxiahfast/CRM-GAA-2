@@ -256,7 +256,7 @@
                     </header>
 
                     <div class="flex flex-col gap-[20px] p-[20px]">
-                        <div class="grid gap-[20px] {{ $this->isOwnProfile ? '2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]' : '' }}">
+                        <div class="grid gap-[20px] 2xl:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)]">
                             @if ($this->isOwnProfile)
                             <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                                 <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
@@ -274,8 +274,12 @@
                                 </div>
                             </article>
                             @else
-                            <article class="min-w-0 rounded-xl border border-[#d4d4d8] bg-white p-[20px]">
-                                <div class="flex flex-wrap items-center gap-x-[30px] gap-y-[15px] text-black">
+                            <article class="min-w-0 overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                                <header class="profile-strip flex items-center gap-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                    <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h16v16H4zM8 9h8m-8 4h8m-8 4h5" /></svg></span>
+                                    <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Información de contacto</h3><p class="mt-[10px] leading-none text-black">Datos de la cuenta</p></div>
+                                </header>
+                                <div class="flex flex-col gap-[20px] p-[20px] text-black">
                                     <span class="flex min-w-0 items-center gap-[10px] break-all"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 6h18v12H3zM3 7l9 7 9-7" /></svg>{{ $this->user->email }}</span>
                                     <span class="flex items-center gap-[10px]"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0zM12 10h.01" /></svg>Mérida, Yucatán, México</span>
                                     <span class="flex items-center gap-[10px]"><svg class="h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5h18v16H3zM7 3v4m10-4v4M3 10h18" /></svg>{{ (int) $this->user->created_at->diffInDays(now()) }} días con la cuenta</span>
