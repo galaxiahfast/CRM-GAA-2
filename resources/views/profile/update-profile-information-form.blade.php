@@ -49,7 +49,6 @@
         $allFriends = $this->user->friends()->orderBy('name')->orderBy('last_name')->get();
         $friends = $allFriends->take(8);
         $actionButton = 'inline-flex items-center gap-[10px] whitespace-nowrap bg-transparent py-[15px] leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
-        $primaryButton = 'profile-primary inline-flex items-center gap-[10px] whitespace-nowrap rounded-xl border border-[#1A3A6B] bg-[#1A3A6B] px-[20px] py-[10px] leading-none text-white transition-colors focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-40';
         $fieldClass = 'h-11 w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-black';
     @endphp
 
@@ -87,12 +86,12 @@
                     @if (! $this->isOwnProfile)
                         @php($friendship = $this->friendship)
                         @if (! $friendship)
-                            <button type="button" wire:click="requestFriendship" class="{{ $primaryButton }}">
+                            <button type="button" wire:click="requestFriendship" class="{{ $actionButton }}">
                                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
                                 <span>Seguir</span>
                             </button>
                         @elseif ($friendship->status === \App\Models\Friendship::PENDING && $friendship->addressee_id === auth()->id())
-                            <button type="button" wire:click="acceptFriendship" class="{{ $primaryButton }}">
+                            <button type="button" wire:click="acceptFriendship" class="{{ $actionButton }}">
                                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" /></svg>
                                 <span>Aceptar solicitud</span>
                             </button>
@@ -303,34 +302,36 @@
                             </article>
                         </div>
 
-                        <article class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
-                            <header class="profile-strip flex items-center justify-between gap-[20px] gap-y-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
-                                <div class="flex min-w-0 items-center gap-[10px]">
-                                    <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm9 1v6m3-3h-6" /></svg></span>
-                                    <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Amigos</h3><p class="mt-[10px] leading-none text-black">{{ $totalFriends }} contactos agregados</p></div>
-                                </div>
-                                <button type="button" @click="friendsDirectoryOpen = true" class="{{ str_replace('py-[15px]', 'py-[10px]', $actionButton) }} shrink-0">
-                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10" /></svg>
-                                    <span>Ver directorio</span>
-                                </button>
-                            </header>
-                            <div class="profile-chip-grid min-w-0 p-[20px] {{ $this->isOwnProfile ? '' : 'profile-chip-grid-wide' }}">
-                                @forelse ($friends as $friend)
-                                    <a href="{{ route('profiles.show', $friend) }}" class="flex min-w-0 items-center gap-[10px] rounded-xl border border-[#d4d4d8] px-[20px] py-[10px] transition hover:bg-zinc-50">
-                                        @if ($friend->profile_photo_path)
-                                            <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
-                                        @else
-                                            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
-                                        @endif
-                                        <span class="min-w-0 truncate leading-none text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
-                                    </a>
-                                @empty
-                                    <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center text-black">
-                                        <span class="profile-lines">Todavía no tienes amigos agregados.</span>
+                        @if ($this->isOwnProfile)
+                            <article class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
+                                <header class="profile-strip flex items-center justify-between gap-[20px] gap-y-[10px] border-b border-[#d4d4d8] bg-zinc-100 p-[20px]">
+                                    <div class="flex min-w-0 items-center gap-[10px]">
+                                        <span class="profile-icon-box flex shrink-0 items-center justify-center rounded-lg border border-[#d4d4d8] bg-white text-[#1A3A6B]"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4m9-10a4 4 0 100-8 4 4 0 000 8zm9 1v6m3-3h-6" /></svg></span>
+                                        <div class="min-w-0"><h3 class="leading-none text-[#1A3A6B]">Amigos</h3><p class="mt-[10px] leading-none text-black">{{ $totalFriends }} contactos agregados</p></div>
                                     </div>
-                                @endforelse
-                            </div>
-                        </article>
+                                    <button type="button" @click="friendsDirectoryOpen = true" class="{{ str_replace('py-[15px]', 'py-[10px]', $actionButton) }} shrink-0">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h10" /></svg>
+                                        <span>Ver directorio</span>
+                                    </button>
+                                </header>
+                                <div class="profile-chip-grid min-w-0 p-[20px]">
+                                    @forelse ($friends as $friend)
+                                        <a href="{{ route('profiles.show', $friend) }}" class="flex min-w-0 items-center gap-[10px] rounded-xl border border-[#d4d4d8] px-[20px] py-[10px] transition hover:bg-zinc-50">
+                                            @if ($friend->profile_photo_path)
+                                                <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-200">
+                                            @else
+                                                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-black ring-1 ring-zinc-200">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
+                                            @endif
+                                            <span class="min-w-0 truncate leading-none text-black" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
+                                        </a>
+                                    @empty
+                                        <div class="flex w-full items-center justify-center rounded-xl border border-dashed border-[#d4d4d8] px-[20px] py-[30px] text-center text-black">
+                                            <span class="profile-lines">Todavía no tienes amigos agregados.</span>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </article>
+                        @endif
 
                         @if ($editing)
                             <article class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
@@ -413,11 +414,13 @@
                         @endif
                     </div>
                 </div>
-            </section>
 
-            @if (! $this->isOwnProfile)
-                @livewire('profile.people-sidebar', ['wide' => true])
-            @endif
+                @if (! $this->isOwnProfile)
+                    <div class="profile-people-row min-w-0 border-t border-[#d4d4d8] bg-white p-[20px]">
+                        @livewire('profile.people-sidebar', ['wide' => true])
+                    </div>
+                @endif
+            </section>
 
             <x-action-message on="saved" class="profile-message text-emerald-600">Perfil actualizado correctamente.</x-action-message>
     @if ($this->isOwnProfile)
@@ -601,13 +604,6 @@
             }
         }
 
-        /* Botón principal (Seguir / Aceptar): azul fuerte con letra blanca. */
-        .profile-page .profile-primary:hover {
-            background-color: #14305a;
-            border-color: #14305a;
-            color: #ffffff;
-        }
-
         /* Con interlineado 1 y texto cortado con "...", la parte baja de letras como g, y, p se recortaba: se amplía el área visible sin mover nada. */
         .profile-page .truncate,
         [data-profile-overlay] .truncate {
@@ -622,8 +618,9 @@
             gap: 20px;
         }
 
-        .profile-chip-grid-wide {
-            grid-template-columns: minmax(0, 1fr);
+        /* Perfil de otra persona: "Conectar con personas" ocupa todo el ancho de la tarjeta, debajo de la portada y la información, para que la portada no deje un hueco en blanco. */
+        .profile-page .profile-people-row {
+            grid-column: 1 / -1;
         }
 
         .profile-chip-grid > div {
