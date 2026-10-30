@@ -715,7 +715,7 @@ class SupportModuleTest extends TestCase
             ->assertSee('personas o equipos');
     }
 
-    public function test_questions_bot_categories_follow_the_menu_and_have_five_questions_each(): void
+    public function test_questions_bot_categories_follow_the_menu_and_have_four_questions_each(): void
     {
         $categories = config('support.questions');
 
@@ -729,7 +729,7 @@ class SupportModuleTest extends TestCase
         );
 
         foreach ($categories as $category) {
-            $this->assertCount(5, $category['items']);
+            $this->assertCount(4, $category['items']);
 
             foreach ($category['items'] as $item) {
                 $this->assertNotEmpty($item['question']);

@@ -17,7 +17,7 @@ return [
     // Una categoría por cada apartado del menú lateral, en el mismo orden del menú.
     // Las opciones de Control de Horas (Cronómetro, Reloj Checador, Productividad, Panel de Control
     // y Supervisión de Horas) comparten una sola categoría.
-    // Cada categoría lleva 5 preguntas; 'steps' alimenta la guía en PDF.
+    // Cada categoría lleva 4 preguntas; 'steps' alimenta la guía en PDF.
     'questions' => [
         'inicio' => [
             'label' => 'Inicio',
@@ -53,15 +53,6 @@ return [
                         'Si prefieres hablar, usa el botón “Buscar por Voz”.',
                     ],
                 ],
-                'tema' => [
-                    'question' => '¿Cómo cambio entre tema claro y tema oscuro?',
-                    'answer' => 'Presiona el botón de tema de la barra superior o la opción “Tema Oscuro” del menú de tu usuario, al pie del menú lateral. La preferencia se recuerda en tu navegador.',
-                    'steps' => [
-                        'Busca el botón de tema en la barra superior, junto a Ayuda y Ajustes.',
-                        'Presiónalo para alternar entre tema claro y tema oscuro.',
-                        'Como alternativa, abre tu usuario al pie del menú lateral y elige “Tema Oscuro” o “Tema Claro”.',
-                    ],
-                ],
                 'opciones_visibles' => [
                     'question' => '¿Por qué no veo algunas opciones del menú?',
                     'answer' => 'El menú se adapta a tu rol y a tus permisos: apartados como Administración, Clientes, Gestión de Respaldos u Hoja de Entrega solo aparecen para quien tiene acceso.',
@@ -86,15 +77,6 @@ return [
                         'Entra a General › Panel General.',
                         'Revisa las tarjetas del “Informe de clientes”; cada servicio muestra su porcentaje de avance.',
                         'Si tienes permiso para administrar clientes, consulta en la parte superior los archivos mensuales, anuales y totales subidos.',
-                    ],
-                ],
-                'clientes_visibles' => [
-                    'question' => '¿Qué clientes aparecen en mi panel?',
-                    'answer' => 'Depende de tu rol: administradores y coordinadores ven todos los clientes; los contadores ven los clientes que tienen asignados y los auxiliares, aquellos donde están asignados como apoyo.',
-                    'steps' => [
-                        'Confirma tu rol con tu coordinador o en Información › Administración.',
-                        'Si falta un cliente, solicita que te lo asignen en Administración, en la tarjeta Asignaciones.',
-                        'Si no tienes clientes asignados, el panel mostrará el aviso “Sin clientes asignados”.',
                     ],
                 ],
                 'completos_incompletos' => [
@@ -164,16 +146,6 @@ return [
                         'Revisa los movimientos sin cruzar en los pasos 4 (banco) y 5 (contabilidad) para validar si falta registrarlos o si son partidas en tránsito.',
                     ],
                 ],
-                'reglas' => [
-                    'question' => '¿Qué reglas usa para cruzar los movimientos?',
-                    'answer' => 'Aplica cinco reglas en cascada: cruce exacto, fecha cercana (hasta 3 días), cruce por nombre, suma de comisiones/IVA y suma grupal. Las tres primeras toleran hasta $0.01 de diferencia.',
-                    'steps' => [
-                        'Cruce exacto: misma fecha y mismo valor.',
-                        'Fecha cercana: mismo valor exacto con hasta 3 días de diferencia.',
-                        'Cruce por nombre: mismo valor y descripciones que comparten una palabra.',
-                        'Suma de comisiones/IVA y suma grupal: varios movimientos cuyo total coincide exactamente.',
-                    ],
-                ],
                 'generar_excel' => [
                     'question' => '¿Cómo genero la conciliación del mes en Excel?',
                     'answer' => 'En el paso 7 captura el cliente, el RFC, el banco y los nombres de las firmas, y presiona “Descargar Conciliación en Excel”. Ese archivo se sube el mes siguiente como conciliación anterior.',
@@ -192,15 +164,6 @@ return [
             'menu' => 'General › Conciliación Bancaria › Conciliación Bancaria',
             'summary' => 'La Conciliación Bancaria cruza de forma automática el estado de cuenta contra el auxiliar contable de bancos y la conciliación del mes anterior. Está pensada para estados de cuenta digitales: PDF con texto seleccionable, Excel o CSV.',
             'items' => [
-                'diferencia_ocr' => [
-                    'question' => '¿En qué se diferencia de la Conciliación OCR?',
-                    'answer' => 'Esta herramienta lee estados de cuenta digitales. Si el cliente entrega el estado de cuenta escaneado o en imagen, utiliza la Conciliación OCR.',
-                    'steps' => [
-                        'Revisa si el PDF del banco permite seleccionar el texto.',
-                        'Si se puede seleccionar, o si tienes el Excel o el CSV, usa esta herramienta.',
-                        'Si es una imagen o un PDF escaneado, entra a General › Conciliación Bancaria › Conciliación OCR.',
-                    ],
-                ],
                 'archivos' => [
                     'question' => '¿Qué archivos necesito cargar?',
                     'answer' => 'Tres archivos: el estado de cuenta bancario (Excel, CSV o PDF digital), el auxiliar contable de bancos (.xlsx) y la conciliación del mes anterior (.xls o .xlsx).',
@@ -291,15 +254,6 @@ return [
                         'Antes de eliminar un rol, reasigna a las personas que lo tienen para que no queden sin perfil.',
                     ],
                 ],
-                'permisos_asignaciones' => [
-                    'question' => '¿Para qué sirven Permisos y Asignaciones?',
-                    'answer' => 'Permisos muestra la matriz de acceso disponible para cada perfil. Asignaciones relaciona clientes con sus responsables y auxiliares, y de ahí depende qué clientes ve cada persona en el Panel General.',
-                    'steps' => [
-                        'En la tarjeta Permisos consulta las reglas disponibles y los roles protegidos.',
-                        'En Asignaciones presiona Crear para elegir un cliente y relacionarlo con sus contadores y auxiliares.',
-                        'Usa Editar o Eliminar para actualizar o retirar una asignación.',
-                    ],
-                ],
             ],
         ],
         'clientes' => [
@@ -336,16 +290,6 @@ return [
                         'Localiza al cliente con el buscador.',
                         'Presiona “Editar cliente”, cambia los datos y presiona Actualizar.',
                         'Para borrarlo, presiona “Eliminar cliente” y confirma el aviso.',
-                    ],
-                ],
-                'seguimiento' => [
-                    'question' => '¿Cómo veo el seguimiento de un cliente?',
-                    'answer' => 'Usa la acción “Seguimiento del cliente” o selecciona su tarjeta en el Panel General. La ficha muestra sus contadores, el avance de formatos del mes y los servicios contratados.',
-                    'steps' => [
-                        'Abre la ficha desde Clientes o desde el Panel General.',
-                        'Elige el mes y el año que quieres consultar.',
-                        'Revisa “Formatos completados” y el porcentaje de avance.',
-                        'Selecciona un servicio y después un subservicio para ver sus formatos.',
                     ],
                 ],
                 'subir_pdf' => [
@@ -406,17 +350,6 @@ return [
                         'Presiona Buscar.',
                     ],
                 ],
-                'supervision' => [
-                    'question' => '¿Cómo genero el informe general de horas?',
-                    'answer' => 'Si tienes permiso de supervisión, en “Preparar informe” selecciona a los colaboradores, define el periodo (Desde y Hasta) y presiona “Generar informe”. El resultado aparece en “Resultado del reporte”.',
-                    'steps' => [
-                        'Entra a Actividades › Control de Horas › Supervisión de Horas.',
-                        'En Buscar colaborador escribe un nombre, ID o área (también puedes buscar por voz).',
-                        'Marca a los colaboradores o usa “Seleccionar todos”.',
-                        'Define Desde y Hasta en “Periodo del informe”.',
-                        'Presiona “Generar informe”.',
-                    ],
-                ],
             ],
         ],
         'gestion_respaldos' => [
@@ -425,15 +358,6 @@ return [
             'menu' => 'Actividades › Gestión de Respaldos',
             'summary' => 'Gestión de Respaldos compara los respaldos de CONTPAQi que están en el servidor con los que ya se copiaron a la memoria externa. Permite respaldar empresas, revisar el estado de cada una, consultar el historial y descargar la guía técnica de configuración.',
             'items' => [
-                'que_es' => [
-                    'question' => '¿Para qué sirve Gestión de Respaldos?',
-                    'answer' => 'Para comprobar qué empresas ya tienen respaldo completo (archivo BAK más documento ZIP o RAR), copiarlas a la memoria externa y llevar el historial de movimientos. El servidor se consulta en modo de solo lectura.',
-                    'steps' => [
-                        'Entra a Actividades › Gestión de Respaldos.',
-                        'Revisa el “Estado de respaldo de hoy”: una empresa está completa cuando existen su BAK y su ZIP o RAR.',
-                        'Consulta los respaldos por fecha y por estado.',
-                    ],
-                ],
                 'carpeta_destino' => [
                     'question' => '¿Cómo selecciono la carpeta de destino?',
                     'answer' => 'En la pestaña Respaldos navega por las carpetas de la memoria externa con Abrir y Volver; la carpeta elegida define dónde se comprueban y se guardan los respaldos.',
@@ -502,16 +426,6 @@ return [
                         'Presiona el botón final, por ejemplo “Generar recepción”.',
                     ],
                 ],
-                'foto_ocr' => [
-                    'question' => '¿Cómo funciona la identificación automática del equipo?',
-                    'answer' => 'Puedes tomar o subir una fotografía de la etiqueta (JPEG, PNG o WebP, máximo 10 MB). El sistema lee el texto con OCR dentro del servidor y sugiere los datos; tú decides cuáles aplicar.',
-                    'steps' => [
-                        'En “Identificación automática del equipo” presiona “Tomar o subir fotografía”.',
-                        'Espera a que lea la etiqueta y busque coincidencias.',
-                        'Si no se reconoce bien, usa Escala de grises, Más contraste o Rotar 90° y analiza de nuevo.',
-                        'Revisa las “Sugerencias interpretadas” y presiona Aplicar o “Aplicar todo”.',
-                    ],
-                ],
                 'prestamo' => [
                     'question' => '¿Cómo registro un préstamo y su devolución?',
                     'answer' => 'Elige Préstamo y define la operación: “Nuevo préstamo” o “Registrar devolución”. En el préstamo captura la fecha límite de devolución; en la devolución elige la orden pendiente.',
@@ -552,15 +466,6 @@ return [
                         'Presiona “Generar PDF”.',
                     ],
                 ],
-                'destinatario' => [
-                    'question' => '¿Cómo se define el destinatario del reporte?',
-                    'answer' => 'Se toma del departamento de cada colaborador elegido o del nombre del cliente externo. Debes elegir al menos una persona o cliente para poder generar el PDF.',
-                    'steps' => [
-                        'En cada servicio selecciona a las personas o equipos atendidos.',
-                        'Revisa “Destinatario del reporte” en el resumen; se llena al elegir personas.',
-                        'Si no hay personas ni cliente seleccionados, el botón no permite generar el PDF.',
-                    ],
-                ],
                 'historial' => [
                     'question' => '¿Cómo busco, veo o descargo un reporte?',
                     'answer' => 'En “Historial” filtra por fecha, departamento o persona, o busca por folio o servicio. Con las acciones Ver o Descargar de cada fila abres o guardas el PDF.',
@@ -599,16 +504,6 @@ return [
             'menu' => 'Documentos › Reportes › Reporte de Respaldos',
             'summary' => 'Reporte de Respaldos genera el Informe Técnico de Respaldos: supervisa los servidores, sus perfiles de respaldo y las incidencias a partir de los registros de la última ejecución. Su acceso es exclusivo para administradores.',
             'items' => [
-                'que_contiene' => [
-                    'question' => '¿Qué contiene el Informe Técnico de Respaldos?',
-                    'answer' => 'Supervisa servidores, perfiles e incidencias: por cada perfil muestra la última ejecución, si se realizó y su resultado, y resume las incidencias que requieren atención.',
-                    'steps' => [
-                        'Entra a Documentos › Reportes › Reporte de Respaldos.',
-                        'Revisa las estadísticas del encabezado del informe.',
-                        'Consulta “Servidores supervisados”: Perfil, Última ejecución, Hecho, Resultado y Acción.',
-                        'Revisa la sección Incidencias.',
-                    ],
-                ],
                 'actualizar' => [
                     'question' => '¿Cómo actualizo la información del informe?',
                     'answer' => 'Presiona “Actualizar registros”. El sistema lee los registros en modo de solo acceso, perfil por perfil, y muestra el avance mientras procesa.',
@@ -693,15 +588,6 @@ return [
                         'Para borrar uno propio, presiona “Eliminar mensaje”; quedará como “Mensaje eliminado”.',
                     ],
                 ],
-                'buscar_enlinea' => [
-                    'question' => '¿Cómo busco mensajes y veo quién está en línea?',
-                    'answer' => 'Usa “Buscar mensajes” para filtrar por nombre, correo o contenido, y el panel “Personas en línea” para ver quién está conectado.',
-                    'steps' => [
-                        'Presiona “Buscar mensajes” y escribe el nombre, correo o texto.',
-                        'Usa “Limpiar búsqueda” para volver a la conversación completa.',
-                        'Consulta “Personas en línea” en el panel lateral.',
-                    ],
-                ],
             ],
         ],
         'preguntas' => [
@@ -722,7 +608,7 @@ return [
                 ],
                 'categorias' => [
                     'question' => '¿Qué categorías encuentro?',
-                    'answer' => 'Una por cada apartado del menú lateral, en el mismo orden: desde Inicio hasta Preguntas. Cada una incluye 5 preguntas.',
+                    'answer' => 'Una por cada apartado del menú lateral, en el mismo orden: desde Inicio hasta Preguntas. Cada una incluye 4 preguntas.',
                     'steps' => [
                         'Recorre la lista de categorías de la primera columna.',
                         'Cada categoría indica cuántas preguntas contiene.',
@@ -737,15 +623,6 @@ return [
                         'Selecciona el apartado en la primera columna.',
                         'Presiona “Guía PDF” en el encabezado de la columna de preguntas.',
                         'Guarda el documento descargado.',
-                    ],
-                ],
-                'conversacion_pdf' => [
-                    'question' => '¿Cómo guardo o imprimo mi conversación?',
-                    'answer' => 'Con “Descargar PDF” del encabezado guardas la conversación con Sofia; “Imprimir” envía la página a la impresora.',
-                    'steps' => [
-                        'Haz las preguntas que necesites.',
-                        'Presiona “Descargar PDF” para guardar la conversación.',
-                        'O presiona “Imprimir” para imprimir la página.',
                     ],
                 ],
                 'sin_respuesta' => [
