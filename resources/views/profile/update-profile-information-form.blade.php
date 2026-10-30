@@ -623,7 +623,7 @@
         }
 
         .profile-chip-grid-wide {
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+            grid-template-columns: minmax(0, 1fr);
         }
 
         .profile-chip-grid > div {
