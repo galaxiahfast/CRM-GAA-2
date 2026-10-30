@@ -214,6 +214,7 @@
                             </span>
                         </div>
 
+                        @if ($this->isOwnProfile)
                         <div class="mt-[20px] flex flex-col gap-[20px] border-t border-[#d4d4d8] pt-[20px] text-left">
                             @if ($editing)
                                 <div class="min-w-0">
@@ -236,6 +237,7 @@
                                 <span>{{ (int) $this->user->created_at->diffInDays(now()) }} días con la cuenta</span>
                             </div>
                         </div>
+                        @endif
                     </div>
                     @if ($this->isOwnProfile)
                         @livewire('profile.people-sidebar')
@@ -312,7 +314,7 @@
                                     <span>Ver directorio</span>
                                 </button>
                             </header>
-                            <div class="profile-chip-grid min-w-0 p-[20px]">
+                            <div class="profile-chip-grid min-w-0 p-[20px] {{ $this->isOwnProfile ? '' : 'profile-chip-grid-wide' }}">
                                 @forelse ($friends as $friend)
                                     <a href="{{ route('profiles.show', $friend) }}" class="flex min-w-0 items-center gap-[10px] rounded-xl border border-[#d4d4d8] px-[20px] py-[10px] transition hover:bg-zinc-50">
                                         @if ($friend->profile_photo_path)
@@ -618,6 +620,10 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
             gap: 20px;
+        }
+
+        .profile-chip-grid-wide {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
         }
 
         .profile-chip-grid > div {
