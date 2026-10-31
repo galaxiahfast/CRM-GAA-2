@@ -6,6 +6,7 @@ use App\Mail\BackupReportMail;
 use App\Services\Support\BackupLogReaderService;
 use App\Services\Support\BackupReportPdfService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +17,9 @@ use Throwable;
 
 class ServerBackupReports extends Component
 {
+    /** Clave donde se guarda la última lectura completa para mostrarla mientras se actualiza el informe. */
+    private const SNAPSHOT_KEY = 'backup-reports.last-snapshot';
+
     /** @var array<int, array<string, mixed>> */
     public array $servers = [];
 
@@ -67,6 +71,7 @@ class ServerBackupReports extends Component
         $this->responsible = (string) config('backup-reports.responsible');
         $this->emailRecipients = array_values(config('backup-reports.email.recipients', []));
         $this->resetReport();
+        $this->restoreLastSnapshot();
     }
 
     public function startReading(): void
@@ -79,7 +84,9 @@ class ServerBackupReports extends Component
         $this->initialScanStarted = true;
         $this->emailStatus = '';
         $this->emailSent = false;
+        $previousServers = $this->servers;
         $this->resetReport();
+        $this->carryOverPreviousResults($previousServers);
         $this->scanAuthorized = true;
         $this->reading = true;
         $this->stopped = false;
@@ -110,7 +117,8 @@ class ServerBackupReports extends Component
         $serverIndex = $next['server'];
         $profileIndex = $next['profile'];
         $server = $this->servers[$serverIndex];
-        $profile = $server['profiles'][$profileIndex];
+        // Cada perfil se lee desde cero: los datos anteriores solo se muestran hasta que llega el resultado nuevo.
+        $profile = $this->freshProfile($server['profiles'][$profileIndex]);
         $path = rtrim((string) $server['share'], '\\/').DIRECTORY_SEPARATOR.$profile['log'].'.log.html';
 
         try {
@@ -447,7 +455,80 @@ class ServerBackupReports extends Component
         if (! $this->stopped) {
             $this->statusMessage = 'Lectura terminada. Puedes revisar, editar y descargar el informe.';
         }
+        if (! $this->stopped && $this->pendingProfiles === []) {
+            $this->rememberSnapshot();
+        }
         $this->dispatchScanProgress();
+    }
+
+    /** Guarda la última lectura completa para no mostrar el informe en ceros al volver a abrirlo. */
+    private function rememberSnapshot(): void
+    {
+        try {
+            Cache::forever(self::SNAPSHOT_KEY, [
+                'servers' => $this->servers,
+                'generatedAt' => $this->generatedAt,
+            ]);
+        } catch (Throwable $exception) {
+            Log::warning('No se pudo guardar la última lectura del informe de respaldos.', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /** Muestra la última lectura guardada (si existe) mientras llegan los resultados nuevos. */
+    private function restoreLastSnapshot(): void
+    {
+        try {
+            $snapshot = Cache::get(self::SNAPSHOT_KEY);
+        } catch (Throwable) {
+            return;
+        }
+
+        if (! is_array($snapshot) || ! is_array($snapshot['servers'] ?? null)) {
+            return;
+        }
+
+        if ($this->carryOverPreviousResults($snapshot['servers'])) {
+            $this->generatedAt = (string) ($snapshot['generatedAt'] ?? $this->generatedAt);
+            $this->statusMessage = 'Mostrando la última lectura guardada. Se actualizará al leer los registros.';
+        }
+    }
+
+    /**
+     * Copia los datos de la lectura anterior a los perfiles recién reiniciados, solo para mostrarlos:
+     * siguen marcados como pendientes (done = false) y cada uno se reemplaza cuando se lee de nuevo.
+     *
+     * @param  array<int, array<string, mixed>>  $previousServers
+     */
+    private function carryOverPreviousResults(array $previousServers): bool
+    {
+        $previous = [];
+        foreach ($previousServers as $server) {
+            foreach (($server['profiles'] ?? []) as $profile) {
+                if (($profile['done'] ?? false) || ($profile['stale'] ?? false)) {
+                    $previous[($server['key'] ?? '').'|'.($profile['log'] ?? '')] = $profile;
+                }
+            }
+        }
+
+        $carried = false;
+        foreach ($this->servers as $serverIndex => $server) {
+            foreach ($server['profiles'] as $profileIndex => $profile) {
+                $old = $previous[$server['key'].'|'.$profile['log']] ?? null;
+                if (! is_array($old)) {
+                    continue;
+                }
+                $this->servers[$serverIndex]['profiles'][$profileIndex] = array_merge(
+                    $profile,
+                    array_intersect_key($old, $profile),
+                    ['done' => false, 'stale' => true],
+                );
+                $carried = true;
+            }
+        }
+
+        return $carried;
     }
 
     private function dispatchScanProgress(): void

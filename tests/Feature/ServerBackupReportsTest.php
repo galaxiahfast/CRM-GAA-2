@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Support\BackupLogReaderService;
 use App\Services\Support\BackupReportPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Renderless;
@@ -113,6 +114,58 @@ class ServerBackupReportsTest extends TestCase
             ->assertSet('scanAuthorized', false)
             ->assertSee('autoScanStarted: false', false)
             ->assertSee('$wire.startReading()', false);
+    }
+
+    public function test_previous_report_is_shown_by_default_while_a_new_scan_runs(): void
+    {
+        $admin = $this->userWithRole('Administrador', 'admin-previous-report@datamid.test');
+        $profile = config('backup-reports.servers.0.profiles.0');
+        Cache::forever('backup-reports.last-snapshot', [
+            'generatedAt' => '2026-10-24T16:40:00-06:00',
+            'servers' => [[
+                'key' => 'server-0',
+                'profiles' => [[
+                    'name' => $profile['name'], 'log' => $profile['log'], 'available' => true, 'done' => true,
+                    'date' => '24/10/2026 04:40 p. m.', 'errors' => [], 'failedFiles' => [], 'issues' => [],
+                    'failed' => false, 'message' => '', 'processed' => '158/176', 'source' => '', 'destination' => '',
+                    'duration' => '', 'readBytes' => 0, 'totalBytes' => 0, 'readSeconds' => 0,
+                ]],
+            ]],
+        ]);
+
+        Livewire::actingAs($admin)->test(ServerBackupReports::class)
+            ->assertSet('servers.0.profiles.0.available', true)
+            ->assertSet('servers.0.profiles.0.processed', '158/176')
+            ->assertSet('servers.0.profiles.0.done', false)
+            ->assertSeeText('158/176')
+            ->call('startReading')
+            ->assertSet('servers.0.profiles.0.processed', '158/176')
+            ->assertSet('processedProfiles', 0)
+            ->assertSet('reading', true);
+    }
+
+    public function test_finished_scan_saves_the_last_report_for_the_next_visit(): void
+    {
+        $admin = $this->userWithRole('Administrador', 'admin-save-last-report@datamid.test');
+        $reader = \Mockery::mock(BackupLogReaderService::class);
+        $reader->shouldReceive('read')->once()->andReturn([
+            'available' => true, 'done' => true, 'date' => '03/10/2026 08:00 a. m.',
+            'errors' => [], 'failedFiles' => [], 'issues' => [], 'failed' => false,
+            'message' => '', 'processed' => '10/10', 'source' => 'C:\\Datos',
+            'destination' => 'D:\\Respaldos', 'duration' => '00:00:10',
+        ]);
+        $this->app->instance(BackupLogReaderService::class, $reader);
+
+        Livewire::actingAs($admin)->test(ServerBackupReports::class)
+            ->call('startReading')
+            ->set('pendingProfiles', [['server' => 0, 'profile' => 0]])
+            ->set('totalProfiles', 1)
+            ->call('readNext')
+            ->assertSet('reading', false);
+
+        $snapshot = Cache::get('backup-reports.last-snapshot');
+        $this->assertIsArray($snapshot);
+        $this->assertSame('10/10', $snapshot['servers'][0]['profiles'][0]['processed']);
     }
 
     public function test_log_reader_extracts_latest_execution_and_failed_company(): void
