@@ -16,7 +16,7 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200)
-            ->assertSeeText('González Alonzo y Asociados S.C.P')
+            ->assertSee('alt="González Alonzo y Asociados"', false)
             ->assertSeeText('Políticas de privacidad')
             ->assertSeeText('Todos los derechos reservados')
             ->assertDontSee('data-social-provider="facebook"', false)

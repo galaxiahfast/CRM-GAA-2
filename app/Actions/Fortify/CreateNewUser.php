@@ -28,9 +28,9 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         $defaultRole = Role::query()->firstOrCreate(
-            ['role' => 'Auxiliar'],
+            ['role' => 'Becario'],
             [
-                'description' => 'Rol operativo predeterminado',
+                'description' => 'Cuenta de becario registrada desde el portal',
                 'permission_profile' => Role::PROFILE_AUXILIARY,
             ]
         );

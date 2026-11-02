@@ -55,6 +55,7 @@ class RegistrationTest extends TestCase
 
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
 
+        $this->assertSame('Becario', $user->role?->role);
         $this->assertSame(Role::PROFILE_AUXILIARY, $user->role?->permission_profile);
         $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'customers.view'));
         $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'activities.manage'));

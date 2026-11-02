@@ -15,14 +15,15 @@ const initializeAuthParticleNetwork = () => {
     canvas.dataset.initialized = 'true';
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const pointer = { x: 0, y: 0, active: false, radius: 125 };
+    // clearance: distancia mínima absoluta entre una bolita y el puntero (ninguna puede acercarse más).
+    const pointer = { x: 0, y: 0, lastX: 0, lastY: 0, lead: 0, active: false, radius: 72, clearance: 38 };
     let width = 0;
     let height = 0;
     let points = [];
     let animationFrame = null;
     let currentPixelRatio = 0;
 
-    const targetDensity = () => Math.max(24, Math.min(90, Math.round((width * height) / 14000)));
+    const targetDensity = () => Math.max(36, Math.min(170, Math.round((width * height) / 7000)));
 
     const createPoint = (x, y) => {
         const angle = Math.random() * Math.PI * 2;
@@ -36,7 +37,7 @@ const initializeAuthParticleNetwork = () => {
             driftAngle: angle,
             driftSpeed,
             turnDirection: Math.random() > 0.5 ? 1 : -1,
-            size: 2.3,
+            size: 1.8,
         };
     };
 
@@ -134,7 +135,7 @@ const initializeAuthParticleNetwork = () => {
     };
 
     const movePoints = () => {
-        const separationDistance = 42;
+        const separationDistance = 30;
 
         for (let firstIndex = 0; firstIndex < points.length; firstIndex += 1) {
             for (let secondIndex = firstIndex + 1; secondIndex < points.length; secondIndex += 1) {
@@ -156,27 +157,41 @@ const initializeAuthParticleNetwork = () => {
             }
         }
 
+        // Si el puntero se mueve rápido, el área de rechazo se amplía para que las bolitas se aparten antes de que llegue.
+        if (pointer.active) {
+            const travel = Math.hypot(pointer.x - pointer.lastX, pointer.y - pointer.lastY);
+            pointer.lastX = pointer.x;
+            pointer.lastY = pointer.y;
+            pointer.lead += (Math.min(travel, 40) - pointer.lead) * 0.25;
+        } else {
+            pointer.lead = 0;
+        }
+
+        const reach = pointer.radius + pointer.lead * 1.0;
+
         points.forEach((point) => {
             point.driftAngle += point.turnDirection * 0.0012;
             const driftX = Math.cos(point.driftAngle) * point.driftSpeed;
             const driftY = Math.sin(point.driftAngle) * point.driftSpeed;
-            point.vx += (driftX - point.vx) * 0.018;
-            point.vy += (driftY - point.vy) * 0.018;
+            point.vx += (driftX - point.vx) * 0.14;
+            point.vy += (driftY - point.vy) * 0.14;
 
             if (pointer.active) {
                 const dx = point.x - pointer.x;
                 const dy = point.y - pointer.y;
                 const distance = Math.hypot(dx, dy) || 1;
 
-                if (distance < pointer.radius) {
-                    const force = (1 - distance / pointer.radius) * 0.9;
+                if (distance < reach) {
+                    // Rechazo inmediato y muy marcado cerca del puntero, con caída suave hacia el borde del radio.
+                    const proximity = 1 - distance / reach;
+                    const force = proximity * proximity * 6 + proximity * 2;
                     point.vx += (dx / distance) * force;
                     point.vy += (dy / distance) * force;
                 }
             }
 
             const speed = Math.hypot(point.vx, point.vy);
-            const maxSpeed = 3.4;
+            const maxSpeed = 8;
 
             if (speed > maxSpeed) {
                 point.vx = (point.vx / speed) * maxSpeed;
@@ -190,11 +205,43 @@ const initializeAuthParticleNetwork = () => {
             if (point.x > width + 8) point.x = -8;
             if (point.y < -8) point.y = height + 8;
             if (point.y > height + 8) point.y = -8;
+
+            if (pointer.active) {
+                // Zona de exclusión dura: ninguna bolita puede quedar a menos de `clearance` del puntero.
+                let dx = point.x - pointer.x;
+                let dy = point.y - pointer.y;
+                let distance = Math.hypot(dx, dy);
+
+                if (distance < pointer.clearance) {
+                    if (distance < 0.001) {
+                        const angle = Math.random() * Math.PI * 2;
+                        dx = Math.cos(angle);
+                        dy = Math.sin(angle);
+                        distance = 1;
+                    }
+
+                    const nx = dx / distance;
+                    const ny = dy / distance;
+                    const inward = point.vx * nx + point.vy * ny;
+
+                    point.x = pointer.x + nx * pointer.clearance;
+                    point.y = pointer.y + ny * pointer.clearance;
+
+                    // Se anula la velocidad que la empujaba hacia el puntero y se le da un impulso de salida.
+                    if (inward < 0) {
+                        point.vx -= inward * nx;
+                        point.vy -= inward * ny;
+                    }
+
+                    point.vx += nx * 1.5;
+                    point.vy += ny * 1.5;
+                }
+            }
         });
     };
 
     const drawConnections = () => {
-        const connectionDistance = Math.min(190, Math.max(145, width / 7.5));
+        const connectionDistance = Math.min(120, Math.max(90, width / 13));
 
         for (let firstIndex = 0; firstIndex < points.length; firstIndex += 1) {
             const first = points[firstIndex];
@@ -248,6 +295,10 @@ const initializeAuthParticleNetwork = () => {
     }
 
     const animate = () => {
+        if (document.hidden) {
+            animationFrame = null;
+            return;
+        }
         movePoints();
         draw();
         animationFrame = window.requestAnimationFrame(animate);
@@ -257,6 +308,13 @@ const initializeAuthParticleNetwork = () => {
         const bounds = root.getBoundingClientRect();
         pointer.x = event.clientX - bounds.left;
         pointer.y = event.clientY - bounds.top;
+
+        if (!pointer.active) {
+            pointer.lastX = pointer.x;
+            pointer.lastY = pointer.y;
+            pointer.lead = 0;
+        }
+
         pointer.active = true;
 
         if (reduceMotion) {
@@ -279,6 +337,12 @@ const initializeAuthParticleNetwork = () => {
     if (!reduceMotion) {
         animate();
     }
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !reduceMotion && animationFrame === null) {
+            animate();
+        }
+    });
 
     window.addEventListener('pagehide', () => {
         if (animationFrame) window.cancelAnimationFrame(animationFrame);

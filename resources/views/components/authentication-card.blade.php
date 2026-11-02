@@ -1,61 +1,25 @@
 @props(['compact' => false])
 
-<div
-    class="auth-network relative w-full bg-[#EEF3F8] {{ $compact ? 'h-dvh overflow-x-hidden overflow-y-auto px-4 py-4' : 'min-h-screen overflow-hidden px-4 py-8 sm:px-6 lg:px-8' }}"
-    data-auth-particle-network
->
-    <canvas class="pointer-events-none absolute inset-0 h-full w-full" data-auth-network-canvas aria-hidden="true"></canvas>
-    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(238,243,248,0.18)_78%)]"></div>
+{{-- Marco compartido de las pantallas de acceso: logo, tarjeta centrada y pie discreto. --}}
+<div class="relative isolate flex min-h-dvh w-full flex-col items-center overflow-hidden bg-[#F4F6F9] px-4 py-8 sm:py-10" data-auth-particle-network>
+    {{-- Fondo suave en movimiento (red de partículas desenfocada). --}}
+    <canvas class="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-70 blur-[2px]" data-auth-network-canvas aria-hidden="true"></canvas>
+    <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(244,246,249,0.9),rgba(244,246,249,0)_65%)]"></div>
 
-    @if ($compact)
-        <main class="relative mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-[448px] min-w-0">
-            <section class="relative my-auto w-full min-w-0 overflow-hidden rounded-xl bg-[rgba(255,255,255,0.72)] px-4 py-[100px] text-[#17365D] shadow-[0_28px_80px_rgba(49,87,132,0.22)] sm:px-10 sm:py-[100px]">
-                {{ $slot }}
-            </section>
-        </main>
-    @else
-        <main class="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center justify-center">
-            <section class="grid w-full overflow-hidden rounded-xl border border-white/70 bg-white/40 shadow-[0_24px_70px_rgba(15,35,66,0.18)] backdrop-blur-xl lg:grid-cols-[0.9fr_1.1fr]">
-                <aside class="relative overflow-hidden bg-[#1A3A6B]/90 px-7 py-8 text-white backdrop-blur-md sm:px-10 lg:flex lg:min-h-[680px] lg:flex-col lg:justify-between lg:px-12 lg:py-12">
-                    <div class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/10"></div>
-                    <div class="pointer-events-none absolute -bottom-32 -left-20 h-80 w-80 rounded-full border border-white/10"></div>
+    <div class="my-auto w-full max-w-[400px]">
+        <a href="/" class="mx-auto block w-fit rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A3A6B]/40 focus-visible:ring-offset-4">
+            <img src="/img/static/logo-principal_.png" alt="González Alonzo y Asociados" class="h-auto w-[84px]">
+        </a>
 
-                    <div class="relative">
-                        {{ $logo }}
+        <div class="mt-6 rounded-xl border border-slate-200 bg-white-full p-6 sm:p-8">
+            {{ $slot }}
+        </div>
 
-                        <div class="mt-8 hidden lg:block">
-                            <p class="text-[15px] font-semibold uppercase tracking-[0.18em] text-blue-200">Portal corporativo</p>
-                            <h2 class="mt-4 text-3xl font-semibold leading-tight">Tu operación, organizada en un solo lugar.</h2>
-                            <p class="mt-4 max-w-sm text-[15px] leading-7 text-blue-100/90">
-                                Accede de forma segura a clientes, actividades, productividad y herramientas administrativas.
-                            </p>
-                        </div>
-                    </div>
+        {{ $footer ?? '' }}
+    </div>
 
-                    <div class="relative mt-6 hidden border-t border-white/15 pt-6 text-[15px] text-blue-100 lg:block">
-                        <div class="flex items-center gap-3">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.25-4.5A11.95 11.95 0 0112 2.25 11.95 11.95 0 013.75 5.5 11.95 11.95 0 003 9.75c0 5.04 3.15 9.34 7.59 11.05a3.9 3.9 0 002.82 0C17.85 19.09 21 14.79 21 9.75c0-1.5-.27-2.93-.75-4.25z" />
-                                </svg>
-                            </span>
-                            <span>Acceso protegido y gestión confiable</span>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="flex min-h-[620px] items-center bg-white/20 px-6 py-9 backdrop-blur-sm sm:px-10 lg:px-14 lg:py-12">
-                    <div class="mx-auto w-full max-w-md">
-                        {{ $slot }}
-                    </div>
-                </div>
-            </section>
-        </main>
-    @endif
-
-    @unless ($compact)
-        <footer class="pointer-events-none absolute inset-x-0 bottom-5 text-center text-[12px] font-semibold italic text-[#1A3A6B]/70">
-            &copy; {{ now()->year }} Todos los derechos reservados
-        </footer>
-    @endunless
+    <footer class="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-1 text-center text-[12px] text-slate-500">
+        <span>Políticas de privacidad</span>
+        <span>&copy; {{ now()->year }} Todos los derechos reservados</span>
+    </footer>
 </div>

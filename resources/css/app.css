@@ -17,10 +17,23 @@ div.dataTables_filter {
 .auth-login-input:-webkit-autofill,
 .auth-login-input:-webkit-autofill:hover,
 .auth-login-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #17365d;
-    caret-color: #17365d;
-    font-size: 12px !important;
+    -webkit-text-fill-color: #0f172a;
+    caret-color: #0f172a;
+    font-size: 16px !important;
     transition: background-color 9999s ease-out 0s;
+}
+
+/* Pantallas de acceso: al seleccionar un campo no se resalta el borde (ni brillo ni color). */
+input.auth-login-input[id][name]:focus,
+input.auth-login-input[id][name]:focus-visible {
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+input.auth-login-input.border-red-300[id][name]:focus,
+input.auth-login-input.border-red-300[id][name]:focus-visible {
+    border-color: #fca5a5 !important;
 }
 
 /* Scroll corporativo para listas compactas de notificaciones. */
