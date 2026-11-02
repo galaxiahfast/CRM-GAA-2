@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Administracion\PanelAdministracion;
+use App\Livewire\Administracion\Interns\GestionAuxiliares;
 use App\Livewire\Administracion\Permissions\CatalogManager as PermissionCatalogManager;
 use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\Form as RoleForm;
@@ -26,6 +27,29 @@ use Tests\TestCase;
 class AdministrationModalFormsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_auxiliary_search_keeps_only_assigned_people(): void
+    {
+        $role = Role::create(['role' => 'Auxiliar', 'permission_profile' => Role::PROFILE_AUXILIARY]);
+        $owner = $this->createUser($role, 'owner@test.mx');
+        $assigned = $this->createUser($role, 'assigned@test.mx');
+        $other = $this->createUser($role, 'other@test.mx');
+        $assigned->update(['name' => 'Persona asignada']);
+        $other->update(['name' => 'Persona externa']);
+        DB::table('user_interns')->insert([
+            'intern_id' => $assigned->id,
+            'created_by' => $owner->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Livewire::actingAs($owner)->test(GestionAuxiliares::class)
+            ->assertSee('Persona asignada')
+            ->assertDontSee('Persona externa')
+            ->set('search', 'Persona')
+            ->assertSee('Persona asignada')
+            ->assertDontSee('Persona externa');
+    }
 
     public function test_add_user_modal_preserves_the_existing_save_flow(): void
     {

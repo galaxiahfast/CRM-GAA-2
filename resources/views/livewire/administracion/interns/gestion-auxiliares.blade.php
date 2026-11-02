@@ -1,52 +1,59 @@
-<div>
-    <div class="mb-4 mt-6 flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-700">Gestión de auxiliares</h1>
-            <p class="text-gray-500">Administra los auxiliares de la plataforma</p>
-        </div>
-        <div class="mt-4">
-            <input type="text" wire:model.live.debounce.250ms="search"
-                placeholder="Buscar auxiliar..." class="rounded-md border px-2 py-1">
-            @unless ($embedded)
-                <x-a-button href="{{ route('administracion.create.users', ['Intern' => true]) }}"
-                    color="blue">Agregar auxiliar</x-a-button>
-            @endunless
-        </div>
-    </div>
-    <x-table-structure>
+<x-administration-list-page title="Gestión de auxiliares" subtitle="Administra los auxiliares de la plataforma">
+    <x-slot name="icon">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 0 0-5.36-1.86M17 20H7m10 0v-2a5 5 0 0 0-10 0v2M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+    </x-slot>
+
+    <x-slot name="actions">
+        <label for="admin-interns-search" class="sr-only">Buscar auxiliar</label>
+        <input id="admin-interns-search" type="text" wire:model.live.debounce.250ms="search" placeholder="Buscar auxiliar..." autocomplete="off"
+            class="admin-list-search h-11 w-full rounded-xl border border-zinc-200 bg-[#ffffff] px-[15px] text-[15px] text-black placeholder:text-zinc-500 sm:w-72">
+        @unless ($embedded)
+            <a href="{{ route('administracion.create.users', ['Intern' => true]) }}"
+                class="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-black px-[20px] text-[15px] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0">Agregar auxiliar</a>
+        @endunless
+    </x-slot>
+
+    <x-administration-data-table>
         <x-slot name="head">
-            <tr>
-                <th scope="col" class="px-6 py-3">Nombre</th>
-                <th scope="col" class="px-6 py-3">Apellido</th>
-                <th scope="col" class="px-6 py-3">Email</th>
-                <th scope="col" class="px-6 py-3">Rol</th>
-                <th scope="col" class="px-6 py-3">Creación</th>
-                <th scope="col" class="px-6 py-3">Actualización</th>
-                <th scope="col" class="px-6 py-3">Acciones</th>
-            </tr>
+            <th scope="col" class="px-[15px] py-[15px] font-medium">Nombre</th>
+            <th scope="col" class="hidden px-[15px] py-[15px] font-medium md:table-cell">Apellido</th>
+            <th scope="col" class="hidden px-[15px] py-[15px] font-medium md:table-cell">Email</th>
+            <th scope="col" class="hidden px-[15px] py-[15px] font-medium md:table-cell">Rol</th>
+            <th scope="col" class="hidden px-[15px] py-[15px] font-medium xl:table-cell">Creación</th>
+            <th scope="col" class="hidden px-[15px] py-[15px] font-medium xl:table-cell">Actualización</th>
+            <th scope="col" class="px-[15px] py-[15px] text-right font-medium">Acciones</th>
         </x-slot>
+
         <x-slot name="body">
-            @foreach ($users as $user)
-                <tr class="border-b bg-white hover:bg-gray-50">
-                    <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
-                        {{ $user['name'] }}</td>
-                    <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
-                        {{ $user['last_name'] }}</td>
-                    <td class="px-6 py-4">{{ Str::limit(mb_strtolower((string) $user['email']), 25) }}</td>
-                    <td class="px-6 py-4">{{ $user->role->role }}</td>
-                    <td class="px-6 py-4">{{ Str::limit($user['created_at'], 10) }}</td>
-                    <td class="px-6 py-4">{{ Str::limit($user['updated_at'], 10) }}</td>
-                    <td class="px-6 py-4">
-                        @unless ($embedded)
-                            <x-a-button href="{{ route('administracion.edit.users', $user) }}"
-                                color="blue">Editar</x-a-button>
-                        @endunless
-                        <x-danger-button wire:click="delete({{ $user->id }})"
-                            wire:confirm="¿Estás seguro de que deseas eliminar este usuario?"
-                            color="red">Eliminar</x-danger-button>
+            @forelse ($users as $user)
+                <tr wire:key="admin-intern-{{ $user->id }}" class="transition hover:bg-zinc-50">
+                    <td class="w-full max-w-0 px-[15px] py-[15px] md:w-auto md:max-w-none md:whitespace-nowrap">
+                        <span class="block">{{ $user['name'] }}<span class="md:hidden"> {{ $user['last_name'] }}</span></span>
+                        <span class="block truncate text-[#71717a] md:hidden" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span>
+                    </td>
+                    <td class="hidden whitespace-nowrap px-[15px] py-[15px] md:table-cell">{{ $user['last_name'] }}</td>
+                    <td class="hidden px-[15px] py-[15px] md:table-cell">
+                        <span class="block max-w-[170px] xl:max-w-[220px] truncate" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span>
+                    </td>
+                    <td class="hidden whitespace-nowrap px-[15px] py-[15px] md:table-cell">{{ $user->role?->role ?? '—' }}</td>
+                    <td class="hidden whitespace-nowrap px-[15px] py-[15px] text-[#71717a] xl:table-cell">{{ $user->created_at?->format('d/m/Y') }}</td>
+                    <td class="hidden whitespace-nowrap px-[15px] py-[15px] text-[#71717a] xl:table-cell">{{ $user->updated_at?->format('d/m/Y') }}</td>
+                    <td class="whitespace-nowrap px-[15px] py-[15px] text-right">
+                        <div class="inline-flex items-center gap-[10px]">
+                            @unless ($embedded)
+                                <a href="{{ route('administracion.edit.users', $user) }}"
+                                    class="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-[#ffffff] px-[15px] text-[15px] text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">Editar</a>
+                            @endunless
+                        </div>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="7" class="px-[20px] py-[40px] text-center text-[#71717a]">No se encontraron auxiliares.</td>
+                </tr>
+            @endforelse
         </x-slot>
-    </x-table-structure>
-</div>
+    </x-administration-data-table>
+</x-administration-list-page>

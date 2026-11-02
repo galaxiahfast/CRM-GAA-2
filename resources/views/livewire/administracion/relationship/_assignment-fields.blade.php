@@ -9,14 +9,14 @@
     @if ($notice)<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-[15px] text-emerald-800">{{ $notice }}</div>@endif
     <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
         <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">{{ $mode === 'crear' ? 'Cliente de la nueva asignación' : 'Seleccionar asignación' }}</h2>
-        <label class="block text-[15px] font-medium text-gray-700">Cliente</label>
+        <label for="assignment-customer" class="block text-[15px] font-medium text-gray-700">Cliente</label>
         <x-administration-search-picker input-id="assignment-customer" model="selectedCustomer" :selected="$selectedCustomer" :items="$customerOptions" placeholder="Buscar cliente por nombre o RFC..." empty-message="No se encontraron clientes." :disabled="! $embedded && $lockedCustomerId !== null" placement="bottom" />
         <x-input-error for="selectedCustomer" class="mt-2" />
     </section>
 
     <section class="rounded-xl border p-5 {{ $assignmentDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
         <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] {{ $assignmentDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Responsable principal</h2>
-        <label class="block text-[15px] font-medium text-gray-700">Contador o coordinador</label>
+        <label for="assignment-accountant" class="block text-[15px] font-medium text-gray-700">Contador o coordinador</label>
         <x-administration-search-picker input-id="assignment-accountant" model="selectedAccountantId" :selected="$selectedAccountantId" :items="$accountantOptions" placeholder="Buscar responsable..." empty-message="No se encontraron responsables." :disabled="$assignmentDisabled || $mode === 'eliminar'" placement="bottom" />
         <x-input-error for="selectedAccountantId" class="mt-2" />
     </section>
@@ -38,8 +38,8 @@
     @if ($mode === 'eliminar')
         <section class="rounded-xl border p-5 {{ $assignmentDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
             <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] {{ $assignmentDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmación de desvinculación</h2>
-            <label class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre completo: <strong>{{ mb_strtoupper($customerFullName) }}</strong></label>
-            <input wire:model.defer="deleteConfirmation" autocomplete="off" onpaste="return false" @disabled($assignmentDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:bg-[#E8EBF0]">
+            <label for="assignment-delete-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre completo: <strong>{{ mb_strtoupper($customerFullName) }}</strong></label>
+            <input id="assignment-delete-confirmation" wire:model.defer="deleteConfirmation" autocomplete="off" onpaste="return false" @disabled($assignmentDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:bg-[#E8EBF0]">
             <x-input-error for="deleteConfirmation" class="mt-2" />
         </section>
     @endif

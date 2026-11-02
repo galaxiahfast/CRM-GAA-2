@@ -12,12 +12,25 @@ class GestionAuxiliares extends GestionUsuarios
     public function mount(bool $embedded = false)
     {
         $this->embedded = $embedded;
-        parent::mount();
+        $this->updatedSearch();
+    }
+
+    public function updatedSearch(): void
+    {
         $authUserId = auth()->id();
-        $this->users = User::with(['interns', 'role'])->where('role_id', 4)
-            ->whereHas('interns', function ($query) use ($authUserId) {
-                $query->where('user_interns.created_by', $authUserId);
+        $search = trim((string) $this->search);
+
+        $this->users = User::with('role')
+            ->whereHas('interns', fn ($query) => $query->where('user_interns.created_by', $authUserId))
+            ->where(function ($query) {
+                $query->whereHas('role', fn ($role) => $role->whereIn('role', ['Auxiliar', 'Becario']))
+                    ->orWhere('role_id', 4);
             })
+            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('last_name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
+            }))
             ->get();
     }
 

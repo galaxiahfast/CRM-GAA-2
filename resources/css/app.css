@@ -13,7 +13,7 @@ div.dataTables_filter {
     display: none;
 }
 
-/* Mantiene transparentes los campos del login incluso con autocompletado. */
+/* Pantallas de acceso: el autocompletado conserva el fondo blanco (sin el azul/amarillo del navegador). */
 .auth-login-input:-webkit-autofill,
 .auth-login-input:-webkit-autofill:hover,
 .auth-login-input:-webkit-autofill:focus {
@@ -21,6 +21,25 @@ div.dataTables_filter {
     caret-color: #0f172a;
     font-size: 16px !important;
     transition: background-color 9999s ease-out 0s;
+}
+
+input.auth-login-input[id][name]:-webkit-autofill,
+input.auth-login-input[id][name]:-webkit-autofill:hover,
+input.auth-login-input[id][name]:-webkit-autofill:focus,
+input.auth-login-input[id][name]:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    background-color: #ffffff !important;
+    background-clip: padding-box;
+}
+
+input.auth-login-input[id][name]:autofill,
+input.auth-login-input[id][name]:autofill:hover,
+input.auth-login-input[id][name]:autofill:focus,
+input.auth-login-input[id][name]:autofill:active {
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    background-color: #ffffff !important;
+    background-clip: padding-box;
 }
 
 /* Pantallas de acceso: al seleccionar un campo no se resalta el borde (ni brillo ni color). */

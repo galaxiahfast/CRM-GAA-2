@@ -32,7 +32,7 @@
                         @if (in_array($activeTab, ['editar', 'eliminar'], true))
                             <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
                                 <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">Seleccionar grupo de permisos</h2>
-                                <label class="block text-[15px] font-medium text-gray-700">Grupo</label>
+                                <label for="permission-group-picker" class="block text-[15px] font-medium text-gray-700">Grupo</label>
                                 <x-administration-search-picker input-id="permission-group-picker" model="selectedGroupId" :selected="$selectedGroupId" :disabled="$lockedRecordId !== null" :items="$groupOptions" placeholder="Buscar grupo por nombre..." empty-message="No se encontraron grupos." placement="bottom" />
                                 <x-input-error for="selectedGroupId" class="mt-2" />
                             </section>
@@ -41,8 +41,8 @@
                         <section class="rounded-xl border p-5 {{ $fieldsDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                             <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] {{ $fieldsDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Información del grupo</h2>
                             <fieldset class="grid grid-cols-1 gap-[15px]" @disabled($fieldsDisabled || $activeTab === 'eliminar')>
-                                <div><label class="block text-[15px] font-medium text-gray-700">Nombre</label><input wire:model.defer="name" class="{{ $input }}" autocomplete="off"><x-input-error for="name" class="mt-2" /></div>
-                                <div><label class="block text-[15px] font-medium text-gray-700">Descripción</label><textarea wire:model.defer="description" rows="3" maxlength="255" class="mt-[10px] block w-full resize-none rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:bg-[#E8EBF0]"></textarea><x-input-error for="description" class="mt-2" /></div>
+                                <div><label for="permission-group-name" class="block text-[15px] font-medium text-gray-700">Nombre</label><input id="permission-group-name" wire:model.defer="name" class="{{ $input }}" autocomplete="off"><x-input-error for="name" class="mt-2" /></div>
+                                <div><label for="permission-group-description" class="block text-[15px] font-medium text-gray-700">Descripción</label><textarea id="permission-group-description" wire:model.defer="description" rows="3" maxlength="255" class="mt-[10px] block w-full resize-none rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:bg-[#E8EBF0]"></textarea><x-input-error for="description" class="mt-2" /></div>
                             </fieldset>
                             @if ($activeTab === 'eliminar' && $selectedGroup)
                                 <div class="grid grid-cols-2 gap-[10px] text-center"><div class="rounded-lg bg-[#E8EEF7] p-3"><strong class="block text-xl text-[#102A52]">{{ $selectedGroup->permissions_count }}</strong><span class="text-[11px] uppercase text-[#55749D]">Apartados</span></div><div class="rounded-lg bg-[#E8EEF7] p-3"><strong class="block text-xl text-[#102A52]">{{ $selectedGroup->roles_count }}</strong><span class="text-[11px] uppercase text-[#55749D]">Roles asignados</span></div></div>
@@ -69,8 +69,8 @@
                         @if ($activeTab === 'eliminar')
                             <section class="rounded-xl border p-5 {{ $fieldsDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                                 <h2 class="mb-[10px] text-[13px] font-bold uppercase tracking-[.12em] {{ $fieldsDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmación</h2>
-                                <label class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre del grupo</label>
-                                <input wire:model.defer="deleteConfirmation" class="{{ $input }}" autocomplete="off" onpaste="return false" @disabled($fieldsDisabled || $selectedGroup?->is_system || ($selectedGroup?->roles_count ?? 0) > 0)>
+                                <label for="permission-group-delete-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre del grupo</label>
+                                <input id="permission-group-delete-confirmation" wire:model.defer="deleteConfirmation" class="{{ $input }}" autocomplete="off" onpaste="return false" @disabled($fieldsDisabled || $selectedGroup?->is_system || ($selectedGroup?->roles_count ?? 0) > 0)>
                                 @if ($selectedGroup?->is_system)<p class="mt-2 text-[13px] text-amber-700">Este grupo base está protegido.</p>@elseif (($selectedGroup?->roles_count ?? 0) > 0)<p class="mt-2 text-[13px] text-amber-700">Primero debes desasignarlo de sus roles.</p>@endif
                                 <x-input-error for="deleteConfirmation" class="mt-2" />
                             </section>
