@@ -11,6 +11,24 @@
     $input = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3]';
 @endphp
 
+<style>
+    [data-administration-modal="roles-management"] .role-permission-group.is-selected {
+        border-color: #18181b !important;
+        background-color: #f4f4f5 !important;
+    }
+    [data-administration-modal="roles-management"] .role-permission-group.is-selected > span:last-child {
+        background-color: #18181b !important;
+        color: #fff !important;
+    }
+    [data-administration-modal="roles-management"] .role-user-list {
+        scrollbar-width: thin;
+        scrollbar-color: #18181b transparent;
+    }
+    [data-administration-modal="roles-management"] .role-user-list::-webkit-scrollbar { width: 4px; }
+    [data-administration-modal="roles-management"] .role-user-list::-webkit-scrollbar-thumb { background: #18181b; border-radius: 999px; }
+    [data-administration-modal="roles-management"] .role-user-list::-webkit-scrollbar-track { background: transparent; }
+</style>
+
 <x-administration-panel-modal
     :title="$isDelete ? 'Eliminar rol' : 'Editar rol y asignar permisos'"
     modal-id="roles-management"
@@ -58,11 +76,12 @@
                         <h2 class="text-[13px] font-bold uppercase tracking-[.12em] text-[#1A3A6B]">Grupo de permisos</h2>
                         <span class="rounded-full bg-[#DCE9F8] px-3 py-1 text-[11px] font-semibold text-[#1A3A6B]">{{ count($permissionIds) }} accesos</span>
                     </div>
-                    <div class="mt-[15px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
+                    <div class="mt-[15px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                         @forelse ($permissionGroups as $group)
                             <button type="button" wire:click="selectPermissionGroup({{ $group->id }})" wire:key="managed-role-group-{{ $group->id }}" @disabled(! $editingRoleId)
-                                class="min-w-0 rounded-xl border p-4 text-left transition focus:outline-none focus:ring-0 disabled:cursor-not-allowed {{ (int) $permissionGroupId === (int) $group->id ? 'border-[#1A3A6B] bg-[#EAF2FC]' : 'border-[#CAD7E7] bg-white/60 hover:border-[#1A3A6B]' }}">
-                                <span class="flex items-center justify-between gap-3"><strong class="truncate text-[14px] text-[#102A52]">{{ mb_strtoupper($group->name) }}</strong><span class="shrink-0 rounded-full bg-[#DCE9F8] px-2 py-1 text-[10px] font-semibold text-[#1A3A6B]">{{ $group->permissions_count }}</span></span>
+                                aria-pressed="{{ (int) $permissionGroupId === (int) $group->id ? 'true' : 'false' }}"
+                                class="role-permission-group flex min-h-16 min-w-0 items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition hover:bg-zinc-50 focus:outline-none focus:ring-0 disabled:cursor-not-allowed {{ (int) $permissionGroupId === (int) $group->id ? 'is-selected' : '' }}">
+                                <span class="min-w-0 truncate text-[14px]" title="{{ $group->name }}">{{ $group->name }}</span><span class="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[13px]">{{ $group->permissions_count }}</span>
                             </button>
                         @empty
                             <p class="md:col-span-2 rounded-lg border border-dashed border-[#B7CEEA] p-4 text-center text-[14px] text-[#55749D]">Primero crea un grupo desde la tarjeta Permisos.</p>
@@ -116,14 +135,14 @@
             @if ($selectedRole)
                 <section class="rounded-xl border border-zinc-200 bg-white p-5">
                     <h2 class="text-[15px] font-medium">Usuarios del rol</h2>
-                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div class="min-w-0">
                             <h3 class="mb-2 text-[14px]">Asignados ({{ $assignedUsers->count() }})</h3>
-                            <div class="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-zinc-200 p-2">
+                            <div class="role-user-list h-56 space-y-1 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2">
                                 @forelse ($assignedUsers as $user)
-                                    <label class="flex items-center gap-2 rounded-lg p-2 hover:bg-zinc-50">
+                                    <label class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50">
                                         <input type="checkbox" value="{{ $user->id }}" wire:model="selectedUserIds" class="rounded border-zinc-300 text-black focus:ring-0">
-                                        <span class="min-w-0 truncate text-[13px]" title="{{ $user->email }}">{{ trim($user->name.' '.$user->last_name) }}</span>
+                                        <span class="min-w-0 truncate" title="{{ trim($user->name.' '.$user->last_name) }} · {{ $user->email }}">{{ trim($user->name.' '.$user->last_name) }}</span>
                                     </label>
                                 @empty
                                     <p class="p-2 text-[13px] text-zinc-500">Sin usuarios asignados.</p>
@@ -142,11 +161,11 @@
                         </div>
                         <div class="min-w-0">
                             <h3 class="mb-2 text-[14px]">Sin este rol ({{ $otherUsers->count() }})</h3>
-                            <div class="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-zinc-200 p-2">
+                            <div class="role-user-list h-56 space-y-1 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2">
                                 @forelse ($otherUsers as $user)
-                                    <div class="flex items-center justify-between gap-2 rounded-lg p-2 hover:bg-zinc-50">
-                                        <span class="min-w-0 truncate text-[13px]" title="{{ $user->email }}">{{ trim($user->name.' '.$user->last_name) }}</span>
-                                        <button type="button" wire:click="assignUser({{ $user->id }})" class="shrink-0 text-[13px] text-[#1A3A6B]">Asignar</button>
+                                    <div class="flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 py-2 hover:bg-zinc-50">
+                                        <span class="min-w-0 truncate" title="{{ trim($user->name.' '.$user->last_name) }} · {{ $user->email }}">{{ trim($user->name.' '.$user->last_name) }}</span>
+                                        <button type="button" wire:click="assignUser({{ $user->id }})" class="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 hover:bg-zinc-100">Asignar</button>
                                     </div>
                                 @empty
                                     <p class="p-2 text-[13px] text-zinc-500">Todos tienen este rol.</p>

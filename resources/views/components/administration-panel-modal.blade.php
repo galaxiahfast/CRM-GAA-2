@@ -25,7 +25,7 @@
 
     <div
         class="administration-form-panel relative flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl"
-        style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
+        style="max-width: {{ $modalId === 'roles-management' ? '820px' : '620px' }}; height: min({{ $modalId === 'roles-management' ? '720px' : '620px' }}, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;"
     >
         <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
             <div class="flex min-w-0 items-center gap-[15px]">
