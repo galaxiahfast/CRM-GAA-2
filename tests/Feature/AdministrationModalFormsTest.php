@@ -561,7 +561,8 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSee('Seleccionar rol')
             ->assertSee('Verificación')
             ->call('selectRole', $assignedRole->id)
-            ->assertSet('editingRoleId', null)
+            ->assertSet('editingRoleId', $assignedRole->id)
+            ->assertSee('assigned-role@test.mx')
             ->call('selectRole', $temporaryRole->id)
             ->call('deleteRole', $temporaryRole->id)
             ->assertHasErrors(['deleteConfirmationName'])
@@ -593,6 +594,31 @@ class AdministrationModalFormsTest extends TestCase
             ->test(GestionRoles::class)
             ->call('cancel')
             ->assertRedirect(route('administracion.index'));
+    }
+
+    public function test_role_users_can_be_moved_from_delete_form_before_deleting_role(): void
+    {
+        $adminRole = Role::create(['role' => 'Administrador', 'permission_profile' => Role::PROFILE_ADMINISTRATOR]);
+        $source = Role::create(['role' => 'Temporal']);
+        $destination = Role::create(['role' => 'Destino']);
+        $admin = $this->createUser($adminRole, 'role-owner@test.mx');
+        $member = $this->createUser($source, 'role-member@test.mx');
+
+        Livewire::actingAs($admin)->withQueryParams(['tab' => 'delete'])
+            ->test(GestionRoles::class)
+            ->call('selectRole', $source->id)
+            ->assertSet('editingRoleId', $source->id)
+            ->set('selectedUserIds', [$member->id])
+            ->set('destinationRoleId', $destination->id)
+            ->call('moveSelectedUsers')
+            ->assertHasNoErrors()
+            ->assertSee('Sin usuarios asignados.')
+            ->set('deleteConfirmationName', 'Temporal')
+            ->set('deleteConfirmationWord', 'ELIMINAR')
+            ->call('deleteRole', $source->id);
+
+        $this->assertDatabaseHas('users', ['id' => $member->id, 'role_id' => $destination->id]);
+        $this->assertDatabaseMissing('roles', ['id' => $source->id]);
     }
 
     public function test_embedded_role_editor_updates_the_selected_role_without_mounting_a_second_livewire_form(): void

@@ -4,6 +4,7 @@ namespace App\Livewire\Administracion\Roles;
 
 use App\Models\PermissionGroup;
 use App\Models\Role;
+use App\Models\User;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\ReferenceDataCache;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,11 @@ class GestionRoles extends Component
 
     public string $deleteConfirmationWord = '';
 
+    public ?int $destinationRoleId = null;
+
+    /** @var list<int> */
+    public array $selectedUserIds = [];
+
     public function mount(bool $embedded = false, string $initialTab = 'edit', ?int $initialRoleId = null)
     {
         $this->embedded = $embedded;
@@ -69,6 +75,7 @@ class GestionRoles extends Component
 
     public function deleteRole($id)
     {
+        $this->authorizeRoleManagement();
         try {
             if ($this->lockedRoleId !== null) {
                 $id = $this->lockedRoleId;
@@ -165,14 +172,6 @@ class GestionRoles extends Component
 
         $role = Role::query()->with('accessPermissions:id')->withCount('users')->findOrFail($roleId);
 
-        if ($this->activeTab === 'delete'
-            && (in_array($role->role, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true)
-                || $role->users_count > 0)) {
-            $this->clearRoleSelection();
-
-            return;
-        }
-
         $this->editingRoleId = $role->id;
         $this->editingRoleName = $role->role;
         $this->editingRoleDescription = (string) ($role->description ?? '');
@@ -180,6 +179,8 @@ class GestionRoles extends Component
         $this->permissionIds = $role->accessPermissions->pluck('id')->map(fn ($id) => (int) $id)->all();
         $this->deleteConfirmationName = '';
         $this->deleteConfirmationWord = '';
+        $this->destinationRoleId = null;
+        $this->selectedUserIds = [];
         $this->resetValidation();
     }
 
@@ -194,6 +195,7 @@ class GestionRoles extends Component
 
     public function saveEditedRole(PermissionAccessService $permissions): void
     {
+        $this->authorizeRoleManagement();
         if ($this->lockedRoleId !== null) {
             $this->editingRoleId = $this->lockedRoleId;
         }
@@ -249,6 +251,8 @@ class GestionRoles extends Component
         $this->permissionIds = [];
         $this->deleteConfirmationName = '';
         $this->deleteConfirmationWord = '';
+        $this->destinationRoleId = null;
+        $this->selectedUserIds = [];
         $this->resetValidation();
     }
 
@@ -262,6 +266,12 @@ class GestionRoles extends Component
                 : null,
             'permissionGroups' => $permissionCatalog['groups'],
             'availablePermissions' => $permissionCatalog['permissions'],
+            'assignedUsers' => $this->editingRoleId
+                ? User::query()->where('role_id', $this->editingRoleId)->orderBy('name')->orderBy('last_name')->get(['id', 'name', 'last_name', 'email'])
+                : collect(),
+            'otherUsers' => $this->editingRoleId
+                ? User::query()->where(fn ($query) => $query->whereNull('role_id')->orWhere('role_id', '<>', $this->editingRoleId))->orderBy('name')->orderBy('last_name')->get(['id', 'name', 'last_name', 'email'])
+                : collect(),
         ])->layout('layouts.app');
     }
 
@@ -272,6 +282,42 @@ class GestionRoles extends Component
             ->withCount(['users', 'accessPermissions'])
             ->orderBy('role')
             ->get();
+    }
+
+    public function moveSelectedUsers(): void
+    {
+        $this->authorizeRoleManagement();
+        $data = $this->validate([
+            'editingRoleId' => ['required', 'exists:roles,id'],
+            'destinationRoleId' => ['required', 'integer', 'exists:roles,id', Rule::notIn([$this->editingRoleId])],
+            'selectedUserIds' => ['required', 'array', 'min:1'],
+            'selectedUserIds.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $data['selectedUserIds'])));
+        DB::transaction(function () use ($data, $ids): void {
+            User::query()->whereKey($ids)->where('role_id', $data['editingRoleId'])
+                ->update(['role_id' => $data['destinationRoleId']]);
+        });
+        $this->selectedUserIds = [];
+        $this->loadRoles();
+        $this->selectRole((int) $data['editingRoleId']);
+    }
+
+    public function assignUser(int $userId): void
+    {
+        $this->authorizeRoleManagement();
+        abort_unless($this->editingRoleId, 404);
+        User::query()->whereKey($userId)
+            ->where(fn ($query) => $query->whereNull('role_id')->orWhere('role_id', '<>', $this->editingRoleId))
+            ->update(['role_id' => $this->editingRoleId]);
+        $this->loadRoles();
+    }
+
+    private function authorizeRoleManagement(): void
+    {
+        abort_unless(auth()->user() && app(PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.roles.manage'), 403);
     }
 
     private function normalizeConfirmation(?string $value): string
