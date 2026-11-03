@@ -41,8 +41,12 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, SupportPasswordReset::class, function (SupportPasswordReset $notification) use ($user): bool {
             $message = $notification->toMail($user);
 
+            $html = view('mail.support-password-reset', $message->viewData)->render();
+
             return $message->mailer === 'backup_reports'
-                && $message->from[0] === config('backup-reports.email.from_address');
+                && $message->from[0] === config('backup-reports.email.from_address')
+                && str_contains($html, 'DataMID')
+                && str_contains($html, '/reset-password/');
         });
     }
 
