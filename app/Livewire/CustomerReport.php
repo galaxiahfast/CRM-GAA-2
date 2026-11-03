@@ -22,7 +22,8 @@ class CustomerReport extends Dashboard
         // cargar y calcular el dashboard completo antes de abrir este detalle.
         $this->months = collect(json_decode(File::get(resource_path('/data/months.json')), true));
         $this->selectedMonth = now()->month - 1;
-        $this->selectedYear = now()->year;
+        $requestedYear = (int) request()->query('year', now()->year);
+        $this->selectedYear = in_array($requestedYear, $this->years, true) ? $requestedYear : now()->year;
         $this->customer = Customer::query()
             ->with(['services:id,service_id', 'states:id', 'statements:id'])
             ->find($customerId);

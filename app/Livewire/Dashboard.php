@@ -347,7 +347,10 @@ class Dashboard extends Component
 
     public function annualReport($customerId)
     {
-        redirect()->to('/dashboard/'.$customerId.'/report', $this->selectedYear);
+        return redirect()->route('dashboard.customer.report', [
+            'customerId' => $customerId,
+            'year' => $this->selectedYear,
+        ]);
     }
 
     public function redirectToCreateCustomer()

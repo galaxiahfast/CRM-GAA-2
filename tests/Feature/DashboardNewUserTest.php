@@ -40,6 +40,18 @@ class DashboardNewUserTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
+    public function test_annual_report_action_uses_a_valid_redirect_and_selected_year(): void
+    {
+        $role = Role::create(['role' => 'Administrador', 'permission_profile' => Role::PROFILE_ADMINISTRATOR]);
+        $user = User::create(['name' => 'Admin', 'email' => 'annual@test.mx', 'password' => Hash::make('secret123'), 'role_id' => $role->id]);
+        $customer = Customer::create(['name' => 'Cliente anual', 'rfc' => 'TEST123456789', 'created_by' => $user->id]);
+
+        Livewire::actingAs($user)->test(Dashboard::class)
+            ->set('selectedYear', 2025)
+            ->call('annualReport', $customer->id)
+            ->assertRedirect(route('dashboard.customer.report', ['customerId' => $customer->id, 'year' => 2025]));
+    }
+
     public function test_dashboard_query_count_does_not_grow_with_the_number_of_customers(): void
     {
         $role = Role::create([
