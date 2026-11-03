@@ -21,27 +21,38 @@
     $hasFile = $pdf && $pdf->isNotEmpty();
 @endphp
 
+{{-- Tarjeta de archivo PDF con el diseño de los paneles (variables y clases panel-* de x-panel-styles).
+     Solo icono y texto, sin recuadros dentro de la tarjeta. Los nombres de los campos, wire:model, wire:change
+     y deletePdf son los mismos de siempre. --}}
 @if ($comprobanteNormalIsVisible)
     <label for="{{ $inputId }}"
-        class="transition-scale align-center relative flex aspect-[1/1] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-white shadow-2xl duration-200 hover:scale-[1.02] sm:aspect-[4/3]">
+        class="panel-upload panel-surface panel-border relative flex min-h-[200px] cursor-pointer flex-col items-center gap-[10px] rounded-xl border p-[20px] text-center {{ $hasFile ? '' : 'border-dashed' }}">
 
         @if ($state)
-            <span class="absolute left-2 top-2 z-10 text-xs text-gray-500">
+            <span class="panel-muted absolute left-[20px] top-[20px] z-10 leading-none">
                 {{ $state->key }}
             </span>
         @endif
 
-        <img src="/img/static/{{ $hasFile ? 'pdf.svg' : 'pdf_02.svg' }}" alt="pdf"
-            class="h-12 w-12 object-contain sm:h-16 sm:w-16">
+        <span class="{{ $hasFile ? 'panel-tone-green' : 'panel-muted' }} mt-[5px]">
+            @if ($hasFile)
+                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4" /></svg>
+            @else
+                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
+            @endif
+        </span>
+
+        <span class="leading-none">{{ $fileType }}</span>
+        <span class="panel-muted leading-none">{{ $declarationType }}</span>
 
         @if ($hasFile)
             @foreach ($pdf as $p)
-                <div class="absolute right-0 top-0">
-                    <x-dropdown align="right" width="30">
+                <div class="absolute right-[10px] top-[10px] z-10">
+                    <x-dropdown align="right" width="48" content-classes="panel-surface panel-border border p-[5px] !rounded-xl" dropdown-classes="!top-full !mt-[8px] !rounded-xl">
                         <x-slot name="trigger">
-                            <button
-                                class="absolute right-2 top-2 z-10 cursor-default text-gray-500">
-                                @svg('feathericon-more-vertical')
+                            <button type="button" aria-label="Opciones del archivo"
+                                class="panel-icon-button flex h-9 w-9 cursor-default items-center justify-center rounded-xl focus:outline-none focus:ring-0">
+                                @svg('feathericon-more-vertical', 'h-5 w-5')
                             </button>
                         </x-slot>
 
@@ -49,33 +60,28 @@
                             @if ($p->pivot)
                                 <a href="{{ asset('storage/' . $p->pivot->file_path) ?? '' }}"
                                     target="_blank"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    class="panel-menu-item block rounded-lg px-[15px] py-[10px] focus:outline-none">
                                     Ver
                                 </a>
                                 <a wire:click.prevent="deletePdf({{ $p->pivot->id }})"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    class="panel-menu-item panel-menu-danger block cursor-pointer rounded-lg px-[15px] py-[10px] focus:outline-none">
                                     Eliminar
                                 </a>
                             @endif
                         </x-slot>
                     </x-dropdown>
                 </div>
-                <div class="absolute bottom-0 right-2">
-                    <span class="text-xs text-gray-500">
-                        {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
-                    </span>
-                </div>
-                <span class="z-10 max-w-[90%] truncate text-center text-xs text-gray-500">
+
+                <span class="z-10 mt-[5px] block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
                 </span>
+                <span class="panel-muted leading-none tabular-nums">
+                    {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
+                </span>
             @endforeach
+        @else
+            <span class="panel-muted mt-[5px] leading-snug">Haz clic para subir el PDF</span>
         @endif
-
-        <span class="text-sm font-bold">{{ $fileType }}</span>
-        <span
-            class="{{ $hasFile ? 'text-red-500 bg-red-100 px-2 py-1 rounded-full' : 'text-gray-500 bg-gray-100 px-2 py-1 rounded-full' }} absolute bottom-1 left-1 text-[10px] sm:bottom-2 sm:left-2 sm:text-xs">
-            {{ $declarationType }}
-        </span>
 
         <input accept=".pdf" wire:loading.attr="disabled" wire:model="{{ $model }}"
             wire:change="handleUpload({{ $state->id ?? 'null' }}, {{ $statement->id ?? 'null' }})"
@@ -83,27 +89,26 @@
             class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
     </label>
 @else
+    {{-- Comprobante normal bloqueado mientras exista una declaración complementaria --}}
     <label for="{{ $inputId }}"
-        class="align-center relative flex aspect-[4/3] cursor-default flex-col items-center justify-center gap-4 rounded-lg bg-gray-100 shadow-2xl">
+        class="panel-header panel-border panel-muted relative flex min-h-[200px] cursor-default flex-col items-center gap-[10px] rounded-xl border p-[20px] text-center">
 
-        <img src="/img/static/{{ $hasFile ? 'pdf_02.svg' : 'pdf_02.svg' }}" alt="pdf"
-            class="h-16 w-16 object-contain">
+        <span class="mt-[5px]">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6" /></svg>
+        </span>
+
+        <span class="leading-none">{{ $fileType }}</span>
+        <span class="leading-none">{{ $declarationType }}</span>
 
         @if ($hasFile)
             @foreach ($pdf as $p)
-                <span class="z-10 text-xs text-gray-500">
+                <span class="mt-[5px] block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
-
                 </span>
-                <div class="absolute bottom-0 right-2">
-                    <span class="text-xs text-gray-500">
-                        {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
-                    </span>
-                </div>
+                <span class="leading-none tabular-nums">
+                    {{ optional($p->pivot->updated_at)->format('d/m/Y') ?? '' }}
+                </span>
             @endforeach
         @endif
-
-        <span class="text-sm font-bold text-gray-400">{{ $fileType }}</span>
-        <span class="absolute bottom-2 left-2 text-xs text-gray-400">{{ $declarationType }}</span>
     </label>
 @endif

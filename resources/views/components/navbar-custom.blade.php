@@ -136,7 +136,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profile.show', 'profiles.show') ? 'px-[50px]' : 'px-[20px]' }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profile.show', 'profiles.show') ? 'px-[50px]' : (request()->routeIs('dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
@@ -183,6 +183,18 @@
                     <span>Centro de ayuda</span>
                     <span class="text-white/40">›</span>
                     <span class="text-white">Preguntas</span>
+                </div>
+            @elseif (request()->routeIs('dashboard'))
+                <div class="hidden min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65 sm:flex">
+                    <span>Inicio</span>
+                    <span class="text-white/40">›</span>
+                    <span class="text-white">Panel general</span>
+                </div>
+            @elseif (request()->routeIs('customers.view'))
+                <div class="hidden min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65 sm:flex">
+                    <a href="{{ route('customers.index') }}" class="transition-colors hover:text-white">Clientes</a>
+                    <span class="text-white/40">›</span>
+                    <span class="text-white">Detalle del cliente</span>
                 </div>
             @elseif (request()->routeIs('profile.show'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">

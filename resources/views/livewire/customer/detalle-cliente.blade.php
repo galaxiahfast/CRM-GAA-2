@@ -1,392 +1,562 @@
 @php
     $role = auth()->user()->role->role;
+
+    $periodMonth = collect($months ?? [])->firstWhere('number', (int) $selectedMonth);
+    $periodLabel = trim(($periodMonth['name'] ?? '').' '.$selectedYear);
 @endphp
 
-<div class="relative mt-[24px] p-8">
-    @if (isset($notFound) && $notFound)
-        <x-not-found></x-not-found>
-    @else
-        <!-- Tarjeta principal -->
-        <div
-            class="flex items-center justify-between rounded-lg border border-gray-200 bg-white bg-white-full p-6 shadow-md">
-            <!-- Izquierda: Foto + Info -->
-            <div class="flex items-center gap-6">
-                <!-- Foto circular -->
-                @if ($customer->url_photo)
-                    <div
-                        class="relative flex h-28 w-28 items-center justify-center rounded-full shadow">
-                        <img class="absolute inset-0 h-full w-full rounded-full object-cover"
-                            src="{{ asset('storage/photos/' . $customer->url_photo) }}">
-                    </div>
-                @else
-                    <div
-                        class="flex h-24 w-24 items-center justify-center rounded-full bg-blue-100 text-4xl font-bold text-blue-400 shadow ring-2">
-                        {{ strtoupper(substr($customer->name, 0, 2)) }}
-                    </div>
-                @endif
+{{-- Detalle del cliente: mismo diseño que el Panel general, Administración y Reportes de soporte (secciones con
+     cabecera gris, líneas de 1px, texto de 15px, escala de vista ajustable y tema oscuro). Solo cambia la
+     presentación; la lógica vive en App\Livewire\Customer\DetalleCliente. --}}
+<div
+    data-panel
+    data-customer-detail
+    x-data="{
+        viewScale: 90,
+        isFullscreen: false,
+        isCompact: window.innerWidth < 1024,
+        back: null,
+        scaledHeight: null,
+        observer: null,
+        onFullscreen: null,
+        init() {
+            try {
+                const from = new URL(document.referrer);
+                if (from.origin === window.location.origin && from.pathname !== window.location.pathname && !/login|logout/.test(from.pathname)) this.back = from.href;
+            } catch (error) {}
+            try {
+                const saved = Number(localStorage.getItem('customer-detail-view-scale'));
+                if (saved >= 70 && saved <= 100) this.viewScale = saved;
+            } catch (error) {}
+            this.onFullscreen = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
+            document.addEventListener('fullscreenchange', this.onFullscreen);
+            this.$nextTick(() => {
+                this.observer = new ResizeObserver(() => this.syncHeight());
+                this.observer.observe(this.$refs.scaled);
+                this.syncHeight();
+            });
+        },
+        destroy() {
+            this.observer?.disconnect();
+            document.removeEventListener('fullscreenchange', this.onFullscreen);
+        },
+        syncHeight() {
+            if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
+        },
+        setScale(value) {
+            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
+            try { localStorage.setItem('customer-detail-view-scale', String(this.viewScale)); } catch (error) {}
+            this.$nextTick(() => this.syncHeight());
+        },
+        async toggleFullscreen() {
+            if (document.fullscreenElement === this.$root) return document.exitFullscreen();
+            if (document.fullscreenElement) await document.exitFullscreen();
+            await this.$root.requestFullscreen();
+        },
+    }"
+    @resize.window.debounce.150ms="isCompact = window.innerWidth < 1024; syncHeight()"
+    class="relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+>
+    <x-panel-styles />
 
-                @error('error')
-                    <x-alert-message type="error">
-                        {{ $messages }}
-                    </x-alert-message>
-                @enderror
-
-                @error('pdfsValidate')
-                    <x-alert-message type="error">
-                        {{ $message }}
-                    </x-alert-message>
-                @enderror
-                <!-- Datos -->
-                <div>
-                    <p class="text-xs text-gray-500">
-                        RFC: {{ $customer->rfc }}
-                    </p>
-                    <h2 class="text-xl font-bold">{{ $customer->name }} @if ($customer->last_name)
-                            {{ $customer->last_name }} {{ $customer->maternal_last_name }}
-                        @endif
-                    </h2>
-
-                    <div>
-                        @if ($customer->phone)
-                            <span class="text-sm text-gray-600">
-                                +{{ $customer->codePhone }} {{ $customer->phone }}
-                            </span>
-                        @endif
-                        @if ($customer->email)
-                            <span class="text-sm text-gray-600">
-                                | {{ Str::limit($customer->email, 25) }}
-                            </span>
-                        @endif
-                        @if ($customer->address)
-                            <span class="text-sm text-gray-600">
-                                | {{ Str::limit($customer->address, 22) }}
-                            </span>
-                        @endif
-                    </div>
-
-                    <!-- Servicios y contadores -->
-                    <div class="relative mt-2 flex-col gap-4 rounded-sm bg-white px-4 py-2 shadow">
-                        <div class="flex items-center gap-2">
-                            @foreach ($customer->accountants->sortByDesc(fn($accountant) => $accountant->pivot->status) as $accountant)
-                                <span
-                                    class="{{ $accountant->pivot->status == 1 ? 'bg-green-500' : 'bg-blue-500' }} transition-scale cursor-default rounded-full p-1 px-2 text-xs uppercase text-white duration-200 hover:scale-105"
-                                    data-tooltip-target="tooltip-{{ $accountant->id }}">
-                                    {{ substr($accountant->name, 0, 2) }}
-                                </span>
-                                <x-tooltip id="tooltip-{{ $accountant->id }}"
-                                    content="{{ $accountant->name }}" />
-                            @endforeach
-                        </div>
-                        <span class="text-xs text-gray-900">Contadores asignados</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Derecha: Fecha y progreso -->
-            <div class="flex flex-col items-center gap-3">
-                <div class="flex gap-2">
-                    <select wire:model.lazy="selectedMonth"
-                        class="rounded-lg border border-gray-300 py-1 text-sm">
-                        @foreach ($months as $month)
-                            <option value="{{ $month['number'] }}">
-                                {{ $month['name'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <select wire:model.lazy="selectedYear"
-                        class="rounded-lg border border-gray-300 py-1 text-sm">
-                        @foreach ($years as $year)
-                            <option value="{{ $year }}">{{ $year }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @if ($selectedServiceId)
-                    <p
-                        class="{{ $percentage == 100 ? 'text-green-500' : 'text-gray-500' }} text-xs">
-                        Formatos completados
-                        {{ $countPDFs }}/{{ $totalPdfAvailable }}</p>
-                @else
-                    <p class="text-xs text-gray-500">Sin archivos</p>
-                @endif
-
-                <div
-                    class="@if ($percentage == 0) border-red-500 text-red-500
-                    @elseif ($percentage < 99) border-yellow-500 text-yellow-500
-                    @elseif ($percentage == 100) border-green-500 text-green-500
-                    @else border-gray-300 text-gray-500 @endif flex h-16 w-16 items-center justify-center rounded-full border text-sm font-semibold">
-                    {{ $percentage }}%
-                </div>
-            </div>
-        </div>
-
-        <!-- Botones de impuestos -->
-        <div class="mt-4">
-            <div class="mt-6 flex gap-4">
-                <!-- Botón 1 -->
-                <div class="relative">
-                    @if (empty($services) || count($services) === 0)
-                        <span
-                            class="relative cursor-default rounded-lg border border-gray-300 bg-blue-900 px-4 py-2 text-white transition-colors duration-200 hover:border-gray-500">
-                            Sin Servicios seleccionados
-                        </span>
-                    @else
-                        @foreach ($serviceRelation as $service)
-                            <div class="relative inline-block">
-                                <button
-                                    wire:click="selectButton({{ $service->id }}, {{ $customer->id }})"
-                                    class="{{ $selectedServiceId === $service->id ? 'bg-blue-900 text-white' : '' }} rounded-lg border border-gray-300 px-4 py-2 text-sm transition-colors duration-200 hover:border-gray-500">
-                                    {{ $service->service }}
-                                </button>
-                                <div
-                                    class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
-                                    {{ $serviceCounts[$service->id] ?? 0 }}
-                                </div>
-                            </div>
-                        @endforeach
-                    @endif
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <ul
-                    class="flex flex-wrap border-b border-gray-200 text-center text-sm font-medium text-gray-500">
-                    @if ($subServicesCustomer && $subServicesCustomer->isNotEmpty())
-
-                        @foreach ($subServicesCustomer as $subService)
-                            <li class="me-2">
-                                <a href="#"
-                                    wire:click.prevent="selectSubServiceButton({{ $subService->id }})"
-                                    class="{{ $selectedSubServices === $subService->id
-                                        ? 'text-indigo-600 font-medium'
-                                        : 'text-gray-500 hover:text-gray-700' }} duration-400 relative inline-block border-b-2 p-4 transition-all ease-[cubic-bezier(0.4,0,0.2,1)]">
-
-                                    {{ $subService->sub_service }}
-                                    <span
-                                        class="{{ $selectedSubServices === $subService->id ? 'scale-x-100' : 'scale-x-0' }} absolute bottom-0 left-0 h-0.5 w-full bg-indigo-600 transition-all duration-[0.6s] ease-[cubic-bezier(0.4,0,0.2,1)]">
-                                    </span>
+    <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
+        <div x-ref="scaled" class="origin-top-left" :style="isCompact ? 'width:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">
+            <div class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
+                @if (isset($notFound) && $notFound)
+                    <section class="panel-surface panel-border overflow-hidden rounded-xl border">
+                        <x-panel-empty-state subtitle="El cliente que buscas no existe o fue eliminado.">
+                            <x-slot name="icon">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </x-slot>
+                            Cliente no encontrado
+                            <x-slot name="action">
+                                <a href="{{ route('customers.index') }}"
+                                    class="panel-button inline-flex h-11 items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">
+                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" /></svg>
+                                    Volver al listado
                                 </a>
-                            </li>
-                        @endforeach
-                    @endif
-                </ul>
-            </div>
-        </div>
-
-        <!-- Sección de Impuestos -->
-        @if ($selectedServiceId)
-            <div class="mt-8">
-                <div class="mb-2 flex items-center justify-between">
-                    <div class="flex flex-col">
-                        <span
-                            class="font-semibold text-gray-700">{{ $selectedSubService->sub_service ?? 'null' }}</span>
-                        <span
-                            class="mb-4 text-sm text-gray-700">{{ $selectedSubService->description ?? 'null' }}</span>
-                    </div>
-                    @if ($selectedSubServiceId !== 1 && $selectedSubServiceId !== 6)
-                        @php
-                            $complementariaFiles = $pdfsDB['complementaria'][
-                                $this->selectedSubServiceId
-                            ] ?? [
-                                'acuse' => collect(),
-                                'comprobante' => collect(),
-                            ];
-
-                            $hasComplementaria =
-                                $complementariaFiles['acuse']->isNotEmpty() ||
-                                $complementariaFiles['comprobante']->isNotEmpty();
-                            $buttonText =
-                                $hasComplementaria || $isComplementaria ? 'Eliminar' : 'Agregar';
-                        @endphp
-                        <div>
-                            <x-button wire:click="toggle()" @class([
-                                'bg-gray-600 focus:bg-gray-500 hover:bg-gray-500 active:bg-gray-500' => $hasComplementaria,
-                                'bg-red-600 hover:bg-red-400 focus:bg-red-400 active:bg-red-500' =>
-                                    $isComplementaria || $hasComplementaria,
-                            ])>
-                                {{ $buttonText }}
-                                Complementaria
-                            </x-button>
-
-                        </div>
-                    @endif
-                </div>
-                @if ($selectedSubServiceId === 1)
-                    @foreach ($states as $key => $state)
-                        @php
-                            $normalFiles = $pdfsDB['normal'][$state->id] ?? [
-                                'acuse' => collect(),
-                                'comprobante' => collect(),
-                            ];
-                            $complementariaFiles = $pdfsDB['complementaria'][$state->id] ?? [
-                                'acuse' => collect(),
-                                'comprobante' => collect(),
-                            ];
-
-                            $hasComplementaria =
-                                $complementariaFiles['acuse']->isNotEmpty() ||
-                                $complementariaFiles['comprobante']->isNotEmpty();
-                            $isOpen = $this->isStateOpen($state->id);
-                            $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
-                        @endphp
-                        <div class="mb-8">
-                            <div class="mb-4 flex items-center justify-between">
-                                <span
-                                    class="font-semibold text-gray-700">{{ $state->name }}</span>
-                                <x-button @class([
-                                    'bg-gray-600 cursor-not-allowed hover:bg-gray-500 active:bg-gray-500 text-white disabled' => $hasComplementaria,
-                                    'bg-red-600 hover:bg-red-400 focus:bg-red-400 active:bg-red-500 text-white' =>
-                                        $isOpen || $hasComplementaria,
-                                ])
-                                    wire:click="toggleState({{ $state->id }})">
-                                    {{ $buttonText }} complementaria
-                                </x-button>
-                            </div>
-
-                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                                <!-- Archivos Normales -->
-                                <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
-                                    :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
-                                    :state="$state" />
-
-                                <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
-                                    fileType="Comprobante" declarationType="Normal"
-                                    :state="$state" :successMessage="$successMessage" :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
-                                        $complementariaFiles['comprobante']->isEmpty()" />
-
-                                <!-- Archivos Complementaria -->
-                                @if ($hasComplementaria || $isOpen)
-                                    <x-format-pdf model="pdfs.complementaria.acuse"
-                                        :pdf="$complementariaFiles['acuse']" fileType="Acuse"
-                                        declarationType="Complementaria" :state="$state" />
-
-                                    <x-format-pdf model="pdfs.complementaria.comprobante"
-                                        :pdf="$complementariaFiles['comprobante']" fileType="Comprobante"
-                                        declarationType="Complementaria" :state="$state" />
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                @elseif ($selectedSubServiceId === 6)
-                    @foreach ($statements as $statement)
-                        @php
-                            $normalFiles = $pdfsDB['normal'][$statement->id] ?? [
-                                'acuse' => collect(),
-                                'comprobante' => collect(),
-                            ];
-                            $complementariaFiles = $pdfsDB['complementaria'][$statement->id] ?? [
-                                'acuse' => collect(),
-                                'comprobante' => collect(),
-                            ];
-
-                            $hasComplementaria =
-                                $complementariaFiles['acuse']->isNotEmpty() ||
-                                $complementariaFiles['comprobante']->isNotEmpty();
-                            $isOpen = $this->isStatementOpen($statement->id);
-                            $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
-                        @endphp
-
-                        <div class="mb-8">
-                            <div class="mb-4 flex items-center justify-between">
-                                <span
-                                    class="font-semibold text-gray-700">{{ $statement->statement }}</span>
-                                <x-button @class([
-                                    'bg-gray-600 cursor-not-allowed hover:bg-gray-500 active:bg-gray-500 text-white disabled' => $hasComplementaria,
-                                    'bg-red-600 hover:bg-red-400 focus:bg-red-400 text-white' =>
-                                        $isOpen || $hasComplementaria,
-                                ])
-                                    wire:click="toggleStatement({{ $statement->id }})">
-                                    {{ $buttonText }} complementaria
-                                </x-button>
-                            </div>
-
-                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                                <!-- Archivos Normales -->
-
-                                <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
-                                    :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
-                                    :statement="$statement" />
-
-                                <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
-                                    fileType="Comprobante" declarationType="Normal"
-                                    :statement="$statement" :successMessage="$successMessage" :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
-                                        $complementariaFiles['comprobante']->isEmpty()" />
-
-                                <!-- Archivos Complementaria -->
-                                @if ($hasComplementaria || $isOpen)
-                                    <x-format-pdf model="pdfs.complementaria.acuse"
-                                        :pdf="$complementariaFiles['acuse']" fileType="Acuse"
-                                        declarationType="Complementaria" :statement="$statement" />
-
-                                    <x-format-pdf model="pdfs.complementaria.comprobante"
-                                        :pdf="$complementariaFiles['comprobante']" fileType="Comprobante"
-                                        declarationType="Complementaria" :statement="$statement" />
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
+                            </x-slot>
+                        </x-panel-empty-state>
+                    </section>
                 @else
                     @php
-                        $normalFiles = $pdfsDB['normal'][$selectedSubServiceId] ?? [
-                            'acuse' => collect(),
-                            'comprobante' => collect(),
-                        ];
-                        $complementariaFiles = $pdfsDB['complementaria'][$selectedSubServiceId] ?? [
-                            'acuse' => collect(),
-                            'comprobante' => collect(),
-                        ];
+                        $fullName = trim($customer->name.' '.($customer->last_name ? $customer->last_name.' '.$customer->maternal_last_name : ''));
+                        $initials = mb_strtoupper(mb_substr($customer->name, 0, 2));
+                        $tone = $percentage == 0 ? 'red' : ($percentage < 99 ? 'amber' : ($percentage == 100 ? 'green' : 'gray'));
+                        $ringLength = 2 * M_PI * 28;
+                        $ringFill = $ringLength * max(0, min(100, (float) $percentage)) / 100;
+                        $accountants = $customer->accountants->sortByDesc(fn ($accountant) => $accountant->pivot->status);
+                        $hasContact = $customer->phone || $customer->email || $customer->address;
                     @endphp
 
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        <!-- Archivos Normales -->
-                        <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
-                            :successMessage="$successMessage" fileType="Acuse" declarationType="Normal" />
+                    <!-- Regresar a la pantalla de donde se llegó (Panel general o listado de clientes) -->
+                    <a href="{{ route('customers.index') }}" :href="back || @js(route('customers.index'))"
+                        class="panel-tab inline-flex w-fit items-center gap-[10px] leading-none focus:outline-none focus:ring-0">
+                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                        <span>Regresar</span>
+                    </a>
 
-                        <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
-                            fileType="Comprobante" declarationType="Normal" :successMessage="$successMessage"
-                            :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
-                                $complementariaFiles['comprobante']->isEmpty()" />
+                    @error('error')
+                        <div class="panel-danger-box rounded-xl border px-[20px] py-[15px]" role="alert" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+                            {{ $message }}
+                        </div>
+                    @enderror
 
-                        <!-- Archivos Complementaria -->
-                        @if (
-                            $complementariaFiles['acuse']->isNotEmpty() ||
-                                $complementariaFiles['comprobante']->isNotEmpty() ||
-                                $isComplementaria)
-                            <x-format-pdf model="pdfs.complementaria.acuse" :pdf="$complementariaFiles['acuse']"
-                                fileType="Acuse" declarationType="Complementaria" />
+                    @error('pdfsValidate')
+                        <div class="panel-danger-box rounded-xl border px-[20px] py-[15px]" role="alert" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+                            {{ $message }}
+                        </div>
+                    @enderror
 
-                            <x-format-pdf model="pdfs.complementaria.comprobante" :pdf="$complementariaFiles['comprobante']"
-                                fileType="Comprobante" declarationType="Complementaria" />
+                    <!-- Cabecera y periodo -->
+                    <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                        <div class="flex min-w-0 max-w-full items-center gap-[15px]">
+                            @if ($customer->url_photo)
+                                <img class="panel-border h-14 w-14 shrink-0 rounded-full border object-cover"
+                                    src="{{ asset('storage/photos/' . $customer->url_photo) }}"
+                                    alt="{{ $fullName }}">
+                            @else
+                                <span class="panel-header panel-border panel-accent grid h-14 w-14 shrink-0 place-items-center rounded-full border">{{ $initials }}</span>
+                            @endif
+
+                            <div class="min-w-0">
+                                <h1 class="panel-accent line-clamp-2 break-words text-xl font-normal leading-tight tracking-tight" title="{{ $fullName }}">{{ $fullName }}</h1>
+                                <p class="panel-muted mt-[10px] leading-none">RFC: {{ $customer->rfc }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
+                            <div class="min-w-[140px] flex-1 sm:flex-none">
+                                <label for="customer-month" class="sr-only">Mes</label>
+                                <select id="customer-month" wire:model.lazy="selectedMonth"
+                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-44">
+                                    @foreach ($months as $month)
+                                        <option value="{{ $month['number'] }}">{{ $month['name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="min-w-[110px] flex-1 sm:flex-none">
+                                <label for="customer-year" class="sr-only">Año</label>
+                                <select id="customer-year" wire:model.lazy="selectedYear"
+                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-28">
+                                    @foreach ($years as $year)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Información del cliente -->
+                    <section class="panel-surface panel-border overflow-hidden rounded-xl border">
+                        <header class="panel-header panel-border flex flex-col justify-between gap-[10px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
+                            <div class="min-w-0">
+                                <h2 class="panel-accent leading-none">Información del cliente</h2>
+                                <p class="mt-[10px] leading-tight">Datos de contacto, contadores asignados y avance del periodo</p>
+                            </div>
+                            @if ($periodLabel !== '')
+                                <div class="flex shrink-0 items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Periodo: {{ $periodLabel }}</div>
+                            @endif
+                        </header>
+
+                        <div class="panel-line grid grid-cols-1 gap-px lg:grid-cols-3">
+                            <!-- Contacto -->
+                            <div class="panel-surface min-w-0 p-[20px]">
+                                <span class="panel-accent block leading-none">Contacto</span>
+                                @if ($hasContact)
+                                    <ul class="mt-[15px] space-y-[10px]">
+                                        @if ($customer->phone)
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1z" /></svg>
+                                                <span class="min-w-0 break-words">+{{ $customer->codePhone }} {{ $customer->phone }}</span>
+                                            </li>
+                                        @endif
+                                        @if ($customer->email)
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zM22 6l-10 7L2 6" /></svg>
+                                                <span class="min-w-0 break-words">{{ $customer->email }}</span>
+                                            </li>
+                                        @endif
+                                        @if ($customer->address)
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6z" /></svg>
+                                                <span class="min-w-0 break-words">{{ $customer->address }}</span>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                @else
+                                    <p class="panel-muted mt-[15px] leading-snug">Sin datos de contacto</p>
+                                @endif
+                            </div>
+
+                            <!-- Contadores asignados -->
+                            <div class="panel-surface min-w-0 p-[20px]">
+                                <span class="panel-accent block leading-none">Contadores asignados</span>
+                                @if ($accountants->isNotEmpty())
+                                    <ul class="mt-[15px] flex flex-wrap gap-x-[20px] gap-y-[10px]">
+                                        @foreach ($accountants as $accountant)
+                                            <li class="flex min-w-0 max-w-full items-center gap-[10px] leading-none" title="{{ $accountant->name }}">
+                                                <span class="{{ $accountant->pivot->status == 1 ? 'panel-avatar-green' : 'panel-avatar-blue' }} grid h-7 w-7 shrink-0 place-items-center rounded-full uppercase">{{ mb_substr($accountant->name, 0, 2) }}</span>
+                                                <span class="min-w-0 truncate">{{ $accountant->name }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="panel-muted mt-[15px] leading-snug">Sin contadores asignados</p>
+                                @endif
+                            </div>
+
+                            <!-- Avance del periodo -->
+                            <div class="panel-surface flex min-w-0 items-center gap-[15px] p-[20px]">
+                                <div class="panel-tone-{{ $tone }} relative grid h-16 w-16 shrink-0 place-items-center" role="img" aria-label="Avance {{ $percentage }}%">
+                                    <svg class="h-16 w-16 -rotate-90" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                                        <circle class="panel-ring-track" cx="32" cy="32" r="28" stroke-width="5" />
+                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{ round($ringFill, 2) }} {{ round($ringLength, 2) }}" />
+                                    </svg>
+                                    <span class="absolute leading-none tabular-nums">{{ $percentage }}%</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="panel-accent block leading-none">Avance del periodo</span>
+                                    @if ($selectedServiceId)
+                                        <span class="{{ $percentage == 100 ? 'panel-tone-green' : 'panel-muted' }} mt-[10px] block leading-snug">Formatos completados {{ $countPDFs }}/{{ $totalPdfAvailable }}</span>
+                                    @else
+                                        <span class="panel-muted mt-[10px] block leading-snug">Sin archivos</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Documentos del cliente -->
+                    <section class="panel-surface panel-border overflow-hidden rounded-xl border">
+                        <header class="panel-header panel-border flex flex-col justify-between gap-[10px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
+                            <div class="min-w-0">
+                                <h2 class="panel-accent leading-none">Documentos del cliente</h2>
+                                <p class="mt-[10px] leading-tight">Acuses y comprobantes por servicio y periodo</p>
+                            </div>
+                        </header>
+
+                        @php
+                            $hasServices = ! (empty($services) || count($services) === 0);
+                            $hasSubServices = $subServicesCustomer && $subServicesCustomer->isNotEmpty();
+                        @endphp
+
+                        <!-- Servicios (pestañas en pantallas medianas y grandes) -->
+                        @if ($hasServices)
+                            <div class="hidden flex-wrap items-center gap-x-[20px] px-[20px] md:flex" role="tablist" aria-label="Servicios del cliente">
+                                @foreach ($serviceRelation as $service)
+                                    <button type="button" role="tab" wire:key="customer-service-{{ $service->id }}"
+                                        wire:click="selectButton({{ $service->id }}, {{ $customer->id }})"
+                                        aria-selected="{{ $selectedServiceId === $service->id ? 'true' : 'false' }}"
+                                        class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
+                                        <span>{{ $service->service }}</span>
+                                        <span class="panel-muted tabular-nums">({{ $serviceCounts[$service->id] ?? 0 }})</span>
+                                    </button>
+                                @endforeach
+                            </div>
                         @endif
-                    </div>
-                @endif
 
-                <div wire:loading wire:target="pdfs.normal.acuse">
-                    <x-progress />
-                </div>
-                <div wire:loading wire:target="pdfs.normal.comprobante">
-                    <x-progress />
-                </div>
+                        <!-- Apartados del servicio (pestañas en pantallas medianas y grandes) -->
+                        @if ($hasSubServices)
+                            <div class="panel-subtle hidden flex-wrap items-center gap-x-[20px] px-[20px] md:flex" role="tablist" aria-label="Apartados del servicio">
+                                @foreach ($subServicesCustomer as $subService)
+                                    <a href="#" role="tab" wire:key="customer-subservice-{{ $subService->id }}"
+                                        wire:click.prevent="selectSubServiceButton({{ $subService->id }})"
+                                        aria-selected="{{ $selectedSubServices === $subService->id ? 'true' : 'false' }}"
+                                        class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>
+                                        <span>{{ $subService->sub_service }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
 
-                <div wire:loading wire:target="pdfs.complementaria.acuse">
-                    <x-progress />
-                </div>
-                <div wire:loading wire:target="pdfs.complementaria.comprobante">
-                    <x-progress />
-                </div>
+                        <!-- Servicios y apartados en celular: listas desplegables con el mismo diseño de mes y año -->
+                        @if ($hasServices || $hasSubServices)
+                            <div class="flex flex-col gap-[15px] px-[20px] pt-[20px] md:hidden">
+                                @if ($hasServices)
+                                    <div class="relative">
+                                        <label for="customer-service" class="sr-only">Servicio</label>
+                                        <svg class="panel-accent pointer-events-none absolute left-[12px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
+                                        <select id="customer-service" x-on:change="$wire.selectButton(Number($event.target.value), {{ $customer->id }})"
+                                            class="panel-field h-11 w-full rounded-xl border pl-[40px] pr-[32px]">
+                                            @foreach ($serviceRelation as $service)
+                                                <option value="{{ $service->id }}" @selected($selectedServiceId === $service->id)>{{ $service->service }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
 
-                @if ($successMessage)
-                    <x-toast message="{{ $successMessage }}" typeMessage="{{ $typeMessage }}"
-                        icon="{{ $iconSVG }}" />
+                                @if ($hasSubServices)
+                                    <div class="relative">
+                                        <label for="customer-subservice" class="sr-only">Apartado</label>
+                                        <svg class="panel-accent pointer-events-none absolute left-[12px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>
+                                        <select id="customer-subservice" x-on:change="$wire.selectSubServiceButton(Number($event.target.value))"
+                                            class="panel-field h-11 w-full rounded-xl border pl-[40px] pr-[32px]">
+                                            @foreach ($subServicesCustomer as $subService)
+                                                <option value="{{ $subService->id }}" @selected($selectedSubServices === $subService->id)>{{ $subService->sub_service }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
+                        <!-- Sección de impuestos -->
+                        @if ($selectedServiceId)
+                            @php
+                                $description = $selectedSubService->description ?? '';
+                                $showGlobalAction = $selectedSubServiceId !== 1 && $selectedSubServiceId !== 6;
+                            @endphp
+                            <div class="flex flex-col gap-[20px] p-[20px]">
+                                @if ($description !== '' || $showGlobalAction)
+                                    <div class="flex flex-col justify-between gap-[10px] sm:flex-row sm:items-center sm:gap-[20px]">
+                                        <p class="min-w-0 leading-snug">{{ $description }}</p>
+
+                                        @if ($showGlobalAction)
+                                            @php
+                                                $complementariaFiles = $pdfsDB['complementaria'][
+                                                    $this->selectedSubServiceId
+                                                ] ?? [
+                                                    'acuse' => collect(),
+                                                    'comprobante' => collect(),
+                                                ];
+
+                                                $hasComplementaria =
+                                                    $complementariaFiles['acuse']->isNotEmpty() ||
+                                                    $complementariaFiles['comprobante']->isNotEmpty();
+                                                $buttonText =
+                                                    $hasComplementaria || $isComplementaria ? 'Eliminar' : 'Agregar';
+                                                $isDanger = $isComplementaria || $hasComplementaria;
+                                            @endphp
+                                            <button type="button" wire:click="toggle()"
+                                                class="{{ $isDanger ? 'panel-action-danger' : 'panel-action' }} inline-flex w-fit shrink-0 items-center gap-[10px] py-[10px] leading-none focus:outline-none focus:ring-0 sm:py-0">
+                                                <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $isDanger ? 'M5 7h14M9 7V4h6v3m-8 0l1 13h8l1-13' : 'M12 5v14M5 12h14' }}" /></svg>
+                                                <span>{{ $buttonText }} complementaria</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @if ($selectedSubServiceId === 1)
+                                    @foreach ($states as $key => $state)
+                                        @php
+                                            $normalFiles = $pdfsDB['normal'][$state->id] ?? [
+                                                'acuse' => collect(),
+                                                'comprobante' => collect(),
+                                            ];
+                                            $complementariaFiles = $pdfsDB['complementaria'][$state->id] ?? [
+                                                'acuse' => collect(),
+                                                'comprobante' => collect(),
+                                            ];
+
+                                            $hasComplementaria =
+                                                $complementariaFiles['acuse']->isNotEmpty() ||
+                                                $complementariaFiles['comprobante']->isNotEmpty();
+                                            $isOpen = $this->isStateOpen($state->id);
+                                            $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
+                                            $isDanger = $isOpen || $hasComplementaria;
+                                        @endphp
+                                        <section wire:key="customer-state-{{ $state->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0">
+                                            <div class="flex flex-col justify-between gap-[10px] sm:flex-row sm:items-center sm:gap-[20px]">
+                                                <span class="panel-accent min-w-0 leading-snug">{{ $state->name }}</span>
+                                                <button type="button" wire:click="toggleState({{ $state->id }})"
+                                                    class="{{ $isDanger ? 'panel-action-danger' : 'panel-action' }} {{ $hasComplementaria ? 'cursor-not-allowed' : '' }} inline-flex w-fit shrink-0 items-center gap-[10px] py-[10px] leading-none focus:outline-none focus:ring-0 sm:py-0">
+                                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $isDanger ? 'M5 7h14M9 7V4h6v3m-8 0l1 13h8l1-13' : 'M12 5v14M5 12h14' }}" /></svg>
+                                                    <span>{{ $buttonText }} complementaria</span>
+                                                </button>
+                                            </div>
+
+                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                                <!-- Archivos Normales -->
+                                                <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
+                                                    :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
+                                                    :state="$state" />
+
+                                                <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
+                                                    fileType="Comprobante" declarationType="Normal"
+                                                    :state="$state" :successMessage="$successMessage" :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
+                                                        $complementariaFiles['comprobante']->isEmpty()" />
+
+                                                <!-- Archivos Complementaria -->
+                                                @if ($hasComplementaria || $isOpen)
+                                                    <x-format-pdf model="pdfs.complementaria.acuse"
+                                                        :pdf="$complementariaFiles['acuse']" fileType="Acuse"
+                                                        declarationType="Complementaria" :state="$state" />
+
+                                                    <x-format-pdf model="pdfs.complementaria.comprobante"
+                                                        :pdf="$complementariaFiles['comprobante']" fileType="Comprobante"
+                                                        declarationType="Complementaria" :state="$state" />
+                                                @endif
+                                            </div>
+                                        </section>
+                                    @endforeach
+                                @elseif ($selectedSubServiceId === 6)
+                                    @foreach ($statements as $statement)
+                                        @php
+                                            $normalFiles = $pdfsDB['normal'][$statement->id] ?? [
+                                                'acuse' => collect(),
+                                                'comprobante' => collect(),
+                                            ];
+                                            $complementariaFiles = $pdfsDB['complementaria'][$statement->id] ?? [
+                                                'acuse' => collect(),
+                                                'comprobante' => collect(),
+                                            ];
+
+                                            $hasComplementaria =
+                                                $complementariaFiles['acuse']->isNotEmpty() ||
+                                                $complementariaFiles['comprobante']->isNotEmpty();
+                                            $isOpen = $this->isStatementOpen($statement->id);
+                                            $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
+                                            $isDanger = $isOpen || $hasComplementaria;
+                                        @endphp
+                                        <section wire:key="customer-statement-{{ $statement->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0">
+                                            <div class="flex flex-col justify-between gap-[10px] sm:flex-row sm:items-center sm:gap-[20px]">
+                                                <span class="panel-accent min-w-0 leading-snug">{{ $statement->statement }}</span>
+                                                <button type="button" wire:click="toggleStatement({{ $statement->id }})"
+                                                    class="{{ $isDanger ? 'panel-action-danger' : 'panel-action' }} {{ $hasComplementaria ? 'cursor-not-allowed' : '' }} inline-flex w-fit shrink-0 items-center gap-[10px] py-[10px] leading-none focus:outline-none focus:ring-0 sm:py-0">
+                                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $isDanger ? 'M5 7h14M9 7V4h6v3m-8 0l1 13h8l1-13' : 'M12 5v14M5 12h14' }}" /></svg>
+                                                    <span>{{ $buttonText }} complementaria</span>
+                                                </button>
+                                            </div>
+
+                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                                <!-- Archivos Normales -->
+                                                <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
+                                                    :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
+                                                    :statement="$statement" />
+
+                                                <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
+                                                    fileType="Comprobante" declarationType="Normal"
+                                                    :statement="$statement" :successMessage="$successMessage" :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
+                                                        $complementariaFiles['comprobante']->isEmpty()" />
+
+                                                <!-- Archivos Complementaria -->
+                                                @if ($hasComplementaria || $isOpen)
+                                                    <x-format-pdf model="pdfs.complementaria.acuse"
+                                                        :pdf="$complementariaFiles['acuse']" fileType="Acuse"
+                                                        declarationType="Complementaria" :statement="$statement" />
+
+                                                    <x-format-pdf model="pdfs.complementaria.comprobante"
+                                                        :pdf="$complementariaFiles['comprobante']" fileType="Comprobante"
+                                                        declarationType="Complementaria" :statement="$statement" />
+                                                @endif
+                                            </div>
+                                        </section>
+                                    @endforeach
+                                @else
+                                    @php
+                                        $normalFiles = $pdfsDB['normal'][$selectedSubServiceId] ?? [
+                                            'acuse' => collect(),
+                                            'comprobante' => collect(),
+                                        ];
+                                        $complementariaFiles = $pdfsDB['complementaria'][$selectedSubServiceId] ?? [
+                                            'acuse' => collect(),
+                                            'comprobante' => collect(),
+                                        ];
+                                    @endphp
+
+                                    <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                        <!-- Archivos Normales -->
+                                        <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
+                                            :successMessage="$successMessage" fileType="Acuse" declarationType="Normal" />
+
+                                        <x-format-pdf model="pdfs.normal.comprobante" :pdf="$normalFiles['comprobante']"
+                                            fileType="Comprobante" declarationType="Normal" :successMessage="$successMessage"
+                                            :comprobante-normal-is-visible="$complementariaFiles['acuse']->isEmpty() &&
+                                                $complementariaFiles['comprobante']->isEmpty()" />
+
+                                        <!-- Archivos Complementaria -->
+                                        @if (
+                                            $complementariaFiles['acuse']->isNotEmpty() ||
+                                                $complementariaFiles['comprobante']->isNotEmpty() ||
+                                                $isComplementaria)
+                                            <x-format-pdf model="pdfs.complementaria.acuse" :pdf="$complementariaFiles['acuse']"
+                                                fileType="Acuse" declarationType="Complementaria" />
+
+                                            <x-format-pdf model="pdfs.complementaria.comprobante" :pdf="$complementariaFiles['comprobante']"
+                                                fileType="Comprobante" declarationType="Complementaria" />
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <x-panel-empty-state>
+                                <x-slot name="icon">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6" /></svg>
+                                </x-slot>
+                                Sin servicios contratados seleccionados
+                            </x-panel-empty-state>
+                        @endif
+                    </section>
                 @endif
             </div>
-        @else
-            <div
-                class="relative flex h-[200px] items-center justify-center rounded-lg border border-gray-300 bg-white shadow-sm">
-                <span
-                    class="rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-base font-semibold text-gray-600 shadow-sm">
-                    Sin servicios contratados seleccionados
+        </div>
+    </div>
+
+    @unless (isset($notFound) && $notFound)
+        <!-- Subida de PDF en curso (fuera del contenedor escalado para cubrir toda la pantalla) -->
+        <div wire:loading wire:target="pdfs.normal.acuse,pdfs.normal.comprobante,pdfs.complementaria.acuse,pdfs.complementaria.comprobante">
+            <div role="alert" aria-live="polite" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-[20px]">
+                <div class="panel-surface panel-border flex max-w-[320px] flex-col items-center gap-[15px] rounded-xl border px-[30px] py-[30px] text-center shadow-[0_8px_24px_rgba(0,0,0,0.20)]">
+                    <span class="relative grid h-14 w-14 place-items-center">
+                        <span class="panel-border absolute inset-0 rounded-full border-4"></span>
+                        <span class="panel-spinner absolute inset-0 animate-spin rounded-full border-4"></span>
+                        <svg class="panel-accent h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6" /></svg>
+                    </span>
+                    <span class="panel-accent leading-none">Subiendo PDF…</span>
+                    <p class="panel-muted leading-snug">Estamos cargando tu archivo de manera segura. Por favor espera un momento.</p>
+                </div>
+            </div>
+        </div>
+
+        @if ($successMessage)
+            @php
+                $toastTone = match ($typeMessage) {
+                    'error' => 'panel-tone-red',
+                    'alert' => 'panel-tone-amber',
+                    default => 'panel-tone-green',
+                };
+            @endphp
+            <div class="panel-surface panel-border fixed bottom-[30px] right-[20px] z-[70] flex w-[calc(100%-40px)] max-w-sm items-center gap-[15px] rounded-xl border p-[15px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:right-[30px] lg:bottom-[100px]"
+                role="alert" x-data="{ show: true }" x-show="show"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-2"
+                @toast-hidden.window="if ($event.detail.message === @js($successMessage)) show = false"
+                x-init="setTimeout(() => {
+                    show = false;
+                    $wire.set('successMessage', null);
+                }, 3000)">
+                <span class="{{ $toastTone }} panel-header panel-border grid h-9 w-9 shrink-0 place-items-center rounded-xl border">
+                    @if ($iconSVG)
+                        @svg($iconSVG, 'h-5 w-5')
+                    @endif
                 </span>
+                <span class="min-w-0 flex-1 leading-snug">{{ $successMessage }}</span>
+                <button type="button" aria-label="Cerrar" @click="show = false; $wire.set('successMessage', null);"
+                    class="panel-icon-button grid h-9 w-9 shrink-0 place-items-center rounded-xl focus:outline-none focus:ring-0">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
             </div>
         @endif
-    @endif
+    @endunless
+
+    <!-- Control de zoom y pantalla completa (igual que en Administración y Reportes de soporte) -->
+    <div class="panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
+        <button type="button" @click="setScale(viewScale - 5)" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center focus:outline-none focus:ring-0">−</button>
+        <input type="range" min="70" max="100" step="5" :value="viewScale" @input="setScale($event.target.value)" class="h-1.5 w-[130px] cursor-pointer" style="accent-color: var(--panel-accent)" aria-label="Ajustar tamaño de la vista">
+        <button type="button" @click="setScale(viewScale + 5)" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center focus:outline-none focus:ring-0">+</button>
+        <span class="w-[42px] text-right tabular-nums" x-text="viewScale + '%'">90%</span>
+        <span class="panel-line h-5 w-px"></span>
+        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg>
+            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5" /></svg>
+        </button>
+    </div>
 </div>
