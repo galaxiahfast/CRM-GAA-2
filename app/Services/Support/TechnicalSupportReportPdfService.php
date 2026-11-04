@@ -88,9 +88,7 @@ class TechnicalSupportReportPdfService
             'issuedAtLong' => ucfirst($issuedAt->isoFormat('dddd, D [de] MMMM [de] YYYY, HH:mm:ss')).' '.$issuedAt->format('T'),
             'responsible' => $report->responsible,
             'serviceRecipient' => $report->service_recipient,
-            'title' => data_get($report->details, 'report_kind') === 'hardware_inventory'
-                ? 'Ficha técnica de equipo para cotización'
-                : 'Soporte técnico',
+            'title' => 'Soporte técnico',
             'addressee' => 'Atención: A quién corresponda',
             'supports' => $report->supports ?? [],
             'details' => $report->details ?? [],

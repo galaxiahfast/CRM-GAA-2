@@ -35,7 +35,7 @@
         .detail-marker-cell { width: 24pt; padding: 0 6pt 0 0; vertical-align: top; line-height: 2; text-align: right; white-space: nowrap; }
         .detail-text { padding: 0; line-height: 2; text-align: justify; }
         .spec-table { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
-        .spec-table td { padding: 4pt 7pt; border-bottom: 0.5pt solid #b4b4b4; vertical-align: top; }
+        .spec-table td { padding: 4pt 7pt; vertical-align: top; }
         .spec-table td:first-child { width: 35%; }
         body.inventory-mode * { line-height: 1.45; }
         body.inventory-mode .meta, body.inventory-mode .document-heading,
@@ -61,7 +61,7 @@
 
     <main>
         <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
-        <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>{{ data_get($details, 'report_kind') === 'hardware_inventory' ? 'Usuario del equipo' : 'Departamento o cliente' }}: {{ $serviceRecipient }}</td></tr></table>
+        <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>Departamento o cliente: {{ $serviceRecipient }}</td></tr></table>
         @if (data_get($details, 'contact_email'))
             <p class="body-copy">Correo de contacto: {{ data_get($details, 'contact_email') }}</p>
         @endif

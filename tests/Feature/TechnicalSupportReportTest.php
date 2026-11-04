@@ -44,9 +44,11 @@ class TechnicalSupportReportTest extends TestCase
         $this->assertStringNotContainsString('zona horaria', mb_strtolower($jesus->details['summary']));
 
         $inventory = TechnicalSupportReport::query()->where('folio', 'ST-20261104-0022')->firstOrFail();
-        $this->assertSame('Ángel Moo', $inventory->service_recipient);
+        $this->assertSame('Contabilidad', $inventory->service_recipient);
         $this->assertSame('hardware_inventory', $inventory->details['report_kind']);
         $this->assertCount(8, $inventory->details['hardware_specs']);
+        $this->assertSame(['MOO CUY ANGEL GABRIEL'], $inventory->supports[0]['targets']);
+        $this->assertSame('MOO CUY ANGEL GABRIEL', $inventory->details['hardware_specs'][0]['value']);
         $this->assertSame(
             'ST-20261104-0022-caracteristicas-equipo-cotizacion.pdf',
             app(TechnicalSupportReportPdfService::class)->data($inventory)['filename'],
