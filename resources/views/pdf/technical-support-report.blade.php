@@ -53,6 +53,9 @@
     <main>
         <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
         <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>Departamento o cliente: {{ $serviceRecipient }}</td></tr></table>
+        @if (data_get($details, 'contact_email'))
+            <p class="body-copy">Correo de contacto: {{ data_get($details, 'contact_email') }}</p>
+        @endif
         <p class="addressee">{{ $addressee }}</p>
         <p class="body-copy">Por medio de la presente nos permitimos informarle del soporte solicitado.</p>
 
@@ -77,6 +80,9 @@
                     </li>
                 @endforeach
             </ol>
+        @endif
+        @if (data_get($details, 'summary'))
+            <p class="body-copy">Observaciones: {{ data_get($details, 'summary') }}</p>
         @endif
         <div class="closing-block">
             <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>

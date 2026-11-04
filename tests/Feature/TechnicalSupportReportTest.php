@@ -14,6 +14,29 @@ class TechnicalSupportReportTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_accounting_network_and_timezone_reports_are_available_with_their_recipients(): void
+    {
+        $expected = [
+            'ST-20261104-0018' => ['Josue Ricardo Puc Pech', 'josucpuc292@gmail.com'],
+            'ST-20261104-0019' => ['Jesus Ricardo Pech Ku', 'bc_jesus_pech@gonzalezalonzo.net'],
+            'ST-20261104-0020' => ['Alan Alberto Chan Caballero', 'alan.chan@gonzalezalonzo.net'],
+            'ST-20261104-0021' => ['Pedro Pablo Tuyub Albornoz', null],
+        ];
+
+        foreach ($expected as $folio => [$person, $email]) {
+            $report = TechnicalSupportReport::query()->where('folio', $folio)->firstOrFail();
+
+            $this->assertSame('Contabilidad', $report->service_recipient);
+            $this->assertSame($email, $report->details['contact_email']);
+            $this->assertContains($person, $report->supports[0]['targets']);
+            $this->assertDatabaseHas('technical_support_report_movements', [
+                'technical_support_report_id' => $report->id,
+                'folio' => $folio,
+                'action' => TechnicalSupportReportMovement::ACTION_CREATED,
+            ]);
+        }
+    }
+
     public function test_report_section_requires_authentication(): void
     {
         $this->get(route('soporte.reportes-tecnicos'))->assertRedirect(route('login'));
@@ -613,7 +636,7 @@ class TechnicalSupportReportTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get(route('soporte.reportes-tecnicos.history'))
+            ->get(route('soporte.reportes-tecnicos.history', ['date' => '2026-10-30']))
             ->assertOk()
             ->assertSee('ST-20261030-0013')
             ->assertSee('Departamento o cliente: Contabilidad');
