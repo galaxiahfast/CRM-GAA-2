@@ -279,9 +279,6 @@
                                 @elseif ($selectedCustomerId)
                                     <section class="rounded-xl border border-blue-100 bg-blue-50 p-5 text-[15px] text-blue-900">
                                         <p>Las asignaciones, servicios y documentos existentes se conservarán sin cambios.</p>
-                                        <a href="{{ route('customers.edit', $selectedCustomerId) }}" class="mt-3 inline-flex font-medium text-[#1A3A6B] underline underline-offset-4">
-                                            Abrir configuración completa del cliente
-                                        </a>
                                     </section>
                                 @endif
                             @endif

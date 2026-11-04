@@ -20,6 +20,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Envío automático semanal
+    |--------------------------------------------------------------------------
+    |
+    | Cada lunes a las 9:00 (hora de México) el comando backup-reports:send-weekly
+    | lee los logs, genera el PDF y lo envía únicamente a estos destinatarios.
+    | El envío manual desde la pantalla sigue disponible para cualquier día.
+    | Requiere que el programador de tareas (schedule:work o cron) esté activo en
+    | el equipo que puede leer los recursos compartidos de abajo.
+    |
+    */
+    'weekly' => [
+        'enabled' => filter_var(env('BACKUP_WEEKLY_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'day' => 1, // 0 = domingo, 1 = lunes
+        'time' => env('BACKUP_WEEKLY_TIME', '09:00'),
+        'recipients' => array_values(array_filter(array_map(
+            static fn (string $email): string => trim($email),
+            explode(',', env('BACKUP_WEEKLY_RECIPIENTS', 'soporte@datamid.com.mx,emiliano.ortiz@datamid.com.mx')),
+        ))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fuentes de Create Synchronicity
     |--------------------------------------------------------------------------
     |

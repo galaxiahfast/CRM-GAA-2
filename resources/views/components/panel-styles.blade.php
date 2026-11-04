@@ -3,6 +3,7 @@
      Reportes de soporte), así que ningún componente necesita reglas propias para el tema oscuro. --}}
 <style>
     [data-panel] {
+        --panel-page: #ffffff;
         --panel-surface: #ffffff;
         --panel-header: #f4f4f5;
         --panel-subtle: #fafafa;
@@ -18,12 +19,13 @@
         --panel-danger: #b91c1c;
         --panel-danger-soft: #fef2f2;
         --panel-danger-line: #fecaca;
-        background-color: var(--panel-surface);
+        background-color: var(--panel-page);
         color: var(--panel-text);
         color-scheme: light;
     }
 
     html.module-dark-theme [data-panel] {
+        --panel-page: #09090b;
         --panel-surface: #18181b;
         --panel-header: #202023;
         --panel-subtle: #1d1d21;
@@ -115,7 +117,7 @@
     .panel-menu-item { color: var(--panel-text); }
     .panel-menu-item:hover { background-color: var(--panel-hover); }
 
-    /* Campos: conservan su borde gris al enfocar (igual que los formularios de Administración) */
+    /* Campos: el borde no cambia al enfocarlos (igual que Reportes de soporte y Administración) */
     .panel-field {
         border-color: var(--panel-border);
         background-color: var(--panel-surface);
@@ -124,12 +126,42 @@
     .panel-field::placeholder { color: var(--panel-muted); opacity: 1; }
     [data-panel] :is(input, select, textarea).panel-field:focus,
     [data-panel] :is(input, select, textarea).panel-field:focus-visible {
-        border-color: var(--panel-muted) !important;
+        border-color: var(--panel-border) !important;
         box-shadow: none !important;
         outline: none !important;
     }
 
+    /* Listas desplegables (mes, año y servicios): mismo diseño que las de Reportes de soporte */
+    .panel-option {
+        background-color: var(--panel-surface);
+        color: var(--panel-text);
+    }
+    .panel-option:hover { background-color: var(--panel-subtle); }
+    html.module-dark-theme [data-panel] .panel-option:hover { background-color: var(--panel-hover); }
+    .panel-option[aria-selected="true"] { color: var(--panel-accent); }
+    .panel-scroll {
+        scrollbar-width: none;
+        overscroll-behavior: contain;
+    }
+    .panel-scroll::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+    .panel-scroll-thumb {
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 20;
+        width: 3px;
+        min-height: 32px;
+        border-radius: 9999px;
+        background: var(--panel-accent);
+        pointer-events: none;
+    }
+
     /* Anillos de avance (componente compartido): pista, texto y colores según el tema */
+    /* Mismo tamaño de aro en todo el panel (el componente trae 75px fijos y es compartido con otras pantallas) */
+    [data-panel] .radial-progress svg { width: 56px; height: 56px; flex-shrink: 0; }
     [data-panel] .radial-progress circle:first-child { stroke: var(--panel-track); }
     [data-panel] .radial-progress .percentage-text {
         color: var(--panel-text);

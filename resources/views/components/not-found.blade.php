@@ -25,14 +25,14 @@
             </p>
 
             <!-- Botón -->
-            <a href="{{ route('customers.index') }}"
+            <a href="{{ route('dashboard') }}"
                 class="inline-flex items-center gap-3 rounded-full bg-blue-600 px-6 py-3 text-lg font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-blue-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15 19l-7-7 7-7" />
                 </svg>
-                Volver al listado
+                Volver al Panel general
             </a>
 
         </div>

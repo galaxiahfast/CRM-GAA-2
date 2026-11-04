@@ -16,7 +16,6 @@
                 : ($canManagePermissions
                     ? route('administracion.permissions')
                     : route('administracion.interns'))));
-    $canCustomers = $permissionAccess->allows($currentUser, 'customers.view');
     $canTimeActivities = $permissionAccess->allows($currentUser, 'activities.manage');
     $canTimeClock = $permissionAccess->allows($currentUser, 'time-control.clock.use');
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
@@ -138,6 +137,9 @@
     <!-- ===================== BARRA SUPERIOR ===================== -->
     <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profile.show', 'profiles.show') ? 'px-[50px]' : (request()->routeIs('dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
+            <button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed" class="mobile-menu-button" aria-label="Menú de navegación" title="Menú de navegación">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
             @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
                     <span>Actividades</span>
@@ -192,7 +194,9 @@
                 </div>
             @elseif (request()->routeIs('customers.view'))
                 <div class="hidden min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65 sm:flex">
-                    <a href="{{ route('customers.index') }}" class="transition-colors hover:text-white">Clientes</a>
+                    <span>Inicio</span>
+                    <span class="text-white/40">›</span>
+                    <a href="{{ route('dashboard') }}" class="transition-colors hover:text-white">Panel general</a>
                     <span class="text-white/40">›</span>
                     <span class="text-white">Detalle del cliente</span>
                 </div>
@@ -337,6 +341,20 @@
     <!-- ============================================================ -->
     <!-- MENÚ LATERAL - top: 90px (altura de la barra superior)      -->
     <!-- ============================================================ -->
+    {{-- Pantallas angostas: en tableta el menú sigue en el diseño (riel de 80px) y empuja el contenido; en celular se muestra como un panel bajo la barra superior, sin tapar ni difuminar nada --}}
+    <style>
+        .mobile-menu-button { display: none; height: 42px; width: 42px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 8px; background: transparent; color: #ffffff; cursor: pointer; transition: background-color 150ms ease; }
+        .mobile-menu-button:hover { background-color: rgba(255, 255, 255, 0.12); }
+        @media (max-width: 639px) {
+            .mobile-menu-button { display: flex; }
+            #main-content { margin-left: 0 !important; }
+            #main-nav { left: 0 !important; padding-left: 20px !important; padding-right: 20px !important; }
+            #main-nav > div > div.min-w-0 > :not(:last-child) { display: none; }
+            #logo-sidebar { top: 100px !important; height: calc(100dvh - 100px) !important; width: 100% !important; box-shadow: none; }
+            #logo-sidebar[data-collapsed="true"] { display: none; }
+        }
+    </style>
+
     <aside
         id="logo-sidebar"
         :data-collapsed="collapsed ? 'true' : 'false'"
@@ -530,19 +548,6 @@
                 </li>
                 @endif
 
-                <!-- ========================================================== -->
-                <!-- BOTÓN: Clientes (siempre visible)                          -->
-                <!-- ========================================================== -->
-                @if ($canCustomers)
-                <li class="pt-[15px] px-[15px] pb-0 m-0">
-                    <a href="{{ route('customers.index') }}"
-                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('customers.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                        <x-hugeicons-user-group class="w-5 h-5 transition-colors {{ request()->routeIs('customers.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Clientes</span>
-                    </a>
-                </li>
-                @endif
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: ACTIVIDADES (oculta en modo compacto)            -->

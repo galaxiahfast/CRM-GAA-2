@@ -35,12 +35,12 @@
     <!-- ========================================= -->
     <div
         x-data="{
-            collapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+            collapsed: window.innerWidth < 1024 || localStorage.getItem('sidebarCollapsed') === 'true',
         }"
 
         x-init="
             $watch('collapsed', value => {
-                localStorage.setItem('sidebarCollapsed', value);
+                if (window.innerWidth >= 1024) localStorage.setItem('sidebarCollapsed', value);
             });
         "
 

@@ -35,9 +35,9 @@
         .support-list > li { page-break-inside: avoid; }
         .detail-marker-cell { width: 24pt; padding: 0 6pt 0 0; vertical-align: top; line-height: 2; text-align: right; white-space: nowrap; }
         .detail-text { padding: 0; line-height: 2; text-align: justify; }
-        .spec-table { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
+        .spec-table { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: auto; }
         .spec-table td { padding: 4pt 7pt; vertical-align: top; }
-        .spec-table td:first-child { width: 35%; }
+        .spec-table .spec-marker { padding-right: 4pt; text-align: right; white-space: nowrap; }
         body.inventory-mode * { line-height: 1.45; }
         body.inventory-mode .meta, body.inventory-mode .document-heading,
         body.inventory-mode .addressee, body.inventory-mode .body-copy,
@@ -71,8 +71,9 @@
             <p class="body-copy">Se registran las características actuales del equipo para que el área correspondiente prepare una cotización. Este documento es únicamente informativo; no contiene precios ni una propuesta de compra.</p>
             <p class="section-title">Características registradas</p>
             <table class="spec-table" aria-label="Características del equipo">
+                <colgroup><col style="width: 3%"><col style="width: 27%"><col style="width: 70%"></colgroup>
                 @foreach (data_get($details, 'hardware_specs', []) as $spec)
-                    <tr><td>{{ $spec['label'] }}</td><td>{{ $spec['value'] }}</td></tr>
+                    <tr><td class="spec-marker">&mdash;</td><td class="spec-label">{{ $spec['label'] }}</td><td>{{ $spec['value'] }}</td></tr>
                 @endforeach
             </table>
         @else

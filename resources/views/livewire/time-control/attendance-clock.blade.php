@@ -1,410 +1,380 @@
-<div wire:ignore class="attendance-clock-modern relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
-    x-data="{ viewScale: 100, isFullscreen: false,
-        init() { const saved = Number(localStorage.getItem('attendance-clock-view-scale')); if (saved >= 70 && saved <= 100) this.viewScale = saved },
-        saveScale() { localStorage.setItem('attendance-clock-view-scale', String(this.viewScale)) },
-        async toggleFullscreen() { if (document.fullscreenElement === $root) return document.exitFullscreen(); if (document.fullscreenElement) await document.exitFullscreen(); await $root.requestFullscreen() }
-    }" @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root">
+{{-- Reloj Checador (usuario): mismo diseño que Panel general, Administración y Reportes de soporte (tarjetas con
+     cabecera gris, líneas de 1px, texto de 15px, separaciones de 20px, escala de vista al 90% ajustable y tema
+     oscuro con fondo negro). Solo cambia la presentación; las consultas, gráficas y exportaciones son las mismas. --}}
+<div
+    wire:ignore
+    data-panel
+    data-attendance-clock
+    class="attendance-clock-modern relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+    x-data="{
+        viewScale: 90,
+        isFullscreen: false,
+        isCompact: window.innerWidth < 1024,
+        scaledHeight: null,
+        observer: null,
+        onFullscreen: null,
+        init() {
+            try {
+                const saved = Number(localStorage.getItem('attendance-clock-view-scale'));
+                if (saved >= 70 && saved <= 100) this.viewScale = saved;
+            } catch (error) {}
+            this.onFullscreen = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
+            document.addEventListener('fullscreenchange', this.onFullscreen);
+            this.$nextTick(() => {
+                this.observer = new ResizeObserver(() => this.syncHeight());
+                this.observer.observe(this.$refs.scaled);
+                this.syncHeight();
+            });
+        },
+        destroy() {
+            this.observer?.disconnect();
+            document.removeEventListener('fullscreenchange', this.onFullscreen);
+        },
+        syncHeight() {
+            if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
+        },
+        setScale(value) {
+            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
+            try { localStorage.setItem('attendance-clock-view-scale', String(this.viewScale)); } catch (error) {}
+            this.$nextTick(() => this.syncHeight());
+        },
+        async toggleFullscreen() {
+            if (document.fullscreenElement === this.$root) return document.exitFullscreen();
+            if (document.fullscreenElement) await document.exitFullscreen();
+            await this.$root.requestFullscreen();
+        }
+    }"
+    @resize.window.debounce.150ms="isCompact = window.innerWidth < 1024; syncHeight()"
+>
+    <x-panel-styles />
 
-<style>
-    .attendance-clock-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .attendance-clock-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .attendance-clock-scrollbar::-webkit-scrollbar-thumb { background: #000; border-radius: 9999px; }
-    .attendance-clock-scrollbar { scrollbar-width: thin; scrollbar-color: #000 transparent; }
-    .attendance-clock-modern:fullscreen { overflow: auto; background: #fff; }
-    .attendance-clock-modern input:focus,
-    .attendance-clock-modern button:focus,
-    .attendance-clock-modern button:focus-visible { outline: none !important; box-shadow: none !important; }
-    .attendance-clock-modern #panel_resultados_checador article,
-    .attendance-clock-modern #panel_resultados_checador > section {
-        border-color: #e4e4e7 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, .05) !important;
-    }
-    .attendance-clock-modern #panel_resultados_checador > section:first-child article > span:first-child { background: #000 !important; }
-    .attendance-clock-modern #panel_resultados_checador > section:first-child article header > span:first-child,
-    .attendance-clock-modern #panel_resultados_checador > section:nth-child(2) article header > span:first-child,
-    .attendance-clock-modern #panel_resultados_checador > section:nth-child(3) header > div:first-child > span:first-child {
-        border: 1px solid #e4e4e7 !important;
-        background: #fff !important;
-        color: #000 !important;
-    }
-    .attendance-clock-modern #kpi_tiempo_neto,
-    .attendance-clock-modern #kpi_horas_decimales,
-    .attendance-clock-modern #kpi_pago_base,
-    .attendance-clock-modern #kpi_bono,
-    .attendance-clock-modern #kpi_total_dia,
-    .attendance-clock-modern #promedio_tiempo_checador,
-    .attendance-clock-modern #promedio_ganancias_checador,
-    .attendance-clock-modern #total_general { color: #000 !important; }
-    .attendance-clock-modern #panel_resultados_checador article > header,
-    .attendance-clock-modern #panel_resultados_checador section > header { background: rgba(255,255,255,.65) !important; }
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article,
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador > section {
-        border-color: #3f3f46 !important;
-        background: #18181b !important;
-    }
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article > header,
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador section > header {
-        background: transparent !important;
-    }
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header > span:last-child,
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header h2,
-    html.module-dark-theme .attendance-clock-modern #panel_resultados_checador article header p {
-        color: #d4d4d8 !important;
-    }
-    html.module-dark-theme .attendance-clock-modern #kpi_tiempo_neto,
-    html.module-dark-theme .attendance-clock-modern #kpi_horas_decimales,
-    html.module-dark-theme .attendance-clock-modern #kpi_pago_base,
-    html.module-dark-theme .attendance-clock-modern #kpi_bono,
-    html.module-dark-theme .attendance-clock-modern #kpi_total_dia,
-    html.module-dark-theme .attendance-clock-modern #promedio_tiempo_checador,
-    html.module-dark-theme .attendance-clock-modern #promedio_ganancias_checador,
-    html.module-dark-theme .attendance-clock-modern #total_general {
-        color: #fafafa !important;
-    }
-    .attendance-clock-modern #checador_export_bar button {
-        border-color: #e4e4e7 !important;
-        background: #fff !important;
-        color: #000 !important;
-    }
-    .attendance-clock-modern table thead,
-    .attendance-clock-modern table tfoot { background: #fafafa !important; }
-    .attendance-clock-modern table th { color: #3f3f46 !important; }
-    .attendance-clock-modern * { scrollbar-width: thin; scrollbar-color: #000 transparent; }
-    html.module-dark-theme .attendance-clock-modern:fullscreen { background: #09090b; }
-    html.module-dark-theme .attendance-clock-modern #checador_export_bar button {
-        border-color: #52525b !important;
-        background: #27272a !important;
-        color: #fafafa !important;
-    }
-    html.module-dark-theme .attendance-clock-modern table thead,
-    html.module-dark-theme .attendance-clock-modern table tfoot { background: #27272a !important; }
-    html.module-dark-theme .attendance-clock-modern table th { color: #e4e4e7 !important; }
-    html.module-dark-theme .attendance-clock-modern * {
-        scrollbar-color: #fff transparent !important;
-    }
-    html.module-dark-theme .attendance-clock-modern *::-webkit-scrollbar-thumb {
-        background: #fff !important;
-    }
-    @media (max-width: 1100px) {
-        .attendance-clock-modern .attendance-topbar { flex-wrap: wrap; padding: 30px !important; }
-        .attendance-clock-modern .attendance-heading { align-items: flex-start; flex-direction: column; }
-        .attendance-clock-modern .attendance-heading > .no-print { justify-content: flex-start; }
-    }
-    @media (max-width: 767px) {
-        .attendance-clock-modern .attendance-topbar { padding: 20px !important; overflow-x: auto; }
-        .attendance-clock-modern .attendance-heading,
-        .attendance-clock-modern .attendance-filters,
-        .attendance-clock-modern #panel_resultados_checador,
-        .attendance-clock-modern > div > div > p { margin-left: 20px !important; margin-right: 20px !important; }
-        .attendance-clock-modern .attendance-heading { margin-top: 30px !important; }
-        .attendance-clock-modern .attendance-filters > div { width: 100% !important; }
-        .attendance-clock-modern .attendance-heading > .no-print { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
-    }
-    @media print {
-        .attendance-clock-modern .no-print { display: none !important; }
-    }
-</style>
+    <style>
+        /* Desplazamiento fino con el color de acento del panel */
+        .attendance-clock-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: var(--panel-accent) transparent;
+            overscroll-behavior: contain;
+        }
+        .attendance-clock-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .attendance-clock-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .attendance-clock-scrollbar::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
 
-<div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-    <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño del Reloj checador">
-    <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
-    <span class="h-5 w-px bg-zinc-200"></span>
-    <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none hover:bg-zinc-100 focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-        <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
-        <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
-    </button>
-</div>
+        /* Tabla de jornadas (las filas las dibuja revisarHorasChecador) */
+        .attendance-clock-modern table thead,
+        .attendance-clock-modern table tfoot { background-color: var(--panel-header); }
+        .attendance-clock-modern table thead { box-shadow: 0 1px 0 var(--panel-border); }
+        .attendance-clock-modern table tfoot { box-shadow: 0 -1px 0 var(--panel-border); }
+        .attendance-clock-modern tbody tr:last-child td { border-bottom-width: 0; }
+        .attendance-row:hover { background-color: var(--panel-subtle); }
+        .attendance-row-review,
+        .attendance-row-review:hover {
+            background-color: var(--panel-danger-soft);
+            box-shadow: inset 4px 0 0 var(--panel-danger);
+        }
+        .attendance-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+            border-radius: 9999px;
+            padding: 3px 12px;
+            white-space: nowrap;
+        }
 
-<div class="relative z-10 min-h-[calc(100dvh-90px)] w-full origin-top bg-white" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
-    <div class="w-full min-w-0">
-        <div class="attendance-topbar hidden">
-            <div class="flex items-center gap-[15px]">
-                <span class="font-medium">Actividades</span>
-                <span class="font-light text-gray-300">&gt;</span>
-                <span class="font-medium">Control de Horas</span>
-                <span class="font-light text-gray-300">&gt;</span>
-                <span class="font-semibold text-black">Reloj Checador</span>
-            </div>
-            <div class="no-print flex items-center gap-[20px]">
-                <button id="attendance-header-download" type="button" onclick="exportarChecador('pdf')" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Descargar PDF
-                </button>
-                <button type="button" onclick="window.print()" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 text-[15px] font-medium text-black transition-colors hover:text-zinc-600">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" />
-                    </svg>
-                    Imprimir
-                </button>
-            </div>
-        </div>
+        /* Gráficas: los colores salen del tema, así cambian solos al pasar de claro a oscuro */
+        .attendance-chart-grid { stroke: var(--panel-border); }
+        .attendance-chart-base { stroke: var(--panel-muted); }
+        .attendance-chart-guide { stroke: var(--panel-border); opacity: .6; }
+        .attendance-chart-text { fill: var(--panel-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+        .attendance-chart-year { fill: var(--panel-muted); opacity: .75; }
+        .attendance-chart-series { stroke: var(--panel-accent); }
+        .attendance-chart-fill { fill: var(--panel-accent); }
+        .attendance-chart-point { stroke: var(--panel-surface); }
 
-        <div class="attendance-heading mx-[50px] mt-[50px] flex items-center justify-between gap-[20px]">
-            <div class="flex min-w-0 items-center gap-[20px]">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
-                <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-xl font-semibold tracking-tight text-black">Reloj Checador</h1>
-                <p class="mt-[5px] text-[15px] text-zinc-500">Consulta tus marcas biométricas y el resumen acumulado del periodo.</p>
-            </div>
-            </div>
-            <div class="no-print flex flex-wrap justify-end gap-[10px]">
-                <a href="{{ route('time.index') }}" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-black hover:bg-zinc-100">Cronómetro <span>›</span></a>
-                <a href="{{ route('time.reports') }}" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-black hover:bg-zinc-100">Productividad <span>›</span></a>
-                <a href="{{ route('time.dashboard') }}" class="inline-flex items-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-white hover:bg-zinc-800">Panel de control <span>›</span></a>
-            </div>
-        </div>
 
-        <p class="mx-[50px] mt-[20px] max-w-2xl text-[15px] leading-6 text-zinc-500">Visualiza las marcas registradas por día, con cálculo de tiempo y acumulados durante el periodo seleccionado.</p>
+        /* Gráficas interactivas: columna resaltada, línea guía y tooltip al pasar, enfocar o tocar */
+        .attendance-chart-band { fill: transparent; }
+        .attendance-chart-band-active { fill: var(--panel-accent); fill-opacity: .1; }
+        .attendance-chart-cursor { stroke: var(--panel-muted); stroke-dasharray: 4 4; pointer-events: none; }
+        .attendance-clock-modern [role="img"] svg * { pointer-events: none; -webkit-tap-highlight-color: transparent; }
+        .attendance-clock-modern [role="img"] svg .attendance-chart-band { pointer-events: all; }
 
-        <input type="hidden" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}">
-        <input type="hidden" id="attendance_user_id" value="{{ auth()->id() }}">
+        /* Botón principal: en tema oscuro usa el azul de marca en lugar de blanco */
+        html.module-dark-theme [data-panel] .panel-button { background-color: #1A3A6B; color: #ffffff; }
+        html.module-dark-theme [data-panel] .panel-button:hover { background-color: #234b88; }
+        [data-panel] .panel-button:disabled { cursor: not-allowed; opacity: .6; }
 
-        <div class="attendance-filters mx-[50px] mb-[20px] mt-[20px] flex flex-wrap items-end gap-[20px] rounded-xl border border-zinc-200 bg-white/65 p-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
-            <div class="w-[180px] shrink-0">
-                <label class="mb-[10px] block text-[15px] font-semibold text-black">Fecha Inicio</label>
-                <input type="date" id="fecha_inicio" value="{{ date('Y-m-d', strtotime('-14 days')) }}"
-                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black outline-none transition focus:border-zinc-400 focus:ring-0">
-            </div>
-            <div class="w-[180px] shrink-0">
-                <label class="mb-[10px] block text-[15px] font-semibold text-black">Fecha Fin</label>
-                <input type="date" id="fecha_fin" value="{{ date('Y-m-d') }}"
-                    class="h-[50px] w-full rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] text-black outline-none transition focus:border-zinc-400 focus:ring-0">
-            </div>
-            <div class="w-[180px] shrink-0">
-                <button id="btn_revisar_horas" type="button" onclick="revisarHorasChecador()"
-                    class="inline-flex h-[50px] w-full items-center justify-center gap-[10px] rounded-xl border-0 bg-black px-[20px] text-[15px] font-normal text-white transition-colors hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-70">
-                    <svg id="icono_buscar_checador" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-                    </svg>
-                    <svg id="carga_checador" class="hidden h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                    <span id="texto_boton_checador">Revisar Horas</span>
-                </button>
-            </div>
-        </div>
+        /* Celular y tablet: cada jornada se muestra como una tarjeta, sin desplazamiento horizontal */
+        @media (max-width: 1023px) {
+            .attendance-clock-modern .attendance-table-wrap { max-height: none; overflow: hidden; }
+            .attendance-clock-modern table { display: block; min-width: 0 !important; }
+            .attendance-clock-modern colgroup,
+            .attendance-clock-modern thead { display: none; }
+            .attendance-clock-modern tbody,
+            .attendance-clock-modern tfoot { display: block; position: static; }
+            .attendance-clock-modern tbody tr,
+            .attendance-clock-modern tfoot tr {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 15px 20px;
+                padding: 20px;
+            }
+            .attendance-clock-modern tbody tr { border-bottom: 1px solid var(--panel-border); }
+            .attendance-clock-modern tbody tr:last-child { border-bottom-width: 0; }
+            .attendance-clock-modern tbody td,
+            .attendance-clock-modern tfoot td { display: block; padding: 0 !important; border-width: 0 !important; }
+            .attendance-clock-modern td[colspan] { grid-column: 1 / -1; }
+            .attendance-clock-modern td:empty { display: none; }
+            .attendance-clock-modern td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--panel-muted); }
+            .attendance-clock-modern tbody tr > :nth-child(1) { order: 1; }
+            .attendance-clock-modern tbody tr > :nth-child(8) { order: 2; }
+            .attendance-clock-modern tbody tr > :nth-child(2) { order: 3; grid-column: 1 / -1; }
+            .attendance-clock-modern tbody tr > :nth-child(3) { order: 4; }
+            .attendance-clock-modern tbody tr > :nth-child(4) { order: 5; }
+            .attendance-clock-modern tbody tr > :nth-child(5) { order: 6; }
+            .attendance-clock-modern tbody tr > :nth-child(6) { order: 7; }
+            .attendance-clock-modern tbody tr > :nth-child(7) { order: 8; }
+        }
 
-        <div id="panel_resultados_checador" class="mx-[50px] mb-[50px] space-y-[20px] text-[15px]">
-            <section aria-label="Acumulados del periodo" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-[#1A3A6B]"></span>
-                    <header class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </span>
-                        <span class="truncate font-medium text-gray-500">Tiempo Neto</span>
-                    </header>
-                    <div id="kpi_tiempo_neto" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-[#1A3A6B]" title="00h 00m 00s" aria-live="polite">00h 00m 00s</div>
-                </article>
-                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-indigo-500"></span>
-                    <header class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h8M8 11h2m4 0h2m-8 4h2m4 0h2" />
-                            </svg>
-                        </span>
-                        <span class="truncate font-medium text-gray-500">Horas Decimales</span>
-                    </header>
-                    <div id="kpi_horas_decimales" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-indigo-600" title="0.00" aria-live="polite">0.00</div>
-                </article>
-                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-sky-500"></span>
-                    <header class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7.5A2.5 2.5 0 015.5 5H18a2 2 0 012 2v2H6a3 3 0 000 6h14v2a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-9zM20 9v6h-4a3 3 0 010-6h4z" />
-                            </svg>
-                        </span>
-                        <span class="truncate font-medium text-gray-500">Pago Base</span>
-                    </header>
-                    <div id="kpi_pago_base" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-sky-600" title="$0.00" aria-live="polite">$0.00</div>
-                </article>
-                <article class="relative min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-amber-500"></span>
-                    <header class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 12v8H4v-8m-1-5h18v5H3V7zm9 13V7m0 0H8.5A2.5 2.5 0 118 2c2 0 4 5 4 5zm0 0h3.5A2.5 2.5 0 1016 2c-2 0-4 5-4 5z" />
-                            </svg>
-                        </span>
-                        <span class="truncate font-medium text-gray-500">Bono</span>
-                    </header>
-                    <div id="kpi_bono" class="mt-5 truncate text-[20px] font-semibold tracking-tight text-amber-600" title="$0.00" aria-live="polite">$0.00</div>
-                </article>
-                <article class="relative min-w-0 overflow-hidden rounded-xl border border-emerald-200 bg-white p-5 shadow-[0_8px_24px_rgba(16,185,129,0.10)]">
-                    <span class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></span>
-                    <header class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 17l5-5 4 4 7-8m0 0h-5m5 0v5" />
-                            </svg>
-                        </span>
-                        <span class="truncate font-medium text-gray-500">Total Día</span>
-                    </header>
-                    <div id="kpi_total_dia" class="mt-5 truncate text-[20px] font-bold tracking-tight text-emerald-600" title="$0.00" aria-live="polite">$0.00</div>
-                </article>
-            </section>
+        @media print {
+            .attendance-clock-modern .no-print { display: none !important; }
+        }
+    </style>
 
-            <section aria-label="Estadísticas del periodo" class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <article class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <header class="flex min-h-[76px] items-center gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
-                            </svg>
-                        </span>
-                        <div class="min-w-0">
-                            <h2 class="truncate font-semibold text-gray-800">Tiempo neto por día</h2>
-                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Duración efectiva de cada jornada</p>
-                        </div>
-                    </header>
-                    <div class="grid grid-cols-2 border-b border-gray-200 bg-white">
-                        <div class="min-w-0 px-5 py-3">
-                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Promedio diario</span>
-                            <strong id="promedio_tiempo_checador" class="mt-1 block truncate text-[14px] font-semibold text-[#1A3A6B]">00h 00m 00s</strong>
-                        </div>
-                        <div class="min-w-0 border-l border-gray-200 px-5 py-3">
-                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Jornada máxima</span>
-                            <strong id="maximo_tiempo_checador" class="mt-1 block truncate text-[14px] font-semibold text-gray-700">00h 00m 00s</strong>
-                        </div>
-                    </div>
-                    <div class="relative h-[300px] p-4">
-                        <div id="grafica_tiempo_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de tiempo neto por día"></div>
-                        <div id="grafica_tiempo_vacia" class="absolute inset-0 flex items-center justify-center px-6 text-center text-gray-400">Sin datos para mostrar en el periodo.</div>
-                    </div>
-                </article>
+    <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
+        <div x-ref="scaled" class="origin-top-left" :style="isCompact ? 'width:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">
+            <div class="flex w-full min-w-0 flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
 
-                <article class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                    <header class="flex min-h-[76px] items-center gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 7-8m0 0h-5m5 0v5" />
-                            </svg>
-                        </span>
-                        <div class="min-w-0">
-                            <h2 class="truncate font-semibold text-gray-800">Ganancias por día</h2>
-                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Pago total generado por jornada</p>
-                        </div>
-                    </header>
-                    <div class="grid grid-cols-2 border-b border-gray-200 bg-white">
-                        <div class="min-w-0 px-5 py-3">
-                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Promedio diario</span>
-                            <strong id="promedio_ganancias_checador" class="mt-1 block truncate text-[14px] font-semibold text-emerald-700">$0.00</strong>
-                        </div>
-                        <div class="min-w-0 border-l border-gray-200 px-5 py-3">
-                            <span class="block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-400">Ingreso máximo</span>
-                            <strong id="maximo_ganancias_checador" class="mt-1 block truncate text-[14px] font-semibold text-gray-700">$0.00</strong>
-                        </div>
-                    </div>
-                    <div class="relative h-[300px] p-4">
-                        <div id="grafica_ganancias_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de ganancias por día"></div>
-                        <div id="grafica_ganancias_vacia" class="absolute inset-0 flex items-center justify-center px-6 text-center text-gray-400">Sin datos para mostrar en el periodo.</div>
-                    </div>
-                </article>
-            </section>
-
-            <section aria-label="Detalle diario del checador" class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(15,35,66,0.07)]">
-                <header class="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex min-w-0 items-center gap-3">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf1fb] text-[#1A3A6B]">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zm0 5h16M9 4v16m6-11v11" />
-                            </svg>
-                        </span>
-                        <div class="min-w-0">
-                            <h2 class="truncate font-semibold text-gray-800">Detalle de jornadas</h2>
-                            <p class="mt-0.5 truncate text-[13px] text-gray-500">Marcas, tiempos e importes del periodo consultado</p>
-                        </div>
-                    </div>
-                    <div id="checador_export_bar" class="hidden">
-                        <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" onclick="exportarChecador('csv')" title="Exportar CSV" aria-label="Exportar reporte en CSV"
-                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 focus:outline-none focus:ring-4 focus:ring-emerald-100">
-                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
-                            </svg>
-                            <span class="text-[13px] font-semibold">CSV</span>
-                        </button>
-                        <button type="button" onclick="exportarChecador('pdf')" title="Exportar PDF" aria-label="Exportar reporte en PDF"
-                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 focus:outline-none focus:ring-4 focus:ring-rose-100">
-                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
-                            </svg>
-                            <span class="text-[13px] font-semibold">PDF</span>
-                        </button>
-                        <button type="button" onclick="exportarChecador('txt')" title="Exportar TXT" aria-label="Exportar reporte en TXT"
-                            class="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-slate-100">
-                            <svg class="h-5 w-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
-                            </svg>
-                            <span class="text-[13px] font-semibold">TXT</span>
-                        </button>
-                        </div>
-                    </div>
-                </header>
-
-                <div class="p-4">
-                    <div class="attendance-clock-scrollbar max-h-[560px] overflow-auto rounded-xl border border-gray-200">
-                    <table class="w-full table-fixed border-separate border-spacing-0 text-[15px]" style="min-width: 1515px;">
-                        <colgroup>
-                            <col style="width: 175px;">
-                            <col style="width: 365px;">
-                            <col style="width: 175px;">
-                            <col style="width: 150px;">
-                            <col style="width: 145px;">
-                            <col style="width: 130px;">
-                            <col style="width: 155px;">
-                            <col style="width: 220px;">
-                        </colgroup>
-                        <thead class="sticky top-0 z-20 bg-gray-50 shadow-[0_1px_0_#e5e7eb]">
-                            <tr>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Fecha Jornada</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Marcas / Chequeos</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Tiempo Neto</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Hrs Decimales</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Pago Base</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Bono</th>
-                                <th class="px-5 py-4 text-left align-middle text-[15px] font-semibold text-gray-600">Total del Día</th>
-                                <th class="py-4 pl-5 pr-8 text-left align-middle text-[15px] font-semibold text-gray-600">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla_checador_body" class="bg-white text-[15px] font-normal text-gray-700">
-                            <tr>
-                                <td colspan="8" class="px-6 py-10 text-center text-gray-400">
-                                    Consultando las marcas de los últimos 15 días...
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="sticky bottom-0 z-20 bg-[#f3f6fa] font-semibold text-gray-800 shadow-[0_-1px_0_#dbe3ee]">
-                            <tr>
-                                <td class="px-5 py-4 text-[15px] font-semibold text-gray-800">Total acumulado</td>
-                                <td class="px-5 py-4"></td>
-                                <td id="total_tiempo" class="whitespace-nowrap px-5 py-4">00h 00m 00s</td>
-                                <td id="total_decimal" class="whitespace-nowrap px-5 py-4">0.00</td>
-                                <td id="total_pago_h" class="whitespace-nowrap px-5 py-4">$0.00</td>
-                                <td id="total_bonos" class="whitespace-nowrap px-5 py-4">$0.00</td>
-                                <td id="total_general" class="whitespace-nowrap px-5 py-4 text-emerald-600">$0.00</td>
-                                <td class="py-4 pl-5 pr-8"></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                    </div>
+                {{-- Migas de pan y botones antiguos (ocultos; se conservan por compatibilidad) --}}
+                <div class="attendance-topbar hidden">
+                    <button id="attendance-header-download" type="button" onclick="exportarChecador('pdf')">Descargar PDF</button>
+                    <button type="button" onclick="window.print()">Imprimir</button>
                 </div>
-            </section>
+
+                <!-- Cabecera y accesos -->
+                <section class="attendance-heading flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                    <div class="flex min-w-0 max-w-full items-center gap-[15px]">
+                        <span class="panel-surface panel-border panel-text grid h-14 w-14 shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Reloj Checador</h1>
+                            <p class="mt-[10px] leading-tight">Consulta tus marcas biométricas y el resumen acumulado del periodo.</p>
+                        </div>
+                    </div>
+                    <div class="no-print flex flex-wrap items-center gap-[10px]">
+                        <a href="{{ route('time.index') }}" class="panel-button-secondary inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Cronómetro <span>›</span></a>
+                        <a href="{{ route('time.reports') }}" class="panel-button-secondary inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Productividad <span>›</span></a>
+                        <a href="{{ route('time.dashboard') }}" class="panel-button inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Panel de control <span>›</span></a>
+                    </div>
+                </section>
+
+                <p class="max-w-2xl leading-tight">Visualiza las marcas registradas por día, con cálculo de tiempo y acumulados durante el periodo seleccionado.</p>
+
+                <input type="hidden" id="employee_id" value="{{ auth()->user()->employee_id ?? '' }}">
+                <input type="hidden" id="attendance_user_id" value="{{ auth()->id() }}">
+
+                <!-- Periodo a consultar -->
+                <section class="attendance-filters panel-surface panel-border flex flex-wrap items-end gap-[20px] rounded-xl border p-[20px]">
+                    <div class="w-full shrink-0 sm:w-[180px]">
+                        <label for="fecha_inicio" class="mb-[10px] block">Fecha Inicio</label>
+                        <input type="date" id="fecha_inicio" value="{{ date('Y-m-d', strtotime('-14 days')) }}"
+                            class="panel-field h-11 w-full rounded-xl border px-[15px] outline-none focus:ring-0">
+                    </div>
+                    <div class="w-full shrink-0 sm:w-[180px]">
+                        <label for="fecha_fin" class="mb-[10px] block">Fecha Fin</label>
+                        <input type="date" id="fecha_fin" value="{{ date('Y-m-d') }}"
+                            class="panel-field h-11 w-full rounded-xl border px-[15px] outline-none focus:ring-0">
+                    </div>
+                    <div class="w-full shrink-0 sm:w-[180px]">
+                        <button id="btn_revisar_horas" type="button" onclick="revisarHorasChecador()"
+                            class="panel-button inline-flex h-11 w-full items-center justify-center gap-[10px] rounded-xl border-0 px-[20px] disabled:cursor-wait disabled:opacity-70">
+                            <svg id="icono_buscar_checador" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                            </svg>
+                            <svg id="carga_checador" class="hidden h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            <span id="texto_boton_checador">Revisar Horas</span>
+                        </button>
+                    </div>
+                </section>
+
+                <div id="panel_resultados_checador" class="flex min-w-0 flex-col gap-[20px]">
+                    <!-- Acumulados del periodo -->
+                    <section aria-label="Acumulados del periodo" class="panel-surface panel-border overflow-hidden rounded-xl border">
+                        <header class="panel-header panel-border border-b p-[20px]">
+                            <h2 class="panel-accent leading-none">Acumulados del periodo</h2>
+                            <p class="mt-[10px] leading-tight">Totales de las jornadas consultadas</p>
+                        </header>
+                        <div class="panel-line grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-5">
+                            @foreach ([
+                                ['id' => 'kpi_tiempo_neto', 'label' => 'Tiempo Neto', 'value' => '00h 00m 00s', 'icon' => 'M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                ['id' => 'kpi_horas_decimales', 'label' => 'Horas Decimales', 'value' => '0.00', 'icon' => 'M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm1 4h8M8 11h2m4 0h2m-8 4h2m4 0h2'],
+                                ['id' => 'kpi_pago_base', 'label' => 'Pago Base', 'value' => '$0.00', 'icon' => 'M3 7.5A2.5 2.5 0 015.5 5H18a2 2 0 012 2v2H6a3 3 0 000 6h14v2a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-9zM20 9v6h-4a3 3 0 010-6h4z'],
+                                ['id' => 'kpi_bono', 'label' => 'Bono', 'value' => '$0.00', 'icon' => 'M20 12v8H4v-8m-1-5h18v5H3V7zm9 13V7m0 0H8.5A2.5 2.5 0 118 2c2 0 4 5 4 5zm0 0h3.5A2.5 2.5 0 1016 2c-2 0-4 5-4 5z'],
+                                ['id' => 'kpi_total_dia', 'label' => 'Total Día', 'value' => '$0.00', 'icon' => 'M4 17l5-5 4 4 7-8m0 0h-5m5 0v5'],
+                            ] as $kpi)
+                                <article class="panel-surface flex min-w-0 items-center gap-[15px] p-[20px] {{ $loop->last ? 'sm:col-span-2 xl:col-span-1' : '' }}">
+                                    <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $kpi['icon'] }}" /></svg>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <span id="{{ $kpi['id'] }}" class="panel-accent block truncate leading-none tabular-nums" title="{{ $kpi['value'] }}" aria-live="polite">{{ $kpi['value'] }}</span>
+                                        <span class="mt-[10px] block truncate leading-snug">{{ $kpi['label'] }}</span>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    <!-- Gráficas -->
+                    <section aria-label="Estadísticas del periodo" class="grid grid-cols-1 gap-[20px] xl:grid-cols-2">
+                        <article class="panel-surface panel-border flex min-w-0 flex-col overflow-hidden rounded-xl border">
+                            <header class="panel-header panel-border flex items-center gap-[15px] border-b p-[20px]">
+                                <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3" /></svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <h2 class="panel-accent truncate leading-none">Tiempo neto por día</h2>
+                                    <p class="mt-[10px] truncate leading-tight">Duración efectiva de cada jornada</p>
+                                </div>
+                            </header>
+                            <div class="panel-line grid grid-cols-2 gap-px">
+                                <div class="panel-surface min-w-0 p-[20px]">
+                                    <span class="block truncate leading-none">Promedio diario</span>
+                                    <strong id="promedio_tiempo_checador" class="panel-accent mt-[10px] block truncate leading-none">00h 00m 00s</strong>
+                                </div>
+                                <div class="panel-surface min-w-0 p-[20px]">
+                                    <span class="block truncate leading-none">Jornada máxima</span>
+                                    <strong id="maximo_tiempo_checador" class="panel-accent mt-[10px] block truncate leading-none">00h 00m 00s</strong>
+                                </div>
+                            </div>
+                            <div class="panel-border relative h-[300px] border-t p-[20px]">
+                                <div id="grafica_tiempo_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de tiempo neto por día"></div>
+                                <div id="grafica_tiempo_vacia" class="panel-muted absolute inset-0 flex items-center justify-center px-[20px] text-center">Sin datos para mostrar en el periodo.</div>
+                            </div>
+                        </article>
+
+                        <article class="panel-surface panel-border flex min-w-0 flex-col overflow-hidden rounded-xl border">
+                            <header class="panel-header panel-border flex items-center gap-[15px] border-b p-[20px]">
+                                <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 7-8m0 0h-5m5 0v5" /></svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <h2 class="panel-accent truncate leading-none">Ganancias por día</h2>
+                                    <p class="mt-[10px] truncate leading-tight">Pago total generado por jornada</p>
+                                </div>
+                            </header>
+                            <div class="panel-line grid grid-cols-2 gap-px">
+                                <div class="panel-surface min-w-0 p-[20px]">
+                                    <span class="block truncate leading-none">Promedio diario</span>
+                                    <strong id="promedio_ganancias_checador" class="panel-accent mt-[10px] block truncate leading-none">$0.00</strong>
+                                </div>
+                                <div class="panel-surface min-w-0 p-[20px]">
+                                    <span class="block truncate leading-none">Ingreso máximo</span>
+                                    <strong id="maximo_ganancias_checador" class="panel-accent mt-[10px] block truncate leading-none">$0.00</strong>
+                                </div>
+                            </div>
+                            <div class="panel-border relative h-[300px] border-t p-[20px]">
+                                <div id="grafica_ganancias_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de ganancias por día"></div>
+                                <div id="grafica_ganancias_vacia" class="panel-muted absolute inset-0 flex items-center justify-center px-[20px] text-center">Sin datos para mostrar en el periodo.</div>
+                            </div>
+                        </article>
+                    </section>
+
+                    <!-- Detalle de jornadas -->
+                    <section aria-label="Detalle diario del checador" class="panel-surface panel-border overflow-hidden rounded-xl border">
+                        <header class="panel-header panel-border flex flex-col gap-[15px] border-b p-[20px] sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex min-w-0 items-center gap-[15px]">
+                                <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zm0 5h16M9 4v16m6-11v11" /></svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <h2 class="panel-accent leading-none sm:truncate">Detalle de jornadas</h2>
+                                    <p class="mt-[10px] leading-tight sm:truncate">Marcas, tiempos e importes del periodo consultado</p>
+                                </div>
+                            </div>
+                            <div id="checador_export_bar" class="no-print hidden">
+                                <div class="flex flex-wrap items-center gap-[10px]">
+                                    @foreach ([['csv', 'CSV', 'Exportar CSV', 'Exportar reporte en CSV'], ['pdf', 'PDF', 'Exportar PDF', 'Exportar reporte en PDF'], ['txt', 'TXT', 'Exportar TXT', 'Exportar reporte en TXT']] as [$format, $formatLabel, $formatTitle, $formatAria])
+                                        <button type="button" onclick="exportarChecador('{{ $format }}')" title="{{ $formatTitle }}" aria-label="{{ $formatAria }}"
+                                            class="panel-button-secondary inline-flex h-10 items-center justify-center gap-[10px] rounded-xl px-[15px] focus:outline-none focus:ring-0">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5M9 14h6m-6 3h4" />
+                                            </svg>
+                                            <span>{{ $formatLabel }}</span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </header>
+
+                        <div class="p-[20px]">
+                            <div class="attendance-table-wrap attendance-clock-scrollbar panel-border max-h-[560px] overflow-auto rounded-xl border">
+                                <table class="w-full table-fixed border-separate border-spacing-0" style="min-width: 1390px;">
+                                    <colgroup>
+                                        <col style="width: 150px;">
+                                        <col style="width: 330px;">
+                                        <col style="width: 170px;">
+                                        <col style="width: 150px;">
+                                        <col style="width: 140px;">
+                                        <col style="width: 110px;">
+                                        <col style="width: 140px;">
+                                        <col style="width: 200px;">
+                                    </colgroup>
+                                    <thead class="sticky top-0 z-20">
+                                        <tr>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Fecha Jornada</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Marcas / Chequeos</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Tiempo Neto</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Hrs Decimales</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Pago Base</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Bono</th>
+                                            <th class="panel-accent px-[20px] py-[15px] text-left align-middle font-normal">Total del Día</th>
+                                            <th class="panel-accent py-[15px] pl-[20px] pr-[30px] text-left align-middle font-normal">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla_checador_body" class="panel-surface">
+                                        <tr>
+                                            <td colspan="8" class="panel-muted p-[30px] text-center">
+                                                Consultando las marcas de los últimos 15 días...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="sticky bottom-0 z-20">
+                                        <tr>
+                                            <td colspan="2" class="panel-accent whitespace-nowrap px-[20px] py-[15px]">Total acumulado</td>
+                                            <td id="total_tiempo" data-label="Tiempo neto" class="whitespace-nowrap px-[20px] py-[15px]">00h 00m 00s</td>
+                                            <td id="total_decimal" data-label="Hrs decimales" class="whitespace-nowrap px-[20px] py-[15px]">0.00</td>
+                                            <td id="total_pago_h" data-label="Pago base" class="whitespace-nowrap px-[20px] py-[15px]">$0.00</td>
+                                            <td id="total_bonos" data-label="Bono" class="whitespace-nowrap px-[20px] py-[15px]">$0.00</td>
+                                            <td id="total_general" data-label="Total del día" class="panel-accent whitespace-nowrap px-[20px] py-[15px]">$0.00</td>
+                                            <td class="py-[15px] pl-[20px] pr-[30px]"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Control de zoom y pantalla completa (igual que en Panel general, Administración y Reportes de soporte) -->
+    <div class="no-print panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
+        <button type="button" @click="setScale(viewScale - 5)" aria-label="Alejar vista" title="Alejar vista" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg focus:outline-none focus:ring-0">−</button>
+        <input type="range" min="70" max="100" step="5" :value="viewScale" @input="setScale($event.target.value)" class="h-1.5 w-[130px] cursor-pointer" style="accent-color: var(--panel-accent)" aria-label="Ajustar tamaño del Reloj checador">
+        <button type="button" @click="setScale(viewScale + 5)" aria-label="Acercar vista" title="Acercar vista" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg focus:outline-none focus:ring-0">+</button>
+        <span class="w-[42px] text-right tabular-nums" x-text="viewScale + '%'">90%</span>
+        <span class="panel-line h-5 w-px"></span>
+        <button type="button" @click="toggleFullscreen()" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg>
+            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5" /></svg>
+        </button>
+    </div>
 
 <script>
 function asignarValorChecador(id, valor) {
@@ -475,8 +445,7 @@ function crearElementoSvgChecador(etiqueta, atributos = {}) {
 
 function agregarTextoSvgChecador(svg, texto, atributos = {}) {
     const elemento = crearElementoSvgChecador('text', {
-        fill: '#6b7280',
-        'font-family': 'Poppins, sans-serif',
+        class: 'attendance-chart-text',
         'font-size': 15,
         ...atributos,
     });
@@ -514,7 +483,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
     const ancho = Math.max(320, Math.round(contenedor.clientWidth || 620));
     const alto = Math.max(220, Math.round(contenedor.clientHeight || 268));
     // Ambas gráficas comparten exactamente la misma retícula y canales de ejes.
-    const margen = { superior: 10, derecho: 18, inferior: 50, izquierdo: 72 };
+    const margen = { superior: 10, derecho: 20, inferior: 60, izquierdo: ancho < 480 ? 92 : 100 };
     const anchoGrafica = Math.max(1, ancho - margen.izquierdo - margen.derecho);
     const altoGrafica = Math.max(1, alto - margen.superior - margen.inferior);
     const baseY = margen.superior + altoGrafica;
@@ -546,17 +515,15 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             x2: ancho - margen.derecho,
             y1: y,
             y2: y,
-            stroke: paso === pasos ? '#94a3b8' : '#dbe3ee',
-            'stroke-width': paso === pasos ? 1.25 : 1,
+            class: paso === pasos ? 'attendance-chart-base' : 'attendance-chart-grid',
+            'stroke-width': 1,
             'stroke-dasharray': paso === pasos ? '0' : '4 4',
         }));
 
         agregarTextoSvgChecador(svg, configuracion.formatearEje(valorEje), {
-            x: margen.izquierdo - 14,
-            y: y + 4,
+            x: margen.izquierdo - 15,
+            y: y + 5,
             'text-anchor': 'end',
-            'font-size': 12,
-            'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
         });
     }
 
@@ -585,7 +552,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             x2: obtenerX(indice),
             y1: margen.superior,
             y2: baseY,
-            stroke: '#edf1f6',
+            class: 'attendance-chart-guide',
             'stroke-width': 1,
             'stroke-dasharray': '3 4',
         }));
@@ -593,11 +560,10 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         const fecha = partesFechaChecador(etiqueta);
         const textoFecha = crearElementoSvgChecador('text', {
             x: obtenerX(indice),
-            y: alto - 25,
-            fill: '#64748b',
+            y: alto - 30,
+            class: 'attendance-chart-text',
             'text-anchor': 'middle',
-            'font-size': 12,
-            'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+            'font-size': 15,
         });
         const lineaFecha = crearElementoSvgChecador('tspan', { x: obtenerX(indice), dy: 0 });
         lineaFecha.textContent = fecha.corta;
@@ -606,9 +572,9 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         if (fecha.anio) {
             const lineaAnio = crearElementoSvgChecador('tspan', {
                 x: obtenerX(indice),
-                dy: 15,
-                fill: '#94a3b8',
-                'font-size': 10,
+                dy: 20,
+                class: 'attendance-chart-year',
+                'font-size': 15,
             });
             lineaAnio.textContent = fecha.anio;
             textoFecha.appendChild(lineaAnio);
@@ -623,11 +589,77 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         x2: ancho - margen.derecho,
         y1: promedioY,
         y2: promedioY,
-        stroke: configuracion.color,
+        class: 'attendance-chart-series',
         'stroke-width': 1.5,
         'stroke-dasharray': '7 5',
         opacity: 0.5,
     }));
+
+    // Tooltip visible al pasar el cursor, enfocar o tocar una jornada
+    contenedor.style.position = 'relative';
+    const tooltip = document.createElement('div');
+    tooltip.className = 'panel-surface panel-border pointer-events-none absolute z-10 hidden whitespace-nowrap rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.18)]';
+    const lineaGuia = crearElementoSvgChecador('line', {
+        class: 'attendance-chart-cursor',
+        y1: margen.superior,
+        y2: baseY,
+        'stroke-width': 1,
+        visibility: 'hidden',
+    });
+    svg.appendChild(lineaGuia);
+    const bandas = [];
+    let temporizadorTooltip = null;
+
+    const ocultarTooltip = () => {
+        window.clearTimeout(temporizadorTooltip);
+        tooltip.classList.add('hidden');
+        lineaGuia.setAttribute('visibility', 'hidden');
+        bandas.forEach(banda => banda.classList.remove('attendance-chart-band-active'));
+    };
+
+    const mostrarTooltip = indice => {
+        window.clearTimeout(temporizadorTooltip);
+        const x = obtenerX(indice);
+        const y = obtenerY(valores[indice]);
+        const textoFecha = document.createElement('span');
+        textoFecha.className = 'panel-muted block leading-none';
+        textoFecha.textContent = partesFechaChecador(etiquetas[indice]).completa;
+        const textoValor = document.createElement('strong');
+        textoValor.className = 'panel-accent mt-[10px] block leading-none';
+        textoValor.textContent = configuracion.formatearDetalle(valores[indice], indice);
+        tooltip.replaceChildren(textoFecha, textoValor);
+        tooltip.classList.remove('hidden');
+        const mitad = tooltip.offsetWidth / 2;
+        const arriba = y - tooltip.offsetHeight - 15;
+        tooltip.style.left = Math.min(Math.max(x, mitad + 5), ancho - mitad - 5) + 'px';
+        tooltip.style.top = (arriba >= 0 ? arriba : y + 15) + 'px';
+        tooltip.style.transform = 'translateX(-50%)';
+        lineaGuia.setAttribute('x1', x);
+        lineaGuia.setAttribute('x2', x);
+        lineaGuia.setAttribute('visibility', 'visible');
+        bandas.forEach((banda, posicion) => banda.classList.toggle('attendance-chart-band-active', posicion === indice));
+    };
+
+    const anchoBanda = Math.max(8, anchoGrafica / cantidad);
+    valores.forEach((_valor, indice) => {
+        const banda = crearElementoSvgChecador('rect', {
+            x: obtenerX(indice) - (anchoBanda / 2),
+            y: margen.superior,
+            width: anchoBanda,
+            height: altoGrafica,
+            class: 'attendance-chart-band',
+        });
+        banda.addEventListener('pointerenter', () => mostrarTooltip(indice));
+        banda.addEventListener('pointerdown', evento => {
+            mostrarTooltip(indice);
+            if (evento.pointerType !== 'mouse') temporizadorTooltip = window.setTimeout(ocultarTooltip, 3500);
+        });
+        banda.addEventListener('pointerleave', evento => {
+            if (evento.pointerType === 'mouse') ocultarTooltip();
+        });
+        svg.appendChild(banda);
+        bandas.push(banda);
+    });
 
     if (configuracion.tipo === 'linea') {
         const puntos = valores.map((valor, indice) => obtenerX(indice) + ',' + obtenerY(valor));
@@ -635,7 +667,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         if (puntos.length > 1) {
             const area = crearElementoSvgChecador('polygon', {
                 points: margen.izquierdo + ',' + baseY + ' ' + puntos.join(' ') + ' ' + obtenerX(valores.length - 1) + ',' + baseY,
-                fill: configuracion.color,
+                class: 'attendance-chart-fill',
                 opacity: 0.12,
             });
             svg.appendChild(area);
@@ -644,7 +676,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         svg.appendChild(crearElementoSvgChecador('polyline', {
             points: puntos.join(' '),
             fill: 'none',
-            stroke: configuracion.color,
+            class: 'attendance-chart-series',
             'stroke-width': 3,
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
@@ -655,8 +687,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
                 cx: obtenerX(indice),
                 cy: obtenerY(valor),
                 r: cantidad > 24 ? 3.5 : 4.5,
-                fill: configuracion.color,
-                stroke: '#ffffff',
+                class: 'attendance-chart-fill attendance-chart-point',
                 'stroke-width': 2,
                 'aria-label': etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice),
             });
@@ -664,6 +695,9 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             titulo.textContent = etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice);
             punto.appendChild(titulo);
             activarMarcaGraficaChecador(punto, '0.62');
+            punto.style.pointerEvents = 'none';
+            punto.addEventListener('focus', () => mostrarTooltip(indice));
+            punto.addEventListener('blur', ocultarTooltip);
             svg.appendChild(punto);
         });
     } else {
@@ -678,7 +712,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
                 width: anchoBarra,
                 height: altoBarra,
                 rx: Math.min(5, anchoBarra / 3),
-                fill: configuracion.color,
+                class: 'attendance-chart-fill',
                 opacity: 0.88,
                 'aria-label': etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice),
             });
@@ -686,11 +720,15 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             titulo.textContent = etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice);
             barra.appendChild(titulo);
             activarMarcaGraficaChecador(barra, '0.68');
+            barra.style.pointerEvents = 'none';
+            barra.addEventListener('focus', () => mostrarTooltip(indice));
+            barra.addEventListener('blur', ocultarTooltip);
             svg.appendChild(barra);
         });
     }
 
     contenedor.appendChild(svg);
+    contenedor.appendChild(tooltip);
 }
 
 let ultimoResumenGraficasChecador = [];
@@ -735,7 +773,6 @@ function actualizarGraficasChecador(resumen = []) {
 
     renderizarGraficaSvgChecador('grafica_tiempo_checador', etiquetas, tiemposSegundos, {
         tipo: 'linea',
-        color: '#000000',
         descripcion: 'Evolución del tiempo neto por día',
         formatearEje: valor => formatearSegundosChecador(valor).replaceAll('h ', ':').replaceAll('m ', ':').replace('s', ''),
         formatearDetalle: (_valor, indice) => formatearSegundosChecador(tiemposSegundos[indice]),
@@ -743,7 +780,6 @@ function actualizarGraficasChecador(resumen = []) {
 
     renderizarGraficaSvgChecador('grafica_ganancias_checador', etiquetas, ganancias, {
         tipo: 'barras',
-        color: '#000000',
         descripcion: 'Evolución de las ganancias por día',
         formatearEje: valor => formatoMoneda.format(valor),
         formatearDetalle: valor => formatoMoneda.format(valor),
@@ -817,7 +853,7 @@ function revisarHorasChecador() {
         if (!data.resumen || data.resumen.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="px-6 py-10 text-center text-gray-400 italic" style="font-size: 15px;">
+                    <td colspan="8" class="panel-muted p-[30px] text-center">
                         No hay marcas registradas en el dispositivo para este ID en las fechas seleccionadas.
                     </td>
                 </tr>`;
@@ -828,22 +864,23 @@ function revisarHorasChecador() {
 
         data.resumen.forEach(item => {
             const tr = document.createElement('tr');
-            tr.className = item.requiere_revision
-                ? 'bg-red-50/60 transition-colors hover:bg-red-50'
-                : 'transition-colors hover:bg-slate-50/70';
+            tr.className = item.requiere_revision ? 'attendance-row attendance-row-review' : 'attendance-row';
+
+            const iconoCorrecto = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>';
+            const iconoRevisar = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>';
 
             tr.innerHTML = `
-                <td class="border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.fecha}</td>
-                <td class="whitespace-normal break-words border-b border-gray-100 px-5 py-4 align-top font-normal leading-7 text-gray-700" style="font-size: 15px;" title="${item.detalles_marcas}">${item.detalles_marcas}</td>
-                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.neto}</td>
-                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.horas_decimal}</td>
-                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.pago_horas}</td>
-                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-gray-700" style="font-size: 15px;">${item.bono}</td>
-                <td class="whitespace-nowrap border-b border-gray-100 px-5 py-4 align-top font-normal text-emerald-600" style="font-size: 15px;">${item.total}</td>
-                <td class="border-b border-gray-100 py-4 pl-5 pr-8 align-top font-normal" style="font-size: 15px;">
+                <td data-label="Fecha Jornada" class="panel-border whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.fecha}</td>
+                <td data-label="Marcas / Chequeos" class="panel-border whitespace-normal break-words border-b px-[20px] py-[15px] align-top tabular-nums" title="${item.detalles_marcas}">${item.detalles_marcas}</td>
+                <td data-label="Tiempo neto" class="panel-border whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.neto}</td>
+                <td data-label="Hrs decimales" class="panel-border whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.horas_decimal}</td>
+                <td data-label="Pago base" class="panel-border whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.pago_horas}</td>
+                <td data-label="Bono" class="panel-border whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.bono}</td>
+                <td data-label="Total del día" class="panel-border panel-accent whitespace-nowrap border-b px-[20px] py-[15px] align-top tabular-nums">${item.total}</td>
+                <td data-label="Estado" class="panel-border border-b py-[15px] pl-[20px] pr-[30px] align-top">
                     ${item.requiere_revision
-                        ? '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 font-normal text-red-800" style="font-size: 15px;">⚠️ Impar / Revisar</span>'
-                        : '<span class="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-3 py-1 font-normal text-green-800" style="font-size: 15px;">Correcto</span>'
+                        ? '<span class="attendance-pill panel-tone-red">' + iconoRevisar + 'Impar / Revisar</span>'
+                        : '<span class="attendance-pill panel-tone-green">' + iconoCorrecto + 'Correcto</span>'
                     }
                 </td>
             `;
@@ -896,7 +933,7 @@ function cargarPeriodoInicialChecador() {
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="px-6 py-10 text-center text-gray-400" style="font-size: 15px;">
+                <td colspan="8" class="panel-muted p-[30px] text-center">
                     Tu usuario no tiene un ID de checador asignado.
                 </td>
             </tr>`;

@@ -20,10 +20,7 @@
         observer: null,
         onFullscreen: null,
         init() {
-            try {
-                const from = new URL(document.referrer);
-                if (from.origin === window.location.origin && from.pathname !== window.location.pathname && !/login|logout/.test(from.pathname)) this.back = from.href;
-            } catch (error) {}
+            this.back = this.resolveBack();
             try {
                 const saved = Number(localStorage.getItem('customer-detail-view-scale'));
                 if (saved >= 70 && saved <= 100) this.viewScale = saved;
@@ -35,6 +32,32 @@
                 this.observer.observe(this.$refs.scaled);
                 this.syncHeight();
             });
+        },
+        resolveBack() {
+            /* Pantalla a la que vuelve la flecha Regresar: la anotada por el Panel general al abrir el cliente o, si no hay, la página anterior que informa el navegador. */
+            const sameApp = (href) => {
+                try {
+                    const url = new URL(href);
+                    return url.origin === window.location.origin && url.pathname !== window.location.pathname && !/login|logout/.test(url.pathname) ? url.href : null;
+                } catch (error) { return null; }
+            };
+            try {
+                const key = 'customer-detail-return';
+                const reloaded = performance.getEntriesByType('navigation')[0]?.type === 'reload';
+                const stored = JSON.parse(sessionStorage.getItem(key) || 'null');
+                let target = reloaded && stored && stored.path === window.location.pathname ? sameApp(stored.url) : null;
+                if (! target) {
+                    const marker = JSON.parse(sessionStorage.getItem('customer-detail-back') || 'null');
+                    if (marker && Date.now() - marker.at < 30000) target = sameApp(marker.url);
+                    if (! target) target = sameApp(document.referrer);
+                }
+                sessionStorage.removeItem('customer-detail-back');
+                if (target) sessionStorage.setItem(key, JSON.stringify({ path: window.location.pathname, url: target }));
+                else sessionStorage.removeItem(key);
+                return target;
+            } catch (error) {
+                return sameApp(document.referrer);
+            }
         },
         destroy() {
             this.observer?.disconnect();
@@ -70,10 +93,10 @@
                             </x-slot>
                             Cliente no encontrado
                             <x-slot name="action">
-                                <a href="{{ route('customers.index') }}"
+                                <a href="{{ route('dashboard') }}"
                                     class="panel-button inline-flex h-11 items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">
                                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7" /></svg>
-                                    Volver al listado
+                                    Volver al Panel general
                                 </a>
                             </x-slot>
                         </x-panel-empty-state>
@@ -86,11 +109,21 @@
                         $ringLength = 2 * M_PI * 28;
                         $ringFill = $ringLength * max(0, min(100, (float) $percentage)) / 100;
                         $accountants = $customer->accountants->sortByDesc(fn ($accountant) => $accountant->pivot->status);
+                        // Contadores asignados: quien consulta como Administrador siempre aparece primero. Se decide por el rol
+                        // (no por un usuario fijo), así funciona igual en el servidor local y en el remoto.
+                        $viewerId = auth()->id();
+                        $accountantItems = $accountants
+                            ->map(fn ($accountant) => ['id' => $accountant->id, 'name' => $accountant->name, 'active' => (int) $accountant->pivot->status === 1])
+                            ->values();
+                        if ($role === 'Administrador') {
+                            $viewerItem = $accountantItems->firstWhere('id', $viewerId) ?? ['id' => $viewerId, 'name' => auth()->user()->name, 'active' => true];
+                            $accountantItems = $accountantItems->reject(fn ($item) => $item['id'] === $viewerId)->prepend($viewerItem)->values();
+                        }
                         $hasContact = $customer->phone || $customer->email || $customer->address;
                     @endphp
 
                     <!-- Regresar a la pantalla de donde se llegó (Panel general o listado de clientes) -->
-                    <a href="{{ route('customers.index') }}" :href="back || @js(route('customers.index'))"
+                    <a href="{{ route('dashboard') }}" :href="back || @js(route('dashboard'))"
                         class="panel-tab inline-flex w-fit items-center gap-[10px] leading-none focus:outline-none focus:ring-0">
                         <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5M12 19l-7-7 7-7" /></svg>
                         <span>Regresar</span>
@@ -112,11 +145,11 @@
                     <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                             @if ($customer->url_photo)
-                                <img class="panel-border h-14 w-14 shrink-0 rounded-full border object-cover"
+                                <img class="panel-border h-12 w-12 shrink-0 rounded-full border object-cover"
                                     src="{{ asset('storage/photos/' . $customer->url_photo) }}"
                                     alt="{{ $fullName }}">
                             @else
-                                <span class="panel-header panel-border panel-accent grid h-14 w-14 shrink-0 place-items-center rounded-full border">{{ $initials }}</span>
+                                <span class="panel-header panel-border panel-accent grid h-12 w-12 shrink-0 place-items-center rounded-full border">{{ $initials }}</span>
                             @endif
 
                             <div class="min-w-0">
@@ -126,25 +159,13 @@
                         </div>
 
                         <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
-                            <div class="min-w-[140px] flex-1 sm:flex-none">
-                                <label for="customer-month" class="sr-only">Mes</label>
-                                <select id="customer-month" wire:model.lazy="selectedMonth"
-                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-44">
-                                    @foreach ($months as $month)
-                                        <option value="{{ $month['number'] }}">{{ $month['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-panel-select id="customer-month" label="Mes" property="selectedMonth"
+                                :options="collect($months)->map(fn ($month) => ['value' => $month['number'], 'label' => $month['name']])->all()"
+                                class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
 
-                            <div class="min-w-[110px] flex-1 sm:flex-none">
-                                <label for="customer-year" class="sr-only">Año</label>
-                                <select id="customer-year" wire:model.lazy="selectedYear"
-                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-28">
-                                    @foreach ($years as $year)
-                                        <option value="{{ $year }}">{{ $year }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-panel-select id="customer-year" label="Año" property="selectedYear"
+                                :options="collect($years)->map(fn ($year) => ['value' => $year, 'label' => $year])->all()"
+                                class="min-w-[110px] flex-1 sm:w-28 sm:flex-none" />
                         </div>
                     </section>
 
@@ -165,21 +186,21 @@
                             <div class="panel-surface min-w-0 p-[20px]">
                                 <span class="panel-accent block leading-none">Contacto</span>
                                 @if ($hasContact)
-                                    <ul class="mt-[15px] space-y-[10px]">
+                                    <ul class="mt-[15px] space-y-[20px]">
                                         @if ($customer->phone)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
                                                 <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1z" /></svg>
                                                 <span class="min-w-0 break-words">+{{ $customer->codePhone }} {{ $customer->phone }}</span>
                                             </li>
                                         @endif
                                         @if ($customer->email)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
                                                 <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zM22 6l-10 7L2 6" /></svg>
                                                 <span class="min-w-0 break-words">{{ $customer->email }}</span>
                                             </li>
                                         @endif
                                         @if ($customer->address)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-snug">
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
                                                 <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6z" /></svg>
                                                 <span class="min-w-0 break-words">{{ $customer->address }}</span>
                                             </li>
@@ -193,12 +214,12 @@
                             <!-- Contadores asignados -->
                             <div class="panel-surface min-w-0 p-[20px]">
                                 <span class="panel-accent block leading-none">Contadores asignados</span>
-                                @if ($accountants->isNotEmpty())
-                                    <ul class="mt-[15px] flex flex-wrap gap-x-[20px] gap-y-[10px]">
-                                        @foreach ($accountants as $accountant)
-                                            <li class="flex min-w-0 max-w-full items-center gap-[10px] leading-none" title="{{ $accountant->name }}">
-                                                <span class="{{ $accountant->pivot->status == 1 ? 'panel-avatar-green' : 'panel-avatar-blue' }} grid h-7 w-7 shrink-0 place-items-center rounded-full uppercase">{{ mb_substr($accountant->name, 0, 2) }}</span>
-                                                <span class="min-w-0 truncate">{{ $accountant->name }}</span>
+                                @if ($accountantItems->isNotEmpty())
+                                    <ul class="mt-[15px] flex flex-wrap gap-[20px]">
+                                        @foreach ($accountantItems as $accountantItem)
+                                            <li class="flex min-w-0 max-w-full items-center gap-[10px] leading-none" title="{{ $accountantItem['name'] }}{{ $accountantItem['active'] ? '' : ' (inactivo)' }}">
+                                                <span class="panel-header panel-border panel-accent grid h-10 w-10 shrink-0 place-items-center rounded-full border uppercase">{{ mb_substr($accountantItem['name'], 0, 2) }}</span>
+                                                <span class="{{ $accountantItem['active'] ? '' : 'panel-muted' }} min-w-0 truncate">{{ $accountantItem['name'] }}</span>
                                             </li>
                                         @endforeach
                                     </ul>
@@ -208,33 +229,39 @@
                             </div>
 
                             <!-- Avance del periodo -->
-                            <div class="panel-surface flex min-w-0 items-center gap-[15px] p-[20px]">
-                                <div class="panel-tone-{{ $tone }} relative grid h-16 w-16 shrink-0 place-items-center" role="img" aria-label="Avance {{ $percentage }}%">
-                                    <svg class="h-16 w-16 -rotate-90" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-                                        <circle class="panel-ring-track" cx="32" cy="32" r="28" stroke-width="5" />
-                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{ round($ringFill, 2) }} {{ round($ringLength, 2) }}" />
-                                    </svg>
-                                    <span class="absolute leading-none tabular-nums">{{ $percentage }}%</span>
-                                </div>
-                                <div class="min-w-0">
-                                    <span class="panel-accent block leading-none">Avance del periodo</span>
+                            <div class="panel-surface min-w-0 p-[20px]">
+                                <span class="panel-accent block leading-none">Avance del periodo</span>
+                                <div class="mt-[15px] flex min-w-0 items-center gap-[15px]">
+                                    <div class="panel-tone-{{ $tone }} relative grid h-14 w-14 shrink-0 place-items-center" role="img" aria-label="Avance {{ $percentage }}%">
+                                        <svg class="h-14 w-14 -rotate-90" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                                            <circle class="panel-ring-track" cx="32" cy="32" r="28" stroke-width="5" />
+                                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{ round($ringFill, 2) }} {{ round($ringLength, 2) }}" />
+                                        </svg>
+                                        <span class="absolute leading-none tabular-nums">{{ $percentage }}%</span>
+                                    </div>
                                     @if ($selectedServiceId)
-                                        <span class="{{ $percentage == 100 ? 'panel-tone-green' : 'panel-muted' }} mt-[10px] block leading-snug">Formatos completados {{ $countPDFs }}/{{ $totalPdfAvailable }}</span>
+                                        <span class="{{ $percentage == 100 ? 'panel-tone-green' : 'panel-muted' }} min-w-0 leading-snug">Formatos completados {{ $countPDFs }}/{{ $totalPdfAvailable }}</span>
                                     @else
-                                        <span class="panel-muted mt-[10px] block leading-snug">Sin archivos</span>
+                                        <span class="panel-muted min-w-0 leading-snug">Sin archivos</span>
                                     @endif
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Documentos del cliente -->
-                    <section class="panel-surface panel-border overflow-hidden rounded-xl border">
-                        <header class="panel-header panel-border flex flex-col justify-between gap-[10px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
+                    <!-- Documentos del cliente (sin overflow-hidden para que las listas desplegables no se corten) -->
+                    <section class="panel-surface panel-border rounded-xl border">
+                        <header class="panel-header panel-border flex flex-col justify-between gap-[10px] rounded-t-[11px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Documentos del cliente</h2>
-                                <p class="mt-[10px] leading-tight">Acuses y comprobantes por servicio y periodo</p>
+                                <p class="mt-[10px] leading-tight">Elige un servicio y un apartado; después sube el acuse y el comprobante en PDF.</p>
                             </div>
+                            @if ($selectedServiceId)
+                                <div class="flex shrink-0 items-center gap-[10px] leading-none tabular-nums" title="Formatos cargados del servicio seleccionado en el periodo">
+                                    <span class="{{ ['red' => 'bg-red-500', 'amber' => 'bg-amber-500', 'green' => 'bg-emerald-500'][$tone] ?? 'bg-zinc-400' }} h-2 w-2 shrink-0 rounded-full"></span>
+                                    Formatos cargados: {{ $countPDFs }}/{{ $totalPdfAvailable }}
+                                </div>
+                            @endif
                         </header>
 
                         @php
@@ -252,7 +279,7 @@
                                         class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
                                         <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
                                         <span>{{ $service->service }}</span>
-                                        <span class="panel-muted tabular-nums">({{ $serviceCounts[$service->id] ?? 0 }})</span>
+                                        <span class="panel-muted tabular-nums" title="Apartados contratados">({{ $serviceCounts[$service->id] ?? 0 }})</span>
                                     </button>
                                 @endforeach
                             </div>
@@ -277,29 +304,17 @@
                         @if ($hasServices || $hasSubServices)
                             <div class="flex flex-col gap-[15px] px-[20px] pt-[20px] md:hidden">
                                 @if ($hasServices)
-                                    <div class="relative">
-                                        <label for="customer-service" class="sr-only">Servicio</label>
-                                        <svg class="panel-accent pointer-events-none absolute left-[12px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
-                                        <select id="customer-service" x-on:change="$wire.selectButton(Number($event.target.value), {{ $customer->id }})"
-                                            class="panel-field h-11 w-full rounded-xl border pl-[40px] pr-[32px]">
-                                            @foreach ($serviceRelation as $service)
-                                                <option value="{{ $service->id }}" @selected($selectedServiceId === $service->id)>{{ $service->service }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    <x-panel-select id="customer-service" label="Servicio" :selected="$selectedServiceId"
+                                        icon="M4 7h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+                                        :options="collect($serviceRelation)->map(fn ($service) => ['value' => $service->id, 'label' => $service->service])->all()"
+                                        x-on:panel-select="$wire.selectButton($event.detail.value, {{ $customer->id }})" />
                                 @endif
 
                                 @if ($hasSubServices)
-                                    <div class="relative">
-                                        <label for="customer-subservice" class="sr-only">Apartado</label>
-                                        <svg class="panel-accent pointer-events-none absolute left-[12px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>
-                                        <select id="customer-subservice" x-on:change="$wire.selectSubServiceButton(Number($event.target.value))"
-                                            class="panel-field h-11 w-full rounded-xl border pl-[40px] pr-[32px]">
-                                            @foreach ($subServicesCustomer as $subService)
-                                                <option value="{{ $subService->id }}" @selected($selectedSubServices === $subService->id)>{{ $subService->sub_service }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    <x-panel-select id="customer-subservice" label="Apartado" :selected="$selectedSubServices"
+                                        icon="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"
+                                        :options="collect($subServicesCustomer)->map(fn ($subService) => ['value' => $subService->id, 'label' => $subService->sub_service])->all()"
+                                        x-on:panel-select="$wire.selectSubServiceButton($event.detail.value)" />
                                 @endif
                             </div>
                         @endif

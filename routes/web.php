@@ -8,6 +8,7 @@ use App\Http\Controllers\ContpaqiBackupDownloadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
+use App\Http\Controllers\PanelGeneralGuideController;
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\TechnicalSupportReportController;
 // Modelos
@@ -18,10 +19,7 @@ use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\GestionRoles;
 use App\Livewire\Administracion\Users\GestionUsuarios;
 use App\Livewire\Backups\BackupStorageManager;
-use App\Livewire\Customer\CrearCliente;
 use App\Livewire\Customer\DetalleCliente;
-use App\Livewire\Customer\EditarCliente;
-use App\Livewire\Customer\GestionClientes;
 use App\Livewire\CustomerReport;
 use App\Livewire\Profile\ProfileDirectory;
 use App\Livewire\Profile\UpdateProfileInformationForm;
@@ -94,6 +92,9 @@ Route::middleware([
     // ==========================================
     // DASHBOARD
     // ==========================================
+    // Guía en PDF del Panel General (uso del panel y configuración del programador de tareas).
+    Route::get('/panel-general/guia.pdf', PanelGeneralGuideController::class)->name('dashboard.guide');
+
     Route::get('/dashboard/{customerId?}', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -182,21 +183,16 @@ Route::middleware([
 
     // ==========================================
     // SECCIÓN CLIENTES (Customers)
+    // Alta, edición y eliminación de clientes se hacen desde Administración. El listado, "crear" y "editar"
+    // ya no tienen pantalla propia: sus direcciones redirigen y se conservan los nombres de ruta.
     // ==========================================
-    Route::get('/customers', GestionClientes::class)
-        ->middleware('access.permission:customers.view')
-        ->name('customers.index');
+    Route::redirect('/customers', '/dashboard')->name('customers.index');
     Route::get('/customers/{customer}/view', DetalleCliente::class)
         ->middleware('access.permission:customers.view')
         ->name('customers.view');
 
-    Route::get('/customers/create', CrearCliente::class)
-        ->middleware('access.permission:customers.manage')
-        ->name('customers.create');
-
-    Route::get('/customers/{customer}/edit', EditarCliente::class)
-        ->middleware('access.permission:customers.manage')
-        ->name('customers.edit');
+    Route::redirect('/customers/create', '/administracion')->name('customers.create');
+    Route::redirect('/customers/{customer}/edit', '/administracion')->name('customers.edit');
 
     // ==========================================
     // TEST DE EMAIL INSTITUCIONAL

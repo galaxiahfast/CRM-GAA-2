@@ -45,13 +45,17 @@
         <span class="leading-none">{{ $fileType }}</span>
         <span class="panel-muted leading-none">{{ $declarationType }}</span>
 
+        <span class="{{ $hasFile ? 'panel-tone-green' : 'panel-tone-amber' }} mt-[5px] inline-flex items-center gap-[8px] leading-none">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-current"></span>{{ $hasFile ? 'Cargado' : 'Pendiente' }}
+        </span>
+
         @if ($hasFile)
             @foreach ($pdf as $p)
                 <div class="absolute right-[10px] top-[10px] z-10">
                     <x-dropdown align="right" width="48" content-classes="panel-surface panel-border border p-[5px] !rounded-xl" dropdown-classes="!top-full !mt-[8px] !rounded-xl">
                         <x-slot name="trigger">
                             <button type="button" aria-label="Opciones del archivo"
-                                class="panel-icon-button flex h-9 w-9 cursor-default items-center justify-center rounded-xl focus:outline-none focus:ring-0">
+                                class="panel-icon-button flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl focus:outline-none focus:ring-0">
                                 @svg('feathericon-more-vertical', 'h-5 w-5')
                             </button>
                         </x-slot>
@@ -72,7 +76,7 @@
                     </x-dropdown>
                 </div>
 
-                <span class="z-10 mt-[5px] block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
+                <span class="z-10 block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
                 </span>
                 <span class="panel-muted leading-none tabular-nums">
@@ -80,7 +84,7 @@
                 </span>
             @endforeach
         @else
-            <span class="panel-muted mt-[5px] leading-snug">Haz clic para subir el PDF</span>
+            <span class="panel-accent leading-snug">Haz clic para subir el PDF</span>
         @endif
 
         <input accept=".pdf" wire:loading.attr="disabled" wire:model="{{ $model }}"
@@ -99,10 +103,11 @@
 
         <span class="leading-none">{{ $fileType }}</span>
         <span class="leading-none">{{ $declarationType }}</span>
+        <span class="mt-[5px] leading-snug">Bloqueado por la complementaria</span>
 
         @if ($hasFile)
             @foreach ($pdf as $p)
-                <span class="mt-[5px] block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
+                <span class="block max-w-full truncate leading-none" title="{{ $p->pivot->original_name ?? '' }}">
                     {{ Str::limit($p->pivot->original_name ?? '', 20) }}
                 </span>
                 <span class="leading-none tabular-nums">

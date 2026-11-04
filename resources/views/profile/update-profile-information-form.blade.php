@@ -66,6 +66,23 @@
 
     <div class="w-full" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : null">
     <main x-ref="scaledMain" class="profile-main flex w-full origin-top-left flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
+    {{-- Regresar a la sección donde estabas antes (Panel general, Clientes, etc.). Si no hay una pantalla anterior, va al Panel general. --}}
+    <a href="{{ route('dashboard') }}"
+        x-data="{
+            back: null,
+            init() {
+                try {
+                    const from = new URL(document.referrer);
+                    if (from.origin === window.location.origin && from.pathname !== window.location.pathname && !/login|logout/.test(from.pathname)) this.back = from.href;
+                } catch (error) {}
+            },
+        }"
+        :href="back || @js(route('dashboard'))"
+        class="no-print inline-flex w-fit shrink-0 items-center gap-[10px] bg-transparent leading-none text-[#1A3A6B] transition-colors hover:text-black focus:outline-none focus:ring-0">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5m0 0 6-6m-6 6 6 6" /></svg>
+        <span>Regresar</span>
+    </a>
+
     @if ($this->isOwnProfile)
         <form wire:submit="updateProfileInformation" class="flex flex-col gap-[20px]">
     @else
@@ -737,6 +754,11 @@
         html.module-dark-theme #main-content .profile-page,
         html.module-dark-theme [data-profile-overlay] {
             color: #e4e4e7;
+        }
+
+        /* Fondo de la página en negro (igual que el Panel general); las tarjetas siguen en gris oscuro */
+        html.module-dark-theme #main-content .profile-page.profile-page {
+            background-color: #09090b !important;
         }
 
         html.module-dark-theme #main-content .profile-page [class~="bg-white"],

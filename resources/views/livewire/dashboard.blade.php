@@ -47,6 +47,11 @@
             if (document.fullscreenElement) await document.exitFullscreen();
             await this.$root.requestFullscreen();
         },
+        openCustomer(url) {
+            /* Anota esta pantalla para que la flecha Regresar del cliente vuelva aquí aunque el navegador no informe la página anterior. */
+            try { sessionStorage.setItem('customer-detail-back', JSON.stringify({ url: window.location.href, at: Date.now() })); } catch (error) {}
+            window.location.href = url;
+        },
     }"
     @resize.window.debounce.150ms="isCompact = window.innerWidth < 1024; syncHeight()"
     class="relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden text-[15px]"
@@ -88,25 +93,13 @@
                         </div>
 
                         <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
-                            <div class="min-w-[140px] flex-1 sm:flex-none">
-                                <label for="dashboard-month" class="sr-only">Mes</label>
-                                <select id="dashboard-month" wire:model.lazy="selectedMonth"
-                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-44">
-                                    @foreach ($months as $item)
-                                        <option value="{{ $item['number'] }}">{{ $item['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-panel-select id="dashboard-month" label="Mes" property="selectedMonth"
+                                :options="collect($months)->map(fn ($item) => ['value' => $item['number'], 'label' => $item['name']])->all()"
+                                class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
 
-                            <div class="min-w-[110px] flex-1 sm:flex-none">
-                                <label for="dashboard-year" class="sr-only">Año</label>
-                                <select id="dashboard-year" wire:model.lazy="selectedYear"
-                                    class="panel-field h-11 w-full rounded-xl border pl-[15px] pr-[40px] sm:w-28">
-                                    @foreach ($years as $year)
-                                        <option value="{{ $year }}">{{ $year }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <x-panel-select id="dashboard-year" label="Año" property="selectedYear"
+                                :options="collect($years)->map(fn ($year) => ['value' => $year, 'label' => $year])->all()"
+                                class="min-w-[110px] flex-1 sm:w-28 sm:flex-none" />
 
                             <div class="relative w-full sm:w-72">
                                 <label for="dashboard-search" class="sr-only">Buscar cliente</label>
@@ -170,20 +163,32 @@
                             @endif
                         </header>
 
-                        <div class="flex flex-wrap items-center justify-center gap-x-[15px] sm:justify-start sm:gap-x-[20px] sm:px-[20px]" role="tablist" aria-label="Estatus de los clientes">
-                            <button type="button" role="tab" wire:click.prevent="customersPorcentageIncomplete"
-                                aria-selected="{{ $filterType === 'incomplete' ? 'true' : 'false' }}"
-                                class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
-                                <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <span>Incompletos</span>
-                            </button>
+                        <div class="flex flex-wrap items-center justify-center gap-x-[15px] sm:justify-between sm:gap-x-[20px] sm:px-[20px]">
+                            <div class="flex flex-wrap items-center justify-center gap-x-[15px] sm:justify-start sm:gap-x-[20px]" role="tablist" aria-label="Estatus de los clientes">
+                                <button type="button" role="tab" wire:click.prevent="customersPorcentageIncomplete"
+                                    aria-selected="{{ $filterType === 'incomplete' ? 'true' : 'false' }}"
+                                    class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>Incompletos</span>
+                                </button>
 
-                            <button type="button" role="tab" wire:click.prevent="customersPorcentageComplete"
-                                aria-selected="{{ $filterType === 'complete' ? 'true' : 'false' }}"
-                                class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
-                                <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <span>Completos</span>
-                            </button>
+                                <button type="button" role="tab" wire:click.prevent="customersPorcentageComplete"
+                                    aria-selected="{{ $filterType === 'complete' ? 'true' : 'false' }}"
+                                    class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>Completos</span>
+                                </button>
+                            </div>
+
+                            {{-- Guía en PDF: cómo usar el Panel general y cómo está configurado el programador de tareas --}}
+                            {{-- Si las rutas están en caché y aún no incluyen la guía, el botón se oculta en lugar de romper el panel. --}}
+                            @if (\Illuminate\Support\Facades\Route::has('dashboard.guide'))
+                                <a href="{{ route('dashboard.guide') }}" title="Descargar la guía del Panel general en PDF"
+                                    class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                                    <span>Guía</span>
+                                </a>
+                            @endif
                         </div>
 
                         <div class="transition-opacity" wire:loading.class="opacity-60" wire:target="search,selectedMonth,selectedYear,customersPorcentageIncomplete,customersPorcentageComplete,showMoreCustomers">
@@ -219,19 +224,20 @@
                                     Sin clientes con estatus {{ $filterType === 'complete' ? 'Completo' : 'Incompleto' }}
                                 </x-panel-empty-state>
                             @else
-                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] px-[15px] pb-[20px] pt-0 sm:px-[20px]">
+                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] px-[15px] pb-[20px] pt-0 sm:px-[20px]">
                                     @foreach ($filteredCustomers->take($visibleCustomerLimit) as $customer)
                                         @php
                                             $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
+                                            $displayName = trim(Str::limit($customer['name'], 50).' '.($customer['last_name'] ? Str::limit($customer['last_name'], 50).' '.Str::limit($customer['maternal_last_name'], 50) : ''));
                                         @endphp
-                                        <div wire:key="dashboard-customer-{{ $customer->id }}" role="link" tabindex="0" @click="window.location.href = @js(route('customers.view', $customer->id))" @keydown.enter="window.location.href = @js(route('customers.view', $customer->id))"
-                                            class="panel-card panel-surface panel-border relative flex min-w-0 flex-col gap-[15px] rounded-xl border p-[15px] focus:outline-none sm:p-[20px]">
+                                        <div wire:key="dashboard-customer-{{ $customer->id }}" role="link" tabindex="0" @click="openCustomer(@js(route('customers.view', $customer->id)))" @keydown.enter="openCustomer(@js(route('customers.view', $customer->id)))"
+                                            class="panel-card panel-surface panel-border relative flex min-w-0 cursor-pointer flex-col gap-[15px] rounded-xl border p-[15px] focus:outline-none sm:p-[20px]">
                                             @if ($customer->services->isNotEmpty())
                                                 <div data-card-actions @click.stop @keydown.enter.stop class="absolute right-[10px] top-[10px] z-10 sm:right-[15px] sm:top-[15px]">
                                                     <x-dropdown align="right" width="48" content-classes="panel-surface panel-border border p-[5px] !rounded-xl" dropdown-classes="!top-full !mt-[8px] !rounded-xl">
                                                         <x-slot name="trigger">
                                                             <button type="button" wire:click.prevent aria-label="Opciones del cliente"
-                                                                class="panel-icon-button flex h-9 w-9 cursor-default items-center justify-center rounded-xl focus:outline-none focus:ring-0">
+                                                                class="panel-icon-button flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl focus:outline-none focus:ring-0">
                                                                 @svg('feathericon-more-vertical', 'h-5 w-5')
                                                             </button>
                                                         </x-slot>
@@ -246,21 +252,18 @@
 
                                             <div class="flex items-center gap-[15px] sm:h-[64px] {{ $customer->services->isNotEmpty() ? 'pr-[40px]' : '' }}">
                                                 @if ($customer['url_photo'])
-                                                    <img class="panel-border hidden h-14 w-14 shrink-0 rounded-full border object-cover sm:block"
+                                                    <img class="panel-border hidden h-10 w-10 shrink-0 rounded-full border object-cover sm:block"
                                                         src="{{ asset('storage/photos/' . $customer['url_photo']) }}"
                                                         alt="{{ $customer['name'] }}" loading="lazy">
                                                 @else
-                                                    <span class="panel-header panel-border panel-accent hidden h-14 w-14 shrink-0 place-items-center rounded-full border sm:grid">
+                                                    <span class="panel-header panel-border panel-accent hidden h-10 w-10 shrink-0 place-items-center rounded-full border sm:grid">
                                                         {{ mb_strtoupper(mb_substr($customer['name'], 0, 2)) }}
                                                     </span>
                                                 @endif
 
                                                 <div class="min-w-0">
-                                                    <span class="line-clamp-2 break-words leading-snug" title="{{ trim($customer['name'].' '.$customer['last_name'].' '.$customer['maternal_last_name']) }}">
-                                                        {{ Str::limit($customer['name'], 50) }} @if ($customer['last_name'])
-                                                            {{ Str::limit($customer['last_name'], 50) }}
-                                                            {{ Str::limit($customer['maternal_last_name'], 50) }}
-                                                        @endif
+                                                    <span class="line-clamp-2 break-words text-justify leading-snug" title="{{ trim($customer['name'].' '.$customer['last_name'].' '.$customer['maternal_last_name']) }}">
+                                                        <x-hyphenated-text :text="$displayName" />
                                                     </span>
                                                     <span class="panel-muted mt-[5px] block truncate leading-none">{{ $customer['rfc'] }}</span>
                                                 </div>
@@ -281,6 +284,21 @@
                                                                 :percentageKey="$percentageKey" :serviceId="$serviceId" />
                                                         </div>
                                                     @endforeach
+
+                                                    {{-- Siempre dos aros por cliente: si solo tiene un servicio, el segundo queda con guiones --}}
+                                                    @for ($emptySlot = $uniqueServiceIds->count(); $emptySlot < 2; $emptySlot++)
+                                                        <div class="flex w-[96px] flex-col items-center justify-between gap-[10px] text-center sm:w-[110px]" aria-hidden="true">
+                                                            <div class="flex w-full flex-1 items-end justify-center sm:h-[38px] sm:flex-none">
+                                                                <span class="panel-muted leading-tight">--</span>
+                                                            </div>
+                                                            <div class="radial-progress relative flex items-center justify-center">
+                                                                <svg width="56" height="56" viewBox="0 0 100 100" class="-rotate-90 transform">
+                                                                    <circle cx="50" cy="50" r="46" stroke="#e5e7eb" stroke-width="8" fill="none" />
+                                                                </svg>
+                                                                <span class="percentage-text absolute" style="color: var(--panel-muted)">--</span>
+                                                            </div>
+                                                        </div>
+                                                    @endfor
                                                 </div>
                                             @else
                                                 <div class="panel-danger-box rounded-xl border px-[15px] py-[20px] text-center">
@@ -295,7 +313,7 @@
                         </div>
 
                         @if ($filteredCustomers->isNotEmpty() && $filteredCustomers->count() > $visibleCustomerLimit)
-                            <div class="flex flex-col items-center gap-[10px] px-[20px] pb-[20px]">
+                            <div class="flex flex-col items-center gap-[20px] px-[20px] pb-[20px]">
                                 <span class="panel-muted leading-none">Mostrando {{ $visibleCustomerLimit }} de {{ $filteredCustomers->count() }}</span>
                                 <button wire:click="showMoreCustomers" type="button"
                                     class="panel-button-secondary inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">

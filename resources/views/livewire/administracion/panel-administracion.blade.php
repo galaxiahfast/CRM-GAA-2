@@ -67,7 +67,6 @@
         },
     }"
     class="administration-monochrome relative min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
-    style="background-color: #ffffff !important;"
 >
     <x-administration-modal-styles />
 
@@ -78,6 +77,7 @@
             background-color: #ffffff !important;
         }
         .administration-monochrome {
+            --administration-field-border: #e4e4e7;
             color: #3f3f46;
             font-size: 15px;
         }
@@ -136,7 +136,7 @@
         .administration-monochrome select:focus-visible,
         .administration-monochrome textarea:focus,
         .administration-monochrome textarea:focus-visible {
-            border-color: #e4e4e7 !important;
+            border-color: var(--administration-field-border) !important;
         }
         html body div.administration-monochrome input:focus,
         html body div.administration-monochrome input:focus-visible,
@@ -144,7 +144,7 @@
         html body div.administration-monochrome select:focus-visible,
         html body div.administration-monochrome textarea:focus,
         html body div.administration-monochrome textarea:focus-visible {
-            border-color: #e4e4e7 !important;
+            border-color: var(--administration-field-border) !important;
             outline: none !important;
             box-shadow: none !important;
             --tw-ring-color: transparent !important;
@@ -360,6 +360,46 @@
             touch-action: manipulation;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Tema oscuro: misma paleta que Reportes de soporte. El fondo de la pantalla es el de la página
+           (sin bloque blanco ni pastilla oscura en el encabezado), los textos azul oscuro pasan al azul claro
+           y las líneas y campos usan el gris de las demás pantallas. */
+        html.module-dark-theme #main-content div.administration-monochrome {
+            --administration-field-border: #3f3f46;
+            background-color: transparent !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome section.m-0,
+        html.module-dark-theme #main-content .administration-monochrome section.m-0 > div {
+            background-color: transparent !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="text-[#1A3A6B]"],
+        html.module-dark-theme #main-content .administration-monochrome [class~="hover:text-[#1A3A6B]"]:hover {
+            color: #6aa9ff !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="text-[#1A3A6B]"][class~="hover:text-black"]:hover {
+            color: #fafafa !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="hover:text-red-600"]:hover {
+            color: #f87171 !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="text-emerald-700"] {
+            color: #4ade80 !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class*="border-[#d4d4d8]"] {
+            border-color: #3f3f46 !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class*="bg-zinc-100"] {
+            background-color: #202023 !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="hover:bg-zinc-50"] {
+            background-color: #18181b !important;
+        }
+        html.module-dark-theme #main-content .administration-monochrome [class~="hover:bg-zinc-50"]:hover {
+            background-color: #26262b !important;
+        }
+        html.module-dark-theme .administration-record-scroll-thumb {
+            background: #6aa9ff;
         }
     </style>
 

@@ -52,6 +52,16 @@ Schedule::command('time:auto-close')
     ->timezone(config('time-control.timezone', 'America/Mexico_City'))
     ->withoutOverlapping();
 
+// Reporte de respaldos: cada lunes a las 9:00 (hora de México) se leen los logs y el PDF se envía solo a
+// soporte y a Emiliano Ortiz (config/backup-reports.php > weekly). El envío manual sigue en la pantalla.
+if (config('backup-reports.weekly.enabled', true)) {
+    Schedule::command('backup-reports:send-weekly')
+        ->weeklyOn((int) config('backup-reports.weekly.day', 1), (string) config('backup-reports.weekly.time', '09:00'))
+        ->timezone(config('support.timezone', 'America/Mexico_City'))
+        ->name('backup-reports:send-weekly')
+        ->withoutOverlapping(120);
+}
+
 // Evita que la recolección de sesiones vencidas recaiga aleatoriamente sobre
 // una petición interactiva. El pequeño lottery de respaldo sigue habilitado.
 Schedule::call(function (): void {
