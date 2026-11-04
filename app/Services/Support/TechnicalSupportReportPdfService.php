@@ -72,6 +72,7 @@ class TechnicalSupportReportPdfService
             'antivirus_install' => ['title' => 'Instalación o configuración de antivirus', 'description' => 'Instalación, actualización y comprobación de protección.'],
             'data_migration' => ['title' => 'Migración de información', 'description' => 'Transferencia controlada de archivos y validación en el equipo destino.'],
             'general_diagnosis' => ['title' => 'Diagnóstico general de equipo', 'description' => 'Revisión de hardware, sistema operativo y aplicaciones.'],
+            'hardware_inventory_for_quote' => ['title' => 'Levantamiento de características del equipo para cotización', 'description' => 'Registro de las características actuales del equipo, sin precios ni propuesta comercial.'],
         ];
     }
 
@@ -87,7 +88,9 @@ class TechnicalSupportReportPdfService
             'issuedAtLong' => ucfirst($issuedAt->isoFormat('dddd, D [de] MMMM [de] YYYY, HH:mm:ss')).' '.$issuedAt->format('T'),
             'responsible' => $report->responsible,
             'serviceRecipient' => $report->service_recipient,
-            'title' => 'Soporte técnico',
+            'title' => data_get($report->details, 'report_kind') === 'hardware_inventory'
+                ? 'Ficha técnica de equipo para cotización'
+                : 'Soporte técnico',
             'addressee' => 'Atención: A quién corresponda',
             'supports' => $report->supports ?? [],
             'details' => $report->details ?? [],
@@ -195,6 +198,7 @@ class TechnicalSupportReportPdfService
                 'antivirus_install' => 'antivirus',
                 'data_migration' => 'migracion-datos',
                 'general_diagnosis' => 'diagnostico',
+                'hardware_inventory_for_quote' => 'caracteristicas-equipo-cotizacion',
                 default => 'soporte',
             })
             ->unique()

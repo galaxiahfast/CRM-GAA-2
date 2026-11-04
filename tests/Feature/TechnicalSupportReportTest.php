@@ -37,6 +37,22 @@ class TechnicalSupportReportTest extends TestCase
         }
     }
 
+    public function test_jesus_report_only_lists_antivirus_and_equipment_sheet_has_no_quote(): void
+    {
+        $jesus = TechnicalSupportReport::query()->where('folio', 'ST-20261104-0019')->firstOrFail();
+        $this->assertSame(['antivirus_web_access'], collect($jesus->supports)->pluck('key')->all());
+        $this->assertStringNotContainsString('zona horaria', mb_strtolower($jesus->details['summary']));
+
+        $inventory = TechnicalSupportReport::query()->where('folio', 'ST-20261104-0022')->firstOrFail();
+        $this->assertSame('Ángel Moo', $inventory->service_recipient);
+        $this->assertSame('hardware_inventory', $inventory->details['report_kind']);
+        $this->assertCount(8, $inventory->details['hardware_specs']);
+        $this->assertSame(
+            'ST-20261104-0022-caracteristicas-equipo-cotizacion.pdf',
+            app(TechnicalSupportReportPdfService::class)->data($inventory)['filename'],
+        );
+    }
+
     public function test_report_section_requires_authentication(): void
     {
         $this->get(route('soporte.reportes-tecnicos'))->assertRedirect(route('login'));

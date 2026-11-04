@@ -34,6 +34,15 @@
         .support-list > li { page-break-inside: avoid; }
         .detail-marker-cell { width: 24pt; padding: 0 6pt 0 0; vertical-align: top; line-height: 2; text-align: right; white-space: nowrap; }
         .detail-text { padding: 0; line-height: 2; text-align: justify; }
+        .spec-table { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
+        .spec-table td { padding: 4pt 7pt; border-bottom: 0.5pt solid #b4b4b4; vertical-align: top; }
+        .spec-table td:first-child { width: 35%; }
+        body.inventory-mode * { line-height: 1.45; }
+        body.inventory-mode .meta, body.inventory-mode .document-heading,
+        body.inventory-mode .addressee, body.inventory-mode .body-copy,
+        body.inventory-mode .spec-table { margin-bottom: 11pt; }
+        body.inventory-mode .spec-table td { padding: 3pt 7pt; }
+        body.inventory-mode .signature-space { height: 55pt; }
         .closing-block { page-break-inside: avoid; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
         .signature-space { position: relative; width: 200pt; height: 63pt; margin: 0 auto; overflow: hidden; }
@@ -41,7 +50,7 @@
         .signature-name { margin-top: 0; }
     </style>
 </head>
-<body>
+<body @if (data_get($details, 'report_kind') === 'hardware_inventory') class="inventory-mode" @endif>
     @if ($headerDecoration)<img class="header-decoration" src="{{ $headerDecoration }}" alt="">@endif
     @if ($logo)<img class="brand-logo" src="{{ $logo }}" alt="DataMID">@endif
     @if ($footerDecoration)<img class="footer-decoration" src="{{ $footerDecoration }}" alt="">@endif
@@ -52,11 +61,23 @@
 
     <main>
         <table class="meta" aria-label="Folio y fecha"><tr><td>Folio: {{ $serial }}</td><td>{{ $issuedAtLong }}</td></tr></table>
-        <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>Departamento o cliente: {{ $serviceRecipient }}</td></tr></table>
+        <table class="document-heading" aria-label="Título y destinatario del servicio"><tr><td>{{ $title }}</td><td>{{ data_get($details, 'report_kind') === 'hardware_inventory' ? 'Usuario del equipo' : 'Departamento o cliente' }}: {{ $serviceRecipient }}</td></tr></table>
         @if (data_get($details, 'contact_email'))
             <p class="body-copy">Correo de contacto: {{ data_get($details, 'contact_email') }}</p>
         @endif
         <p class="addressee">{{ $addressee }}</p>
+        @if (data_get($details, 'report_kind') === 'hardware_inventory')
+            <p class="body-copy">Se registran las características actuales del equipo para que el área correspondiente prepare una cotización. Este documento es únicamente informativo; no contiene precios ni una propuesta de compra.</p>
+            <p class="section-title">Características registradas</p>
+            <table class="spec-table" aria-label="Características del equipo">
+                @foreach (data_get($details, 'hardware_specs', []) as $spec)
+                    <tr><td>{{ $spec['label'] }}</td><td>{{ $spec['value'] }}</td></tr>
+                @endforeach
+            </table>
+            @if (data_get($details, 'summary'))
+                <p class="body-copy">Observaciones: {{ data_get($details, 'summary') }}</p>
+            @endif
+        @else
         <p class="body-copy">Por medio de la presente nos permitimos informarle del soporte solicitado.</p>
 
         @if (count($supports))
@@ -84,8 +105,9 @@
         @if (data_get($details, 'summary'))
             <p class="body-copy">Observaciones: {{ data_get($details, 'summary') }}</p>
         @endif
+        @endif
         <div class="closing-block">
-            <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>
+            <p class="body-copy">{{ data_get($details, 'report_kind') === 'hardware_inventory' ? 'Se entrega esta ficha para su uso en el proceso de cotización. La selección del equipo y la elaboración de la cotización corresponden al área responsable.' : 'En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.' }}</p>
             <div class="signature">
                 <div class="signature-space">@if ($signatureImage)<img class="signature-image" src="{{ $signatureImage }}" alt="Firma">@endif</div>
                 <div class="signature-name">{{ $responsible }} · Soporte técnico</div>
