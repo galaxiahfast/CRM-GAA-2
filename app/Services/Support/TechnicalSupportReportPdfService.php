@@ -101,13 +101,14 @@ class TechnicalSupportReportPdfService
         File::ensureDirectoryExists(storage_path('fonts'));
 
         $data = $this->data($report);
+        $landscape = data_get($report->details, 'report_kind') === 'hardware_inventory';
         $pdf = Pdf::loadView('pdf.technical-support-report', [
             ...$data,
             'logo' => $this->dataUri(public_path('img/delivery-notes/datamid-logo.png')),
             'headerDecoration' => $this->dataUri(public_path('img/delivery-notes/datamid-header.png')),
             'footerDecoration' => $this->dataUri(public_path('img/delivery-notes/datamid-footer.png')),
             'signatureImage' => $this->dataUri(public_path('img/support/julian-emiliano-signature.png')),
-        ])->setPaper('letter');
+        ])->setPaper('letter', $landscape ? 'landscape' : 'portrait');
 
         $dompdf = $pdf->getDomPDF();
         $dompdf->add_info('Title', 'Reporte de soporte técnico '.$report->folio);
@@ -119,14 +120,14 @@ class TechnicalSupportReportPdfService
         $logoPath = public_path('img/delivery-notes/datamid-logo.png');
         $footerPath = public_path('img/delivery-notes/datamid-footer.png');
 
-        $dompdf->getCanvas()->page_script(static function ($pageNumber, $pageCount, $canvas) use ($headerPath, $logoPath, $footerPath): void {
+        $dompdf->getCanvas()->page_script(static function ($pageNumber, $pageCount, $canvas) use ($headerPath, $logoPath, $footerPath, $landscape): void {
             if ($pageNumber === 1) {
                 return;
             }
 
             $canvas->image($headerPath, 0, 0, 108, 107);
-            $canvas->image($logoPath, 438, 28, 120, 36);
-            $canvas->image($footerPath, 0, 611, 612, 181);
+            $canvas->image($logoPath, $landscape ? 618 : 438, 28, 120, 36);
+            $canvas->image($footerPath, 0, $landscape ? 378 : 611, $landscape ? 792 : 612, $landscape ? 234 : 181);
         });
 
         return $pdf->output();

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Reporte de soporte técnico {{ $serial }}</title>
     <style>
-        @page { size: letter; margin: 90pt 54pt 54pt; }
+        @page { size: {{ data_get($details, 'report_kind') === 'hardware_inventory' ? '11in 8.5in' : 'letter' }}; margin: 90pt 54pt 54pt; }
         * {
             box-sizing: border-box;
             color: #000000;
@@ -17,6 +17,7 @@
         .header-decoration { position: fixed; top: -90pt; left: -54pt; width: 108pt; }
         .brand-logo { position: fixed; top: -62pt; right: 0; width: 120pt; max-height: 42pt; object-fit: contain; }
         .footer-decoration { position: fixed; right: -54pt; bottom: -54pt; left: -54pt; width: 612pt; }
+        body.inventory-mode .footer-decoration { width: 792pt; }
         .meta { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
         .meta td { padding: 0; vertical-align: top; }
         .meta td:first-child { width: 37%; }
@@ -41,7 +42,7 @@
         body.inventory-mode .meta, body.inventory-mode .document-heading,
         body.inventory-mode .addressee, body.inventory-mode .body-copy,
         body.inventory-mode .spec-table { margin-bottom: 11pt; }
-        body.inventory-mode .spec-table td { padding: 3pt 7pt; }
+        body.inventory-mode .spec-table td { padding: 2pt 7pt; }
         body.inventory-mode .signature-space { height: 55pt; }
         .closing-block { page-break-inside: avoid; }
         .signature { width: 330pt; margin: 0 auto; text-align: center; page-break-inside: avoid; }
@@ -74,9 +75,6 @@
                     <tr><td>{{ $spec['label'] }}</td><td>{{ $spec['value'] }}</td></tr>
                 @endforeach
             </table>
-            @if (data_get($details, 'summary'))
-                <p class="body-copy">Observaciones: {{ data_get($details, 'summary') }}</p>
-            @endif
         @else
         <p class="body-copy">Por medio de la presente nos permitimos informarle del soporte solicitado.</p>
 
@@ -107,7 +105,9 @@
         @endif
         @endif
         <div class="closing-block">
-            <p class="body-copy">{{ data_get($details, 'report_kind') === 'hardware_inventory' ? 'Se entrega esta ficha para su uso en el proceso de cotización. La selección del equipo y la elaboración de la cotización corresponden al área responsable.' : 'En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.' }}</p>
+            @if (data_get($details, 'report_kind') !== 'hardware_inventory')
+                <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>
+            @endif
             <div class="signature">
                 <div class="signature-space">@if ($signatureImage)<img class="signature-image" src="{{ $signatureImage }}" alt="Firma">@endif</div>
                 <div class="signature-name">{{ $responsible }} · Soporte técnico</div>
