@@ -156,9 +156,9 @@
                 </div>
             @elseif (request()->routeIs('bank-reconciliation.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
-                    <span>Actividades</span>
+                    <span>General</span>
                     <span class="text-white/40">›</span>
-                    <span class="text-white">Conciliación Bancaria</span>
+                    <span class="text-white">{{ request()->route('tool') === 'ocr' ? 'Conciliación OCR' : 'Conciliación Bancaria' }}</span>
                 </div>
             @elseif (request()->routeIs('administracion.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
@@ -1022,13 +1022,57 @@
 
                 if (!sidebar || !main) return;
 
-                new ResizeObserver(() => {
+                // El zoom de cada apartado (el control de la esquina inferior derecha) escala solo su contenido con
+                // `transform: scale(...)` y un ancho de 10000 / zoom %. Aquí se lee ese mismo factor y se aplica también al
+                // menú lateral y al encabezado, para que todo el marco se vea al mismo tamaño en cualquier apartado.
+                const pageScale = () => {
+                    if (window.innerWidth < 1024) return 1;
 
-                    const sidebarWidth = sidebar.getBoundingClientRect().width + 'px';
-                    main.style.marginLeft = sidebarWidth;
-                    if (nav) nav.style.left = sidebarWidth;
+                    for (const element of main.querySelectorAll('[style*="scale("]')) {
+                        const style = element.getAttribute('style') || '';
+                        if (!/width:\s*[\d.]+%/.test(style) || /translate/.test(style)) continue;
+                        const match = style.match(/transform:\s*scale\(([\d.]+)\)/);
+                        const value = match ? parseFloat(match[1]) : NaN;
+                        if (value >= 0.5 && value <= 1.5) return value;
+                    }
 
-                }).observe(sidebar);
+                    return 1;
+                };
+
+                const applyShell = () => {
+                    const scale = pageScale();
+                    const zoomed = Math.abs(scale - 1) > 0.001;
+
+                    sidebar.style.zoom = zoomed ? String(scale) : '';
+                    sidebar.style.height = zoomed ? (window.innerHeight / scale) + 'px' : '';
+                    if (nav) nav.style.zoom = zoomed ? String(scale) : '';
+
+                    // Ancho visual del menú ya con el zoom: de ahí salen el margen del contenido y el inicio del encabezado
+                    const left = sidebar.getBoundingClientRect().width;
+                    main.style.marginLeft = left + 'px';
+                    main.style.paddingTop = zoomed ? (100 * scale) + 'px' : '';
+
+                    if (nav) {
+                        nav.style.left = (left / scale) + 'px';
+                        nav.style.right = zoomed ? 'auto' : '';
+                        nav.style.width = zoomed ? ((document.documentElement.clientWidth - left) / scale) + 'px' : '';
+                    }
+                };
+
+                let queued = false;
+                const queueShell = () => {
+                    if (queued) return;
+                    queued = true;
+                    setTimeout(() => { queued = false; applyShell(); }, 20);
+                };
+
+                new ResizeObserver(queueShell).observe(sidebar);
+                new MutationObserver((records) => {
+                    if (records.some((record) => record.target !== main)) queueShell();
+                }).observe(main, { attributes: true, attributeFilter: ['style'], subtree: true, childList: true });
+                window.addEventListener('resize', queueShell, { passive: true });
+                document.addEventListener('livewire:navigated', queueShell);
+                applyShell();
 
             });
 

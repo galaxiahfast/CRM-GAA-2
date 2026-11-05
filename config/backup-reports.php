@@ -51,7 +51,7 @@ return [
     */
     'servers' => [
         [
-            'name' => 'IFACTURE',
+            'name' => 'Ifacture',
             'ip' => '192.168.2.178',
             'share' => '\\\\SRVIFAC\\log',
             'profiles' => [
@@ -61,7 +61,7 @@ return [
             ],
         ],
         [
-            'name' => 'AUDICTAMEN',
+            'name' => 'Audictamen',
             'ip' => '192.168.2.203',
             'share' => '\\\\LENOVO-LA0X1877\\log',
             'profiles' => [
@@ -72,7 +72,7 @@ return [
             ],
         ],
         [
-            'name' => 'COMPAQI (TULUM)',
+            'name' => 'Compaqi (Tulum)',
             'ip' => '192.168.1.2',
             'share' => '\\\\192.168.1.2\\log',
             'profiles' => [
@@ -81,7 +81,7 @@ return [
             ],
         ],
         [
-            'name' => 'COMPAQI (MÉRIDA)',
+            'name' => 'Compaqi (Mérida)',
             'ip' => '192.168.2.210',
             'share' => '\\\\SRVCONTPAQ\\log',
             'profiles' => [
@@ -92,7 +92,7 @@ return [
             ],
         ],
         [
-            'name' => 'COMPAQI (AUDITORÍA)',
+            'name' => 'Compaqi (Auditoría)',
             'ip' => '192.168.2.252',
             'share' => '\\\\SRVCONTA2\\log',
             'profiles' => [

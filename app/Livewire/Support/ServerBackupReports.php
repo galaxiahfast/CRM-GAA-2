@@ -5,10 +5,13 @@ namespace App\Livewire\Support;
 use App\Mail\BackupReportMail;
 use App\Services\Support\BackupLogReaderService;
 use App\Services\Support\BackupReportPdfService;
+use App\Services\Support\SupportGuidePdfService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Attributes\Renderless;
 use Livewire\Component;
@@ -54,6 +57,9 @@ class ServerBackupReports extends Component
     public bool $showProfileEditor = false;
 
     public bool $showServerEditor = false;
+
+    /** El editor de servidor está creando uno nuevo en lugar de modificar uno existente. */
+    public bool $addingServer = false;
 
     public ?int $editingServer = null;
 
@@ -234,6 +240,7 @@ class ServerBackupReports extends Component
             $this->servers[$this->editingServer]['profiles'][$this->editingProfile] = array_merge($existing, $profile);
         }
 
+        $this->sortWhenIdle();
         $this->showProfileEditor = false;
         $this->generatedAt = now(config('app.timezone'))->toIso8601String();
     }
@@ -249,8 +256,34 @@ class ServerBackupReports extends Component
         $this->showProfileEditor = false;
     }
 
+    public function removeProfile(int $serverIndex, int $profileIndex): void
+    {
+        abort_unless(isset($this->servers[$serverIndex]['profiles'][$profileIndex]), 404);
+        $this->editingServer = $serverIndex;
+        $this->editingProfile = $profileIndex;
+        $this->deleteProfile();
+    }
+
+    public function removeServer(int $serverIndex): void
+    {
+        abort_unless(isset($this->servers[$serverIndex]), 404);
+        $this->editingServer = $serverIndex;
+        $this->deleteServer();
+    }
+
+    public function addServer(): void
+    {
+        Gate::authorize('manage-backup-reports');
+        $this->addingServer = true;
+        $this->editingServer = null;
+        $this->serverForm = ['name' => '', 'ip' => '', 'share' => ''];
+        $this->resetValidation();
+        $this->showServerEditor = true;
+    }
+
     public function openServer(int $serverIndex): void
     {
+        $this->addingServer = false;
         $server = $this->servers[$serverIndex] ?? null;
         abort_unless(is_array($server), 404);
 
@@ -271,6 +304,21 @@ class ServerBackupReports extends Component
             'serverForm.share' => ['nullable', 'string', 'max:500'],
         ]);
 
+        if ($this->addingServer) {
+            $this->servers[] = [
+                'key' => 'server-'.Str::lower(Str::random(8)),
+                'name' => trim($this->serverForm['name']),
+                'ip' => trim($this->serverForm['ip']),
+                'share' => trim($this->serverForm['share']),
+                'profiles' => [],
+            ];
+            $this->sortWhenIdle();
+            $this->addingServer = false;
+            $this->showServerEditor = false;
+
+            return;
+        }
+
         if ($this->editingServer === null || ! isset($this->servers[$this->editingServer])) {
             $this->showServerEditor = false;
 
@@ -280,6 +328,7 @@ class ServerBackupReports extends Component
         foreach (['name', 'ip', 'share'] as $field) {
             $this->servers[$this->editingServer][$field] = trim($this->serverForm[$field]);
         }
+        $this->sortWhenIdle();
         $this->showServerEditor = false;
     }
 
@@ -313,6 +362,19 @@ class ServerBackupReports extends Component
         return response()->streamDownload(static function () use ($contents): void {
             echo $contents;
         }, $filename, ['Content-Type' => 'application/pdf']);
+    }
+
+    /** Guía en PDF de este apartado (la misma que ofrece el Centro de Ayuda). */
+    public function downloadGuide(SupportGuidePdfService $guides): StreamedResponse
+    {
+        Gate::authorize('manage-backup-reports');
+
+        $guide = $guides->generate('reporte_respaldos');
+        abort_if($guide === null, 404);
+
+        return response()->streamDownload(static function () use ($guide): void {
+            echo $guide['content'];
+        }, $guide['filename'], ['Content-Type' => 'application/pdf']);
     }
 
     /** @return array{sent: bool, status: string} */
@@ -410,6 +472,30 @@ class ServerBackupReports extends Component
         ])->layout('layouts.app');
     }
 
+    /** Servidores y perfiles de la cadena más corta a la más larga (a igual largo, en orden alfabético sin distinguir mayúsculas ni acentos). */
+    private function sortReport(): void
+    {
+        $compare = function (string $a, string $b): int {
+            return mb_strlen($a) <=> mb_strlen($b)
+                ?: strnatcmp(Str::lower(Str::ascii($a)), Str::lower(Str::ascii($b)));
+        };
+
+        foreach ($this->servers as &$server) {
+            usort($server['profiles'], fn (array $a, array $b): int => $compare((string) $a['name'], (string) $b['name']));
+        }
+        unset($server);
+
+        usort($this->servers, fn (array $a, array $b): int => $compare((string) $a['name'], (string) $b['name']));
+    }
+
+    /** Reordena solo si no hay una lectura en curso, porque la lectura avanza por posición. */
+    private function sortWhenIdle(): void
+    {
+        if (! $this->reading) {
+            $this->sortReport();
+        }
+    }
+
     private function resetReport(): void
     {
         $this->servers = collect(config('backup-reports.servers', []))->map(function (array $server, int $index): array {
@@ -421,6 +507,7 @@ class ServerBackupReports extends Component
                 'profiles' => collect($server['profiles'])->map(fn (array $profile): array => $this->freshProfile($profile))->all(),
             ];
         })->all();
+        $this->sortReport();
         $this->pendingProfiles = [];
         foreach ($this->servers as $serverIndex => $server) {
             foreach ($server['profiles'] as $profileIndex => $_profile) {
@@ -476,7 +563,10 @@ class ServerBackupReports extends Component
         }
     }
 
-    /** Muestra la última lectura guardada (si existe) mientras llegan los resultados nuevos. */
+    /**
+     * Al abrir el apartado muestra la última lectura guardada como informe completo, sin leer los logs
+     * otra vez: la lectura solo se hace cuando se presiona «Actualizar registros».
+     */
     private function restoreLastSnapshot(): void
     {
         try {
@@ -491,8 +581,37 @@ class ServerBackupReports extends Component
 
         if ($this->carryOverPreviousResults($snapshot['servers'])) {
             $this->generatedAt = (string) ($snapshot['generatedAt'] ?? $this->generatedAt);
-            $this->statusMessage = 'Mostrando la última lectura guardada. Se actualizará al leer los registros.';
+            $this->markRestoredProfilesAsRead();
+
+            $readAt = '';
+            try {
+                $readAt = Carbon::parse($this->generatedAt)->timezone((string) config('app.timezone'))->format('d/m/Y H:i');
+            } catch (Throwable) {
+            }
+            $this->statusMessage = 'Última lectura guardada'.($readAt !== '' ? ': '.$readAt : '');
         }
+    }
+
+    /** Los perfiles recuperados de la última lectura cuentan como revisados (la barra muestra el avance real). */
+    private function markRestoredProfilesAsRead(): void
+    {
+        $processed = 0;
+        foreach ($this->servers as $serverIndex => $server) {
+            foreach ($server['profiles'] as $profileIndex => $profile) {
+                if (! ($profile['stale'] ?? false)) {
+                    continue;
+                }
+                $this->servers[$serverIndex]['profiles'][$profileIndex]['done'] = true;
+                $this->servers[$serverIndex]['profiles'][$profileIndex]['stale'] = false;
+                $processed++;
+            }
+        }
+
+        $this->processedProfiles = $processed;
+        $this->pendingProfiles = array_values(array_filter(
+            $this->pendingProfiles,
+            fn (array $next): bool => ! ($this->servers[$next['server']]['profiles'][$next['profile']]['done'] ?? false),
+        ));
     }
 
     /**

@@ -166,7 +166,7 @@ class WeeklyBackupReportTest extends TestCase
 
         Livewire::actingAs($admin)->test(ServerBackupReports::class)
             ->assertSeeText('Envío automático')
-            ->assertSeeText('Cada lunes a las 9:00')
+            ->assertSeeText('Cada Lunes, 09:00 h (GMT-6)')
             ->assertSeeText('Destinatarios del lunes')
             ->assertSeeText('soporte@datamid.com.mx')
             ->assertSeeText('emiliano.ortiz@datamid.com.mx')
@@ -185,7 +185,7 @@ class WeeklyBackupReportTest extends TestCase
         ]);
 
         Livewire::actingAs($admin)->test(ServerBackupReports::class)
-            ->assertSeeText('Enviado · 02/11/2026 09:01')
+            ->assertSeeText('Enviado · 02/11/2026, 09:01 h (GMT-6)')
             ->assertSeeText('Último envío automático')
             ->assertDontSeeText('Sin ejecutarse');
     }
@@ -200,7 +200,7 @@ class WeeklyBackupReportTest extends TestCase
         ]);
 
         Livewire::actingAs($admin)->test(ServerBackupReports::class)
-            ->assertSeeText('No se envió · 02/11/2026 09:00')
+            ->assertSeeText('No se envió · 02/11/2026, 09:00 h (GMT-6)')
             ->assertSeeText('Falta configurar BACKUP_MAIL_PASSWORD');
     }
 

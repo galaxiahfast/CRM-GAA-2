@@ -19,10 +19,28 @@ class BackupLogReaderService
             throw new RuntimeException('El formato del log no pudo interpretarse.');
         }
 
-        $target = preg_quote($heading['id'], '/');
-        if (! preg_match('/<h2\s+id="'.$target.'"[^>]*>(?<date>.*?)<\/h2>(?<body>.*?)(?=<h2\s+id=|<\/body>)/is', $html, $block)) {
+        // Sin expresiones regulares sobre todo el bloque: en ejecuciones con miles de filas (p. ej. 1 MB de errores)
+        // un `.*?` agota el límite de retroceso de PCRE y la última ejecución parecía incompleta.
+        $headingStart = stripos($html, '<h2 id="'.$heading['id'].'"');
+        $headingOpenEnd = $headingStart === false ? false : strpos($html, '>', $headingStart);
+        $headingEnd = $headingOpenEnd === false ? false : stripos($html, '</h2>', $headingOpenEnd);
+        if ($headingEnd === false) {
             throw new RuntimeException('La última ejecución no está completa en el log.');
         }
+
+        $bodyStart = $headingEnd + 5;
+        $bodyEnd = strlen($html);
+        foreach (['<h2 id=', '</body>'] as $terminator) {
+            $found = stripos($html, $terminator, $bodyStart);
+            if ($found !== false) {
+                $bodyEnd = min($bodyEnd, $found);
+            }
+        }
+
+        $block = [
+            'date' => substr($html, $headingOpenEnd + 1, $headingEnd - $headingOpenEnd - 1),
+            'body' => substr($html, $bodyStart, $bodyEnd - $bodyStart),
+        ];
 
         $date = $this->plain($block['date']);
         $body = $block['body'];
