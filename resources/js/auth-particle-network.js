@@ -16,18 +16,18 @@ const initializeAuthParticleNetwork = () => {
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // clearance: distancia mínima absoluta entre una bolita y el puntero (ninguna puede acercarse más).
-    const pointer = { x: 0, y: 0, lastX: 0, lastY: 0, lead: 0, active: false, radius: 72, clearance: 38 };
+    const pointer = { x: 0, y: 0, lastX: 0, lastY: 0, lead: 0, active: false, radius: 120, clearance: 24 };
     let width = 0;
     let height = 0;
     let points = [];
     let animationFrame = null;
     let currentPixelRatio = 0;
 
-    const targetDensity = () => Math.max(36, Math.min(170, Math.round((width * height) / 7000)));
+    const targetDensity = () => Math.max(30, Math.min(120, Math.round((width * height) / 10000)));
 
     const createPoint = (x, y) => {
         const angle = Math.random() * Math.PI * 2;
-        const driftSpeed = reduceMotion ? 0 : 0.16 + Math.random() * 0.2;
+        const driftSpeed = reduceMotion ? 0 : 0.07 + Math.random() * 0.1;
 
         return {
             x,
@@ -37,7 +37,7 @@ const initializeAuthParticleNetwork = () => {
             driftAngle: angle,
             driftSpeed,
             turnDirection: Math.random() > 0.5 ? 1 : -1,
-            size: 1.8,
+            size: 1.4,
         };
     };
 
@@ -147,7 +147,7 @@ const initializeAuthParticleNetwork = () => {
 
                 if (distance >= separationDistance) continue;
 
-                const separation = (1 - distance / separationDistance) * 0.025;
+                const separation = (1 - distance / separationDistance) * 0.012;
                 const forceX = (dx / distance) * separation;
                 const forceY = (dy / distance) * separation;
                 first.vx += forceX;
@@ -173,8 +173,8 @@ const initializeAuthParticleNetwork = () => {
             point.driftAngle += point.turnDirection * 0.0012;
             const driftX = Math.cos(point.driftAngle) * point.driftSpeed;
             const driftY = Math.sin(point.driftAngle) * point.driftSpeed;
-            point.vx += (driftX - point.vx) * 0.14;
-            point.vy += (driftY - point.vy) * 0.14;
+            point.vx += (driftX - point.vx) * 0.05;
+            point.vy += (driftY - point.vy) * 0.05;
 
             if (pointer.active) {
                 const dx = point.x - pointer.x;
@@ -184,14 +184,14 @@ const initializeAuthParticleNetwork = () => {
                 if (distance < reach) {
                     // Rechazo inmediato y muy marcado cerca del puntero, con caída suave hacia el borde del radio.
                     const proximity = 1 - distance / reach;
-                    const force = proximity * proximity * 6 + proximity * 2;
+                    const force = proximity * proximity * 0.9 + proximity * 0.25;
                     point.vx += (dx / distance) * force;
                     point.vy += (dy / distance) * force;
                 }
             }
 
             const speed = Math.hypot(point.vx, point.vy);
-            const maxSpeed = 8;
+            const maxSpeed = 2.5;
 
             if (speed > maxSpeed) {
                 point.vx = (point.vx / speed) * maxSpeed;
@@ -233,11 +233,20 @@ const initializeAuthParticleNetwork = () => {
                         point.vy -= inward * ny;
                     }
 
-                    point.vx += nx * 1.5;
-                    point.vy += ny * 1.5;
+                    point.vx += nx * 0.5;
+                    point.vy += ny * 0.5;
                 }
             }
         });
+    };
+
+    // Colores según el tema activo (negro / azul), leídos en cada cuadro para que el cambio sea inmediato.
+    let palette = { rgb: '212, 212, 216', line: 0.22, fill: 0.025, dot: 0.55 };
+
+    const updatePalette = () => {
+        palette = root.dataset.authTheme === 'blue'
+            ? { rgb: '186, 214, 255', line: 0.22, fill: 0, dot: 0.55 }
+            : { rgb: '212, 212, 216', line: 0.16, fill: 0, dot: 0.4 };
     };
 
     const drawConnections = () => {
@@ -253,12 +262,12 @@ const initializeAuthParticleNetwork = () => {
 
                 if (distance > connectionDistance) continue;
 
-                const opacity = (1 - distance / connectionDistance) * 0.46;
+                const opacity = (1 - distance / connectionDistance) * palette.line;
                 context.beginPath();
                 context.moveTo(first.x, first.y);
                 context.lineTo(second.x, second.y);
-                context.strokeStyle = `rgba(43, 92, 183, ${opacity})`;
-                context.lineWidth = 0.9;
+                context.strokeStyle = `rgba(${palette.rgb}, ${opacity})`;
+                context.lineWidth = 0.7;
                 context.stroke();
                 nearby.push({ point: second, distance });
             }
@@ -274,7 +283,7 @@ const initializeAuthParticleNetwork = () => {
                     context.lineTo(second.x, second.y);
                     context.lineTo(third.x, third.y);
                     context.closePath();
-                    context.fillStyle = 'rgba(47, 128, 183, 0.04)';
+                    context.fillStyle = `rgba(${palette.rgb}, ${palette.fill})`;
                     context.fill();
                 }
             }
@@ -283,12 +292,13 @@ const initializeAuthParticleNetwork = () => {
 
     function draw() {
         context.clearRect(0, 0, width, height);
+        updatePalette();
         drawConnections();
 
         points.forEach((point) => {
             context.beginPath();
             context.arc(point.x, point.y, point.size, 0, Math.PI * 2);
-            context.fillStyle = 'rgba(40, 78, 180, 0.88)';
+            context.fillStyle = `rgba(${palette.rgb}, ${palette.dot})`;
             context.fill();
         });
 
@@ -329,6 +339,8 @@ const initializeAuthParticleNetwork = () => {
             draw();
         }
     });
+
+    new MutationObserver(draw).observe(root, { attributes: true, attributeFilter: ['data-auth-theme'] });
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(root);

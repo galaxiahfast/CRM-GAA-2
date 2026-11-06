@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BackupUploadController;
 use App\Http\Controllers\BackupInfrastructureGuideController;
@@ -57,6 +58,12 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 })->name('home');
+
+// Inicio de sesión con Google (solo si hay credenciales y dominios permitidos configurados)
+Route::middleware(['guest', 'throttle:10,1'])->group(function () {
+    Route::get('/auth/google', [GoogleLoginController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleLoginController::class, 'callback'])->name('auth.google.callback');
+});
 
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
     ->middleware(['guest', 'throttle:5,1'])

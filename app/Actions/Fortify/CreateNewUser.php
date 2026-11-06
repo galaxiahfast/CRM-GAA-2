@@ -23,7 +23,9 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => $this->passwordRules(),
+            // En el registro público la contraseña solo debe existir (sin largo mínimo ni confirmación);
+            // el medidor de la pantalla de acceso orienta al usuario sobre su fortaleza.
+            'password' => ['required', 'string', 'max:255'],
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 

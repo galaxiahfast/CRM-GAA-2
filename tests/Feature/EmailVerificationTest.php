@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
+/**
+ * La confirmación del correo se exige a las cuentas vinculadas con Google (ver User::hasVerifiedEmail), por eso
+ * los usuarios sin confirmar de estas pruebas tienen google_id.
+ */
 class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
@@ -20,7 +24,7 @@ class EmailVerificationTest extends TestCase
             $this->markTestSkipped('Email verification not enabled.');
         }
 
-        $user = User::factory()->withPersonalTeam()->unverified()->create();
+        $user = User::factory()->withPersonalTeam()->unverified()->create(['google_id' => 'google-test-id']);
 
         $response = $this->actingAs($user)->get('/email/verify');
 
@@ -35,7 +39,7 @@ class EmailVerificationTest extends TestCase
 
         Event::fake();
 
-        $user = User::factory()->unverified()->create();
+        $user = User::factory()->unverified()->create(['google_id' => 'google-test-id']);
 
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
@@ -57,7 +61,7 @@ class EmailVerificationTest extends TestCase
             $this->markTestSkipped('Email verification not enabled.');
         }
 
-        $user = User::factory()->unverified()->create();
+        $user = User::factory()->unverified()->create(['google_id' => 'google-test-id']);
 
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',

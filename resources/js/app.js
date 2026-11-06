@@ -1,6 +1,7 @@
 import './bootstrap';
 import 'flowbite';
 import './auth-particle-network';
+import './auth-fit';
 import './activity-sortable';
 import './organization-sortable';
 import './clock-particle-network';

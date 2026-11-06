@@ -61,4 +61,38 @@ class RegistrationTest extends TestCase
         $this->assertTrue(app(PermissionAccessService::class)->allows($user, 'activities.manage'));
         $this->assertFalse(app(PermissionAccessService::class)->allows($user, 'administration.organization.manage'));
     }
+
+    public function test_registration_accepts_a_short_password_without_confirmation(): void
+    {
+        if (! Features::enabled(Features::registration())) {
+            $this->markTestSkipped('Registration support is not enabled.');
+        }
+
+        $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'corta@example.com',
+            'password' => 'abc',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ])->assertSessionHasNoErrors();
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', ['email' => 'corta@example.com']);
+    }
+
+    public function test_registration_still_requires_a_password(): void
+    {
+        if (! Features::enabled(Features::registration())) {
+            $this->markTestSkipped('Registration support is not enabled.');
+        }
+
+        $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'vacia@example.com',
+            'password' => '',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ])->assertSessionHasErrors('password');
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'vacia@example.com']);
+    }
 }

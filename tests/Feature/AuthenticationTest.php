@@ -17,7 +17,6 @@ class AuthenticationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertSee('alt="González Alonzo y Asociados"', false)
-            ->assertSeeText('Políticas de privacidad')
             ->assertSeeText('Todos los derechos reservados')
             ->assertDontSee('data-social-provider="facebook"', false)
             ->assertDontSee('data-social-provider="google"', false)

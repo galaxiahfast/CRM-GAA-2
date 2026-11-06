@@ -2,21 +2,36 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Notifications\SupportPasswordReset;
+use App\Notifications\VerifyAccountEmail;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new SupportPasswordReset($token));
+    }
+
+    /**
+     * La confirmación del correo solo se exige a las cuentas que entran con Google: quien ya tenía cuenta con
+     * contraseña conserva su acceso como estaba, y quien se vincula con Google debe confirmar su correo real.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->google_id === null || $this->email_verified_at !== null;
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyAccountEmail);
     }
 
     use HasApiTokens;

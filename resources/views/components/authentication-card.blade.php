@@ -1,25 +1,72 @@
 @props(['compact' => false])
 
-{{-- Marco compartido de las pantallas de acceso: logo, tarjeta centrada y pie discreto. --}}
-<div class="relative isolate flex min-h-dvh w-full flex-col items-center overflow-hidden bg-[#F4F6F9] px-4 py-8 sm:py-10" data-auth-particle-network>
-    {{-- Fondo suave en movimiento (red de partículas desenfocada). --}}
-    <canvas class="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-70 blur-[2px]" data-auth-network-canvas aria-hidden="true"></canvas>
-    <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(244,246,249,0.9),rgba(244,246,249,0)_65%)]"></div>
+{{-- Marco compartido de las pantallas de acceso: logo, contenido, pie legal y botones flotantes (tema / asistente). --}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <div class="my-auto w-full max-w-[400px]">
-        <a href="/" class="mx-auto block w-fit rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A3A6B]/40 focus-visible:ring-offset-4">
-            <img src="/img/static/logo-principal_.png" alt="González Alonzo y Asociados" class="h-auto w-[84px]">
-        </a>
+<div class="auth-shell relative isolate flex w-full flex-col items-center" data-auth-particle-network data-auth-theme="dark">
+    <script>
+        (function (root) {
+            var themes = ['dark', 'blue'];
+            var stored = null;
+            try { stored = localStorage.getItem('auth-theme'); } catch (e) {}
+            root.dataset.authTheme = themes.indexOf(stored) > -1 ? stored : 'dark';
 
-        <div class="mt-6 rounded-xl border border-slate-200 bg-white-full p-6 sm:p-8">
-            {{ $slot }}
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('[data-auth-theme-toggle]')) return;
+                var next = root.dataset.authTheme === 'dark' ? 'blue' : 'dark';
+                root.dataset.authTheme = next;
+                try { localStorage.setItem('auth-theme', next); } catch (e) {}
+            });
+        })(document.currentScript.parentElement);
+    </script>
+
+    {{-- Detalle de temporada: telaraña muy tenue en la esquina superior izquierda. --}}
+    <svg class="auth-web" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true">
+        <path d="M0 0 120 0M0 0 110.9 45.9M0 0 84.8 84.8M0 0 45.9 110.9M0 0 0 120"/>
+        <path d="M30 0Q25.9 5.1 27.7 11.5Q21.9 14.7 21.2 21.2Q14.7 21.9 11.5 27.7Q5.1 25.9 0 30"/>
+        <path d="M55 0Q47.5 9.4 50.8 21.1Q40.2 26.9 38.9 38.9Q26.9 40.2 21.1 50.8Q9.4 47.5 0 55"/>
+        <path d="M80 0Q69.1 13.7 73.9 30.6Q58.5 39.1 56.6 56.6Q39.1 58.5 30.6 73.9Q13.7 69.1 0 80"/>
+        <path d="M105 0Q90.6 18 97 40.2Q76.8 51.4 74.2 74.2Q51.4 76.8 40.2 97Q18 90.6 0 105"/>
+    </svg>
+
+    {{-- Fondo: red de partículas tenue que reacciona al puntero. --}}
+    <canvas class="auth-canvas pointer-events-none absolute inset-0 -z-10 h-full w-full" data-auth-network-canvas aria-hidden="true"></canvas>
+
+    {{-- El bloque conserva su forma (412px de ancho); el script lo reduce proporcionalmente si no cabe en pantalla. --}}
+    <div class="auth-stage" data-auth-fit>
+        <div class="auth-rise">
+            <div class="auth-card">
+                <a href="/" class="auth-brand">
+                    <img src="/img/static/logo-principal_.png" alt="González Alonzo y Asociados" class="auth-logo">
+                    {{-- Detalle de temporada: una arañita que cuelga de un hilo junto al logo. --}}
+                    <span class="auth-spider" aria-hidden="true">
+                        <span class="auth-spider-swing">
+                            <i class="auth-thread"></i>
+                            <svg viewBox="0 0 24 22" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+                                <path d="M8.4 12Q3.5 7.5 1 9.5M8 14Q2.5 12.5 0.5 17M8.6 16Q4 18 2.5 21.5M9.8 17.6Q7 19.5 6.5 21.8M15.6 12Q20.5 7.5 23 9.5M16 14Q21.5 12.5 23.5 17M15.4 16Q20 18 21.5 21.5M14.2 17.6Q17 19.5 17.5 21.8"/>
+                                <ellipse cx="12" cy="14.2" rx="4.1" ry="4.6" fill="currentColor" stroke="none"/>
+                                <circle cx="12" cy="8.2" r="2.6" fill="currentColor" stroke="none"/>
+                                <circle cx="11" cy="7.9" r="0.65" fill="#f87171" stroke="none"/>
+                                <circle cx="13" cy="7.9" r="0.65" fill="#f87171" stroke="none"/>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+
+                {{ $slot }}
+
+                @isset($footer)
+                    <div class="auth-card-footer">{{ $footer }}</div>
+                @endisset
+            </div>
         </div>
-
-        {{ $footer ?? '' }}
     </div>
 
-    <footer class="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-1 text-center text-[12px] text-slate-500">
-        <span>Políticas de privacidad</span>
-        <span>&copy; {{ now()->year }} Todos los derechos reservados</span>
+    <footer class="auth-legal" data-auth-fit-footer>
+        <span class="auth-legal-bottom">&copy; {{ now()->year }} Todos los derechos reservados</span>
     </footer>
+
+    <x-auth-assistant />
 </div>
