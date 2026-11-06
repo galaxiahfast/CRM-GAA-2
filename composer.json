@@ -62,6 +62,10 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "node scripts/dev.mjs"
+        ],
+        "server": [
+            "Composer\\Config::disableProcessTimeout",
+            "node scripts/server.mjs"
         ]
     },
     "extra": {

@@ -49,4 +49,10 @@ return [
         ],
     ],
 
+    'biometric' => [
+        'ip' => env('BIOMETRIC_IP', '192.168.2.239'),
+        'username' => env('BIOMETRIC_USERNAME', 'admin'),
+        'password' => env('BIOMETRIC_PASSWORD'),
+    ],
+
 ];

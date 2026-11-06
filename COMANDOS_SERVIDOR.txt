@@ -71,6 +71,12 @@ CACHE_STORE=file
 # Las tareas en segundo plano continuan almacenandose en la base de datos.
 QUEUE_CONNECTION=database
 
+# Credenciales del checador: definirlas solo en el .env del servidor.
+# Cambia la contraseña del dispositivo: la anterior estuvo en el historial público de Git.
+BIOMETRIC_IP=192.168.2.239
+BIOMETRIC_USERNAME=admin
+BIOMETRIC_PASSWORD=<nueva_contraseña_del_checador>
+
 
 # 8. SERVIDOR WEB
 # No usar "php artisan serve" como servidor permanente de produccion.
@@ -82,6 +88,19 @@ C:\xampp\htdocs\crm-gaa-2\public
 # URL de acceso configurada:
 
 http://192.168.2.249:8001
+
+# Apache sirve la web. Para el programador y ambas colas basta UNA terminal:
+composer run server
+
+# Este comando sustituye a schedule:work, al worker default y al worker
+# backup_database/backup-uploads iniciados por separado. La terminal debe
+# permanecer abierta. Si ya existe una tarea Windows que ejecuta cronjob.bat,
+# desactívala antes para no ejecutar el programador dos veces.
+# Tras cambiar .env: php artisan optimize:clear; php artisan optimize
+
+# Para entrar sin puerto, Apache debe escuchar en 80; para entrar sin IP,
+# configura un nombre en el DNS local (o el archivo hosts de cada equipo).
+# No cambies APP_URL hasta que el nombre funcione desde todos los equipos.
 
 
 # 9. COMPROBACION DE VELOCIDAD

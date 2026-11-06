@@ -93,53 +93,20 @@ El inicio separado en tres terminales resulta más práctico cuando se necesita 
 
 ## Ejecución en un servidor interno o red local
 
-En el servidor Windows, abre PowerShell y entra en la ubicación real del proyecto:
+La instalación Windows documentada en [COMANDOS_SERVIDOR.txt](COMANDOS_SERVIDOR.txt) ya utiliza Apache para servir `public` en el puerto 8001. No inicies también `php artisan serve`.
+
+Después de compilar los recursos con `npm run build`, una sola terminal inicia el programador y las dos colas:
 
 ```powershell
-cd C:\xampp\htdocs\crm-v1
+cd C:\xampp\htdocs\crm-gaa-2
+composer run server
 ```
 
-Inicia Laravel escuchando en todas las interfaces de red:
+El programador sincroniza el checador cada minuto, actualiza el índice de respaldos y ejecuta el mantenimiento del checador a las 23:00. La cola general procesa trabajos normales; la cola `backup-uploads` ensambla y procesa cargas de respaldos. El programa reinicia los procesos si terminan, pero la terminal debe permanecer abierta. Si Windows ya ejecuta `cronjob.bat` cada minuto, desactiva esa tarea para evitar dos programadores.
 
-```powershell
-php artisan serve --host=0.0.0.0 --port=8001
-```
+El checador necesita `BIOMETRIC_PASSWORD` en el `.env` del servidor. Cambia primero la contraseña del dispositivo y coloca la nueva en `.env`; luego ejecuta `php artisan optimize:clear` y `php artisan optimize`. La contraseña anterior estuvo escrita en el historial público del repositorio.
 
-El servidor mostrará una salida similar a:
-
-```text
-Starting Laravel development server: http://0.0.0.0:8001
-```
-
-Desde otro equipo de la misma red se debe utilizar la dirección IP del servidor, no `0.0.0.0`. Por ejemplo:
-
-```text
-http://192.168.2.122:8001
-```
-
-Si el puerto `8001` está ocupado, utiliza otro puerto y conserva el mismo número en la URL:
-
-```powershell
-php artisan serve --host=0.0.0.0 --port=8002
-```
-
-```text
-http://192.168.2.122:8002
-```
-
-En terminales adicionales también deben permanecer activos los recursos frontend y las tareas programadas:
-
-```powershell
-cd C:\xampp\htdocs\crm-v1
-npm run dev
-```
-
-```powershell
-cd C:\xampp\htdocs\crm-v1
-php artisan schedule:work
-```
-
-> `php artisan serve` es apropiado para desarrollo o una red interna controlada. Para un despliegue público de producción debe configurarse Apache o Nginx, HTTPS y un servicio permanente para el scheduler.
+Para usar una dirección como `http://crm.interno/inicio` sin IP ni puerto, configura el DNS local para apuntar al servidor y Apache para escuchar en el puerto 80. Ambas configuraciones son del servidor y la red, no de Laravel. Hasta entonces conserva `APP_URL` con la dirección actual.
 
 ## Compilación para producción
 

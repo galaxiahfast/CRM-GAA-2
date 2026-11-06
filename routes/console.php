@@ -41,8 +41,8 @@ Schedule::call(fn () => app(ContpaqiBackupCatalog::class)->refreshToday())
     ->name('contpaqi-backups:refresh-today')
     ->withoutOverlapping();
 
-// 2. MANTENIMIENTO PROFUNDO (Una vez al día)
-// Valida los últimos 30 días contra el hardware y purga inconsistencias a las 11:00 PM
+// 2. REVISIÓN DE 30 DÍAS (Una vez al día)
+// Recupera marcas faltantes sin borrar ni sobrescribir correcciones locales.
 Schedule::command('biometric:sync --maintenance')->dailyAt('23:00')->withoutOverlapping();
 
 // Cierra los cronómetros que sigan activos al terminar la jornada. Se usa
