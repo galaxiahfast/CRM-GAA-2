@@ -74,6 +74,9 @@ class TechnicalSupportReportPdfService
             'antivirus_install' => ['title' => 'Instalación o configuración de antivirus', 'description' => 'Instalación, actualización y comprobación de protección.'],
             'data_migration' => ['title' => 'Migración de información', 'description' => 'Transferencia controlada de archivos y validación en el equipo destino.'],
             'general_diagnosis' => ['title' => 'Diagnóstico general de equipo', 'description' => 'Revisión de hardware, sistema operativo y aplicaciones.'],
+            'computer_performance_diagnosis' => ['title' => 'Diagnóstico de lentitud y consumo de recursos del equipo', 'description' => 'Revisión de memoria, almacenamiento, procesos y aplicaciones de inicio.'],
+            'unneeded_software_removal' => ['title' => 'Desinstalación de aplicaciones y componentes no requeridos', 'description' => 'Retiro de programas indicados y sus componentes asociados.'],
+            'startup_residual_cleanup' => ['title' => 'Limpieza de componentes residuales y entradas de inicio automático', 'description' => 'Revisión y retiro de residuos de programas desinstalados.'],
             'hardware_inventory_for_quote' => ['title' => 'Levantamiento de características del equipo para cotización', 'description' => 'Registro de las características actuales del equipo, sin precios ni propuesta comercial.'],
         ];
     }
@@ -201,6 +204,9 @@ class TechnicalSupportReportPdfService
                 'antivirus_install' => 'antivirus',
                 'data_migration' => 'migracion-datos',
                 'general_diagnosis' => 'diagnostico',
+                'computer_performance_diagnosis' => 'diagnostico-rendimiento',
+                'unneeded_software_removal' => 'desinstalacion-programas',
+                'startup_residual_cleanup' => 'limpieza-inicio',
                 'hardware_inventory_for_quote' => 'caracteristicas-equipo-cotizacion',
                 default => 'soporte',
             })

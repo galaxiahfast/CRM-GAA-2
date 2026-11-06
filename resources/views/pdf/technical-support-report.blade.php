@@ -106,7 +106,7 @@
         @endif
         @endif
         <div class="closing-block">
-            @if (data_get($details, 'report_kind') !== 'hardware_inventory')
+            @if (data_get($details, 'report_kind') !== 'hardware_inventory' && ! data_get($details, 'omit_closing_paragraph'))
                 <p class="body-copy">En espera de que el presente sea de su interés y responda a sus expectativas, quedamos a sus órdenes para cualquier comentario adicional y esperamos poder servirles ahora o en un futuro.</p>
             @endif
             <div class="signature">
