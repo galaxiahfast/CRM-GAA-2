@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'access.permission' => \App\Http\Middleware\EnsureAccessPermission::class,
         ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackUserPresence::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->report(function (Throwable $exception): void {

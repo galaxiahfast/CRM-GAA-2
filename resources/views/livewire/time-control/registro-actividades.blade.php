@@ -43,12 +43,12 @@
 
 <div
     data-clock-particle-network
-    class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+    class="support-monochrome relative isolate min-h-[calc(var(--app-dvh)-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
-        viewScale: 100,
+        viewScale: 90,
         isFullscreen: false,
         init() {
-            const savedScale = Number(localStorage.getItem('time-control-view-scale'));
+            const savedScale = Number(null);
             if (savedScale >= 70 && savedScale <= 100) {
                 this.viewScale = savedScale;
             }

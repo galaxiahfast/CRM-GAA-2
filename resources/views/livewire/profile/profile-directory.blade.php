@@ -1,4 +1,4 @@
-<div class="min-h-[calc(100dvh-90px)] bg-gray-100 text-[15px] text-gray-700" x-data="{ profilePhotoOpen: false }" x-on:keydown.escape.window="profilePhotoOpen = false">
+<div class="min-h-[calc(var(--app-dvh)-90px)] bg-gray-100 text-[15px] text-gray-700" x-data="{ profilePhotoOpen: false }" x-on:keydown.escape.window="profilePhotoOpen = false">
     <header class="flex items-center gap-3 border-b border-gray-200 px-6 py-6 lg:px-10">
         <a href="{{ route('profile.show') }}" class="font-medium text-gray-500 hover:text-[#1A3A6B]">Mi perfil</a>
         <span class="text-gray-300">&gt;</span>

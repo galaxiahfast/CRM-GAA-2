@@ -7,19 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
 
-<div class="auth-shell relative isolate w-full" data-auth-particle-network data-auth-theme="dark">
+<div class="auth-shell relative isolate w-full" data-auth-particle-network data-auth-theme="blue">
     <script>
         (function (root) {
-            var themes = ['dark', 'blue'];
-            var stored = null;
-            try { stored = localStorage.getItem('auth-theme'); } catch (e) {}
-            root.dataset.authTheme = themes.indexOf(stored) > -1 ? stored : 'dark';
+            // Siempre inicia en azul; el botón de tema solo cambia la vista actual.
+            root.dataset.authTheme = 'blue';
 
             document.addEventListener('click', function (event) {
                 if (!event.target.closest('[data-auth-theme-toggle]')) return;
                 var next = root.dataset.authTheme === 'dark' ? 'blue' : 'dark';
                 root.dataset.authTheme = next;
-                try { localStorage.setItem('auth-theme', next); } catch (e) {}
             });
         })(document.currentScript.parentElement);
     </script>

@@ -8,6 +8,7 @@
         <title>{{ config('app.name', 'González Alonzo y Asociados') }}</title>
 
         <!-- Scripts -->
+        @include('layouts.partials.auto-scale')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Styles -->

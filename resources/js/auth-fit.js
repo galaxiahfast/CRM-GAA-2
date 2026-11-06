@@ -1,7 +1,9 @@
 // Pantallas de acceso: todo el contenido (formulario, telaraña, derechos reservados, botones y chat) vive en
-// un "mundo" que se escala con un zoom común, como el zoom de la página. El mundo ocupa exactamente la
-// ventana (o su tamaño mínimo): las esquinas son las de la página, no las de la pantalla. Si ni a la escala
-// mínima cabe, la página se desplaza y hay que bajar para ver las esquinas de abajo.
+// un "mundo" que se escala con un zoom común, como el zoom de la página. La escala es la misma que la del marco
+// de la app (window.appAutoScale: lienzo de 1800x950, mínimo 75%), así todo se ve igual en cualquier pantalla.
+// El mundo ocupa exactamente la ventana (o su tamaño mínimo): las esquinas son las de la página, no las de la
+// pantalla. Si la ventana es más pequeña de lo que cabe a la escala mínima, no se encoge más: la página se
+// desplaza en horizontal y en vertical.
 const initializeAuthFit = () => {
     const world = document.querySelector('[data-auth-world]');
     const stage = world?.querySelector('[data-auth-fit]');
@@ -29,7 +31,7 @@ const initializeAuthFit = () => {
         // Medida natural: el mundo a escala 1 (el bloque central mide siempre 412px de ancho).
         world.style.zoom = '1';
 
-        const viewportWidth = shell.clientWidth;
+        const viewportWidth = document.documentElement.clientWidth;
         const viewportHeight = window.innerHeight;
         const legalItem = legal?.querySelector('.auth-legal-bottom');
         const legalInFlow = Boolean(legal) && getComputedStyle(legal).display !== 'contents';
@@ -49,7 +51,11 @@ const initializeAuthFit = () => {
             stageHeight + flowHeight + pad + padBottom + 2 * reserve,
             mobile ? 0 : chatHeight + 2 * pad,
         );
-        const solve = (reserve) => Math.min(1, viewportWidth / requiredWidth, Math.max(minScale, viewportHeight / requiredHeight(reserve)));
+        // Escritorio: la escala del lienzo (igual que la app). Celular: se ajusta al ancho y al alto, sin bajar del mínimo.
+        const canvasScale = window.appAutoScale ? window.appAutoScale() : 1;
+        const solve = (reserve) => (mobile
+            ? Math.max(minScale, Math.min(1, window.innerWidth / requiredWidth, viewportHeight / requiredHeight(reserve)))
+            : canvasScale);
 
         let scale = solve(0);
         let reserve = 0;
@@ -57,7 +63,7 @@ const initializeAuthFit = () => {
         if (!mobile && legalItem) {
             // Si el texto legal quedaría debajo del formulario (ventana angosta), se reserva su alto arriba y
             // abajo por igual: así el formulario sigue centrado y nunca lo pisa.
-            const stageLeft = (viewportWidth / scale - stageWidth) / 2;
+            const stageLeft = (Math.max(viewportWidth / scale, requiredWidth) - stageWidth) / 2;
 
             if (stageLeft < pad + legalItem.offsetWidth + 20) {
                 reserve = Math.ceil(legalItem.offsetHeight + 15);
@@ -67,10 +73,13 @@ const initializeAuthFit = () => {
 
         scale = Math.floor(scale * 1000) / 1000;
 
-        const worldWidth = viewportWidth / scale;
+        // El mundo nunca es más pequeño de lo que necesita su contenido: si la ventana es menor, sobra y hay scroll.
+        const worldWidth = Math.max(viewportWidth / scale, requiredWidth);
         const worldHeight = Math.max(viewportHeight / scale, requiredHeight(reserve));
+        const visualWidth = worldWidth * scale;
         const visualHeight = worldHeight * scale;
-        const scrolls = visualHeight > viewportHeight + 1;
+        const scrollsX = visualWidth > viewportWidth + 1;
+        const scrollsY = visualHeight > viewportHeight + 1;
 
         world.style.width = `${worldWidth}px`;
         world.style.height = `${worldHeight}px`;
@@ -80,9 +89,16 @@ const initializeAuthFit = () => {
         world.style.zoom = scale < 1 ? String(scale) : '';
 
         // La página crece solo si el mundo no cabe en la ventana: entonces el scroll es el de la página.
-        shell.style.height = scrolls ? `${Math.ceil(visualHeight)}px` : '';
+        shell.style.width = scrollsX ? `${Math.ceil(visualWidth)}px` : '';
+        shell.style.height = scrollsY ? `${Math.ceil(visualHeight)}px` : '';
 
-        if (scrolls) {
+        if (scrollsX) {
+            shell.dataset.authScrollX = '';
+        } else {
+            delete shell.dataset.authScrollX;
+        }
+
+        if (scrollsX || scrollsY) {
             shell.dataset.authScroll = '';
         } else {
             delete shell.dataset.authScroll;

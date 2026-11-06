@@ -301,7 +301,7 @@ html.module-dark-theme [aria-label$="notificaciones sin leer"] {
 }
 
 html.module-dark-theme #logo-sidebar {
-    background: #111113 !important;
+    background: #09090b !important;
     border-right: 1px solid #27272a;
     box-shadow: none;
 }
@@ -442,11 +442,16 @@ html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [c
 /* Paleta coherente del menú: base, superficie y estado activo. */
 html.module-dark-theme #logo-sidebar > .bg-zinc-100,
 html.module-dark-theme #logo-sidebar > footer.bg-zinc-100 {
-    background-color: #111113 !important;
+    background-color: #09090b !important;
 }
 
 html.module-dark-theme #logo-sidebar .bg-gray-50 {
-    background-color: #18181b !important;
+    background-color: #101012 !important;
+}
+
+/* El icono de voz va sin cuadro de fondo (solo se rellena mientras escucha). */
+html.module-dark-theme #logo-sidebar button[aria-label="Buscar Apartados por Voz"]:not(.bg-zinc-900) {
+    background-color: transparent !important;
 }
 
 html.module-dark-theme #logo-sidebar .bg-gray-100,
@@ -691,4 +696,16 @@ html.module-dark-theme::-webkit-scrollbar-thumb {
     background-color: #fffbeb !important;
     box-shadow: inset 3px 0 0 #f0b429 !important;
     transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+/* Zoom automático del contenido de las vistas: --app-zoom lo calcula auto-scale.blade.php según el tamaño de la ventana.
+   --app-dvh es la altura de la ventana expresada en las unidades escaladas del contenido (las alturas mínimas de las páginas
+   usan calc(var(--app-dvh) - 100px) para seguir llenando la pantalla aunque el contenido esté reducido). */
+:root {
+    --app-zoom: 1;
+    --app-dvh: calc(100dvh / var(--app-zoom));
+}
+
+#app-zoom {
+    zoom: var(--app-zoom);
 }

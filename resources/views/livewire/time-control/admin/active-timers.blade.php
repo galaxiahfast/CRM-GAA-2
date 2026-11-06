@@ -1,4 +1,4 @@
-<div class="supervision-online-uniform min-h-[calc(100dvh-90px)] min-w-[1300px] bg-white text-[15px] text-zinc-700">
+<div class="supervision-online-uniform min-h-[calc(var(--app-dvh)-90px)] min-w-[1300px] bg-white text-[15px] text-zinc-700">
     <style>
         .supervision-online-uniform :where(p, span, small, label, input, textarea, button, a, strong, h2, h3, th, td) {
             font-size: 15px !important;

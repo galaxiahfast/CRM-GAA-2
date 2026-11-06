@@ -26,7 +26,7 @@
         toggle() {
             if (this.open) { this.open = false; return; }
             const rect = this.$refs.trigger.getBoundingClientRect();
-            const k = (typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100 || 1;
+            const k = (typeof effScale === 'undefined' ? 100 * (window.appAutoScale ? window.appAutoScale() : 1) : Number(effScale)) / 100 || 1;
             const gap = 10 * k;
             const wanted = (Math.max(1, Math.min(this.options.length, 5)) * 55 + 2) * k;
             const below = window.innerHeight - rect.bottom - gap - 8;

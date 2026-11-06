@@ -77,7 +77,7 @@
         },
         position() {
             const rect = this.$refs.trigger.getBoundingClientRect();
-            const k = (typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100 || 1;
+            const k = (typeof effScale === 'undefined' ? 100 * (window.appAutoScale ? window.appAutoScale() : 1) : Number(effScale)) / 100 || 1;
             const gap = 10 * k;
             const chrome = 62;
             const rows = Math.max(1, Math.min(this.shown.length + (this.canAdd ? 1 : 0), 5));

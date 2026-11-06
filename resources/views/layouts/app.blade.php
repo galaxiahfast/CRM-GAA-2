@@ -17,6 +17,12 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
 
+    {{-- Tema: por defecto claro. Si la persona lo cambia se guarda y se aplica desde el primer pintado, así al recargar no parpadea ni vuelve al claro. --}}
+    <script>
+        try { document.documentElement.classList.toggle('module-dark-theme', localStorage.getItem('activities-support-theme') === 'dark'); } catch (error) {}
+    </script>
+    @include('layouts.partials.auto-scale')
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
@@ -35,12 +41,12 @@
     <!-- ========================================= -->
     <div
         x-data="{
-            collapsed: window.innerWidth < 1024 || localStorage.getItem('sidebarCollapsed') === 'true',
+            collapsed: window.innerWidth / window.appAutoScale() < 1024 || localStorage.getItem('sidebarCollapsed') === 'true',
         }"
 
         x-init="
             $watch('collapsed', value => {
-                if (window.innerWidth >= 1024) localStorage.setItem('sidebarCollapsed', value);
+                if (window.innerWidth / window.appAutoScale() >= 1024) localStorage.setItem('sidebarCollapsed', value);
             });
         "
 
@@ -56,7 +62,7 @@
             class="pt-[100px]"
         >
 
-            <div>
+            <div id="app-zoom">
                 {{ $slot }}
             </div>
 

@@ -135,12 +135,18 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('time.admin.attendance', 'time.attendance', 'activity-backups.*', 'bank-reconciliation.*', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profile.show', 'profiles.show') ? 'px-[50px]' : (request()->routeIs('dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             <button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed" class="mobile-menu-button" aria-label="Menú de navegación" title="Menú de navegación">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            @if (request()->routeIs('time.admin.attendance', 'time.attendance'))
+            @if (request()->routeIs('inicio'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
+                    <span>General</span>
+                    <span class="text-white">›</span>
+                    <span class="text-white">Inicio</span>
+                </div>
+            @elseif (request()->routeIs('time.admin.attendance', 'time.attendance'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
                     <span>Actividades</span>
                     <span class="text-white/40">›</span>
@@ -467,7 +473,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0">
+                <li class="pt-[30px] px-[15px] pb-0 m-0">
                     <a href="{{ route('inicio') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('inicio') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -481,7 +487,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Dashboard (vista completa anterior)                -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0">
+                <li class="pt-[30px] px-[15px] pb-0 m-0">
                     <a href="{{ route('dashboard') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -495,11 +501,11 @@
                     </a>
                 </li>
 
-                <li class="px-[15px] pt-[15px] m-0" :class="collapsed ? 'hidden' : 'block'" aria-hidden="true">
+                <li class="px-[15px] pt-[30px] m-0" :class="collapsed ? 'hidden' : 'block'" aria-hidden="true">
                     <div class="border-t border-zinc-200"></div>
                 </li>
 
-                <li x-data="{ openBankReconciliation: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openBankReconciliation: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
                     <button type="button" @click="openBankReconciliation = !openBankReconciliation"
                         :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -515,15 +521,15 @@
                     </button>
 
                     <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
-                        <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="w-full">
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
                                     <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
                                 </a>
                             </li>
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
                                     <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
@@ -544,7 +550,7 @@
                 <!-- BOTÓN: Administración (siempre visible)                    -->
                 <!-- ========================================================== -->
                 @if ($canAdministrationSection)
-                <li class="pt-[15px] px-[15px] pb-0 m-0">
+                <li class="pt-[30px] px-[15px] pb-0 m-0">
                     <a href="{{ $administrationRoute }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -558,7 +564,7 @@
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: ACTIVIDADES (oculta en modo compacto)            -->
                 <!-- ========================================================== -->
-                <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Actividades</span>
                 </li>
 
@@ -567,7 +573,7 @@
                 <!-- ========================================================== -->
                 @if ($canTimeControl && $canTimeSupervision)
                     <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
-                    <li x-data="{ openTimeControl: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -595,10 +601,10 @@
                             class="relative mt-0 dynamic-sub-menu" 
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
-                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Reloj Checador -->
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.attendance') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -607,7 +613,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -618,7 +624,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Supervisión de horas -->
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -633,7 +639,7 @@
                     </li>
                 @elseif ($canTimeControl)
                     <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
-                    <li x-data="{ openTimeControl: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -661,11 +667,11 @@
                             class="relative mt-0 dynamic-sub-menu" 
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
-                            <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Cronómetro -->
                                 @if ($canTimeActivities)
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -679,7 +685,7 @@
                                 @endif
                                 <!-- Sub-elemento: Reloj Checador -->
                                 @if ($canTimeClock)
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.attendance') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -692,7 +698,7 @@
                                 @endif
                                 <!-- Sub-elemento: Mi Productividad -->
                                 @if ($canTimeProductivity)
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.reports') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -703,7 +709,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -720,7 +726,7 @@
                 @endif
 
                 @can('access-system-backups')
-                    <li class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li class="relative pt-[30px] px-[15px] pb-0 m-0">
                         <a href="{{ route('activity-backups.index') }}"
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                             class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('activity-backups.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -733,19 +739,19 @@
                     </li>
                 @endcan
 
-                    <li class="pt-[15px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                    <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
                         <span class="flex h-[15px] items-center text-[15px] font-medium leading-none text-black">Documentos</span>
                     </li>
 
                                 @can('manage-delivery-notes')
-                                    <li class="pt-[15px] px-[15px] pb-0 m-0 w-full">
+                                    <li class="pt-[30px] px-[15px] pb-0 m-0 w-full">
                                         <a href="{{ route('soporte.hoja-entrega') }}" data-sidebar-label="Hoja de Entrega" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
                                         </a>
                                     </li>
                                 @endcan
-                    <li x-data="{ openReports: false }" class="relative pt-[15px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openReports: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
                         <button type="button" @click="openReports = !openReports" :aria-expanded="openReports" data-sidebar-label="Reportes"
                             :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -761,14 +767,14 @@
                         <div x-show="openReports" x-transition class="relative" style="display: none;">
                             <div class="absolute bottom-0 left-[22px] top-[15px] w-[2px] bg-gray-200"></div>
                             <ul class="w-full">
-                                <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[15px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[30px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('soporte.reportes-tecnicos') }}" data-sidebar-label="Reportes de Soporte" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                                         <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
                                     </a>
                                 </li>
                                 @can('manage-backup-reports')
-                                    <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[15px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[30px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                         <a href="{{ route('soporte.reportes-respaldos') }}" data-sidebar-label="Reporte de Respaldos" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
@@ -782,14 +788,14 @@
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
                 <!-- ========================================================== -->
-                <li class="hidden pt-[15px] px-[15px] pb-0 m-0">
+                <li class="hidden pt-[30px] px-[15px] pb-0 m-0">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Soporte</span>
                 </li>
 
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Centro de ayuda (con flecha siempre visible)      -->
                 <!-- ========================================================== -->
-                <li x-data="{ openSoporte: false }" class="hidden relative pt-[15px] px-[15px] pb-0 m-0">
+                <li x-data="{ openSoporte: false }" class="hidden relative pt-[30px] px-[15px] pb-0 m-0">
                     <button @click="openSoporte = !openSoporte" 
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -819,10 +825,10 @@
                         class="relative mt-0 dynamic-sub-menu" 
                         style="display: none;">
                         <!-- Línea vertical siempre visible -->
-                        <div class="absolute left-[22px] top-[15px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="space-y-0 w-full">
                             <!-- Ticket -->
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('soporte.ticket') }}" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -833,7 +839,7 @@
                                 </a>
                             </li>
                             <!-- Preguntas -->
-                            <li class="pt-[15px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('soporte.preguntas') }}" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -1031,22 +1037,34 @@
                 // El zoom de cada apartado (el control de la esquina inferior derecha) escala solo su contenido con
                 // `transform: scale(...)` y un ancho de 10000 / zoom %. Aquí se lee ese mismo factor y se aplica también al
                 // menú lateral y al encabezado, para que todo el marco se vea al mismo tamaño en cualquier apartado.
-                const pageScale = () => {
-                    if (window.innerWidth < 1024) return 1;
+                // Todas las pantallas se ven al mismo tamaño base (el más pequeño de los que se usan: 0.9), para que al cambiar de
+                // apartado no haya que alejar ni acercar. Si el apartado ya aplica su propia escala se usa esa; si no, el contenido
+                // recibe este mismo 0.9 mediante --app-zoom (ver appApplyZoom en auto-scale.blade.php).
+                const BASE_SCALE = 0.9;
+                let ownScale = false;
+                const manualScale = () => {
+                    ownScale = false;
+                    if (window.innerWidth / window.appAutoScale() < 1024) return 1;
 
                     for (const element of main.querySelectorAll('[style*="scale("]')) {
                         const style = element.getAttribute('style') || '';
                         if (!/width:\s*[\d.]+%/.test(style) || /translate/.test(style)) continue;
                         const match = style.match(/transform:\s*scale\(([\d.]+)\)/);
                         const value = match ? parseFloat(match[1]) : NaN;
-                        if (value >= 0.5 && value <= 1.5) return value;
+                        if (value >= 0.5 && value <= 1.5) { ownScale = true; return value; }
                     }
 
-                    return 1;
+                    return BASE_SCALE;
                 };
+
+                // Factor final del marco: el zoom elegido en el apartado por el zoom automático según el ancho de la ventana
+                // (lienzo de 1800x950: 1 en pantallas grandes y, en las más pequeñas, se reduce hasta 0.85). Ver auto-scale.blade.php.
+                const pageScale = () => manualScale() * (window.appAutoScale ? window.appAutoScale() : 1);
 
                 const applyShell = () => {
                     const scale = pageScale();
+                    window.appContentBase = (ownScale || window.innerWidth / window.appAutoScale() < 1024) ? 1 : BASE_SCALE;
+                    if (window.appApplyZoom) window.appApplyZoom();
                     const zoomed = Math.abs(scale - 1) > 0.001;
 
                     sidebar.style.zoom = zoomed ? String(scale) : '';

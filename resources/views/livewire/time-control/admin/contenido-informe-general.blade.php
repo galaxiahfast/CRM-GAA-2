@@ -48,7 +48,7 @@
     class="supervision-monochrome w-full bg-white"
     style="overflow-x: auto; padding: 0 50px 50px;"
     x-data="{
-        viewScale: Number(localStorage.getItem('supervision-hours-scale') || 100),
+        viewScale: 90,
         isFullscreen: false,
         saveScale() { localStorage.setItem('supervision-hours-scale', this.viewScale); },
         zoomOut() { this.viewScale = Math.max(70, this.viewScale - 5); this.saveScale(); },
@@ -62,11 +62,6 @@
 >
 
     <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-        <button type="button" @click="zoomOut()" aria-label="Alejar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">−</button>
-        <input type="range" min="70" max="100" step="5" x-model.number="viewScale" @input="saveScale()" class="h-1.5 w-[130px] cursor-pointer accent-black" aria-label="Ajustar tamaño de Supervisión de Horas">
-        <button type="button" @click="zoomIn()" aria-label="Acercar vista" class="inline-flex h-7 w-7 items-center justify-center text-black focus:outline-none focus:ring-0">+</button>
-        <span class="w-[42px] text-right font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
-        <span class="h-5 w-px bg-zinc-200"></span>
         <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
         </button>
@@ -397,7 +392,7 @@
         role="dialog" aria-modal="true" aria-labelledby="activity-edit-title"
         wire:keydown.escape.window="closeActivityEditModal">
         <div x-data @click.away="$wire.closeActivityEditModal()"
-            class="flex max-h-[calc(100vh-40px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            class="flex max-h-[calc(var(--app-dvh)-40px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
             <div class="flex items-center justify-between gap-5 border-b border-gray-300 px-5 py-4">
                 <div class="flex min-w-0 items-center gap-[15px]">
                     <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">

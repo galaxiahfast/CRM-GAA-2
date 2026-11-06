@@ -905,8 +905,9 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
  * (auth-fit.js). Las esquinas son las del mundo (la página), no las de la pantalla: si hay scroll,
  * para ver los botones y el texto legal de abajo hay que bajar.
  */
-html:has(.auth-shell[data-auth-scroll]),
-html:has(.auth-shell[data-auth-scroll]) body { height: auto; overflow-x: hidden; overflow-y: auto; }
+html:has(.auth-shell[data-auth-scroll]) { height: auto; overflow: auto; }
+html:has(.auth-shell[data-auth-scroll]) body { height: auto; overflow: visible; }
+.auth-shell[data-auth-scroll-x] { max-width: none; }
 .auth-shell { height: 100dvh; padding: 0; overflow: hidden; }
 .auth-world {
     position: absolute;

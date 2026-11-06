@@ -32,7 +32,7 @@
 
     <template x-teleport="body">
         <div data-support-modal x-cloak x-show="open" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/50 p-[20px]" role="dialog" aria-modal="true" aria-labelledby="support-trash-title">
-            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100})` }" @click.outside="if (! purge) open = false" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
+            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 * (window.appAutoScale ? window.appAutoScale() : 1) : Number(effScale)) / 100})` }" @click.outside="if (! purge) open = false" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
                 <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
                         <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
@@ -92,7 +92,7 @@
     {{-- Segunda confirmación para borrar de forma permanente. --}}
     <template x-teleport="body">
         <div data-support-modal x-cloak x-show="purge" class="fixed inset-0 z-[200010] flex items-center justify-center bg-black/50 p-[20px]" role="dialog" aria-modal="true" aria-labelledby="support-purge-title">
-            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100})` }" @click.outside="purge = null" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-height: calc(100dvh - 40px);">
+            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 * (window.appAutoScale ? window.appAutoScale() : 1) : Number(effScale)) / 100})` }" @click.outside="purge = null" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-height: calc(100dvh - 40px);">
                 <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
                         <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">

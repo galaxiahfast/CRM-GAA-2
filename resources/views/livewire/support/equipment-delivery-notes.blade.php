@@ -61,8 +61,8 @@
 
 <div
     data-clock-particle-network
-    class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-[#F3F3F3] text-[15px] text-zinc-700"
-    x-data="{ viewScale: 100, isFullscreen: false, init() { const saved = Number(localStorage.getItem('delivery-notes-view-scale')); if (saved >= 70 && saved <= 100) this.viewScale = saved; }, saveScale() { localStorage.setItem('delivery-notes-view-scale', String(this.viewScale)); }, async toggleFullscreen(container) { if (document.fullscreenElement === container) return document.exitFullscreen(); if (document.fullscreenElement) await document.exitFullscreen(); await container.requestFullscreen(); } }"
+    class="support-monochrome relative isolate min-h-[calc(var(--app-dvh)-90px)] w-full overflow-hidden bg-[#F3F3F3] text-[15px] text-zinc-700"
+    x-data="{ viewScale: 90, isFullscreen: false, init() { const saved = Number(null); if (saved >= 70 && saved <= 100) this.viewScale = saved; }, saveScale() { localStorage.setItem('delivery-notes-view-scale', String(this.viewScale)); }, async toggleFullscreen(container) { if (document.fullscreenElement === container) return document.exitFullscreen(); if (document.fullscreenElement) await document.exitFullscreen(); await container.requestFullscreen(); } }"
     @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
 >
     <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.55]" aria-hidden="true"></canvas>
@@ -77,7 +77,7 @@
         </button>
     </div>
 
-    <div class="relative z-10 min-h-[calc(100dvh-90px)] min-w-[1180px] origin-top" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
+    <div class="relative z-10 min-h-[calc(var(--app-dvh)-90px)] min-w-[1180px] origin-top" :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`">
         <header class="flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px]">
             <div class="flex items-center gap-[15px] text-zinc-500">
                 <span class="font-medium">Actividades</span>

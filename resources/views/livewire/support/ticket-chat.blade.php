@@ -1,6 +1,6 @@
 <div
     data-clock-particle-network
-    class="support-monochrome relative isolate min-h-[calc(100dvh-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+    class="support-monochrome relative isolate min-h-[calc(var(--app-dvh)-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
         viewScale: 90,
         isFullscreen: false,
@@ -64,7 +64,7 @@
     </div>
 
     <div
-        class="relative z-10 min-h-[calc(100dvh-90px)] min-w-[1200px] origin-top"
+        class="relative z-10 min-h-[calc(var(--app-dvh)-90px)] min-w-[1200px] origin-top"
         :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
     >
     <header class="flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px]">

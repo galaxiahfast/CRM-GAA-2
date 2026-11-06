@@ -24,11 +24,11 @@
 @endphp
 <div
     data-panel
-    class="support-backup-report-page relative isolate min-h-[calc(100dvh-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+    class="support-backup-report-page relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-hidden text-[15px]"
     x-data="{
         viewScale: 90,
         isFullscreen: false,
-        isCompact: window.innerWidth < 1024,
+        isCompact: window.innerWidth / window.appAutoScale() < 1024,
         scaledHeight: null,
         observer: null,
         selServer: @js($servers[0]['key'] ?? ''),
@@ -93,7 +93,7 @@
             });
             this.$watch('processed', () => { this.lastProgressAt = this.nowTick = Date.now(); });
             try {
-                const saved = Number(localStorage.getItem('backup-reports-view-scale'));
+                const saved = Number(null);
                 if (saved >= 70 && saved <= 100) this.viewScale = saved;
             } catch (error) {}
             this.$nextTick(() => {
@@ -377,7 +377,7 @@
     x-on:backup-read-next.window="scheduleRead()"
     x-on:backup-scan-progress.window="trackDots($event.detail.processed, $event.detail.total, $event.detail.reading, $event.detail.message); processed = $event.detail.processed; total = $event.detail.total; scanning = $event.detail.reading; statusMessage = $event.detail.message; currentServer = $event.detail.server || ''; currentProfile = $event.detail.profile || ''; if ($event.detail.reading) { mailStatus = ''; mailSent = false; }"
     @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
-    @resize.window.debounce.150ms="isCompact = window.innerWidth < 1024; syncHeight()"
+    @resize.window.debounce.150ms="isCompact = window.innerWidth / window.appAutoScale() < 1024; syncHeight()"
 >
     <x-panel-styles />
 
@@ -1291,13 +1291,8 @@
             </main>
         </div>
     </div>
-    <!-- Control de zoom y pantalla completa (igual que en Panel general, Administración y Reloj Checador); semitransparente mientras no se usa para no tapar el contenido -->
+    <!-- Control de pantalla completa (igual que en Panel general, Administración y Reloj Checador); semitransparente mientras no se usa para no tapar el contenido -->
     <div class="no-print panel-surface panel-border fixed bottom-[50px] right-[50px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] opacity-40 shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition-opacity duration-200 hover:opacity-100 focus-within:opacity-100 lg:flex">
-        <button type="button" @click="setScale(viewScale - 5)" aria-label="Alejar vista" title="Alejar vista" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg focus:outline-none focus:ring-0">−</button>
-        <input type="range" min="70" max="100" step="5" :value="viewScale" @input="setScale($event.target.value)" class="h-1.5 w-[130px] cursor-pointer" style="accent-color: var(--panel-accent)" aria-label="Ajustar tamaño de la vista">
-        <button type="button" @click="setScale(viewScale + 5)" aria-label="Acercar vista" title="Acercar vista" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg focus:outline-none focus:ring-0">+</button>
-        <span class="w-[42px] text-right tabular-nums" x-text="viewScale + '%'">90%</span>
-        <span class="panel-line h-5 w-px"></span>
         <button type="button" @click="toggleFullscreen($root)" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el informe en pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
             <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
