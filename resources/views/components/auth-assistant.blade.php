@@ -30,6 +30,8 @@
             'a' => 'Comunícate con el área de soporte técnico de González Alonzo y Asociados indicando tu nombre y el correo con el que intentas entrar.',
         ],
     ];
+    $botName = (string) config('support.automated_user.name', 'Sofia');
+    $botAvatar = asset(ltrim((string) config('support.automated_user.avatar', 'img/support/sofia-avatar.svg'), '/'));
 @endphp
 
 {{-- Botones flotantes: la flecha despliega el cambio de tema y el asistente de ayuda. --}}
@@ -38,9 +40,12 @@
         chat: false,
         typing: false,
         faq: @js($faq),
-        messages: [{ from: 'bot', text: 'Hola, soy el asistente de acceso. ¿En qué te ayudo?' }],
+        botName: @js($botName),
+        greeted: false,
+        greeting: false,
+        messages: [],
         ask(item) {
-            if (this.typing) return;
+            if (this.typing || this.greeting) return;
             this.messages.push({ from: 'user', text: item.q });
             this.typing = true;
             this.scroll();
@@ -49,6 +54,32 @@
                 this.messages.push({ from: 'bot', text: item.a });
                 this.scroll();
             }, 550);
+        },
+        // La primera vez que se abre, el usuario saluda solo y Sofia responde.
+        greet() {
+            if (this.greeted) return;
+            this.greeted = true;
+            this.greeting = true;
+            setTimeout(() => {
+                this.messages.push({ from: 'user', text: '¡Hola, buenas!' });
+                this.scroll();
+                setTimeout(() => {
+                    this.typing = true;
+                    this.scroll();
+                    setTimeout(() => {
+                        this.typing = false;
+                        this.messages.push({ from: 'bot', text: '¡Hola! Soy ' + this.botName + ', la asistente de ayuda. Elige una de las preguntas disponibles y te explicaré cómo hacerlo.' });
+                        this.greeting = false;
+                        this.scroll();
+                    }, 900);
+                }, 400);
+            }, 500);
+        },
+        // Si la ventana es baja, la página tiene scroll: al abrir el chat se baja hasta donde está anclado.
+        reveal() {
+            if (document.querySelector('.auth-shell[data-auth-scroll]')) {
+                this.$nextTick(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }));
+            }
         },
         scroll() { this.$nextTick(() => { const body = this.$refs.body; if (body) body.scrollTop = body.scrollHeight; }); },
         toggleMenu() { this.menu = !this.menu; if (!this.menu) this.chat = false; },
@@ -72,20 +103,14 @@
             <template x-for="(message, index) in messages" :key="index">
                 <div class="auth-msg-row" :class="message.from === 'bot' ? 'is-bot' : 'is-user'">
                     <span class="auth-avatar" :class="message.from === 'bot' ? 'is-bot' : 'is-user'" aria-hidden="true">
-                        <span x-show="message.from === 'bot'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/>
-                        <circle cx="9.5" cy="13" r="0.9" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="0.9" fill="currentColor" stroke="none"/><path d="M9.5 16.2h5"/>
-                    </svg></span>
+                        <img x-show="message.from === 'bot'" src="{{ $botAvatar }}" alt="">
                         <b x-show="message.from !== 'bot'">Yo</b>
                     </span>
                     <div class="auth-msg" :class="message.from === 'bot' ? 'auth-msg-bot' : 'auth-msg-user'" x-html="message.text"></div>
                 </div>
             </template>
             <div class="auth-msg-row is-bot" x-show="typing" aria-label="Escribiendo">
-                <span class="auth-avatar is-bot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/>
-                        <circle cx="9.5" cy="13" r="0.9" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="0.9" fill="currentColor" stroke="none"/><path d="M9.5 16.2h5"/>
-                    </svg></span>
+                <span class="auth-avatar is-bot" aria-hidden="true"><img src="{{ $botAvatar }}" alt=""></span>
                 <div class="auth-msg auth-msg-bot"><span class="auth-typing"><i></i><i></i><i></i></span></div>
             </div>
         </div>
@@ -100,7 +125,7 @@
         <div class="auth-fab-items" x-show="menu" x-cloak
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0"
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-3">
-            <button type="button" class="auth-fab-btn auth-fab-tip" :class="{ 'is-on': chat }" data-tip="Ayuda" @click="chat = !chat; if (chat) scroll()" aria-label="Abrir asistente de ayuda">
+            <button type="button" class="auth-fab-btn auth-fab-tip" :class="{ 'is-on': chat }" data-tip="Ayuda" @click="chat = !chat; if (chat) { scroll(); greet(); reveal(); }" aria-label="Abrir asistente de ayuda">
                 <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.5h9M7.5 13h5.5M20 12a8 8 0 0 1-11.7 7.1L4 20l.9-4.3A8 8 0 1 1 20 12Z" />
                 </svg>

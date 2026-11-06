@@ -1,75 +1,92 @@
-// Pantallas de acceso: el formulario conserva su forma y su ancho; si la ventana es más pequeña,
-// se reduce completo de forma proporcional para que nunca aparezca scroll horizontal ni vertical.
+// Pantallas de acceso: todo el contenido (formulario, telaraña, derechos reservados, botones y chat) vive en
+// un "mundo" que se escala con un zoom común, como el zoom de la página. El mundo ocupa exactamente la
+// ventana (o su tamaño mínimo): las esquinas son las de la página, no las de la pantalla. Si ni a la escala
+// mínima cabe, la página se desplaza y hay que bajar para ver las esquinas de abajo.
 const initializeAuthFit = () => {
-    const stage = document.querySelector('[data-auth-fit]');
-    const shell = stage?.closest('.auth-shell');
-    const footer = shell?.querySelector('[data-auth-fit-footer]');
+    const world = document.querySelector('[data-auth-world]');
+    const stage = world?.querySelector('[data-auth-fit]');
+    const shell = world?.closest('.auth-shell');
+    const legal = world?.querySelector('[data-auth-fit-footer]');
 
-    if (!stage || !shell || stage.dataset.initialized === 'true') {
+    if (!world || !stage || !shell || world.dataset.initialized === 'true') {
         return;
     }
 
-    stage.dataset.initialized = 'true';
+    world.dataset.initialized = 'true';
 
-    // Límite de reducción por falta de alto: por debajo de esta escala el formulario deja de achicarse
-    // y se permite desplazar. El ancho nunca se limita, para que no haya scroll horizontal.
+    // Por debajo de esta escala el contenido sería ilegible: a partir de ahí la página se desplaza.
     const minScale = 0.75;
+    const chatHeight = 540;
     let frame = null;
 
     const fit = () => {
         frame = null;
 
-        // Medida natural (sin reducir y sin espacio reservado).
-        shell.style.setProperty('--auth-reserve', '0px');
-        stage.style.zoom = '1';
-        if (footer) footer.style.zoom = '1';
+        const mobile = window.matchMedia('(max-width: 640px)').matches;
+        const pad = mobile ? 20 : 40;
+        const padBottom = mobile ? 80 : 40; // en móvil el último espacio es para la fila de botones
 
-        const style = getComputedStyle(shell);
-        const paddingLeft = parseFloat(style.paddingLeft);
-        const availableWidth = shell.clientWidth - paddingLeft - parseFloat(style.paddingRight);
-        const baseHeight = shell.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 1;
+        // Medida natural: el mundo a escala 1 (el bloque central mide siempre 412px de ancho).
+        world.style.zoom = '1';
 
-        // En pantallas pequeñas el pie va dentro del flujo y se reduce junto con el formulario;
-        // en pantallas grandes va en las esquinas izquierdas (arriba y abajo) y no forma parte de la medida.
-        const footerInFlow = Boolean(footer) && getComputedStyle(footer).display !== 'contents';
-        const margin = parseFloat(getComputedStyle(stage).marginTop) || 0;
+        const viewportWidth = shell.clientWidth;
+        const viewportHeight = window.innerHeight;
+        const legalItem = legal?.querySelector('.auth-legal-bottom');
+        const legalInFlow = Boolean(legal) && getComputedStyle(legal).display !== 'contents';
         const stageWidth = stage.offsetWidth;
-        const naturalWidth = Math.max(stageWidth, footerInFlow ? footer.offsetWidth : 0);
-        const naturalHeight = stage.offsetHeight + margin + (footerInFlow ? footer.offsetHeight : 0);
+        const stageHeight = stage.offsetHeight;
+        const flowWidth = legalInFlow ? legal.offsetWidth : 0;
+        const flowHeight = legalInFlow ? legal.offsetHeight : 0;
 
-        if (!naturalWidth || !naturalHeight) {
-            stage.style.zoom = '';
-            if (footer) footer.style.zoom = '';
+        if (!stageWidth || !stageHeight || !viewportWidth) {
+            world.style.zoom = '';
             return;
         }
 
-        const solve = (height) => Math.min(1, availableWidth / naturalWidth, Math.max(minScale, height / naturalHeight));
-        let scale = solve(baseHeight);
+        const requiredWidth = Math.max(stageWidth, flowWidth) + 2 * pad;
+        // El chat (380x540) necesita 540px más sus márgenes; el bloque central, su alto más los márgenes.
+        const requiredHeight = (reserve) => Math.max(
+            stageHeight + flowHeight + pad + padBottom + 2 * reserve,
+            mobile ? 0 : chatHeight + 2 * pad,
+        );
+        const solve = (reserve) => Math.min(1, viewportWidth / requiredWidth, Math.max(minScale, viewportHeight / requiredHeight(reserve)));
+
+        let scale = solve(0);
         let reserve = 0;
 
-        if (footer && !footerInFlow) {
-            // Si los textos legales quedarían debajo del formulario (ventana angosta), se reserva su alto arriba y abajo
-            // por igual: así el formulario sigue centrado y nunca lo pisa.
-            const boxes = [...footer.querySelectorAll('.auth-legal-bottom')].map((item) => item.getBoundingClientRect());
-            const footerRight = Math.max(0, ...boxes.map((box) => box.right));
-            const footerHeight = Math.max(0, ...boxes.map((box) => box.height));
-            const stageLeft = paddingLeft + (availableWidth - scale * stageWidth) / 2;
+        if (!mobile && legalItem) {
+            // Si el texto legal quedaría debajo del formulario (ventana angosta), se reserva su alto arriba y
+            // abajo por igual: así el formulario sigue centrado y nunca lo pisa.
+            const stageLeft = (viewportWidth / scale - stageWidth) / 2;
 
-            if (stageLeft < footerRight + 24) {
-                reserve = Math.ceil(footerHeight + 16);
-                scale = solve(baseHeight - 2 * reserve);
+            if (stageLeft < pad + legalItem.offsetWidth + 20) {
+                reserve = Math.ceil(legalItem.offsetHeight + 15);
+                scale = solve(reserve);
             }
         }
 
-        shell.style.setProperty('--auth-reserve', `${reserve}px`);
+        scale = Math.floor(scale * 1000) / 1000;
 
-        const zoom = scale < 1 ? String(Math.floor(scale * 1000) / 1000) : '';
-        stage.style.zoom = zoom;
-        if (footer && footerInFlow) footer.style.zoom = zoom;
-        else if (footer) footer.style.zoom = '';
+        const worldWidth = viewportWidth / scale;
+        const worldHeight = Math.max(viewportHeight / scale, requiredHeight(reserve));
+        const visualHeight = worldHeight * scale;
+        const scrolls = visualHeight > viewportHeight + 1;
 
-        // Solo si ni siquiera a la escala mínima cabe, se permite desplazar verticalmente.
-        shell.style.overflowY = scale * naturalHeight > baseHeight - 2 * reserve + 1 ? 'auto' : '';
+        world.style.width = `${worldWidth}px`;
+        world.style.height = `${worldHeight}px`;
+        world.style.setProperty('--auth-pad', `${pad}px`);
+        world.style.setProperty('--auth-pad-top', `${pad + reserve}px`);
+        world.style.setProperty('--auth-pad-bottom', `${padBottom + reserve}px`);
+        world.style.zoom = scale < 1 ? String(scale) : '';
+
+        // La página crece solo si el mundo no cabe en la ventana: entonces el scroll es el de la página.
+        shell.style.height = scrolls ? `${Math.ceil(visualHeight)}px` : '';
+
+        if (scrolls) {
+            shell.dataset.authScroll = '';
+        } else {
+            delete shell.dataset.authScroll;
+        }
     };
 
     const schedule = () => {
@@ -81,7 +98,6 @@ const initializeAuthFit = () => {
     const resizeObserver = new ResizeObserver(schedule);
     resizeObserver.observe(stage);
     resizeObserver.observe(shell);
-    if (footer) resizeObserver.observe(footer);
     window.addEventListener('resize', schedule);
     document.fonts?.ready.then(schedule);
     fit();

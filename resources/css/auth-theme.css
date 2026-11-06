@@ -49,14 +49,14 @@
     mask-image: radial-gradient(ellipse 34% 60% at 50% 50%, transparent 35%, #000 100%);
 }
 
-.auth-shell .auth-card { padding: 0 4px; }
+.auth-shell .auth-card { padding: 0; }
 
 /* Marca. */
 .auth-shell .auth-brand { display: flex; justify-content: center; outline: none; }
 .auth-shell .auth-logo { width: 66px; height: auto; filter: brightness(0) invert(1); }
 
 /* Saludo. */
-.auth-shell .auth-heading { margin-top: 26px; text-align: center; }
+.auth-shell .auth-heading { margin-top: 30px; text-align: center; }
 .auth-shell .auth-heading h1,
 .auth-shell .auth-heading .auth-title {
     margin: 0;
@@ -66,18 +66,18 @@
     line-height: 1.2;
     color: var(--auth-fg);
 }
-.auth-shell .auth-heading p { margin-top: 8px; font-size: 14px; color: var(--auth-muted); }
+.auth-shell .auth-heading p { margin-top: 10px; font-size: 14px; color: var(--auth-muted); }
 
 /* Pestañas con indicador deslizante. */
 .auth-shell .auth-tabs {
     position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    margin-top: 28px;
+    margin-top: 30px;
     border-bottom: 1px solid var(--auth-line);
 }
 .auth-shell .auth-tab {
-    padding: 0 0 13px;
+    padding: 0 0 15px;
     text-align: center;
     font-size: 12px;
     font-weight: 500;
@@ -104,16 +104,16 @@
 
 /* Cambio entre paneles. */
 .auth-shell .auth-panel-enter { transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1); }
-.auth-shell .auth-panel-from-right { opacity: 0; transform: translateX(14px); }
-.auth-shell .auth-panel-from-left { opacity: 0; transform: translateX(-14px); }
+.auth-shell .auth-panel-from-right { opacity: 0; transform: translateX(15px); }
+.auth-shell .auth-panel-from-left { opacity: 0; transform: translateX(-15px); }
 .auth-shell .auth-panel-to { opacity: 1; transform: translateX(0); }
 
 /* Formulario. */
-.auth-shell .auth-form { margin-top: 28px; display: grid; gap: 20px; }
+.auth-shell .auth-form { margin-top: 30px; display: grid; gap: 20px; }
 .auth-shell .auth-label {
     display: block;
-    margin-bottom: 9px;
-    font-size: 10.5px;
+    margin-bottom: 10px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -123,12 +123,12 @@
 .auth-shell .auth-input {
     display: block;
     width: 100%;
-    height: 46px;
+    height: 45px;
     border: 1px solid var(--auth-line);
     border-radius: 10px;
     background: transparent;
-    padding: 0 14px;
-    font-size: 14.5px;
+    padding: 0 15px;
+    font-size: 14px;
     color: var(--auth-fg);
     box-shadow: none;
     transition: border-color 0.2s ease;
@@ -143,8 +143,8 @@
 .auth-shell .auth-input-action {
     position: absolute;
     inset: 0 0 0 auto;
-    padding: 0 14px;
-    font-size: 10.5px;
+    padding: 0 15px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -161,16 +161,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    font-size: 13px;
+    gap: 10px;
+    font-size: 14px;
     color: var(--auth-muted);
 }
-.auth-shell .auth-check { display: inline-flex; align-items: flex-start; gap: 9px; cursor: pointer; line-height: 1.4; }
+.auth-shell .auth-check { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; line-height: 1.4; }
 .auth-shell .auth-check input {
     flex-shrink: 0;
     width: 15px;
     height: 15px;
-    margin-top: 1px;
+    margin-top: 0;
     border-radius: 4px;
     border: 1px solid var(--auth-line-strong);
     background-color: transparent;
@@ -192,12 +192,12 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 46px;
+    height: 45px;
     border: 0;
     border-radius: 10px;
     background: var(--auth-btn);
     color: var(--auth-btn-fg);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.22em;
     text-transform: uppercase;
@@ -213,26 +213,26 @@
 .auth-shell .auth-divider {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin: 28px 0 18px;
-    font-size: 10.5px;
+    gap: 15px;
+    margin: 30px 0 30px;
+    font-size: 12px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--auth-faint);
 }
 .auth-shell .auth-divider::before,
 .auth-shell .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--auth-line); }
-.auth-shell .auth-social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.auth-shell .auth-social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .auth-shell .auth-social {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    height: 44px;
+    gap: 10px;
+    height: 45px;
     border: 1px solid var(--auth-line);
     border-radius: 10px;
     background: transparent;
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--auth-fg);
     transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -243,21 +243,21 @@
 
 /* Avisos. */
 .auth-shell .auth-alert {
-    margin-top: 22px;
+    margin-top: 20px;
     border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 13px;
+    padding: 10px 15px;
+    font-size: 14px;
     line-height: 1.45;
 }
-.auth-shell .auth-alert ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.auth-shell .auth-alert ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
 .auth-shell .auth-alert-error { border: 1px solid rgba(248, 113, 113, 0.3); background: rgba(239, 68, 68, 0.08); color: #fca5a5; }
 .auth-shell .auth-alert-ok { border: 1px solid rgba(52, 211, 153, 0.3); background: rgba(16, 185, 129, 0.08); color: #6ee7b7; }
 
 /* Pie de la tarjeta (otras pantallas) y pie legal. */
 .auth-shell .auth-card-footer {
-    margin-top: 28px;
+    margin-top: 30px;
     text-align: center;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--auth-muted);
 }
 .auth-shell .auth-legal {
@@ -288,8 +288,8 @@
 .auth-shell .auth-fab-btn {
     display: grid;
     place-items: center;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border: 1px solid var(--auth-line);
     border-radius: 9999px;
     background: var(--auth-panel);
@@ -312,7 +312,7 @@
     top: 50%;
     transform: translateY(-50%);
     white-space: nowrap;
-    padding: 5px 9px;
+    padding: 10px;
     border-radius: 6px;
     background: var(--auth-panel);
     border: 1px solid var(--auth-line);
@@ -330,12 +330,12 @@
 /* Asistente de ayuda: espaciado uniforme de 20px y altura fija. */
 .auth-shell .auth-chat {
     position: fixed;
-    right: 76px;
+    right: 100px;
     bottom: 20px;
     z-index: 30;
     display: flex;
     flex-direction: column;
-    width: min(380px, calc(100vw - 32px));
+    width: min(380px, calc(100vw - 40px));
     height: min(540px, calc(100dvh - 40px));
     border: 1px solid var(--auth-line);
     border-radius: 16px;
@@ -383,14 +383,14 @@
     max-width: 85%;
     padding: 20px;
     border-radius: 12px;
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.5;
     animation: auth-msg-in 0.25s ease both;
 }
 .auth-shell .auth-msg a { text-decoration: underline; text-underline-offset: 3px; }
 .auth-shell .auth-msg-bot { align-self: flex-start; background: var(--auth-hover); border: 1px solid var(--auth-line); border-bottom-left-radius: 4px; }
 .auth-shell .auth-msg-user { align-self: flex-end; background: var(--auth-btn); color: var(--auth-btn-fg); border-bottom-right-radius: 4px; }
-.auth-shell .auth-typing { display: inline-flex; gap: 4px; }
+.auth-shell .auth-typing { display: inline-flex; gap: 5px; }
 .auth-shell .auth-typing i { width: 5px; height: 5px; border-radius: 9999px; background: var(--auth-muted); animation: auth-typing 1s infinite ease-in-out; }
 .auth-shell .auth-typing i:nth-child(2) { animation-delay: 0.15s; }
 .auth-shell .auth-typing i:nth-child(3) { animation-delay: 0.3s; }
@@ -410,7 +410,7 @@
     border: 1px solid var(--auth-line);
     border-radius: 9999px;
     background: none;
-    font-size: 12.5px;
+    font-size: 12px;
     line-height: 1.2;
     white-space: nowrap;
     color: var(--auth-fg);
@@ -420,23 +420,7 @@
 .auth-shell .auth-chip:hover { border-color: var(--auth-line-strong); background: var(--auth-hover); }
 .auth-shell .auth-chip:focus-visible { outline: 2px solid var(--auth-line-strong); outline-offset: 2px; }
 
-/* Barras de desplazamiento integradas con la paleta (sin el contenedor blanco del navegador). */
-.auth-shell .auth-chat-body,
-.auth-shell .auth-chat-options {
-    scrollbar-width: thin;
-    scrollbar-color: var(--auth-line-strong) transparent;
-}
-.auth-shell .auth-chat-body::-webkit-scrollbar,
-.auth-shell .auth-chat-options::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
-.auth-shell .auth-chat-body::-webkit-scrollbar-track,
-.auth-shell .auth-chat-options::-webkit-scrollbar-track,
-.auth-shell .auth-chat-body::-webkit-scrollbar-corner,
-.auth-shell .auth-chat-options::-webkit-scrollbar-corner { background: transparent; }
-.auth-shell .auth-chat-body::-webkit-scrollbar-thumb,
-.auth-shell .auth-chat-options::-webkit-scrollbar-thumb { background: var(--auth-line-strong); border-radius: 9999px; }
-.auth-shell .auth-chat-body::-webkit-scrollbar-button,
-.auth-shell .auth-chat-options::-webkit-scrollbar-button { display: none; }
-@keyframes auth-msg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes auth-msg-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes auth-typing { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 
 /* Entrada suave al cargar la página. */
@@ -481,14 +465,14 @@
 }
 .auth-shell input:-webkit-autofill::first-line {
     font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
-    font-size: 14.5px;
+    font-size: 14px;
 }
 
 /*
  * Compatibilidad con el resto de pantallas de acceso (recuperar contraseña, 2FA, verificar correo…),
  * que aún usan clases utilitarias: se adaptan a los colores del tema.
  */
-.auth-shell .auth-card > h1 { margin-top: 26px; text-align: center; font-size: 24px !important; font-weight: 500 !important; letter-spacing: -0.02em; }
+.auth-shell .auth-card > h1 { margin-top: 30px; text-align: center; font-size: 24px !important; font-weight: 500 !important; letter-spacing: -0.02em; }
 .auth-shell .text-slate-900,
 .auth-shell .text-slate-800,
 .auth-shell .text-slate-700 { color: var(--auth-fg); }
@@ -507,23 +491,23 @@
 .auth-shell .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.08); }
 .auth-shell .text-emerald-700 { color: #6ee7b7; }
 .auth-shell label.block:not(.auth-label) {
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--auth-muted);
 }
-.auth-shell input.auth-login-input[id][name] { color: var(--auth-fg); font-size: 14.5px; }
+.auth-shell input.auth-login-input[id][name] { color: var(--auth-fg); font-size: 14px; }
 .auth-shell input.auth-login-input[id][name]:focus,
 .auth-shell input.auth-login-input[id][name]:focus-visible {
     border-color: var(--auth-fg) !important;
     box-shadow: none !important;
 }
-.auth-shell form button.bg-\[\#1A3A6B\] { margin-top: 8px; }
+.auth-shell form button.bg-\[\#1A3A6B\] { margin-top: 10px; }
 .auth-shell .bg-\[\#1A3A6B\] {
     background-color: var(--auth-btn);
     color: var(--auth-btn-fg);
-    font-size: 12.5px;
+    font-size: 12px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
 }
@@ -532,9 +516,9 @@
 
 /* Avisos flotantes: aparecen arriba, se desvanecen solos y nunca desplazan el contenido. */
 @keyframes auth-toast {
-    0% { opacity: 0; transform: translate(-50%, -14px); }
+    0% { opacity: 0; transform: translate(-50%, -15px); }
     6%, 90% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, -14px); visibility: hidden; }
+    100% { opacity: 0; transform: translate(-50%, -15px); visibility: hidden; }
 }
 .auth-shell [role="alert"],
 .auth-shell [role="status"] {
@@ -543,9 +527,9 @@
     left: 50%;
     z-index: 40;
     width: max-content;
-    max-width: min(440px, calc(100vw - 32px));
+    max-width: min(440px, calc(100vw - 40px));
     margin: 0;
-    padding: 14px 20px;
+    padding: 15px 20px;
     border: 1px solid var(--auth-line-strong);
     border-radius: 8px;
     background: var(--auth-panel) !important;
@@ -598,18 +582,18 @@
 /* Contenedor principal: 40px por todos los lados (20px en pantallas pequeñas). */
 .auth-shell { padding: 40px; }
 .auth-shell .auth-fab { right: 40px; bottom: 40px; }
-.auth-shell .auth-chat { right: 96px; bottom: 40px; height: min(540px, calc(100dvh - 80px)); }
+.auth-shell .auth-chat { right: 100px; bottom: 40px; height: min(540px, calc(100dvh - 80px)); }
 .auth-shell [role="alert"],
 .auth-shell [role="status"] { top: 40px; }
 @media (max-width: 640px) {
-    .auth-shell { padding: 20px 20px 76px; }
+    .auth-shell { padding: 20px 20px 80px; }
     .auth-shell .auth-fab { right: 20px; bottom: 20px; }
-    .auth-shell .auth-chat { right: 20px; left: 20px; bottom: 76px; width: auto; height: min(540px, calc(100dvh - 116px)); }
+    .auth-shell .auth-chat { right: 20px; left: 20px; bottom: 80px; width: auto; height: min(540px, calc(100dvh - 100px)); }
     .auth-shell [role="alert"],
     .auth-shell [role="status"] { top: 20px; }
 }
 
-.auth-shell .auth-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.auth-shell .auth-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .auth-shell .auth-label-row .auth-label { margin: 0; }
 
 /* Sin borde blanco al enfocar o pulsar campos y botones flotantes: conservan su borde sutil. */
@@ -660,10 +644,10 @@
     min-width: 0;
 }
 .auth-shell .auth-pw-meter[x-cloak] { display: none; }
-.auth-shell .auth-pw-bars { display: inline-flex; gap: 3px; }
+.auth-shell .auth-pw-bars { display: inline-flex; gap: 5px; }
 .auth-shell .auth-pw-bars i {
-    width: 18px;
-    height: 4px;
+    width: 20px;
+    height: 5px;
     border-radius: 2px;
     background: var(--auth-line);
     transition: background-color 0.3s ease;
@@ -724,23 +708,12 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s linear 0.2s;
 }
-.auth-shell .auth-stack > .is-off.to-left { transform: translateX(-14px); }
-.auth-shell .auth-stack > .is-off.to-right { transform: translateX(14px); }
+.auth-shell .auth-stack > .is-off.to-left { transform: translateX(-15px); }
+.auth-shell .auth-stack > .is-off.to-right { transform: translateX(15px); }
 @media (prefers-reduced-motion: reduce) {
     .auth-shell .auth-stack > *,
     .auth-shell .auth-stack > .is-off { transition: none; }
 }
-
-/* Scroll general de la pantalla: delgado y sin el contenedor blanco del navegador. */
-.auth-shell {
-    scrollbar-width: thin;
-    scrollbar-color: var(--auth-line-strong) transparent;
-}
-.auth-shell::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
-.auth-shell::-webkit-scrollbar-track,
-.auth-shell::-webkit-scrollbar-corner { background: transparent; }
-.auth-shell::-webkit-scrollbar-thumb { background: var(--auth-line-strong); border-radius: 9999px; }
-.auth-shell::-webkit-scrollbar-button { display: none; }
 
 /*
  * Pie legal: en pantallas grandes va fijo abajo a la izquierda (40px, igual que los botones flotantes);
@@ -764,10 +737,10 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 .auth-shell .auth-brand { position: relative; }
 .auth-shell .auth-spider {
     position: absolute;
-    top: -72px;
+    top: -70px;
     left: calc(50% + 50px);
-    width: 24px;
-    height: 156px;
+    width: 25px;
+    height: 160px;
     color: var(--auth-fg);
     opacity: 0.8;
     pointer-events: none;
@@ -784,11 +757,11 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     left: 50%;
     top: 0;
     width: 1px;
-    height: 134px;
+    height: 140px;
     background: linear-gradient(to bottom, transparent, var(--auth-line-strong) 45%);
     transform: translateX(-50%);
 }
-.auth-shell .auth-spider svg { position: absolute; left: 0; bottom: 0; width: 24px; height: 22px; overflow: visible; }
+.auth-shell .auth-spider svg { position: absolute; left: 0; bottom: 0; width: 25px; height: 23px; overflow: visible; }
 .auth-shell .auth-web {
     position: absolute;
     top: 0;
@@ -809,7 +782,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     50% { transform: rotate(4deg); }
 }
 @media (max-width: 640px) {
-    .auth-shell .auth-web { width: 84px; height: 84px; }
+    .auth-shell .auth-web { width: 80px; height: 80px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .auth-shell .auth-spider,
@@ -880,13 +853,13 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 }
 .auth-shell .auth-msg-row.is-bot { align-self: flex-start; }
 .auth-shell .auth-msg-row.is-user { align-self: flex-end; flex-direction: row-reverse; }
-.auth-shell .auth-msg-row .auth-msg { align-self: auto; max-width: calc(100% - 52px); animation: none; }
+.auth-shell .auth-msg-row .auth-msg { align-self: auto; max-width: calc(100% - 50px); animation: none; }
 .auth-shell .auth-avatar {
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 9999px;
     border: 1px solid var(--auth-line);
 }
@@ -902,13 +875,97 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 /* Separación de 20px entre los botones flotantes y entre estos y el chat. */
 .auth-shell .auth-fab,
 .auth-shell .auth-fab-items { gap: 20px; }
-.auth-shell .auth-chat { right: calc(40px + 42px + 20px); }
+.auth-shell .auth-chat { right: calc(40px + 40px + 20px); }
 @media (max-width: 640px) {
     .auth-shell .auth-fab,
     .auth-shell .auth-fab-items { gap: 20px; }
     .auth-shell .auth-chat {
         right: 20px;
-        bottom: calc(20px + 42px + 20px);
-        height: min(540px, calc(100dvh - 102px));
+        bottom: calc(20px + 40px + 20px);
+        height: min(540px, calc(100dvh - 100px));
     }
+}
+
+/* Ritmo vertical: la misma separación (30px) entre logo, título, pestañas, formulario y accesos sociales. */
+.auth-shell { --auth-gap: 30px; }
+.auth-shell .auth-heading { margin-top: var(--auth-gap); }
+.auth-shell .auth-tabs { margin-top: var(--auth-gap); }
+.auth-shell .auth-form { margin-top: var(--auth-gap); }
+.auth-shell .auth-divider { margin: var(--auth-gap) 0; line-height: 1.2; }
+
+/* El botón principal queda a 30px del último campo (la rejilla del formulario ya aporta 20px). */
+.auth-shell .auth-form > .auth-submit { margin-top: calc(var(--auth-gap) - 20px); }
+
+/* Avatar de Sofia: la foto llena el círculo. */
+.auth-shell .auth-avatar img { display: block; width: 100%; height: 100%; border-radius: 9999px; object-fit: cover; }
+.auth-shell .auth-avatar.is-bot { overflow: hidden; }
+
+/*
+ * Mundo escalado: formulario, telaraña, derechos reservados, botones y chat comparten un mismo zoom
+ * (auth-fit.js). Las esquinas son las del mundo (la página), no las de la pantalla: si hay scroll,
+ * para ver los botones y el texto legal de abajo hay que bajar.
+ */
+html:has(.auth-shell[data-auth-scroll]),
+html:has(.auth-shell[data-auth-scroll]) body { height: auto; overflow-x: hidden; overflow-y: auto; }
+.auth-shell { height: 100dvh; padding: 0; overflow: hidden; }
+.auth-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: var(--auth-pad-top, 40px) var(--auth-pad, 40px) var(--auth-pad-bottom, 40px);
+}
+.auth-shell .auth-stage { margin: auto; }
+.auth-shell .auth-fab,
+.auth-shell .auth-chat { position: absolute; }
+@media (min-width: 641px) {
+    .auth-shell .auth-fab { right: 40px; bottom: 40px; }
+    .auth-shell .auth-chat { right: 100px; bottom: 40px; width: 380px; height: 540px; }
+    .auth-shell .auth-legal-bottom { position: absolute; left: 40px; bottom: 40px; }
+}
+@media (max-width: 640px) {
+    .auth-shell .auth-fab { right: 20px; bottom: 20px; }
+    .auth-shell .auth-chat { left: 20px; right: 20px; bottom: 80px; width: auto; height: min(540px, calc(100% - 100px)); }
+}
+
+/*
+ * Scroll discreto, igual al del menú lateral de la aplicación: barra azul de 3px, redondeada, a 2px del borde,
+ * sin pista ni flechas. Nada blanco: el fondo de la página toma el color del tema, así la pista nunca se ve.
+ */
+html:has(.auth-shell) { background-color: #000; }
+html:has(.auth-shell[data-auth-theme="blue"]) { background-color: #081c4b; }
+html:has(.auth-shell) body { background-color: transparent; }
+
+html:has(.auth-shell)::-webkit-scrollbar,
+.auth-shell .auth-chat-body::-webkit-scrollbar,
+.auth-shell .auth-chat-options::-webkit-scrollbar { width: 5px; height: 5px; background: transparent; }
+html:has(.auth-shell)::-webkit-scrollbar-track,
+html:has(.auth-shell)::-webkit-scrollbar-corner,
+.auth-shell .auth-chat-body::-webkit-scrollbar-track,
+.auth-shell .auth-chat-body::-webkit-scrollbar-corner,
+.auth-shell .auth-chat-options::-webkit-scrollbar-track,
+.auth-shell .auth-chat-options::-webkit-scrollbar-corner { background: transparent; }
+html:has(.auth-shell)::-webkit-scrollbar-thumb,
+.auth-shell .auth-chat-body::-webkit-scrollbar-thumb,
+.auth-shell .auth-chat-options::-webkit-scrollbar-thumb {
+    background: #3a67b5;
+    background-clip: padding-box;
+    border: 0 solid transparent;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-radius: 9999px;
+}
+html:has(.auth-shell)::-webkit-scrollbar-button,
+.auth-shell .auth-chat-body::-webkit-scrollbar-button,
+.auth-shell .auth-chat-options::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+@supports not selector(::-webkit-scrollbar) {
+    html:has(.auth-shell),
+    .auth-shell .auth-chat-body,
+    .auth-shell .auth-chat-options { scrollbar-width: thin; scrollbar-color: #3a67b5 transparent; }
 }

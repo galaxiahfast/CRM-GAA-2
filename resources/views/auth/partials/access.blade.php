@@ -76,7 +76,7 @@
                 <label for="password" class="auth-label">Contraseña</label>
                 <div class="auth-field">
                     <input id="password" type="password" :type="visible ? 'text' : 'password'" name="password" required autocomplete="current-password"
-                        placeholder="••••••••" class="auth-input" style="padding-right: 96px">
+                        placeholder="••••••••" class="auth-input" style="padding-right: 100px">
                     <button type="button" class="auth-input-action" @click="visible = !visible"
                         :aria-label="visible ? 'Ocultar contraseña' : 'Mostrar contraseña'" x-text="visible ? 'Ocultar' : 'Mostrar'">Mostrar</button>
                 </div>
@@ -186,7 +186,7 @@
                     </div>
                     <div class="auth-field">
                         <input id="register_password" type="password" :type="visible ? 'text' : 'password'" name="password" required autocomplete="new-password"
-                            placeholder="Crea tu contraseña" class="auth-input" style="padding-right: 96px" x-model="password">
+                            placeholder="Crea tu contraseña" class="auth-input" style="padding-right: 100px" x-model="password">
                         <button type="button" class="auth-input-action" @click="visible = !visible"
                             :aria-label="visible ? 'Ocultar contraseña' : 'Mostrar contraseña'" x-text="visible ? 'Ocultar' : 'Mostrar'">Mostrar</button>
                     </div>
