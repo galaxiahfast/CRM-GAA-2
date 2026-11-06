@@ -2,6 +2,10 @@
 
 Sistema corporativo desarrollado con Laravel 11, Livewire 3, Alpine.js, Tailwind CSS y Vite. Integra administración de usuarios, clientes, control de horas, reloj checador, organigrama, reportes y soporte.
 
+## Versiones y contribuciones
+
+Consulta el [historial de versiones](CHANGELOG.md) para identificar entregas y los [criterios de commits](.github/CONTRIBUTING.md) para registrar cambios nuevos. Las versiones se identifican con etiquetas Git `vMAJOR.MINOR.PATCH`; `v0.1.0` es la primera versión documentada del proyecto.
+
 ## Tecnologías principales
 
 - PHP 8.2 o superior
