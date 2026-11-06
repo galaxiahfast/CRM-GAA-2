@@ -251,7 +251,8 @@ class OrganizationChartTest extends TestCase
             ->assertOk()
             ->assertDontSee('Carrusel')
             ->assertSee('Organigrama')
-            ->assertSee('Listado general')
+            ->assertSee('Secciones administrativas')
+            ->assertDontSee('Listado general')
             ->assertSee('Directorio de colaboradores y su perfil organizacional.')
             ->assertSee('ADMIN')
             ->assertDontSee('Auditada');

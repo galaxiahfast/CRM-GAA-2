@@ -34,6 +34,7 @@
         'clock' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
         'chart' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
         'eye' => 'M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
+        'org' => 'M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z',
         'database' => 'M20 5c0 1.66-3.58 3-8 3S4 6.66 4 5s3.58-3 8-3 8 1.34 8 3ZM4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7',
         'delivery' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z',
         'report' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
@@ -47,16 +48,19 @@
 
     $general = [
         ['Dashboard', 'Consulta clientes, archivos e indicadores.', route('dashboard'), 'dashboard'],
-        ['Conciliación bancaria', 'Concilia tus movimientos bancarios.', route('bank-reconciliation.show', 'bancaria'), 'bank'],
-        ['Conciliación OCR', 'Concilia a partir de documentos escaneados.', route('bank-reconciliation.show', 'ocr'), 'ocr'],
     ];
     $sections['General'] = $general;
 
-    if ($canAdministration) {
-        $sections['Información'] = [
-            ['Administración', 'Colaboradores, roles, permisos y organización.', $administrationRoute, 'users'],
-        ];
+    $information = [];
+    if ($permissions->allows($user, 'administration.organization.manage')) {
+        $information[] = ['Organigrama', 'Estructura jerárquica y líneas de mando.', route('organigrama.index'), 'org'];
     }
+    if ($canAdministration) {
+        $information[] = ['Administración', 'Colaboradores, roles, permisos y organización.', $administrationRoute, 'users'];
+    }
+    $information[] = ['Conciliación bancaria', 'Concilia tus movimientos bancarios.', route('bank-reconciliation.show', 'bancaria'), 'bank'];
+    $information[] = ['Conciliación OCR', 'Concilia a partir de documentos escaneados.', route('bank-reconciliation.show', 'ocr'), 'ocr'];
+    $sections['Información'] = $information;
 
     $activities = [];
     if ($permissions->allows($user, 'activities.manage')) {
@@ -98,14 +102,14 @@
 @php
     $sectionMeta = [
         'General' => ['dashboard', 'Tus herramientas principales de trabajo.'],
-        'Información' => ['users', 'Colaboradores, roles y organización.'],
+        'Información' => ['users', 'Organigrama, administración y conciliaciones.'],
         'Actividades' => ['check', 'Registro de actividades, asistencia y respaldos.'],
         'Documentos' => ['report', 'Hojas de entrega y reportes.'],
         'Soporte' => ['ticket', 'Ayuda, preguntas y tu cuenta.'],
     ];
 @endphp
 <x-app-layout>
-    <div data-panel data-home class="relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 text-[15px]">
+    <div data-panel data-home class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px]">
         <x-panel-styles />
 
         <style>

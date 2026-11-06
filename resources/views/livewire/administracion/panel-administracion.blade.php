@@ -22,7 +22,7 @@
 <div
     x-data="{
         administrationView: 'directory',
-        viewScale: 90,
+        viewScale: 100,
         isFullscreen: false,
         scaledContentHeight: null,
         scaleObserver: null,
@@ -30,6 +30,7 @@
         init() {
             this.fullscreenHandler = () => { this.isFullscreen = Boolean(document.fullscreenElement); };
             document.addEventListener('fullscreenchange', this.fullscreenHandler);
+            this.$nextTick(() => window.dispatchEvent(new CustomEvent('organization-chart-shown')));
             this.$nextTick(() => {
                 this.scaleObserver = new ResizeObserver(() => this.syncScaledContentHeight());
                 this.scaleObserver.observe(this.$refs.scaledMain);
@@ -66,8 +67,12 @@
             }
         },
     }"
-    class="administration-monochrome relative min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
+    data-panel
+    data-home
+    class="administration-monochrome relative min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
 >
+    <x-panel-styles />
+    <x-home-styles />
     <x-administration-modal-styles />
 
     <style hidden>
@@ -152,8 +157,6 @@
             --tw-ring-shadow: 0 0 #0000 !important;
         }
         .unassigned-users-scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: #1A3A6B transparent;
             overscroll-behavior: contain;
         }
         .unassigned-users-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -178,10 +181,6 @@
             border-radius: 9999px;
             background: #1A3A6B;
             pointer-events: none;
-        }
-        .administration-monochrome * {
-            scrollbar-width: thin;
-            scrollbar-color: #1A3A6B transparent;
         }
         .administration-monochrome *::-webkit-scrollbar,
         html:has(.administration-monochrome)::-webkit-scrollbar,
@@ -271,29 +270,29 @@
         #fullscreen-toggle {
             outline: none !important;
             box-shadow: none !important;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--panel-border);
             width: 50px;
             height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 0.5rem;
-            background-color: rgba(255,255,255,0.8);
-            backdrop-filter: blur(4px);
-            transition: background-color 0.2s, border-color 0.2s;
+            background-color: var(--panel-surface);
+            color: var(--panel-text);
+            transition: background-color 0.2s;
         }
         #fullscreen-toggle:hover,
         #fullscreen-toggle:focus,
         #fullscreen-toggle:active {
             outline: none !important;
             box-shadow: none !important;
-            border-color: #d1d5db; /* Sin cambio a azul */
-            background-color: #ffffff;
+            border-color: var(--panel-border);
+            background-color: var(--panel-hover, var(--panel-subtle));
         }
         #fullscreen-toggle svg {
             width: 24px;
             height: 24px;
-            color: #1A3A6B;
+            color: var(--panel-text);
         }
 
         /* Contenedor del mensaje sin datos ocupa todo el espacio */
@@ -367,7 +366,7 @@
            y las líneas y campos usan el gris de las demás pantallas. */
         html.module-dark-theme #main-content div.administration-monochrome {
             --administration-field-border: #3f3f46;
-            background-color: transparent !important;
+            background-color: var(--panel-page) !important;
         }
         html.module-dark-theme #main-content .administration-monochrome section.m-0,
         html.module-dark-theme #main-content .administration-monochrome section.m-0 > div {
@@ -410,40 +409,27 @@
         </button>
     </div>
 
-    <div class="w-full" :style="scaledContentHeight ? `height:${scaledContentHeight}px` : null">
-    <main x-ref="scaledMain" class="w-full origin-top-left space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]" :style="`width:${10000 / viewScale}%;transform:scale(${viewScale / 100});`">
-    <!-- Centro de gestión siempre visible -->
-    <section class="m-0 w-full bg-white pt-0">
-        <div class="m-0 w-full bg-white pt-0">
-            <div class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
-                <div class="flex min-w-0 items-center gap-[15px]">
-                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <h1 class="text-xl font-normal leading-none tracking-tight text-[#1A3A6B]">Administración</h1>
-                        <p class="mt-[10px] max-w-3xl leading-none text-black">Gestiona colaboradores, roles, permisos y la estructura organizacional.</p>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-[10px]">
-                    <span class="font-normal leading-none text-black">Organización</span>
-                    <span class="inline-flex items-center gap-[7px] leading-none text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</span>
-                </div>
+    <div class="w-full">
+    <main x-ref="scaledMain" class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
+    <!-- Cabecera: mismo patrón que el inicio (cuadro con ícono, título azul, subtítulo y datos a la derecha) -->
+    <section class="mb-[30px] flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+        <div class="flex min-w-0 max-w-full items-center gap-[15px]">
+            <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
+                <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+            </span>
+            <div class="min-w-0">
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $orgChartPage ? 'Organigrama' : 'Administración' }}</h1>
+                <p class="mt-[15px] leading-none">{{ $orgChartPage ? 'Estructura jerárquica: líneas de mando y niveles de supervisión.' : 'Gestiona colaboradores, roles, permisos y la estructura organizacional.' }}</p>
             </div>
-
-            <nav class="!mt-[8px] flex items-center gap-[20px]" aria-label="Vistas del centro de organización">
-                <button type="button" @click="selectAdministrationView('directory')" :class="administrationView === 'directory' ? 'font-normal text-[#1A3A6B]' : 'font-normal text-black'" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'directory' ? 'page' : null">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
-                    <span>Listado general</span>
-                </button>
-                <button type="button" @click="selectAdministrationView('organization')" :class="administrationView === 'organization' ? 'font-normal text-[#1A3A6B]' : 'font-normal text-black'" class="flex items-center gap-[10px] py-[20px] leading-none transition focus:outline-none focus:ring-0" :aria-current="administrationView === 'organization' ? 'page' : null">
-                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
-                    <span>Organigrama</span>
-                </button>
-            </nav>
         </div>
+        <div class="w-full min-w-0 lg:w-auto lg:text-right">
+            <p class="panel-accent leading-none">Organización</p>
+            <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
+        </div>
+    </section>
 
-        @if (false)
+    <section class="hidden">
+            @if (false)
         <div x-show="administrationView === 'carousel'" class="organization-carousel-frame relative mt-[36px] flex w-full items-center" x-data="{ move(direction) { window.organizationCarouselMove($refs.track, direction) } }">
             <button type="button" @click="move(-1)" class="absolute left-0 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[#1A3A6B] text-white focus:outline-none focus:ring-0" aria-label="Ver tarjetas anteriores">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" /></svg>
@@ -633,55 +619,64 @@
     {{-- La información jerárquica solamente se entrega a administradores. --}}
     @if ($canManageOrganization)
 
+    @unless ($orgChartPage)
+    @include('livewire.administracion.partials.organization-directory')
+    @endunless
+
+    @if ($orgChartPage)
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" x-show="administrationView === 'organization'" x-cloak class="mt-[20px] scroll-mt-5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="padding: 20px; background-color: #ffffff;">
-
-        <!-- Encabezado -->
-        <div style="padding: 0; background-color: transparent; display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 32px; min-width: max-content;">
-            <div style="max-width: 672px; flex-shrink: 0; display: flex; flex-direction: column; gap: 21px;">
-                
-                <!-- Grupo 1: Icono + Título / Subtítulo -->
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 0px; background-color: rgba(26, 58, 107, 0.1); flex-shrink: 0;">
-                        <svg style="height: 28px; width: 28px; color: #1A3A6B; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                    </div>
-                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 4px;">
-                        <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: #111827; white-space: nowrap; line-height: 1.5; margin: 0;">
-                            Organigrama
-                        </h1>
-                        <p style="font-size: 15px; color: #6b7280; white-space: nowrap; line-height: 1.5; margin: 0;">
-                            Estructura jerárquica dinámica
-                        </p>
-                    </div>
+    <div id="organigrama-principal" class="flex flex-col gap-[20px]">
+        <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen del organigrama">
+            <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                <div class="min-w-0">
+                    <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span>Resumen</span></p>
+                    <p class="mt-[15px] leading-none">Estado actual de la estructura jerárquica de la organización.</p>
                 </div>
-
-                <!-- Grupo 2: Descripción -->
-                <p style="max-width: 672px; font-size: 15px; line-height: 2; margin: 0; color: #6b7280;">
-                    Gestión integral de la estructura organizacional, líneas de mando<br>y niveles de supervisión entre colaboradores, áreas y departamentos.
-                </p>
-
-                <!-- Grupo 3: Estadísticas -->
-                <div style="display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: #6b7280;">
-                    <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $totalUsers ?? 0 }}</strong> Usuarios totales</span>
-                    <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $orgChartStats['in_tree'] ?? 0 }}</strong> En árbol</span>
-                    <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $orgChartStats['relations'] ?? 0 }}</strong> Relaciones</span>
-                    <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">{{ $totalRoles ?? 0 }}</strong> Roles</span>
-                    <span style="display: inline-flex; align-items: center; line-height: 1;"><strong style="color: #1A3A6B; margin-right: 4px;">30</strong> Permisos</span>
+                <span class="leading-none">{{ $orgChartStats['in_tree'] ?? 0 }} de {{ $totalUsers ?? 0 }} en el árbol</span>
+            </header>
+            <div class="-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg><span class="min-w-0">Usuarios totales</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $totalUsers ?? 0 }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Registrados</span>
                 </div>
-
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span class="min-w-0">En el árbol</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $orgChartStats['in_tree'] ?? 0 }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Con jefe o equipo</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8 3 12l4 4m10-8 4 4-4 4M4 12h16" /></svg><span class="min-w-0">Relaciones</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $orgChartStats['relations'] ?? 0 }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Líneas de mando</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg><span class="min-w-0">Roles</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $totalRoles ?? 0 }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Perfiles configurados</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg><span class="min-w-0">Permisos</span></span>
+                    <span class="mt-[15px] block truncate leading-none">30</span>
+                    <span class="mt-[15px] block truncate leading-none">Reglas de acceso</span>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="h-[35px]" aria-hidden="true"></div>
-
+        
         <!-- Grid con ancho mínimo para evitar deformación -->
         <div class="grid min-w-0 grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="padding: 0;">
 
             <!-- Árbol jerárquico -->
-            <div class="xl:col-span-2" style="padding: 0;">
+            <section class="panel-surface panel-border overflow-hidden rounded-xl border xl:col-span-2" aria-label="Estructura jerárquica">
+            <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                <div class="min-w-0">
+                    <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span>Estructura jerárquica</span></p>
+                    <p class="mt-[15px] leading-none">Arrastra para mover, usa la rueda para acercar y haz doble clic para restablecer.</p>
+                </div>
+                
+            </header>
+            <div>
                 @if (($orgChartStats['cycles_detected'] ?? 0) > 0)
                     <div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[15px] text-red-700">
                         Se detectaron {{ $orgChartStats['cycles_detected'] }} ciclo(s) en las relaciones jerárquicas.
@@ -690,11 +685,11 @@
                 @endif
 
                 <!-- Contenedor con pan y zoom (siempre visible) -->
-                <div id="org-tree-container" class="relative overflow-hidden border border-dashed border-gray-300 p-5" style="max-height: 520px; height: auto; background: #F3F3F3; border-radius: 0.75rem; touch-action: none;">
+                <div id="org-tree-container" class="relative overflow-hidden" style="height: 663px; background: var(--panel-surface); touch-action: none;">
 
                     <!-- LEYENDA (siempre visible) -->
-                    <div class="absolute top-0 left-0 p-5 bg-white/80 backdrop-blur-sm rounded-br-xl border-r border-b border-white/30 shadow-sm" style="z-index: 30;">
-                        <div class="text-[15px] text-gray-700 flex flex-col items-start gap-[10px]">
+                    <div class="panel-surface panel-border absolute top-0 left-0 rounded-br-xl border-b border-r p-5" style="z-index: 30;">
+                        <div class="text-[15px] flex flex-col items-start gap-[10px]">
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #1e3a8a;"></span> Rol</div>
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #059669;"></span> Puesto</div>
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #7c3aed;"></span> Área</div>
@@ -710,13 +705,13 @@
                                 id="node-search-input"
                                 type="text" 
                                 placeholder="Buscar colaborador..."
-                                class="rounded-lg text-[15px] border-gray-300 bg-white/80 backdrop-blur-sm"
-                                style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; border: 1px solid #d1d5db; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
+                                class="panel-surface panel-border panel-text rounded-lg border text-[15px]"
+                                style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
                                 autocomplete="off"
                             >
                             <div 
                                 id="search-results"
-                                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
+                                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--panel-surface); border: 1px solid var(--panel-border); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
                             ></div>
                         </div>
 
@@ -729,16 +724,16 @@
                             }" @click.away="open = false; query = ''" @keydown.escape.window="open = false; query = ''">
                             <input id="physical-area-filter" x-ref="areaInput" type="text" x-model="query" @focus="open = true" @input="open = true"
                                 :placeholder="selected && !open ? (areas.find(area => area.id === selected)?.name || 'Todas las áreas') : 'Todas las áreas'"
-                                class="h-[50px] w-full rounded-lg border border-gray-300 bg-white/80 px-4 pr-10 text-[15px] backdrop-blur-sm focus:border-gray-300 focus:outline-none focus:ring-0"
+                                class="panel-surface panel-border panel-text h-[50px] w-full rounded-lg border px-4 pr-10 text-[15px] focus:outline-none focus:ring-0"
                                 autocomplete="off" aria-label="Buscar o filtrar por área">
                             <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.areaInput.focus())"
-                                class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-500 focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
+                                class="absolute inset-y-0 right-0 flex w-10 items-center justify-center focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
                                 <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                             </button>
-                            <div x-cloak x-show="open" id="physical-area-results" class="absolute left-0 right-0 top-[54px] max-h-[300px] overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-lg" style="z-index: 100;">
-                                <button type="button" @mousedown.prevent="choose('')" class="block w-full border-b border-gray-100 px-4 py-3 text-left text-[15px] hover:bg-[#f0f4ff]">Todas las áreas</button>
-                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" x-text="area.name" class="block w-full border-b border-gray-100 px-4 py-3 text-left text-[15px] hover:bg-[#f0f4ff]"></button></template>
-                                <div x-show="filteredAreas.length === 0" class="px-4 py-3 text-center text-sm text-gray-500">No se encontraron áreas</div>
+                            <div x-cloak x-show="open" id="physical-area-results" class="panel-surface panel-border absolute left-0 right-0 top-[54px] max-h-[300px] overflow-y-auto rounded-lg border" style="z-index: 100;">
+                                <button type="button" @mousedown.prevent="choose('')" class="home-row panel-border block w-full border-b px-4 py-3 text-left text-[15px]">Todas las áreas</button>
+                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" x-text="area.name" class="home-row panel-border block w-full border-b px-4 py-3 text-left text-[15px]"></button></template>
+                                <div x-show="filteredAreas.length === 0" class="px-4 py-3 text-center text-sm">No se encontraron áreas</div>
                             </div>
                         </div>
 
@@ -757,8 +752,8 @@
                     </div>
 
                     <!-- INSTRUCCIONES (siempre visibles) -->
-                    <div class="absolute bottom-0 right-0 p-5 bg-white/80 backdrop-blur-sm rounded-tl-xl border-l border-t border-white/30 shadow-sm" style="z-index: 30;">
-                        <div class="text-[15px] text-gray-500">
+                    <div class="panel-surface panel-border absolute bottom-0 right-0 rounded-tl-xl border-l border-t p-5" style="z-index: 30;">
+                        <div class="text-[15px]">
                             Arrastra para mover · Rueda para zoom · Doble clic para reset
                         </div>
                     </div>
@@ -779,26 +774,29 @@
                     @endif
                 </div>
             </div>
+            </section>
 
             <!-- Usuarios sin asignar -->
-            <div class="unassigned-users-scrollbar rounded-xl border border-dashed border-gray-300" style="min-width: 400px; background-color: #F3F3F3; max-height: 520px; overflow-y: auto; padding: 20px;">
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div class="flex w-full items-center justify-between" style="line-height: 1; height: 10px;">
-                            <h3 class="text-[15px] font-semibold text-gray-700" style="line-height: 1; margin: 0; padding: 0;">
-                                Usuarios sin asignar
-                            </h3>
-                            <span class="rounded-full bg-gray-200 px-2 text-[15px] font-medium text-gray-700"
-                                style="line-height: 1; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
-                                {{ count($unassignedUsers) }}
-                            </span>
-                        </div>
-                        <p class="text-[15px] text-gray-500" style="line-height: 1; margin: 0; padding: 0;">
-                            Sin jefe, puesto o área asignada.
-                        </p>
+            <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Usuarios sin asignar">
+                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                    <div class="min-w-0">
+                        <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg><span>Usuarios sin asignar</span></p>
+                        <p class="mt-[15px] leading-none">Sin jefe, puesto o área asignada.</p>
                     </div>
+                    <span class="leading-none">{{ count($unassignedUsers) }}</span>
+                </header>
+                <div class="unassigned-users-scrollbar" style="height: 663px; overflow-y: auto; padding: 15px 20px;">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
                     @if (count($unassignedUsers) > 0)
-                        <ul class="overflow-y-auto" style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;">
+                        <ul class="overflow-y-auto" style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;"
+                            x-data="{
+                                hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
+                                isHidden(id) { return this.hidden.includes(id); },
+                                toggle(id) {
+                                    this.hidden = this.isHidden(id) ? this.hidden.filter((item) => item !== id) : [...this.hidden, id];
+                                    try { localStorage.setItem('organigrama-unassigned-hidden', JSON.stringify(this.hidden)); } catch (error) {}
+                                },
+                            }">
                             @foreach ($unassignedUsers as $user)
                                 @php
                                     $nameParts = array_values(array_filter(preg_split('/\s+/', trim((string) $user['name']))));
@@ -806,107 +804,45 @@
                                         static fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)),
                                         array_slice($nameParts, 0, 2)
                                     ));
+                                    $createdAt = ! empty($user['created_at']) ? \Carbon\Carbon::parse($user['created_at'])->locale('es') : null;
                                 @endphp
-                                <li style="list-style: none;">
-                                    <button type="button" wire:key="unassigned-user-{{ $user['id'] }}" wire:click="selectUser({{ (int) $user['id'] }})"
-                                        class="w-full rounded-xl border border-dashed border-gray-300 bg-[#F3F3F3] p-[20px] text-left shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0"
-                                        style="display: flex; flex-direction: column; gap: 20px;">
-                                        <div class="flex min-w-0 items-start gap-[20px]">
-                                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">
-                                                {{ $initials !== '' ? $initials : '?' }}
-                                            </div>
-                                            <div class="min-w-0 flex-1" style="display: flex; flex-direction: column; gap: 13px;">
-                                                <div class="flex min-w-0 items-start justify-between gap-[0px]">
-
-                                                    {{--  --}}
-                                                    <p class="min-w-0 flex-1 truncate text-[15px] font-medium text-gray-800" title="{{ $user['name'] }}" style="line-height: 1; margin: 0; padding: 0;">
-                                                        {{ $user['name'] }}
-                                                    </p>
-
-                                                    {{--  --}}
-                                                    @if(! empty($user['created_at']))
-                                                        <span class="shrink-0 text-[13px] text-gray-500" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
-                                                            {{ \Carbon\Carbon::parse($user['created_at'])->format('d/m/Y') }}
-                                                        </span>
-                                                    @else
-                                                        <span class="shrink-0 text-[13px] text-gray-400" style="line-height: 1; margin: 0; padding: 0; white-space: nowrap;">
-                                                            Fecha no disponible
-                                                        </span>
-                                                    @endif
-                                                </div>
-
-
-                                                {{--  --}}
-                                                <p class="truncate text-[15px] text-gray-500" title="{{ mb_strtolower((string) $user['email']) }}" style="line-height: 1; margin: 0; padding: 0;">{{ mb_strtolower((string) $user['email']) }}</p>
-
-                                                <div class="flex min-w-0 items-center gap-2" title="{{ $user['presence_label'] ?? 'Sin actividad registrada' }}" style="line-height: 1; margin: 0; padding: 0;">
-                                                    <span @class([
-                                                        'h-2 w-2 shrink-0 rounded-full',
-                                                        'bg-emerald-500' => $user['is_online'] ?? false,
-                                                        'bg-gray-400' => ! ($user['is_online'] ?? false),
-                                                    ])></span>
-                                                    <span @class([
-                                                        'truncate text-[13px] font-medium',
-                                                        'text-emerald-600' => $user['is_online'] ?? false,
-                                                        'text-gray-500' => ! ($user['is_online'] ?? false),
-                                                    ])>
-                                                        {{ $user['presence_label'] ?? 'Sin actividad registrada' }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-wrap gap-[10px]">
-                                            @foreach ($user['missing'] as $missingKey)
-                                                <span @class([
-                                                    'inline-flex w-[130px] shrink-0 items-center justify-center gap-[10px] rounded-md px-[20px] py-[10px] text-[15px] font-medium text-white',
-                                                    'bg-[#D9383A]' => $missingKey === 'superior',
-                                                    'bg-[#028A58]' => $missingKey === 'job_position',
-                                                    'bg-[#8B3DFF]' => $missingKey === 'physical_area',
-                                                ]) style="line-height: 1;">
-                                                    @if($missingKey === 'superior')
-                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                                        <span class="min-w-0 truncate">Sin supervisor</span>
-                                                    @elseif($missingKey === 'job_position')
-                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7l1 12h12l1-12M9 7V5a3 3 0 016 0v2" /></svg>
-                                                        <span class="min-w-0 truncate">Sin puesto</span>
-                                                    @elseif($missingKey === 'physical_area')
-                                                        <svg class="h-[10px] w-[10px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM8 8h2v2H8zm4 0h2v2h-2zm-4 4h2v2H8zm4 0h2v2h-2z" /></svg>
-                                                        <span class="min-w-0 truncate">Sin área</span>
-                                                    @else
-                                                        <span class="min-w-0 truncate">{{ $missingLabels[$missingKey] ?? $missingKey }}</span>
-                                                    @endif
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                        @if (! empty($user['role']) || ! empty($user['job_position']) || ! empty($user['physical_area']))
-                                            <div class="flex flex-wrap gap-[20px]">
-                                                @if (! empty($user['role']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Rol:</strong> {{ $user['role'] }}</span>
-                                                @endif
-                                                @if (! empty($user['job_position']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Puesto:</strong> {{ $user['job_position'] }}</span>
-                                                @endif
-                                                @if (! empty($user['physical_area']))
-                                                    <span class="text-[15px] text-gray-400" style="line-height: 1; margin: 0; padding: 0;"><strong class="font-semibold text-gray-500">Área:</strong> {{ $user['physical_area'] }}</span>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </button>
+                                <li style="list-style: none;" :style="isHidden({{ (int) $user['id'] }}) ? 'order: 1; opacity: 0.5' : 'order: 0'">
+                                    <div wire:key="unassigned-user-{{ $user['id'] }}" class="home-row panel-border panel-surface flex w-full items-stretch gap-[20px] rounded-xl border p-[20px]">
+                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials !== '' ? $initials : '?' }}</span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="home-link block h-[15px] truncate leading-none" title="{{ $user['name'] }}">{{ $user['name'] }}</span>
+                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg><span class="truncate" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span></span>
+                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg><span class="truncate">{{ $createdAt ? 'Creado el '.$createdAt->translatedFormat('d \\d\\e F \\d\\e Y') : 'Fecha de creación no disponible' }}</span></span>
+                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg><span class="truncate">{{ $createdAt ? 'Hace '.$createdAt->diffForHumans(now(), true).' en el sistema' : 'Antigüedad no disponible' }}</span></span>
+                                        </span>
+                                        <span class="panel-border flex shrink-0 flex-col items-center justify-between self-stretch border-l pl-[20px]">
+                                            <button type="button" wire:click="openUserManagement('editar', {{ (int) $user['id'] }})" class="home-link flex h-4 w-4 items-center justify-center focus:outline-none focus:ring-0" aria-label="Editar {{ $user['name'] }}" title="Editar {{ $user['name'] }}">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
+                                            </button>
+                                            <button type="button" @click="toggle({{ (int) $user['id'] }})" class="home-link flex h-4 w-4 items-center justify-center focus:outline-none focus:ring-0" :aria-label="isHidden({{ (int) $user['id'] }}) ? 'Mostrar {{ $user['name'] }}' : 'Ocultar {{ $user['name'] }}'" :title="isHidden({{ (int) $user['id'] }}) ? 'Mostrar' : 'Ocultar al final de la lista'">
+                                                <svg x-show="!isHidden({{ (int) $user['id'] }})" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                                                <svg x-show="isHidden({{ (int) $user['id'] }})" x-cloak class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                            </button>
+                                            <button type="button" wire:click="openUserManagement('eliminar', {{ (int) $user['id'] }})" class="flex h-4 w-4 items-center justify-center text-red-600 focus:outline-none focus:ring-0" aria-label="Eliminar {{ $user['name'] }}" title="Eliminar {{ $user['name'] }}">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
+                                            </button>
+                                        </span>
+                                    </div>
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <p class="text-[15px] text-gray-500" style="line-height: 1.3; margin: 0; padding: 0;">
+                        <p class="text-[15px]" style="line-height: 1.3; margin: 0; padding: 0;">
                             Todos los usuarios tienen jefe, puesto y área asignados.
                         </p>
                     @endif
                 </div>
-            </div>
+                </div>
+            </section>
 
         </div>
     </div>
-
-    @include('livewire.administracion.partials.organization-directory')
+    @endif
     </main>
     </div>
 

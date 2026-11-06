@@ -26,18 +26,18 @@
 
     html.module-dark-theme [data-panel] {
         --panel-page: #09090b;
-        --panel-surface: #18181b;
-        --panel-header: #202023;
-        --panel-subtle: #1d1d21;
-        --panel-hover: #26262b;
-        --panel-border: #3f3f46;
-        --panel-text: #e4e4e7;
-        --panel-muted: #a1a1aa;
+        --panel-surface: #09090b;
+        --panel-header: #0f0f12;
+        --panel-subtle: #0c0c0f;
+        --panel-hover: #131316;
+        --panel-border: #27272a;
+        --panel-text: #ffffff;
+        --panel-muted: #ffffff;
         --panel-accent: #6aa9ff;
         --panel-button: #fafafa;
         --panel-button-text: #09090b;
         --panel-button-hover: #e4e4e7;
-        --panel-track: #3f3f46;
+        --panel-track: #27272a;
         --panel-danger: #f87171;
         --panel-danger-soft: rgba(248, 113, 113, 0.08);
         --panel-danger-line: rgba(248, 113, 113, 0.4);

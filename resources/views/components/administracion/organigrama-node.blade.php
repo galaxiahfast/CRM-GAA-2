@@ -16,113 +16,57 @@
     <button type="button"
         wire:click="selectUser({{ $node['id'] }})"
         data-id="{{ $node['id'] }}"
-        class="org-node js-org-card inline-flex w-[280px] flex-shrink-0 flex-col items-center rounded-xl border-2 border-gray-300 bg-transparent p-[20px] text-center shadow-sm transition hover:border-[#1e3a8a] hover:shadow-md focus:border-[#1e3a8a] focus:outline-none focus:ring-0 z-10"
-        style="gap: 15px;">
-        
-        <div class="flex items-center justify-center rounded-full bg-[#1A3A6B] text-white font-semibold text-xs" 
-             style="width: 36px; height: 36px; flex-shrink: 0;">
-            {{ $initials }}
-        </div>
+        class="org-node js-org-card flex w-[280px] flex-shrink-0 flex-col items-stretch rounded-xl panel-border panel-surface border-2 p-[20px] text-left home-row focus:outline-none focus:ring-0 z-10">
 
-        <div class="w-full relative h-[10px]">
-            <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-sm font-semibold text-gray-800 text-center leading-none truncate" title="{{ $node['name'] }}">
-                {{ $node['name'] }}
-            </p>
-        </div>
-
-        <div class="w-full relative h-[10px]">
-            <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-xs text-gray-500 text-center leading-none truncate" title="{{ $node['email'] }}">
-                {{ $node['email'] }}
-            </p>
-        </div>
-
-        <div class="flex h-[10px] w-full items-center justify-center gap-2" title="{{ $node['presence_label'] ?? 'Sin actividad registrada' }}">
-            <span @class([
-                'h-2 w-2 shrink-0 rounded-full',
-                'bg-emerald-500' => $node['is_online'] ?? false,
-                'bg-gray-400' => ! ($node['is_online'] ?? false),
-            ])></span>
-            <span @class([
-                'truncate text-[10px] font-medium leading-none',
-                'text-emerald-600' => $node['is_online'] ?? false,
-                'text-gray-500' => ! ($node['is_online'] ?? false),
-            ])>
-                {{ $node['presence_label'] ?? 'Sin actividad registrada' }}
-            </span>
-        </div>
-
-        <div class="w-full flex flex-wrap items-center justify-center" style="gap: 10px;">
-            @if (!empty($node['role']))
-                <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#1e3a8a] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 
-                      style="width: 110px; flex-shrink: 0; line-height: 1;" title="{{ $node['role'] }}">
-                    <svg class="flex-shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span class="truncate" style="line-height: 1;">{{ $node['role'] }}</span>
-                </span>
-            @endif
-            @if (!empty($node['job_position']))
-                <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#059669] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 
-                      style="width: 110px; flex-shrink: 0; line-height: 1;" title="{{ $node['job_position'] }}">
-                    <svg class="flex-shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                    </svg>
-                    <span class="truncate" style="line-height: 1;">{{ $node['job_position'] }}</span>
-                </span>
-            @endif
-            @if (!empty($node['physical_area']))
-                <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#7c3aed] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 
-                      style="width: 110px; flex-shrink: 0; line-height: 1;" title="{{ $node['physical_area'] }}">
-                    <svg class="flex-shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
-                        <path d="M9 4v16M15 4v16M4 9h16M4 15h16"/>
-                    </svg>
-                    <span class="truncate" style="line-height: 1;">{{ $node['physical_area'] }}</span>
-                </span>
-            @endif
-            @if (($node['superior_count'] ?? 0) > 1)
-                <span class="inline-flex items-center justify-center gap-[10px] rounded-md bg-[#d97706] text-[10px] font-medium text-white py-[10px] px-[20px] box-border min-w-0" 
-                      style="width: 110px; flex-shrink: 0; line-height: 1;" title="Reporta a múltiples superiores">
-                    <svg class="flex-shrink-0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span class="truncate" style="line-height: 1;">{{ $node['superior_count'] }} jefes</span>
-                </span>
-            @endif
-        </div>
-
-        <div class="w-full relative h-[10px]">
-            @if (($node['subordinate_count'] ?? 0) > 0)
-                <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-[10px] font-medium text-gray-400 italic text-center leading-none truncate">
-                    {{ $node['subordinate_count'] }} subordinado(s) directo(s)
-                </p>
+        <span class="flex flex-col items-center">
+            @if (! empty($node['photo']))
+                <img src="{{ $node['photo'] }}" alt="" class="h-[60px] w-[60px] shrink-0 rounded-full object-cover" loading="lazy">
             @else
-                <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-[10px] font-medium text-gray-400 italic text-center leading-none truncate">
-                    Sin subordinados
-                </p>
+                <span class="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials }}</span>
             @endif
-        </div>
+            <span class="home-link mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['name'] }}">{{ $node['name'] }}</span>
+            <span class="mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['email'] }}">{{ $node['email'] }}</span>
+        </span>
+
+        <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="{{ $node['presence_label'] ?? 'Sin actividad registrada' }}">
+            <span @class([
+                'h-[10px] w-[10px] shrink-0 rounded-full',
+                'bg-emerald-500' => $node['is_online'] ?? false,
+                'bg-zinc-500' => ! ($node['is_online'] ?? false),
+            ])></span>
+            <span @class(['truncate', 'home-link' => $node['is_online'] ?? false])>{{ $node['presence_label'] ?? 'Sin actividad registrada' }}</span>
+        </span>
+
+        @if (! empty($node['role']))
+            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Rol: {{ $node['role'] }}"><svg class="h-[15px] w-[15px] shrink-0" style="color: #3b82f6;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM5 21a7 7 0 0 1 14 0" /></svg><span class="truncate">{{ $node['role'] }}</span></span>
+        @endif
+        @if (! empty($node['job_position']))
+            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Puesto: {{ $node['job_position'] }}"><svg class="h-[15px] w-[15px] shrink-0" style="color: #10b981;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18.4v-4.25m16.5 0a2.25 2.25 0 0 0 .75-1.7V8.7A2.25 2.25 0 0 0 18.75 6.45H15M20.25 14.15 12 16.5l-8.25-2.35m0 0A2.25 2.25 0 0 1 3 12.45V8.7a2.25 2.25 0 0 1 2.25-2.25H9m6 0V5.25A2.25 2.25 0 0 0 12.75 3h-1.5A2.25 2.25 0 0 0 9 5.25v1.2m6 0H9" /></svg><span class="truncate">{{ $node['job_position'] }}</span></span>
+        @endif
+        @if (! empty($node['physical_area']))
+            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Área: {{ $node['physical_area'] }}"><svg class="h-[15px] w-[15px] shrink-0" style="color: #8b5cf6;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg><span class="truncate">{{ $node['physical_area'] }}</span></span>
+        @endif
+        @if (($node['superior_count'] ?? 0) > 1)
+            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Reporta a múltiples superiores"><svg class="h-[15px] w-[15px] shrink-0" style="color: #f59e0b;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg><span class="truncate">{{ $node['superior_count'] }} jefes</span></span>
+        @endif
+
+        <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" style="color: currentColor;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" /></svg><span class="truncate">{{ ($node['subordinate_count'] ?? 0) > 0 ? $node['subordinate_count'].' subordinado(s) directo(s)' : 'Sin subordinados' }}</span></span>
     </button>
 
     @if (!empty($node['children']) && count($node['children']) > 0)
-        <div class="h-6 border-l-2 border-gray-300"></div>
+        <div class="h-6 border-l-2 panel-border"></div>
         <div class="flex items-start justify-center isolate">
             @foreach ($node['children'] as $index => $child)
                 <div class="relative flex flex-col items-center px-4 w-full">
                     <div @class([
-                        'absolute top-0 h-8 border-gray-300',
+                        'absolute top-0 h-8 panel-border',
                         'border-l-2' => count($node['children']) === 1,
                         'left-1/2 right-0 border-t-2 border-l-2 rounded-tl-xl' => count($node['children']) > 1 && $index === 0,
                         'left-0 right-1/2 border-t-2 border-r-2 rounded-tr-xl' => count($node['children']) > 1 && $index === count($node['children']) - 1,
                         'left-0 right-0 border-t-2' => count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1,
                     ])></div>
                     @if(count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1)
-                        <div class="absolute top-0 left-1/2 -translate-x-[1px] h-8 border-l-2 border-gray-300"></div>
+                        <div class="absolute top-0 left-1/2 -translate-x-[1px] h-8 border-l-2 panel-border"></div>
                     @endif
                     <div class="h-8 w-full"></div>
                     <x-administracion.organigrama-node :node="$child" :depth="$depth + 1" />

@@ -117,6 +117,11 @@ Route::middleware([
         ->middleware('access.permission:administration.organization.manage')
         ->name('administracion.index');
 
+    // Organigrama como apartado propio del menú (mismo componente que Administración, en modo organigrama)
+    Route::get('/organigrama', PanelAdministracion::class)
+        ->middleware('access.permission:administration.organization.manage')
+        ->name('organigrama.index');
+
     // Organigrama - Solo Administrador
     Route::prefix('administracion/org-chart')
         ->middleware('access.permission:administration.organization.manage')

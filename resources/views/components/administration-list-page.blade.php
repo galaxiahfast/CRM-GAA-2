@@ -5,7 +5,7 @@
 
 {{-- Marco común de las listas de Administración: mismo lenguaje visual que el panel y los modales
      (fondo blanco, bordes zinc-200, botón negro, 20px de separación). --}}
-<div data-admin-list class="min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 bg-[#ffffff] text-[15px] text-black">
+<div data-admin-list class="min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 bg-[#ffffff] text-[15px] text-black">
     <style>
         /* Sin borde ni halo morado al enfocar: el campo conserva su borde gris (igual que en los modales). */
         [data-admin-list] input.admin-list-search[id]:focus,

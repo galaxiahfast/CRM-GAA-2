@@ -21,6 +21,11 @@
     <script>
         try { document.documentElement.classList.toggle('module-dark-theme', localStorage.getItem('activities-support-theme') === 'dark'); } catch (error) {}
     </script>
+    {{-- Desplegables del menú lateral: se recuerdan al recargar o cambiar de pantalla (por pestaña); se reinician al volver al login. --}}
+    <script>
+        window.sidebarOpenGet = function (key) { try { return sessionStorage.getItem('sidebar-open-' + key) === '1'; } catch (error) { return false; } };
+        window.sidebarOpenSet = function (key, value) { try { sessionStorage.setItem('sidebar-open-' + key, value ? '1' : '0'); } catch (error) {} };
+    </script>
     @include('layouts.partials.auto-scale')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -59,7 +64,7 @@
         <!-- CONTENIDO -->
         <main
             id="main-content"
-            class="pt-[100px]"
+            class="pt-[123px]"
         >
 
             <div id="app-zoom">

@@ -21,6 +21,7 @@
     $canTimeProductivity = $permissionAccess->allows($currentUser, 'time-control.productivity.view');
     $canTimeSupervision = $permissionAccess->allows($currentUser, 'time-control.supervision.view');
     $canTimeControl = $canTimeActivities || $canTimeClock || $canTimeProductivity || $canTimeSupervision;
+    $canOrganizationChart = $permissionAccess->allows($currentUser, 'administration.organization.manage');
     $supportsDarkTheme = true;
 @endphp
 <script>
@@ -135,7 +136,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[100px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[123px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'organigrama.*', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             <button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed" class="mobile-menu-button" aria-label="Menú de navegación" title="Menú de navegación">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -162,9 +163,15 @@
                 </div>
             @elseif (request()->routeIs('bank-reconciliation.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
-                    <span>General</span>
+                    <span>Información</span>
                     <span class="text-white/40">›</span>
                     <span class="text-white">{{ request()->route('tool') === 'ocr' ? 'Conciliación OCR' : 'Conciliación Bancaria' }}</span>
+                </div>
+            @elseif (request()->routeIs('organigrama.*'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                    <span>Información</span>
+                    <span class="text-white/40">›</span>
+                    <span class="text-white">Organigrama</span>
                 </div>
             @elseif (request()->routeIs('administracion.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
@@ -362,7 +369,7 @@
             #main-content { margin-left: 0 !important; }
             #main-nav { left: 0 !important; padding-left: 20px !important; padding-right: 20px !important; }
             #main-nav > div > div.min-w-0 > :not(:last-child) { display: none; }
-            #logo-sidebar { top: 100px !important; height: calc(100dvh - 100px) !important; width: 100% !important; box-shadow: none; }
+            #logo-sidebar { top: 123px !important; height: calc(100dvh - 123px) !important; width: 100% !important; box-shadow: none; }
             #logo-sidebar[data-collapsed="true"] { display: none; }
         }
     </style>
@@ -375,13 +382,13 @@
             overflow-hidden"
     >
 
-        <div class="flex h-[85px] shrink-0 items-start gap-[10px] px-[15px] pt-[30px]">
-            <img x-show="!collapsed" x-cloak src="{{ asset('img/static/small-logo-gaa.png') }}" alt="Logotipo de González Alonzo y Asociados" class="h-10 w-10 shrink-0 object-contain">
-            <div x-show="!collapsed" class="min-w-0 flex-1 leading-tight">
+        <div class="flex shrink-0 items-center gap-[15px] px-[15px] pb-[25px] pt-[40px]">
+            <img x-show="!collapsed" x-transition.opacity.duration.250ms x-cloak src="{{ asset('img/static/logo-principal_.png') }}" alt="Logotipo de González Alonzo y Asociados" class="sidebar-brand-logo h-[43px] w-[30px] shrink-0 object-contain">
+            <div x-show="!collapsed" x-transition.opacity.duration.250ms class="min-w-0 flex-1 leading-none">
                 <p class="truncate text-[14px] font-semibold text-black">González Alonzo y</p>
-                <p class="mt-[4px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
+                <p class="mt-[15px] truncate text-[14px] font-semibold text-black">Asociados S.C.P.</p>
             </div>
-            <button @click="collapsed = !collapsed" type="button" class="flex h-[50px] w-[50px] shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
+            <button @click="collapsed = !collapsed" type="button" :class="collapsed ? 'ml-[20px]' : ''" class="flex h-[43px] w-5 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-black focus:outline-none focus:ring-0" :aria-label="collapsed ? 'Expandir Menú' : 'Comprimir Menú'" :title="collapsed ? 'Expandir Menú' : 'Comprimir Menú'">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <path stroke-linecap="round" d="M9 3v18" />
@@ -390,7 +397,7 @@
         </div>
 
         <div class="relative shrink-0 bg-zinc-100 p-[15px]" @click.outside="sidebarSearchOpen = false">
-            <div x-show="!collapsed" class="relative">
+            <div x-show="!collapsed" x-transition.opacity.duration.250ms class="relative">
                 <svg class="pointer-events-none absolute left-[15px] top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
                 </svg>
@@ -424,7 +431,7 @@
                 x-cloak
                 type="button"
                 @click="openCompactSidebarSearch()"
-                class="flex h-[50px] w-[50px] items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-600 transition hover:border-zinc-400 hover:text-black focus:outline-none focus:ring-0"
+                class="flex h-[50px] w-[60px] items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-600 transition hover:border-zinc-400 hover:text-black focus:outline-none focus:ring-0"
                 aria-label="Abrir Buscador de Apartados"
                 title="Buscar Apartados"
             >
@@ -462,9 +469,9 @@
         </div>
 
         <!-- Contenedor del menú -->
-        <div x-ref="sidebarMenuScroller" @wheel="containSidebarWheel($event, $refs.sidebarMenuScroller)" class="sidebar-menu-scrollbar flex-1 px-0 pb-4 overflow-y-auto h-full overscroll-contain"
+        <div x-ref="sidebarMenuScroller" @wheel="containSidebarWheel($event, $refs.sidebarMenuScroller)" class="sidebar-menu-scrollbar flex-1 px-0 pb-[20px] overflow-y-auto h-full overscroll-contain"
             :style="collapsed ? 'opacity: 1;' : 'opacity: 1; transition: opacity 300ms ease-in-out;'">
-            <div x-show="!collapsed" class="shrink-0 px-[15px] pt-[15px]">
+            <div x-show="!collapsed" x-transition.opacity.duration.250ms class="shrink-0 px-[15px] pb-[15px] pt-[25px]">
                 <p class="text-[15px] font-medium leading-none text-black">General</p>
             </div>
 
@@ -473,7 +480,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Inicio (siempre visible)                            -->
                 <!-- ========================================================== -->
-                <li class="pt-[30px] px-[15px] pb-0 m-0">
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
                     <a href="{{ route('inicio') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('inicio') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -487,7 +494,7 @@
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Dashboard (vista completa anterior)                -->
                 <!-- ========================================================== -->
-                <li class="pt-[30px] px-[15px] pb-0 m-0">
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
                     <a href="{{ route('dashboard') }}"
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
@@ -501,11 +508,46 @@
                     </a>
                 </li>
 
-                <li class="px-[15px] pt-[30px] m-0" :class="collapsed ? 'hidden' : 'block'" aria-hidden="true">
+                <li class="px-[15px] pt-[20px] m-0" :class="collapsed ? 'hidden' : 'block'" aria-hidden="true">
                     <div class="border-t border-zinc-200"></div>
                 </li>
 
-                <li x-data="{ openBankReconciliation: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
+                <!-- ========================================================== -->
+                <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
+                <!-- ========================================================== -->
+                <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
+                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
+                </li>
+
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Organigrama (apartado propio, antes dentro de Administración) -->
+                <!-- ========================================================== -->
+                @if ($canOrganizationChart)
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ route('organigrama.index') }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('organigrama.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('organigrama.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Organigrama</span>
+                    </a>
+                </li>
+                @endif
+
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Administración (siempre visible)                    -->
+                <!-- ========================================================== -->
+                @if ($canAdministrationSection)
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ $administrationRoute }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
+                    </a>
+                </li>
+                @endif
+
+                <li x-data="{ openBankReconciliation: window.sidebarOpenGet('bank'), init() { this.$watch('openBankReconciliation', (value) => window.sidebarOpenSet('bank', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
                     <button type="button" @click="openBankReconciliation = !openBankReconciliation"
                         :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -521,15 +563,15 @@
                     </button>
 
                     <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
-                        <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="w-full">
-                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
                                     <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
                                 </a>
                             </li>
-                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
                                     <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
@@ -539,32 +581,11 @@
                     </div>
                 </li>
 
-                <!-- ========================================================== -->
-                <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
-                <!-- ========================================================== -->
-                <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
-                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
-                </li>
-
-                <!-- ========================================================== -->
-                <!-- BOTÓN: Administración (siempre visible)                    -->
-                <!-- ========================================================== -->
-                @if ($canAdministrationSection)
-                <li class="pt-[30px] px-[15px] pb-0 m-0">
-                    <a href="{{ $administrationRoute }}"
-                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                        <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
-                    </a>
-                </li>
-                @endif
-
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: ACTIVIDADES (oculta en modo compacto)            -->
                 <!-- ========================================================== -->
-                <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Actividades</span>
                 </li>
 
@@ -573,7 +594,7 @@
                 <!-- ========================================================== -->
                 @if ($canTimeControl && $canTimeSupervision)
                     <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
-                    <li x-data="{ openTimeControl: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: window.sidebarOpenGet('time'), init() { this.$watch('openTimeControl', (value) => window.sidebarOpenSet('time', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -601,10 +622,10 @@
                             class="relative mt-0 dynamic-sub-menu" 
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
-                            <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Reloj Checador -->
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.attendance') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -613,7 +634,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -624,7 +645,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Supervisión de horas -->
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -639,7 +660,7 @@
                     </li>
                 @elseif ($canTimeControl)
                     <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
-                    <li x-data="{ openTimeControl: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openTimeControl: window.sidebarOpenGet('time'), init() { this.$watch('openTimeControl', (value) => window.sidebarOpenSet('time', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
                         <button @click="openTimeControl = !openTimeControl" 
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -667,11 +688,11 @@
                             class="relative mt-0 dynamic-sub-menu" 
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
-                            <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
+                            <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
                                 <!-- Sub-elemento: Cronómetro -->
                                 @if ($canTimeActivities)
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -685,7 +706,7 @@
                                 @endif
                                 <!-- Sub-elemento: Reloj Checador -->
                                 @if ($canTimeClock)
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.attendance') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -698,7 +719,7 @@
                                 @endif
                                 <!-- Sub-elemento: Mi Productividad -->
                                 @if ($canTimeProductivity)
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.reports') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -709,7 +730,7 @@
                                     </a>
                                 </li>
                                 <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -726,7 +747,7 @@
                 @endif
 
                 @can('access-system-backups')
-                    <li class="relative pt-[30px] px-[15px] pb-0 m-0">
+                    <li class="relative pt-[20px] px-[15px] pb-0 m-0">
                         <a href="{{ route('activity-backups.index') }}"
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                             class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 font-medium {{ request()->routeIs('activity-backups.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -739,19 +760,19 @@
                     </li>
                 @endcan
 
-                    <li class="pt-[30px] px-[15px] pb-0 m-0" :class="collapsed ? 'hidden' : 'block'">
+                    <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
                         <span class="flex h-[15px] items-center text-[15px] font-medium leading-none text-black">Documentos</span>
                     </li>
 
                                 @can('manage-delivery-notes')
-                                    <li class="pt-[30px] px-[15px] pb-0 m-0 w-full">
+                                    <li class="pt-[20px] px-[15px] pb-0 m-0 w-full">
                                         <a href="{{ route('soporte.hoja-entrega') }}" data-sidebar-label="Hoja de Entrega" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.hoja-entrega*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.hoja-entrega*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M8 3h8l4 4v14H4V3h4Zm7 0v5h5" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Hoja de Entrega</span>
                                         </a>
                                     </li>
                                 @endcan
-                    <li x-data="{ openReports: false }" class="relative pt-[30px] px-[15px] pb-0 m-0">
+                    <li x-data="{ openReports: window.sidebarOpenGet('reports'), init() { this.$watch('openReports', (value) => window.sidebarOpenSet('reports', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
                         <button type="button" @click="openReports = !openReports" :aria-expanded="openReports" data-sidebar-label="Reportes"
                             :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
                             class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos', 'soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -764,17 +785,17 @@
                             </svg>
                         </button>
 
-                        <div x-show="openReports" x-transition class="relative" style="display: none;">
+                        <div x-show="openReports" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
                             <div class="absolute bottom-0 left-[22px] top-[15px] w-[2px] bg-gray-200"></div>
                             <ul class="w-full">
-                                <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[30px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[20px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('soporte.reportes-tecnicos') }}" data-sidebar-label="Reportes de Soporte" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-tecnicos*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                                         <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
                                     </a>
                                 </li>
                                 @can('manage-backup-reports')
-                                    <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[30px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[20px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                         <a href="{{ route('soporte.reportes-respaldos') }}" data-sidebar-label="Reporte de Respaldos" :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-start p-[15px]'" class="group flex w-full items-center rounded-xl text-[15px] text-black transition-all duration-200 {{ request()->routeIs('soporte.reportes-respaldos') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                             <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.reportes-respaldos') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V7M3 21h18" /></svg>
                                             <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reporte de Respaldos</span>
@@ -788,14 +809,14 @@
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
                 <!-- ========================================================== -->
-                <li class="hidden pt-[30px] px-[15px] pb-0 m-0">
+                <li class="hidden pt-[20px] px-[15px] pb-0 m-0">
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Soporte</span>
                 </li>
 
                 <!-- ========================================================== -->
                 <!-- SUBMENÚ: Centro de ayuda (con flecha siempre visible)      -->
                 <!-- ========================================================== -->
-                <li x-data="{ openSoporte: false }" class="hidden relative pt-[30px] px-[15px] pb-0 m-0">
+                <li x-data="{ openSoporte: window.sidebarOpenGet('help'), init() { this.$watch('openSoporte', (value) => window.sidebarOpenSet('help', value)); } }" class="hidden relative pt-[20px] px-[15px] pb-0 m-0">
                     <button @click="openSoporte = !openSoporte" 
                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
                         class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('soporte.ticket', 'soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -825,10 +846,10 @@
                         class="relative mt-0 dynamic-sub-menu" 
                         style="display: none;">
                         <!-- Línea vertical siempre visible -->
-                        <div class="absolute left-[22px] top-[30px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="space-y-0 w-full">
                             <!-- Ticket -->
-                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('soporte.ticket') }}" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -839,7 +860,7 @@
                                 </a>
                             </li>
                             <!-- Preguntas -->
-                            <li class="pt-[30px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('soporte.preguntas') }}" 
                                     :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                     class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -856,9 +877,9 @@
             </ul>
         </div>
 
-        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 px-[15px] py-[30px]">
+        <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 px-[15px] py-[20px]">
             <div class="absolute left-[15px] right-[15px] top-0 border-t border-zinc-200" aria-hidden="true"></div>
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+15px)] left-[15px] right-[15px]'">
+            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+20px)] left-[15px] right-[15px]'">
                 <a href="{{ route('soporte.preguntas') }}" class="group flex items-center gap-[15px] rounded-xl p-[15px] text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }}">
                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.preguntas') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z"/></svg>
                     <span class="truncate">Centro de Ayuda</span>
@@ -889,7 +910,7 @@
                 </form>
             </div>
 
-            <button type="button" @click="profileMenuOpen = !profileMenuOpen" :aria-expanded="profileMenuOpen" class="flex min-h-[50px] w-full items-center text-left transition focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Menú de Usuario">
+            <button type="button" @click="profileMenuOpen = !profileMenuOpen" :aria-expanded="profileMenuOpen" class="flex min-h-[50px] w-full items-center rounded-xl px-[20px] py-[15px] text-left transition focus:outline-none focus:ring-0" :class="collapsed ? 'justify-center' : 'gap-[12px]'" title="Abrir Menú de Usuario">
                 <span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                     @if(Auth::user()->profile_photo_path)
                         <img class="h-full w-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="Foto de {{ Auth::user()->name }}">
@@ -897,7 +918,7 @@
                     <span class="text-[15px] font-semibold text-black">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1).mb_substr(Auth::user()->last_name ?? '', 0, 1)) }}</span>
                     @endif
                 </span>
-                <span x-show="!collapsed" class="min-w-0 flex-1">
+                <span x-show="!collapsed" x-transition.opacity.duration.250ms class="min-w-0 flex-1">
                     <span class="flex min-w-0 items-center gap-[8px]">
                         <strong class="block max-w-[145px] truncate text-[15px] text-black" title="{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}">{{ trim(Auth::user()->name.' '.(Auth::user()->last_name ?? '')) }}</strong>
                         <span class="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full bg-blue-600 text-white" title="Cuenta Verificada" aria-label="Cuenta Verificada">
@@ -906,7 +927,7 @@
                     </span>
                     <span class="mt-[4px] block max-w-[180px] truncate text-[15px] leading-none text-zinc-500" title="{{ Auth::user()->email }}">{{ Auth::user()->email }}</span>
                 </span>
-                <svg x-show="!collapsed" class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
+                <svg x-show="!collapsed" x-transition.opacity.duration.250ms class="h-5 w-5 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
             </button>
         </footer>
     </aside>
@@ -1074,7 +1095,7 @@
                     // Ancho visual del menú ya con el zoom: de ahí salen el margen del contenido y el inicio del encabezado
                     const left = sidebar.getBoundingClientRect().width;
                     main.style.marginLeft = left + 'px';
-                    main.style.paddingTop = zoomed ? (100 * scale) + 'px' : '';
+                    main.style.paddingTop = zoomed ? (123 * scale) + 'px' : '';
 
                     if (nav) {
                         nav.style.left = (left / scale) + 'px';
@@ -1087,7 +1108,7 @@
                 const queueShell = () => {
                     if (queued) return;
                     queued = true;
-                    setTimeout(() => { queued = false; applyShell(); }, 20);
+                    requestAnimationFrame(() => { queued = false; applyShell(); });
                 };
 
                 new ResizeObserver(queueShell).observe(sidebar);
@@ -1097,6 +1118,8 @@
                 window.addEventListener('resize', queueShell, { passive: true });
                 document.addEventListener('livewire:navigated', queueShell);
                 applyShell();
+                // La animación de comprimir/descomprimir se activa tras el primer pintado para que no se anime al cargar.
+                window.addEventListener('load', () => setTimeout(() => sidebar.classList.add('sidebar-animate'), 150), { once: true });
 
             });
 

@@ -145,8 +145,6 @@
             return words.slice(0, 2).map((word) => word.charAt(0)).join('') || '?';
         },
     }"
-    x-show="administrationView === 'directory'"
-    x-cloak
     class="mt-[20px] overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-none"
     aria-label="Directorio de administración"
 >
@@ -194,7 +192,7 @@
                         <h2 class="font-normal leading-none text-[#1A3A6B]" x-text="activeCatalog.label"></h2>
                         <span class="leading-none text-[#1A3A6B]" x-text="`(${filteredItems.length})`"></span>
                     </div>
-                    <p class="mt-[10px] text-[12px] leading-none text-black" x-text="activeCatalog.description"></p>
+                    <p class="mt-[15px] text-[12px] leading-none text-black" x-text="activeCatalog.description"></p>
                 </div>
 
                 <div class="ml-auto flex shrink-0 items-center gap-[20px]" aria-label="Acciones del catálogo seleccionado">

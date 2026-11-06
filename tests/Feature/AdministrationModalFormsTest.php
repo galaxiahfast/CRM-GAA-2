@@ -826,7 +826,7 @@ class AdministrationModalFormsTest extends TestCase
             ->assertDontSeeHtml("x-show=\"selectedCatalog !== 'users' && expandedItem === item.id\"")
             ->assertSeeHtml('x-ref="scaledMain"')
             ->assertSeeHtml('scaledContentHeight = Math.ceil')
-            ->assertSeeHtml('transform:scale(${viewScale / 100})')
+            ->assertDontSeeHtml('transform:scale(${viewScale / 100})')
             ->assertSeeHtml('style="height: 76px;"')
             ->assertSeeHtml('style="height: 75px;"')
             ->assertDontSeeHtml('zoom:${viewScale / 100}');

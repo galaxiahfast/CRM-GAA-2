@@ -58,7 +58,7 @@ input.auth-login-input.border-red-300[id][name]:focus-visible {
 
 /* Scroll corporativo para listas compactas de notificaciones. */
 .notification-scrollbar {
-    scrollbar-color: #000 transparent;
+    scrollbar-color: #1a3a6b transparent;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
 }
@@ -287,7 +287,7 @@ html.module-dark-theme {
 html.module-dark-theme body,
 html.module-dark-theme #main-content {
     background: #09090b !important;
-    color: #d4d4d8 !important;
+    color: #ffffff !important;
 }
 
 html.module-dark-theme #main-nav {
@@ -429,14 +429,14 @@ html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [c
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#f4f4f4]"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#F4F4F4]"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-[#F3F3F3]"] {
-    background-color: #18181b !important;
+    background-color: #09090b !important;
 }
 
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-zinc-50"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-gray-50"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-gray-100"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="bg-zinc-100"] {
-    background-color: #27272a !important;
+    background-color: #0f0f12 !important;
 }
 
 /* Paleta coherente del menú: base, superficie y estado activo. */
@@ -463,20 +463,20 @@ html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [c
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-900"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-800"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-800"] {
-    color: #fafafa !important;
+    color: #ffffff !important;
 }
 
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-700"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-700"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-600"] {
-    color: #d4d4d8 !important;
+    color: #ffffff !important;
 }
 
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-500"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-500"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-gray-400"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="text-zinc-400"] {
-    color: #a1a1aa !important;
+    color: #ffffff !important;
 }
 
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-zinc-200"],
@@ -484,26 +484,26 @@ html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [c
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-100"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-200"],
 html.module-dark-theme :is(#main-content, #logo-sidebar, .notification-panel) [class*="border-gray-300"] {
-    border-color: #3f3f46 !important;
+    border-color: #27272a !important;
 }
 
 html.module-dark-theme #main-content :is(input, select, textarea) {
-    border-color: #3f3f46 !important;
-    background-color: #18181b !important;
-    color: #fafafa !important;
+    border-color: #27272a !important;
+    background-color: #0c0c0f !important;
+    color: #ffffff !important;
 }
 
 html.module-dark-theme #main-content :is(input, textarea)::placeholder {
-    color: #71717a !important;
+    color: #ffffff !important;
 }
 
-html.module-dark-theme #main-content [class*="bg-black"] {
+html.module-dark-theme #main-content [class*="bg-black"]:not([class*="bg-black/"]) {
     border-color: #fafafa !important;
     background-color: #fafafa !important;
     color: #09090b !important;
 }
 
-html.module-dark-theme #main-content [class*="bg-black"] svg {
+html.module-dark-theme #main-content [class*="bg-black"]:not([class*="bg-black/"]) svg {
     color: #09090b !important;
     stroke: #09090b !important;
 }
@@ -530,14 +530,9 @@ html.module-dark-theme #main-content #clientActivityChart {
     background: #e7e7e4 !important;
 }
 
-html.module-dark-theme :is(#main-content, .notification-panel) *,
-html.module-dark-theme :is(#main-content, .notification-panel) {
-    scrollbar-color: #fff transparent !important;
-}
-
 html.module-dark-theme :is(#main-content, .notification-panel) *::-webkit-scrollbar-thumb,
 html.module-dark-theme :is(#main-content, .notification-panel)::-webkit-scrollbar-thumb {
-    background: #fff !important;
+    background: #1a3a6b !important;
 }
 
 html.module-dark-theme :is(#main-content, .notification-panel) *::-webkit-scrollbar-track,
@@ -577,7 +572,7 @@ html.module-dark-theme .sidebar-overlay-scrollbar {
 
 /* Scroll del directorio lateral de personas del perfil. */
 .profile-people-scrollbar {
-    scrollbar-color: #000 #f4f4f5;
+    scrollbar-color: #1a3a6b transparent;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
 }
@@ -602,7 +597,7 @@ html.module-dark-theme .sidebar-overlay-scrollbar {
 
 /* Scroll horizontal del perfil sin reservar espacio vertical a la derecha. */
 .profile-page-scrollbar {
-    scrollbar-color: #000 #f4f4f5;
+    scrollbar-color: #1a3a6b transparent;
     scrollbar-width: thin;
     scrollbar-gutter: auto;
 }
@@ -641,7 +636,7 @@ html,
 body,
 * {
     scrollbar-width: thin;
-    scrollbar-color: #1a3a6b #eef3f8;
+    scrollbar-color: #1a3a6b transparent;
 }
 
 *::-webkit-scrollbar {
@@ -664,20 +659,15 @@ body,
     background: #15305a;
 }
 
-html.module-dark-theme *,
-html.module-dark-theme {
-    scrollbar-color: #a9a4cf #24222f !important;
-}
-
 html.module-dark-theme *::-webkit-scrollbar-track,
 html.module-dark-theme::-webkit-scrollbar-track {
-    background: #24222f !important;
+    background: transparent !important;
 }
 
 html.module-dark-theme *::-webkit-scrollbar-thumb,
 html.module-dark-theme::-webkit-scrollbar-thumb {
-    border-color: #24222f !important;
-    background: #a9a4cf !important;
+    border-color: transparent !important;
+    background: #1a3a6b !important;
 }
 
 /* Hoja de entrega: acordeón, estado persistente y campos sugeridos por OCR. */
@@ -700,7 +690,7 @@ html.module-dark-theme::-webkit-scrollbar-thumb {
 
 /* Zoom automático del contenido de las vistas: --app-zoom lo calcula auto-scale.blade.php según el tamaño de la ventana.
    --app-dvh es la altura de la ventana expresada en las unidades escaladas del contenido (las alturas mínimas de las páginas
-   usan calc(var(--app-dvh) - 100px) para seguir llenando la pantalla aunque el contenido esté reducido). */
+   usan calc(var(--app-dvh) - 123px) para seguir llenando la pantalla aunque el contenido esté reducido). */
 :root {
     --app-zoom: 1;
     --app-dvh: calc(100dvh / var(--app-zoom));
@@ -708,4 +698,99 @@ html.module-dark-theme::-webkit-scrollbar-thumb {
 
 #app-zoom {
     zoom: var(--app-zoom);
+}
+
+/* Apartados del menú lateral sin recuadro: solo se resalta el activo y el que tiene el cursor encima. */
+#logo-sidebar ul :is(a, button).bg-gray-50:not(:hover),
+html.module-dark-theme #logo-sidebar ul :is(a, button).bg-gray-50:not(:hover) {
+    background-color: transparent !important;
+}
+
+/* Menú lateral: entre el contenido de un apartado y el del siguiente hay siempre 40px, haya o no un título de grupo, un
+   buscador o una línea de por medio (la línea queda a 20px de los botones de arriba y de abajo). Cada apartado lleva 15px de relleno arriba y
+   abajo y 20px a los lados; esos 15px ya cuentan dentro de los 40px (15 + 10 de separación + 15). */
+#logo-sidebar ul :is(a, button):is(.bg-gray-50, .bg-gray-100) {
+    padding: 15px 20px !important;
+}
+#logo-sidebar ul li:has(> :is(a, button):is(.bg-gray-50, .bg-gray-100)) {
+    padding-top: 10px !important;
+}
+#logo-sidebar ul li[aria-hidden="true"] + li {
+    padding-top: 35px !important;
+}
+
+/* Menú lateral: ningún texto ni icono en gris. Solo blanco (negro en tema claro), azul o verde (el apartado activo). */
+html #logo-sidebar#logo-sidebar { --sidebar-ink: #000000; }
+html.module-dark-theme #logo-sidebar#logo-sidebar { --sidebar-ink: #ffffff; }
+html #logo-sidebar#logo-sidebar :is([class*="text-gray-"], [class*="text-zinc-"], [class*="text-slate-"], [class*="text-neutral-"]) {
+    color: var(--sidebar-ink) !important;
+}
+html #logo-sidebar#logo-sidebar input::placeholder {
+    color: var(--sidebar-ink) !important;
+    opacity: 1;
+}
+html #logo-sidebar#logo-sidebar .text-green-600 { color: #16a34a !important; }
+html.module-dark-theme #logo-sidebar#logo-sidebar .text-green-600 { color: #4ade80 !important; }
+
+/* Pie del menú y su desplegable: mismo criterio que los apartados (sin recuadros, relleno de 15px arriba y abajo y 20px a los
+   lados, 10px de separación) y, en tema oscuro, un fondo más cerrado. */
+#logo-sidebar footer :is(a, button):not(:hover):not(.bg-gray-100):not(.bg-gray-200) {
+    background-color: transparent !important;
+}
+#logo-sidebar footer > div[x-show="profileMenuOpen"] > button:not(:hover) {
+    background-color: transparent !important;
+}
+#logo-sidebar footer > div[x-show="profileMenuOpen"] :is(a, button) {
+    padding: 15px 20px !important;
+}
+#logo-sidebar footer > div[x-show="profileMenuOpen"] > :is(a, button):not(:first-child) {
+    margin-top: 10px !important;
+}
+#logo-sidebar footer > div[x-show="profileMenuOpen"] > div.border-t {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+html.module-dark-theme #logo-sidebar footer > div[x-show="profileMenuOpen"] {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    box-shadow: 0 18px 45px rgb(0 0 0 / 55%);
+}
+
+/* Scroll general (vertical y horizontal) con el mismo diseño del menú lateral: fino, azul y redondeado; la pista va
+   transparente y siempre hay una barra vertical presente. */
+html:not(:has(.auth-shell)) { overflow-y: scroll; }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #1a3a6b; border: 2px solid transparent; border-radius: 9999px; background-clip: padding-box; min-height: 32px; min-width: 32px; }
+*::-webkit-scrollbar-corner { background: transparent; }
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: #1a3a6b transparent; } }
+
+/* Logotipo del menú: el mismo del login; en tema oscuro se muestra en blanco. */
+html.module-dark-theme #logo-sidebar .sidebar-brand-logo { filter: brightness(0) invert(1); }
+
+/* Menú comprimido: la flecha de cada desplegable queda alineada (mismo centro) con los iconos de sus apartados internos. */
+#logo-sidebar ul > li > button.justify-start > :is(svg:last-child, div.shrink-0) { margin-left: 22px !important; }
+
+/* Comprimir y descomprimir el menú lateral: el ancho se anima (los textos se desvanecen y se recogen con él) y el contenido
+   y el encabezado lo siguen cuadro por cuadro desde el script del menú. */
+#logo-sidebar { width: 306px; }
+#logo-sidebar[data-collapsed="true"] { width: 132px; }
+#logo-sidebar.sidebar-animate { transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1); }
+#logo-sidebar span[class*="ms-[15px]"] { display: inline-flex; overflow: hidden; max-width: 240px; opacity: 1; }
+#logo-sidebar.sidebar-animate span[class*="ms-[15px]"] { transition: opacity 200ms ease, max-width 320ms cubic-bezier(0.22, 1, 0.36, 1), margin 320ms cubic-bezier(0.22, 1, 0.36, 1); }
+#logo-sidebar span[class*="ms-[15px]"].hidden { display: inline-flex !important; max-width: 0; opacity: 0; margin-inline-start: 0; }
+@media (prefers-reduced-motion: reduce) { #logo-sidebar.sidebar-animate, #logo-sidebar.sidebar-animate span[class*="ms-[15px]"] { transition: none; } }
+
+/* Ventanas (modales) de Administración en tema oscuro: telón oscuro, marco negro y textos blancos (sin grises ni títulos
+   ilegibles). Los botones conservan sus propios colores. */
+html.module-dark-theme .administration-monochrome [data-administration-modal] :where(h1, h2, h3, h4, label, legend, strong, p, span, dt, dd, small, td, th, li):not(button *):not(button) {
+    color: #ffffff !important;
+}
+html.module-dark-theme .administration-monochrome [data-administration-modal] :where(section, fieldset, article, header, footer) {
+    border-color: #27272a !important;
+    background-color: #09090b !important;
+}
+html.module-dark-theme .administration-monochrome [data-administration-modal] header svg,
+html.module-dark-theme .administration-monochrome [data-administration-modal] .administration-form-panel svg {
+    color: #ffffff;
 }

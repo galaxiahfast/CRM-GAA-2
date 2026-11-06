@@ -5,7 +5,7 @@
     wire:ignore
     data-panel
     data-attendance-clock
-    class="attendance-clock-modern relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+    class="attendance-clock-modern relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
     x-data="{
         viewScale: 90,
         isFullscreen: false,

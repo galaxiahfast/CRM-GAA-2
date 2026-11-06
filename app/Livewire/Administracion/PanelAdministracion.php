@@ -40,6 +40,9 @@ class PanelAdministracion extends Component
 
     public array $orgChartStats = [];
 
+    /** true cuando el componente se muestra como el apartado «Organigrama» (y no como Administración). */
+    public bool $orgChartPage = false;
+
     public ?array $selectedUserDetails = null;
 
     public ?int $selectedUserId = null;
@@ -273,7 +276,10 @@ class PanelAdministracion extends Component
         $this->totalRoles = Role::count();
         $this->showPermissionsModal = request()->routeIs('administracion.permissions');
 
-        if ($this->canManageOrganization()) {
+        $this->orgChartPage = request()->routeIs('organigrama.index');
+
+        // El árbol solo se arma en el apartado Organigrama; Administración no lo necesita.
+        if ($this->orgChartPage && $this->canManageOrganization()) {
             $this->loadOrgChart($chartService);
         }
     }

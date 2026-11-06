@@ -1,5 +1,5 @@
 <section
-    class="profile-page relative min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-x-auto bg-white text-[15px] text-black"
+    class="profile-page relative min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-x-auto bg-white text-[15px] text-black"
     x-data="{
         profilePhotoOpen: false,
         friendsDirectoryOpen: false,
@@ -445,7 +445,7 @@
     </div>
 
     <template x-teleport="body">
-        <div data-profile-overlay x-cloak x-show="friendsDirectoryOpen" class="fixed inset-x-0 bottom-0 z-[100]" style="top: 100px;" role="dialog" aria-modal="true" aria-label="Directorio de amigos">
+        <div data-profile-overlay x-cloak x-show="friendsDirectoryOpen" class="fixed inset-x-0 bottom-0 z-[100]" style="top: 123px;" role="dialog" aria-modal="true" aria-label="Directorio de amigos">
             <button type="button" x-show="friendsDirectoryOpen" x-transition.opacity @click="friendsDirectoryOpen = false" class="absolute inset-0 bg-black/25 backdrop-blur-md" aria-label="Cerrar directorio"></button>
             <aside
                 x-show="friendsDirectoryOpen"

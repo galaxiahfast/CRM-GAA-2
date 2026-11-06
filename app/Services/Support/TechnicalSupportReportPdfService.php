@@ -14,6 +14,7 @@ class TechnicalSupportReportPdfService
         return [
             'contpaqi_contabilidad_install' => ['title' => 'Instalación de CONTPAQi Contabilidad', 'description' => 'Instalación del sistema, componentes y validación inicial.'],
             'contpaqi_contabilidad_reinstall' => ['title' => 'Reinstalación de CONTPAQi Contabilidad', 'description' => 'Instalación limpia, componentes y validación inicial del sistema.'],
+            'contpaqi_reinstall_components' => ['title' => 'Reinstalación de CONTPAQi y sus complementos', 'description' => 'Instalación limpia del sistema, instalación de sus componentes complementarios y validación inicial.'],
             'contpaqi_nominas_install' => ['title' => 'Instalación de CONTPAQi Nóminas', 'description' => 'Instalación del sistema, componentes y validación inicial.'],
             'contpaqi_nominas_reinstall' => ['title' => 'Reinstalación de CONTPAQi Nóminas', 'description' => 'Instalación limpia, componentes y validación inicial del sistema.'],
             'contpaqi_errors' => ['title' => 'Resolución de errores de CONTPAQi', 'description' => 'Diagnóstico y corrección de incidencias de operación o acceso.'],
@@ -144,6 +145,7 @@ class TechnicalSupportReportPdfService
             ->map(fn (array $support): string => match ($support['key'] ?? '') {
                 'contpaqi_contabilidad_install' => 'inst-cont',
                 'contpaqi_contabilidad_reinstall' => 'reinst-cont',
+                'contpaqi_reinstall_components' => 'reinst-contpaqi-complementos',
                 'contpaqi_nominas_install' => 'inst-nom',
                 'contpaqi_nominas_reinstall' => 'reinst-nom',
                 'contpaqi_errors' => 'errores-contpaqi',

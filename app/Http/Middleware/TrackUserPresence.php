@@ -18,6 +18,7 @@ class TrackUserPresence
         'inicio' => 'Inicio',
         'dashboard' => 'Panel general',
         'bank-reconciliation.' => 'Conciliación bancaria',
+        'organigrama.' => 'Organigrama',
         'administracion.' => 'Administración',
         'time.admin.' => 'Supervisión de horas',
         'time.attendance' => 'Reloj Checador',

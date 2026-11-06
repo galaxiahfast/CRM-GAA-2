@@ -33,7 +33,7 @@
     >
         <section
             class="w-full overflow-hidden"
-            :class="isFullscreen ? 'h-dvh' : 'h-[calc(var(--app-dvh)-100px)] min-h-[640px]'"
+            :class="isFullscreen ? 'h-dvh' : 'h-[calc(var(--app-dvh)-123px)] min-h-[640px]'"
             aria-label="{{ $title }}"
         >
             <div class="origin-top-left" :style="isCompact ? 'width:100%;height:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;height:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">

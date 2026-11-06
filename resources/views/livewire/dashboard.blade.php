@@ -54,7 +54,7 @@
         },
     }"
     @resize.window.debounce.150ms="isCompact = window.innerWidth / window.appAutoScale() < 1024; syncHeight()"
-    class="relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
 >
     <x-panel-styles />
 

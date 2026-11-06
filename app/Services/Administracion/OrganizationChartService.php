@@ -35,7 +35,7 @@ class OrganizationChartService
             ->select('user_id', DB::raw('MAX(last_activity) as last_activity'))
             ->groupBy('user_id')
             ->pluck('last_activity', 'user_id');
-        $onlineThreshold = now()->subMinute()->timestamp;
+        $onlineThreshold = now()->subMinutes(3)->timestamp;
 
         // Obtener todos los usuarios con sus perfiles
         $users = User::query()
@@ -63,7 +63,8 @@ class OrganizationChartService
             $superiorIds = $superiorIdsByUser[$user->id] ?? [];
             $subordinateIds = $subordinateIdsByUser[$user->id] ?? [];
             $missing = $this->resolveMissingAssignments($user, $superiorIds, $profile);
-            $lastActivityTimestamp = (int) ($lastActivityByUser[$user->id] ?? 0);
+            // Actividad registrada en las sesiones o por el seguimiento de presencia (users.last_seen_at).
+            $lastActivityTimestamp = max((int) ($lastActivityByUser[$user->id] ?? 0), (int) ($user->last_seen_at?->timestamp ?? 0));
             $isOnline = $lastActivityTimestamp >= $onlineThreshold;
             $lastActivity = $lastActivityTimestamp > 0
                 ? Carbon::createFromTimestamp($lastActivityTimestamp)->locale('es')
@@ -73,6 +74,7 @@ class OrganizationChartService
                 'id' => $user->id,
                 'name' => trim("{$user->name} {$user->last_name}"),
                 'email' => $user->email,
+                'photo' => $user->profile_photo_path ? $user->profile_photo_url : null,
                 'created_at' => $user->created_at?->toIso8601String(),
                 'role' => $user->role?->role,
                 'job_position' => $profile?->jobPosition?->name,
@@ -94,6 +96,9 @@ class OrganizationChartService
                 $allUnassigned[] = array_merge($node, ['missing' => $missing]);
             }
         }
+
+        // Los usuarios sin asignar se muestran del más nuevo al más antiguo.
+        usort($allUnassigned, static fn (array $a, array $b): int => strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? '')));
 
         // Construir el árbol completo (sin filtro de área)
         $fullTree = $this->buildTreeFromUserMap($userMap, $superiorIdsByUser, $subordinateIdsByUser, $usersWithRelations);

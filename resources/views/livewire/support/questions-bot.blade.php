@@ -1,5 +1,5 @@
 <div
-    class="support-questions-page h-[calc(var(--app-dvh)-100px)] overflow-hidden bg-white text-[15px] text-black"
+    class="support-questions-page h-[calc(var(--app-dvh)-123px)] overflow-hidden bg-white text-[15px] text-black"
     x-data="{
         viewScale: 90,
         isFullscreen: false,

@@ -149,7 +149,7 @@
 
     <div
         data-panel
-        class="support-report-page relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full min-w-0 overflow-hidden text-[15px]"
+        class="support-report-page relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
         x-data="{
             viewScale: 90,
             isFullscreen: false,

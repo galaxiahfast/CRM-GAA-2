@@ -8,7 +8,9 @@
         <title>{{ config('app.name', 'González Alonzo y Asociados') }}</title>
 
         <!-- Scripts -->
-        @include('layouts.partials.auto-scale')
+        {{-- Al llegar al login se reinician los desplegables recordados del menú lateral. --}}
+    <script>try { ['bank', 'time', 'reports', 'help'].forEach(function (key) { sessionStorage.removeItem('sidebar-open-' + key); }); } catch (error) {}</script>
+    @include('layouts.partials.auto-scale')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Styles -->

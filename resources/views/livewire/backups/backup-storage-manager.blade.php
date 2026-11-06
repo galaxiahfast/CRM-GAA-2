@@ -15,7 +15,7 @@
     $exportError = $exportMessage ?: (($exportStatus['status'] ?? null) === 'failed' ? ($exportStatus['error'] ?? 'La copia no pudo completarse.') : null);
 @endphp
 
-<div class="backup-storage-monochrome relative isolate min-h-[calc(var(--app-dvh)-100px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+<div class="backup-storage-monochrome relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
     x-data="{
         viewScale: Number(null || 90),
         isFullscreen: false,
