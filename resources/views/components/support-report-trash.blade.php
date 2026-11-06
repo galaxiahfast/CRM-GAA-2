@@ -8,7 +8,8 @@
 
 @endphp
 
-{{-- Papelera de reciclaje: reportes eliminados, con opción de restaurarlos o borrarlos para siempre. --}}
+{{-- Papelera de reciclaje: reportes eliminados, con opción de restaurarlos o borrarlos para siempre.
+     Diseño del panel; las ventanas se montan fuera de la página y usan `effScale` (escala efectiva de la vista). --}}
 <div
     x-data="{
         open: false,
@@ -24,63 +25,65 @@
     @keydown.escape.window="if (purge) { purge = null } else { open = false }"
     {{ $attributes->class(['shrink-0']) }}
 >
-    <button type="button" @click="open = true" class="flex items-center gap-[10px] bg-transparent py-[20px] leading-none text-black transition-colors hover:text-[#1A3A6B] focus:outline-none focus:ring-0" title="Papelera de reciclaje">
+    <button type="button" @click="open = true" class="panel-tab flex items-center gap-[10px] bg-transparent leading-none focus:outline-none focus:ring-0" title="Papelera de reciclaje">
         <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
         <span>Papelera de reciclaje ({{ $reports->count() }})</span>
     </button>
 
     <template x-teleport="body">
-        <div data-support-modal x-cloak x-show="open" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-trash-title">
-            <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="if (! purge) open = false" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
-                <header class="flex shrink-0 items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
-                    <div class="flex min-w-0 items-center gap-[20px]">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
+        <div data-support-modal x-cloak x-show="open" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/50 p-[20px]" role="dialog" aria-modal="true" aria-labelledby="support-trash-title">
+            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100})` }" @click.outside="if (! purge) open = false" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="height: min(620px, calc(100dvh - 40px));">
+                <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
+                    <div class="flex min-w-0 items-center gap-[15px]">
+                        <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
                         </span>
                         <div class="min-w-0">
-                            <h1 id="support-trash-title" class="font-semibold leading-none text-black">Papelera de reciclaje</h1>
-                            <p class="mt-[10px] truncate leading-none text-black">Restaura un reporte o elimínalo de forma permanente.</p>
+                            <h3 id="support-trash-title" class="panel-accent truncate leading-none">Papelera de reciclaje</h3>
+                            <p class="mt-[10px] leading-tight sm:truncate">Restaura un reporte o elimínalo de forma permanente.</p>
                         </div>
                     </div>
-                    <button type="button" @click="open = false" aria-label="Cerrar" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600 leading-none text-white focus:outline-none focus:ring-0">×</button>
+                    <button type="button" @click="open = false" aria-label="Cerrar" class="panel-icon-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
+                    </button>
                 </header>
 
-                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="open; $nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
-                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll absolute inset-0 overflow-y-auto">
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="open; $nextTick(() => update())" class="relative min-h-0 flex-1">
+                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll absolute inset-0 overflow-y-auto">
                         @forelse ($reports as $report)
-                            <div class="flex items-center gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]" style="min-height: 77px;">
+                            <div class="panel-border flex items-center gap-[15px] border-b p-[20px]" style="min-height: 77px;">
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate leading-none text-[#1A3A6B]" title="{{ $report->folio }}">{{ $report->folio }}</p>
-                                    <p class="mt-[10px] truncate leading-none text-black" title="{{ $report->service_recipient }}">{{ $report->service_recipient }}</p>
-                                    <p class="mt-[10px] truncate leading-none text-black">Eliminado: {{ $report->deleted_at?->timezone($timezone)->translatedFormat('d M Y · H:i') }}</p>
+                                    <p class="panel-accent truncate leading-none" title="{{ $report->folio }}">{{ $report->folio }}</p>
+                                    <p class="mt-[10px] truncate leading-none" title="{{ $report->service_recipient }}">{{ $report->service_recipient }}</p>
+                                    <p class="panel-muted mt-[10px] truncate leading-none">Eliminado: {{ $report->deleted_at?->timezone($timezone)->translatedFormat('d M Y · H:i') }}</p>
                                 </div>
 
-                                <div class="flex shrink-0 items-center gap-[10px]">
-                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-black transition-colors hover:bg-zinc-100 hover:text-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Ver {{ $report->folio }}" title="Ver">
+                                <div class="flex shrink-0 items-center gap-[5px] sm:gap-[10px]">
+                                    <a href="{{ route('soporte.reportes-tecnicos.pdf', $report) }}" target="_blank" rel="noopener" class="panel-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none focus:ring-0" aria-label="Ver {{ $report->folio }}" title="Ver">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconView }}"/></svg>
                                     </a>
                                     <form method="POST" action="{{ route('soporte.reportes-tecnicos.restore', $report) }}">
                                         @csrf
-                                        <button type="submit" class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-black transition-colors hover:bg-zinc-100 hover:text-[#1A3A6B] focus:outline-none focus:ring-0" aria-label="Restaurar {{ $report->folio }}" title="Restaurar">
+                                        <button type="submit" class="panel-icon-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none focus:ring-0" aria-label="Restaurar {{ $report->folio }}" title="Restaurar">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconRestore }}"/></svg>
                                         </button>
                                     </form>
-                                    <button type="button" @click="folioText = ''; wordText = ''; purge = { folio: @js($report->folio), url: @js(route('soporte.reportes-tecnicos.purge', $report)) }" class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl text-black transition-colors hover:bg-zinc-100 hover:text-red-600 focus:outline-none focus:ring-0" aria-label="Eliminar de forma permanente {{ $report->folio }}" title="Eliminar de forma permanente">
+                                    <button type="button" @click="folioText = ''; wordText = ''; purge = { folio: @js($report->folio), url: @js(route('soporte.reportes-tecnicos.purge', $report)) }" class="panel-icon-button support-icon-danger flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none focus:ring-0" aria-label="Eliminar de forma permanente {{ $report->folio }}" title="Eliminar de forma permanente">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
                                     </button>
                                 </div>
                             </div>
                         @empty
-                            <div class="grid h-full min-h-[260px] place-items-center p-[20px] text-center leading-[20px] text-black">
+                            <div class="panel-muted grid h-full min-h-[260px] place-items-center p-[20px] text-center leading-tight">
                                 La papelera está vacía.
                             </div>
                         @endforelse
                     </div>
-                    <span x-show="visible" x-cloak class="support-service-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                    <span x-show="visible" x-cloak class="panel-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
 
-                <footer class="flex shrink-0 justify-end gap-[10px] border-t border-[#d4d4d8] bg-white p-[20px]">
-                    <button type="button" @click="open = false" class="h-[44px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] leading-none text-black focus:outline-none focus:ring-0">Cerrar</button>
+                <footer class="panel-border flex shrink-0 justify-end gap-[10px] border-t p-[20px]">
+                    <button type="button" @click="open = false" class="panel-button-secondary inline-flex h-11 items-center justify-center rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0">Cerrar</button>
                 </footer>
             </div>
         </div>
@@ -88,49 +91,51 @@
 
     {{-- Segunda confirmación para borrar de forma permanente. --}}
     <template x-teleport="body">
-        <div data-support-modal x-cloak x-show="purge" class="fixed inset-0 z-[200010] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="support-purge-title">
-            <div :style="{ transform: `scale(${(typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100})` }" @click.outside="purge = null" class="flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-2xl">
-                <header class="flex items-center justify-between gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px]">
-                    <div class="flex min-w-0 items-center gap-[20px]">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white text-black">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
+        <div data-support-modal x-cloak x-show="purge" class="fixed inset-0 z-[200010] flex items-center justify-center bg-black/50 p-[20px]" role="dialog" aria-modal="true" aria-labelledby="support-purge-title">
+            <div data-panel :style="{ transform: `scale(${(typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100})` }" @click.outside="purge = null" class="panel-surface panel-border flex w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-height: calc(100dvh - 40px);">
+                <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
+                    <div class="flex min-w-0 items-center gap-[15px]">
+                        <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $iconTrash }}"/></svg>
                         </span>
                         <div class="min-w-0">
-                            <h1 id="support-purge-title" class="font-semibold leading-none text-black">Eliminar de forma permanente</h1>
-                            <p class="mt-[10px] truncate leading-none text-black">Ya no podrás restaurar este reporte.</p>
+                            <h3 id="support-purge-title" class="panel-accent truncate leading-none">Eliminar de forma permanente</h3>
+                            <p class="mt-[10px] leading-tight sm:truncate">Ya no podrás restaurar este reporte.</p>
                         </div>
                     </div>
-                    <button type="button" @click="purge = null" aria-label="Cerrar" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600 leading-none text-white focus:outline-none focus:ring-0">×</button>
+                    <button type="button" @click="purge = null" aria-label="Cerrar" class="panel-icon-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
+                    </button>
                 </header>
 
-                <form method="POST" :action="purge?.url" @submit="if (! canPurge()) $event.preventDefault()">
+                <form method="POST" :action="purge?.url" @submit="if (! canPurge()) $event.preventDefault()" class="flex min-h-0 flex-1 flex-col overflow-y-auto">
                     @csrf
                     @method('DELETE')
 
                     <div class="p-[20px]">
-                        <section class="border-b border-[#d4d4d8] pb-[20px]">
-                            <h2 class="leading-none text-black">Reporte seleccionado</h2>
-                            <p class="mt-[20px] leading-none text-[#1A3A6B]" x-text="purge?.folio"></p>
+                        <section class="panel-border border-b pb-[20px]">
+                            <h2 class="leading-none">Reporte seleccionado</h2>
+                            <p class="panel-accent mt-[15px] leading-none" x-text="purge?.folio"></p>
                         </section>
 
                         <section class="pt-[20px]">
-                            <h2 class="leading-none text-black">Verificación</h2>
+                            <h2 class="leading-none">Verificación</h2>
 
-                            <label class="mt-[20px] block">
-                                <span class="block leading-none text-black">Escribe el folio exacto del reporte</span>
-                                <input type="text" x-model="folioText" autocomplete="new-password" onpaste="return false" class="mt-[20px] h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal uppercase text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0" placeholder="Folio del reporte...">
+                            <label class="mt-[15px] block">
+                                <span class="block leading-none">Escribe el folio exacto del reporte</span>
+                                <input type="text" x-model="folioText" autocomplete="new-password" onpaste="return false" class="panel-field mt-[10px] block h-11 w-full rounded-xl border px-[20px] uppercase focus:ring-0" placeholder="Folio del reporte...">
                             </label>
 
                             <label class="mt-[20px] block">
-                                <span class="block leading-none text-black">Escribe ELIMINAR</span>
-                                <input type="text" x-model="wordText" autocomplete="new-password" onpaste="return false" class="mt-[20px] h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal uppercase text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0" placeholder="ELIMINAR">
+                                <span class="block leading-none">Escribe ELIMINAR</span>
+                                <input type="text" x-model="wordText" autocomplete="new-password" onpaste="return false" class="panel-field mt-[10px] block h-11 w-full rounded-xl border px-[20px] uppercase focus:ring-0" placeholder="ELIMINAR">
                             </label>
                         </section>
                     </div>
 
-                    <div class="flex justify-end gap-[10px] border-t border-[#d4d4d8] bg-white p-[20px]">
-                        <button type="button" @click="purge = null" class="h-[44px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] leading-none text-black focus:outline-none focus:ring-0">Cancelar</button>
-                        <button type="submit" :disabled="! canPurge()" class="h-[44px] rounded-xl bg-black px-[20px] leading-none text-white focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40">Eliminar</button>
+                    <div class="panel-border mt-auto flex justify-end gap-[10px] border-t p-[20px]">
+                        <button type="button" @click="purge = null" class="panel-button-secondary inline-flex h-11 items-center justify-center rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0">Cancelar</button>
+                        <button type="submit" :disabled="! canPurge()" class="panel-button inline-flex h-11 items-center justify-center rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0">Eliminar</button>
                     </div>
                 </form>
             </div>

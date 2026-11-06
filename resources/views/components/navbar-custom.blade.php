@@ -345,6 +345,12 @@
     <style>
         .mobile-menu-button { display: none; height: 42px; width: 42px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 8px; background: transparent; color: #ffffff; cursor: pointer; transition: background-color 150ms ease; }
         .mobile-menu-button:hover { background-color: rgba(255, 255, 255, 0.12); }
+        /* Sin contorno de enfoque en el menú lateral, el encabezado y el cierre de sesión: tras pulsar un botón el navegador
+           a veces lo remarcaba (outline / aro de enfoque) y no se quiere ese contorno */
+        #logo-sidebar :is(button, a, summary, [tabindex]):is(:focus, :focus-visible, :active),
+        #main-nav :is(button, a, summary, [tabindex]):is(:focus, :focus-visible, :active),
+        [data-session-logout] :is(button, a):is(:focus, :focus-visible, :active) { outline: none !important; box-shadow: none !important; }
+        #logo-sidebar, #main-nav, [data-session-logout] { -webkit-tap-highlight-color: transparent; }
         @media (max-width: 639px) {
             .mobile-menu-button { display: flex; }
             #main-content { margin-left: 0 !important; }

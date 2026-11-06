@@ -3,6 +3,7 @@
     'value' => '',
     'options' => [],
     'allLabel' => 'Todos',
+    'label' => null,
 ])
 
 @php
@@ -12,7 +13,8 @@
         ->all();
 @endphp
 
-{{-- Menú desplegable con el diseño de Administración; envía su valor en un campo oculto. --}}
+{{-- Menú desplegable con el diseño del panel (mismo de Administración); envía su valor en un campo oculto.
+     Lee `effScale` (escala efectiva de la vista) de la página para colocar la lista fuera de la zona escalada. --}}
 <div
     x-data="{
         open: false,
@@ -24,7 +26,7 @@
         toggle() {
             if (this.open) { this.open = false; return; }
             const rect = this.$refs.trigger.getBoundingClientRect();
-            const k = (typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100 || 1;
+            const k = (typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100 || 1;
             const gap = 10 * k;
             const wanted = (Math.max(1, Math.min(this.options.length, 5)) * 55 + 2) * k;
             const below = window.innerHeight - rect.bottom - gap - 8;
@@ -44,20 +46,21 @@
 >
     <input type="hidden" name="{{ $name }}" :value="value">
 
-    <button x-ref="trigger" type="button" @click="toggle()" class="flex h-[44px] w-full items-center justify-between gap-[10px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-left font-normal leading-none text-black outline-none focus:outline-none focus:ring-0" aria-haspopup="listbox" :aria-expanded="open">
+    <button x-ref="trigger" type="button" @click="toggle()" class="panel-field support-trigger flex h-11 w-full items-center justify-between gap-[10px] rounded-xl border px-[20px] text-left leading-none outline-none focus:outline-none focus:ring-0" aria-haspopup="listbox" :aria-expanded="open">
+        @if ($label)<span class="sr-only">{{ $label }}:</span>@endif
         <span class="min-w-0 flex-1 truncate" x-text="label"></span>
-        <svg class="h-4 w-4 shrink-0 text-black transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
+        <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
     </button>
 
     <template x-teleport="body">
-        <div x-ref="list" data-support-dropdown x-cloak x-show="open" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white" role="listbox">
+        <div x-ref="list" data-panel data-support-dropdown x-cloak x-show="open" :style="listStyle" class="panel-surface panel-border overflow-hidden rounded-xl border" role="listbox">
             <div x-data="backupOverlayScroll()" x-effect="open; options; $nextTick(() => update())" class="relative">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px; scrollbar-width: none;`">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px;`">
                     <template x-for="option in options" :key="option.value">
-                        <button type="button" role="option" @click="const changed = value !== option.value; value = option.value; open = false; if (changed) $nextTick(() => $refs.trigger.closest('form')?.requestSubmit())" :class="option.value === value ? 'text-[#1A3A6B]' : 'text-black'" class="block w-full truncate bg-white p-[20px] text-left text-[15px] font-normal leading-none hover:bg-zinc-50 focus:outline-none focus:ring-0" x-text="option.label"></button>
+                        <button type="button" role="option" :aria-selected="option.value === value" @click="const changed = value !== option.value; value = option.value; open = false; if (changed) $nextTick(() => $refs.trigger.closest('form')?.requestSubmit())" class="panel-option block w-full truncate p-[20px] text-left leading-none focus:outline-none focus:ring-0" x-text="option.label"></button>
                     </template>
                 </div>
-                <span x-show="visible" x-cloak class="support-service-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
         </div>
     </template>

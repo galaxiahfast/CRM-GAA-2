@@ -12,7 +12,7 @@
     $folios = collect($options)->map(fn ($option) => (string) $option)->values()->all();
 @endphp
 
-{{-- Buscador con el diseño de Administración: al enfocarlo muestra todos los folios y los va
+{{-- Buscador con el diseño del panel (mismo de Administración): al enfocarlo muestra todos los folios y los va
      acotando mientras se escribe; al elegir uno se actualiza la lista. --}}
 <div
     x-data="{
@@ -30,7 +30,7 @@
         },
         position() {
             const rect = this.$refs.input.getBoundingClientRect();
-            const k = (typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100 || 1;
+            const k = (typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100 || 1;
             const gap = 10 * k;
             const wanted = (Math.max(1, Math.min(this.filtered.length, 5)) * 55 + 2) * k;
             const below = window.innerHeight - rect.bottom - gap - 8;
@@ -72,21 +72,21 @@
         @click="show()"
         @input="show()"
         @keydown.escape.prevent="open = false"
-        class="h-[44px] w-full rounded-xl border border-[#d4d4d8] bg-white px-[20px] font-normal text-black placeholder:text-zinc-500 focus:outline-none focus:ring-0"
+        class="panel-field support-trigger block h-11 w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0"
         role="combobox"
         aria-autocomplete="list"
         :aria-expanded="open"
     >
 
     <template x-teleport="body">
-        <div x-ref="list" data-support-dropdown x-cloak x-show="open && filtered.length > 0" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white" role="listbox">
+        <div x-ref="list" data-panel data-support-dropdown x-cloak x-show="open && filtered.length > 0" :style="listStyle" class="panel-surface panel-border overflow-hidden rounded-xl border" role="listbox">
             <div x-data="backupOverlayScroll()" x-effect="open; filtered; $nextTick(() => update())" class="relative">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px; scrollbar-width: none;`">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px;`">
                     <template x-for="option in filtered" :key="option">
-                        <button type="button" role="option" @click="choose(option)" class="block w-full truncate bg-white p-[20px] text-left text-[15px] font-normal leading-none text-black hover:bg-zinc-50 focus:outline-none focus:ring-0" x-text="option"></button>
+                        <button type="button" role="option" @click="choose(option)" class="panel-option block w-full truncate p-[20px] text-left leading-none focus:outline-none focus:ring-0" x-text="option"></button>
                     </template>
                 </div>
-                <span x-show="visible" x-cloak class="support-service-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
         </div>
     </template>

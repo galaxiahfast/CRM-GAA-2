@@ -608,6 +608,21 @@
         html.module-dark-theme .support-backup-report-page[data-panel] { --backup-green: #4ade80; }
         .support-backup-report-page .panel-action:not(.panel-action-danger) { color: var(--backup-green); }
 
+        /* Formularios del informe (mismo estilo que «Agregar usuario»): encabezado y pie blancos, secciones separadas solo por líneas,
+           botón principal en azul fuerte, cancelar con contorno azul y cierre / eliminar en rojo */
+        [data-backup-modal] { --backup-blue: #1A3A6B; --backup-blue-hover: #142d54; }
+        html.module-dark-theme [data-backup-modal] { --backup-blue: var(--panel-accent); --backup-blue-hover: var(--panel-text); }
+        [data-backup-modal] .backup-modal-section + .backup-modal-section { border-top: 1px solid var(--panel-border); padding-top: 20px; }
+        [data-backup-modal] .backup-modal-primary { background-color: var(--backup-blue); color: #ffffff; transition: background-color 150ms ease; }
+        [data-backup-modal] .backup-modal-primary:hover { background-color: var(--backup-blue-hover); }
+        html.module-dark-theme [data-backup-modal] .backup-modal-primary { color: var(--panel-page); }
+        [data-backup-modal] .backup-modal-outline { border: 1px solid var(--backup-blue); color: var(--backup-blue); background-color: var(--panel-surface); transition: background-color 150ms ease; }
+        [data-backup-modal] .backup-modal-outline:hover { background-color: color-mix(in srgb, var(--backup-blue) 8%, var(--panel-surface)); }
+        [data-backup-modal] .backup-modal-close { border: 1px solid var(--panel-danger-line); color: var(--panel-danger); background-color: var(--panel-surface); transition: background-color 150ms ease; }
+        [data-backup-modal] .backup-modal-close:hover { background-color: var(--panel-danger-soft); }
+        [data-backup-modal] .backup-modal-delete { border: 1px solid var(--panel-danger-line); color: var(--panel-danger); background-color: var(--panel-surface); transition: background-color 150ms ease; }
+        [data-backup-modal] .backup-modal-delete:hover { background-color: var(--panel-danger-soft); }
+
         /* Cajas de texto exactas: el cuadro de cada texto va de la altura de la mayúscula a la línea base (sin el aire que trae
            la fuente por defecto), así la separación entre una línea de texto y la siguiente es la distancia real (15 px).
            Con varias líneas, 25 px de interlineado equivalen a esos 15 px entre una y otra. Los iconos de 16 px se recortan
@@ -689,9 +704,9 @@
                                     ? ['Conectado', 'backup-tone-blue', $backupOffline.' de '.$backupRead->count().' perfiles no se pudieron leer en la última lectura.']
                                     : ['Conectado', 'backup-tone-blue', 'Todos los perfiles respondieron en la última lectura.']));
                     @endphp
-                    <div class="min-w-0 sm:text-right" data-backup-connection>
+                    <div class="w-full min-w-0 lg:w-auto lg:text-right" data-backup-connection>
                         {{-- La guía va al mismo nivel que «Servicio de respaldos»: es lo primero que se necesita para saber cómo funciona --}}
-                        <div class="flex flex-wrap items-center gap-x-[10px] gap-y-[15px] sm:justify-end">
+                        <div class="flex flex-wrap items-center gap-x-[10px] gap-y-[15px] lg:justify-end">
                             <span class="no-print flex items-center">
                                 <button type="button" wire:click="downloadGuide" wire:loading.attr="disabled" wire:target="downloadGuide" title="Descargar la guía del Reporte de Respaldos en PDF" class="panel-action backup-action inline-flex items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
                                 <svg wire:loading.remove wire:target="downloadGuide" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5"/></svg>
@@ -702,7 +717,7 @@
                             <span class="no-print panel-muted" aria-hidden="true">·</span>
                             <p class="panel-accent flex items-center leading-none"><span>Servicio de respaldos</span></p>
                         </div>
-                        <p class="mt-[15px] flex items-center gap-[10px] leading-tight sm:justify-end" aria-live="polite">
+                        <p class="mt-[15px] flex items-center gap-[10px] leading-tight lg:justify-end" aria-live="polite">
                             <span x-show="busy" x-cloak class="panel-muted inline-flex items-center gap-[10px]">
                                 <span class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-current" aria-hidden="true"></span>
                                 <span>Leyendo…</span>
@@ -866,10 +881,10 @@
                             </div>
                         </div>
                         <!-- Debajo de la barra: estado de la lectura a la izquierda y «Actualizar registros» a la derecha -->
-                        <div class="panel-muted mt-[20px] flex flex-col items-start gap-[10px] sm:flex-row sm:items-center sm:justify-between sm:gap-[20px]">
-                            <span class="backup-status-line block min-w-0 sm:truncate" x-text="mailSending || mailStatus ? 'El reporte se envía a los destinatarios seleccionados.' : loadingLine()">Lectura de solo acceso, perfil por perfil.</span>
+                        <div class="panel-muted mt-[20px] flex flex-col items-start gap-[15px] lg:flex-row lg:items-center lg:justify-between lg:gap-[20px]">
+                            <span class="backup-status-line block min-w-0 lg:truncate" x-text="mailSending || mailStatus ? 'El reporte se envía a los destinatarios seleccionados.' : loadingLine()">Lectura de solo acceso, perfil por perfil.</span>
                             <!-- Acciones del informe: enviar por correo, guardar PDF, guía PDF y actualizar, juntas a la derecha -->
-                            <div class="no-print backup-actions flex shrink-0 flex-wrap items-center gap-x-[20px] gap-y-[15px] self-end sm:self-auto">
+                            <div class="no-print backup-actions flex min-w-0 flex-wrap items-center gap-x-[20px] gap-y-[15px] lg:shrink-0">
                             <div class="relative flex items-center select-none">
                                 <button type="button" @click="recipientsOpen = !recipientsOpen" :disabled="mailSending || busy || total === 0 || processed < total" @disabled($reading || $totalProfiles === 0 || $processedProfiles < $totalProfiles) class="panel-action backup-action inline-flex select-none items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 6.75A1.75 1.75 0 0 1 4.75 5h14.5A1.75 1.75 0 0 1 21 6.75v10.5A1.75 1.75 0 0 1 19.25 19H4.75A1.75 1.75 0 0 1 3 17.25V6.75Zm.5-.5L12 13l8.5-6.75"/></svg>
@@ -1070,7 +1085,7 @@
                                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6.5" rx="1.5" /><rect x="3" y="13.5" width="18" height="6.5" rx="1.5" /><path d="M7 7.25h.01M7 16.75h.01" /></svg>
                                             <span>Servidores</span>
                                         </h2>
-                                            <p class="mt-[15px] truncate pl-[26px] leading-tight">Equipos que se supervisan.</p>
+                                            <p class="mt-[15px] pl-[26px] leading-tight sm:truncate">Equipos que se supervisan.</p>
                                         </div>
                                     <button type="button" wire:click="addServer" class="panel-action backup-action no-print inline-flex shrink-0 items-center gap-[10px] leading-none focus:outline-none focus:ring-0"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Agregar servidor</span></button>
                                     </header>
@@ -1087,7 +1102,7 @@
                                                 else { $menuNum = $menuCount; $menuText = 'perfil(es)'; }
                                                 $menuTone = $meta['pending'] || $meta['available'] === 0 ? 'panel-muted' : ($meta['errors'] ? 'backup-tone-red' : 'panel-muted');
                                             @endphp
-                                            <div wire:key="backup-server-row-{{ $server['key'] }}" class="relative w-[220px] shrink-0 lg:w-full">
+                                            <div wire:key="backup-server-row-{{ $server['key'] }}" class="relative w-[280px] shrink-0 lg:w-full">
                                             <button
                                                 type="button"
                                                 role="tab"
@@ -1151,7 +1166,7 @@
                                                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
                                                             <span>Perfiles</span>
                                                         </h2>
-                                                            <p class="mt-[15px] truncate pl-[26px] leading-tight">Respaldos de este servidor.</p>
+                                                            <p class="mt-[15px] pl-[26px] leading-tight sm:truncate">Respaldos de este servidor.</p>
                                                         </div>
                                                         <button type="button" wire:click="addProfile({{ $serverIndex }})" class="panel-action backup-action no-print inline-flex shrink-0 items-center gap-[10px] leading-none focus:outline-none focus:ring-0"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Agregar perfil</span></button>
                                                     </header>
@@ -1208,7 +1223,7 @@
                                                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
                                                                 <span>Detalle</span>
                                                             </h2>
-                                                                <p class="mt-[15px] truncate pl-[26px] leading-tight">Elige un perfil de la lista.</p>
+                                                                <p class="mt-[15px] pl-[26px] leading-tight sm:truncate">Elige un perfil de la lista.</p>
                                                             </div>
                                                         </header>
                                                         <div class="grid min-h-[260px] place-items-center p-[20px] text-center">
@@ -1230,7 +1245,7 @@
                                                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
                                                                     <span>Detalle</span>
                                                                 </h2>
-                                                                    <p class="mt-[15px] truncate pl-[26px] leading-tight">Última ejecución del perfil {{ $profile['name'] }}.</p>
+                                                                    <p class="mt-[15px] pl-[26px] leading-tight sm:truncate">Última ejecución del perfil {{ $profile['name'] }}.</p>
                                                                 </div>
                                                                 <button type="button" wire:click="openProfile({{ $serverIndex }}, {{ $profileIndex }})" class="panel-action backup-action no-print inline-flex shrink-0 items-center gap-[10px] leading-none focus:outline-none focus:ring-0"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.2 5.2 3.6 3.6M4 20l4.2-1 10.1-10.1a2 2 0 0 0 0-2.8l-.4-.4a2 2 0 0 0-2.8 0L5 15.8 4 20Z"/></svg><span>Editar perfil</span></button>
                                                             </header>
@@ -1309,8 +1324,8 @@
                 >
                     <div data-panel class="panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); overscroll-behavior: contain;">
                         <form wire:submit="saveProfile" class="flex min-h-0 flex-1 flex-col">
-                            <header class="panel-header panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
-                                <div class="flex min-w-0 items-center gap-[15px]">
+                            <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
+                                <div class="flex min-w-0 items-start gap-[15px] sm:items-center">
                                     <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                                     </span>
@@ -1319,7 +1334,7 @@
                                         <p class="mt-[15px] leading-tight sm:truncate">Los ajustes solo afectan el informe actual.</p>
                                     </div>
                                 </div>
-                                <button type="button" wire:click="$set('showProfileEditor', false)" class="panel-icon-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0" aria-label="Cerrar">
+                                <button type="button" wire:click="$set('showProfileEditor', false)" class="backup-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0" aria-label="Cerrar">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
                                 </button>
                             </header>
@@ -1327,30 +1342,30 @@
                             <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
                                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll absolute inset-0 overflow-y-auto">
                                     <div class="flex flex-col gap-[20px] p-[20px]">
-                                        <div class="panel-border rounded-xl border p-[20px]">
+                                        <section class="backup-modal-section">
                                             <h4 class="panel-accent text-[15px] font-normal leading-none">Datos del perfil</h4>
                                             <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                                 <div class="min-w-0">
                                                     <label for="backup-profile-name" class="mb-[10px] block">Perfil *</label>
-                                                    <input id="backup-profile-name" type="text" wire:model="profileForm.name" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                    <input id="backup-profile-name" type="text" wire:model="profileForm.name" placeholder="Ej. Comprobantes33" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                     @error('profileForm.name')<p class="backup-tone-red mt-[15px]">{{ $message }}</p>@enderror
                                                 </div>
                                                 <div class="min-w-0">
                                                     <label for="backup-profile-log" class="mb-[10px] block">Nombre del log</label>
-                                                    <input id="backup-profile-log" type="text" wire:model="profileForm.log" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                    <input id="backup-profile-log" type="text" wire:model="profileForm.log" placeholder="Ej. Comprobantes33" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                 </div>
                                                 <div class="min-w-0">
                                                     <label for="backup-profile-date" class="mb-[10px] block">Fecha y hora</label>
-                                                    <input id="backup-profile-date" type="text" wire:model="profileForm.date" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                    <input id="backup-profile-date" type="text" wire:model="profileForm.date" placeholder="Ej. 31/10/2026 04:00 p. m." class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                 </div>
                                                 <div class="min-w-0">
                                                     <label for="backup-profile-processed" class="mb-[10px] block">Procesados</label>
-                                                    <input id="backup-profile-processed" type="text" wire:model="profileForm.processed" placeholder="0/0" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                    <input id="backup-profile-processed" type="text" wire:model="profileForm.processed" placeholder="Ej. 158/176" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                 </div>
                                             </div>
-                                        </div>
+                                        </section>
 
-                                        <div class="panel-border rounded-xl border p-[20px]">
+                                        <section class="backup-modal-section">
                                             <h4 class="panel-accent text-[15px] font-normal leading-none">Incidencias del perfil</h4>
                                             <div class="mt-[20px] grid grid-cols-1 gap-[20px]">
                                                 <div class="min-w-0">
@@ -1362,43 +1377,43 @@
                                                     <textarea id="backup-profile-issues" wire:model="profileForm.issues" rows="3" placeholder="Ej. Directorio destino inválido" class="panel-field block w-full rounded-xl border px-[15px] py-[12px] focus:ring-0"></textarea>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </section>
 
-                                        <div class="panel-border rounded-xl border p-[20px]">
+                                        <section class="backup-modal-section">
                                             <h4 class="panel-accent text-[15px] font-normal leading-none">Informe</h4>
                                             <div class="mt-[20px] grid grid-cols-1 gap-[20px]">
                                                 <label class="flex cursor-pointer items-center gap-[10px]">
                                                     <input wire:model="profileForm.available" type="checkbox" class="backup-check">
                                                     <span>Incluir este perfil en el PDF</span>
                                                 </label>
-                                                <details class="panel-border rounded-xl border px-[20px] py-[15px]">
+                                                <details class="panel-border border-t pt-[20px]">
                                                     <summary class="panel-accent cursor-pointer">Datos técnicos</summary>
                                                     <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-3">
                                                         <div class="min-w-0">
                                                             <label for="backup-profile-source" class="mb-[10px] block">Origen</label>
-                                                            <input id="backup-profile-source" type="text" wire:model="profileForm.source" placeholder="Origen" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                            <input id="backup-profile-source" type="text" wire:model="profileForm.source" placeholder="Ej. C:\Compac\" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                         </div>
                                                         <div class="min-w-0">
                                                             <label for="backup-profile-destination" class="mb-[10px] block">Destino</label>
-                                                            <input id="backup-profile-destination" type="text" wire:model="profileForm.destination" placeholder="Destino" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                            <input id="backup-profile-destination" type="text" wire:model="profileForm.destination" placeholder="Ej. D:\Contpaq\" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                         </div>
                                                         <div class="min-w-0">
                                                             <label for="backup-profile-duration" class="mb-[10px] block">Duración</label>
-                                                            <input id="backup-profile-duration" type="text" wire:model="profileForm.duration" placeholder="Duración" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                            <input id="backup-profile-duration" type="text" wire:model="profileForm.duration" placeholder="Ej. 00:02:10" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                         </div>
                                                     </div>
                                                 </details>
                                             </div>
-                                        </div>
+                                        </section>
                                     </div>
                                 </div>
                                 <span x-show="visible" x-cloak class="panel-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
 
                             <footer class="panel-border flex flex-shrink-0 flex-wrap items-center justify-end gap-[10px] border-t p-[20px]">
-                                @if ($editingProfile !== null)<button type="button" wire:click="deleteProfile" wire:confirm="¿Eliminar este perfil del informe?" class="panel-action-danger mr-auto inline-flex h-11 items-center gap-[10px] leading-none focus:outline-none focus:ring-0">Eliminar</button>@endif
-                                <button type="button" wire:click="$set('showProfileEditor', false)" class="panel-button-secondary inline-flex h-11 min-w-28 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0">Cancelar</button>
-                                <button type="submit" class="panel-button inline-flex h-11 min-w-28 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0">Guardar</button>
+                                @if ($editingProfile !== null)<button type="button" wire:click="deleteProfile" wire:confirm="¿Eliminar este perfil del informe?" class="backup-modal-delete inline-flex h-11 w-full items-center justify-center rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:mr-auto sm:w-auto">Eliminar</button>@endif
+                                <button type="button" wire:click="$set('showProfileEditor', false)" class="backup-modal-outline inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Cancelar</button>
+                                <button type="submit" class="backup-modal-primary inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Guardar</button>
                             </footer>
                         </form>
                     </div>
@@ -1427,8 +1442,8 @@
                 >
                     <div data-panel class="panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; max-height: calc(100dvh - 40px); overscroll-behavior: contain;">
                         <form wire:submit="saveServer" class="flex min-h-0 flex-1 flex-col">
-                            <header class="panel-header panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
-                                <div class="flex min-w-0 items-center gap-[15px]">
+                            <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
+                                <div class="flex min-w-0 items-start gap-[15px] sm:items-center">
                                     <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 6.5h14v5H5v-5Zm0 6h14v5H5v-5ZM8 9h.01M8 15h.01"/></svg>
                                     </span>
@@ -1437,38 +1452,38 @@
                                         <p class="mt-[15px] leading-tight sm:truncate">Define el nombre y el recurso compartido donde están los logs.</p>
                                     </div>
                                 </div>
-                                <button type="button" wire:click="$set('showServerEditor', false)" class="panel-icon-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0" aria-label="Cerrar">
+                                <button type="button" wire:click="$set('showServerEditor', false)" class="backup-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0" aria-label="Cerrar">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
                                 </button>
                             </header>
 
                             <div class="min-h-0 flex-1 overflow-y-auto">
                                 <div class="p-[20px]">
-                                    <div class="panel-border rounded-xl border p-[20px]">
+                                    <section class="backup-modal-section">
                                         <h4 class="panel-accent text-[15px] font-normal leading-none">Datos del servidor</h4>
                                         <div class="mt-[20px] grid grid-cols-1 gap-[20px]">
                                             <div class="min-w-0">
                                                 <label for="backup-server-name" class="mb-[10px] block">Servidor *</label>
-                                                <input id="backup-server-name" type="text" wire:model="serverForm.name" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                <input id="backup-server-name" type="text" wire:model="serverForm.name" placeholder="Ej. Ifacture" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                                 @error('serverForm.name')<p class="backup-tone-red mt-[15px]">{{ $message }}</p>@enderror
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="backup-server-ip" class="mb-[10px] block">Dirección IP</label>
-                                                <input id="backup-server-ip" type="text" wire:model="serverForm.ip" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
+                                                <input id="backup-server-ip" type="text" wire:model="serverForm.ip" placeholder="Ej. 192.168.2.178" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="backup-server-share" class="mb-[10px] block">Carpeta compartida</label>
-                                                <input id="backup-server-share" type="text" wire:model="serverForm.share" placeholder="\\SERVIDOR\log" class="panel-field block h-11 w-full rounded-xl border px-[15px] font-mono focus:ring-0">
+                                                <input id="backup-server-share" type="text" wire:model="serverForm.share" placeholder="Ej. \\SRVIFAC\log" class="panel-field block h-11 w-full rounded-xl border px-[15px] focus:ring-0">
                                             </div>
                                         </div>
-                                    </div>
+                                    </section>
                                 </div>
                             </div>
 
                             <footer class="panel-border flex flex-shrink-0 flex-wrap items-center justify-end gap-[10px] border-t p-[20px]">
-                                @if (! $addingServer)<button type="button" wire:click="deleteServer" wire:confirm="¿Eliminar este servidor y sus perfiles del informe?" class="panel-action-danger mr-auto inline-flex h-11 items-center gap-[10px] leading-none focus:outline-none focus:ring-0">Eliminar</button>@endif
-                                <button type="button" wire:click="$set('showServerEditor', false)" class="panel-button-secondary inline-flex h-11 min-w-28 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0">Cancelar</button>
-                                <button type="submit" class="panel-button inline-flex h-11 min-w-28 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0">Guardar</button>
+                                @if (! $addingServer)<button type="button" wire:click="deleteServer" wire:confirm="¿Eliminar este servidor y sus perfiles del informe?" class="backup-modal-delete inline-flex h-11 w-full items-center justify-center rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:mr-auto sm:w-auto">Eliminar</button>@endif
+                                <button type="button" wire:click="$set('showServerEditor', false)" class="backup-modal-outline inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Cancelar</button>
+                                <button type="submit" class="backup-modal-primary inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Guardar</button>
                             </footer>
                         </form>
                     </div>

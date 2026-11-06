@@ -8,9 +8,11 @@ use App\Models\TechnicalSupportReportMovement;
 use App\Models\User;
 use App\Services\Support\TechnicalSupportReportPdfService;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -43,33 +45,20 @@ class TechnicalSupportReportController extends Controller
         $recipient = trim((string) $request->query('recipient', ''));
         $target = trim((string) $request->query('target', ''));
         $requestedDate = trim((string) $request->query('date', ''));
+        $period = $this->datePeriod($request);
         $timezone = config('support.timezone', 'America/Mexico_City');
 
         $filterReports = TechnicalSupportReport::query()
             ->get(['service_recipient', 'supports', 'issued_at']);
 
-        $dateOptions = $filterReports
-            ->groupBy(fn (TechnicalSupportReport $report): string => $report->issued_at->timezone($timezone)->format('Y-m-d'))
-            ->map(function ($reports, string $date) use ($timezone): array {
-                $localDate = CarbonImmutable::createFromFormat('Y-m-d', $date, $timezone)->locale('es');
+        $dateOptions = $this->groupByPeriod($filterReports, 'issued_at', $period, $timezone);
 
-                return [
-                    'date' => $date,
-                    'label' => ucfirst($localDate->translatedFormat('l, d \d\e F \d\e Y')),
-                    'count' => $reports->count(),
-                ];
-            })
-            ->sortByDesc('date')
-            ->values();
-
-        $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedDate) === 1
+        $date = preg_match('/^\d{4}(-\d{2}-\d{2})?$/', $requestedDate) === 1
             && $dateOptions->contains('date', $requestedDate)
                 ? $requestedDate
                 : (string) ($dateOptions->first()['date'] ?? '');
 
-        $localDateStart = $date !== ''
-            ? CarbonImmutable::createFromFormat('Y-m-d H:i:s', $date.' 00:00:00', $timezone)
-            : null;
+        $dateRange = $this->periodRange($date, $period, $timezone);
 
         $reportsQuery = TechnicalSupportReport::query()
             ->when($search !== '', function ($query) use ($search): void {
@@ -82,10 +71,7 @@ class TechnicalSupportReportController extends Controller
             })
             ->when($recipient !== '', fn ($query) => $query->where('service_recipient', $recipient))
             ->when($target !== '', fn ($query) => $query->where('supports', 'like', '%'.$target.'%'))
-            ->when($localDateStart !== null, fn ($query) => $query->whereBetween('issued_at', [
-                $localDateStart->utc(),
-                $localDateStart->endOfDay()->utc(),
-            ]))
+            ->when($dateRange !== null, fn ($query) => $query->whereBetween('issued_at', $dateRange))
             ->latest('issued_at')
             ->latest('id');
 
@@ -93,13 +79,10 @@ class TechnicalSupportReportController extends Controller
             'activeTab' => 'history',
             'trashedReports' => $this->trashedReports(),
             'reports' => $reportsQuery->paginate(20)->withQueryString(),
-            'filters' => compact('search', 'recipient', 'target', 'date'),
+            'filters' => compact('search', 'recipient', 'target', 'date', 'period'),
             'dateOptions' => $dateOptions,
             'folioOptions' => TechnicalSupportReport::query()
-                ->when($localDateStart !== null, fn ($query) => $query->whereBetween('issued_at', [
-                    $localDateStart->utc(),
-                    $localDateStart->endOfDay()->utc(),
-                ]))
+                ->when($dateRange !== null, fn ($query) => $query->whereBetween('issued_at', $dateRange))
                 ->latest('issued_at')
                 ->latest('id')
                 ->pluck('folio')
@@ -127,6 +110,7 @@ class TechnicalSupportReportController extends Controller
         $action = trim((string) $request->query('action', ''));
         $actor = trim((string) $request->query('user', ''));
         $requestedDate = trim((string) $request->query('date', ''));
+        $period = $this->datePeriod($request);
         $timezone = config('support.timezone', 'America/Mexico_City');
 
         if (! in_array($action, [
@@ -142,33 +126,16 @@ class TechnicalSupportReportController extends Controller
             ->with('user:id,name')
             ->get(['id', 'folio', 'action', 'user_id', 'user_name', 'occurred_at']);
 
-        $dateOptions = $allMovements
-            ->groupBy(fn (TechnicalSupportReportMovement $movement): string => $movement->occurred_at->timezone($timezone)->format('Y-m-d'))
-            ->map(function ($movements, string $date) use ($timezone): array {
-                $localDate = CarbonImmutable::createFromFormat('Y-m-d', $date, $timezone)->locale('es');
+        $dateOptions = $this->groupByPeriod($allMovements, 'occurred_at', $period, $timezone);
 
-                return [
-                    'date' => $date,
-                    'label' => ucfirst($localDate->translatedFormat('l, d \d\e F \d\e Y')),
-                    'count' => $movements->count(),
-                ];
-            })
-            ->sortByDesc('date')
-            ->values();
-
-        $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedDate) === 1
+        $date = preg_match('/^\d{4}(-\d{2}-\d{2})?$/', $requestedDate) === 1
             && $dateOptions->contains('date', $requestedDate)
                 ? $requestedDate
                 : (string) ($dateOptions->first()['date'] ?? '');
 
-        $localDateStart = $date !== ''
-            ? CarbonImmutable::createFromFormat('Y-m-d H:i:s', $date.' 00:00:00', $timezone)
-            : null;
+        $dateRange = $this->periodRange($date, $period, $timezone);
 
-        $inSelectedDate = fn ($query) => $query->when($localDateStart !== null, fn ($query) => $query->whereBetween('occurred_at', [
-            $localDateStart->utc(),
-            $localDateStart->endOfDay()->utc(),
-        ]));
+        $inSelectedDate = fn ($query) => $query->when($dateRange !== null, fn ($query) => $query->whereBetween('occurred_at', $dateRange));
 
         $movementsQuery = TechnicalSupportReportMovement::query()
             ->with('user:id,name,email')
@@ -195,7 +162,7 @@ class TechnicalSupportReportController extends Controller
             'activeTab' => 'movements',
             'trashedReports' => $this->trashedReports(),
             'movements' => $movementsQuery->paginate(30)->withQueryString(),
-            'filters' => compact('search', 'action', 'date') + ['user' => $actor],
+            'filters' => compact('search', 'action', 'date', 'period') + ['user' => $actor],
             'dateOptions' => $dateOptions,
             'folioOptions' => $inSelectedDate(TechnicalSupportReportMovement::query())
                 ->latest('occurred_at')
@@ -216,6 +183,82 @@ class TechnicalSupportReportController extends Controller
                 ->sort(SORT_NATURAL | SORT_FLAG_CASE)
                 ->values(),
         ]);
+    }
+
+    /**
+     * Cómo se agrupa la lista de fechas de los historiales: por día (predeterminado), semana o año.
+     */
+    private function datePeriod(Request $request): string
+    {
+        $period = trim((string) $request->query('period', 'day'));
+
+        return in_array($period, ['week', 'year'], true) ? $period : 'day';
+    }
+
+    /**
+     * Agrupa los registros por día, semana (de lunes a domingo) o año, según la zona horaria local.
+     *
+     * @return Collection<int, array{date: string, label: string, count: int}>
+     */
+    private function groupByPeriod(Collection $records, string $column, string $period, string $timezone): Collection
+    {
+        return $records
+            ->groupBy(fn ($record): string => $this->periodKey(CarbonImmutable::instance($record->{$column})->timezone($timezone), $period))
+            ->map(fn ($group, $key): array => [
+                'date' => (string) $key,
+                'label' => $this->periodLabel((string) $key, $period, $timezone),
+                'count' => $group->count(),
+            ])
+            ->sortByDesc('date')
+            ->values();
+    }
+
+    private function periodKey(CarbonImmutable $moment, string $period): string
+    {
+        return match ($period) {
+            'week' => $moment->startOfWeek(CarbonInterface::MONDAY)->format('Y-m-d'),
+            'year' => $moment->format('Y'),
+            default => $moment->format('Y-m-d'),
+        };
+    }
+
+    private function periodLabel(string $key, string $period, string $timezone): string
+    {
+        if ($period === 'year') {
+            return 'Año '.$key;
+        }
+
+        $start = CarbonImmutable::createFromFormat('Y-m-d', $key, $timezone)->locale('es');
+
+        if ($period === 'week') {
+            $end = $start->addDays(6);
+
+            return 'Semana del '.$start->translatedFormat($start->year === $end->year ? 'd M' : 'd M Y').' al '.$end->translatedFormat('d M Y');
+        }
+
+        return ucfirst($start->translatedFormat('l, d \d\e F \d\e Y'));
+    }
+
+    /**
+     * Inicio y fin (en UTC) del día, la semana o el año elegido; null si no hay fecha.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}|null
+     */
+    private function periodRange(string $date, string $period, string $timezone): ?array
+    {
+        if ($date === '') {
+            return null;
+        }
+
+        $start = CarbonImmutable::createFromFormat('Y-m-d H:i:s', ($period === 'year' ? $date.'-01-01' : $date).' 00:00:00', $timezone);
+
+        $end = match ($period) {
+            'week' => $start->addDays(6)->endOfDay(),
+            'year' => $start->endOfYear(),
+            default => $start->endOfDay(),
+        };
+
+        return [$start->utc(), $end->utc()];
     }
 
     public function store(Request $request, TechnicalSupportReportPdfService $pdf): RedirectResponse

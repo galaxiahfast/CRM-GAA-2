@@ -132,6 +132,46 @@ class TechnicalSupportReportTest extends TestCase
         );
     }
 
+    public function test_date_list_can_be_grouped_by_day_week_or_year(): void
+    {
+        $user = User::factory()->create();
+
+        $day = $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history'))
+            ->assertOk();
+        $this->assertSame('day', $day->viewData('filters')['period']);
+        $this->assertContains('2026-10-28', $day->viewData('dateOptions')->pluck('date'));
+
+        $week = $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['period' => 'week', 'date' => '2026-10-26']))
+            ->assertOk()
+            ->assertSee('Semana del 26');
+        $this->assertSame('week', $week->viewData('filters')['period']);
+        $this->assertSame('2026-10-26', $week->viewData('filters')['date']);
+        $this->assertContains('2026-10-26', $week->viewData('dateOptions')->pluck('date'));
+        $this->assertContains('ST-20261028-0012', $week->viewData('reports')->pluck('folio'));
+        $this->assertNotContains('ST-20261023-0007', $week->viewData('reports')->pluck('folio'));
+
+        $year = $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['period' => 'year', 'date' => '2026']))
+            ->assertOk()
+            ->assertSee('Año 2026');
+        $this->assertSame('2026', $year->viewData('filters')['date']);
+        $this->assertContains('ST-20261028-0012', $year->viewData('reports')->pluck('folio'));
+        $this->assertContains('ST-20261023-0007', $year->viewData('reports')->pluck('folio'));
+
+        $unknown = $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.history', ['period' => 'month']))
+            ->assertOk();
+        $this->assertSame('day', $unknown->viewData('filters')['period']);
+
+        $this->actingAs($user)
+            ->get(route('soporte.reportes-tecnicos.movements', ['period' => 'week', 'date' => '2026-10-26']))
+            ->assertOk()
+            ->assertSee('Semana del 26')
+            ->assertSee('ST-20261028-0012');
+    }
+
     public function test_report_can_only_be_deleted_by_its_creator_or_an_administrator(): void
     {
         $administratorRole = Role::query()->create([

@@ -1,7 +1,8 @@
 {{-- Selector múltiple de a quién se atendió (colaboradores con su departamento y clientes externos).
      Se usa dentro del x-for de servicios: lee `directory`, `quantities` y `targets` del componente
      padre y escribe targets[item.key] (un nombre por línea, el formato que recibe el servidor).
-     El máximo de personas es la cantidad indicada en el servicio. --}}
+     El máximo de personas es la cantidad indicada en el servicio. La lista se dibuja fuera de la zona escalada
+     de la página y usa `effScale` (escala efectiva de la vista) para colocarse. --}}
 <div
     x-data="{
         open: false,
@@ -76,7 +77,7 @@
         },
         position() {
             const rect = this.$refs.trigger.getBoundingClientRect();
-            const k = (typeof viewScale === 'undefined' ? 100 : Number(viewScale)) / 100 || 1;
+            const k = (typeof effScale === 'undefined' ? 100 : Number(effScale)) / 100 || 1;
             const gap = 10 * k;
             const chrome = 62;
             const rows = Math.max(1, Math.min(this.shown.length + (this.canAdd ? 1 : 0), 5));
@@ -106,40 +107,40 @@
     @resize.window="if (open) position()"
     {{ $attributes->class(['relative min-w-0']) }}
 >
-    <button x-ref="trigger" type="button" @click="show()" :disabled="! selected.includes(item.key)" :style="over ? 'border-color: #dc2626 !important;' : ''" class="flex h-[44px] w-full items-center justify-between gap-[10px] rounded-xl border border-[#d4d4d8] bg-white px-[20px] text-left font-normal leading-none text-black outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" aria-haspopup="listbox" :aria-expanded="open">
-        <span class="min-w-0 flex-1 truncate" :class="list.length === 0 ? 'text-zinc-500' : 'text-black'" x-text="list.length === 0 ? 'Elegir personas o clientes...' : list.join(', ')"></span>
-        <svg class="h-4 w-4 shrink-0 text-black transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
+    <button x-ref="trigger" type="button" @click="show()" :disabled="! selected.includes(item.key)" :style="over ? 'border-color: var(--panel-danger) !important;' : ''" class="panel-field support-trigger flex h-11 w-full items-center justify-between gap-[10px] rounded-xl border px-[20px] text-left leading-none outline-none focus:outline-none focus:ring-0 disabled:opacity-40" aria-haspopup="listbox" :aria-expanded="open">
+        <span class="min-w-0 flex-1 truncate" :class="list.length === 0 ? 'panel-muted' : ''" x-text="list.length === 0 ? 'Elegir personas o clientes...' : list.join(', ')"></span>
+        <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
     </button>
 
     <template x-teleport="body">
-        <div x-ref="list" data-support-dropdown data-support-modal x-cloak x-show="open" :style="listStyle" class="overflow-hidden rounded-xl border border-[#d4d4d8] bg-white text-[15px] text-black" role="listbox" aria-multiselectable="true">
-            <div class="flex items-center border-b border-[#d4d4d8] bg-white" style="height: 62px;">
-                <input x-ref="search" x-model="q" @input="$nextTick(() => { if (open) position(); })" type="search" autocomplete="off" :placeholder="tab === 'user' ? 'Buscar colaborador...' : 'Buscar o agregar...'" @keydown.enter.prevent="enter()" class="block h-full min-w-0 flex-1 border-0 bg-white px-[20px] font-normal text-black outline-none placeholder:text-zinc-500 focus:outline-none focus:ring-0" style="box-shadow: none !important; outline: none !important;">
+        <div x-ref="list" data-panel data-support-dropdown x-cloak x-show="open" :style="listStyle" class="panel-surface panel-border overflow-hidden rounded-xl border" role="listbox" aria-multiselectable="true">
+            <div class="panel-border flex items-center border-b" style="height: 62px;">
+                <input x-ref="search" x-model="q" @input="$nextTick(() => { if (open) position(); })" type="search" autocomplete="off" :placeholder="tab === 'user' ? 'Buscar colaborador...' : 'Buscar o agregar...'" @keydown.enter.prevent="enter()" class="panel-field block h-full min-w-0 flex-1 border-0 px-[20px] outline-none focus:outline-none focus:ring-0" style="box-shadow: none !important; outline: none !important;">
                 <div class="flex shrink-0 items-center gap-[20px] pr-[20px]">
-                    <button type="button" @click="setTab('user')" class="text-left font-normal leading-none focus:outline-none focus:ring-0" :class="tab === 'user' ? 'text-[#1A3A6B]' : 'text-black'" x-text="countOf('user') > 0 ? `Colaboradores (${countOf('user')})` : 'Colaboradores'"></button>
-                    <button type="button" @click="setTab('client')" class="text-left font-normal leading-none focus:outline-none focus:ring-0" :class="tab === 'client' ? 'text-[#1A3A6B]' : 'text-black'" x-text="countOf('client') > 0 ? `Clientes (${countOf('client')})` : 'Clientes'"></button>
+                    <button type="button" role="tab" @click="setTab('user')" :aria-selected="tab === 'user'" class="panel-tab text-left leading-none focus:outline-none focus:ring-0" x-text="countOf('user') > 0 ? `Colaboradores (${countOf('user')})` : 'Colaboradores'"></button>
+                    <button type="button" role="tab" @click="setTab('client')" :aria-selected="tab === 'client'" class="panel-tab text-left leading-none focus:outline-none focus:ring-0" x-text="countOf('client') > 0 ? `Clientes (${countOf('client')})` : 'Clientes'"></button>
                 </div>
             </div>
 
             <div x-data="backupOverlayScroll()" x-effect="open; shown; canAdd; tab; $nextTick(() => update())" class="relative" style="margin-bottom: -1px;">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="support-service-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px;`">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll overflow-y-auto overscroll-contain" :style="`max-height: ${listHeight}px;`">
                     <template x-for="person in shown" :key="person.name">
-                        <button type="button" role="option" :aria-selected="has(person.name)" :disabled="full && ! has(person.name)" @click="toggle(person.name)" class="flex w-full items-center gap-[20px] border-b border-[#d4d4d8] bg-white p-[20px] text-left font-normal leading-none hover:bg-zinc-50 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white">
+                        <button type="button" role="option" :aria-selected="has(person.name)" :disabled="full && ! has(person.name)" @click="toggle(person.name)" class="panel-option panel-border flex w-full items-center gap-[20px] border-b p-[20px] text-left leading-none focus:outline-none focus:ring-0 disabled:opacity-40 disabled:hover:bg-transparent">
                             <span class="support-check flex h-4 w-4 shrink-0 items-center justify-center rounded border" :class="has(person.name) ? 'support-check-on' : ''">
                                 <svg x-show="has(person.name)" class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m5 13 4 4L19 7" /></svg>
                             </span>
-                            <span class="min-w-0 flex-1 truncate" :class="has(person.name) ? 'text-[#1A3A6B]' : 'text-black'" x-text="person.name"></span>
-                            <span x-show="person.group" x-cloak class="max-w-[45%] shrink-0 truncate leading-none text-black" x-text="person.group"></span>
+                            <span class="min-w-0 flex-1 truncate" x-text="person.name"></span>
+                            <span x-show="person.group" x-cloak class="panel-muted max-w-[45%] shrink-0 truncate leading-none" x-text="person.group"></span>
                         </button>
                     </template>
-                    <button x-show="canAdd" x-cloak type="button" :disabled="full" @click="add()" class="flex w-full items-center gap-[10px] border-b border-[#d4d4d8] bg-white p-[20px] text-left font-normal leading-none text-[#1A3A6B] hover:bg-zinc-50 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40">
+                    <button x-show="canAdd" x-cloak type="button" :disabled="full" @click="add()" class="panel-option panel-accent panel-border flex w-full items-center gap-[10px] border-b p-[20px] text-left leading-none focus:outline-none focus:ring-0 disabled:opacity-40">
                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14M5 12h14" /></svg>
                         <span class="min-w-0 flex-1 truncate" x-text="`Agregar cliente «${q.trim()}»`"></span>
                     </button>
-                    <p x-show="filtered.length > 100" x-cloak class="border-b border-[#d4d4d8] p-[20px] leading-none text-black">Escribe para acotar los resultados.</p>
-                    <p x-show="filtered.length === 0 && ! canAdd" x-cloak class="border-b border-[#d4d4d8] p-[20px] leading-none text-black" x-text="tab === 'client' ? 'Escribe el nombre del cliente para agregarlo.' : 'No hay resultados.'"></p>
+                    <p x-show="filtered.length > 100" x-cloak class="panel-muted panel-border border-b p-[20px] leading-none">Escribe para acotar los resultados.</p>
+                    <p x-show="filtered.length === 0 && ! canAdd" x-cloak class="panel-muted panel-border border-b p-[20px] leading-none" x-text="tab === 'client' ? 'Escribe el nombre del cliente para agregarlo.' : 'No hay resultados.'"></p>
                 </div>
-                <span x-show="visible" x-cloak class="support-service-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
         </div>
     </template>

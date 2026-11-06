@@ -506,40 +506,42 @@ return [
             'items' => [
                 'actualizar' => [
                     'question' => '¿Cómo actualizo la información del informe?',
-                    'answer' => 'Presiona “Actualizar registros”. El sistema lee los registros en modo de solo acceso, perfil por perfil, y muestra el avance mientras procesa.',
+                    'answer' => 'Al abrir el apartado se muestra la última lectura guardada, con la barra al 100 %, y no se leen los registros otra vez para no desgastar los servidores. Para actualizar la información presiona “Actualizar registros”: el sistema lee los registros en modo de solo acceso, perfil por perfil, y la barra muestra el avance, el porcentaje y el tiempo estimado. La barra se llena de forma continua y tiene un punto por servidor: cada servidor tarda al menos 5 segundos y, al llegar a su punto, este se marca con una palomita azul. Cada servidor tiene su globo junto a su punto (uno debajo de la barra, el siguiente arriba, y así) con su IP, su estado ([x] leído, [>] leyendo, [ ] pendiente), los perfiles leídos y el tiempo que tardó. “Actualizar registros” está debajo de la barra, a la derecha.',
                     'steps' => [
-                        'Presiona “Actualizar registros”.',
-                        'Espera a que termine el procesamiento; la barra indica el avance.',
-                        'Revisa los resultados actualizados.',
+                        'Al abrir el apartado revisa la barra: indica la fecha de la última lectura guardada y se muestra al 100 %.',
+                        'Si necesitas datos nuevos, presiona “Actualizar registros” y espera a que termine; la barra indica el avance y el tiempo estimado, y el globo de cada servidor, arriba o debajo de la barra, muestra su estado, los perfiles leídos y el tiempo.',
+                        'Revisa el resumen de la tabla: perfiles revisados, correctos, con error y sin datos o pendientes.',
+                        'Elige un servidor en la lista de la izquierda y después un perfil para ver su detalle e incidencias.',
                     ],
                 ],
                 'incidencias' => [
                     'question' => '¿Cómo agrego un perfil o registro una incidencia?',
-                    'answer' => 'En Incidencias usa “Agregar perfil”: captura el perfil, el nombre del log, la fecha y hora, las empresas con error (una por línea) y las incidencias generales.',
+                    'answer' => 'Elige el servidor en la lista de la izquierda y usa “Agregar perfil” al final de su lista de perfiles: captura el perfil, el nombre del log, la fecha y hora, las empresas con error (una por línea) y las incidencias generales.',
                     'steps' => [
-                        'En la sección Incidencias presiona “Agregar perfil”.',
+                        'Elige el servidor en la lista de la izquierda y presiona “Agregar perfil”.',
                         'Escribe el Perfil y el Nombre del log.',
                         'Captura la fecha y hora y las empresas con error, una por línea.',
                         'Describe las incidencias generales y presiona Guardar.',
-                        'Para corregir un perfil que ya existe, presiona Editar en su fila, ajusta los datos y presiona Guardar.',
+                        'Para corregir un perfil que ya existe, selecciónalo, presiona “Editar perfil”, ajusta los datos y presiona Guardar. Para cambiar el nombre, la IP o la carpeta del servidor usa “Editar servidor”.',
                     ],
                 ],
                 'guardar_pdf' => [
                     'question' => '¿Cómo guardo el informe en PDF?',
-                    'answer' => 'Presiona “Guardar PDF”. Con la opción “Incluir este perfil en el PDF” decides qué perfiles se incluyen en el documento.',
+                    'answer' => 'Presiona “Guardar PDF” cuando la lectura haya terminado. Con la opción “Incluir este perfil en el PDF”, que aparece al editar un perfil, decides qué perfiles se incluyen en el documento.',
                     'steps' => [
-                        'Revisa cada perfil y marca “Incluir este perfil en el PDF” en los que deban aparecer.',
+                        'Para decidir qué perfiles aparecen, presiona “Editar perfil” y marca o desmarca “Incluir este perfil en el PDF”.',
                         'Presiona “Guardar PDF”.',
                         'Guarda el documento generado.',
                     ],
                 ],
                 'correo' => [
                     'question' => '¿Cómo envío el reporte por correo?',
-                    'answer' => 'Presiona “Enviar reporte por correo”, selecciona uno o varios destinatarios (al menos uno) y confirma con “Enviar reporte”.',
+                    'answer' => 'Presiona “Enviar reporte por correo”, selecciona uno o varios destinatarios (al menos uno) y confirma con “Enviar reporte”. Además, el CRM envía el informe solo, cada semana, a los destinatarios configurados: la barra “Envío automático” muestra el día, la hora y el estado del último envío.',
                     'steps' => [
                         'Presiona “Enviar reporte por correo”.',
                         'En “Enviar reporte a” selecciona uno o varios destinatarios.',
                         'Presiona “Enviar reporte” y espera la confirmación.',
+                        'Para consultar el envío automático, presiona “Ver detalle” en la barra “Envío automático”.',
                     ],
                 ],
             ],
