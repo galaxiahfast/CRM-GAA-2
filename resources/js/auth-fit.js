@@ -100,6 +100,8 @@ const initializeAuthFit = () => {
     resizeObserver.observe(shell);
     window.addEventListener('resize', schedule);
     document.fonts?.ready.then(schedule);
+    // La tipografía llega sin bloquear la página: al terminar de cargar cambian las medidas del texto.
+    document.fonts?.addEventListener?.('loadingdone', schedule);
     fit();
 
     window.addEventListener('pagehide', () => {

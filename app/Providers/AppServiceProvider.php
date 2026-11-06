@@ -16,9 +16,11 @@ use App\Observers\UserOrganizationalProfileHierarchyObserver;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\Notifications\SystemNotificationService;
 use App\Services\ReferenceDataCache;
+use App\Services\Security\RequestMemoizedHasher;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Hashing\HashManager;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -37,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
         // Una sola instancia por petición comparte los resultados de permisos
         // entre middleware, Gates y navegación sin conservarlos entre usuarios.
         $this->app->scoped(PermissionAccessService::class);
+
+        // Fortify valida la contraseña dos veces al iniciar sesión (una para decidir si pide el segundo
+        // factor y otra al autenticar). Se recuerda el resultado de la primera comparación dentro de la
+        // petición para no pagar dos veces el costo de bcrypt; las validaciones y el costo no cambian.
+        $this->app->extend('hash', fn (HashManager $manager): RequestMemoizedHasher => new RequestMemoizedHasher($manager));
     }
 
     /**
