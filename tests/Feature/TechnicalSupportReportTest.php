@@ -14,6 +14,25 @@ class TechnicalSupportReportTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_tulum_accounting_performance_and_excel_report_is_available(): void
+    {
+        $report = TechnicalSupportReport::query()->where('folio', 'ST-20261106-0023')->firstOrFail();
+
+        $this->assertSame('Tulum Contabilidad', $report->service_recipient);
+        $this->assertSame(['command_performance_correction', 'excel_repair'], array_column($report->supports, 'key'));
+        $this->assertNull($report->details['contact_email']);
+
+        foreach ($report->supports as $support) {
+            $this->assertSame(['Manuel Agustin Kauil Canche'], $support['targets']);
+        }
+
+        $this->assertDatabaseHas('technical_support_report_movements', [
+            'technical_support_report_id' => $report->id,
+            'folio' => 'ST-20261106-0023',
+            'action' => TechnicalSupportReportMovement::ACTION_CREATED,
+        ]);
+    }
+
     public function test_accounting_network_and_timezone_reports_are_available_with_their_recipients(): void
     {
         $expected = [
