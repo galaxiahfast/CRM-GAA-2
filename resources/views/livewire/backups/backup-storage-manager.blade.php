@@ -49,6 +49,8 @@
         .backup-storage-monochrome { --backup-green: #15803d; font-size: 15px; }
         html.module-dark-theme .backup-storage-monochrome { --backup-green: #4ade80; }
         .backup-green { color: var(--backup-green); }
+        .backup-action-button { background-color: #15803d; color: #fff; }
+        .backup-action-button:hover:not(:disabled) { background-color: #166534; }
         .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
             font-size: 15px !important;
         }
@@ -328,7 +330,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="grid w-full {{ $selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups') ? 'grid-cols-2' : 'grid-cols-1' }} gap-[10px]">
-                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="panel-button inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl px-[12px] leading-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="backup-action-button inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl px-[12px] leading-none transition disabled:cursor-not-allowed disabled:opacity-50">
                                                         <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
                                                         <span wire:loading.remove wire:target="startExport" class="truncate">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedDeletableCount === $selectedExportCount) Reemplazar {{ $selectedExportCount === 1 ? 'respaldo' : $selectedExportCount.' respaldos' }} @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
                                                         <span wire:loading wire:target="startExport">Validando…</span>
@@ -342,7 +344,7 @@
                                                 </div>
                                         </div>
                             </div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative h-[544px] order-3 min-h-0 flex-none">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative order-3 h-[700px] min-h-0 flex-none">
                                 <div wire:loading.flex wire:target="selectDate" class="absolute inset-0 z-30 hidden flex-col items-center justify-center panel-surface ">
                                     <svg class="h-9 w-9 animate-spin panel-accent" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-20" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"/><path class="opacity-90" fill="currentColor" d="M21 12a9 9 0 0 0-9-9v3a6 6 0 0 1 6 6h3Z"/></svg>
                                     <span class="mt-[12px] ">Cargando respaldos…</span>
@@ -363,7 +365,7 @@
                                                 <td class="border-r panel-border px-[15px] py-[15px] text-center tabular-nums ">{{ $record['time'] }}</td>
                                                 <td class="min-w-0 border-r panel-border px-[15px] py-[15px] text-center">
                                                     @if($latestDestination)
-                                                        <div class="mx-auto min-w-0" title="{{ $latestDestination['label'] }} · {{ $latestDestination['path'] }}"><p class="truncate leading-none">{{ $latestDestination['label'] }}</p><p class="mt-[15px] truncate leading-none">{{ $latestDestination['path'] }}</p>@if(count($recordDestinations) > 1)<p class="mt-[15px] leading-none">+{{ count($recordDestinations) - 1 }} {{ count($recordDestinations) === 2 ? 'destino' : 'destinos' }}</p>@endif</div>
+                                                        <div class="mx-auto min-w-0" title="{{ $latestDestination['label'] }} · {{ $latestDestination['path'] }}"><p class="truncate leading-none">{{ $latestDestination['label'] }}@if(count($recordDestinations) > 1) · +{{ count($recordDestinations) - 1 }} {{ count($recordDestinations) === 2 ? 'destino' : 'destinos' }}@endif</p><p class="mt-[15px] truncate leading-none">{{ $latestDestination['path'] }}</p></div>
                                                     @elseif($recordState === 'available')<span class="panel-accent">Disponible</span>
                                                     @elseif($recordState === 'backed_up')<span class="panel-accent">Ya respaldada</span>
                                                     @elseif($recordState === 'copying')<span class="">Copiando</span>
