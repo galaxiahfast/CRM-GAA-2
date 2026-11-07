@@ -36,6 +36,8 @@
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
         .backup-today-scroll { scroll-snap-type: y mandatory; scroll-padding-top: 60px; }
         .backup-today-scroll tbody tr { scroll-snap-align: start; }
+        .backup-history-scroll { scroll-snap-type: y mandatory; scroll-padding-top: 70px; }
+        .backup-history-scroll tbody tr { scroll-snap-align: start; }
         .backup-catalog-scroll-thumb { position: absolute; right: 0; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: var(--panel-accent); opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x { position: absolute; bottom: 0; left: 0; z-index: 21; height: 14px; min-width: 48px; background: transparent; opacity: 0; cursor: ew-resize; touch-action: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: var(--panel-accent); }
@@ -207,7 +209,7 @@
                     <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
                 </button>
                 </div>
-                <span class="inline-flex items-center gap-[10px] leading-none {{ $bothLocationsOnline ? 'panel-accent' : 'text-[color:var(--panel-danger)]' }}" title="Origen: {{ ($catalog['connected'] ?? false) ? 'en línea' : 'fuera de línea' }} · Memoria: {{ ($exportDestination['connected'] ?? false) ? 'en línea' : 'fuera de línea' }}"><span class="h-1.5 w-1.5 rounded-full {{ $bothLocationsOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></span>{{ $bothLocationsOnline ? 'En línea' : 'Fuera de línea' }}</span>
+                @if($activeView === 'backups')<span class="inline-flex items-center gap-[10px] leading-none {{ $bothLocationsOnline ? 'panel-accent' : 'text-[color:var(--panel-danger)]' }}" title="Origen: {{ ($catalog['connected'] ?? false) ? 'en línea' : 'fuera de línea' }} · Memoria: {{ ($exportDestination['connected'] ?? false) ? 'en línea' : 'fuera de línea' }}"><span class="h-1.5 w-1.5 rounded-full {{ $bothLocationsOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></span>{{ $bothLocationsOnline ? 'En línea' : 'Fuera de línea' }}</span>@endif
             </div>
         </section>
 
@@ -411,11 +413,11 @@
                         <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><span>Historial de movimientos</span></h2>
                         <p class="mt-[15px] leading-none">Respaldos, reemplazos, cancelaciones, errores y eliminaciones registrados por el sistema.</p>
                     </div>
-                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative h-[650px]">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative h-[620px]">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll backup-history-scroll h-full overflow-auto">
                             <table class="w-full min-w-[1050px] table-fixed border-collapse text-left">
                                 <colgroup><col class="w-[170px]"><col class="w-[190px]"><col class="w-[290px]"><col class="w-[230px]"><col class="w-[190px]"></colgroup>
-                                <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px]"><th class="border-r panel-border px-[20px] ">Fecha y hora</th><th class="border-r panel-border px-[15px] ">Movimiento</th><th class="border-r panel-border px-[15px] ">Empresas</th><th class="border-r panel-border px-[15px] ">Destino</th><th class="px-[20px] ">Usuario</th></tr></thead>
+                                <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px]"><th class="border-r panel-border px-[20px] ">Fecha y hora</th><th class="border-r panel-border px-[15px] text-center">Movimiento</th><th class="border-r panel-border px-[15px] ">Empresas</th><th class="border-r panel-border px-[15px] ">Destino</th><th class="px-[20px] ">Usuario</th></tr></thead>
                                 <tbody class="divide-y divide-[color:var(--panel-border)]">
                                     @forelse($movementHistory as $movement)
                                         @php
@@ -440,16 +442,16 @@
                                             $companyNames = implode(', ', $movement['companies'] ?? []);
                                             $destinationText = trim(($movement['destination_label'] ?? 'Memoria externa').' · '.str_replace('/', '\\', $movement['destination_folder'] ?? ''), ' ·');
                                         @endphp
-                                        <tr wire:key="history-{{ $movement['id'] }}" class="h-[100px] {{ $loop->odd ? 'panel-subtle' : 'panel-surface' }}">
+                                        <tr wire:key="history-{{ $movement['id'] }}" class="h-[110px] {{ $loop->odd ? 'panel-subtle' : 'panel-surface' }}">
                                             @php($movementAt = \Carbon\CarbonImmutable::parse($movement['occurred_at'])->setTimezone(config('backup-storage.display_timezone'))->locale('es'))
                                             <td class="border-r panel-border px-[20px] py-[15px]"><p class="leading-none">{{ $movementAt->translatedFormat('d M Y') }}</p><p class="mt-[15px] leading-none">{{ $movementAt->format('H:i:s') }}</p></td>
-                                            <td class="border-r panel-border px-[15px] py-[15px]"><p class="{{ $movementColor }} leading-none">{{ $movementLabel }}</p><p class="mt-[15px] leading-none">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[15px] truncate text-[color:var(--panel-danger)] leading-none" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
+                                            <td class="border-r panel-border px-[15px] py-[15px] text-center"><p class="{{ $movementColor }} leading-none">{{ $movementLabel }}</p><p class="mt-[15px] leading-none tabular-nums">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[15px] truncate text-[color:var(--panel-danger)] leading-none" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
                                             <td class="border-r panel-border px-[15px] py-[15px]"><p class="truncate leading-none" title="{{ $companyNames }}">{{ $companyNames !== '' ? $companyNames : 'Sin empresas registradas' }}</p>@if($movement['backup_date'])<p class="mt-[15px] leading-none">Respaldo del {{ \Carbon\CarbonImmutable::parse($movement['backup_date'])->locale('es')->translatedFormat('d \d\e F \d\e Y') }}</p>@endif</td>
                                             <td class="border-r panel-border px-[15px] py-[15px]"><p class="truncate leading-none" title="{{ $destinationText }}">{{ $movement['destination_label'] ?? 'Memoria externa' }}</p><p class="mt-[15px] truncate leading-none" title="{{ $movement['destination_folder'] }}">{{ str_replace('/', '\\', $movement['destination_folder'] ?? '') ?: 'Carpeta no registrada' }}</p></td>
                                             <td class="px-[20px] py-[15px]"><p class="truncate leading-none" title="{{ $movement['user_name'] }}">{{ $movement['user_name'] }}</p></td>
                                         </tr>
                                     @empty
-                                        <tr class="h-[580px]"><td colspan="5" class="px-[20px] text-center align-middle"><svg class="mx-auto h-10 w-10 panel-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><p class="mt-[12px] leading-none">Todavía no hay movimientos registrados</p><p class="mt-[15px] leading-none">Los próximos respaldos y eliminaciones aparecerán aquí.</p></td></tr>
+                                        <tr class="h-[550px]"><td colspan="5" class="px-[20px] text-center align-middle"><svg class="mx-auto h-10 w-10 panel-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><p class="mt-[12px] leading-none">Todavía no hay movimientos registrados</p><p class="mt-[15px] leading-none">Los próximos respaldos y eliminaciones aparecerán aquí.</p></td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -466,10 +468,10 @@
                     <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative h-[620px]">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll backup-today-scroll h-full overflow-auto">
                         <table class="w-full min-w-[780px] border-collapse text-left">
-                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="h-[60px] px-[20px] py-0 text-left">Empresa</th><th class="h-[60px] px-[15px] py-0 text-left">Estado hoy</th><th class="h-[60px] px-[15px] py-0 text-left">Respaldos hoy</th><th class="h-[60px] px-[20px] py-0 text-left">Último respaldo localizado</th></tr></thead>
+                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="h-[60px] px-[20px] py-0 text-left">Empresa</th><th class="h-[60px] px-[15px] py-0 text-left">Estado hoy</th><th class="h-[60px] px-[15px] py-0 text-center">Respaldos hoy</th><th class="h-[60px] px-[20px] py-0 text-left">Último respaldo localizado</th></tr></thead>
                             <tbody class="divide-y divide-[color:var(--panel-border)]">
                                 @forelse($companies as $company)
-                                    <tr wire:key="company-{{ $company['key'] }}" class="h-[80px] hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] tabular-nums ">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
+                                    <tr wire:key="company-{{ $company['key'] }}" class="h-[80px] hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] text-center tabular-nums">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
                                 @empty<tr><td colspan="4" class="px-[20px] py-[70px] text-center ">No hay empresas que coincidan con la búsqueda.</td></tr>@endforelse
                             </tbody>
                         </table>

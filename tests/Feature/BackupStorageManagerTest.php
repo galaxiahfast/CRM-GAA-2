@@ -238,9 +238,22 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('destinationBrowsePath', 'ANGEL MOO')
             ->assertDontSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
-            ->assertSeeHtml('relative h-[544px]')
+            ->assertSeeHtml('order-3 h-[700px]')
             ->assertSeeHtml('class="h-[90px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
+    }
+
+    public function test_history_opens_without_scanning_the_backup_source(): void
+    {
+        $admin = $this->user('Administrador', 'admin-history-fast@datamid.test');
+        $catalog = \Mockery::mock(ContpaqiBackupCatalog::class);
+        $catalog->shouldNotReceive('forRoot');
+        $this->app->instance(ContpaqiBackupCatalog::class, $catalog);
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class, ['activeView' => 'history'])
+            ->assertSee('Historial de movimientos')
+            ->assertSeeHtml('relative h-[620px]');
     }
 
     public function test_destination_browser_rejects_paths_outside_the_usb(): void

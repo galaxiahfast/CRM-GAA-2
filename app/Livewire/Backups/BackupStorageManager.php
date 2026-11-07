@@ -490,29 +490,45 @@ class BackupStorageManager extends Component
     {
         Gate::authorize('access-system-backups');
 
-        try {
-            $data = $this->profileDashboard($catalog, $profiles);
-            $error = null;
-        } catch (Throwable $exception) {
+        $isHistoryView = $this->activeView === 'history';
+        if ($isHistoryView) {
+            // El historial se guarda localmente: no necesita recorrer el origen ni la memoria de red.
             $data = [
                 'connected' => false,
                 'root' => (string) ($profiles->profile($this->backupProfile)['source_root'] ?? config('backup-storage.server.root')),
                 'scanned_at' => null,
-                'scan_seconds' => null,
                 'companies' => [],
                 'records' => [],
                 'today_records' => [],
                 'dates' => [],
                 'last_by_company' => [],
             ];
-            $error = $exception instanceof RuntimeException
-                ? $exception->getMessage()
-                : 'La conexión con el servidor se interrumpió durante la lectura.';
+            $error = null;
+        } else {
+            try {
+                $data = $this->profileDashboard($catalog, $profiles);
+                $error = null;
+            } catch (Throwable $exception) {
+                $data = [
+                    'connected' => false,
+                    'root' => (string) ($profiles->profile($this->backupProfile)['source_root'] ?? config('backup-storage.server.root')),
+                    'scanned_at' => null,
+                    'scan_seconds' => null,
+                    'companies' => [],
+                    'records' => [],
+                    'today_records' => [],
+                    'dates' => [],
+                    'last_by_company' => [],
+                ];
+                $error = $exception instanceof RuntimeException
+                    ? $exception->getMessage()
+                    : 'La conexión con el servidor se interrumpió durante la lectura.';
+            }
         }
 
         $today = now()->toDateString();
-        $recordAvailability = $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
-        $completedDestinations = $export->completedDestinations($this->selectedDate, $this->destinationKey);
+        $recordAvailability = $isHistoryView ? [] : $export->recordAvailability($this->selectedDate, $data['records'], $this->destinationFolder, $this->destinationKey);
+        $completedDestinations = $isHistoryView ? [] : $export->completedDestinations($this->selectedDate, $this->destinationKey);
         $recordsForDate = collect($data['records'])
             ->when($this->status === 'complete', fn ($records) => $records->where('complete', true))
             ->when($this->status === 'available', fn ($records) => $records->filter(
@@ -567,7 +583,7 @@ class BackupStorageManager extends Component
         $headerSelectableCount = collect($recordAvailability)
             ->filter(fn (string $state): bool => in_array($state, $headerSelectableStates, true))
             ->count();
-        $movementHistory = $this->activeView === 'history'
+        $movementHistory = $isHistoryView
             ? collect($export->history())
             : collect();
         $historyUsers = User::query()
@@ -587,8 +603,8 @@ class BackupStorageManager extends Component
             'records' => $recordsForDate,
             'companies' => $companies,
             'summary' => $summary,
-            'exportDestinations' => $export->destinations(),
-            'exportDestination' => $export->destination($this->destinationKey),
+            'exportDestinations' => $isHistoryView ? [] : $export->destinations(),
+            'exportDestination' => $isHistoryView ? ['connected' => false] : $export->destination($this->destinationKey),
             'selectedExportCount' => $selectedCompleteRecords->count(),
             'selectedDeletableCount' => $selectedDeletableCount,
             'headerSelectableCount' => $headerSelectableCount,
@@ -597,7 +613,7 @@ class BackupStorageManager extends Component
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
-            'destinationFolders' => $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
+            'destinationFolders' => $isHistoryView ? [] : $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
             'movementHistory' => $movementHistory,
