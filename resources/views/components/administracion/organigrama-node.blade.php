@@ -1,7 +1,11 @@
 @props(['node', 'depth' => 0])
 
 @php
-    $nameParts = explode(' ', trim($node['name'] ?? ''));
+    // Nombre y apellido van en dos líneas; si el nodo viene de una caché vieja sin esos datos se separa el nombre completo.
+    $fullName = trim((string) ($node['name'] ?? ''));
+    $firstName = trim((string) ($node['first_name'] ?? \Illuminate\Support\Str::before($fullName, ' ')));
+    $lastName = trim((string) ($node['last_name'] ?? \Illuminate\Support\Str::after($fullName, ' ')));
+    $nameParts = explode(' ', $fullName);
     $initials = '';
     if (count($nameParts) >= 2) {
         $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[count($nameParts) - 1], 0, 1));
@@ -13,6 +17,7 @@
 @endphp
 
 <div class="flex flex-col items-center visual-node-wrapper" wire:key="org-node-box-{{ $node['instance'] ?? $node['id'] }}">
+    <div class="relative z-10">
     <button type="button"
         wire:click="selectUser({{ $node['id'] }})"
         data-id="{{ $node['id'] }}"
@@ -34,7 +39,10 @@
             @else
                 <span class="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials }}</span>
             @endif
-            <span class="home-link mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['name'] }}">{{ $node['name'] }}</span>
+            <span class="home-link mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['name'] }}">{{ $firstName }}</span>
+            @if ($lastName !== '')
+                <span class="home-link mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['name'] }}">{{ $lastName }}</span>
+            @endif
             <span class="mt-[15px] block h-[15px] w-full truncate text-center leading-none">{{ \Illuminate\Support\Str::before((string) $node['email'], '@') }}@</span>
         </span>
 
@@ -69,6 +77,15 @@
         <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" style="color: currentColor;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" /></svg><span class="truncate">{{ ($node['subordinate_count'] ?? 0) > 0 ? $node['subordinate_count'].' subordinado(s) directo(s)' : 'Sin subordinados' }}</span></span>
     </button>
 
+    {{-- Eliminar al usuario: abre la confirmación (hay que escribir su nombre completo), no borra directamente. --}}
+    <button type="button"
+        wire:click="requestDeleteUser({{ $node['id'] }})"
+        class="org-node-delete absolute right-[8px] top-[8px] z-20 inline-flex h-[24px] w-[24px] items-center justify-center rounded-md text-[color:var(--panel-danger)] transition-colors hover:bg-[var(--panel-danger-soft)] focus:outline-none focus:ring-0"
+        title="Eliminar a {{ $node['name'] }}" aria-label="Eliminar a {{ $node['name'] }}">
+        <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+    </div>
+
     @if (!empty($node['children']) && count($node['children']) > 0)
         {{-- Conectores: un tronco desde la persona, una barra horizontal y una bajada por cada subordinado (ver estilos .org-*). --}}
         <div class="org-stem" aria-hidden="true"></div>
@@ -82,44 +99,3 @@
     @endif
 </div>
 
-<script>
-    // Iguala el alto de las tarjetas. Si el organigrama está oculto (x-show) la medición da 0 y
-    // dejaba todas las tarjetas en 0px (contenido desbordado); ahora no se fija nada en ese caso
-    // y se vuelve a calcular en cuanto el organigrama se muestra o cambia de tamaño.
-    window.equalizeNodeHeights = window.equalizeNodeHeights || function () {
-        const cards = document.querySelectorAll('.js-org-card');
-        if (cards.length === 0) return;
-
-        cards.forEach(card => { card.style.height = 'auto'; });
-
-        let maxHeight = 0;
-        cards.forEach(card => { maxHeight = Math.max(maxHeight, card.offsetHeight); });
-
-        if (maxHeight === 0) return;
-
-        cards.forEach(card => { card.style.height = `${maxHeight}px`; });
-    };
-
-    window.bindOrgEqualizer = window.bindOrgEqualizer || function () {
-        const container = document.getElementById('organigrama-principal');
-        window.orgEqualizerObserver?.disconnect();
-        if (!container) return;
-
-        let scheduled = false;
-        window.orgEqualizerObserver = new ResizeObserver(() => {
-            if (scheduled) return;
-            scheduled = true;
-            requestAnimationFrame(() => { scheduled = false; window.equalizeNodeHeights(); });
-        });
-        window.orgEqualizerObserver.observe(container);
-        window.equalizeNodeHeights();
-    };
-
-    if (!window.orgEqualizerReady) {
-        window.orgEqualizerReady = true;
-        document.addEventListener('livewire:navigated', () => window.bindOrgEqualizer());
-        document.addEventListener('livewire:initialized', () => window.bindOrgEqualizer());
-        window.addEventListener('DOMContentLoaded', () => window.bindOrgEqualizer());
-        if (document.readyState !== 'loading') window.bindOrgEqualizer();
-    }
-</script>

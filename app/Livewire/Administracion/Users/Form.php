@@ -366,6 +366,7 @@ class Form extends Component
     public function save(Request $request)
     {
         $this->email = mb_strtolower(trim((string) $this->email));
+        $this->employee_id = trim((string) $this->employee_id);
 
         $rules = [
             'name' => 'bail|required|string|max:255',
@@ -393,6 +394,8 @@ class Form extends Component
         }
 
         $data = $this->validate($rules);
+        // El ID del reloj checador es opcional: vacío se guarda como «sin ID», no como texto en blanco.
+        $data['employee_id'] = filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null;
 
         // Aislamos los datos exclusivos del perfil organizacional antes de guardar el usuario
         $isAuxiliarRole = $this->isAuxiliarRole($data['role_id']);
@@ -459,7 +462,9 @@ class Form extends Component
                 );
             }
 
-            session()->flash('success', 'Usuario guardado y posicionado exitosamente.');
+            $message = $this->mode === 'edit' ? 'Usuario actualizado.' : 'Usuario agregado.';
+            session()->flash('success', $message);
+            $this->dispatch('notify', message: $message, type: 'success');
             $references = app(ReferenceDataCache::class);
             $references->forgetManageableUsers();
             $references->forgetOrganizationDashboard();

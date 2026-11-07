@@ -73,6 +73,8 @@ class OrganizationChartService
             $node = [
                 'id' => $user->id,
                 'name' => trim("{$user->name} {$user->last_name}"),
+                'first_name' => trim((string) $user->name),
+                'last_name' => trim((string) $user->last_name),
                 'email' => $user->email,
                 'photo' => $user->profile_photo_path ? $user->profile_photo_url : null,
                 'created_at' => $user->created_at?->toIso8601String(),

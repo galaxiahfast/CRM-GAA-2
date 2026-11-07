@@ -148,83 +148,83 @@
                     <span class="text-white">Inicio</span>
                 </div>
             @elseif (request()->routeIs('time.admin.attendance', 'time.attendance'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Actividades</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span>Control de Horas</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Reloj Checador</span>
                 </div>
             @elseif (request()->routeIs('activity-backups.*'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Actividades</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Gestión de Respaldos</span>
                 </div>
             @elseif (request()->routeIs('bank-reconciliation.*'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Información</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">{{ request()->route('tool') === 'ocr' ? 'Conciliación OCR' : 'Conciliación Bancaria' }}</span>
                 </div>
             @elseif (request()->routeIs('organigrama.*'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Información</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Organigrama</span>
                 </div>
             @elseif (request()->routeIs('administracion.*'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Información</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Administración</span>
                 </div>
             @elseif (request()->routeIs('soporte.reportes-tecnicos*'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Documentos</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Reportes de soporte</span>
                 </div>
             @elseif (request()->routeIs('soporte.reportes-respaldos'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Documentos</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Reporte de Respaldos</span>
                 </div>
             @elseif (request()->routeIs('soporte.preguntas'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Soporte</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span>Centro de ayuda</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Preguntas</span>
                 </div>
             @elseif (request()->routeIs('dashboard'))
-                <div class="hidden min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65 sm:flex">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Inicio</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Panel general</span>
                 </div>
             @elseif (request()->routeIs('customers.view'))
-                <div class="hidden min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65 sm:flex">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Inicio</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <a href="{{ route('dashboard') }}" class="transition-colors hover:text-white">Panel general</a>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Detalle del cliente</span>
                 </div>
             @elseif (request()->routeIs('profile.show'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Mi cuenta</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Ajustes</span>
                 </div>
             @elseif (request()->routeIs('profiles.show'))
-                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white/65">
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Información</span>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <a href="{{ route('profiles.index') }}" class="transition-colors hover:text-white">Perfiles</a>
-                    <span class="text-white/40">›</span>
+                    <span class="text-white">›</span>
                     <span class="text-white">Perfil de usuario</span>
                 </div>
             @endif

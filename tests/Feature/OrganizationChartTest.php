@@ -311,6 +311,27 @@ class OrganizationChartTest extends TestCase
         $this->assertSame(0, UserHierarchyRelation::count());
     }
 
+    public function test_organigrama_opens_first_and_builds_the_tree_afterwards(): void
+    {
+        ['adminRole' => $adminRole] = $this->seedRoles();
+        $admin = $this->createUser($adminRole, 'admin-org@test.mx', 'Admin');
+
+        // La pantalla abre con el aviso de carga: el árbol no se arma en la primera respuesta.
+        $this->actingAs($admin)
+            ->get(route('organigrama.index'))
+            ->assertOk()
+            ->assertSee('Cargando organigrama')
+            ->assertSee('wire:init="loadOrgChartData"', false);
+
+        Livewire::actingAs($admin)
+            ->test(PanelAdministracion::class)
+            ->set('orgChartPage', true)
+            ->assertSet('orgChartLoaded', false)
+            ->call('loadOrgChartData')
+            ->assertSet('orgChartLoaded', true)
+            ->assertSee('Admin');
+    }
+
     public function test_administracion_index_still_loads(): void
     {
         ['adminRole' => $adminRole] = $this->seedRoles();

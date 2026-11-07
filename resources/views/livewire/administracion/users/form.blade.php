@@ -163,10 +163,10 @@
 
                 <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
-                        <label for="employee_id" class="block text-[15px] font-medium text-gray-700">ID Checador (Hikvision)</label>
+                        <label for="employee_id" class="block text-[15px] font-medium text-gray-700">ID Checador (Hikvision) · opcional</label>
                         <x-administration-search-picker style="margin-top: 20px;" input-id="employee_id" model="employee_id" :selected="$employee_id"
                             :items="$employeeIdSuggestions->map(fn ($suggestion) => ['id' => $suggestion->employeeID, 'label' => $suggestion->employeeID, 'meta' => trim((string) ($suggestion->personName ?: 'Nombre no disponible'))])"
-                            placeholder="Buscar ID o persona..." empty-message="No hay IDs registrados en el checador." placement="bottom" results-id="create-employee-id-suggestions" :disabled="$editingDisabled" />
+                            placeholder="Opcional: buscar ID o persona..." empty-message="No hay IDs registrados en el checador." placement="bottom" results-id="create-employee-id-suggestions" :disabled="$editingDisabled" />
                         <x-input-error for="employee_id" class="mt-2 text-[15px]" />
                     </div>
 

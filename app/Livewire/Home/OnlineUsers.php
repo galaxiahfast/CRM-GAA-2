@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Personas en línea (actividad en los últimos minutos) y la actividad que tienen en curso.
@@ -29,9 +30,28 @@ class OnlineUsers extends Component
 
     public function render(): View
     {
-        return view('livewire.home.online-users', [
-            'rows' => Cache::remember('home:online-users', self::CACHE_SECONDS, fn (): array => $this->rows()),
-        ]);
+        return view('livewire.home.online-users', ['rows' => $this->safeRows()]);
+    }
+
+    /**
+     * Esta lista es un complemento del inicio: si algo falla (una migración pendiente, la caché sin tabla, etc.)
+     * no debe tumbar la pantalla, así que en ese caso se muestra solo a la asistente virtual y se registra el motivo.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function safeRows(): array
+    {
+        try {
+            return Cache::remember('home:online-users', self::CACHE_SECONDS, fn (): array => $this->rows());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            try {
+                return $this->rows();
+            } catch (Throwable) {
+                return [$this->assistantRow()];
+            }
+        }
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -72,9 +92,17 @@ class OnlineUsers extends Component
             ];
         })->sortBy(fn (array $row): string => ($row['activity'] ? '0' : '1').mb_strtolower($row['name']))->values()->all();
 
-        // Sofía, la asistente virtual, está siempre disponible; su fila abre el asistente.
+        array_unshift($rows, $this->assistantRow());
+
+        return $rows;
+    }
+
+    /** Sofía, la asistente virtual, está siempre disponible; su fila abre el asistente. */
+    private function assistantRow(): array
+    {
         $bot = (array) config('support.automated_user');
-        array_unshift($rows, [
+
+        return [
             'id' => 'sofia',
             'name' => trim(($bot['name'] ?? 'Sofia').' '.($bot['last_name'] ?? '')),
             'photo' => asset(ltrim((string) ($bot['avatar'] ?? 'img/support/sofia-avatar.svg'), '/')),
@@ -82,8 +110,6 @@ class OnlineUsers extends Component
             'customer' => null,
             'section' => 'Soporte',
             'url' => route('soporte.preguntas'),
-        ]);
-
-        return $rows;
+        ];
     }
 }

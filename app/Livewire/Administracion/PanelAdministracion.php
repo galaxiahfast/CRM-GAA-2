@@ -43,6 +43,9 @@ class PanelAdministracion extends Component
     /** true cuando el componente se muestra como el apartado «Organigrama» (y no como Administración). */
     public bool $orgChartPage = false;
 
+    /** El árbol se arma después de abrir la pantalla (wire:init), para que el apartado abra al instante aunque haya muchos usuarios. */
+    public bool $orgChartLoaded = false;
+
     public ?array $selectedUserDetails = null;
 
     public ?int $selectedUserId = null;
@@ -278,10 +281,17 @@ class PanelAdministracion extends Component
 
         $this->orgChartPage = request()->routeIs('organigrama.index');
 
-        // El árbol solo se arma en el apartado Organigrama; Administración no lo necesita.
+        // El árbol solo se arma en el apartado Organigrama y no aquí: se pide con wire:init (loadOrgChartData) una vez
+        // dibujada la pantalla, así abrir el apartado nunca espera a esas consultas.
+    }
+
+    public function loadOrgChartData(OrganizationChartService $chartService): void
+    {
         if ($this->orgChartPage && $this->canManageOrganization()) {
             $this->loadOrgChart($chartService);
         }
+
+        $this->orgChartLoaded = true;
     }
 
     public function openPermissionsModal(string $tab = 'crear', ?int $recordId = null): void
@@ -388,7 +398,7 @@ class PanelAdministracion extends Component
 
         $this->closeJobPositionModal();
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Puesto de trabajo agregado correctamente.');
+        $this->notify('Puesto de trabajo agregado correctamente.');
     }
 
     public function setJobPositionModalTab(string $tab): void
@@ -458,7 +468,7 @@ class PanelAdministracion extends Component
 
         $this->loadOrgChart($chartService);
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Puesto de trabajo actualizado correctamente.');
+        $this->notify('Puesto de trabajo actualizado correctamente.');
     }
 
     public function deleteJobPosition(OrganizationChartService $chartService): void
@@ -502,7 +512,7 @@ class PanelAdministracion extends Component
         $this->deleteJobPositionConfirmation = '';
         $this->loadOrgChart($chartService);
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
+        $this->notify('Puesto eliminado. Los usuarios relacionados quedaron sin puesto asignado.');
     }
 
     public function openPhysicalAreaModal(string $tab = 'crear', ?int $areaId = null): void
@@ -556,7 +566,7 @@ class PanelAdministracion extends Component
 
         $this->closePhysicalAreaModal();
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Área o departamento agregado correctamente.');
+        $this->notify('Área o departamento agregado correctamente.');
     }
 
     public function setPhysicalAreaModalTab(string $tab): void
@@ -610,7 +620,7 @@ class PanelAdministracion extends Component
 
         $this->loadOrgChart($chartService);
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Área o departamento actualizado correctamente.');
+        $this->notify('Área o departamento actualizado correctamente.');
     }
 
     public function deletePhysicalArea(OrganizationChartService $chartService): void
@@ -652,7 +662,7 @@ class PanelAdministracion extends Component
         $this->deletePhysicalAreaConfirmation = '';
         $this->loadOrgChart($chartService);
         $this->forgetOrganizationReferenceData();
-        session()->flash('success', 'Área eliminada. Los usuarios relacionados quedaron sin área asignada.');
+        $this->notify('Área eliminada. Los usuarios relacionados quedaron sin área asignada.');
     }
 
     public function updatedSelectedPhysicalAreaId(OrganizationChartService $chartService): void
@@ -667,6 +677,7 @@ class PanelAdministracion extends Component
 
     private function loadOrgChart(OrganizationChartService $chartService): void
     {
+        $this->orgChartLoaded = true;
         $data = $chartService->buildChartData($this->selectedPhysicalAreaId);
 
         $this->orgChartTree = $data['tree'];
@@ -705,6 +716,7 @@ class PanelAdministracion extends Component
         $role = $user->role?->role;
 
         $this->deleteConfirmationName = '';
+        $this->activeTab = 'datos';
         $this->selectedUserId = $user->id;
         $this->isEditingUser = false;
         $this->userForm = [
@@ -741,6 +753,20 @@ class PanelAdministracion extends Component
             'superiors' => $user->superiors->map(fn (User $person) => trim("{$person->name} {$person->last_name}"))->values()->all(),
             'subordinates' => $user->subordinates->map(fn (User $person) => trim("{$person->name} {$person->last_name}"))->values()->all(),
         ];
+    }
+
+    /** Deja el mensaje en la sesión y además lo muestra como aviso flotante (el panel no pintaba los mensajes de sesión). */
+    private function notify(string $message, string $type = 'success'): void
+    {
+        session()->flash($type, $message);
+        $this->dispatch('notify', message: $message, type: $type);
+    }
+
+    /** La X de cada nodo: abre al usuario directo en la confirmación de eliminación (se escribe su nombre completo). */
+    public function requestDeleteUser(int $userId): void
+    {
+        $this->selectUser($userId);
+        $this->activeTab = 'eliminar';
     }
 
     /** Compatibilidad con los nodos ya renderizados en caché. */
@@ -894,7 +920,7 @@ class PanelAdministracion extends Component
                 'last_name' => $data['last_name'] ?? null,
                 'email' => $data['email'],
                 'role_id' => $data['role_id'],
-                'employee_id' => $data['employee_id'] ?? null,
+                'employee_id' => filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null,
                 'password' => filled($data['password'] ?? null) ? $data['password'] : null,
             ], fn ($value, $key) => $key !== 'password' || $value !== null, ARRAY_FILTER_USE_BOTH));
 
@@ -929,12 +955,12 @@ class PanelAdministracion extends Component
         }
 
         $this->loadOrgChart($chartService);
-        $this->selectUser($user->id);
-        $this->isEditingUser = false;
+        // Al actualizar se avisa y se sale del formulario (ya no se queda en la ficha del usuario).
+        $this->closeUserDetails();
         $references = app(ReferenceDataCache::class);
         $references->forgetManageableUsers();
         $references->forgetOrganizationDashboard();
-        session()->flash('success', 'Información del usuario actualizada.');
+        $this->notify('Usuario actualizado.');
     }
 
     public function closeUserDetails(): void
@@ -944,6 +970,7 @@ class PanelAdministracion extends Component
         $this->userForm = [];
         $this->isEditingUser = false;
         $this->deleteConfirmationName = '';
+        $this->activeTab = 'datos';
     }
 
     public function deleteSelectedUser(OrganizationChartService $chartService): void
@@ -977,7 +1004,7 @@ class PanelAdministracion extends Component
         $references = app(ReferenceDataCache::class);
         $references->forgetManageableUsers();
         $references->forgetOrganizationDashboard();
-        session()->flash('success', 'Usuario eliminado. Sus subordinados directos quedaron sin jefe asignado.');
+        $this->notify('Usuario eliminado. Sus subordinados directos quedaron sin jefe asignado.');
     }
 
     private function canManageOrganization(): bool

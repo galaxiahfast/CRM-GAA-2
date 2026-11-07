@@ -75,6 +75,21 @@
     <x-home-styles />
     <x-administration-modal-styles />
 
+    {{-- Aviso flotante (Usuario actualizado., Usuario eliminado., etc.): llega con el evento «notify» y se oculta solo. --}}
+    <div
+        x-data="{ show: false, text: '', kind: 'success', timer: null }"
+        @notify.window="text = $event.detail.message; kind = $event.detail.type || 'success'; show = true; clearTimeout(timer); timer = setTimeout(() => show = false, 3500)"
+        x-show="show"
+        x-cloak
+        role="status"
+        aria-live="polite"
+        class="panel-surface panel-border fixed left-1/2 top-[143px] z-[200002] flex max-w-[calc(100vw-40px)] -translate-x-1/2 items-center gap-[10px] rounded-xl border px-[20px] py-[15px] leading-none shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        style="display: none;"
+    >
+        <svg class="h-4 w-4 shrink-0" :class="kind === 'success' ? 'text-[#1A3A6B]' : 'text-[color:var(--panel-danger)]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5l2.7 2.7L16 9.5" /><circle cx="12" cy="12" r="9.5" /></svg>
+        <span x-text="text"></span>
+    </div>
+
     <style hidden>
         .administration-monochrome,
         .administration-monochrome > section,
@@ -653,7 +668,7 @@
 
     @if ($orgChartPage)
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" class="flex flex-col gap-[20px]">
+    <div id="organigrama-principal" class="flex flex-col gap-[20px]" wire:init="loadOrgChartData">
         <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen del organigrama">
             <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                 <div class="min-w-0">
@@ -788,7 +803,11 @@
                     </div>
 
                     <!-- CONTENIDO PRINCIPAL: árbol o mensaje sin datos (profesional) -->
-                    @if (count($orgChartTree) > 0)
+                    @if (! $orgChartLoaded)
+                        <div class="org-tree-empty">
+                            <span>Cargando organigrama…</span>
+                        </div>
+                    @elseif (count($orgChartTree) > 0)
                         <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
@@ -816,7 +835,9 @@
                 </header>
                 <div class="unassigned-users-scrollbar" style="height: 663px; overflow-y: auto; padding: 15px 20px;">
                 <div style="display: flex; flex-direction: column; gap: 20px;">
-                    @if (count($unassignedUsers) > 0)
+                    @if (! $orgChartLoaded)
+                        <p class="text-[15px]" style="line-height: 1.3; margin: 0; padding: 0;">Cargando usuarios…</p>
+                    @elseif (count($unassignedUsers) > 0)
                         <ul style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;"
                             x-data="{
                                 hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
@@ -1331,8 +1352,8 @@
     @php($detailInput = 'mt-[20px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400')
     @php($detailLabel = 'block text-[15px] font-medium text-gray-700')
     @php($detailValue = 'mt-[20px] flex min-h-[44px] w-full cursor-default items-center break-words rounded-xl border border-zinc-200 bg-white px-[15px] py-[10px] text-[15px] text-black')
-    @php($detailSecondaryButton = 'inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0')
-    @php($detailPrimaryButton = 'inline-flex min-w-28 items-center justify-center gap-2 rounded-xl bg-black px-[20px] py-[12px] text-[15px] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
+    @php($detailSecondaryButton = 'inline-flex h-11 min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] font-medium leading-none text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0')
+    @php($detailPrimaryButton = 'inline-flex h-11 min-w-28 items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] text-[15px] font-semibold leading-none text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
     <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
         {{-- Mismo marco que el modal de Usuarios: blanco, bordes grises, 20px de relleno. --}}
         <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
@@ -1406,7 +1427,7 @@
                                         <h2 class="mb-[10px] font-semibold text-black">Configuración del checador{{ ($userForm['is_hourly_position'] ?? false) ? ' y nómina' : '' }}</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
-                                                <label for="edit-employee-id" class="{{ $detailLabel }}">ID del reloj checador</label>
+                                                <label for="edit-employee-id" class="{{ $detailLabel }}">ID del reloj checador · opcional</label>
                                                 <div
                                                     class="relative mt-[20px]"
                                                     x-data="{ open: false, search: @js((string) ($userForm['employee_id'] ?? '')) }"
@@ -1572,12 +1593,7 @@
                     </footer>
                 </form>
             @else
-                {{-- ===== PESTAÑAS (fijas) ===== --}}
-                <nav class="flex flex-shrink-0 border-b border-gray-300 bg-[#F3F3F3] px-5" aria-label="Secciones del usuario">
-                    @foreach (['datos' => 'Datos', 'eliminar' => 'Eliminar usuario'] as $detailTab => $detailTabLabel)
-                        <button type="button" wire:click="setActiveTab('{{ $detailTab }}')" class="border-b-2 px-4 py-3 text-[15px] font-medium transition focus:outline-none focus:ring-0 {{ $activeTab === $detailTab ? ($detailTab === 'eliminar' ? 'border-red-600 text-red-700' : 'border-[#1A3A6B] text-[#1A3A6B]') : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">{{ $detailTabLabel }}</button>
-                    @endforeach
-                </nav>
+                {{-- Sin menú de pestañas: los datos se ven aquí y la eliminación se pide con la X de cada nodo. --}}
 
                 {{-- ===== CONTENIDO CON SCROLL ===== --}}
                 <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
@@ -1679,7 +1695,7 @@
                                     @error('deleteConfirmationName')
                                         <p class="mt-2 text-[15px] text-red-600" style="margin-bottom: 0;">{{ $message }}</p>
                                     @enderror
-                                    <button type="button" wire:click="deleteSelectedUser" class="mt-[20px] inline-flex w-full items-center justify-center rounded-xl bg-red-600 px-[20px] py-[12px] text-[15px] font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">Eliminar usuario permanentemente</button>
+                                    <button type="button" wire:click="deleteSelectedUser" class="mt-[20px] inline-flex h-11 w-full items-center justify-center rounded-xl bg-red-600 px-[20px] text-[15px] font-medium leading-none text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">Eliminar usuario permanentemente</button>
                                 </section>
                             @endif
                         </div>
@@ -1706,6 +1722,48 @@
 
 @push('scripts')
 <script>
+    // Ajuste de altura de las tarjetas del organigrama. Va aquí (y no en cada tarjeta) porque el árbol llega después de
+    // abrir la pantalla y los scripts que llegan en una actualización de Livewire no se ejecutan.
+    // Iguala el alto de las tarjetas. Si el organigrama está oculto (x-show) la medición da 0 y
+    // dejaba todas las tarjetas en 0px (contenido desbordado); ahora no se fija nada en ese caso
+    // y se vuelve a calcular en cuanto el organigrama se muestra o cambia de tamaño.
+    window.equalizeNodeHeights = window.equalizeNodeHeights || function () {
+        const cards = document.querySelectorAll('.js-org-card');
+        if (cards.length === 0) return;
+
+        cards.forEach(card => { card.style.height = 'auto'; });
+
+        let maxHeight = 0;
+        cards.forEach(card => { maxHeight = Math.max(maxHeight, card.offsetHeight); });
+
+        if (maxHeight === 0) return;
+
+        cards.forEach(card => { card.style.height = `${maxHeight}px`; });
+    };
+
+    window.bindOrgEqualizer = window.bindOrgEqualizer || function () {
+        const container = document.getElementById('organigrama-principal');
+        window.orgEqualizerObserver?.disconnect();
+        if (!container) return;
+
+        let scheduled = false;
+        window.orgEqualizerObserver = new ResizeObserver(() => {
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(() => { scheduled = false; window.equalizeNodeHeights(); });
+        });
+        window.orgEqualizerObserver.observe(container);
+        window.equalizeNodeHeights();
+    };
+
+    if (!window.orgEqualizerReady) {
+        window.orgEqualizerReady = true;
+        document.addEventListener('livewire:navigated', () => window.bindOrgEqualizer());
+        document.addEventListener('livewire:initialized', () => window.bindOrgEqualizer());
+        window.addEventListener('DOMContentLoaded', () => window.bindOrgEqualizer());
+        if (document.readyState !== 'loading') window.bindOrgEqualizer();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('org-tree-container');
         // El contenido del árbol lo vuelve a dibujar Livewire (al filtrar por área, por ejemplo) y el elemento cambia:
