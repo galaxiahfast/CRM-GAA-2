@@ -44,6 +44,7 @@
         .backup-record-group > tr { background: inherit; }
         .backup-record-gray > tr > td { background-color: var(--panel-subtle); }
         .backup-record-white > tr > td { background-color: var(--panel-surface); }
+        .backup-storage-monochrome :where(th, td, thead, tbody) { font-weight: 400; }
         .backup-record-detail > div > :where(a, div) { background: transparent !important; }
         .backup-storage-monochrome { --backup-green: #15803d; font-size: 15px; }
         html.module-dark-theme .backup-storage-monochrome { --backup-green: #4ade80; }
@@ -67,19 +68,19 @@
 
     @if($exportError)
         @teleport('body')
-            <div wire:key="backup-export-error-{{ $exportErrorVersion }}-{{ md5((string) $exportError.($exportStatus['completed_at'] ?? '')) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-red-200 bg-white px-[20px] py-[15px] text-red-700 shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="alert">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg></span>
+            <div wire:key="backup-export-error-{{ $exportErrorVersion }}-{{ md5((string) $exportError.($exportStatus['completed_at'] ?? '')) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-[color:var(--panel-danger-line)] panel-surface px-[20px] py-[15px] text-[color:var(--panel-danger)] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="alert">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg panel-danger-box"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg></span>
                 <span class="min-w-0 flex-1">{{ $exportError }}</span>
-                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:bg-[color:var(--panel-hover)]"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
             </div>
         @endteleport
     @endif
 
     @if($syncResult)
         @teleport('body')
-            <div wire:key="backup-sync-result-{{ md5(json_encode($syncResult)) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 6000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" class="backup-sync-toast fixed left-1/2 top-[20px] z-[199998] w-[calc(100%-40px)] max-w-3xl -translate-x-1/2 rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-red-200' : 'border-emerald-200' }} bg-white px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+            <div wire:key="backup-sync-result-{{ md5(json_encode($syncResult)) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 6000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="backup-sync-toast fixed left-1/2 top-[20px] z-[199998] w-[calc(100%-40px)] max-w-3xl -translate-x-1/2 rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-[color:var(--panel-danger-line)]' : 'panel-border' }} panel-surface px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
                 <div class="flex items-start gap-[12px]">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ ($syncResult['error'] ?? null) ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-[#1A3A6B]' }}">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ ($syncResult['error'] ?? null) ? 'panel-danger-box text-[color:var(--panel-danger)]' : 'panel-header panel-accent' }}">
                         @if($syncResult['error'] ?? null)
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
                         @else
@@ -88,22 +89,22 @@
                     </span>
                     <div class="min-w-0 flex-1">
                         @if($syncResult['error'] ?? null)
-                            <p class="text-red-700">No se pudo comprobar</p>
-                            <p class="mt-[15px] text-red-700">{{ $syncResult['error'] }}</p>
+                            <p class="text-[color:var(--panel-danger)]">No se pudo comprobar</p>
+                            <p class="mt-[15px] text-[color:var(--panel-danger)]">{{ $syncResult['error'] }}</p>
                         @else
-                            <p class="text-black">Sincronización comprobada</p>
-                            <p class="mt-[15px] text-black">Parejas BAK + ZIP/RAR y tamaños comprobados {{ \Carbon\CarbonImmutable::parse($syncResult['checked_at'])->translatedFormat('d M Y · H:i:s') }}</p>
+                            <p class="">Sincronización comprobada</p>
+                            <p class="mt-[15px] ">Parejas BAK + ZIP/RAR y tamaños comprobados {{ \Carbon\CarbonImmutable::parse($syncResult['checked_at'])->translatedFormat('d M Y · H:i:s') }}</p>
                             <div class="mt-[10px] flex flex-wrap gap-x-[15px] gap-y-[5px]">
-                                <span class="text-[#1A3A6B]">{{ $syncResult['server_complete'] }} completas en servidor</span>
-                                <span class="text-red-700">{{ $syncResult['server_incomplete'] }} incompletas</span>
-                                <span class="text-[#1A3A6B]">{{ $syncResult['synced'] }} sincronizadas</span>
-                                <span class="text-black">{{ $syncResult['pending'] }} pendientes</span>
-                                @if($syncResult['outdated'] > 0)<span class="text-black">{{ $syncResult['outdated'] }} por actualizar</span>@endif
-                                @if($syncResult['copying'] > 0)<span class="text-black">{{ $syncResult['copying'] }} copiándose</span>@endif
+                                <span class="panel-accent">{{ $syncResult['server_complete'] }} completas en servidor</span>
+                                <span class="text-[color:var(--panel-danger)]">{{ $syncResult['server_incomplete'] }} incompletas</span>
+                                <span class="panel-accent">{{ $syncResult['synced'] }} sincronizadas</span>
+                                <span class="">{{ $syncResult['pending'] }} pendientes</span>
+                                @if($syncResult['outdated'] > 0)<span class="">{{ $syncResult['outdated'] }} por actualizar</span>@endif
+                                @if($syncResult['copying'] > 0)<span class="">{{ $syncResult['copying'] }} copiándose</span>@endif
                             </div>
                         @endif
                     </div>
-                    <button type="button" @click="visible = false" aria-label="Cerrar resultado" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-black transition hover:bg-zinc-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+                    <button type="button" @click="visible = false" aria-label="Cerrar resultado" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:bg-[color:var(--panel-hover)]"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
                 </div>
             </div>
         @endteleport
@@ -111,10 +112,10 @@
 
     @if($actionMessage)
         @teleport('body')
-            <div wire:key="backup-action-result-{{ md5($actionMessage) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-emerald-200 bg-white px-[20px] py-[15px] text-[#1A3A6B] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status">
+            <div wire:key="backup-action-result-{{ md5($actionMessage) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition data-panel class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border panel-border panel-surface px-[20px] py-[15px] panel-accent shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg>
                 <span class="min-w-0 flex-1">{{ $actionMessage }}</span>
-                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 items-center justify-center text-black"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
+                <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 items-center justify-center "><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
             </div>
         @endteleport
     @endif
@@ -122,23 +123,23 @@
     @if($showDeleteConfirmation)
         @teleport('body')
             <div class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-backups-title">
-                <div class="w-full max-w-lg rounded-2xl bg-white p-[20px] shadow-2xl">
-                    <h2 id="delete-backups-title" class="text-black">Eliminar {{ count($pendingDeleteRecords) === 1 ? 'respaldo' : count($pendingDeleteRecords).' respaldos' }}</h2>
-                    <p class="mt-[5px] text-black">Solo se eliminarán las copias de la memoria externa. Los archivos originales del servidor no se modificarán.</p>
+                <div data-panel class="panel-border w-full max-w-lg rounded-xl border p-[20px] shadow-2xl">
+                    <h2 id="delete-backups-title" class="">Eliminar {{ count($pendingDeleteRecords) === 1 ? 'respaldo' : count($pendingDeleteRecords).' respaldos' }}</h2>
+                    <p class="mt-[5px] ">Solo se eliminarán las copias de la memoria externa. Los archivos originales del servidor no se modificarán.</p>
                     <div class="mt-[20px] space-y-[15px]">
                         <div>
-                            <label for="delete-backup-password" class="mb-[7px] block text-black">Contraseña</label>
-                            <input id="delete-backup-password" type="password" wire:model="deletePassword" autocomplete="current-password" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-black focus:border-[#1A3A6B]">
-                            @error('deletePassword')<p class="mt-[5px] text-red-700">{{ $message }}</p>@enderror
+                            <label for="delete-backup-password" class="mb-[10px] block leading-none">Contraseña</label>
+                            <input id="delete-backup-password" type="password" wire:model="deletePassword" autocomplete="current-password" class="panel-field h-[44px] w-full rounded-xl border px-[15px] ">
+                            @error('deletePassword')<p class="mt-[5px] text-[color:var(--panel-danger)]">{{ $message }}</p>@enderror
                         </div>
                         <div>
-                            <label for="delete-backup-code" class="mb-[7px] block text-black">Código del autenticador</label>
-                            <input id="delete-backup-code" type="text" inputmode="numeric" maxlength="6" wire:model="deleteTwoFactorCode" autocomplete="one-time-code" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] tracking-[0.2em] text-black focus:border-[#1A3A6B]">
-                            @error('deleteTwoFactorCode')<p class="mt-[5px] text-red-700">{{ $message }}</p>@enderror
+                            <label for="delete-backup-code" class="mb-[10px] block leading-none">Código del autenticador</label>
+                            <input id="delete-backup-code" type="text" inputmode="numeric" maxlength="6" wire:model="deleteTwoFactorCode" autocomplete="one-time-code" class="panel-field h-[44px] w-full rounded-xl border px-[15px] tracking-[0.2em]">
+                            @error('deleteTwoFactorCode')<p class="mt-[5px] text-[color:var(--panel-danger)]">{{ $message }}</p>@enderror
                         </div>
                     </div>
                     <div class="mt-[20px] grid grid-cols-2 gap-[10px]">
-                        <button type="button" wire:click="closeDeleteConfirmation" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[44px] w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-black hover:bg-zinc-50">Cancelar</button>
+                        <button type="button" wire:click="closeDeleteConfirmation" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="panel-button-secondary h-[44px] w-full rounded-xl px-[15px] leading-none">Cancelar</button>
                         <button type="button" wire:click="deleteDestinationBackups" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[44px] w-full rounded-xl bg-red-700 px-[15px] text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60"><span wire:loading.remove wire:target="deleteDestinationBackups">Eliminar definitivamente</span><span wire:loading wire:target="deleteDestinationBackups">Verificando…</span></button>
                     </div>
                 </div>
@@ -148,35 +149,35 @@
 
     @if($exportIsActive)
         @teleport('body')
-            <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" class="fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-black shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+            <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" data-panel class="fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border panel-border panel-surface px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
                 <div class="flex items-center justify-between gap-[15px]">
                     <div class="min-w-0">
-                        <p class="truncate text-black">
+                        <p class="truncate ">
                             @if(($exportStatus['status'] ?? '') === 'queued') Respaldo en espera
                             @elseif(($exportStatus['status'] ?? '') === 'cancelling') Cancelando respaldo…
                             @else Respaldando {{ $exportStatus['current_company'] ?? 'archivos' }}
                             @endif
                         </p>
-                        <p class="mt-[15px] truncate text-black">Todos los usuarios pueden ver este avance. No se puede iniciar otro respaldo hasta que termine.</p>
+                        <p class="mt-[15px] truncate ">Todos los usuarios pueden ver este avance. No se puede iniciar otro respaldo hasta que termine.</p>
                     </div>
                     <div class="flex shrink-0 items-center gap-[15px]">
-                        <span class="tabular-nums text-black">{{ $exportPercent }}% · {{ $formatBytes((int) ($exportStatus['copied_bytes'] ?? 0)) }} / {{ $formatBytes((int) ($exportStatus['total_bytes'] ?? 0)) }}</span>
-                        <button type="button" wire:click="cancelExport" wire:loading.attr="disabled" wire:target="cancelExport" @disabled(($exportStatus['status'] ?? null) === 'cancelling') class="text-red-700 transition hover:opacity-70 disabled:cursor-wait disabled:opacity-50">{{ ($exportStatus['status'] ?? null) === 'cancelling' ? 'Cancelando…' : 'Cancelar respaldo' }}</button>
+                        <span class="tabular-nums ">{{ $exportPercent }}% · {{ $formatBytes((int) ($exportStatus['copied_bytes'] ?? 0)) }} / {{ $formatBytes((int) ($exportStatus['total_bytes'] ?? 0)) }}</span>
+                        <button type="button" wire:click="cancelExport" wire:loading.attr="disabled" wire:target="cancelExport" @disabled(($exportStatus['status'] ?? null) === 'cancelling') class="text-[color:var(--panel-danger)] transition hover:opacity-70 disabled:cursor-wait disabled:opacity-50">{{ ($exportStatus['status'] ?? null) === 'cancelling' ? 'Cancelando…' : 'Cancelar respaldo' }}</button>
                     </div>
                 </div>
-                <div class="mt-[12px] h-[6px] overflow-hidden rounded-full bg-zinc-100"><span class="block h-full rounded-full bg-[#1A3A6B] transition-all duration-300" style="width: {{ $exportPercent }}%"></span></div>
+                <div class="mt-[12px] h-[6px] overflow-hidden rounded-full bg-[color:var(--panel-track)]"><span class="block h-full rounded-full bg-[color:var(--panel-accent)] transition-all duration-300" style="width: {{ $exportPercent }}%"></span></div>
             </div>
         @endteleport
     @endif
 
-    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
+    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border panel-border bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
             <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
         </button>
     </div>
 
-    <main class="w-full origin-top space-y-[20px] p-[50px]" :style="`width:${10000 / viewScale}%;margin-left:${(100 - (10000 / viewScale)) / 2}%;transform:scale(${viewScale / 100});`">
+    <main class="w-full space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
         <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
             <div class="flex min-w-0 items-center gap-[15px]">
                 <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border panel-border panel-surface ">
@@ -208,7 +209,6 @@
 
         <nav class="flex items-center gap-[20px]" aria-label="Secciones de respaldos">
             <button type="button" wire:click="selectView('backups')" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none" aria-selected="{{ $activeView === 'backups' ? 'true' : 'false' }}">Respaldos</button>
-            <button type="button" wire:click="selectView('companies')" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none" aria-selected="{{ $activeView === 'companies' ? 'true' : 'false' }}">Empresas</button>
             <button type="button" wire:click="selectView('history')" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none" aria-selected="{{ $activeView === 'history' ? 'true' : 'false' }}">
                 <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg>
                 <span>Historial</span>
@@ -402,21 +402,6 @@
                             </div>
                         </div>
                     </div>
-                @elseif ($activeView === 'companies')
-                    <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent leading-none">Estado de respaldo de hoy</h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
-                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative max-h-[650px]">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[650px] overflow-auto">
-                        <table class="w-full min-w-[780px] border-collapse text-left">
-                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="px-[20px] py-[20px] text-left">Empresa</th><th class="px-[15px] py-[20px] text-left">Estado hoy</th><th class="px-[15px] py-[20px] text-left">Respaldos hoy</th><th class="px-[20px] py-[20px] text-left">Último respaldo localizado</th></tr></thead>
-                            <tbody class="divide-y divide-[color:var(--panel-border)]">
-                                @forelse($companies as $company)
-                                    <tr wire:key="company-{{ $company['key'] }}" class="hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] tabular-nums ">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
-                                @empty<tr><td colspan="4" class="px-[20px] py-[70px] text-center ">No hay empresas que coincidan con la búsqueda.</td></tr>@endforelse
-                            </tbody>
-                        </table>
-                        </div>
-                        <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
-                    </div>
                 @else
                     <div class="border-b panel-border panel-header p-[20px]">
                         <h2 class="panel-accent leading-none">Historial de movimientos</h2>
@@ -471,6 +456,24 @@
 
                 <footer class="flex flex-col gap-[5px] border-t panel-border panel-subtle px-[20px] py-[12px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
             </section>
+            @if ($activeView === 'backups')
+                <section class="!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
+                    <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent leading-none">Estado de respaldo de hoy</h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
+                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative max-h-[650px]">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[650px] overflow-auto">
+                        <table class="w-full min-w-[780px] border-collapse text-left">
+                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="px-[20px] py-[20px] text-left">Empresa</th><th class="px-[15px] py-[20px] text-left">Estado hoy</th><th class="px-[15px] py-[20px] text-left">Respaldos hoy</th><th class="px-[20px] py-[20px] text-left">Último respaldo localizado</th></tr></thead>
+                            <tbody class="divide-y divide-[color:var(--panel-border)]">
+                                @forelse($companies as $company)
+                                    <tr wire:key="company-{{ $company['key'] }}" class="hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] tabular-nums ">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
+                                @empty<tr><td colspan="4" class="px-[20px] py-[70px] text-center ">No hay empresas que coincidan con la búsqueda.</td></tr>@endforelse
+                            </tbody>
+                        </table>
+                        </div>
+                        <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                    </div>
+                </section>
+            @endif
         @endif
     </main>
 </div>

@@ -69,7 +69,7 @@ class BackupStorageManager extends Component
     {
         Gate::authorize('access-system-backups');
 
-        if (! in_array($this->activeView, ['backups', 'companies', 'history'], true)) {
+        if (! in_array($this->activeView, ['backups', 'history'], true)) {
             $this->activeView = 'backups';
         }
 
@@ -104,7 +104,7 @@ class BackupStorageManager extends Component
 
     public function selectView(string $view): void
     {
-        abort_unless(in_array($view, ['backups', 'companies', 'history'], true), 404);
+        abort_unless(in_array($view, ['backups', 'history'], true), 404);
         $this->activeView = $view;
     }
 
