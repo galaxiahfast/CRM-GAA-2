@@ -11,36 +11,14 @@
     data-panel
     data-dashboard
     x-data="{
-        viewScale: 90,
         isFullscreen: false,
-        isCompact: window.innerWidth / window.appAutoScale() < 1024,
-        scaledHeight: null,
-        observer: null,
         onFullscreen: null,
         init() {
-            try {
-                const saved = Number(null);
-                if (saved >= 70 && saved <= 100) this.viewScale = saved;
-            } catch (error) {}
             this.onFullscreen = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
             document.addEventListener('fullscreenchange', this.onFullscreen);
-            this.$nextTick(() => {
-                this.observer = new ResizeObserver(() => this.syncHeight());
-                this.observer.observe(this.$refs.scaled);
-                this.syncHeight();
-            });
         },
         destroy() {
-            this.observer?.disconnect();
             document.removeEventListener('fullscreenchange', this.onFullscreen);
-        },
-        syncHeight() {
-            if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
-        },
-        setScale(value) {
-            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
-            try { localStorage.setItem('dashboard-view-scale', String(this.viewScale)); } catch (error) {}
-            this.$nextTick(() => this.syncHeight());
         },
         async toggleFullscreen() {
             if (document.fullscreenElement === this.$root) return document.exitFullscreen();
@@ -53,118 +31,147 @@
             window.location.href = url;
         },
     }"
-    @resize.window.debounce.150ms="isCompact = window.innerWidth / window.appAutoScale() < 1024; syncHeight()"
-    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
+    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px]"
 >
     <x-panel-styles />
 
-    <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
-        <div x-ref="scaled" class="origin-top-left" :style="isCompact ? 'width:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">
-            <div class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
-                @if (! $dashboardReady)
-                    <div class="animate-pulse space-y-[20px]" role="status" aria-label="Cargando panel">
-                        <div class="flex items-center gap-[15px]">
-                            <div class="panel-header h-14 w-14 rounded-xl"></div>
-                            <div class="space-y-[10px]">
-                                <div class="panel-header h-5 w-40 rounded-lg"></div>
-                                <div class="panel-header h-4 w-64 max-w-full rounded-lg"></div>
-                            </div>
+    <style>
+        /* Mismo diseño que Inicio y Organigrama: solo texto negro (blanco en tema oscuro) y azul; enlaces y botones en verde. */
+        [data-dashboard] { --panel-muted: var(--panel-text); --dash-green: #15803d; color: var(--panel-text); }
+        html.module-dark-theme [data-dashboard] {
+            --panel-page: #09090b;
+            --panel-surface: #09090b;
+            --panel-header: #0f0f12;
+            --panel-subtle: #0c0c0f;
+            --panel-hover: #131316;
+            --panel-border: #27272a;
+            --panel-text: #ffffff;
+            --dash-green: #4ade80;
+            background-color: var(--panel-page);
+        }
+        [data-dashboard] .dash-link { color: var(--dash-green); }
+        [data-dashboard] .dash-link:disabled { opacity: .4; }
+        [data-dashboard] .dash-button {
+            border: 1px solid var(--dash-green);
+            color: var(--dash-green);
+            background-color: var(--panel-surface);
+            transition: background-color 150ms ease;
+        }
+        [data-dashboard] .dash-button:hover { background-color: color-mix(in srgb, var(--dash-green) 8%, var(--panel-surface)); }
+        [data-dashboard] .dash-cell { transition: background-color 150ms ease; }
+        @media (prefers-reduced-motion: reduce) { [data-dashboard] .dash-button, [data-dashboard] .dash-cell { transition: none; } }
+    </style>
+
+    <main class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
+            @if (! $dashboardReady)
+                <div class="animate-pulse space-y-[20px]" role="status" aria-label="Cargando panel">
+                    <div class="mb-[30px] flex items-center gap-[15px]">
+                        <div class="panel-header h-[50px] w-[50px] rounded-xl"></div>
+                        <div class="space-y-[15px]">
+                            <div class="panel-header h-5 w-40 rounded-lg"></div>
+                            <div class="panel-header h-4 w-64 max-w-full rounded-lg"></div>
                         </div>
-                        <div class="panel-border panel-surface h-[170px] rounded-xl border"></div>
-                        <div class="panel-border panel-surface h-[420px] rounded-xl border"></div>
-                        <span class="sr-only">Cargando información del dashboard...</span>
                     </div>
-                @else
+                    <div class="panel-border panel-surface h-[170px] rounded-xl border"></div>
+                    <div class="panel-border panel-surface h-[420px] rounded-xl border"></div>
+                    <span class="sr-only">Cargando información del dashboard...</span>
+                </div>
+            @else
+                @php
+                    $periodMonth = collect($months)->firstWhere('number', (int) $selectedMonth);
+                    $periodLabel = trim(($periodMonth['name'] ?? '').' '.$selectedYear);
+                @endphp
+
+                <!-- Cabecera: título y subtítulo a la izquierda; filtros a la derecha -->
+                <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                    <div class="flex min-w-0 max-w-full items-center gap-[15px]">
+                        <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Panel general</h1>
+                            <p class="-mb-[5px] mt-[10px] leading-[25px]">Consulta el avance de tus clientes y los archivos cargados.</p>
+                        </div>
+                    </div>
+
+
+                    <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
+                        <x-panel-select id="dashboard-month" label="Mes" property="selectedMonth"
+                            :options="collect($months)->map(fn ($item) => ['value' => $item['number'], 'label' => $item['name']])->all()"
+                            class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
+
+                        <x-panel-select id="dashboard-year" label="Año" property="selectedYear"
+                            :options="collect($years)->map(fn ($year) => ['value' => $year, 'label' => $year])->all()"
+                            class="min-w-[110px] flex-1 sm:w-28 sm:flex-none" />
+
+                        <div class="relative w-full sm:w-72">
+                            <label for="dashboard-search" class="sr-only">Buscar cliente</label>
+                            <svg class="panel-muted pointer-events-none absolute left-[15px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+                            <input id="dashboard-search" wire:model.live.debounce.500ms="search" type="text" autocomplete="off" placeholder="Buscar cliente o RFC..."
+                                class="panel-field h-11 w-full rounded-xl border pl-[44px] pr-[15px]">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Resumen de archivos: una caja con cabecera gris y celdas separadas por líneas de 1px -->
+                @if ($canManageCustomers)
                     @php
-                        $periodMonth = collect($months)->firstWhere('number', (int) $selectedMonth);
-                        $periodLabel = trim(($periodMonth['name'] ?? '').' '.$selectedYear);
+                        $stats = [
+                            ['label' => 'Archivos mensuales subidos', 'value' => $totalFilesMonth, 'icon' => 'M8 7V3m8 4V3M5 11h14M6 5h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z'],
+                            ['label' => 'Archivos anuales subidos', 'value' => $totalFilesYear, 'icon' => 'M4 20h16M7 16v-5m5 5V6m5 10v-8'],
+                            ['label' => 'Archivos totales', 'value' => $totalFiles, 'icon' => 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z'],
+                        ];
                     @endphp
 
-                    <!-- Cabecera y filtros -->
-                    <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
-                        <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                            <span class="panel-surface panel-border panel-text grid h-14 w-14 shrink-0 place-items-center rounded-xl border">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
-                            </span>
+                    <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de archivos">
+                        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                             <div class="min-w-0">
-                                <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Panel general</h1>
-                                <p class="mt-[10px] leading-tight">Consulta el avance de tus clientes y los archivos cargados.</p>
+                                <p class="panel-accent flex items-center gap-[10px] leading-none">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                                    <span>Resumen de archivos</span>
+                                </p>
+                                <p class="-mb-[5px] mt-[10px] leading-[25px]">Documentos cargados por tus clientes</p>
                             </div>
-                        </div>
+                            @if ($periodLabel !== '')
+                                <span class="flex shrink-0 items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span><span>Periodo: {{ $periodLabel }}</span></span>
+                            @endif
+                        </header>
 
-                        <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
-                            <x-panel-select id="dashboard-month" label="Mes" property="selectedMonth"
-                                :options="collect($months)->map(fn ($item) => ['value' => $item['number'], 'label' => $item['name']])->all()"
-                                class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
-
-                            <x-panel-select id="dashboard-year" label="Año" property="selectedYear"
-                                :options="collect($years)->map(fn ($year) => ['value' => $year, 'label' => $year])->all()"
-                                class="min-w-[110px] flex-1 sm:w-28 sm:flex-none" />
-
-                            <div class="relative w-full sm:w-72">
-                                <label for="dashboard-search" class="sr-only">Buscar cliente</label>
-                                <svg class="panel-muted pointer-events-none absolute left-[15px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
-                                <input id="dashboard-search" wire:model.live.debounce.500ms="search" type="text" autocomplete="off" placeholder="Buscar cliente o RFC..."
-                                    class="panel-field h-11 w-full rounded-xl border pl-[44px] pr-[15px]">
-                            </div>
+                        <div class="-mb-px -mr-px grid grid-cols-1 lg:grid-cols-3">
+                            @foreach ($stats as $stat)
+                                <div class="panel-border min-w-0 border-b border-r p-[20px]">
+                                    <p class="panel-accent flex items-center gap-[10px] leading-none">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $stat['icon'] }}" /></svg>
+                                        <span class="min-w-0">{{ $stat['label'] }}</span>
+                                    </p>
+                                    <p class="mt-[15px] pl-[26px] leading-none tabular-nums">{{ number_format((int) $stat['value']) }}</p>
+                                </div>
+                            @endforeach
                         </div>
                     </section>
-
-                    <!-- Resumen de archivos -->
-                    @if ($canManageCustomers)
-                        @php
-                            $stats = [
-                                ['label' => 'Archivos mensuales subidos', 'value' => $totalFilesMonth, 'icon' => 'M8 7V3m8 4V3M5 11h14M6 5h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z'],
-                                ['label' => 'Archivos anuales subidos', 'value' => $totalFilesYear, 'icon' => 'M4 20h16M7 16v-5m5 5V6m5 10v-8'],
-                                ['label' => 'Archivos totales', 'value' => $totalFiles, 'icon' => 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z'],
-                            ];
-                        @endphp
-
-                        <section class="panel-surface panel-border overflow-hidden rounded-xl border">
-                            <header class="panel-header panel-border flex flex-col justify-between gap-[10px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
-                                <div class="min-w-0">
-                                    <h2 class="panel-accent leading-none">Resumen de archivos</h2>
-                                    <p class="mt-[10px] leading-tight">Documentos cargados por tus clientes</p>
-                                </div>
-                                @if ($periodLabel !== '')
-                                    <div class="flex shrink-0 items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Periodo: {{ $periodLabel }}</div>
-                                @endif
-                            </header>
-
-                            <div class="panel-line grid grid-cols-1 gap-px lg:grid-cols-3">
-                                @foreach ($stats as $stat)
-                                    <div class="panel-surface flex min-w-0 items-center gap-[15px] p-[20px]">
-                                        <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $stat['icon'] }}" /></svg>
-                                        </span>
-                                        <div class="min-w-0">
-                                            <span class="panel-accent block leading-none tabular-nums">{{ number_format((int) $stat['value']) }}</span>
-                                            <span class="mt-[10px] block leading-snug">{{ $stat['label'] }}</span>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </section>
-                    @endif
+                @endif
 
                     <!-- Informe de clientes -->
                     @php
                         $filteredCustomers = $this->filteredCustomers;
                     @endphp
 
-                    <section class="panel-surface panel-border overflow-hidden rounded-xl border">
-                        <header class="panel-header panel-border flex flex-col justify-between gap-[10px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
-                            <div class="min-w-0">
-                                <h2 class="panel-accent leading-none">Informe de clientes</h2>
-                                <p class="mt-[10px] leading-tight">Avance de archivos por cliente y servicio</p>
-                            </div>
-                            @if ($this->customers->isNotEmpty())
-                                <span class="shrink-0 leading-none tabular-nums">{{ $filteredCustomers->count() }} {{ $filteredCustomers->count() === 1 ? 'cliente' : 'clientes' }}</span>
-                            @endif
-                        </header>
+                <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Informe de clientes">
+                    <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                        <div class="min-w-0">
+                            <p class="panel-accent flex items-center gap-[10px] leading-none">
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+                                <span>Informe de clientes</span>
+                            </p>
+                            <p class="-mb-[5px] mt-[10px] leading-[25px]">Avance de archivos por cliente y servicio</p>
+                        </div>
+                        @if ($this->customers->isNotEmpty())
+                            <span class="shrink-0 leading-none tabular-nums">{{ $filteredCustomers->count() }} {{ $filteredCustomers->count() === 1 ? 'cliente' : 'clientes' }}</span>
+                        @endif
+                    </header>
 
-                        <div class="flex flex-wrap items-center justify-center gap-x-[15px] sm:justify-between sm:gap-x-[20px] sm:px-[20px]">
-                            <div class="flex flex-wrap items-center justify-center gap-x-[15px] sm:justify-start sm:gap-x-[20px]" role="tablist" aria-label="Estatus de los clientes">
+                        <div class="panel-border flex flex-wrap items-center justify-between gap-x-[20px] border-b px-[20px]">
+                            <div class="flex flex-wrap items-center gap-x-[20px]" role="tablist" aria-label="Estatus de los clientes">
                                 <button type="button" role="tab" wire:click.prevent="customersPorcentageIncomplete"
                                     aria-selected="{{ $filterType === 'incomplete' ? 'true' : 'false' }}"
                                     class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
@@ -184,7 +191,7 @@
                             {{-- Si las rutas están en caché y aún no incluyen la guía, el botón se oculta en lugar de romper el panel. --}}
                             @if (\Illuminate\Support\Facades\Route::has('dashboard.guide'))
                                 <a href="{{ route('dashboard.guide') }}" title="Descargar la guía del Panel general en PDF"
-                                    class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
+                                    class="dash-link inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
                                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
                                     <span>Guía</span>
                                 </a>
@@ -201,7 +208,7 @@
                                         No hay clientes
                                         <x-slot name="action">
                                             <button type="button" wire:click="redirectToCreateCustomer"
-                                                class="panel-button inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">Agregar</button>
+                                                class="dash-button inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">Agregar</button>
                                         </x-slot>
                                     </x-panel-empty-state>
                                 @else
@@ -224,14 +231,14 @@
                                     Sin clientes con estatus {{ $filterType === 'complete' ? 'Completo' : 'Incompleto' }}
                                 </x-panel-empty-state>
                             @else
-                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] px-[15px] pb-[20px] pt-0 sm:px-[20px]">
+                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] p-[20px]">
                                     @foreach ($filteredCustomers->take($visibleCustomerLimit) as $customer)
                                         @php
                                             $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
                                             $displayName = trim(Str::limit($customer['name'], 50).' '.($customer['last_name'] ? Str::limit($customer['last_name'], 50).' '.Str::limit($customer['maternal_last_name'], 50) : ''));
                                         @endphp
                                         <div wire:key="dashboard-customer-{{ $customer->id }}" role="link" tabindex="0" @click="openCustomer(@js(route('customers.view', $customer->id)))" @keydown.enter="openCustomer(@js(route('customers.view', $customer->id)))"
-                                            class="panel-card panel-surface panel-border relative flex min-w-0 cursor-pointer flex-col gap-[15px] rounded-xl border p-[15px] focus:outline-none sm:p-[20px]">
+                                            class="panel-card panel-surface panel-border relative flex min-w-0 cursor-pointer flex-col gap-[20px] rounded-xl border p-[20px] focus:outline-none">
                                             @if ($customer->services->isNotEmpty())
                                                 <div data-card-actions @click.stop @keydown.enter.stop class="absolute right-[10px] top-[10px] z-10 sm:right-[15px] sm:top-[15px]">
                                                     <x-dropdown align="right" width="48" content-classes="panel-surface panel-border border p-[5px] !rounded-xl" dropdown-classes="!top-full !mt-[8px] !rounded-xl">
@@ -262,21 +269,21 @@
                                                 @endif
 
                                                 <div class="min-w-0">
-                                                    <span class="line-clamp-2 break-words text-justify leading-snug" title="{{ trim($customer['name'].' '.$customer['last_name'].' '.$customer['maternal_last_name']) }}">
+                                                    <span class="line-clamp-2 break-words text-left leading-snug" title="{{ trim($customer['name'].' '.$customer['last_name'].' '.$customer['maternal_last_name']) }}">
                                                         <x-hyphenated-text :text="$displayName" />
                                                     </span>
-                                                    <span class="panel-muted mt-[5px] block truncate leading-none">{{ $customer['rfc'] }}</span>
+                                                    <span class="mt-[15px] block truncate leading-none">{{ $customer['rfc'] }}</span>
                                                 </div>
                                             </div>
 
                                             @if ($customer->services->isNotEmpty())
-                                                <div class="panel-border flex flex-wrap justify-center gap-x-[10px] gap-y-[20px] border-t pt-[15px] sm:gap-x-[20px]">
+                                                <div class="panel-border flex flex-wrap justify-center gap-x-[10px] gap-y-[20px] border-t pt-[20px] sm:gap-x-[20px]">
                                                     @foreach ($uniqueServiceIds as $serviceId)
                                                         @php
                                                             $inService = $this->services[$serviceId] ?? null;
                                                             $percentageKey = "{$customer->id}-{$serviceId}";
                                                         @endphp
-                                                        <div class="flex w-[96px] flex-col items-center justify-between gap-[10px] text-center sm:w-[110px]">
+                                                        <div class="flex w-[96px] flex-col items-center justify-between gap-[15px] text-center sm:w-[110px]">
                                                             <div class="flex w-full flex-1 items-end justify-center sm:h-[38px] sm:flex-none">
                                                                 <span class="panel-muted line-clamp-2 leading-tight" title="{{ $inService?->service ?? 'Sin servicio' }}">{{ $inService?->service ?? 'Sin servicio' }}</span>
                                                             </div>
@@ -287,7 +294,7 @@
 
                                                     {{-- Siempre dos aros por cliente: si solo tiene un servicio, el segundo queda con guiones --}}
                                                     @for ($emptySlot = $uniqueServiceIds->count(); $emptySlot < 2; $emptySlot++)
-                                                        <div class="flex w-[96px] flex-col items-center justify-between gap-[10px] text-center sm:w-[110px]" aria-hidden="true">
+                                                        <div class="flex w-[96px] flex-col items-center justify-between gap-[15px] text-center sm:w-[110px]" aria-hidden="true">
                                                             <div class="flex w-full flex-1 items-end justify-center sm:h-[38px] sm:flex-none">
                                                                 <span class="panel-muted leading-tight">--</span>
                                                             </div>
@@ -303,7 +310,7 @@
                                             @else
                                                 <div class="panel-danger-box rounded-xl border px-[15px] py-[20px] text-center">
                                                     <p>Sin servicios contratados</p>
-                                                    <p class="mt-[6px]">Este cliente aún no tiene servicios activos.</p>
+                                                    <p class="mt-[15px]">Este cliente aún no tiene servicios activos.</p>
                                                 </div>
                                             @endif
                                         </div>
@@ -316,19 +323,17 @@
                             <div class="flex flex-col items-center gap-[20px] px-[20px] pb-[20px]">
                                 <span class="panel-muted leading-none">Mostrando {{ $visibleCustomerLimit }} de {{ $filteredCustomers->count() }}</span>
                                 <button wire:click="showMoreCustomers" type="button"
-                                    class="panel-button-secondary inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">
+                                    class="dash-button inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">
                                     Mostrar más
                                 </button>
                             </div>
                         @endif
-                    </section>
-                @endif
-            </div>
-        </div>
-    </div>
+                </section>
+            @endif
+        </main>
 
-    <!-- Control de pantalla completa (igual que en Administración y Reportes de soporte) -->
-    <div class="panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
+    <!-- Control de pantalla completa -->
+    <div class="panel-surface panel-border fixed bottom-[50px] right-[50px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
         <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg>
             <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5" /></svg>
