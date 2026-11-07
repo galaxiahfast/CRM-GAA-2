@@ -1,6 +1,6 @@
-{{-- Reporte de respaldos: mismo diseño que Panel general, Administración, Reloj Checador y Reportes de soporte
-     (tarjetas con cabecera gris, líneas de 1px, texto de 15px, separaciones de 20px, escala de vista al 90%
-     ajustable y tema oscuro con fondo negro). Solo cambia la presentación; la lógica vive en
+{{-- Reporte de respaldos: mismo diseño que Inicio y Panel general
+     (tarjetas con cabecera gris, líneas de 1px, texto de 15px y separaciones de 20px).
+     La lógica vive en
      App\Livewire\Support\ServerBackupReports y el envío de los lunes en App\Services\Support\WeeklyBackupReportService. --}}
 @php
     // Perfil que se abre al elegir cada servidor: el primero con error y, si no hay, el primero de la lista
@@ -26,7 +26,7 @@
     data-panel
     class="support-backup-report-page relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
     x-data="{
-        viewScale: 90,
+        viewScale: 100,
         isFullscreen: false,
         isCompact: window.innerWidth / window.appAutoScale() < 1024,
         scaledHeight: null,
@@ -336,7 +336,7 @@
             if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
         },
         setScale(value) {
-            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
+            this.viewScale = Math.min(100, Math.max(70, Number(value) || 100));
             try { localStorage.setItem('backup-reports-view-scale', String(this.viewScale)); } catch (error) {}
             this.$nextTick(() => this.syncHeight());
         },
@@ -678,13 +678,12 @@
                 <!-- Cabecera: título y subtítulo a la izquierda; servicio y estado a la derecha -->
                 <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                        {{-- El recuadro mide lo mismo que el bloque de texto (título 20 px + 15 px + subtítulo), así la distancia al menú es la misma que la de abajo --}}
-                        <span class="panel-surface panel-border panel-text grid h-[40px] w-[40px] shrink-0 place-items-center rounded-xl border">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18h16M6 15V9m4 6V5m4 10v-3m4 3V7"/></svg>
+                        <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18h16M6 15V9m4 6V5m4 10v-3m4 3V7"/></svg>
                         </span>
                         <div class="min-w-0">
-                            <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Informe Técnico de Respaldos</h1>
-                            <p class="mt-[15px] leading-tight">Supervisa servidores, perfiles e incidencias.</p>
+                            <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Informe Técnico de Respaldos</h1>
+                            <p class="-mb-[5px] mt-[10px] leading-[25px]">Supervisa servidores, perfiles e incidencias.</p>
                         </div>
                     </div>
 
@@ -924,8 +923,8 @@
                     </div>
                 </section>
 
-                <!-- Envío automático semanal: caja aparte, separada 50 px de la de arriba (20 px de la página + 30 px) -->
-                <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Envío automático">
+                <!-- Envío automático semanal: caja aparte, con la separación habitual del panel -->
+                <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Envío automático">
                     @php
                         $weekly = (array) config('backup-reports.weekly', []);
                         $weeklyEnabled = (bool) ($weekly['enabled'] ?? false);
@@ -1051,7 +1050,7 @@
                             $selectableServers = collect($servers)->pluck('key')->values()->all();
                             $serverErrorTotal = collect($serverMeta)->sum('errors');
                         @endphp
-                        <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Servidores y perfiles">
+                        <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Servidores y perfiles">
                             <span
                                 class="hidden"
                                 wire:key="backup-selection-{{ md5(json_encode([$selectableServers, $selectableProfiles])) }}"
