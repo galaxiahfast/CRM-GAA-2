@@ -1,5 +1,5 @@
 <x-app-layout>
-    {{-- Reportes de soporte: mismo diseño que Panel general, Administración, Reloj Checador y Reporte de respaldos
+    {{-- Reportes de soporte: mismo diseño que Gestión de Respaldos, Panel general y Administración
          (tarjetas con cabecera gris, líneas de 1px, texto de 15px, separaciones de 20px, escala de vista al 90%
          ajustable, pantalla completa y tema oscuro con fondo negro). Solo cambia la presentación; la lógica vive en
          App\Http\Controllers\TechnicalSupportReportController. --}}
@@ -24,6 +24,13 @@
         html.module-dark-theme [data-support-modal] .panel-button { background-color: #1A3A6B; color: #ffffff; }
         html.module-dark-theme .support-report-page .panel-button:hover:not(:disabled),
         html.module-dark-theme [data-support-modal] .panel-button:hover:not(:disabled) { background-color: #234b88; }
+
+        /* Acción principal del reporte: el verde de Gestión de Respaldos. */
+        .support-report-page .support-report-primary { background-color: #15803d; color: #ffffff; transition: background-color 150ms ease; }
+        .support-report-page .support-report-primary:hover:not(:disabled) { background-color: #166534; }
+        .support-report-page .support-report-primary:disabled { opacity: .4; }
+        .support-report-page .support-report-header-action > button { color: #15803d; }
+        html.module-dark-theme .support-report-page .support-report-header-action > button { color: #4ade80; }
 
         /* Pestañas (enlaces): la activa toma el color de acento */
         .support-report-page .panel-tab[aria-current="page"] { color: var(--panel-accent); }
@@ -70,11 +77,10 @@
         .support-row.is-selected { background-color: color-mix(in srgb, var(--panel-accent) 8%, transparent); }
         .support-row.is-selected:hover { background-color: color-mix(in srgb, var(--panel-accent) 14%, transparent); }
 
-        /* Fechas de la columna izquierda: la fecha elegida se marca solo con un fondo gris neutro (sin azul) */
+        /* Fechas de la columna izquierda, como en Gestión de Respaldos. */
         .support-date { transition: background-color 150ms ease; }
         .support-date:not(.is-selected):hover { background-color: var(--support-hover); }
-        .support-date.is-selected { background-color: color-mix(in srgb, var(--panel-text) 7%, var(--panel-surface)); }
-        html.module-dark-theme [data-panel] .support-date.is-selected { background-color: color-mix(in srgb, var(--panel-text) 10%, var(--panel-surface)); }
+        .support-date.is-selected { background-color: var(--panel-header); color: var(--panel-accent); }
 
         /* Indicador de scroll de la lista de fechas: gris, fino y separado del borde para no parecer una marca de selección */
         .support-date-scroll .panel-scroll-thumb {
@@ -215,30 +221,30 @@
                     <section class="flex shrink-0 flex-wrap items-center justify-between gap-[20px]">
                         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                             <span class="panel-surface panel-border panel-text grid h-14 w-14 shrink-0 place-items-center rounded-xl border">
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
+                                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg>
                             </span>
                             <div class="min-w-0">
                                 <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Reportes de soporte</h1>
-                                <p class="mt-[11px] leading-tight">Genera y consulta los documentos de los servicios técnicos realizados.</p>
+                                <p class="mt-[15px] leading-none">Genera y consulta los documentos de los servicios técnicos realizados.</p>
                             </div>
                         </div>
+                        <x-support-report-trash :reports="$trashedReports" class="support-report-header-action w-full lg:ml-auto lg:w-auto" />
                     </section>
 
                     <!-- Secciones -->
                     <nav class="flex flex-wrap items-center gap-x-[20px] gap-y-[10px]" aria-label="Secciones de reportes de soporte">
-                        <a href="{{ route('soporte.reportes-tecnicos') }}" @if ($activeTab === 'generate') aria-current="page" @endif class="panel-tab flex items-center gap-[10px] leading-none">
+                        <a href="{{ route('soporte.reportes-tecnicos') }}" @if ($activeTab === 'generate') aria-current="page" @endif class="panel-tab flex min-h-[44px] items-center gap-[10px] leading-none">
                             <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4"/></svg>
                             <span>Generar reporte</span>
                         </a>
-                        <a href="{{ route('soporte.reportes-tecnicos.history') }}" @if ($activeTab === 'history') aria-current="page" @endif class="panel-tab flex items-center gap-[10px] leading-none">
+                        <a href="{{ route('soporte.reportes-tecnicos.history') }}" @if ($activeTab === 'history') aria-current="page" @endif class="panel-tab flex min-h-[44px] items-center gap-[10px] leading-none">
                             <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                             <span>Historial</span>
                         </a>
-                        <a href="{{ route('soporte.reportes-tecnicos.movements') }}" @if ($activeTab === 'movements') aria-current="page" @endif class="panel-tab flex items-center gap-[10px] leading-none">
+                        <a href="{{ route('soporte.reportes-tecnicos.movements') }}" @if ($activeTab === 'movements') aria-current="page" @endif class="panel-tab flex min-h-[44px] items-center gap-[10px] leading-none">
                             <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
                             <span>Historial de movimientos</span>
                         </a>
-                        <x-support-report-trash :reports="$trashedReports" class="ml-auto" />
                     </nav>
 
                     @if (session('status'))
@@ -329,14 +335,14 @@
                                         <h2 class="panel-accent leading-none">Generar reporte</h2>
                                         <span class="panel-accent leading-none">(<span x-text="selected.length">0</span>)</span>
                                     </div>
-                                    <p class="mt-[10px] leading-tight" :class="hasOverLimit() ? 'panel-tone-red' : ''" x-text="hasOverLimit() ? 'Hay servicios con más personas que su cantidad.' : (selected.length > 0 && ! hasPeople() ? 'Elige al menos una persona o cliente para generar el PDF.' : 'El folio y la fecha se asignarán automáticamente.')">El folio y la fecha se asignarán automáticamente.</p>
+                                    <p class="mt-[15px] leading-tight" :class="hasOverLimit() ? 'panel-tone-red' : ''" x-text="hasOverLimit() ? 'Hay servicios con más personas que su cantidad.' : (selected.length > 0 && ! hasPeople() ? 'Elige al menos una persona o cliente para generar el PDF.' : 'El folio y la fecha se asignarán automáticamente.')">El folio y la fecha se asignarán automáticamente.</p>
                                 </div>
                                 <div class="no-print flex flex-col gap-[10px] sm:flex-row sm:items-center">
                                     <button type="button" @click="summaryOpen = true" class="panel-button-secondary inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
                                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>
                                         <span>Ver resumen</span>
                                     </button>
-                                    <button type="submit" :disabled="! canSubmit()" class="panel-button inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
+                                    <button type="submit" :disabled="! canSubmit()" class="support-report-primary inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
                                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4"/></svg>
                                         <span>Generar PDF</span>
                                     </button>
@@ -511,7 +517,7 @@
                                     <h2 class="panel-accent leading-none">Historial de reportes</h2>
                                     <span class="panel-accent leading-none">({{ $reports->total() }})</span>
                                 </div>
-                                <p class="mt-[10px] leading-tight">Consulta, filtra o descarga los documentos generados.</p>
+                                <p class="mt-[15px] leading-tight">Consulta, filtra o descarga los documentos generados.</p>
                             </div>
                             <div class="no-print flex flex-col gap-[10px] sm:flex-row sm:items-center">
                                 <button type="button" @click="viewSelection()" :disabled="selectedReports.length === 0" class="panel-button-secondary inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
@@ -523,7 +529,7 @@
                                     <template x-for="folio in selectedReports" :key="folio">
                                         <input type="hidden" name="report_folios[]" :value="folio">
                                     </template>
-                                    <button type="submit" :disabled="selectedReports.length === 0" class="panel-button inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
+                                    <button type="submit" :disabled="selectedReports.length === 0" class="support-report-primary inline-flex h-11 w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-xl px-[20px] leading-none focus:outline-none focus:ring-0 sm:w-auto">
                                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v4h16v-4M12 4v12m0 0 4-4m-4 4-4-4"/></svg>
                                         <span>Descargar selección (<span x-text="selectedReports.length">0</span>)</span>
                                     </button>
@@ -547,9 +553,9 @@
                                             $dateQuery = request()->except('page', 'date');
                                         @endphp
                                         @foreach ($dateOptions as $day)
-                                            <a href="{{ route('soporte.reportes-tecnicos.history', array_merge($dateQuery, ['date' => $day['date']])) }}" @if ($filters['date'] === $day['date']) aria-current="true" @endif class="support-date panel-border flex min-h-[90px] w-full flex-col justify-center border-b px-[20px] py-[12px] {{ $filters['date'] === $day['date'] ? 'is-selected' : '' }}">
-                                                <span class="support-date-label block w-full break-words leading-tight" title="{{ $day['label'] }}">{{ $day['label'] }}</span>
-                                                <span class="panel-muted mt-[6px] leading-none">{{ $day['count'] }} {{ $day['count'] === 1 ? 'reporte' : 'reportes' }}</span>
+                                            <a href="{{ route('soporte.reportes-tecnicos.history', array_merge($dateQuery, ['date' => $day['date']])) }}" @if ($filters['date'] === $day['date']) aria-current="true" @endif class="support-date panel-border flex min-h-[90px] w-full flex-col justify-center border-b px-[20px] py-[20px] {{ $filters['date'] === $day['date'] ? 'is-selected' : '' }}">
+                                                <span class="support-date-label block w-full truncate leading-none" title="{{ $day['label'] }}">{{ $day['label'] }}</span>
+                                                <span class="mt-[15px] leading-none">{{ $day['count'] }} {{ $day['count'] === 1 ? 'reporte' : 'reportes' }}</span>
                                             </a>
                                         @endforeach
                                     </div>
@@ -703,7 +709,7 @@
                                     <h2 class="panel-accent leading-none">Historial de movimientos</h2>
                                     <span class="panel-accent leading-none">({{ $movements->total() }})</span>
                                 </div>
-                                <p class="mt-[10px] leading-tight">Registro permanente de reportes generados y eliminados.</p>
+                                <p class="mt-[15px] leading-tight">Registro permanente de reportes generados y eliminados.</p>
                             </div>
                         </header>
 
@@ -723,9 +729,9 @@
                                             $dateQuery = request()->except('page', 'date');
                                         @endphp
                                         @foreach ($dateOptions as $day)
-                                            <a href="{{ route('soporte.reportes-tecnicos.movements', array_merge($dateQuery, ['date' => $day['date']])) }}" @if ($filters['date'] === $day['date']) aria-current="true" @endif class="support-date panel-border flex min-h-[90px] w-full flex-col justify-center border-b px-[20px] py-[12px] {{ $filters['date'] === $day['date'] ? 'is-selected' : '' }}">
-                                                <span class="support-date-label block w-full break-words leading-tight" title="{{ $day['label'] }}">{{ $day['label'] }}</span>
-                                                <span class="panel-muted mt-[6px] leading-none">{{ $day['count'] }} {{ $day['count'] === 1 ? 'movimiento' : 'movimientos' }}</span>
+                                            <a href="{{ route('soporte.reportes-tecnicos.movements', array_merge($dateQuery, ['date' => $day['date']])) }}" @if ($filters['date'] === $day['date']) aria-current="true" @endif class="support-date panel-border flex min-h-[90px] w-full flex-col justify-center border-b px-[20px] py-[20px] {{ $filters['date'] === $day['date'] ? 'is-selected' : '' }}">
+                                                <span class="support-date-label block w-full truncate leading-none" title="{{ $day['label'] }}">{{ $day['label'] }}</span>
+                                                <span class="mt-[15px] leading-none">{{ $day['count'] }} {{ $day['count'] === 1 ? 'movimiento' : 'movimientos' }}</span>
                                             </a>
                                         @endforeach
                                     </div>

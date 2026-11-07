@@ -1,6 +1,6 @@
-{{-- Reporte de respaldos: mismo diseño que Gestión de Respaldos
-     (tarjetas con cabecera gris, líneas de 1px, texto de 15px y separaciones de 20px).
-     La lógica vive en
+{{-- Reporte de respaldos: mismo diseño que Panel general, Administración, Reloj Checador y Reportes de soporte
+     (tarjetas con cabecera gris, líneas de 1px, texto de 15px, separaciones de 20px, escala de vista al 90%
+     ajustable y tema oscuro con fondo negro). Solo cambia la presentación; la lógica vive en
      App\Livewire\Support\ServerBackupReports y el envío de los lunes en App\Services\Support\WeeklyBackupReportService. --}}
 @php
     // Perfil que se abre al elegir cada servidor: el primero con error y, si no hay, el primero de la lista
@@ -26,8 +26,7 @@
     data-panel
     class="support-backup-report-page relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
     x-data="{
-        viewScale: 100,
-        activeSection: @js(count($servers) > 0 ? 'servers' : 'reading'),
+        viewScale: 90,
         isFullscreen: false,
         isCompact: window.innerWidth / window.appAutoScale() < 1024,
         scaledHeight: null,
@@ -337,7 +336,7 @@
             if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
         },
         setScale(value) {
-            this.viewScale = Math.min(100, Math.max(70, Number(value) || 100));
+            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
             try { localStorage.setItem('backup-reports-view-scale', String(this.viewScale)); } catch (error) {}
             this.$nextTick(() => this.syncHeight());
         },
@@ -422,7 +421,11 @@
         .backup-server-item[aria-selected="true"],
         .backup-server-item[aria-selected="true"]:hover,
         .backup-profile-item.is-selected,
-        .backup-profile-item.is-selected:hover { background-color: var(--panel-header); color: var(--panel-accent); }
+        .backup-profile-item.is-selected:hover { background-color: color-mix(in srgb, var(--panel-accent) 8%, var(--panel-surface)); }
+        html.module-dark-theme [data-panel] .backup-server-item[aria-selected="true"],
+        html.module-dark-theme [data-panel] .backup-server-item[aria-selected="true"]:hover,
+        html.module-dark-theme [data-panel] .backup-profile-item.is-selected,
+        html.module-dark-theme [data-panel] .backup-profile-item.is-selected:hover { background-color: color-mix(in srgb, var(--panel-accent) 18%, var(--panel-surface)); }
 
         /* Menú de servidores en celular: fila que se desplaza de lado */
         .backup-server-menu { scrollbar-width: none; }
@@ -603,9 +606,7 @@
         /* Botones de acción (enviar, guardar, guía, actualizar, agregar, editar y eliminar de cada fila) en verde; solo «Cancelar lectura» sigue en rojo */
         .support-backup-report-page[data-panel] { --backup-green: #15803d; }
         html.module-dark-theme .support-backup-report-page[data-panel] { --backup-green: #4ade80; }
-        .support-backup-report-page .backup-green { color: var(--backup-green); }
         .support-backup-report-page .panel-action:not(.panel-action-danger) { color: var(--backup-green); }
-        .support-backup-report-page [data-backup-nav] .panel-tab[aria-pressed="true"] { color: var(--panel-accent); }
 
         /* Formularios del informe (mismo estilo que «Agregar usuario»): encabezado y pie blancos, secciones separadas solo por líneas,
            botón principal en azul fuerte, cancelar con contorno azul y cierre / eliminar en rojo */
@@ -645,7 +646,6 @@
         }
 
         @media print {
-            .support-backup-report-page [data-backup-section] { display: block !important; }
             .support-backup-report-page [data-server-panel] { display: block !important; break-inside: avoid; }
             .support-backup-report-page [data-server-panel] + [data-server-panel] { border-top: 1px solid #d4d4d8; }
             .support-backup-report-page [data-profile-detail] { display: block !important; }
@@ -676,14 +676,15 @@
                 ></span>
 
                 <!-- Cabecera: título y subtítulo a la izquierda; servicio y estado a la derecha -->
-                <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                        <span class="panel-surface panel-border panel-text grid h-14 w-14 shrink-0 place-items-center rounded-xl border">
-                            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18h16M6 15V9m4 6V5m4 10v-3m4 3V7"/></svg>
+                        {{-- El recuadro mide lo mismo que el bloque de texto (título 20 px + 15 px + subtítulo), así la distancia al menú es la misma que la de abajo --}}
+                        <span class="panel-surface panel-border panel-text grid h-[40px] w-[40px] shrink-0 place-items-center rounded-xl border">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18h16M6 15V9m4 6V5m4 10v-3m4 3V7"/></svg>
                         </span>
                         <div class="min-w-0">
-                            <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Informe Técnico de Respaldos</h1>
-                            <p class="mt-[15px] leading-none">Supervisa servidores, perfiles e incidencias.</p>
+                            <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Informe Técnico de Respaldos</h1>
+                            <p class="mt-[15px] leading-tight">Supervisa servidores, perfiles e incidencias.</p>
                         </div>
                     </div>
 
@@ -700,11 +701,12 @@
                             : ($backupOffline === $backupRead->count()
                                 ? ['Desconectado', 'backup-tone-red', 'Ningún perfil se pudo leer en la última lectura.']
                                 : ($backupOffline > 0
-                                    ? ['Conectado', 'backup-green', $backupOffline.' de '.$backupRead->count().' perfiles no se pudieron leer en la última lectura.']
-                                    : ['Conectado', 'backup-green', 'Todos los perfiles respondieron en la última lectura.']));
+                                    ? ['Conectado', 'backup-tone-blue', $backupOffline.' de '.$backupRead->count().' perfiles no se pudieron leer en la última lectura.']
+                                    : ['Conectado', 'backup-tone-blue', 'Todos los perfiles respondieron en la última lectura.']));
                     @endphp
-                    <div class="flex w-full min-w-0 flex-col gap-[5px] lg:w-auto lg:items-end" data-backup-connection>
-                        <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px] lg:justify-end">
+                    <div class="w-full min-w-0 lg:w-auto lg:text-right" data-backup-connection>
+                        {{-- La guía va al mismo nivel que «Servicio de respaldos»: es lo primero que se necesita para saber cómo funciona --}}
+                        <div class="flex flex-wrap items-center gap-x-[10px] gap-y-[15px] lg:justify-end">
                             <span class="no-print flex items-center">
                                 <button type="button" wire:click="downloadGuide" wire:loading.attr="disabled" wire:target="downloadGuide" title="Descargar la guía del Reporte de Respaldos en PDF" class="panel-action backup-action inline-flex items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
                                 <svg wire:loading.remove wire:target="downloadGuide" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5"/></svg>
@@ -712,12 +714,10 @@
                                 <span>Guía PDF</span>
                                 </button>
                             </span>
-                            <button type="button" wire:click="startReading" wire:loading.attr="disabled" :disabled="busy" class="panel-action backup-action no-print inline-flex items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
-                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>
-                                <span>Actualizar registros</span>
-                            </button>
+                            <span class="no-print panel-muted" aria-hidden="true">·</span>
+                            <p class="panel-accent flex items-center leading-none"><span>Servicio de respaldos</span></p>
                         </div>
-                        <p class="flex items-center gap-[10px] leading-none lg:justify-end" aria-live="polite">
+                        <p class="mt-[15px] flex items-center gap-[10px] leading-tight lg:justify-end" aria-live="polite">
                             <span x-show="busy" x-cloak class="panel-muted inline-flex items-center gap-[10px]">
                                 <span class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-current" aria-hidden="true"></span>
                                 <span>Leyendo…</span>
@@ -730,17 +730,9 @@
                     </div>
                 </section>
 
-                <nav data-backup-nav class="no-print flex flex-wrap items-center gap-[20px]" aria-label="Secciones del reporte de respaldos">
-                    @if (count($servers) > 0)
-                        <button type="button" @click="activeSection = 'servers'" :aria-pressed="activeSection === 'servers'" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none">Servidores y perfiles</button>
-                    @endif
-                    <button type="button" @click="activeSection = 'reading'" :aria-pressed="activeSection === 'reading'" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none">Lectura de respaldos</button>
-                    <button type="button" @click="activeSection = 'weekly'" :aria-pressed="activeSection === 'weekly'" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none">Envío automático</button>
-                </nav>
-
-                <!-- Barra de lectura y acciones del informe -->
+                <!-- Caja general: barra de avance, envío automático, cifras y tabla de servidores -->
                 <!-- Sin overflow-hidden: el globo emergente de cada servidor sale de la caja y no debe cortarse; por eso la cabecera redondea sus propias esquinas -->
-                <section x-show="activeSection === 'reading'" data-backup-section class="panel-surface panel-border rounded-xl border" aria-label="Resumen del informe">
+                <section class="panel-surface panel-border rounded-xl border" aria-label="Resumen del informe">
                     <div class="backup-progress" aria-live="polite">
                         <!-- Cabecera gris como las demás: título y, debajo a 10 px, estado de la lectura y cifras -->
                         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] rounded-t-[11px] border-b p-[20px]">
@@ -888,10 +880,10 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Debajo de la barra: estado de la lectura y acciones del informe -->
+                        <!-- Debajo de la barra: estado de la lectura a la izquierda y «Actualizar registros» a la derecha -->
                         <div class="panel-muted mt-[20px] flex flex-col items-start gap-[15px] lg:flex-row lg:items-center lg:justify-between lg:gap-[20px]">
                             <span class="backup-status-line block min-w-0 lg:truncate" x-text="mailSending || mailStatus ? 'El reporte se envía a los destinatarios seleccionados.' : loadingLine()">Lectura de solo acceso, perfil por perfil.</span>
-                            <!-- Acciones del informe: envío y descarga; la actualización está en la cabecera -->
+                            <!-- Acciones del informe: enviar por correo, guardar PDF, guía PDF y actualizar, juntas a la derecha -->
                             <div class="no-print backup-actions flex min-w-0 flex-wrap items-center gap-x-[20px] gap-y-[15px] lg:shrink-0">
                             <div class="relative flex items-center select-none">
                                 <button type="button" @click="recipientsOpen = !recipientsOpen" :disabled="mailSending || busy || total === 0 || processed < total" @disabled($reading || $totalProfiles === 0 || $processedProfiles < $totalProfiles) class="panel-action backup-action inline-flex select-none items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
@@ -922,14 +914,18 @@
                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
                                 <span>Guardar PDF</span>
                             </button>
+                                    <button type="button" wire:click="startReading" wire:loading.attr="disabled" :disabled="busy" class="panel-action backup-action no-print inline-flex shrink-0 items-center gap-[10px] whitespace-nowrap leading-none focus:outline-none focus:ring-0">
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5m-5 4a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>
+                                <span>Actualizar registros</span>
+                            </button>
                             </div>
                         </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Envío automático semanal -->
-                <section x-show="activeSection === 'weekly'" x-cloak data-backup-section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Envío automático">
+                <!-- Envío automático semanal: caja aparte, separada 50 px de la de arriba (20 px de la página + 30 px) -->
+                <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Envío automático">
                     @php
                         $weekly = (array) config('backup-reports.weekly', []);
                         $weeklyEnabled = (bool) ($weekly['enabled'] ?? false);
@@ -978,7 +974,7 @@
                                 <h2 class="panel-accent flex items-center leading-none"><span>Envío automático</span></h2>
                                 <p class="panel-muted mt-[15px] leading-tight">El reporte se envía solo a los destinatarios configurados.</p>
                             </div>
-                            <span class="{{ $weeklyEnabled ? 'backup-green' : 'panel-muted' }} inline-flex items-center gap-[10px] leading-none">
+                            <span class="{{ $weeklyEnabled ? 'backup-tone-blue' : 'panel-muted' }} inline-flex items-center gap-[10px] leading-none">
                                 <span class="h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
                                 <span>{{ $weeklyEnabled ? 'Activo' : 'Desactivado' }}</span>
                             </span>
@@ -1037,7 +1033,7 @@
                     </div>
                 </section>
 
-                <!-- Tabla de servidores y perfiles -->
+                <!-- Tabla de servidores y perfiles: caja aparte, separada 50 px de la de arriba (20 px de la página + 30 px) -->
                 @if (count($servers) > 0)
                         @php
                             $serverMeta = [];
@@ -1055,7 +1051,7 @@
                             $selectableServers = collect($servers)->pluck('key')->values()->all();
                             $serverErrorTotal = collect($serverMeta)->sum('errors');
                         @endphp
-                        <section x-show="activeSection === 'servers'" x-cloak data-backup-section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Servidores y perfiles">
+                        <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Servidores y perfiles">
                             <span
                                 class="hidden"
                                 wire:key="backup-selection-{{ md5(json_encode([$selectableServers, $selectableProfiles])) }}"
@@ -1083,7 +1079,7 @@
                             <div class="grid min-h-[420px] grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                                 <!-- Menú de servidores -->
                                 <nav class="no-print panel-border flex min-w-0 flex-col border-b lg:border-b-0 lg:border-r" aria-label="Servidores supervisados">
-                                    <header class="panel-header panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
+                                    <header class="panel-surface panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
                                         <div class="min-w-0">
                                             <h2 class="panel-accent flex items-center gap-[10px] leading-none">
                                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6.5" rx="1.5" /><rect x="3" y="13.5" width="18" height="6.5" rx="1.5" /><path d="M7 7.25h.01M7 16.75h.01" /></svg>
@@ -1164,7 +1160,7 @@
                                             <div class="grid flex-1 grid-cols-1 xl:grid-cols-2">
                                                 <!-- Perfiles -->
                                                 <div class="min-w-0">
-                                                    <header class="panel-header panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
+                                                    <header class="panel-surface panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
                                                         <div class="min-w-0">
                                                             <h2 class="panel-accent flex items-center gap-[10px] leading-none">
                                                             <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
@@ -1221,7 +1217,7 @@
                                                 <!-- Detalle del perfil -->
                                                 <div class="panel-border min-w-0 xl:border-l">
                                                     <div wire:key="backup-detail-empty-{{ $server['key'] }}" x-show="!selProfile" x-cloak data-detail-empty>
-                                                        <header class="panel-header panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
+                                                        <header class="panel-surface panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
                                                             <div class="min-w-0">
                                                                 <h2 class="panel-accent flex items-center gap-[10px] leading-none">
                                                                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
@@ -1243,7 +1239,7 @@
                                                     @foreach ($server['profiles'] as $profileIndex => $profile)
                                                         @php $row = $rows[$profileIndex]; @endphp
                                                         <div wire:key="backup-profile-detail-{{ $server['key'] }}-{{ $profile['log'] }}-{{ $profileIndex }}" x-show="selProfile === @js($row['key'])" x-cloak data-profile-detail="{{ $row['key'] }}">
-                                                            <header class="panel-header panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
+                                                            <header class="panel-surface panel-border flex items-center justify-between gap-[20px] border-b p-[20px]">
                                                                 <div class="min-w-0">
                                                                     <h2 class="panel-accent flex items-center gap-[10px] leading-none">
                                                                     <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
@@ -1295,8 +1291,8 @@
             </main>
         </div>
     </div>
-    <!-- Control de pantalla completa, con la posición de Gestión de Respaldos -->
-    <div class="no-print panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
+    <!-- Control de pantalla completa (igual que en Panel general, Administración y Reloj Checador); semitransparente mientras no se usa para no tapar el contenido -->
+    <div class="no-print panel-surface panel-border fixed bottom-[50px] right-[50px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] opacity-40 shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition-opacity duration-200 hover:opacity-100 focus-within:opacity-100 lg:flex">
         <button type="button" @click="toggleFullscreen($root)" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el informe en pantalla completa'">
             <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
             <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
