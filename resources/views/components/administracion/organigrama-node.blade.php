@@ -12,11 +12,21 @@
     }
 @endphp
 
-<div class="flex flex-col items-center visual-node-wrapper" wire:key="org-node-box-{{ $node['id'] }}">
+<div class="flex flex-col items-center visual-node-wrapper" wire:key="org-node-box-{{ $node['instance'] ?? $node['id'] }}">
     <button type="button"
         wire:click="selectUser({{ $node['id'] }})"
         data-id="{{ $node['id'] }}"
-        class="org-node js-org-card flex w-[280px] flex-shrink-0 flex-col items-stretch rounded-xl panel-border panel-surface border-2 p-[20px] text-left home-row focus:outline-none focus:ring-0 z-10">
+        data-name="{{ $node['name'] }}"
+        data-email="{{ $node['email'] }}"
+        data-role="{{ $node['role'] ?? '' }}"
+        data-position="{{ $node['job_position'] ?? '' }}"
+        data-area="{{ $node['physical_area'] ?? '' }}"
+        data-photo="{{ $node['photo'] ?? '' }}"
+        data-initials="{{ $initials }}"
+        @class([
+            'org-node js-org-card flex w-[280px] flex-shrink-0 flex-col items-stretch rounded-xl panel-border panel-surface border-2 p-[20px] text-left home-row focus:outline-none focus:ring-0 z-10',
+            'org-node-outside' => ! empty($node['out_of_area']),
+        ])>
 
         <span class="flex flex-col items-center">
             @if (! empty($node['photo']))
@@ -25,7 +35,7 @@
                 <span class="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials }}</span>
             @endif
             <span class="home-link mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['name'] }}">{{ $node['name'] }}</span>
-            <span class="mt-[15px] block h-[15px] w-full truncate text-center leading-none" title="{{ $node['email'] }}">{{ $node['email'] }}</span>
+            <span class="mt-[15px] block h-[15px] w-full truncate text-center leading-none">{{ \Illuminate\Support\Str::before((string) $node['email'], '@') }}@</span>
         </span>
 
         <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="{{ $node['presence_label'] ?? 'Sin actividad registrada' }}">
@@ -37,6 +47,12 @@
             <span @class(['truncate', 'home-link' => $node['is_online'] ?? false])>{{ $node['presence_label'] ?? 'Sin actividad registrada' }}</span>
         </span>
 
+        @if (! empty($node['out_of_area']))
+            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Jefatura fuera del área elegida: se muestra para ubicar la rama">
+                <svg class="h-[15px] w-[15px] shrink-0" style="color: #64748b;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
+                <span class="truncate">Fuera del área</span>
+            </span>
+        @endif
         @if (! empty($node['role']))
             <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none" title="Rol: {{ $node['role'] }}"><svg class="h-[15px] w-[15px] shrink-0" style="color: #3b82f6;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM5 21a7 7 0 0 1 14 0" /></svg><span class="truncate">{{ $node['role'] }}</span></span>
         @endif
@@ -54,21 +70,11 @@
     </button>
 
     @if (!empty($node['children']) && count($node['children']) > 0)
-        <div class="h-6 border-l-2 panel-border"></div>
-        <div class="flex items-start justify-center isolate">
-            @foreach ($node['children'] as $index => $child)
-                <div class="relative flex flex-col items-center px-4 w-full">
-                    <div @class([
-                        'absolute top-0 h-8 panel-border',
-                        'border-l-2' => count($node['children']) === 1,
-                        'left-1/2 right-0 border-t-2 border-l-2 rounded-tl-xl' => count($node['children']) > 1 && $index === 0,
-                        'left-0 right-1/2 border-t-2 border-r-2 rounded-tr-xl' => count($node['children']) > 1 && $index === count($node['children']) - 1,
-                        'left-0 right-0 border-t-2' => count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1,
-                    ])></div>
-                    @if(count($node['children']) > 1 && $index > 0 && $index < count($node['children']) - 1)
-                        <div class="absolute top-0 left-1/2 -translate-x-[1px] h-8 border-l-2 panel-border"></div>
-                    @endif
-                    <div class="h-8 w-full"></div>
+        {{-- Conectores: un tronco desde la persona, una barra horizontal y una bajada por cada subordinado (ver estilos .org-*). --}}
+        <div class="org-stem" aria-hidden="true"></div>
+        <div class="org-children">
+            @foreach ($node['children'] as $child)
+                <div class="org-child">
                     <x-administracion.organigrama-node :node="$child" :depth="$depth + 1" />
                 </div>
             @endforeach

@@ -64,7 +64,7 @@ class AuthenticationTest extends TestCase
         }
     }
 
-    public function test_login_preserves_the_original_protected_destination(): void
+    public function test_login_always_lands_on_the_start_page_even_after_a_protected_visit(): void
     {
         $user = User::factory()->create();
 
@@ -74,7 +74,7 @@ class AuthenticationTest extends TestCase
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-        ])->assertRedirect(route('soporte.ticket', absolute: false));
+        ])->assertRedirect(route('inicio', absolute: false));
     }
 
     public function test_users_can_keep_the_session_started(): void
@@ -103,13 +103,13 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_authenticated_users_are_sent_from_the_entry_page_to_the_dashboard(): void
+    public function test_authenticated_users_are_sent_from_the_entry_page_to_the_start_page(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get('/')
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('inicio', absolute: false));
     }
 
     public function test_logging_out_returns_to_the_same_canonical_login(): void

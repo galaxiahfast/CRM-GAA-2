@@ -55,7 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('dashboard')
+        ? redirect()->route('inicio')
         : redirect()->route('login');
 })->name('home');
 

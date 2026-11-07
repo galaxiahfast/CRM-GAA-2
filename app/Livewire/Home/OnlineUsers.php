@@ -5,6 +5,7 @@ namespace App\Livewire\Home;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 /**
@@ -17,7 +18,24 @@ class OnlineUsers extends Component
 
     private const LIMIT = 60;
 
+    /** Segundos que se reutiliza la lista: todas las personas ven lo mismo, así que se calcula una vez por tick. */
+    private const CACHE_SECONDS = 15;
+
+    /** El inicio se dibuja al instante y esta lista llega justo después (carga diferida), sin frenar la entrada. */
+    public function placeholder(): View
+    {
+        return view('livewire.home.online-users-placeholder');
+    }
+
     public function render(): View
+    {
+        return view('livewire.home.online-users', [
+            'rows' => Cache::remember('home:online-users', self::CACHE_SECONDS, fn (): array => $this->rows()),
+        ]);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function rows(): array
     {
         $users = User::query()
             ->where(function ($query): void {
@@ -66,6 +84,6 @@ class OnlineUsers extends Component
             'url' => route('soporte.preguntas'),
         ]);
 
-        return view('livewire.home.online-users', ['rows' => $rows]);
+        return $rows;
     }
 }

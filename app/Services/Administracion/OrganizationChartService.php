@@ -83,9 +83,12 @@ class OrganizationChartService
                 'superior_count' => count($superiorIds),
                 'subordinate_count' => count($subordinateIds),
                 'is_online' => $isOnline,
+                // Cuánto tiempo lleva sin conectarse: desde su última conexión o, si nunca ha entrado, desde que se creó su usuario.
                 'presence_label' => $isOnline
                     ? 'En línea'
-                    : ($lastActivity ? 'Hace '.$lastActivity->diffForHumans(now(), true) : 'Sin actividad registrada'),
+                    : ($lastActivity
+                        ? 'Última conexión hace '.$lastActivity->diffForHumans(now(), true)
+                        : 'Sin conectarse hace '.($user->created_at ? $user->created_at->copy()->locale('es')->diffForHumans(now(), true) : 'un tiempo')),
                 'children' => [],
             ];
 
@@ -159,13 +162,13 @@ class OrganizationChartService
                 continue; // Este usuario tiene superior, no es raíz
             }
 
-            $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed);
+            $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed, 'raiz');
         }
 
         // Si algún nodo no fue colocado (por ejemplo, si hay un ciclo o un error), lo agregamos como raíz huérfana
         foreach ($usersWithRelations as $userId) {
             if (!isset($placed[$userId]) && isset($userMap[$userId])) {
-                $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed);
+                $roots[] = $this->buildTreeNode($userId, $userMap, $superiorIdsByUser, $subordinateIdsByUser, $placed, 'huerfano');
             }
         }
 
@@ -189,19 +192,26 @@ class OrganizationChartService
         array $superiorIdsByUser,
         array $subordinateIdsByUser,
         array &$placed,
+        string $parentKey = 'raiz',
         array $ancestors = []
     ): array {
-        if (isset($placed[$userId]) || isset($ancestors[$userId])) {
-            return $userMap[$userId];
+        // «instance» es única por posición en el árbol: una persona con varios jefes aparece bajo cada uno de ellos
+        // (con todo su equipo), así que el identificador de la persona por sí solo ya no sirve como llave de dibujo.
+        $instance = $parentKey.'>'.$userId;
+
+        // Una referencia circular se corta aquí: la persona se muestra, pero sin volver a bajar por su rama.
+        if (isset($ancestors[$userId])) {
+            return array_merge($userMap[$userId], ['children' => [], 'instance' => $instance]);
         }
 
         $placed[$userId] = true;
         $ancestors[$userId] = true;
         $node = $userMap[$userId];
+        $node['instance'] = $instance;
         $node['children'] = [];
 
         // Obtener los subordinados directos (hijos) de este usuario
-        $childIds = $subordinateIdsByUser[$userId] ?? [];
+        $childIds = array_values(array_unique($subordinateIdsByUser[$userId] ?? []));
 
         foreach ($childIds as $childId) {
             if (!isset($userMap[$childId])) {
@@ -214,18 +224,17 @@ class OrganizationChartService
                 continue;
             }
 
-            // Construir el nodo hijo recursivamente
+            // Construir el nodo hijo recursivamente (se repite bajo cada jefe que lo tenga)
             $node['children'][] = $this->buildTreeNode(
                 $childId,
                 $userMap,
                 $superiorIdsByUser,
                 $subordinateIdsByUser,
                 $placed,
+                $instance,
                 $ancestors
             );
         }
-
-        unset($ancestors[$userId]);
 
         return $node;
     }
@@ -263,7 +272,9 @@ class OrganizationChartService
         $visibleIds = array_unique(array_merge($matchingIds, $ancestorIds));
 
         // 5. Filtrar el árbol completo manteniendo solo los nodos visibles
-        return $this->filterTreeByIds($fullTree, $visibleIds);
+        // Quien está en el árbol únicamente por ser jefe de alguien del área elegida se marca como «de otra área»
+        // para dibujarlo con otro color y que se vea de qué rama sale cada persona.
+        return $this->markOutOfArea($this->filterTreeByIds($fullTree, $visibleIds), $areaId);
     }
 
     /**
@@ -340,6 +351,20 @@ class OrganizationChartService
      * @param array<int> $visibleIds
      * @return array<int, array>
      */
+    /**
+     * @param  array<int, array>  $nodes
+     * @return array<int, array>
+     */
+    private function markOutOfArea(array $nodes, int $areaId): array
+    {
+        foreach ($nodes as $index => $node) {
+            $nodes[$index]['out_of_area'] = (int) ($node['physical_area_id'] ?? 0) !== $areaId;
+            $nodes[$index]['children'] = $this->markOutOfArea($node['children'] ?? [], $areaId);
+        }
+
+        return $nodes;
+    }
+
     private function filterTreeByIds(array $nodes, array $visibleIds): array
     {
         $filtered = [];
@@ -362,7 +387,9 @@ class OrganizationChartService
     {
         $flat = [];
         $this->flattenTree($tree, $flat);
-        return count($flat);
+
+        // Una persona con varios jefes aparece más de una vez en el árbol, pero cuenta una sola vez.
+        return count(array_unique(array_column($flat, 'id')));
     }
 
     /**

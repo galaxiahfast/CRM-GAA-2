@@ -102,7 +102,7 @@ class GoogleLoginTest extends TestCase
         $admin->forceFill(['email_verified_at' => now()])->save();
         $this->fakeGoogleUser('Admin@Datamid.com.mx', 'sub-admin');
 
-        $this->get(route('auth.google.callback'))->assertRedirect(route('dashboard'));
+        $this->get(route('auth.google.callback'))->assertRedirect(route('inicio'));
 
         Notification::assertNotSentTo($admin, VerifyAccountEmail::class);
         $this->assertTrue(Hash::check('secret', $admin->fresh()->password), 'La contraseña de una cuenta ya verificada no cambia.');

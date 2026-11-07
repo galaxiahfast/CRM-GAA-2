@@ -92,6 +92,45 @@ class OrganizationChartTest extends TestCase
         $this->assertSame($becario->id, $data['tree'][0]['children'][0]['children'][0]['id']);
     }
 
+    public function test_area_filter_keeps_other_area_bosses_marked_as_outside(): void
+    {
+        ['contadorRole' => $contadorRole, 'auxRole' => $auxRole] = $this->seedRoles();
+
+        $bossPos = JobPosition::create(['name' => 'Director']);
+        $auxPos = JobPosition::create(['name' => 'Auxiliar Contable']);
+        $otherPos = JobPosition::create(['name' => 'Auxiliar de Nómina']);
+        $direction = PhysicalArea::create(['name' => 'Dirección']);
+        $accounting = PhysicalArea::create(['name' => 'Contabilidad']);
+
+        $boss = $this->createUser($contadorRole, 'director@test.mx', 'Director');
+        $accountant = $this->createUser($auxRole, 'conta@test.mx', 'Persona Contabilidad');
+        $outsider = $this->createUser($auxRole, 'otro@test.mx', 'Persona Dirección');
+
+        $this->assignProfile($boss, $bossPos, $direction);
+        $this->assignProfile($accountant, $auxPos, $accounting);
+        $this->assignProfile($outsider, $otherPos, $direction);
+
+        $service = app(OrganizationChartService::class);
+        foreach ([[$accountant, $auxPos, $accounting], [$outsider, $otherPos, $direction]] as [$person, $position, $area]) {
+            $service->createRelation([
+                'subordinate_id' => $person->id,
+                'superior_id' => $boss->id,
+                'job_position_id' => $position->id,
+                'physical_area_id' => $area->id,
+            ]);
+        }
+
+        $data = $service->buildChartData($accounting->id);
+
+        // Se ve a las personas de Contabilidad y, para ubicar la rama, al jefe de otra área (marcado); no a sus demás subordinados.
+        $this->assertCount(1, $data['tree']);
+        $this->assertSame($boss->id, $data['tree'][0]['id']);
+        $this->assertTrue($data['tree'][0]['out_of_area']);
+        $this->assertCount(1, $data['tree'][0]['children']);
+        $this->assertSame($accountant->id, $data['tree'][0]['children'][0]['id']);
+        $this->assertFalse($data['tree'][0]['children'][0]['out_of_area']);
+    }
+
     public function test_lists_unassigned_users_missing_superior_or_profile(): void
     {
         ['adminRole' => $adminRole, 'auxRole' => $auxRole] = $this->seedRoles();
@@ -152,6 +191,43 @@ class OrganizationChartTest extends TestCase
 
         $this->assertGreaterThan(0, $data['stats']['cycles_detected']);
         $this->assertNotEmpty($data['tree']);
+    }
+
+    public function test_a_subordinate_with_two_superiors_appears_complete_under_each_one(): void
+    {
+        // La base de datos solo admite un jefe por persona, pero el árbol debe resistir datos antiguos o importados con dos:
+        // se prueba directamente la construcción del árbol con un mapa de relaciones.
+        $service = app(OrganizationChartService::class);
+        $node = fn (int $id): array => ['id' => $id, 'name' => 'Persona '.$id, 'email' => $id.'@test.mx', 'children' => []];
+        $userMap = [1 => $node(1), 2 => $node(2), 3 => $node(3), 4 => $node(4)];
+        $superiorIdsByUser = [3 => [1, 2], 4 => [3]];
+        $subordinateIdsByUser = [1 => [3], 2 => [3], 3 => [4]];
+
+        $method = new \ReflectionMethod($service, 'buildTreeFromUserMap');
+        $method->setAccessible(true);
+        $tree = $method->invoke($service, $userMap, $superiorIdsByUser, $subordinateIdsByUser, [1, 2, 3, 4]);
+
+        $roots = collect($tree)->keyBy('id');
+        $this->assertCount(2, $roots);
+
+        foreach ([1, 2] as $bossId) {
+            $copy = $roots[$bossId]['children'][0];
+            $this->assertSame(3, $copy['id']);
+            $this->assertCount(1, $copy['children'], 'La persona compartida conserva a su equipo bajo cada jefe.');
+            $this->assertSame(4, $copy['children'][0]['id']);
+        }
+
+        $instances = [];
+        array_walk_recursive($tree, function ($value, $key) use (&$instances): void {
+            if ($key === 'instance') {
+                $instances[] = $value;
+            }
+        });
+        $this->assertSame(count($instances), count(array_unique($instances)), 'Cada posición del árbol tiene su propia llave.');
+
+        $count = new \ReflectionMethod($service, 'countNodesInTree');
+        $count->setAccessible(true);
+        $this->assertSame(4, $count->invoke($service, $tree), 'La persona compartida se dibuja dos veces pero cuenta una sola.');
     }
 
     public function test_prevents_circular_hierarchy(): void

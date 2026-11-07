@@ -218,7 +218,7 @@
                     @endforeach
                 </div>
 
-                <livewire:home.online-users />
+                <livewire:home.online-users lazy />
             </div>
         </main>
     </div>

@@ -109,7 +109,7 @@ class GoogleLoginController extends Controller
             return redirect()->route('verification.notice');
         }
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->to(route('inicio'));
     }
 
     /** Manda el enlace de confirmación si el correo todavía no se ha confirmado; un fallo del correo no tumba el inicio de sesión. */

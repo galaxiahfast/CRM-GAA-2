@@ -156,6 +156,9 @@
             --tw-ring-offset-shadow: 0 0 #0000 !important;
             --tw-ring-shadow: 0 0 #0000 !important;
         }
+        /* Siempre se ven exactamente 4 tarjetas: el desplazamiento se detiene en el borde de cada una. */
+        .unassigned-users-scrollbar { scroll-snap-type: y mandatory; scroll-padding: 15px 0; }
+        .unassigned-users-scrollbar li { scroll-snap-align: start; }
         .unassigned-users-scrollbar {
             overscroll-behavior: contain;
         }
@@ -239,6 +242,31 @@
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-track { background: #f4f4f5; border-radius: 9999px; }
         .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
 
+
+        /* Conectores del organigrama: línea de 2px, centrada exactamente en cada tarjeta, con esquinas redondeadas de 12px
+           en la primera y la última rama. Cada .org-child mide lo que su tarjeta más 14px a cada lado, así las barras de
+           hermanos se tocan sin huecos. */
+        [data-panel] { --org-line: #a8b0bd; }
+        html.module-dark-theme [data-panel] { --org-line: #3f3f46; }
+        .org-stem { width: 2px; height: 24px; background: var(--org-line); flex-shrink: 0; }
+        .org-children { display: flex; align-items: flex-start; justify-content: center; }
+        .org-child { position: relative; display: flex; flex-direction: column; align-items: center; padding: 24px 14px 0; }
+        .org-child::before, .org-child::after { content: ''; position: absolute; top: 0; height: 24px; box-sizing: border-box; }
+        .org-child::before { left: 0; right: calc(50% - 1px); border-top: 2px solid var(--org-line); }
+        .org-child::after { left: calc(50% - 1px); right: 0; border-top: 2px solid var(--org-line); border-left: 2px solid var(--org-line); }
+        .org-child:only-child::before { display: none; }
+        .org-child:only-child::after { border-top: 0; }
+        .org-child:first-child:not(:only-child)::before { display: none; }
+        .org-child:first-child:not(:only-child)::after { border-top-left-radius: 12px; }
+        .org-child:last-child:not(:only-child)::after { display: none; }
+        .org-child:last-child:not(:only-child)::before { border-right: 2px solid var(--org-line); border-top-right-radius: 12px; }
+
+
+        /* Jefaturas de otra área (al filtrar por área): borde punteado y tono distinto para ubicar la rama. */
+        .org-node.org-node-outside { border-style: dashed; border-color: #64748b; background-color: var(--panel-subtle); }
+        @keyframes org-node-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(106, 169, 255, 0); } 30% { box-shadow: 0 0 0 6px rgba(106, 169, 255, 0.55); } }
+        .org-node.org-node-flash { animation: org-node-flash 1.6s ease-out 1; border-color: #6aa9ff; }
+
         /* Estilo para el contenedor en modo fullscreen */
         body.org-chart-fullscreen {
             overflow: hidden;
@@ -257,15 +285,15 @@
 
         /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
         #search-results,
-        #physical-area-results { scrollbar-width: thin; scrollbar-color: #1A3A6B #f1f1f1; }
+        #physical-area-results { scrollbar-width: auto; scrollbar-color: auto; }
         #search-results::-webkit-scrollbar,
-        #physical-area-results::-webkit-scrollbar { width: 4px; height: 4px; }
+        #physical-area-results::-webkit-scrollbar { width: 7px; height: 7px; }
         #search-results::-webkit-scrollbar-track,
-        #physical-area-results::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 9999px; }
+        #physical-area-results::-webkit-scrollbar-track { background: transparent; }
         #search-results::-webkit-scrollbar-thumb,
-        #physical-area-results::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
-        #search-results::-webkit-scrollbar-thumb:hover,
-        #physical-area-results::-webkit-scrollbar-thumb:hover { background: #15305a; }
+        #physical-area-results::-webkit-scrollbar-thumb { background: #1A3A6B; border: 2px solid transparent; border-radius: 9999px; background-clip: padding-box; }
+        #search-results::-webkit-scrollbar-button,
+        #physical-area-results::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 
         #fullscreen-toggle {
             outline: none !important;
@@ -694,6 +722,7 @@
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #059669;"></span> Puesto</div>
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #7c3aed;"></span> Área</div>
                             <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #d97706;"></span> Múltiples jefes</div>
+                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #64748b;"></span> Fuera del área (jefatura)</div>
                         </div>
                     </div>
 
@@ -711,7 +740,7 @@
                             >
                             <div 
                                 id="search-results"
-                                style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--panel-surface); border: 1px solid var(--panel-border); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
+                                style="position: absolute; top: calc(100% + 4px); right: 0; width: 400px; max-width: calc(100vw - 80px); background: var(--panel-surface); border: 1px solid var(--panel-border); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
                             ></div>
                         </div>
 
@@ -788,7 +817,7 @@
                 <div class="unassigned-users-scrollbar" style="height: 663px; overflow-y: auto; padding: 15px 20px;">
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     @if (count($unassignedUsers) > 0)
-                        <ul class="overflow-y-auto" style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;"
+                        <ul style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;"
                             x-data="{
                                 hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
                                 isHidden(id) { return this.hidden.includes(id); },
@@ -1301,11 +1330,12 @@
     @php($detailName = $selectedUserDetails['name'] ?? 'Usuario')
     @php($detailInput = 'mt-[20px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400')
     @php($detailLabel = 'block text-[15px] font-medium text-gray-700')
+    @php($detailValue = 'mt-[20px] flex min-h-[44px] w-full cursor-default items-center break-words rounded-xl border border-zinc-200 bg-white px-[15px] py-[10px] text-[15px] text-black')
     @php($detailSecondaryButton = 'inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0')
     @php($detailPrimaryButton = 'inline-flex min-w-28 items-center justify-center gap-2 rounded-xl bg-black px-[20px] py-[12px] text-[15px] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
     <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
         {{-- Mismo marco que el modal de Usuarios: blanco, bordes grises, 20px de relleno. --}}
-        <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(720px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
+        <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
 
             {{-- ===== ENCABEZADO (fijo) ===== --}}
             <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
@@ -1331,7 +1361,7 @@
                             <div class="p-[20px] text-[15px]">
                                 <div class="flex flex-col gap-[20px]">
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Datos personales</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
                                                 <label for="edit-name" class="{{ $detailLabel }}">Nombre</label>
@@ -1352,7 +1382,7 @@
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Perfil organizacional</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-role" class="{{ $detailLabel }}">Rol</label>
@@ -1373,7 +1403,7 @@
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Configuración del checador{{ ($userForm['is_hourly_position'] ?? false) ? ' y nómina' : '' }}</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Configuración del checador{{ ($userForm['is_hourly_position'] ?? false) ? ' y nómina' : '' }}</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-employee-id" class="{{ $detailLabel }}">ID del reloj checador</label>
@@ -1458,7 +1488,7 @@
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Jerarquía</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Jerarquía</h2>
                                         <div class="flex flex-col gap-[20px]">
                                             <div class="min-w-0">
                                                 <span id="edit-superiors-label" class="{{ $detailLabel }}">Jefe directo</span>
@@ -1509,7 +1539,7 @@
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Contraseña</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Contraseña</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
                                                 <label for="edit-password" class="{{ $detailLabel }}">Nueva contraseña (opcional)</label>
@@ -1556,84 +1586,84 @@
                             @if ($activeTab === 'datos')
                                 <div class="flex flex-col gap-[20px]">
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Datos generales</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Datos generales</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
-                                                <span class="block text-[15px] text-[#71717a]">Nombre completo</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['name'] ?? 'N/A' }}</p>
+                                                <span class="{{ $detailLabel }}">Nombre completo</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['name'] ?? 'N/A' }}</div>
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
-                                                <span class="block text-[15px] text-[#71717a]">Correo electrónico</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ isset($selectedUserDetails['email']) ? mb_strtolower((string) $selectedUserDetails['email']) : 'N/A' }}</p>
+                                                <span class="{{ $detailLabel }}">Correo electrónico</span>
+                                                <div class="{{ $detailValue }}">{{ isset($selectedUserDetails['email']) ? mb_strtolower((string) $selectedUserDetails['email']) : 'N/A' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">Rol</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['role'] ?: 'Sin rol' }}</p>
+                                                <span class="{{ $detailLabel }}">Rol</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['role'] ?: 'Sin rol' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">ID del checador</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['employee_id'] ?: 'No asignado' }}</p>
+                                                <span class="{{ $detailLabel }}">ID del checador</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['employee_id'] ?: 'No asignado' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">Fecha de creación</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['created_at'] ?? 'N/A' }}</p>
+                                                <span class="{{ $detailLabel }}">Fecha de creación</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['created_at'] ?? 'N/A' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">Última actualización</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['updated_at'] ?? 'N/A' }}</p>
+                                                <span class="{{ $detailLabel }}">Última actualización</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['updated_at'] ?? 'N/A' }}</div>
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
-                                                <span class="block text-[15px] text-[#71717a]">Contraseña</span>
-                                                <p class="mt-[6px] text-[15px] text-[#71717a]">•••••••• (protegida)</p>
+                                                <span class="{{ $detailLabel }}">Contraseña</span>
+                                                <div class="{{ $detailValue }}">•••••••• (protegida)</div>
                                             </div>
                                         </div>
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2>Organizacional</h2>
+                                        <h2 class="mb-[10px] font-semibold text-black">Organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">Puesto</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['job_position'] ?: 'Sin asignar' }}</p>
+                                                <span class="{{ $detailLabel }}">Puesto</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['job_position'] ?: 'Sin asignar' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="block text-[15px] text-[#71717a]">Área / departamento</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">{{ $selectedUserDetails['physical_area'] ?: 'Sin asignar' }}</p>
+                                                <span class="{{ $detailLabel }}">Área / departamento</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['physical_area'] ?: 'Sin asignar' }}</div>
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
-                                                <span class="block text-[15px] text-[#71717a]">Jefes directos</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">
+                                                <span class="{{ $detailLabel }}">Jefes directos</span>
+                                                <div class="{{ $detailValue }}">
                                                     @if (count($selectedUserDetails['superiors'] ?? []) > 0)
                                                         {{ implode(', ', $selectedUserDetails['superiors']) }}
                                                     @else
-                                                        <span class="text-[#71717a]">Sin jefe asignado</span>
+                                                        <span>Sin jefe asignado</span>
                                                     @endif
-                                                </p>
+                                                </div>
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
-                                                <span class="block text-[15px] text-[#71717a]">Subordinados directos</span>
-                                                <p class="mt-[6px] break-words text-[15px] text-black">
+                                                <span class="{{ $detailLabel }}">Subordinados directos</span>
+                                                <div class="{{ $detailValue }}">
                                                     @if (count($selectedUserDetails['subordinates'] ?? []) > 0)
                                                         {{ implode(', ', $selectedUserDetails['subordinates']) }}
                                                     @else
-                                                        <span class="text-[#71717a]">Sin subordinados</span>
+                                                        <span>Sin subordinados</span>
                                                     @endif
-                                                </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
 
                                     @if ($selectedUserDetails['is_hourly_position'] ?? false)
                                         <section style="--admin-form-gap: 20px;">
-                                            <h2>Datos de auxiliar</h2>
+                                            <h2 class="mb-[10px] font-semibold text-black">Datos de auxiliar</h2>
                                             <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                                 <div class="min-w-0">
-                                                    <span class="block text-[15px] text-[#71717a]">Precio por hora</span>
-                                                    <p class="mt-[6px] break-words text-[15px] text-black">${{ number_format((float) ($selectedUserDetails['hourly_rate'] ?? 0), 2) }}</p>
+                                                    <span class="{{ $detailLabel }}">Precio por hora</span>
+                                                    <div class="{{ $detailValue }}">${{ number_format((float) ($selectedUserDetails['hourly_rate'] ?? 0), 2) }}</div>
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <span class="block text-[15px] text-[#71717a]">Apoyo económico por día</span>
-                                                    <p class="mt-[6px] break-words text-[15px] text-black">${{ number_format((float) ($selectedUserDetails['food_allowance'] ?? 0), 2) }}</p>
+                                                    <span class="{{ $detailLabel }}">Apoyo económico por día</span>
+                                                    <div class="{{ $detailValue }}">${{ number_format((float) ($selectedUserDetails['food_allowance'] ?? 0), 2) }}</div>
                                                 </div>
                                             </div>
                                         </section>
@@ -1641,7 +1671,7 @@
                                 </div>
                             @elseif ($activeTab === 'eliminar')
                                 <section style="--admin-form-gap: 20px;">
-                                    <h2>¿Estás seguro de eliminar este usuario?</h2>
+                                    <h2 class="mb-[10px] font-semibold text-black">¿Estás seguro de eliminar este usuario?</h2>
                                     <p class="text-[15px] leading-relaxed text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
                                     <p class="mt-[20px] text-[15px] leading-relaxed text-black">Para confirmar, escribe el nombre completo del usuario: <span class="text-red-700">{{ $detailName }}</span></p>
                                     <label for="delete-user-confirmation" class="mt-[20px] {{ $detailLabel }}">Nombre completo</label>
@@ -1678,9 +1708,14 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('org-tree-container');
-        const wrapper = document.getElementById('org-tree-wrapper');
+        // El contenido del árbol lo vuelve a dibujar Livewire (al filtrar por área, por ejemplo) y el elemento cambia:
+        // siempre se consulta el vigente para que mover y acercar sigan funcionando después de filtrar.
+        const wrapper = {
+            get style() { return (document.getElementById('org-tree-wrapper') || { style: {} }).style; },
+            getBoundingClientRect() { return (document.getElementById('org-tree-wrapper') || document.createElement('div')).getBoundingClientRect(); },
+        };
 
-        if (!container || !wrapper) return;
+        if (!container) return;
 
         let isPanning = false;
         let didDrag = false;
@@ -1699,6 +1734,28 @@
             translateY = 0;
             updateTransform();
         }
+
+        // Tras cada actualización de Livewire: si cambiaron las personas que se muestran (filtro por área) se parte de la vista
+        // inicial; si no, se conserva el movimiento y el zoom. En ambos casos se suelta cualquier arrastre que haya quedado a medias.
+        const treeSignature = () => [...document.querySelectorAll('.org-node')].map((el) => el.dataset.id).join(',');
+        let lastTreeSignature = treeSignature();
+        const afterLivewireUpdate = () => {
+            isPanning = false;
+            didDrag = false;
+            panStartedOnNode = false;
+            const signature = treeSignature();
+            if (signature !== lastTreeSignature) {
+                lastTreeSignature = signature;
+                resetView();
+            } else {
+                updateTransform();
+            }
+            if (window.equalizeNodeHeights) window.equalizeNodeHeights();
+            allNodes = [];
+        };
+        const hookLivewire = () => window.Livewire?.hook('morphed', () => afterLivewireUpdate());
+        if (window.Livewire) hookLivewire(); else document.addEventListener('livewire:init', hookLivewire);
+        window.addEventListener('blur', () => { isPanning = false; });
 
         function centerNode(nodeElement) {
             resetView();
@@ -1817,87 +1874,116 @@
             });
         }
 
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const normalize = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+        // Lee a las personas del árbol (cada una una sola vez, aunque aparezca bajo varios jefes).
         function loadAllNodes() {
+            const seen = new Set();
             allNodes = [];
-            document.querySelectorAll('.org-node').forEach(el => {
-                const nameEl = el.querySelector('p.text-sm.font-semibold');
-                const emailEl = el.querySelector('p.text-xs.text-gray-500');
-                const name = nameEl ? nameEl.textContent.trim() : '';
-                const email = emailEl ? emailEl.textContent.trim() : '';
+            document.querySelectorAll('.org-node').forEach((el) => {
                 const id = el.dataset.id ? parseInt(el.dataset.id) : null;
-                if (id && name) {
-                    allNodes.push({ id, name, email: email || '', element: el });
-                }
+                if (!id || seen.has(id)) return;
+                seen.add(id);
+                const d = el.dataset;
+                allNodes.push({
+                    id,
+                    name: d.name || '',
+                    email: d.email || '',
+                    role: d.role || '',
+                    position: d.position || '',
+                    area: d.area || '',
+                    photo: d.photo || '',
+                    initials: d.initials || '?',
+                    haystack: normalize([d.name, d.email, d.role, d.position, d.area].join(' ')),
+                });
             });
+            allNodes.sort((a, b) => a.name.localeCompare(b.name, 'es'));
             return allNodes;
         }
 
+        // Lista de resultados con el mismo formato de las demás listas: foto o iniciales, nombre, correo y datos laborales.
         function showResults(results) {
             if (!searchResults) return;
-            
+
             if (results.length === 0) {
-                searchResults.innerHTML = '<div style="padding: 12px 16px; color: #6b7280; font-size: 14px; text-align: center;">No se encontraron resultados</div>';
+                searchResults.innerHTML = '<div class="px-4 py-3 text-center text-[15px]">No se encontraron resultados</div>';
                 searchResults.style.display = 'block';
                 return;
             }
 
-            searchResults.innerHTML = results.map(node => `
-                <div class="search-result-item" data-id="${node.id}" style="padding: 12px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; cursor: pointer; border-bottom: 1px solid #e5e7eb; transition: background-color 0.15s; background-color: transparent;" 
-                     onmouseover="this.style.backgroundColor='#f0f4ff'"
-                     onmouseout="this.style.backgroundColor='transparent'">
-                    <span style="font-weight: 600; color: #111827; font-size: 15px; text-align: left; line-height: 1.2; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${node.name}</span>
-                    <span style="font-size: 13px; color: #6b7280; text-align: left; line-height: 1.2; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${node.email}</span>
-                </div>
-            `).join('');
-            
-            searchResults.style.display = 'block';
+            searchResults.innerHTML = results.map((node) => {
+                const avatar = node.photo
+                    ? `<img src="${escapeHtml(node.photo)}" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover">`
+                    : `<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">${escapeHtml(node.initials)}</span>`;
+                const details = [node.role, node.position, node.area].filter(Boolean).join(' · ');
+                return `<button type="button" class="search-result-item home-row panel-border flex w-full items-center gap-[15px] border-b p-[15px] text-left" data-id="${node.id}">
+                    ${avatar}
+                    <span class="min-w-0 flex-1">
+                        <span class="home-link block h-[15px] truncate leading-none">${escapeHtml(node.name)}</span>
+                        <span class="mt-[15px] block h-[15px] truncate leading-none">${escapeHtml(node.email.split('@')[0])}@</span>
+                        ${details ? `<span class="mt-[15px] block h-[15px] truncate leading-none">${escapeHtml(details)}</span>` : ''}
+                    </span>
+                </button>`;
+            }).join('');
 
-            searchResults.querySelectorAll('.search-result-item').forEach(el => {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    
-                    const nodeId = parseInt(this.dataset.id);
-                    const nodeEl = document.querySelector(`.org-node[data-id="${nodeId}"]`);
-                    
-                    if (nodeEl) {
-                        centerNode(nodeEl);
-                        searchResults.style.display = 'none';
-                        searchInput.value = '';
-                        allNodes = [];
-                    }
-                });
+            searchResults.style.display = 'block';
+        }
+
+        // Lleva la vista al nodo elegido y lo resalta un momento.
+        function goToNode(nodeId) {
+            const nodeEl = document.querySelector(`.org-node[data-id="${nodeId}"]`);
+            if (!nodeEl) return;
+
+            centerNode(nodeEl);
+            nodeEl.classList.remove('org-node-flash');
+            void nodeEl.offsetWidth;
+            nodeEl.classList.add('org-node-flash');
+            setTimeout(() => nodeEl.classList.remove('org-node-flash'), 1800);
+        }
+
+        if (searchResults) {
+            // Delegación: los resultados se vuelven a pintar al escribir, así que el clic se atiende en el contenedor.
+            searchResults.addEventListener('click', function (e) {
+                const item = e.target.closest('.search-result-item');
+                if (!item) return;
+
+                e.stopPropagation();
+                e.preventDefault();
+                goToNode(parseInt(item.dataset.id));
+                searchResults.style.display = 'none';
+                if (searchInput) searchInput.value = '';
             });
         }
 
         if (searchInput) {
+            // Al hacer clic por primera vez aparece la lista completa; al escribir se va filtrando.
             searchInput.addEventListener('focus', function() {
-                const nodes = loadAllNodes();
-                if (nodes.length > 0) {
-                    showResults(nodes);
-                } else {
-                    setTimeout(() => {
-                        const nodes2 = loadAllNodes();
-                        if (nodes2.length > 0) showResults(nodes2);
-                    }, 300);
-                }
+                loadAllNodes();
+                const query = normalize(this.value.trim());
+                showResults(query ? allNodes.filter((n) => n.haystack.includes(query)) : allNodes);
             });
 
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    const nodes = loadAllNodes();
-                    const query = this.value.toLowerCase().trim();
-                    if (!query) {
-                        showResults(nodes);
-                        return;
+                    if (allNodes.length === 0) loadAllNodes();
+                    const query = normalize(this.value.trim());
+                    showResults(query ? allNodes.filter((n) => n.haystack.includes(query)) : allNodes);
+                }, 80);
+            });
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const first = searchResults.querySelector('.search-result-item');
+                    if (first) {
+                        e.preventDefault();
+                        goToNode(parseInt(first.dataset.id));
+                        searchResults.style.display = 'none';
+                        this.value = '';
+                        this.blur();
                     }
-                    const filtered = nodes.filter(n => 
-                        n.name.toLowerCase().includes(query) || 
-                        n.email.toLowerCase().includes(query)
-                    );
-                    showResults(filtered);
-                }, 200);
+                }
             });
 
             searchInput.addEventListener('blur', function() {
