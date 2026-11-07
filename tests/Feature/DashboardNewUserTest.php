@@ -88,7 +88,7 @@ class DashboardNewUserTest extends TestCase
         $this->assertLessThanOrEqual(18, $queryCount, 'El dashboard volvió a introducir consultas N+1.');
     }
 
-    public function test_customer_pages_show_twelve_cards_and_reset_after_search(): void
+    public function test_customer_pages_show_two_rows_and_reset_after_search(): void
     {
         $role = Role::create(['role' => 'Administrador', 'permission_profile' => Role::PROFILE_ADMINISTRATOR]);
         $user = User::create(['name' => 'Admin', 'email' => 'pages@test.mx', 'password' => Hash::make('secret123'), 'role_id' => $role->id]);
@@ -102,16 +102,20 @@ class DashboardNewUserTest extends TestCase
         ])->all());
 
         Livewire::actingAs($user)->test(Dashboard::class)
-            ->assertSee('Mostrando 1–12 de 25')
+            ->assertSee('Mostrando 1–8 de 25')
             ->assertSee('Cliente 1')
             ->assertDontSee('Cliente 25')
             ->call('setCustomerPage', 2)
             ->assertSet('customerPage', 2)
-            ->assertSee('Mostrando 13–24 de 25')
+            ->assertSee('Mostrando 9–16 de 25')
             ->call('setCustomerPage', 99)
-            ->assertSet('customerPage', 3)
+            ->assertSet('customerPage', 4)
             ->assertSee('Mostrando 25–25 de 25')
             ->assertSee('Cliente 25')
+            ->call('setCustomerColumns', 2)
+            ->assertSet('customerColumns', 2)
+            ->assertSet('customerPage', 7)
+            ->assertSee('Mostrando 25–25 de 25')
             ->set('search', 'Cliente 1')
             ->assertSet('customerPage', 1);
     }

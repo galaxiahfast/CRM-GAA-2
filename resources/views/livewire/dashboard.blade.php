@@ -137,9 +137,9 @@
                             @endif
                         </header>
 
-                        <div class="-mb-px -mr-px grid grid-cols-1 lg:grid-cols-3">
+                        <div class="grid grid-cols-1 lg:grid-cols-3">
                             @foreach ($stats as $stat)
-                                <div class="panel-border min-w-0 border-b border-r p-[20px]">
+                                <div class="panel-border min-w-0 border-b p-[20px] last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
                                     <p class="panel-accent flex items-center gap-[10px] leading-none">
                                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $stat['icon'] }}" /></svg>
                                         <span class="min-w-0">{{ $stat['label'] }}</span>
@@ -155,10 +155,11 @@
                     @php
                         $filteredCustomers = $this->filteredCustomers;
                         $customerCount = $filteredCustomers->count();
-                        $lastCustomerPage = max(1, (int) ceil($customerCount / \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE));
+                        $customersPerPage = $this->customersPerPage();
+                        $lastCustomerPage = max(1, (int) ceil($customerCount / $customersPerPage));
                         $currentCustomerPage = max(1, min($customerPage, $lastCustomerPage));
-                        $firstCustomer = ($currentCustomerPage - 1) * \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE + 1;
-                        $lastCustomer = min($currentCustomerPage * \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE, $customerCount);
+                        $firstCustomer = ($currentCustomerPage - 1) * $customersPerPage + 1;
+                        $lastCustomer = min($currentCustomerPage * $customersPerPage, $customerCount);
                         $customerPages = collect([1, ...range(max(1, $currentCustomerPage - 2), min($lastCustomerPage, $currentCustomerPage + 2)), $lastCustomerPage])->unique()->sort()->values();
                     @endphp
 
@@ -204,7 +205,7 @@
                             @endif
                         </div>
 
-                        <div id="dashboard-customer-list" class="scroll-mt-[20px] transition-opacity" x-on:dashboard-page-changed.window="document.getElementById('dashboard-customer-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" wire:loading.class="opacity-60" wire:target="search,selectedMonth,selectedYear,customersPorcentageIncomplete,customersPorcentageComplete,setCustomerPage">
+                        <div id="dashboard-customer-list" class="scroll-mt-[20px] transition-opacity" x-on:dashboard-page-changed.window="document.getElementById('dashboard-customer-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" wire:loading.class="opacity-60" wire:target="search,selectedMonth,selectedYear,customersPorcentageIncomplete,customersPorcentageComplete,setCustomerPage,setCustomerColumns">
                             @if ($this->customers->isEmpty())
                                 @if ($canManageCustomers)
                                     <x-panel-empty-state subtitle="No se encontraron clientes para gestionar">
@@ -237,8 +238,18 @@
                                     Sin clientes con estatus {{ $filterType === 'complete' ? 'Completo' : 'Incompleto' }}
                                 </x-panel-empty-state>
                             @else
-                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] p-[20px]">
-                                    @foreach ($filteredCustomers->forPage($currentCustomerPage, \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE) as $customer)
+                                <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] p-[20px]"
+                                    x-data="{ columns: @js($customerColumns), observer: null,
+                                        syncColumns() {
+                                            const width = Math.max(0, this.$el.clientWidth - 40);
+                                            const minimum = window.matchMedia('(min-width: 1280px)').matches ? 320 : 280;
+                                            const columns = Math.max(1, Math.floor((width + 20) / (minimum + 20)));
+                                            if (columns !== this.columns) { this.columns = columns; this.$wire.setCustomerColumns(columns); }
+                                        },
+                                        init() { this.observer = new ResizeObserver(() => this.syncColumns()); this.observer.observe(this.$el); this.syncColumns(); },
+                                        destroy() { this.observer?.disconnect(); }
+                                    }">
+                                    @foreach ($filteredCustomers->forPage($currentCustomerPage, $customersPerPage) as $customer)
                                         @php
                                             $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
                                             $displayName = trim(Str::limit($customer['name'], 50).' '.($customer['last_name'] ? Str::limit($customer['last_name'], 50).' '.Str::limit($customer['maternal_last_name'], 50) : ''));
@@ -325,7 +336,7 @@
                             @endif
                         </div>
 
-                        @if ($customerCount > \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE)
+                        @if ($customerCount > $customersPerPage)
                             <nav class="panel-border flex flex-wrap items-center justify-between gap-[20px] border-t p-[20px]" aria-label="Páginas del informe de clientes">
                                 <span class="panel-muted whitespace-nowrap leading-none tabular-nums">Mostrando {{ $firstCustomer }}–{{ $lastCustomer }} de {{ $customerCount }}</span>
                                 <div class="flex max-w-full items-center gap-[10px] overflow-x-auto" role="group" aria-label="Seleccionar página">

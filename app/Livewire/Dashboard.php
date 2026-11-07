@@ -48,7 +48,19 @@ class Dashboard extends Component
 
     public int $customerPage = 1;
 
-    public const CUSTOMERS_PER_PAGE = 12;
+    public int $customerColumns = 4;
+
+    public function customersPerPage(): int
+    {
+        return max(1, min(12, $this->customerColumns)) * 2;
+    }
+
+    public function setCustomerColumns(int $columns): void
+    {
+        $firstCustomerIndex = ($this->customerPage - 1) * $this->customersPerPage();
+        $this->customerColumns = max(1, min(12, $columns));
+        $this->customerPage = intdiv($firstCustomerIndex, $this->customersPerPage()) + 1;
+    }
 
     public function mount($customer = null)
     {
@@ -341,7 +353,7 @@ class Dashboard extends Component
 
     public function setCustomerPage(int $page): void
     {
-        $lastPage = max(1, (int) ceil($this->filteredCustomers->count() / self::CUSTOMERS_PER_PAGE));
+        $lastPage = max(1, (int) ceil($this->filteredCustomers->count() / $this->customersPerPage()));
         $this->customerPage = max(1, min($page, $lastPage));
         $this->dispatch('dashboard-page-changed');
     }
