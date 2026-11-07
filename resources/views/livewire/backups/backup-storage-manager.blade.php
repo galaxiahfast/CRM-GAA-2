@@ -62,8 +62,10 @@
         .backup-storage-monochrome input:focus,
         .backup-storage-monochrome input:focus-visible { outline: none !important; box-shadow: none !important; --tw-ring-shadow: 0 0 #0000 !important; }
         .backup-storage-monochrome:fullscreen { overflow: auto; }
-        html.module-dark-theme .backup-status-card { background: #18181b !important; }
-        html.module-dark-theme .backup-soft-panel { background: #111113 !important; }
+        html.module-dark-theme #main-content .backup-storage-monochrome table :is(thead, tfoot) { background: var(--panel-header) !important; }
+        html.module-dark-theme #main-content .backup-storage-monochrome table :is(tbody, tr) { background-color: transparent !important; }
+        html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-gray > tr > td { background-color: var(--panel-subtle) !important; }
+        html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-white > tr > td { background-color: var(--panel-surface) !important; }
     </style>
 
     @if($exportError)
@@ -226,9 +228,9 @@
             <section class="overflow-hidden rounded-xl border panel-border panel-surface shadow-none">
                 @if ($activeView === 'backups')
                     <div class="grid min-h-[520px] xl:grid-cols-[340px_minmax(0,1fr)]">
-                        <aside class="backup-soft-panel h-[520px] min-h-0 overflow-hidden border-b panel-border panel-surface xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
+                        <aside class="h-[520px] min-h-0 overflow-hidden border-b panel-border panel-surface xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
                             <div class="flex h-full min-h-0 flex-col xl:absolute xl:inset-0">
-                                <div class="flex h-[70px] shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] text-center "><span class="truncate ">Fecha de respaldos</span></div>
+                                <div class="flex h-[70px] shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] text-center "><span class="panel-accent flex min-w-0 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg><span class="truncate">Fecha de respaldos</span></span></div>
                                 <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
                                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($visibleBackupDates as $day)
@@ -404,7 +406,7 @@
                     </div>
                 @else
                     <div class="border-b panel-border panel-header p-[20px]">
-                        <h2 class="panel-accent leading-none">Historial de movimientos</h2>
+                        <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><span>Historial de movimientos</span></h2>
                         <p class="mt-[15px] leading-none">Respaldos, reemplazos, cancelaciones, errores y eliminaciones registrados por el sistema.</p>
                     </div>
                     <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative h-[650px]">
@@ -458,7 +460,7 @@
             </section>
             @if ($activeView === 'backups')
                 <section class="!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
-                    <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent leading-none">Estado de respaldo de hoy</h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
+                    <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2m-2 4h2m-2 4h2"/></svg><span>Estado de respaldo de hoy</span></h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
                     <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative max-h-[650px]">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[650px] overflow-auto">
                         <table class="w-full min-w-[780px] border-collapse text-left">
