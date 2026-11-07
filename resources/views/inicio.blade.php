@@ -185,7 +185,7 @@
                 </div>
             </section>
 
-            <div class="grid items-start gap-[20px] xl:grid-cols-[minmax(0,1fr)_400px]">
+            <div class="grid items-start gap-y-[20px] xl:gap-x-[50px] xl:grid-cols-[minmax(0,1fr)_400px]">
                 {{-- Accesos: una caja por grupo, con cabecera gris y celdas separadas por líneas de 1px --}}
                 <div class="flex min-w-0 flex-col gap-[50px]">
                     @foreach ($sections as $title => $cards)
