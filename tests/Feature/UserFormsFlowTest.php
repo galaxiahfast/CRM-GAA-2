@@ -127,4 +127,50 @@ class UserFormsFlowTest extends TestCase
 
         $this->assertSame(3, User::where('employee_id', 'BIO-1')->count());
     }
+
+    public function test_a_user_without_position_or_area_can_still_be_updated_from_the_organigrama(): void
+    {
+        ['admin' => $admin, 'roles' => $roles] = $this->setUpData();
+        $unassigned = User::create(['name' => 'Dionicio', 'last_name' => 'Farfán', 'email' => 'dionicio@datamid.test', 'password' => Hash::make('x'), 'role_id' => $roles['Contador']->id]);
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('selectUser', $unassigned->id)
+            ->call('beginEditingUser')
+            ->set('userForm.name', 'Dionicio Alberto')
+            ->call('saveSelectedUser')
+            ->assertHasNoErrors()
+            ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success')
+            ->assertSet('selectedUserId', null);
+
+        $this->assertSame('Dionicio Alberto', $unassigned->fresh()->name);
+    }
+
+    public function test_a_failed_save_always_shows_an_error_notice_and_the_error_summary(): void
+    {
+        ['admin' => $admin, 'member' => $member] = $this->setUpData();
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('selectUser', $member->id)
+            ->call('beginEditingUser')
+            ->set('userForm.name', '')
+            ->call('saveSelectedUser')
+            ->assertHasErrors('userForm.name')
+            ->assertDispatched('notify', message: 'No se pudo guardar: El campo nombre es obligatorio.', type: 'error')
+            ->assertSee('No se pudo guardar. Revisa lo siguiente:')
+            ->assertSee('El campo nombre es obligatorio.');
+    }
+
+    public function test_a_user_without_position_or_area_can_be_updated_from_administration(): void
+    {
+        ['admin' => $admin, 'roles' => $roles] = $this->setUpData();
+        $unassigned = User::create(['name' => 'Dionicio', 'last_name' => 'Farfán', 'email' => 'dionicio@datamid.test', 'password' => Hash::make('x'), 'role_id' => $roles['Contador']->id]);
+
+        Livewire::actingAs($admin)->test(UserForm::class, ['embedded' => true, 'initialTab' => 'editar', 'initialUserId' => $unassigned->id])
+            ->set('name', 'Dionicio Alberto')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success');
+
+        $this->assertSame('Dionicio Alberto', $unassigned->fresh()->name);
+    }
 }

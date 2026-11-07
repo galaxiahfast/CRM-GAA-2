@@ -755,6 +755,47 @@ class PanelAdministracion extends Component
         ];
     }
 
+    /** @return array<string, string> */
+    private function userFormMessages(): array
+    {
+        return [
+            'required' => 'El campo :attribute es obligatorio.',
+            'email' => 'El campo :attribute debe ser un correo válido.',
+            'max' => 'El campo :attribute no puede tener más de :max caracteres.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'unique' => 'Ese :attribute ya está en uso.',
+            'exists' => 'El :attribute elegido no existe.',
+            'numeric' => 'El campo :attribute debe ser un número.',
+            'confirmed' => 'La confirmación de :attribute no coincide.',
+            'array' => 'El campo :attribute no es válido.',
+            'distinct' => 'El campo :attribute tiene valores repetidos.',
+            'different' => 'El campo :attribute no puede ser la misma persona.',
+            'in' => 'El :attribute elegido no está disponible.',
+            'not_in' => 'El :attribute elegido no está disponible.',
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function userFormAttributes(): array
+    {
+        return [
+            'userForm.name' => 'nombre',
+            'userForm.last_name' => 'apellido',
+            'userForm.email' => 'correo electrónico',
+            'userForm.role_id' => 'rol',
+            'userForm.employee_id' => 'ID del reloj checador',
+            'userForm.job_position_id' => 'puesto',
+            'userForm.physical_area_id' => 'área',
+            'userForm.hourly_rate' => 'precio por hora',
+            'userForm.food_allowance' => 'apoyo de comida',
+            'userForm.password' => 'contraseña',
+            'userForm.superior_ids' => 'jefe',
+            'userForm.superior_ids.*' => 'jefe',
+            'userForm.subordinate_ids' => 'subordinados',
+            'userForm.subordinate_ids.*' => 'subordinado',
+        ];
+    }
+
     /** Deja el mensaje en la sesión y además lo muestra como aviso flotante (el panel no pintaba los mensajes de sesión). */
     private function notify(string $message, string $type = 'success'): void
     {
@@ -874,8 +915,9 @@ class PanelAdministracion extends Component
             'userForm.email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'userForm.role_id' => ['required', 'exists:roles,id'],
             'userForm.employee_id' => ['nullable', 'string', 'max:50'],
-            'userForm.job_position_id' => ['required', 'exists:job_positions,id'],
-            'userForm.physical_area_id' => ['required', 'exists:physical_areas,id'],
+            // Un usuario sin asignar (sin puesto ni área) también debe poder guardarse.
+            'userForm.job_position_id' => ['nullable', 'exists:job_positions,id'],
+            'userForm.physical_area_id' => ['nullable', 'exists:physical_areas,id'],
             'userForm.hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'userForm.food_allowance' => ['nullable', 'numeric', 'min:0'],
             'userForm.is_auxiliar' => ['boolean'],
@@ -912,7 +954,14 @@ class PanelAdministracion extends Component
             $rules['userForm.food_allowance'] = ['required', 'numeric', 'min:0'];
         }
 
-        $data = $this->validate($rules)['userForm'];
+        try {
+            $data = $this->validate($rules, $this->userFormMessages(), $this->userFormAttributes())['userForm'];
+        } catch (ValidationException $exception) {
+            // El error de un campo puede quedar fuera de la vista dentro del formulario: se avisa siempre arriba.
+            $this->dispatch('notify', message: 'No se pudo guardar: '.$exception->validator->errors()->first(), type: 'error');
+
+            throw $exception;
+        }
 
         DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService) {
             $user->update(array_filter([
@@ -927,8 +976,8 @@ class PanelAdministracion extends Component
             $user->activeOrganizationalProfile()->updateOrCreate(
                 ['user_id' => $user->id, 'is_active' => true],
                 [
-                    'job_position_id' => $data['job_position_id'],
-                    'physical_area_id' => $data['physical_area_id'],
+                    'job_position_id' => filled($data['job_position_id'] ?? null) ? (int) $data['job_position_id'] : null,
+                    'physical_area_id' => filled($data['physical_area_id'] ?? null) ? (int) $data['physical_area_id'] : null,
                     // SQL Server tiene estas columnas NOT NULL en instalaciones existentes.
                     // Los valores monetarios solo aplican a Auxiliar; los demás usan cero.
                     'hourly_rate' => $isHourlyPosition ? $data['hourly_rate'] : 0,

@@ -78,7 +78,7 @@
     {{-- Aviso flotante (Usuario actualizado., Usuario eliminado., etc.): llega con el evento «notify» y se oculta solo. --}}
     <div
         x-data="{ show: false, text: '', kind: 'success', timer: null }"
-        @notify.window="text = $event.detail.message; kind = $event.detail.type || 'success'; show = true; clearTimeout(timer); timer = setTimeout(() => show = false, 3500)"
+        @notify.window="text = $event.detail.message; kind = $event.detail.type || 'success'; show = true; clearTimeout(timer); timer = setTimeout(() => show = false, kind === 'error' ? 7000 : 3500)"
         x-show="show"
         x-cloak
         role="status"
@@ -1579,6 +1579,18 @@
                         </div>
                         <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
+
+                    {{-- Resumen de errores: siempre a la vista junto al botón, aunque el campo con el error esté más arriba en el formulario --}}
+                    @if ($errors->any())
+                        <div class="flex-shrink-0 border-t border-zinc-200 bg-white px-[20px] pt-[20px]" role="alert">
+                            <p class="text-red-700">No se pudo guardar. Revisa lo siguiente:</p>
+                            <ul class="mt-[15px] flex flex-col gap-[10px]">
+                                @foreach (array_unique($errors->all()) as $message)
+                                    <li class="text-red-700">{{ $message }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <footer class="flex flex-shrink-0 justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
                         <button type="button" wire:click="cancelEditingUser" class="{{ $detailSecondaryButton }}">Cancelar</button>

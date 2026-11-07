@@ -367,6 +367,12 @@ class Form extends Component
     {
         $this->email = mb_strtolower(trim((string) $this->email));
         $this->employee_id = trim((string) $this->employee_id);
+        // Un puesto o área sin elegir llega como texto vacío: se guarda como «sin asignar» (null), no como '' (que rompe la columna numérica).
+        foreach (['job_position_id', 'physical_area_id'] as $field) {
+            if (! filled($this->{$field})) {
+                $this->{$field} = null;
+            }
+        }
 
         $rules = [
             'name' => 'bail|required|string|max:255',
@@ -387,13 +393,24 @@ class Form extends Component
         $rules['food_allowance'] = $isHourlyPosition ? 'required|numeric|min:0' : 'nullable|numeric|min:0';
 
         if ($this->mode === 'edit') {
+            // Un usuario sin asignar (sin puesto ni área) también debe poder actualizarse.
+            $rules['job_position_id'] = 'nullable|exists:job_positions,id';
+            $rules['physical_area_id'] = 'nullable|exists:physical_areas,id';
+
             if (! $this->password) {
                 unset($rules['password']);
                 unset($rules['password_confirmation']);
             }
         }
 
-        $data = $this->validate($rules);
+        try {
+            $data = $this->validate($rules);
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            // El error de un campo puede quedar fuera de la vista dentro del formulario: se avisa siempre arriba.
+            $this->dispatch('notify', message: 'No se pudo guardar: '.$exception->validator->errors()->first(), type: 'error');
+
+            throw $exception;
+        }
         // El ID del reloj checador es opcional: vacío se guarda como «sin ID», no como texto en blanco.
         $data['employee_id'] = filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null;
 
@@ -403,8 +420,8 @@ class Form extends Component
         // como NOT NULL. En puestos de tiempo completo se persisten en cero.
         $hourlyRate = $isHourlyPosition ? ($data['hourly_rate'] ?? 0) : 0;
         $foodAllowance = $isHourlyPosition ? ($data['food_allowance'] ?? 0) : 0;
-        $jobPositionId = $data['job_position_id'];
-        $physicalAreaId = $data['physical_area_id'];
+        $jobPositionId = $data['job_position_id'] ?? null;
+        $physicalAreaId = $data['physical_area_id'] ?? null;
         unset($data['hourly_rate'], $data['food_allowance'], $data['job_position_id'], $data['physical_area_id']);
 
         try {
@@ -440,16 +457,21 @@ class Form extends Component
 
                     $this->user->update($data);
 
-                    // 🆕 Actualiza o crea el perfil organizacional si no existía uno previo
-                    $this->user->activeOrganizationalProfile()->updateOrCreate(
-                        ['user_id' => $this->user->id, 'is_active' => true],
-                        [
-                            'job_position_id' => $jobPositionId,
-                            'physical_area_id' => $physicalAreaId,
-                            'hourly_rate' => $hourlyRate,
-                            'food_allowance' => $foodAllowance,
-                        ]
-                    );
+                    // Actualiza el perfil organizacional o lo crea si el usuario no tenía uno (usuarios sin asignar).
+                    // Al crearlo hace falta valid_from: sin él la columna obligatoria rechazaba el guardado y parecía
+                    // que el botón no hacía nada.
+                    $profile = $this->user->activeOrganizationalProfile()->first()
+                        ?? new UserOrganizationalProfile([
+                            'user_id' => $this->user->id,
+                            'is_active' => true,
+                            'valid_from' => now()->toDateString(),
+                        ]);
+                    $profile->fill([
+                        'job_position_id' => $jobPositionId,
+                        'physical_area_id' => $physicalAreaId,
+                        'hourly_rate' => $hourlyRate,
+                        'food_allowance' => $foodAllowance,
+                    ])->save();
                 }
             });
 
@@ -480,6 +502,8 @@ class Form extends Component
         } catch (\Exception $e) {
             report($e);
             session()->flash('error', 'Ocurrió un error al guardar el usuario: '.$e->getMessage());
+            // Dentro del formulario el mensaje de sesión no se veía y parecía que el botón no hacía nada.
+            $this->dispatch('notify', message: 'No se pudo guardar el usuario. Intenta de nuevo o avisa a soporte.', type: 'error');
 
             return;
         }
