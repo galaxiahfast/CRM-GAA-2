@@ -81,7 +81,7 @@
                     </div>
 
 
-                    <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
+                    <div class="flex w-full flex-wrap items-center gap-[20px] lg:w-auto">
                         <x-panel-select id="dashboard-month" label="Mes" property="selectedMonth"
                             :options="collect($months)->map(fn ($item) => ['value' => $item['number'], 'label' => $item['name']])->all()"
                             class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
