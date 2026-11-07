@@ -34,6 +34,8 @@
     <style>
         .backup-catalog-scroll { scrollbar-width: none; overscroll-behavior: contain; }
         .backup-catalog-scroll::-webkit-scrollbar { width: 0; height: 0; }
+        .backup-today-scroll { scroll-snap-type: y mandatory; scroll-padding-top: 60px; }
+        .backup-today-scroll tbody tr { scroll-snap-align: start; }
         .backup-catalog-scroll-thumb { position: absolute; right: 0; top: 0; z-index: 20; width: 3px; min-height: 32px; border-radius: 9999px; background: var(--panel-accent); opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x { position: absolute; bottom: 0; left: 0; z-index: 21; height: 14px; min-width: 48px; background: transparent; opacity: 0; cursor: ew-resize; touch-action: none; transition: opacity 140ms ease; }
         .backup-catalog-scroll-thumb-x::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 9999px; background: var(--panel-accent); }
@@ -462,7 +464,7 @@
                 <section class="!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
                     <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2m-2 4h2m-2 4h2"/></svg><span>Estado de respaldo de hoy</span></h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
                     <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative h-[620px]">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll backup-today-scroll h-full overflow-auto">
                         <table class="w-full min-w-[780px] border-collapse text-left">
                             <thead class="sticky top-0 z-10 panel-header"><tr><th class="h-[60px] px-[20px] py-0 text-left">Empresa</th><th class="h-[60px] px-[15px] py-0 text-left">Estado hoy</th><th class="h-[60px] px-[15px] py-0 text-left">Respaldos hoy</th><th class="h-[60px] px-[20px] py-0 text-left">Último respaldo localizado</th></tr></thead>
                             <tbody class="divide-y divide-[color:var(--panel-border)]">
