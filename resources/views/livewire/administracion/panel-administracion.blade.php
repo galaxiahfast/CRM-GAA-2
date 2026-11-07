@@ -668,7 +668,7 @@
 
     @if ($orgChartPage)
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" class="flex flex-col gap-[20px]" wire:init="loadOrgChartData">
+    <div id="organigrama-principal" class="flex flex-col gap-[50px]" wire:init="loadOrgChartData">
         <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen del organigrama">
             <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                 <div class="min-w-0">
@@ -708,7 +708,7 @@
 
         
         <!-- Grid con ancho mínimo para evitar deformación -->
-        <div class="grid min-w-0 grid-cols-1 gap-6 p-0 xl:grid-cols-3" style="padding: 0;">
+        <div class="grid min-w-0 grid-cols-1 gap-[50px] p-0 xl:grid-cols-3" style="padding: 0;">
 
             <!-- Árbol jerárquico -->
             <section class="panel-surface panel-border overflow-hidden rounded-xl border xl:col-span-2" aria-label="Estructura jerárquica">
