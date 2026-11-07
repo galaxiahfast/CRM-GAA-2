@@ -858,7 +858,7 @@
                                 @endphp
                                 <li style="list-style: none;" :style="isHidden({{ (int) $user['id'] }}) ? 'order: 1; opacity: 0.5' : 'order: 0'">
                                     <div wire:key="unassigned-user-{{ $user['id'] }}" class="home-row panel-border panel-surface flex w-full items-stretch gap-[20px] rounded-xl border p-[20px]">
-                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials !== '' ? $initials : '?' }}</span>
+                                        <span class="flex self-center h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials !== '' ? $initials : '?' }}</span>
                                         <span class="min-w-0 flex-1">
                                             <span class="home-link block h-[15px] truncate leading-none" title="{{ $user['name'] }}">{{ $user['name'] }}</span>
                                             <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg><span class="truncate" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span></span>

@@ -11,10 +11,16 @@ use Throwable;
 
 class ContpaqiBackupExport
 {
-    public function destinations(): array
+    /** Segundos que se reutiliza la lectura de las memorias: cada comprobación en una ruta de red tarda cientos de ms. */
+    private const INSPECTION_TTL = 20;
+
+    /** @var array<string, array> Lecturas ya hechas durante esta misma petición. */
+    private array $inspectionMemo = [];
+
+    public function destinations(bool $fresh = false): array
     {
         return collect($this->destinationDefinitions())
-            ->map(fn (array $definition): array => $this->inspectDestination($definition))
+            ->map(fn (array $definition): array => $this->inspectDestination($definition, $fresh))
             ->values()
             ->all();
     }
@@ -22,9 +28,45 @@ class ContpaqiBackupExport
     public function forgetDetectedVolumes(): void
     {
         Cache::forget('contpaqi-backup-export:local-volumes');
+        $this->forgetInspections();
     }
 
-    public function destination(?string $key = null): array
+    /** Descarta lo recordado de las memorias y de sus carpetas (la próxima lectura va al disco). */
+    public function forgetInspections(): void
+    {
+        $this->inspectionMemo = [];
+        Cache::forever('contpaqi-backup-export:inspection-version', ((int) Cache::get('contpaqi-backup-export:inspection-version', 0)) + 1);
+    }
+
+    private function inspectionVersion(): int
+    {
+        return (int) Cache::get('contpaqi-backup-export:inspection-version', 0);
+    }
+
+    /**
+     * Resultado de $callback recordado unos segundos (y durante toda la petición). Las acciones que escriben
+     * (copiar, eliminar) pasan $fresh = true para leer siempre el estado real.
+     */
+    private function remembered(string $key, bool $fresh, \Closure $callback): array
+    {
+        $fullKey = 'contpaqi-backup-export:inspection:'.$this->inspectionVersion().':'.$key;
+        if (! $fresh && isset($this->inspectionMemo[$fullKey])) {
+            return $this->inspectionMemo[$fullKey];
+        }
+        if (! $fresh) {
+            $cached = Cache::get($fullKey);
+            if (is_array($cached)) {
+                return $this->inspectionMemo[$fullKey] = $cached;
+            }
+        }
+
+        $value = $callback();
+        Cache::put($fullKey, $value, self::INSPECTION_TTL);
+
+        return $this->inspectionMemo[$fullKey] = $value;
+    }
+
+    public function destination(?string $key = null, bool $fresh = false): array
     {
         $definitions = $this->destinationDefinitions();
         $definition = $key === null || $key === ''
@@ -35,10 +77,15 @@ class ContpaqiBackupExport
             return ['key' => $key, 'configured' => false, 'connected' => false, 'root' => null, 'free_bytes' => null, 'label' => 'Memoria no seleccionada'];
         }
 
-        return $this->inspectDestination($definition);
+        return $this->inspectDestination($definition, $fresh);
     }
 
-    private function inspectDestination(array $definition): array
+    private function inspectDestination(array $definition, bool $fresh = true): array
+    {
+        return $this->remembered('destination:'.md5(json_encode($definition)), $fresh, fn (): array => $this->readDestination($definition));
+    }
+
+    private function readDestination(array $definition): array
     {
         $configuredPath = trim((string) ($definition['root'] ?? ''));
         $volumeLabel = trim((string) ($definition['label'] ?? 'Memoria externa'));
@@ -75,6 +122,11 @@ class ContpaqiBackupExport
             return [];
         }
 
+        return $this->remembered('folders:'.md5((string) $destination['root'].'|'.$parent), false, fn (): array => $this->readDestinationFolders($destination, $parent));
+    }
+
+    private function readDestinationFolders(array $destination, string $parent): array
+    {
         $parentPath = $parent === ''
             ? $destination['root']
             : $this->resolveDestinationFolder($parent, $destination['root']);
@@ -795,7 +847,7 @@ class ContpaqiBackupExport
 
     private function requireDestination(?string $destinationKey = null): array
     {
-        $destination = $this->destination($destinationKey);
+        $destination = $this->destination($destinationKey, true);
         if (! $destination['configured']) {
             throw new RuntimeException('Primero configura la ruta de la memoria externa.');
         }

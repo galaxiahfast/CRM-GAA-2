@@ -122,13 +122,6 @@
                         $hasContact = $customer->phone || $customer->email || $customer->address;
                     @endphp
 
-                    <!-- Regresar a la pantalla de donde se llegó (Panel general o listado de clientes) -->
-                    <a href="{{ route('dashboard') }}" :href="back || @js(route('dashboard'))"
-                        class="panel-tab inline-flex w-fit items-center gap-[10px] leading-none focus:outline-none focus:ring-0">
-                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 12H5M12 19l-7-7 7-7" /></svg>
-                        <span>Regresar</span>
-                    </a>
-
                     @error('error')
                         <div class="panel-danger-box rounded-xl border px-[20px] py-[15px]" role="alert" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
                             {{ $message }}
@@ -142,7 +135,7 @@
                     @enderror
 
                     <!-- Cabecera y periodo -->
-                    <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                    <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                             @if ($customer->url_photo)
                                 <img class="panel-border h-12 w-12 shrink-0 rounded-full border object-cover"

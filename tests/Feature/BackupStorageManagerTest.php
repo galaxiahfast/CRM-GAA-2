@@ -239,7 +239,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
             ->assertSeeHtml('relative h-[544px]')
-            ->assertSeeHtml('class="h-[70px]"')
+            ->assertSeeHtml('class="h-[90px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
     }
 
