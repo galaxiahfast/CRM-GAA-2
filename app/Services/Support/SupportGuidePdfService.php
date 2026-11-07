@@ -18,7 +18,10 @@ class SupportGuidePdfService
      */
     public function data(string $categoryKey, ?CarbonImmutable $now = null): ?array
     {
-        $bank = (array) config('support.questions', []);
+        $bank = array_merge(
+            (array) config('support.questions', []),
+            (array) config('section-guides', [])
+        );
         $category = $bank[$categoryKey] ?? null;
         if (! is_array($category)) {
             return null;

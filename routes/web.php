@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentDeliveryDocumentController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\PanelGeneralGuideController;
+use App\Http\Controllers\SectionGuideController;
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\TechnicalSupportReportController;
 // Modelos
@@ -92,6 +93,9 @@ Route::middleware([
     // Pantalla ligera posterior al login. El dashboard conserva su ruta y su
     // carga original para ejecutarse únicamente cuando el usuario lo solicita.
     Route::view('/inicio', 'inicio')->name('inicio');
+    Route::get('/guias/{section}.pdf', SectionGuideController::class)
+        ->whereIn('section', ['inicio', 'panel-control', 'supervision-horas'])
+        ->name('section.guide');
 
     Route::get('/perfiles', ProfileDirectory::class)->name('profiles.index');
     Route::get('/perfiles/{user}', UpdateProfileInformationForm::class)->name('profiles.show');

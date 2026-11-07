@@ -32,6 +32,9 @@
 
                 <!-- Botones de acción -->
                 <div style="display: flex; align-items: center; gap: 20px; white-space: nowrap; flex-shrink: 0;">
+                    <a href="{{ route('section.guide', 'panel-control') }}" title="Descargar la guía del Panel de Control en PDF" style="display:flex;align-items:center;gap:10px;color:#000;font-size:15px;text-decoration:none;white-space:nowrap;">
+                        <svg style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>Guía PDF
+                    </a>
                     <button id="downloadPdfBtn" style="display: flex; align-items: center; gap: 10px; padding: 0; border: none; background-color: transparent; color: #000; font-size: 15px; cursor: pointer; transition: color 0.2s; white-space: nowrap;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>

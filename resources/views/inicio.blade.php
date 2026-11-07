@@ -174,7 +174,12 @@
                         <p class="mt-[15px] leading-none">Sesión iniciada correctamente · {{ $greeting }}</p>
                     </div>
                 </div>
-                <div class="w-full min-w-0 lg:w-auto lg:text-right">
+                <div class="flex w-full min-w-0 flex-wrap items-center gap-[20px] lg:w-auto">
+                    <a href="{{ route('section.guide', 'inicio') }}" title="Descargar la guía de Inicio en PDF" class="panel-accent inline-flex shrink-0 items-center gap-[10px] leading-none hover:opacity-70">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                        Guía PDF
+                    </a>
+                    <div class="min-w-0 lg:text-right">
                     <p class="panel-accent leading-none">{{ $roleName ?: 'Portal interno' }}</p>
                     <p class="mt-[15px] leading-none">{{ $today }}</p>
                     {{-- Cada dígito va en una celda de ancho fijo para que la hora no se mueva (el 1 es más angosto que el 0). --}}
@@ -182,6 +187,7 @@
                        x-data="homeClock(@js(config('support.timezone', 'America/Mexico_City')))"
                        x-init="start()"
                        x-html="html">{{ $now->format('h:i:s a') }}</p>
+                    </div>
                 </div>
             </section>
 
