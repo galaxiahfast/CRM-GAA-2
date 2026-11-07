@@ -154,6 +154,12 @@
                     <!-- Informe de clientes -->
                     @php
                         $filteredCustomers = $this->filteredCustomers;
+                        $customerCount = $filteredCustomers->count();
+                        $lastCustomerPage = max(1, (int) ceil($customerCount / \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE));
+                        $currentCustomerPage = max(1, min($customerPage, $lastCustomerPage));
+                        $firstCustomer = ($currentCustomerPage - 1) * \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE + 1;
+                        $lastCustomer = min($currentCustomerPage * \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE, $customerCount);
+                        $customerPages = collect([1, ...range(max(1, $currentCustomerPage - 2), min($lastCustomerPage, $currentCustomerPage + 2)), $lastCustomerPage])->unique()->sort()->values();
                     @endphp
 
                 <section class="panel-surface panel-border {{ $canManageCustomers ? 'mt-[30px]' : '' }} overflow-hidden rounded-xl border" aria-label="Informe de clientes">
@@ -198,7 +204,7 @@
                             @endif
                         </div>
 
-                        <div class="transition-opacity" wire:loading.class="opacity-60" wire:target="search,selectedMonth,selectedYear,customersPorcentageIncomplete,customersPorcentageComplete,showMoreCustomers">
+                        <div id="dashboard-customer-list" class="scroll-mt-[20px] transition-opacity" x-on:dashboard-page-changed.window="document.getElementById('dashboard-customer-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" wire:loading.class="opacity-60" wire:target="search,selectedMonth,selectedYear,customersPorcentageIncomplete,customersPorcentageComplete,setCustomerPage">
                             @if ($this->customers->isEmpty())
                                 @if ($canManageCustomers)
                                     <x-panel-empty-state subtitle="No se encontraron clientes para gestionar">
@@ -232,7 +238,7 @@
                                 </x-panel-empty-state>
                             @else
                                 <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-[20px] xl:grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] p-[20px]">
-                                    @foreach ($filteredCustomers->take($visibleCustomerLimit) as $customer)
+                                    @foreach ($filteredCustomers->forPage($currentCustomerPage, \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE) as $customer)
                                         @php
                                             $uniqueServiceIds = $customer->services->pluck('service_id')->unique();
                                             $displayName = trim(Str::limit($customer['name'], 50).' '.($customer['last_name'] ? Str::limit($customer['last_name'], 50).' '.Str::limit($customer['maternal_last_name'], 50) : ''));
@@ -319,14 +325,25 @@
                             @endif
                         </div>
 
-                        @if ($filteredCustomers->isNotEmpty() && $filteredCustomers->count() > $visibleCustomerLimit)
-                            <div class="flex flex-col items-center gap-[20px] px-[20px] pb-[20px]">
-                                <span class="panel-muted leading-none">Mostrando {{ $visibleCustomerLimit }} de {{ $filteredCustomers->count() }}</span>
-                                <button wire:click="showMoreCustomers" type="button"
-                                    class="dash-button inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl px-[20px] focus:outline-none focus:ring-0">
-                                    Mostrar más
-                                </button>
-                            </div>
+                        @if ($customerCount > \App\Livewire\Dashboard::CUSTOMERS_PER_PAGE)
+                            <nav class="panel-border flex flex-wrap items-center justify-between gap-[20px] border-t p-[20px]" aria-label="Páginas del informe de clientes">
+                                <span class="panel-muted whitespace-nowrap leading-none tabular-nums">Mostrando {{ $firstCustomer }}–{{ $lastCustomer }} de {{ $customerCount }}</span>
+                                <div class="flex max-w-full items-center gap-[10px] overflow-x-auto" role="group" aria-label="Seleccionar página">
+                                    <button type="button" wire:click="setCustomerPage({{ $currentCustomerPage - 1 }})" @disabled($currentCustomerPage === 1)
+                                        class="dash-link inline-flex h-10 shrink-0 items-center justify-center rounded-xl px-[10px] disabled:opacity-40" aria-label="Página anterior">Anterior</button>
+                                    @php($previousCustomerPage = 0)
+                                    @foreach ($customerPages as $page)
+                                        @if ($previousCustomerPage && $page > $previousCustomerPage + 1)
+                                            <span class="panel-muted px-[5px]" aria-hidden="true">…</span>
+                                        @endif
+                                        <button type="button" wire:click="setCustomerPage({{ $page }})" @if ($page === $currentCustomerPage) aria-current="page" @endif
+                                            class="{{ $page === $currentCustomerPage ? 'dash-button' : 'dash-link' }} inline-flex h-10 min-w-10 shrink-0 items-center justify-center rounded-xl px-[10px] tabular-nums" aria-label="Página {{ $page }}">{{ $page }}</button>
+                                        @php($previousCustomerPage = $page)
+                                    @endforeach
+                                    <button type="button" wire:click="setCustomerPage({{ $currentCustomerPage + 1 }})" @disabled($currentCustomerPage === $lastCustomerPage)
+                                        class="dash-link inline-flex h-10 shrink-0 items-center justify-center rounded-xl px-[10px] disabled:opacity-40" aria-label="Página siguiente">Siguiente</button>
+                                </div>
+                            </nav>
                         @endif
                 </section>
             @endif

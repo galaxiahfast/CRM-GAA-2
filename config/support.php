@@ -81,11 +81,12 @@ return [
                 ],
                 'completos_incompletos' => [
                     'question' => '¿Cómo distingo los clientes completos de los incompletos?',
-                    'answer' => 'Usa las pestañas Incompletos y Completos. Un cliente aparece como completo cuando el promedio de avance de sus servicios llega al 100 %; si es menor, aparece como incompleto.',
+                    'answer' => 'Usa las pestañas Incompletos y Completos. Un cliente aparece como completo cuando el promedio de avance de sus servicios llega al 100 %; si es menor, aparece como incompleto. Si hay más de 12 clientes, usa las páginas al pie del informe.',
                     'steps' => [
                         'Selecciona la pestaña Incompletos para ver los clientes con formatos pendientes.',
                         'Selecciona la pestaña Completos para ver los clientes que ya cumplieron en el periodo.',
                         'Al cambiar de pestaña, el listado regresa a las primeras 12 tarjetas.',
+                        'Usa los números de página o Anterior y Siguiente para consultar más clientes.',
                     ],
                 ],
                 'cambiar_periodo' => [

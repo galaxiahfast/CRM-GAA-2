@@ -7,12 +7,9 @@ use App\Models\CustomerFile;
 use App\Models\Service;
 use Illuminate\Support\Facades\File;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class Dashboard extends Component
 {
-    use WithPagination;
-
     public $search = '';
 
     public $months = null;
@@ -49,9 +46,9 @@ class Dashboard extends Component
 
     public bool $dashboardReady = false;
 
-    public int $visibleCustomerLimit = 12;
+    public int $customerPage = 1;
 
-    protected $paginationTheme = 'tailwind';
+    public const CUSTOMERS_PER_PAGE = 12;
 
     public function mount($customer = null)
     {
@@ -252,13 +249,13 @@ class Dashboard extends Component
     public function customersPorcentageIncomplete()
     {
         $this->filterType = 'incomplete';
-        $this->visibleCustomerLimit = 12;
+        $this->customerPage = 1;
     }
 
     public function customersPorcentageComplete()
     {
         $this->filterType = 'complete';
-        $this->visibleCustomerLimit = 12;
+        $this->customerPage = 1;
     }
 
     public function getFilteredCustomersProperty()
@@ -324,12 +321,14 @@ class Dashboard extends Component
 
     public function updatedSelectedMonth()
     {
+        $this->customerPage = 1;
         $this->calculatePercentage();
         $this->countTotalFilesMonth();
     }
 
     public function updatedSelectedYear()
     {
+        $this->customerPage = 1;
         $this->calculatePercentage();
         $this->countTotalFilesYear();
         $this->countTotalFilesMonth();
@@ -337,12 +336,14 @@ class Dashboard extends Component
 
     public function updatedSearch()
     {
-        $this->visibleCustomerLimit = 12;
+        $this->customerPage = 1;
     }
 
-    public function showMoreCustomers(): void
+    public function setCustomerPage(int $page): void
     {
-        $this->visibleCustomerLimit += 12;
+        $lastPage = max(1, (int) ceil($this->filteredCustomers->count() / self::CUSTOMERS_PER_PAGE));
+        $this->customerPage = max(1, min($page, $lastPage));
+        $this->dispatch('dashboard-page-changed');
     }
 
     public function annualReport($customerId)
