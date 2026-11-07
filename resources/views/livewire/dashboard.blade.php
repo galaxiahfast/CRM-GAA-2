@@ -156,7 +156,7 @@
                         $filteredCustomers = $this->filteredCustomers;
                     @endphp
 
-                <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Informe de clientes">
+                <section class="panel-surface panel-border {{ $canManageCustomers ? 'mt-[30px]' : '' }} overflow-hidden rounded-xl border" aria-label="Informe de clientes">
                     <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                         <div class="min-w-0">
                             <p class="panel-accent flex items-center gap-[10px] leading-none">

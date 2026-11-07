@@ -243,7 +243,7 @@
                     </section>
 
                     <!-- Documentos del cliente (sin overflow-hidden para que las listas desplegables no se corten) -->
-                    <section class="panel-surface panel-border rounded-xl border">
+                    <section class="panel-surface panel-border mt-[30px] rounded-xl border">
                         <header class="panel-header panel-border flex flex-col justify-between gap-[10px] rounded-t-[11px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Documentos del cliente</h2>
