@@ -289,7 +289,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                                    <button type="button" @click="if ({{ $exportDestination['connected'] && ($visibleDestinationFolders->isNotEmpty() || $destinationBrowsePath !== '') && ! $exportIsActive ? 'true' : 'false' }}) open = !open" @disabled(!$exportDestination['connected'] || ($visibleDestinationFolders->isEmpty() && $destinationBrowsePath === '') || $exportIsActive) class="flex h-[44px] w-full items-center justify-between rounded-xl border panel-border panel-surface px-[15px] text-left disabled:cursor-not-allowed disabled:opacity-50">
+                                                    <button type="button" @click="if ({{ $exportDestination['connected'] && ! $exportIsActive ? 'true' : 'false' }}) { open = !open; if (open) $wire.openDestinationBrowser() }" @disabled(!$exportDestination['connected'] || $exportIsActive) class="flex h-[44px] w-full items-center justify-between rounded-xl border panel-border panel-surface px-[15px] text-left disabled:cursor-not-allowed disabled:opacity-50">
                                                         <span class="truncate" title="{{ str_replace('/', '\\', $destinationFolder) }}">{{ $destinationFolder !== '' ? str_replace('/', '\\', $destinationFolder) : 'Selecciona una carpeta…' }}</span>
                                                         <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
@@ -306,6 +306,9 @@
                                                         </div>
                                                         <div x-data="backupOverlayScroll()" x-effect="if (open) $nextTick(() => update())" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative">
                                                             <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[240px] divide-y divide-[color:var(--panel-border)] overflow-y-auto overscroll-contain">
+                                                            @if(! $destinationBrowserOpened)
+                                                                <div class="px-[20px] py-[15px]">Cargando carpetas…</div>
+                                                            @else
                                                             @forelse($visibleDestinationFolders as $folder)
                                                                 <div class="flex items-stretch panel-surface transition hover:bg-[color:var(--panel-hover)]">
                                                                     <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] px-[20px] py-[15px] text-left disabled:cursor-not-allowed disabled:opacity-50" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
@@ -328,6 +331,7 @@
                                                                     <span>Esta carpeta no contiene subcarpetas.</span>
                                                                 </div>
                                                             @endforelse
+                                                            @endif
                                                             </div>
                                                             <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                         </div>

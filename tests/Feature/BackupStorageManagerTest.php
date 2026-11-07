@@ -225,6 +225,8 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Cargando respaldos…')
             // Mismo formato que la vista (día con cero: "06"); con isoFormat 'D' fallaba del día 1 al 9 de cada mes.
             ->assertSee(ucfirst(now()->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y')))
+            ->assertSee('Cargando carpetas…')
+            ->call('openDestinationBrowser')
             ->assertSee('ANGEL MOO')
             ->call('browseDestinationFolder', 'ANGEL MOO')
             ->assertSet('destinationBrowsePath', 'ANGEL MOO')

@@ -48,6 +48,8 @@ class BackupStorageManager extends Component
 
     public string $destinationBrowsePath = '';
 
+    public bool $destinationBrowserOpened = false;
+
     #[Url(as: 'departamento')]
     public string $backupProfile = '';
 
@@ -95,6 +97,7 @@ class BackupStorageManager extends Component
         $this->destinationKey = $this->destinationKeyForProfile($profiles);
         $this->destinationFolder = '';
         $this->destinationBrowsePath = '';
+        $this->destinationBrowserOpened = false;
         $this->selectedRecords = [];
         $this->status = 'all';
         $this->selectionNotice = null;
@@ -210,13 +213,20 @@ class BackupStorageManager extends Component
     {
         $this->destinationFolder = '';
         $this->destinationBrowsePath = '';
+        $this->destinationBrowserOpened = false;
         $this->syncResult = null;
         $this->exportMessage = null;
         $this->selectionNotice = null;
     }
 
+    public function openDestinationBrowser(): void
+    {
+        $this->destinationBrowserOpened = true;
+    }
+
     public function browseDestinationFolder(string $path, ContpaqiBackupExport $export): void
     {
+        $this->destinationBrowserOpened = true;
         $path = trim(str_replace('\\', '/', $path), '/');
         abort_if($path === '' || str_contains($path, "\0") || collect(explode('/', $path))->contains(fn (string $segment): bool => in_array($segment, ['', '.', '..'], true)), 422);
         abort_unless($export->destinationFolderExists($path, $this->destinationKey), 422);
@@ -225,6 +235,7 @@ class BackupStorageManager extends Component
 
     public function browseDestinationUp(): void
     {
+        $this->destinationBrowserOpened = true;
         $this->destinationBrowsePath = str_contains($this->destinationBrowsePath, '/')
             ? (string) Str::beforeLast($this->destinationBrowsePath, '/')
             : '';
@@ -603,7 +614,6 @@ class BackupStorageManager extends Component
             'records' => $recordsForDate,
             'companies' => $companies,
             'summary' => $summary,
-            'exportDestinations' => $isHistoryView ? [] : $export->destinations(),
             'exportDestination' => $isHistoryView ? ['connected' => false] : $export->destination($this->destinationKey),
             'selectedExportCount' => $selectedCompleteRecords->count(),
             'selectedDeletableCount' => $selectedDeletableCount,
@@ -613,7 +623,7 @@ class BackupStorageManager extends Component
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
-            'destinationFolders' => $isHistoryView ? [] : $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
+            'destinationFolders' => $isHistoryView || ! $this->destinationBrowserOpened ? [] : $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),
             'movementHistory' => $movementHistory,
