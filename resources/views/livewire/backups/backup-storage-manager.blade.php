@@ -458,7 +458,7 @@
                     </div>
                 @endif
 
-                <footer class="flex flex-col gap-[5px] border-t panel-border panel-subtle px-[20px] py-[12px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
+                <footer class="flex flex-col gap-[15px] border-t panel-border panel-subtle px-[20px] py-[20px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
             </section>
             @if ($activeView === 'backups')
                 <section class="!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
