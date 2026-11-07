@@ -13,20 +13,16 @@
     data-customer-detail
     x-data="{
         viewScale: 90,
-        isFullscreen: false,
         isCompact: window.innerWidth / window.appAutoScale() < 1024,
         back: null,
         scaledHeight: null,
         observer: null,
-        onFullscreen: null,
         init() {
             this.back = this.resolveBack();
             try {
                 const saved = Number(null);
                 if (saved >= 70 && saved <= 100) this.viewScale = saved;
             } catch (error) {}
-            this.onFullscreen = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
-            document.addEventListener('fullscreenchange', this.onFullscreen);
             this.$nextTick(() => {
                 this.observer = new ResizeObserver(() => this.syncHeight());
                 this.observer.observe(this.$refs.scaled);
@@ -61,7 +57,6 @@
         },
         destroy() {
             this.observer?.disconnect();
-            document.removeEventListener('fullscreenchange', this.onFullscreen);
         },
         syncHeight() {
             if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
@@ -70,11 +65,6 @@
             this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
             try { localStorage.setItem('customer-detail-view-scale', String(this.viewScale)); } catch (error) {}
             this.$nextTick(() => this.syncHeight());
-        },
-        async toggleFullscreen() {
-            if (document.fullscreenElement === this.$root) return document.exitFullscreen();
-            if (document.fullscreenElement) await document.exitFullscreen();
-            await this.$root.requestFullscreen();
         },
     }"
     @resize.window.debounce.150ms="isCompact = window.innerWidth / window.appAutoScale() < 1024; syncHeight()"
@@ -562,11 +552,4 @@
         @endif
     @endunless
 
-    <!-- Control de pantalla completa (igual que en Administración y Reportes de soporte) -->
-    <div class="panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
-        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5" /></svg>
-        </button>
-    </div>
 </div>
