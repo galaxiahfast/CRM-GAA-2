@@ -94,7 +94,7 @@ Route::middleware([
     // carga original para ejecutarse únicamente cuando el usuario lo solicita.
     Route::view('/inicio', 'inicio')->name('inicio');
     Route::get('/guias/{section}.pdf', SectionGuideController::class)
-        ->whereIn('section', ['inicio', 'panel-control', 'supervision-horas'])
+        ->whereIn('section', ['inicio', 'detalle-cliente', 'panel-control', 'supervision-horas'])
         ->name('section.guide');
 
     Route::get('/perfiles', ProfileDirectory::class)->name('profiles.index');

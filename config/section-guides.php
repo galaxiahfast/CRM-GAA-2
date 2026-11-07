@@ -12,6 +12,17 @@ return [
             ['question' => '¿Dónde consulto la fecha y la hora?', 'answer' => 'La cabecera de Inicio muestra el rol, la fecha y un reloj actualizado.', 'steps' => ['Abre Inicio.', 'Mira la parte derecha de la cabecera para ver tu rol y la fecha.', 'Consulta el reloj situado debajo de la fecha.']],
         ],
     ],
+    'detalle_cliente' => [
+        'label' => 'Detalle del cliente',
+        'menu' => 'Inicio › Panel general › Detalle del cliente',
+        'summary' => 'Consulta los datos de contacto, los contadores asignados y el avance del cliente. En Documentos del cliente puedes revisar los servicios contratados y sus archivos del periodo.',
+        'items' => [
+            ['question' => '¿Qué información muestra esta pantalla?', 'answer' => 'Muestra los datos de contacto, contadores asignados y el avance de formatos del cliente en el periodo elegido.', 'steps' => ['Abre el cliente desde Panel general.', 'Consulta Información del cliente.', 'Revisa el porcentaje de avance del periodo.']],
+            ['question' => '¿Cómo cambio el periodo?', 'answer' => 'Usa los selectores de Mes y Año en la cabecera para consultar los documentos de otro periodo.', 'steps' => ['Selecciona el mes que necesitas.', 'Selecciona el año.', 'Revisa el avance y los documentos actualizados.']],
+            ['question' => '¿Cómo consulto los documentos?', 'answer' => 'En Documentos del cliente selecciona un servicio contratado para ver sus apartados y archivos.', 'steps' => ['Desplázate a Documentos del cliente.', 'Selecciona el servicio que quieres revisar.', 'Consulta los formatos y archivos disponibles del periodo.']],
+            ['question' => '¿Cómo agrego o reviso un PDF?', 'answer' => 'En el apartado del formato puedes cargar el acuse o comprobante y revisar las acciones disponibles sobre un archivo existente.', 'steps' => ['Selecciona el servicio y apartado correctos.', 'Elige el recuadro del acuse o comprobante y selecciona el PDF.', 'Para revisar un archivo cargado, abre su menú de acciones.']],
+        ],
+    ],
     'panel_control_horas' => [
         'label' => 'Panel de Control de Horas',
         'menu' => 'Actividades › Control de Horas › Panel de Control',

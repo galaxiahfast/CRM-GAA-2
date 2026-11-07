@@ -81,6 +81,10 @@
     class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
 >
     <x-panel-styles />
+    <style>
+        [data-customer-detail] .customer-guide { color: #15803d; }
+        html.module-dark-theme [data-customer-detail] .customer-guide { color: #4ade80; }
+    </style>
 
     <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
         <div x-ref="scaled" class="origin-top-left" :style="isCompact ? 'width:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">
@@ -152,6 +156,9 @@
                         </div>
 
                         <div class="flex w-full flex-wrap items-center gap-[10px] lg:w-auto">
+                            <a href="{{ route('section.guide', 'detalle-cliente') }}" title="Descargar la guía de Detalle del cliente en PDF" class="customer-guide inline-flex items-center gap-[10px] whitespace-nowrap leading-none hover:opacity-70">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>Guía PDF
+                            </a>
                             <x-panel-select id="customer-month" label="Mes" property="selectedMonth"
                                 :options="collect($months)->map(fn ($month) => ['value' => $month['number'], 'label' => $month['name']])->all()"
                                 class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />

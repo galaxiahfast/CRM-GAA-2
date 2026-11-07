@@ -12,6 +12,7 @@ class SectionGuideController extends Controller
     {
         $categories = [
             'inicio' => 'inicio',
+            'detalle-cliente' => 'detalle_cliente',
             'panel-control' => 'panel_control_horas',
             'supervision-horas' => 'supervision_horas',
         ];

@@ -75,7 +75,7 @@
                 <span>Actividades</span><span style="color:#d4d4d8">&gt;</span><span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span><span style="font-weight:600;color:#000">Supervisión de Horas</span>
             </div>
             <div style="display:flex;align-items:center;gap:30px;font-size:15px;">
-                <a href="{{ route('section.guide', 'supervision-horas') }}" title="Descargar la guía de Supervisión de Horas en PDF" style="display:inline-flex;align-items:center;gap:10px;color:#000;text-decoration:none;white-space:nowrap;">
+                <a href="{{ route('section.guide', 'supervision-horas') }}" title="Descargar la guía de Supervisión de Horas en PDF" style="display:inline-flex;align-items:center;gap:10px;color:#15803d;text-decoration:none;white-space:nowrap;">
                     <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>Guía PDF
                 </a>
                 <button type="button" wire:click="exportSelectedGeneralReport" @disabled(! $groupReportIsCurrent) style="display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:0;color:#000;font-weight:600;disabled:opacity-40;">
