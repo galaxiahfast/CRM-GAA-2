@@ -49,8 +49,6 @@
         .backup-storage-monochrome { --backup-green: #15803d; font-size: 15px; }
         html.module-dark-theme .backup-storage-monochrome { --backup-green: #4ade80; }
         .backup-green { color: var(--backup-green); }
-        .backup-green-button { background-color: var(--backup-green); color: #ffffff; }
-        html.module-dark-theme .backup-green-button { color: #09090b; }
         .backup-storage-monochrome :where(p, span, button, input, select, option, label, th, td, h2, h3, small) {
             font-size: 15px !important;
         }
@@ -330,7 +328,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="grid w-full {{ $selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups') ? 'grid-cols-2' : 'grid-cols-1' }} gap-[10px]">
-                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="backup-green-button inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl px-[12px] leading-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="panel-button inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl px-[12px] leading-none transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
                                                         <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
                                                         <span wire:loading.remove wire:target="startExport" class="truncate">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedDeletableCount === $selectedExportCount) Reemplazar {{ $selectedExportCount === 1 ? 'respaldo' : $selectedExportCount.' respaldos' }} @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
                                                         <span wire:loading wire:target="startExport">Validando…</span>
@@ -461,13 +459,13 @@
             @if ($activeView === 'backups')
                 <section class="!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
                     <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2m-2 4h2m-2 4h2"/></svg><span>Estado de respaldo de hoy</span></h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
-                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative max-h-[650px]">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[650px] overflow-auto">
+                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative h-[620px]">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                         <table class="w-full min-w-[780px] border-collapse text-left">
-                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="px-[20px] py-[20px] text-left">Empresa</th><th class="px-[15px] py-[20px] text-left">Estado hoy</th><th class="px-[15px] py-[20px] text-left">Respaldos hoy</th><th class="px-[20px] py-[20px] text-left">Último respaldo localizado</th></tr></thead>
+                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="h-[60px] px-[20px] py-0 text-left">Empresa</th><th class="h-[60px] px-[15px] py-0 text-left">Estado hoy</th><th class="h-[60px] px-[15px] py-0 text-left">Respaldos hoy</th><th class="h-[60px] px-[20px] py-0 text-left">Último respaldo localizado</th></tr></thead>
                             <tbody class="divide-y divide-[color:var(--panel-border)]">
                                 @forelse($companies as $company)
-                                    <tr wire:key="company-{{ $company['key'] }}" class="hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] tabular-nums ">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
+                                    <tr wire:key="company-{{ $company['key'] }}" class="h-[80px] hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] tabular-nums ">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
                                 @empty<tr><td colspan="4" class="px-[20px] py-[70px] text-center ">No hay empresas que coincidan con la búsqueda.</td></tr>@endforelse
                             </tbody>
                         </table>
