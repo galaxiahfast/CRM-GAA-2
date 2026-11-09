@@ -211,15 +211,9 @@
         .administration-directory .administration-catalog-button[aria-current="page"] {
             color: var(--panel-accent);
             background: var(--panel-subtle);
-            box-shadow: inset 3px 0 var(--panel-accent);
         }
         .administration-directory .administration-delete-button:hover {
             color: var(--panel-danger);
-        }
-        @media (max-width: 1279px) {
-            .administration-directory .administration-catalog-button[aria-current="page"] {
-                box-shadow: inset 0 -3px var(--panel-accent);
-            }
         }
         @media (prefers-reduced-motion: reduce) {
             .administration-directory .administration-catalog-button { transition: none; }
