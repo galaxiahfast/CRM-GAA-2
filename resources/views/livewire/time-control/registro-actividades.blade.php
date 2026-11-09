@@ -129,6 +129,8 @@
             transition: color 150ms ease, opacity 150ms ease;
         }
         [data-time-clock] .clock-icon:hover { color: var(--panel-accent); }
+        [data-time-clock] .clock-icon-go { color: var(--clock-green); }
+        [data-time-clock] .clock-icon-go:hover { color: var(--clock-green); opacity: .7; }
         [data-time-clock] .clock-icon-danger { color: var(--panel-danger); }
         [data-time-clock] .clock-icon-danger:hover { color: var(--panel-danger); opacity: .7; }
         [data-time-clock] .clock-scroll { scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; overscroll-behavior: contain; }
@@ -161,8 +163,7 @@
                 color: var(--panel-muted);
             }
             [data-time-clock] .clock-table td:nth-child(1),
-            [data-time-clock] .clock-table td:nth-child(2),
-            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 1 / -1; }
+            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
             [data-time-clock] .clock-pill { min-width: 0; }
         }
@@ -246,34 +247,6 @@
             </div>
             <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
-        @php
-            $inProgressCount = $todayEntries->where('status', \App\Models\TimeEntry::STATUS_IN_PROGRESS)->count();
-            $pausedCount = $todayEntries->filter(fn ($entry) => in_array($entry->status, [\App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED], true))->count();
-        @endphp
-        <div class="panel-border border-b">
-            <div class="-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="min-w-0 truncate">Tiempo total</span></span>
-                    <span class="mt-[15px] block truncate leading-none tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Acumulado de hoy</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span class="min-w-0 truncate">Actividades</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $todayEntries->count() }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Registradas hoy</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5.14v13.72L19 12 8 5.14z" /></svg><span class="min-w-0 truncate">En curso</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $inProgressCount }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Cronómetro activo</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M14 5v14" /></svg><span class="min-w-0 truncate">Pausadas</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $pausedCount }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Listas para reanudar</span>
-                </div>
-            </div>
-        </div>
         <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
     <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
         <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
@@ -449,12 +422,12 @@
                 <p class="leading-[30px]">Selecciona un cliente y una actividad para comenzar.</p>
             </div>
         @else
-            <div class="clock-scroll max-h-[600px] overflow-y-auto overflow-x-auto xl:max-h-none xl:min-h-0 xl:flex-1">
+            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-0 xl:flex-1">
+            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll relative max-h-[600px] overflow-auto overscroll-contain xl:h-full xl:max-h-none">
                 <table class="clock-table w-full border-collapse text-left">
                     <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
                         <tr class="clock-head-row">
-                            <th class="min-w-[180px] p-[20px] align-middle">Cliente</th>
-                            <th class="whitespace-nowrap p-[20px] align-middle">Actividad</th>
+                            <th class="min-w-[260px] p-[20px] align-middle">Cliente y actividad</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
                             <th class="whitespace-nowrap p-[20px] text-left align-middle">Acción</th>
@@ -502,16 +475,9 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
-                                <td data-label="Cliente" class="max-w-[260px] p-[20px] align-middle">
-                                    <div class="truncate" title="{{ $entry->customer->name ?? '--' }}">
-                                        {{ $entry->customer->name ?? '--' }}
-                                    </div>
-                                </td>
-
-                                <td data-label="Actividad" class="max-w-[220px] p-[20px] align-middle">
-                                    <div class="truncate" title="{{ $entry->subService->sub_service ?? '--' }}">
-                                        {{ $entry->subService->sub_service ?? '--' }}
-                                    </div>
+                                <td data-label="Cliente y actividad" class="max-w-[420px] p-[20px] align-middle">
+                                    <div class="truncate leading-none" title="{{ $entry->customer->name ?? '--' }}">{{ $entry->customer->name ?? '--' }}</div>
+                                    <div class="mt-[15px] truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
                                 </td>
 
                                 <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums" x-text="display">
@@ -527,25 +493,22 @@
                                 <td data-label="Acción" class="whitespace-nowrap p-[20px] align-middle">
                                     <div class="flex items-center justify-start gap-[10px]">
                                         @if ($entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS)
-                                            <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-primary clock-button focus:outline-none focus:ring-0" title="Pausar">
-                                                <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Pausar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Pausar">
+                                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M7 5h4v14H7V5zm6 0h4v14h-4V5z"/>
                                                 </svg>
-                                                <span>Pausar</span>
                                             </button>
                                         @elseif ($entry->status !== \App\Models\TimeEntry::STATUS_AUTO_CLOSED)
-                                            <button type="button" wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="clock-primary clock-button focus:outline-none focus:ring-0" title="Reanudar">
-                                                <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <button type="button" wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Reanudar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Reanudar">
+                                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M8 5.14v13.72L19 12 8 5.14z"/>
                                                 </svg>
-                                                <span>Reanudar</span>
                                             </button>
                                         @else
-                                            <button type="button" disabled class="panel-button-secondary clock-button" title="Cerrada automáticamente">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            <button type="button" disabled class="clock-icon cursor-not-allowed opacity-50" aria-label="Cerrada automáticamente" title="Cerrada automáticamente">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                                 </svg>
-                                                <span>Cerrada</span>
                                             </button>
                                         @endif
                                         <button
@@ -578,6 +541,8 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
 
         @endif
