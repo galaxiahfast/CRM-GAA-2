@@ -197,8 +197,32 @@
             width: 3px;
             min-height: 32px;
             border-radius: 9999px;
-            background: #1A3A6B;
+            background: var(--panel-accent);
             pointer-events: none;
+        }
+        .administration-directory .administration-catalog-button {
+            color: var(--panel-text);
+            background: var(--panel-surface);
+            transition: background-color 150ms ease, color 150ms ease;
+        }
+        .administration-directory .administration-catalog-button:hover {
+            background: var(--panel-hover);
+        }
+        .administration-directory .administration-catalog-button[aria-current="page"] {
+            color: var(--panel-accent);
+            background: var(--panel-subtle);
+            box-shadow: inset 3px 0 var(--panel-accent);
+        }
+        .administration-directory .administration-delete-button:hover {
+            color: var(--panel-danger);
+        }
+        @media (max-width: 1279px) {
+            .administration-directory .administration-catalog-button[aria-current="page"] {
+                box-shadow: inset 0 -3px var(--panel-accent);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .administration-directory .administration-catalog-button { transition: none; }
         }
         .administration-monochrome *::-webkit-scrollbar,
         html:has(.administration-monochrome)::-webkit-scrollbar,
@@ -218,7 +242,7 @@
         body:has(.administration-monochrome)::-webkit-scrollbar-thumb {
             border: 0;
             border-radius: 9999px;
-            background: #1A3A6B !important;
+            background: var(--panel-accent, #1A3A6B) !important;
         }
         .administration-monochrome *::-webkit-scrollbar-button,
         html:has(.administration-monochrome)::-webkit-scrollbar-button,
@@ -440,9 +464,6 @@
         html.module-dark-theme #main-content .administration-monochrome [class~="hover:bg-zinc-50"]:hover {
             background-color: #26262b !important;
         }
-        html.module-dark-theme .administration-record-scroll-thumb {
-            background: #6aa9ff;
-        }
     </style>
 
     <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
@@ -453,9 +474,9 @@
     </div>
 
     <div class="w-full">
-    <main x-ref="scaledMain" class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
+    <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
     <!-- Cabecera: mismo patrón que el inicio (cuadro con ícono, título azul, subtítulo y datos a la derecha) -->
-    <section class="mb-[30px] flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+    <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
                 <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
