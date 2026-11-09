@@ -37,16 +37,16 @@
                     <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const content = $refs.scroller.firstElementChild; if (content) new ResizeObserver(() => update()).observe(content); })" class="panel-surface relative flex min-h-0 flex-1 flex-col">
                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll min-h-0 flex-1 overflow-y-auto p-[20px]">
                         @if ($customer->services->isNotEmpty())
-                            <div class="panel-border border-b">
+                            <div class="flex flex-col gap-[20px]">
                                 @foreach ($months as $month)
-                                    <section x-data="{ open: false }" class="panel-border border-t">
+                                    <section x-data="{ open: false }" class="panel-border overflow-hidden rounded-xl border">
                                         <button type="button" x-on:click="open = !open" :aria-expanded="open"
-                                            class="panel-surface panel-text flex w-full items-center justify-between gap-[10px] py-[20px] text-left leading-none focus:outline-none focus:ring-0">
+                                            class="panel-surface panel-text flex w-full items-center justify-between gap-[10px] p-[20px] text-left leading-none focus:outline-none focus:ring-0">
                                             <span>{{ $month['name'] }}</span>
                                             <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
                                         </button>
 
-                                        <div x-show="open" x-cloak class="grid grid-cols-1 gap-[20px] pb-[20px] sm:grid-cols-2">
+                                        <div x-show="open" x-cloak class="panel-border grid grid-cols-1 gap-[20px] border-t p-[20px] sm:grid-cols-2">
                                             @foreach ($uniqueServiceIds as $serviceId)
                                                 @php
                                                     $inService = $this->services[$serviceId] ?? null;
