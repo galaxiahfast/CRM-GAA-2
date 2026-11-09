@@ -41,142 +41,241 @@
     $todayOpenStart = $active ? $openStartFor($active) : '';
 @endphp
 
+{{-- Cronómetro: mismo diseño que Administración y Reloj Checador (variables de panel, tema claro/oscuro, 15px,
+     separaciones de 20px y 15px). Solo cambia la presentación; la lógica vive en App\Livewire\TimeControl\RegistroActividades. --}}
 <div
-    data-clock-particle-network
-    class="support-monochrome relative isolate min-h-[calc(var(--app-dvh)-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
-    x-data="{
-        viewScale: 90,
-        isFullscreen: false,
-        init() {
-            const savedScale = Number(null);
-            if (savedScale >= 70 && savedScale <= 100) {
-                this.viewScale = savedScale;
-            }
-        },
-        saveScale() {
-            localStorage.setItem('time-control-view-scale', String(this.viewScale));
-        },
-        async toggleFullscreen(container) {
-            if (document.fullscreenElement === container) {
-                await document.exitFullscreen();
-                return;
-            }
-
-            if (document.fullscreenElement) {
-                await document.exitFullscreen();
-            }
-
-            await container.requestFullscreen();
-        }
-    }"
-    @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
+    data-panel
+    data-time-clock
+    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] xl:flex xl:h-[calc(var(--app-dvh)-123px)] xl:flex-col"
 >
-    <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.55]" aria-hidden="true"></canvas>
+    <x-panel-styles />
 
-    <div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-        <input
-            type="range"
-            min="70"
-            max="100"
-            step="5"
-            x-model.number="viewScale"
-            @input="saveScale()"
-            class="h-1.5 w-[130px] cursor-pointer accent-black"
-            aria-label="Ajustar tamaño de la vista del cronómetro"
-        >
-        <span class="w-[42px] text-right text-[15px] font-semibold tabular-nums text-black" x-text="viewScale + '%'">100%</span>
-        <span class="h-5 w-px bg-zinc-200" aria-hidden="true"></span>
-        <button
-            type="button"
-            @click="toggleFullscreen($root)"
-            class="inline-flex cursor-pointer items-center justify-center rounded-lg p-[5px] text-black transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-black/15"
-            :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el cronómetro en pantalla completa'"
-            :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'"
-        >
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/>
-            </svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>
-            </svg>
-        </button>
-    </div>
+    <style>
+        /* Mismo diseño que Inicio y Panel general: texto negro (blanco en oscuro) y azul; enlaces y botones en verde. */
+        [data-time-clock] { --panel-muted: var(--panel-text); --clock-green: #15803d; }
+        html.module-dark-theme [data-time-clock] { --clock-green: #4ade80; }
+        [data-time-clock] .clock-row:hover { background-color: var(--panel-hover); }
+        [data-time-clock] .clock-link { color: var(--clock-green); transition: opacity 150ms ease; }
+        [data-time-clock] .clock-link:hover { opacity: .75; }
+        [data-time-clock] .clock-primary {
+            border: 1px solid var(--clock-green);
+            background-color: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface));
+            color: var(--clock-green);
+            transition: background-color 150ms ease;
+        }
+        [data-time-clock] .clock-primary:hover { background-color: color-mix(in srgb, var(--clock-green) 20%, var(--panel-surface)); }
+        [data-time-clock] .clock-primary:disabled { cursor: not-allowed; opacity: .6; }
+        [data-time-clock] .clock-pill {
+            display: inline-flex;
+            min-width: 130px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+            border-radius: 9999px;
+            padding: 5px 20px;
+            white-space: nowrap;
+        }
+        [data-time-clock] .clock-button {
+            display: inline-flex;
+            width: 120px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+        }
+        [data-time-clock] .clock-button:disabled { cursor: not-allowed; opacity: .6; }
+        [data-time-clock] .clock-danger {
+            border: 1px solid var(--panel-danger-line);
+            background-color: var(--panel-danger-soft);
+            color: var(--panel-danger);
+        }
+        [data-time-clock] .clock-danger:hover { opacity: .8; }
+        /* Listas de cliente y actividad: siempre 5 opciones exactas (5 × 55px) y el desplazamiento se detiene en cada opción */
+        [data-time-clock] .clock-options { max-height: 275px; scroll-snap-type: y mandatory; }
+        [data-time-clock] .clock-option {
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            height: 55px;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 15px;
+            scroll-snap-align: start;
+        }
+        [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
+        /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
+        html.module-dark-theme #main-content [data-time-clock] table :is(thead, tfoot),
+        html.module-dark-theme #main-content [data-time-clock] table tbody,
+        html.module-dark-theme #main-content [data-time-clock] table tr {
+            background: var(--panel-surface) !important;
+        }
+        html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
+        /* Iconos de acción sin recuadro: mover, ocultar y eliminar */
+        [data-time-clock] .clock-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border: 0;
+            background: transparent;
+            color: var(--panel-text);
+            cursor: pointer;
+            transition: color 150ms ease, opacity 150ms ease;
+        }
+        [data-time-clock] .clock-icon:hover { color: var(--panel-accent); }
+        [data-time-clock] .clock-icon-danger { color: var(--panel-danger); }
+        [data-time-clock] .clock-icon-danger:hover { color: var(--panel-danger); opacity: .7; }
+        [data-time-clock] .clock-scroll { scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; overscroll-behavior: contain; }
+        [data-time-clock] .clock-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        [data-time-clock] .clock-scroll::-webkit-scrollbar-track { background: transparent; }
+        [data-time-clock] .clock-scroll::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
 
-    <div
-        class="relative z-10 origin-top"
-        :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
-    >
-    <header class="relative z-10 flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-gray-200 bg-white/75 p-[50px]">
-        <div class="flex items-center gap-[15px] text-gray-500">
-            <span class="font-medium">Actividades</span>
-            <span class="text-gray-300">&gt;</span>
-            <span class="font-medium">Control de horas</span>
-            <span class="text-gray-300">&gt;</span>
-            <a href="{{ route('time.index') }}" class="font-semibold text-black transition-colors hover:text-zinc-600">Cronómetro</a>
-        </div>
+        /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
+        @media (max-width: 1439px) {
+            [data-time-clock] .clock-table thead { display: none; }
+            [data-time-clock] .clock-table,
+            [data-time-clock] .clock-table tbody { display: block; }
+            [data-time-clock] .clock-table tr {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 15px 20px;
+                padding: 20px;
+            }
+            [data-time-clock] .clock-table td { display: block; max-width: none; padding: 0; }
+            [data-time-clock] .clock-table td[data-label]::before {
+                content: attr(data-label);
+                font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
+                display: block;
+                margin-bottom: 5px;
+                color: var(--panel-muted);
+            }
+            [data-time-clock] .clock-table td:nth-child(1),
+            [data-time-clock] .clock-table td:nth-child(2),
+            [data-time-clock] .clock-table td:nth-child(5),
+            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 1 / -1; }
+            [data-time-clock] .clock-table td:nth-child(6)::before { display: none; }
+            [data-time-clock] .clock-table .clock-button { width: 100%; }
+            [data-time-clock] .clock-pill { min-width: 0; }
+        }
+        @media (max-width: 479px) {
+            [data-time-clock] .clock-table tr { grid-template-columns: minmax(0, 1fr); }
+        }
+    </style>
 
-        <div class="no-print flex items-center gap-[20px]">
-            <button type="button" wire:click="downloadPdf" wire:loading.attr="disabled" wire:target="downloadPdf" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium text-black transition-colors hover:text-zinc-600 disabled:cursor-wait disabled:opacity-60">
-                <svg wire:loading.remove wire:target="downloadPdf" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    <main class="relative z-10 flex w-full flex-col gap-[50px] xl:min-h-0 xl:flex-1 p-[20px] sm:p-[30px] xl:p-[50px]">
+    <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+        <div class="flex min-w-0 max-w-full items-center gap-[15px]">
+            <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
+                <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <svg wire:loading wire:target="downloadPdf" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true" style="display: none;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                <span>Descargar PDF</span>
-            </button>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium text-black transition-colors hover:text-zinc-600">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" />
-                </svg>
-                <span>Imprimir</span>
-            </button>
-        </div>
-    </header>
-
-    <main class="relative z-10 mx-auto w-full space-y-[20px] p-[50px]">
-    <section class="flex flex-wrap items-end justify-between gap-[20px]">
-        <div class="flex items-center gap-[20px]">
-            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/75 text-black">
-                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+            </span>
+            <div class="min-w-0">
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Cronómetro</h1>
+                <p class="mt-[15px] leading-none">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
-            <div>
-                <h1 class="text-xl font-semibold text-black">Cronómetro</h1>
-                <p class="mt-[5px] text-[15px] text-zinc-500">Registra y administra el tiempo dedicado a tus actividades.</p>
-            </div>
         </div>
-        <div class="flex items-center gap-[10px]">
-            <a href="{{ route('time.reports') }}" class="group inline-flex items-center rounded-xl bg-black px-[20px] py-[15px] text-[15px] font-normal text-white transition-colors hover:bg-zinc-800">
-                Mi productividad
-                <svg class="ml-[10px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-            </a>
-            <a href="{{ route('time.dashboard') }}" class="group inline-flex items-center rounded-xl border border-zinc-200 bg-white/75 px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-white">
-                Panel de control
-                <svg class="ml-[10px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-            </a>
+        <div class="w-full min-w-0 lg:w-auto lg:text-right">
+            <p class="panel-accent leading-none">Organización</p>
+            <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
         </div>
     </section>
 
     @if ($errors->has('timer'))
-        <div class="flex items-center rounded-xl border border-red-200 bg-red-50 p-[20px] text-[15px] text-red-700">
-            <svg class="w-5 h-5 mr-2 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        <div role="alert" class="panel-danger-box flex items-center gap-[15px] rounded-xl border p-[20px]">
+            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/>
             </svg>
             {{ $errors->first('timer') }}
         </div>
     @endif
 
-    <section class="grid min-h-[520px] overflow-hidden rounded-xl border border-zinc-200 bg-white/65 shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:grid-cols-[360px_minmax(0,1fr)]">
-    <aside class="border-b border-zinc-200 bg-white/55 p-[20px] xl:border-b-0 xl:border-r">
-        <div class="mb-[20px] border-b border-zinc-200 pb-[20px]">
-            <h2 class="text-[15px] font-semibold text-black">Nuevo registro</h2>
-            <p class="mt-[5px] text-[15px] leading-6 text-zinc-500">Selecciona dónde trabajarás.</p>
+    <section
+        class="panel-surface panel-border overflow-hidden rounded-xl border xl:flex xl:min-h-0 xl:flex-1 xl:flex-col"
+        aria-label="Registro de actividades"
+        x-data="{
+            totalDisplay: '00:00:00',
+            hiddenIds: [],
+            showHidden: false,
+            hiddenKey: 'time-hidden-entries-{{ auth()->id() }}',
+            loadHidden() {
+                try { this.hiddenIds = (JSON.parse(localStorage.getItem(this.hiddenKey) || '[]') || []).map(Number); } catch (error) { this.hiddenIds = []; }
+            },
+            saveHidden() {
+                try { localStorage.setItem(this.hiddenKey, JSON.stringify(this.hiddenIds)); } catch (error) {}
+            },
+            isHidden(id) { return this.hiddenIds.includes(Number(id)); },
+            toggleHidden(id) {
+                id = Number(id);
+                this.hiddenIds = this.isHidden(id) ? this.hiddenIds.filter((value) => value !== id) : [...this.hiddenIds, id];
+                this.saveHidden();
+            },
+            get hiddenCount() {
+                return [...this.$root.querySelectorAll('tr[data-activity-id]')].filter((row) => this.hiddenIds.includes(Number(row.dataset.activityId))).length;
+            },
+            totalTimerId: null,
+            formatSeconds(seconds) {
+                seconds = Math.max(0, parseInt(seconds || 0, 10));
+                let h = Math.floor(seconds / 3600);
+                let m = Math.floor((seconds % 3600) / 60);
+                let s = seconds % 60;
+
+                return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            },
+            currentEpochSecond() {
+                return Math.floor(Date.now() / 1000);
+            },
+            elapsedFrom(openStart) {
+                if (! openStart) {
+                    return 0;
+                }
+
+                return Math.max(0, this.currentEpochSecond() - parseInt(openStart, 10));
+            },
+            tickTotal() {
+                if (! this.$el.isConnected) {
+                    clearInterval(this.totalTimerId);
+                    return;
+                }
+
+                let total = parseInt(this.$el.dataset.totalAccumulated || '0', 10);
+                total += this.elapsedFrom(this.$el.dataset.totalOpenStart);
+                this.totalDisplay = this.formatSeconds(total);
+            }
+        }"
+        x-init="loadHidden(); tickTotal(); totalTimerId = setInterval(() => tickTotal(), 1000)"
+        data-total-accumulated="{{ $todayLiveBaseSeconds }}"
+        data-total-open-start="{{ $todayOpenStart }}"
+
+    >
+        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+            <div class="min-w-0">
+                <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
+                <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px]">
+                <button type="button" x-show="hiddenCount > 0" x-cloak @click="showHidden = ! showHidden" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 leading-none">
+                    <span x-text="showHidden ? 'Ocultar las ocultas' : 'Ver ocultas (' + hiddenCount + ')'"></span>
+                </button>
+                <p class="leading-none">
+                    <span class="mr-[10px]">Tiempo total</span>
+                    <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
+                </p>
+            </div>
+        </header>
+        <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+    <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
+        <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
+            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
+            <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
-        <form wire:submit="start">
+        <form wire:submit="start" class="p-[20px]">
             <div class="grid gap-[20px]">
                 <div
                     class="relative"
@@ -209,9 +308,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[10px] block text-[15px] font-semibold text-black">
-                        Cliente
-                    </label>
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
                     <div class="relative">
                         <input
@@ -220,31 +317,31 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             :placeholder="selectedName || '-- Escribe o selecciona un cliente --'"
-                            class="w-full truncate rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center">
-                            <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
+                            <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                     </div>
 
-                    <div
-                        x-show="open"
-                        x-transition
-                        class="notification-scrollbar absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_12px_32px_rgba(0,0,0,0.08)]"
-                    >
-                        <template x-for="c in filteredCustomers" :key="c.id">
-                            <button type="button" @click="select(c.id, c.search_name.toUpperCase())" :class="{'bg-black text-white font-semibold': selectedId == c.id}" class="mb-[10px] block w-full truncate rounded-lg px-[15px] py-[10px] text-left text-[15px] text-zinc-700 transition-colors last:mb-0 hover:bg-zinc-100">
-                                <span x-text="c.search_name.toUpperCase()"></span>
-                            </button>
-                        </template>
+                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
+                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                                <template x-for="c in filteredCustomers" :key="c.id">
+                                    <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
+                                </template>
+                                <p x-show="filteredCustomers.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                            </div>
+                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
                     </div>
 
                     @error('customerId')
-                        <span class="text-xs text-red-600 block mt-1">{{ $message }}</span>
+                        <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -279,9 +376,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[10px] block text-[15px] font-semibold text-black">
-                        Actividad
-                    </label>
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
 
                     <div class="relative">
                         <input
@@ -290,40 +385,41 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             :placeholder="selectedName || '-- Escribe o selecciona una actividad --'"
-                            class="w-full truncate rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[20px] pr-[46px] text-[15px] text-zinc-800 placeholder-zinc-400 transition-shadow focus:border-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center">
-                            <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar actividades">
+                            <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                     </div>
 
-                    <div
-                        x-show="open"
-                        x-transition
-                        class="notification-scrollbar absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_12px_32px_rgba(0,0,0,0.08)]"
-                    >
-                        <template x-for="s in filteredServices" :key="s.id">
-                            <button type="button" @click="select(s.id, s.search_name.toUpperCase())" :class="{'bg-black text-white font-semibold': selectedId == s.id}" class="mb-[10px] block w-full truncate rounded-lg px-[15px] py-[10px] text-left text-[15px] text-zinc-700 transition-colors last:mb-0 hover:bg-zinc-100">
-                                <span x-text="s.search_name.toUpperCase()"></span>
-                            </button>
-                        </template>
+                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Actividad">
+                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                                <template x-for="s in filteredServices" :key="s.id">
+                                    <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
+                                </template>
+                                <p x-show="filteredServices.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                            </div>
+                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
                     </div>
 
                     @error('subServiceId')
-                        <span class="text-xs text-red-600 block mt-1">{{ $message }}</span>
+                        <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
                 </div>
-                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="mt-[5px] inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-black px-[20px] py-[15px] text-[15px] font-semibold text-white transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+
+                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M8 5.14v13.72L19 12 8 5.14z"/>
                         </svg>
 
-                        <svg wire:loading wire:target="start" class="animate-spin h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" style="display: none;">
+                        <svg wire:loading wire:target="start" class="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" style="display: none;">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -334,87 +430,43 @@
                 </button>
             </div>
         </form>
-        <div class="mt-[20px] rounded-xl border border-zinc-200 bg-white/70 p-[20px] text-justify text-[15px] leading-6 text-zinc-500">
+        <p class="panel-border mx-[20px] mb-[20px] rounded-xl border p-[20px] leading-[25px]">
             Solo puede existir un cronómetro activo. Al iniciar otro registro, el anterior se detiene de manera automática.
-        </div>
+        </p>
     </aside>
 
     <div
-        class="min-w-0 bg-white/55 p-[20px]"
-        x-data="{
-            totalDisplay: '00:00:00',
-            totalTimerId: null,
-            formatSeconds(seconds) {
-                seconds = Math.max(0, parseInt(seconds || 0, 10));
-                let h = Math.floor(seconds / 3600);
-                let m = Math.floor((seconds % 3600) / 60);
-                let s = seconds % 60;
-
-                return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            },
-            currentEpochSecond() {
-                return Math.floor(Date.now() / 1000);
-            },
-            elapsedFrom(openStart) {
-                if (! openStart) {
-                    return 0;
-                }
-
-                return Math.max(0, this.currentEpochSecond() - parseInt(openStart, 10));
-            },
-            tickTotal() {
-                if (! this.$el.isConnected) {
-                    clearInterval(this.totalTimerId);
-                    return;
-                }
-
-                let total = parseInt(this.$el.dataset.totalAccumulated || '0', 10);
-                total += this.elapsedFrom(this.$el.dataset.totalOpenStart);
-                this.totalDisplay = this.formatSeconds(total);
-            }
-        }"
-        x-init="tickTotal(); totalTimerId = setInterval(() => tickTotal(), 1000)"
-        data-total-accumulated="{{ $todayLiveBaseSeconds }}"
-        data-total-open-start="{{ $todayOpenStart }}"
+        class="flex min-h-0 min-w-0 flex-col"
     >
-        <div class="flex flex-wrap items-center justify-between gap-[15px] border-b border-zinc-200 pb-[20px]">
-            <div>
-                <h2 class="text-[15px] font-semibold text-black">Hoy</h2>
-                <p class="mt-[5px] text-[15px] text-zinc-500">Tiempo registrado por cliente y actividad.</p>
-            </div>
-            <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-[20px] py-[15px] text-[15px] font-semibold text-black">
-                <span class="mr-[10px] font-normal text-zinc-500">Tiempo total</span>
-                <span class="font-mono tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
-            </div>
-        </div>
-
         @if ($todayEntries->isEmpty())
-            <div class="flex min-h-[350px] flex-col items-center justify-center text-center text-[15px] text-zinc-500">
-                <span class="mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-400">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
+                <span class="panel-border mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </span>
-                <p class="font-semibold text-zinc-700">Tu jornada aún no tiene registros</p>
-                <p class="mt-[5px]">Selecciona un cliente y una actividad para comenzar.</p>
+                <p class="leading-[30px]">Tu jornada aún no tiene registros</p>
+                <p class="leading-[30px]">Selecciona un cliente y una actividad para comenzar.</p>
             </div>
         @else
-            <div class="notification-scrollbar max-h-[600px] overflow-auto">
-                <table class="w-full border-collapse text-left text-[15px]">
-                    <thead class="sticky top-0 z-10 border-b border-zinc-200 bg-white">
-                        <tr class="text-[15px] font-bold text-black">
-                            <th class="min-w-[180px] p-[20px] font-bold align-middle">Cliente</th>
-                            <th class="whitespace-nowrap p-[20px] font-bold align-middle">Actividad</th>
-                            <th class="whitespace-nowrap p-[20px] font-bold align-middle">Tiempo</th>
-                            <th class="whitespace-nowrap p-[20px] font-bold align-middle">Estado</th>
-                            <th class="whitespace-nowrap p-[20px] text-left font-bold align-middle">Acción</th>
-                            <th class="w-px whitespace-nowrap p-[20px] text-left font-bold align-middle"><span class="sr-only">Eliminar</span></th>
+            <div class="clock-scroll max-h-[600px] overflow-y-auto overflow-x-auto xl:max-h-none xl:min-h-0 xl:flex-1">
+                <table class="clock-table w-full border-collapse text-left">
+                    <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
+                        <tr class="clock-head-row">
+                            <th class="min-w-[180px] p-[20px] align-middle">Cliente</th>
+                            <th class="whitespace-nowrap p-[20px] align-middle">Actividad</th>
+                            <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
+                            <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
+                            <th class="whitespace-nowrap p-[20px] text-left align-middle">Acción</th>
+                            <th class="w-px whitespace-nowrap p-[20px] text-left align-middle"><span class="sr-only">Eliminar</span></th>
                         </tr>
                     </thead>
-                    <tbody data-activity-sortable class="divide-y divide-zinc-300">
+                    <tbody data-activity-sortable>
                         @foreach ($todayEntries as $entry)
                             <tr
                                 wire:key="time-entry-{{ $entry->id }}"
                                 data-activity-id="{{ $entry->id }}"
-                                class="transition-[opacity,background-color] duration-150 hover:bg-zinc-50"
+                                class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 last:border-b-0"
+                                x-show="showHidden || ! isHidden({{ $entry->id }})"
+                                :class="isHidden({{ $entry->id }}) ? 'opacity-60' : ''"
                                 x-data="{
                                     display: '00:00:00',
                                     timerId: null,
@@ -451,51 +503,47 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
-                                <td class="max-w-[260px] p-[20px] align-middle text-gray-900">
+                                <td data-label="Cliente" class="max-w-[260px] p-[20px] align-middle">
                                     <div class="truncate" title="{{ $entry->customer->name ?? '--' }}">
                                         {{ $entry->customer->name ?? '--' }}
                                     </div>
                                 </td>
 
-                                <td class="max-w-[220px] p-[20px] align-middle text-gray-600">
+                                <td data-label="Actividad" class="max-w-[220px] p-[20px] align-middle">
                                     <div class="truncate" title="{{ $entry->subService->sub_service ?? '--' }}">
                                         {{ $entry->subService->sub_service ?? '--' }}
                                     </div>
                                 </td>
 
-                                <td class="whitespace-nowrap p-[20px] align-middle font-mono font-bold text-black tabular-nums" x-text="display">
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums" x-text="display">
                                     {{ $fmt($entry->calculateEffectiveSeconds()) }}
                                 </td>
 
-                                <td class="whitespace-nowrap p-[20px] align-middle">
-                                    <span class="inline-flex w-[150px] items-center justify-center rounded-full border px-[20px] py-[15px] text-[15px] font-semibold {{ match ($entry->status) {
-                                        \App\Models\TimeEntry::STATUS_IN_PROGRESS => 'border-[#15803d]/30 bg-[#15803d]/10 text-[#166534]',
-                                        \App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED => 'border-[#881337]/30 bg-[#881337]/10 text-[#881337]',
-                                        default => 'border-zinc-300 bg-zinc-100 text-zinc-700',
-                                    } }}">
-                                        {{ in_array($entry->status, [\App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED], true) ? 'Pausada' : $entry->status_label }}
+                                <td data-label="Estado" class="whitespace-nowrap p-[20px] align-middle">
+                                    <span class="clock-pill {{ $entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS ? 'panel-tone-green' : (in_array($entry->status, [\App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED], true) ? 'panel-tone-red' : 'panel-tone-gray') }}">
+                                        {{ in_array($entry->status, [\App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED], true) ? 'Pausada' : ($entry->status === \App\Models\TimeEntry::STATUS_AUTO_CLOSED ? 'Cerrada' : $entry->status_label) }}
                                     </span>
                                 </td>
 
-                                <td class="whitespace-nowrap p-[20px] align-middle">
+                                <td data-label="Acción" class="whitespace-nowrap p-[20px] align-middle">
                                     <div class="flex items-center justify-start gap-[10px]">
                                         @if ($entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS)
-                                            <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="inline-flex w-[140px] cursor-pointer items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-[15px] font-normal text-white transition-colors hover:bg-zinc-800 disabled:opacity-50" title="Pausar">
+                                            <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-primary clock-button focus:outline-none focus:ring-0" title="Pausar">
                                                 <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M7 5h4v14H7V5zm6 0h4v14h-4V5z"/>
                                                 </svg>
                                                 <span>Pausar</span>
                                             </button>
                                         @elseif ($entry->status !== \App\Models\TimeEntry::STATUS_AUTO_CLOSED)
-                                            <button type="button" wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="inline-flex w-[140px] cursor-pointer items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] py-[15px] text-[15px] font-normal text-white transition-colors hover:bg-zinc-800 disabled:opacity-50" title="Reanudar">
+                                            <button type="button" wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="clock-primary clock-button focus:outline-none focus:ring-0" title="Reanudar">
                                                 <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M8 5.14v13.72L19 12 8 5.14z"/>
                                                 </svg>
                                                 <span>Reanudar</span>
                                             </button>
                                         @else
-                                            <button type="button" disabled class="inline-flex h-10 w-[140px] cursor-not-allowed items-center justify-center gap-[10px] rounded-xl bg-zinc-100 px-[15px] text-zinc-400" title="Cerrada automáticamente">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <button type="button" disabled class="panel-button-secondary clock-button" title="Cerrada automáticamente">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                                 </svg>
                                                 <span>Cerrada</span>
@@ -504,17 +552,31 @@
                                     </div>
                                 </td>
 
-                                <td class="w-px whitespace-nowrap p-[20px] align-middle">
+                                <td data-label="Opciones" class="w-px whitespace-nowrap p-[20px] align-middle">
                                     <div class="flex items-center gap-[10px]">
                                         <button
                                             type="button"
                                             data-activity-drag-handle
-                                            class="inline-flex cursor-grab touch-none select-none items-center justify-center rounded-xl border border-zinc-200 bg-white p-[15px] text-black transition-colors hover:bg-zinc-100 active:cursor-grabbing"
+                                            class="clock-icon cursor-grab touch-none select-none active:cursor-grabbing"
                                             aria-label="Mover {{ $entry->subService->sub_service ?? 'actividad' }}"
                                             title="Mover actividad"
                                         >
-                                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                 <circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="toggleHidden({{ $entry->id }})"
+                                            class="clock-icon"
+                                            :aria-label="isHidden({{ $entry->id }}) ? 'Mostrar {{ addslashes($entry->subService->sub_service ?? 'actividad') }}' : 'Ocultar {{ addslashes($entry->subService->sub_service ?? 'actividad') }}'"
+                                            :title="isHidden({{ $entry->id }}) ? 'Mostrar actividad' : 'Ocultar actividad'"
+                                        >
+                                            <svg x-show="! isHidden({{ $entry->id }})" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.1A9.7 9.7 0 0112 4.9c4.6 0 8.5 3 9.9 7.1a10.6 10.6 0 01-2.5 3.9M6.6 6.6A10.7 10.7 0 002.1 12c1.4 4.1 5.3 7.1 9.9 7.1 1.6 0 3.1-.4 4.4-1"/>
+                                            </svg>
+                                            <svg x-show="isHidden({{ $entry->id }})" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.1 12C3.5 7.9 7.4 4.9 12 4.9s8.5 3 9.9 7.1c-1.4 4.1-5.3 7.1-9.9 7.1S3.5 16.1 2.1 12z"/><circle cx="12" cy="12" r="3"/>
                                             </svg>
                                         </button>
                                         <button
@@ -522,12 +584,12 @@
                                             wire:click="requestDeletion({{ $entry->id }})"
                                             wire:loading.attr="disabled"
                                             wire:target="requestDeletion({{ $entry->id }})"
-                                            class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 p-[15px] text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 disabled:cursor-wait disabled:opacity-50"
+                                            class="clock-icon clock-icon-danger disabled:cursor-wait disabled:opacity-50"
                                             aria-label="Eliminar {{ $entry->subService->sub_service ?? 'actividad' }}"
                                             title="Eliminar actividad"
                                         >
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/>
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/>
                                             </svg>
                                         </button>
                                     </div>
@@ -540,46 +602,46 @@
 
         @endif
     </div>
+        </div>
     </section>
     </main>
-    </div>
 
     @if ($showDeleteModal)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-entry-title">
-            <div class="w-full max-w-[520px] rounded-2xl border border-zinc-200 bg-white p-[20px] shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
-                <div class="flex items-start justify-between gap-[20px] border-b border-zinc-200 pb-[20px]">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-entry-title">
+            <div class="panel-surface panel-border w-full max-w-[520px] rounded-xl border shadow-[0_24px_80px_rgba(0,0,0,0.30)]">
+                <div class="panel-surface panel-border flex items-start justify-between gap-[20px] rounded-t-xl border-b px-[20px] py-[15px]">
                     <div>
-                        <h2 id="delete-entry-title" class="text-xl font-semibold text-black">Eliminar actividad</h2>
-                        <p class="mt-[5px] text-[15px] leading-6 text-zinc-500">Esta acción eliminará el registro y todo el tiempo asociado.</p>
+                        <h2 id="delete-entry-title" class="panel-accent text-xl font-normal leading-[30px]">Eliminar actividad</h2>
+                        <p class="leading-[30px]">Esta acción eliminará el registro y todo el tiempo asociado.</p>
                     </div>
-                    <button type="button" wire:click="cancelDeletion" class="inline-flex shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white p-[15px] text-black transition-colors hover:bg-zinc-100" aria-label="Cerrar confirmación">
+                    <button type="button" wire:click="cancelDeletion" class="panel-icon-button inline-flex shrink-0 items-center justify-center rounded-lg p-[10px] focus:outline-none focus:ring-0" aria-label="Cerrar confirmación">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
                     </button>
                 </div>
 
-                <div class="py-[20px]">
-                    <p class="text-[15px] leading-6 text-zinc-700">Para confirmar, escribe exactamente:</p>
-                    <p class="mt-[10px] rounded-xl bg-zinc-100 p-[15px] text-[15px] font-bold text-black">{{ $deleteActivityName }}</p>
+                <div class="p-[20px]">
+                    <p class="leading-[30px]">Para confirmar, escribe exactamente:</p>
+                    <p class="panel-border mt-[15px] rounded-xl border px-[20px] py-[15px] leading-[30px]">{{ $deleteActivityName }}</p>
 
-                    <label for="delete-activity-confirmation" class="mb-[10px] mt-[20px] block text-[15px] font-semibold text-black">Nombre de la actividad</label>
+                    <label for="delete-activity-confirmation" class="mb-[15px] mt-[20px] block leading-[30px]">Nombre de la actividad</label>
                     <input
                         id="delete-activity-confirmation"
                         type="text"
                         wire:model="deleteConfirmation"
                         wire:keydown.enter="deleteEntry"
                         autocomplete="off"
-                        class="w-full rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] text-black placeholder-zinc-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                        class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0"
                         placeholder="Escribe el nombre completo"
                         autofocus
                     >
                     @error('deleteConfirmation')
-                        <p class="mt-[10px] text-[15px] text-red-700">{{ $message }}</p>
+                        <p class="panel-tone-red mt-[15px]">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div class="flex items-center justify-end gap-[10px] border-t border-zinc-200 pt-[20px]">
-                    <button type="button" wire:click="cancelDeletion" class="rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">Cancelar</button>
-                    <button type="button" wire:click="deleteEntry" wire:loading.attr="disabled" wire:target="deleteEntry" class="rounded-xl bg-[#881337] px-[20px] py-[15px] text-[15px] font-normal text-white transition-colors hover:bg-[#6f102d] disabled:cursor-wait disabled:opacity-50">
+                <div class="panel-border flex items-center justify-end gap-[20px] border-t p-[20px]">
+                    <button type="button" wire:click="cancelDeletion" class="panel-button-secondary rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">Cancelar</button>
+                    <button type="button" wire:click="deleteEntry" wire:loading.attr="disabled" wire:target="deleteEntry" class="clock-danger rounded-xl px-[20px] py-[15px] transition-opacity focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-50">
                         <span wire:loading.remove wire:target="deleteEntry">Eliminar actividad</span>
                         <span wire:loading wire:target="deleteEntry">Eliminando...</span>
                     </button>

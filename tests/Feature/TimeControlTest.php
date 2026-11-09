@@ -148,6 +148,21 @@ class TimeControlTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_each_activity_row_offers_move_hide_and_delete_as_plain_icons(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $timer = app(TimerService::class);
+        $entry = $timer->start($aux, $customer->id, $sub->id);
+        $timer->pause($entry);
+
+        Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->assertSeeHtml('data-activity-drag-handle')
+            ->assertSeeHtml('toggleHidden('.$entry->id.')')
+            ->assertSeeHtml('requestDeletion('.$entry->id.')')
+            ->assertSeeHtml('class="clock-icon');
+    }
+
     public function test_user_deletes_a_paused_activity_only_after_typing_its_exact_name(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();

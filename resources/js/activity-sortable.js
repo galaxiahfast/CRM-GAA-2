@@ -37,7 +37,7 @@ const initializeActivitySortable = (container) => {
         draggedRow.style.position = 'relative';
         draggedRow.style.zIndex = '30';
         draggedRow.style.pointerEvents = 'none';
-        draggedRow.style.backgroundColor = '#ffffff';
+        draggedRow.style.backgroundColor = 'var(--panel-surface)';
         draggedRow.style.boxShadow = '0 14px 35px rgba(0, 0, 0, 0.14)';
         document.body.style.userSelect = 'none';
 
