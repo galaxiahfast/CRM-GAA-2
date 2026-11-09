@@ -263,5 +263,15 @@
         padding: 20px !important;
         line-height: 1 !important;
     }
+    /* Los títulos de sección usan el color del texto en cada tema. */
+    .admin-section-title,
+    :is([data-administration-modal], .org-user-modal) :is(h2, h3)[class*="tracking-[.12em]"] {
+        color: #000000 !important;
+    }
+    html.module-dark-theme .admin-section-title,
+    html.module-dark-theme #main-content .admin-section-title,
+    html.module-dark-theme #main-content :is([data-administration-modal], .org-user-modal) :is(h2, h3)[class*="tracking-[.12em]"] {
+        color: #ffffff !important;
+    }
 </style>
 @endonce
