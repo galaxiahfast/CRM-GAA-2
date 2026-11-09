@@ -46,7 +46,7 @@
 <div
     data-panel
     data-time-clock
-    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] xl:flex xl:h-[calc(var(--app-dvh)-123px)] xl:flex-col"
+    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] xl:flex xl:flex-col"
 >
     <x-panel-styles />
 
@@ -134,6 +134,10 @@
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { text-align: center; }
+            /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona) y el scroll se detiene en cada fila */
+            [data-time-clock] .clock-body { container-type: size; scroll-snap-type: y mandatory; }
+            [data-time-clock] .clock-body tbody tr { scroll-snap-align: start; }
+            [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
             /* Departamento o cliente y actividad miden lo mismo: la tabla usa columnas fijas y se reparten el ancho sobrante */
             [data-time-clock] .clock-table { table-layout: fixed; }
             [data-time-clock] .clock-table :is(th, td):nth-child(-n+2) { width: auto; overflow: hidden; text-overflow: ellipsis; }
@@ -144,7 +148,7 @@
 
         /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
         @media (max-width: 1439px) {
-            [data-time-clock] .clock-table thead { display: none; }
+            [data-time-clock] .clock-table-head { display: none; }
             [data-time-clock] .clock-table,
             [data-time-clock] .clock-table tbody { display: block; }
             [data-time-clock] .clock-table tr {
@@ -421,18 +425,21 @@
                 <p class="leading-[30px]">Selecciona un cliente y una actividad para comenzar.</p>
             </div>
         @else
-            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-0 xl:flex-1">
-            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll relative max-h-[600px] overflow-auto overscroll-contain xl:h-full xl:max-h-none">
+            {{-- Encabezado fijo: el scroll solo recorre las filas --}}
+            <table class="clock-table clock-table-head w-full border-collapse text-left">
+                <thead class="panel-surface panel-border border-b">
+                    <tr class="clock-head-row">
+                        <th class="p-[20px] align-middle">Departamento o cliente</th>
+                        <th class="p-[20px] align-middle">Actividad</th>
+                        <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
+                        <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
+                        <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
+                    </tr>
+                </thead>
+            </table>
+            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-[424px] xl:flex-1">
+            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
                 <table class="clock-table w-full border-collapse text-left">
-                    <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
-                        <tr class="clock-head-row">
-                            <th class="p-[20px] align-middle">Departamento o cliente</th>
-                            <th class="p-[20px] align-middle">Actividad</th>
-                            <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
-                            <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
-                            <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
-                        </tr>
-                    </thead>
                     <tbody data-activity-sortable>
                         @foreach ($todayEntries as $entry)
                             <tr
