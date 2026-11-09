@@ -136,20 +136,26 @@
         [data-time-clock] .clock-scroll::-webkit-scrollbar-track { background: transparent; }
         [data-time-clock] .clock-scroll::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
 
+        /* Índice de filas: lo numera el navegador, así se actualiza solo al reordenar */
+        [data-time-clock] .clock-rows { counter-reset: clock-row; }
+        [data-time-clock] .clock-rows > tr { counter-increment: clock-row; }
+        [data-time-clock] .clock-index::after { content: counter(clock-row); }
+
         /* Líneas verticales que dividen las columnas de la tabla (en celular y tablet cada fila es una tarjeta) */
         [data-time-clock] .clock-table :is(th, td) { font-weight: 400; }
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
-            [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { text-align: center; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
             /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona) y el scroll se detiene en cada fila */
             [data-time-clock] .clock-body { container-type: size; scroll-snap-type: y mandatory; }
             [data-time-clock] .clock-body tbody tr { scroll-snap-align: start; }
             [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
             /* Departamento o cliente y actividad miden lo mismo: la tabla usa columnas fijas y se reparten el ancho sobrante */
             [data-time-clock] .clock-table { table-layout: fixed; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(-n+2) { width: auto; overflow: hidden; text-overflow: ellipsis; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 80px; min-width: 80px; max-width: 80px; }
             /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
-            [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { width: 160px; min-width: 160px; max-width: 160px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { width: 160px; min-width: 160px; max-width: 160px; }
             [data-time-clock] .clock-table .clock-actions { justify-content: center; }
         }
 
@@ -174,7 +180,8 @@
             }
             [data-time-clock] .clock-table td:nth-child(1),
             [data-time-clock] .clock-table td:nth-child(2),
-            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 1 / -1; }
+            [data-time-clock] .clock-table td:nth-child(3),
+            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
         }
         @media (max-width: 479px) {
@@ -202,12 +209,30 @@
     </section>
 
     @if ($errors->has('timer'))
-        <div role="alert" class="panel-danger-box flex items-center gap-[15px] rounded-xl border p-[20px]">
-            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/>
-            </svg>
-            {{ $errors->first('timer') }}
-        </div>
+        @teleport('body')
+            <div
+                data-panel
+                wire:key="clock-error-toast-{{ $errorToastVersion }}"
+                x-data="{ visible: true }"
+                x-init="setTimeout(() => visible = false, 4500)"
+                x-show="visible"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 -translate-y-3"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 -translate-y-3"
+                class="panel-surface fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[15px] rounded-xl border px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]"
+                style="border-color: var(--panel-danger-line); color: var(--panel-danger)"
+                role="alert"
+            >
+                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+                <span class="min-w-0 flex-1">{{ $errors->first('timer') }}</span>
+                <button type="button" @click="visible = false" aria-label="Cerrar notificación" class="panel-icon-button inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        @endteleport
     @endif
 
     <section
@@ -436,6 +461,7 @@
             <table class="clock-table clock-table-head w-full border-collapse text-left">
                 <thead class="panel-header panel-border border-b">
                     <tr class="clock-head-row">
+                        <th class="whitespace-nowrap p-[20px] align-middle">N°</th>
                         <th class="p-[20px] align-middle">Departamento o cliente</th>
                         <th class="p-[20px] align-middle">Actividad</th>
                         <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
@@ -447,7 +473,7 @@
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-[424px] xl:flex-1">
             <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
                 <table class="clock-table w-full border-collapse text-left">
-                    <tbody data-activity-sortable>
+                    <tbody data-activity-sortable class="clock-rows">
                         @foreach ($todayEntries as $entry)
                             <tr
                                 wire:key="time-entry-{{ $entry->id }}"
@@ -489,6 +515,8 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
+                                <td data-label="N°" class="clock-index whitespace-nowrap p-[20px] align-middle tabular-nums"></td>
+
                                 <td data-label="Departamento o cliente" class="p-[20px] align-middle">
                                     <div class="truncate leading-none" title="{{ $entry->customer->name ?? '--' }}">{{ $entry->customer->name ?? '--' }}</div>
                                 </td>

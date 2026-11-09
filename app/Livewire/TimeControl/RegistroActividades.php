@@ -31,11 +31,20 @@ class RegistroActividades extends Component
 
     public string $deleteConfirmation = '';
 
+    /** Cambia con cada error del cronómetro para que el aviso emergente vuelva a mostrarse. */
+    public int $errorToastVersion = 0;
+
     public function mount(): void
     {
         if (auth()->user()->isAdmin()) {
             $this->redirect('/time/admin', navigate: false);
         }
+    }
+
+    private function timerError(string $message): void
+    {
+        $this->addError('timer', $message);
+        $this->errorToastVersion++;
     }
 
     public function start(TimerService $timer): void
@@ -56,7 +65,7 @@ class RegistroActividades extends Component
             $timer->playToday(auth()->user(), $this->customerId, $this->subServiceId);
             $this->reset(['customerId', 'subServiceId', 'description']);
         } catch (ActiveEntryException|NoOrganizationalProfileException $e) {
-            $this->addError('timer', $e->getMessage());
+            $this->timerError($e->getMessage());
         }
     }
 
@@ -74,7 +83,7 @@ class RegistroActividades extends Component
         }
 
         if ($entry->status === TimeEntry::STATUS_AUTO_CLOSED) {
-            $this->addError('timer', 'Esta actividad fue cerrada automaticamente y no puede reanudarse.');
+            $this->timerError('Esta actividad fue cerrada automaticamente y no puede reanudarse.');
 
             return;
         }
@@ -82,7 +91,7 @@ class RegistroActividades extends Component
         try {
             $timer->switchTo(auth()->user(), $entry);
         } catch (ActiveEntryException|NoOrganizationalProfileException $e) {
-            $this->addError('timer', $e->getMessage());
+            $this->timerError($e->getMessage());
         }
     }
 
@@ -105,25 +114,25 @@ class RegistroActividades extends Component
             ->find($entryId);
 
         if (! $entry) {
-            $this->addError('timer', 'La actividad no existe o no te pertenece.');
+            $this->timerError('La actividad no existe o no te pertenece.');
 
             return;
         }
 
         if ($entry->status === TimeEntry::STATUS_IN_PROGRESS) {
-            $this->addError('timer', 'No puedes eliminar una actividad en progreso. Primero debes pausarla.');
+            $this->timerError('No puedes eliminar una actividad en progreso. Primero debes pausarla.');
 
             return;
         }
 
         if ($entry->status === TimeEntry::STATUS_AUTO_CLOSED) {
-            $this->addError('timer', 'No puedes eliminar una actividad cerrada automáticamente.');
+            $this->timerError('No puedes eliminar una actividad cerrada automáticamente.');
 
             return;
         }
 
         if ($entry->audits_count > 0) {
-            $this->addError('timer', 'No puedes eliminar una actividad que fue corregida por un administrador.');
+            $this->timerError('No puedes eliminar una actividad que fue corregida por un administrador.');
 
             return;
         }

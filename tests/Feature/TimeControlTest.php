@@ -163,6 +163,22 @@ class TimeControlTest extends TestCase
             ->assertSeeHtml('class="clock-icon');
     }
 
+    public function test_errors_are_shown_as_a_popup_notice_that_can_repeat(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+        $entry = app(TimerService::class)->start($aux, $customer->id, $sub->id);
+
+        Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->call('requestDeletion', $entry->id)
+            ->assertHasErrors('timer')
+            ->assertSet('errorToastVersion', 1)
+            ->assertSeeHtml('clock-error-toast-1')
+            ->call('requestDeletion', $entry->id)
+            ->assertSet('errorToastVersion', 2)
+            ->assertSeeHtml('clock-error-toast-2');
+    }
+
     public function test_user_deletes_a_paused_activity_only_after_typing_its_exact_name(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
