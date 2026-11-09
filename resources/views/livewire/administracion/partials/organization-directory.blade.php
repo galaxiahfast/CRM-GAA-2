@@ -150,7 +150,7 @@
 >
     <div class="grid min-w-0 xl:grid-cols-[240px_minmax(0,1fr)]">
         <aside class="panel-surface panel-border min-w-0 border-b xl:border-b-0 xl:border-r">
-            <div class="panel-header panel-border flex min-h-[86px] items-center border-b p-[20px] xl:justify-center">
+            <div class="panel-header panel-border flex min-h-[86px] items-center border-b p-[20px] xl:min-h-[95px] xl:justify-center">
                 <span class="panel-accent leading-none">Secciones administrativas</span>
             </div>
 
@@ -181,7 +181,7 @@
         </aside>
 
         <div class="relative flex min-h-0 min-w-0 flex-col">
-            <header class="panel-header panel-border flex min-h-[86px] flex-wrap items-center gap-[20px] border-b p-[20px]">
+            <header class="panel-header panel-border flex min-h-[86px] flex-wrap items-center gap-[20px] border-b p-[20px] xl:min-h-[95px]">
                 <div class="min-w-0">
                     <div class="panel-accent flex items-center gap-[10px]">
                         <h2 class="leading-none" x-text="activeCatalog.label"></h2>
