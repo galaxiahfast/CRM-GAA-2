@@ -188,9 +188,6 @@
             [data-time-clock] .clock-table td:nth-child(6) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
         }
-        @media (max-width: 479px) {
-            [data-time-clock] .clock-table tr { grid-template-columns: minmax(0, 1fr); }
-        }
     </style>
 
     <main class="relative z-10 flex w-full flex-col gap-[50px] xl:min-h-0 xl:flex-1 p-[20px] sm:p-[30px] xl:p-[50px]">
@@ -284,9 +281,9 @@
             <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
         <form wire:submit="start" class="panel-border border-b p-[20px]">
-            <div class="grid items-start gap-[20px] md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]">
+            <div class="grid items-start gap-[20px] md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px] xl:items-center">
                 <div
-                    class="relative"
+                    class="relative md:flex md:items-center md:gap-[15px]"
                     x-data="{
                         open: false,
                         search: '',
@@ -316,8 +313,9 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none md:mb-0 md:shrink-0"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
+                    <div class="relative min-w-0 md:flex-1">
                     <div class="relative">
                         <input
                             type="text"
@@ -325,7 +323,7 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             :placeholder="selectedName || '-- Escribe o selecciona un cliente --'"
-                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
+                            class="panel-field h-[52px] w-full truncate rounded-xl border pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
@@ -351,10 +349,11 @@
                     @error('customerId')
                         <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
+                    </div>
                 </div>
 
                 <div
-                    class="relative"
+                    class="relative md:flex md:items-center md:gap-[15px]"
                     x-data="{
                         open: false,
                         search: '',
@@ -384,8 +383,9 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none md:mb-0 md:shrink-0"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
 
+                    <div class="relative min-w-0 md:flex-1">
                     <div class="relative">
                         <input
                             type="text"
@@ -393,7 +393,7 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             :placeholder="selectedName || '-- Escribe o selecciona una actividad --'"
-                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
+                            class="panel-field h-[52px] w-full truncate rounded-xl border pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
@@ -419,9 +419,10 @@
                     @error('subServiceId')
                         <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
+                    </div>
                 </div>
 
-                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer md:col-span-2 xl:col-span-1 xl:mt-[30px] items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex h-[52px] w-full cursor-pointer md:col-span-2 xl:col-span-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M8 5.14v13.72L19 12 8 5.14z"/>
