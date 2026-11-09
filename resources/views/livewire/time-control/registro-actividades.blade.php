@@ -116,7 +116,7 @@
             background: var(--panel-surface) !important;
         }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
-        /* Iconos de acción sin recuadro: mover, ocultar y eliminar */
+        /* Iconos de acción sin recuadro: mover y eliminar */
         [data-time-clock] .clock-icon {
             display: inline-flex;
             align-items: center;
@@ -201,24 +201,6 @@
         aria-label="Registro de actividades"
         x-data="{
             totalDisplay: '00:00:00',
-            hiddenIds: [],
-            showHidden: false,
-            hiddenKey: 'time-hidden-entries-{{ auth()->id() }}',
-            loadHidden() {
-                try { this.hiddenIds = (JSON.parse(localStorage.getItem(this.hiddenKey) || '[]') || []).map(Number); } catch (error) { this.hiddenIds = []; }
-            },
-            saveHidden() {
-                try { localStorage.setItem(this.hiddenKey, JSON.stringify(this.hiddenIds)); } catch (error) {}
-            },
-            isHidden(id) { return this.hiddenIds.includes(Number(id)); },
-            toggleHidden(id) {
-                id = Number(id);
-                this.hiddenIds = this.isHidden(id) ? this.hiddenIds.filter((value) => value !== id) : [...this.hiddenIds, id];
-                this.saveHidden();
-            },
-            get hiddenCount() {
-                return [...this.$root.querySelectorAll('tr[data-activity-id]')].filter((row) => this.hiddenIds.includes(Number(row.dataset.activityId))).length;
-            },
             totalTimerId: null,
             formatSeconds(seconds) {
                 seconds = Math.max(0, parseInt(seconds || 0, 10));
@@ -249,7 +231,7 @@
                 this.totalDisplay = this.formatSeconds(total);
             }
         }"
-        x-init="loadHidden(); tickTotal(); totalTimerId = setInterval(() => tickTotal(), 1000)"
+        x-init="tickTotal(); totalTimerId = setInterval(() => tickTotal(), 1000)"
         data-total-accumulated="{{ $todayLiveBaseSeconds }}"
         data-total-open-start="{{ $todayOpenStart }}"
 
@@ -260,9 +242,6 @@
                 <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px]">
-                <button type="button" x-show="hiddenCount > 0" x-cloak @click="showHidden = ! showHidden" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 leading-none">
-                    <span x-text="showHidden ? 'Ocultar las ocultas' : 'Ver ocultas (' + hiddenCount + ')'"></span>
-                </button>
                 <p class="leading-none">
                     <span class="mr-[10px]">Tiempo total</span>
                     <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
@@ -430,9 +409,6 @@
                 </button>
             </div>
         </form>
-        <p class="panel-border mx-[20px] mb-[20px] rounded-xl border p-[20px] leading-[25px]">
-            Solo puede existir un cronómetro activo. Al iniciar otro registro, el anterior se detiene de manera automática.
-        </p>
     </aside>
 
     <div
@@ -465,8 +441,6 @@
                                 wire:key="time-entry-{{ $entry->id }}"
                                 data-activity-id="{{ $entry->id }}"
                                 class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 last:border-b-0"
-                                x-show="showHidden || ! isHidden({{ $entry->id }})"
-                                :class="isHidden({{ $entry->id }}) ? 'opacity-60' : ''"
                                 x-data="{
                                     display: '00:00:00',
                                     timerId: null,
@@ -552,7 +526,7 @@
                                     </div>
                                 </td>
 
-                                <td data-label="Opciones" class="w-px whitespace-nowrap p-[20px] align-middle">
+                                <td data-label="Mover o eliminar" class="w-px whitespace-nowrap p-[20px] align-middle">
                                     <div class="flex items-center gap-[10px]">
                                         <button
                                             type="button"
@@ -563,20 +537,6 @@
                                         >
                                             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                 <circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/>
-                                            </svg>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            @click="toggleHidden({{ $entry->id }})"
-                                            class="clock-icon"
-                                            :aria-label="isHidden({{ $entry->id }}) ? 'Mostrar {{ addslashes($entry->subService->sub_service ?? 'actividad') }}' : 'Ocultar {{ addslashes($entry->subService->sub_service ?? 'actividad') }}'"
-                                            :title="isHidden({{ $entry->id }}) ? 'Mostrar actividad' : 'Ocultar actividad'"
-                                        >
-                                            <svg x-show="! isHidden({{ $entry->id }})" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.1A9.7 9.7 0 0112 4.9c4.6 0 8.5 3 9.9 7.1a10.6 10.6 0 01-2.5 3.9M6.6 6.6A10.7 10.7 0 002.1 12c1.4 4.1 5.3 7.1 9.9 7.1 1.6 0 3.1-.4 4.4-1"/>
-                                            </svg>
-                                            <svg x-show="isHidden({{ $entry->id }})" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.1 12C3.5 7.9 7.4 4.9 12 4.9s8.5 3 9.9 7.1c-1.4 4.1-5.3 7.1-9.9 7.1S3.5 16.1 2.1 12z"/><circle cx="12" cy="12" r="3"/>
                                             </svg>
                                         </button>
                                         <button
