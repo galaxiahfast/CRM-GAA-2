@@ -8,10 +8,9 @@
             x-on:click.self="if (pressedOnBackdrop) { open = false; $wire.closeAnnualReport() } pressedOnBackdrop = false">
             <x-panel-styles />
             <style>
-                .annual-report-modal .annual-close-button { border: 1px solid #18181b; background: #18181b; color: #ffffff; }
-                .annual-report-modal .annual-close-button:hover { background: #27272a; }
-                html.module-dark-theme .annual-report-modal .annual-close-button { border-color: #3f3f46; background: #18181b; color: #ffffff; }
-                html.module-dark-theme .annual-report-modal .annual-close-button:hover { background: #27272a; }
+                .annual-report-modal .annual-close-button { --annual-green: #15803d; border: 1px solid var(--annual-green); background: transparent; color: var(--annual-green); }
+                html.module-dark-theme .annual-report-modal .annual-close-button { --annual-green: #4ade80; }
+                .annual-report-modal .annual-close-button:hover { background: color-mix(in srgb, var(--annual-green) 8%, transparent); }
             </style>
             <div data-panel class="annual-report-modal panel-surface panel-border flex h-[min(620px,calc(100dvh-40px))] w-full max-w-[620px] flex-col overflow-hidden rounded-xl border shadow-2xl">
                 @if ($notFound)
