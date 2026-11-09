@@ -98,7 +98,7 @@
             white-space: nowrap;
             line-height: 15px;
         }
-        [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
+        [data-time-clock] .clock-table .clock-head-row th { height: 60px; }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
         html.module-dark-theme #main-content [data-time-clock] table tbody,
         html.module-dark-theme #main-content [data-time-clock] table tr {
@@ -165,7 +165,7 @@
 
         /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
         @media (max-width: 1439px) {
-            [data-time-clock] .clock-table-head { display: none; }
+            [data-time-clock] .clock-table.clock-table-head { display: none; }
             [data-time-clock] .clock-table,
             [data-time-clock] .clock-table tbody { display: block; }
             [data-time-clock] .clock-table tr {
@@ -283,14 +283,8 @@
             </div>
             <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
-        <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-    <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
-        <div class="panel-header panel-border box-border h-[87px] border-b p-[20px]">
-            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
-            <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
-        </div>
-        <form wire:submit="start" class="p-[20px]">
-            <div class="grid gap-[20px]">
+        <form wire:submit="start" class="panel-border border-b p-[20px]">
+            <div class="grid items-start gap-[20px] md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]">
                 <div
                     class="relative"
                     x-data="{
@@ -427,7 +421,7 @@
                     @enderror
                 </div>
 
-                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer md:col-span-2 xl:col-span-1 xl:mt-[30px] items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M8 5.14v13.72L19 12 8 5.14z"/>
@@ -444,10 +438,10 @@
                 </button>
             </div>
         </form>
-    </aside>
+
 
     <div
-        class="flex min-h-0 min-w-0 flex-col"
+        class="flex min-h-0 min-w-0 flex-col xl:flex-1"
     >
         @if ($todayEntries->isEmpty())
             <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
@@ -582,7 +576,6 @@
 
         @endif
     </div>
-        </div>
     </section>
     </main>
 
