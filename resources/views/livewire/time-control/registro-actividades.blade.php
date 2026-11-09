@@ -134,6 +134,9 @@
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { text-align: center; }
+            /* Departamento o cliente y actividad miden lo mismo: la tabla usa columnas fijas y se reparten el ancho sobrante */
+            [data-time-clock] .clock-table { table-layout: fixed; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(-n+2) { width: auto; overflow: hidden; text-overflow: ellipsis; }
             /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
             [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { width: 160px; min-width: 160px; max-width: 160px; }
             [data-time-clock] .clock-table .clock-actions { justify-content: center; }
@@ -423,8 +426,8 @@
                 <table class="clock-table w-full border-collapse text-left">
                     <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
                         <tr class="clock-head-row">
-                            <th class="min-w-[260px] p-[20px] align-middle">Departamento o cliente</th>
-                            <th class="min-w-[220px] p-[20px] align-middle">Actividad</th>
+                            <th class="p-[20px] align-middle">Departamento o cliente</th>
+                            <th class="p-[20px] align-middle">Actividad</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
@@ -472,11 +475,11 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
-                                <td data-label="Departamento o cliente" class="max-w-[360px] p-[20px] align-middle">
+                                <td data-label="Departamento o cliente" class="p-[20px] align-middle">
                                     <div class="truncate leading-none" title="{{ $entry->customer->name ?? '--' }}">{{ $entry->customer->name ?? '--' }}</div>
                                 </td>
 
-                                <td data-label="Actividad" class="max-w-[320px] p-[20px] align-middle">
+                                <td data-label="Actividad" class="p-[20px] align-middle">
                                     <div class="truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
                                 </td>
 
