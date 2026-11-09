@@ -59,8 +59,7 @@
             </div>
         </div>
 
-        {{-- Detalle de temporada: dos cactus plantados en su montículo de arena, con sombra y piedras. Se mecen,
-             rebotan al tocarlos con el puntero y levantan polvo al caer. --}}
+        {{-- Detalle de temporada: dos cactus plantados en sus montículos que se inclinan al pasar el puntero. --}}
         <div class="auth-oasis auth-oasis-left" aria-hidden="true">
             <i class="auth-shadow"></i>
             <div class="auth-cactus">
@@ -105,115 +104,23 @@
 
     <script>
         (function () {
-            // Los cactus se estiran como una liga: hay que hacer clic sobre ellos y arrastrar (pasar el puntero no hace nada).
-            // Al soltar vuelven a su sitio con un resorte que rebota y levantan polvo de su montículo.
-            var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-            document.querySelectorAll('.auth-cactus').forEach(function (cactus) {
-                var state = { sx: 1, sy: 1, skew: 0 }, vel = { sx: 0, sy: 0, skew: 0 };
-                var dragging = false, raf = null, startX = 0, startY = 0, scale = 1, height = 86;
+            document.querySelectorAll('.auth-oasis').forEach(function (oasis) {
+                var cactus = oasis.querySelector('.auth-cactus');
+                if (!cactus) return;
 
-                // El siguiente paso se pide con requestAnimationFrame y, por si este se detiene (pestaña en segundo plano), también con un temporizador:
-                // corre el que llegue primero.
-                function nextFrame(fn) {
-                    var finished = false, handle = {};
-                    function run(stamp) {
-                        if (finished) return;
-                        finished = true;
-                        cancelAnimationFrame(handle.a);
-                        clearTimeout(handle.b);
-                        fn(typeof stamp === 'number' ? stamp : performance.now());
-                    }
-                    handle.a = requestAnimationFrame(run);
-                    handle.b = setTimeout(run, 40);
-                    return handle;
-                }
-                function stopFrame() {
-                    if (raf) { cancelAnimationFrame(raf.a); clearTimeout(raf.b); }
-                    raf = null;
-                }
-
-                function apply() {
-                    cactus.style.transform = 'skewX(' + (-state.skew) + 'deg) scale(' + state.sx + ',' + state.sy + ')';
-                }
-                function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
-
-                function dust(power) {
-                    var mound = cactus.parentElement.querySelector('.auth-mound');
-                    if (!mound) return;
-                    var count = Math.round(3 + power * 6);
-                    for (var i = 0; i < count; i++) {
-                        var puff = document.createElement('i');
-                        puff.className = 'auth-dust';
-                        puff.style.left = (22 + Math.random() * 66) + 'px';
-                        mound.appendChild(puff);
-                        var side = (i % 2 ? 1 : -1) * (10 + Math.random() * 30 * (0.5 + power));
-                        puff.animate([
-                            { transform: 'translate(0,0) scale(.4)', opacity: .55 },
-                            { transform: 'translate(' + side + 'px,' + (-10 - Math.random() * 16) + 'px) scale(1.5)', opacity: 0 }
-                        ], { duration: 650 + Math.random() * 250, easing: 'ease-out' }).onfinish = (function (n) { return function () { n.remove(); }; })(puff);
-                    }
-                }
-
-                // Resorte amortiguado: vuelve a (1, 1, 0) pasándose un poco y oscilando hasta quedar quieto.
-                function release() {
-                    var last = performance.now();
-                    var K = 150, C = 7.5;
-                    function step(now) {
-                        var dt = Math.min((now - last) / 1000, 1 / 30);
-                        last = now;
-                        var rest = { sx: 1, sy: 1, skew: 0 }, still = true;
-                        ['sx', 'sy', 'skew'].forEach(function (key) {
-                            var force = -K * (state[key] - rest[key]) - C * vel[key];
-                            vel[key] += force * dt;
-                            state[key] += vel[key] * dt;
-                            if (Math.abs(state[key] - rest[key]) > 0.002 || Math.abs(vel[key]) > 0.02) still = false;
-                        });
-                        apply();
-                        if (still) {
-                            state = { sx: 1, sy: 1, skew: 0 };
-                            cactus.style.transform = '';
-                            cactus.classList.remove('is-grabbed');
-                            return;
-                        }
-                        raf = nextFrame(step);
-                    }
-                    raf = nextFrame(step);
-                }
-
-                cactus.addEventListener('pointerdown', function (event) {
-                    event.preventDefault();
-                    stopFrame();
-                    dragging = true;
-                    vel = { sx: 0, sy: 0, skew: 0 };
-                    cactus.classList.add('is-grabbed');
-                    var rect = cactus.getBoundingClientRect();
-                    height = cactus.offsetHeight || 86;
-                    scale = rect.height / (height * state.sy) || 1;
-                    startX = event.clientX;
-                    startY = event.clientY;
-                    try { cactus.setPointerCapture(event.pointerId); } catch (error) {}
+                oasis.addEventListener('pointermove', function (event) {
+                    var bounds = oasis.getBoundingClientRect();
+                    var position = Math.max(-1, Math.min(1,
+                        (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2)
+                    ));
+                    cactus.style.transform = 'translateX(' + (position * 8).toFixed(1) + 'px) rotate(' + (position * 12).toFixed(1) + 'deg)';
                 });
-                cactus.addEventListener('pointermove', function (event) {
-                    if (!dragging) return;
-                    var dx = (event.clientX - startX) / scale;
-                    var up = (startY - event.clientY) / scale;     // positivo = se jala hacia arriba (se estira); negativo = se aplasta
-                    state.sy = clamp(1 + up / height, 0.5, 2.3);
-                    state.sx = clamp(1 / Math.sqrt(state.sy), 0.62, 1.35);
-                    state.skew = clamp(Math.atan2(dx, height * state.sy) * 180 / Math.PI, -40, 40);
-                    apply();
+
+                oasis.addEventListener('pointerleave', function () {
+                    cactus.style.transform = '';
                 });
-                function drop() {
-                    if (!dragging) return;
-                    dragging = false;
-                    var power = Math.min(1, Math.abs(state.sy - 1) + Math.abs(state.skew) / 40);
-                    if (power > 0.12) dust(power);
-                    if (reduced) { state = { sx: 1, sy: 1, skew: 0 }; cactus.style.transform = ''; cactus.classList.remove('is-grabbed'); return; }
-                    vel = { sx: 0, sy: 0, skew: 0 };
-                    release();
-                }
-                cactus.addEventListener('pointerup', drop);
-                cactus.addEventListener('pointercancel', drop);
             });
         })();
     </script>

@@ -748,8 +748,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
-/* Cactus: plantados en un montículo de arena con sombra y piedras, a la misma distancia del centro.
-   Con clic y arrastre se estiran como una liga y, al soltarlos, vuelven rebotando y levantan polvo. */
+/* Cactus: plantados en montículos a la misma distancia del centro; se inclinan sin deformarse al pasar el puntero. */
 .auth-shell .auth-oasis {
     position: absolute;
     bottom: 0;
@@ -785,32 +784,22 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 .auth-shell .auth-rock-a { left: 14px; width: 12px; height: 8px; }
 .auth-shell .auth-rock-b { left: 92px; width: 9px; height: 6px; bottom: 7px; }
 .auth-shell .auth-rock-c { left: 100px; width: 5px; height: 4px; bottom: 3px; }
-.auth-shell .auth-dust { position: absolute; bottom: 14px; width: 14px; height: 14px; margin-left: -7px; border-radius: 9999px; background: rgba(234, 179, 8, 0.5); pointer-events: none; }
 .auth-shell .auth-cactus {
     position: absolute;
     left: 33px;
     bottom: 18px;
     width: 54px;
     height: 86px;
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
+    pointer-events: none;
     transform-origin: 50% 100%;
-    animation: auth-cactus-sway 3.6s ease-in-out infinite;
+    transition: transform 180ms ease-out;
 }
-.auth-shell .auth-cactus.is-grabbed { animation: none; cursor: grabbing; }
 .auth-shell .auth-cactus svg { width: 100%; height: 100%; overflow: visible; }
-@keyframes auth-cactus-sway {
-    0%, 100% { transform: rotate(-0.8deg); }
-    35% { transform: rotate(1.8deg); }
-    65% { transform: rotate(-1.6deg); }
-}
 @media (max-width: 999px) {
     .auth-shell .auth-oasis { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .auth-shell .auth-cactus { animation: none; }
+    .auth-shell .auth-cactus { transition: none; }
 }
 
 /* Campos: el borde y el contorno nunca cambian al enfocar, pulsar ni con el autocompletado abierto. */
