@@ -438,7 +438,7 @@
                             <tr
                                 wire:key="time-entry-{{ $entry->id }}"
                                 data-activity-id="{{ $entry->id }}"
-                                class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 last:border-b-0"
+                                class="clock-row panel-border border-b transition-[opacity,background-color] duration-150"
                                 x-data="{
                                     display: '00:00:00',
                                     timerId: null,
