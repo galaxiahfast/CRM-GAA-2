@@ -18,7 +18,7 @@
                         @if ($row['photo'])
                             <img src="{{ $row['photo'] }}" alt="" class="h-[40px] w-[40px] rounded-full object-cover" loading="lazy">
                         @else
-                            <span class="panel-header panel-border panel-text grid h-[40px] w-[40px] place-items-center rounded-full border text-[13px]">{{ mb_strtoupper(mb_substr($row['name'], 0, 1)) }}</span>
+                            <span class="panel-header panel-border panel-text grid h-[40px] w-[40px] place-items-center rounded-full border !text-[12px]">{{ mb_strtoupper(mb_substr($row['name'], 0, 1)) }}</span>
                         @endif
                         <span class="absolute -bottom-px -right-px h-[10px] w-[10px] rounded-full border-2 border-[var(--panel-surface)] bg-emerald-500" aria-hidden="true"></span>
                     </span>

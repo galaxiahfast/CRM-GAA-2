@@ -92,9 +92,9 @@
 
                         <div class="relative w-full sm:w-72">
                             <label for="dashboard-search" class="sr-only">Buscar cliente</label>
-                            <svg class="panel-muted pointer-events-none absolute left-[15px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+                            <svg class="panel-muted pointer-events-none absolute left-[20px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
                             <input id="dashboard-search" wire:model.live.debounce.500ms="search" type="text" autocomplete="off" placeholder="Buscar cliente o RFC..."
-                                class="panel-field h-11 w-full rounded-xl border pl-[44px] pr-[15px]">
+                                class="panel-field w-full rounded-xl border py-[15px] pl-[48px] pr-[20px] leading-none">
                         </div>
                     </div>
                 </section>
@@ -266,7 +266,7 @@
                                                         src="{{ asset('storage/photos/' . $customer['url_photo']) }}"
                                                         alt="{{ $customer['name'] }}" loading="lazy">
                                                 @else
-                                                    <span class="panel-header panel-border panel-accent hidden h-10 w-10 shrink-0 place-items-center rounded-full border sm:grid">
+                                                    <span class="panel-header panel-border panel-accent hidden h-10 w-10 shrink-0 place-items-center rounded-full border !text-[12px] sm:grid">
                                                         {{ mb_strtoupper(mb_substr($customer['name'], 0, 2)) }}
                                                     </span>
                                                 @endif
