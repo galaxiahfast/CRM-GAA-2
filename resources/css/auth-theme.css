@@ -733,60 +733,83 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     .auth-shell .auth-legal-bottom { bottom: 40px; }
 }
 
-/* Detalle de temporada: arañita colgando junto al logo y telaraña tenue en la esquina. */
+/* Detalle de temporada: sombrero charro asentado en el logo. */
 .auth-shell .auth-brand { position: relative; }
-.auth-shell .auth-spider {
+.auth-shell .auth-sombrero {
     position: absolute;
-    top: -70px;
-    left: calc(50% + 50px);
-    width: 25px;
-    height: 160px;
-    color: var(--auth-fg);
-    opacity: 0.8;
-    pointer-events: none;
-    animation: auth-spider-drop 1.6s cubic-bezier(0.3, 0.7, 0.2, 1) 0.4s both;
-}
-.auth-shell .auth-spider-swing {
-    position: absolute;
-    inset: 0;
-    transform-origin: 50% 0;
-    animation: auth-spider-swing 6s ease-in-out 2s infinite;
-}
-.auth-shell .auth-thread {
-    position: absolute;
+    top: -35px;
     left: 50%;
-    top: 0;
-    width: 1px;
-    height: 140px;
-    background: linear-gradient(to bottom, transparent, var(--auth-line-strong) 45%);
-    transform: translateX(-50%);
-}
-.auth-shell .auth-spider svg { position: absolute; left: 0; bottom: 0; width: 25px; height: 23px; overflow: visible; }
-.auth-shell .auth-web {
-    position: absolute;
-    top: 0;
-    left: 0;
+    width: 112px;
+    height: 52px;
     z-index: 1;
+    pointer-events: none;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* Cactus: plantados en un montículo de arena con sombra y piedras, a la misma distancia del centro.
+   Con clic y arrastre se estiran como una liga y, al soltarlos, vuelven rebotando y levantan polvo. */
+.auth-shell .auth-oasis {
+    position: absolute;
+    bottom: 50px;
+    z-index: 5;
     width: 120px;
-    height: 120px;
-    color: var(--auth-muted);
-    opacity: 0.3;
+    height: 122px;
+}
+.auth-shell .auth-oasis-left { left: max(30px, calc(50% - 520px)); }
+.auth-shell .auth-oasis-right { right: max(30px, calc(50% - 520px)); }
+.auth-shell .auth-mound {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 30px;
+    pointer-events: none;
+    border-radius: 60px 60px 8px 8px / 30px 30px 8px 8px;
+    background: linear-gradient(to bottom, rgba(234, 179, 8, 0.34), rgba(234, 179, 8, 0.08));
+    border-top: 1px solid rgba(234, 179, 8, 0.45);
+}
+.auth-shell .auth-shadow {
+    position: absolute;
+    left: 28px;
+    bottom: 22px;
+    width: 64px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.32);
+    filter: blur(3px);
     pointer-events: none;
 }
-@keyframes auth-spider-drop {
-    from { opacity: 0; transform: translateY(-90px); }
-    to { opacity: 0.8; transform: translateY(0); }
+.auth-shell .auth-rock { position: absolute; bottom: 4px; border-radius: 50% 50% 40% 40%; background: rgba(228, 228, 231, 0.45); pointer-events: none; }
+.auth-shell .auth-rock-a { left: 14px; width: 12px; height: 8px; }
+.auth-shell .auth-rock-b { left: 92px; width: 9px; height: 6px; bottom: 7px; }
+.auth-shell .auth-rock-c { left: 100px; width: 5px; height: 4px; bottom: 3px; }
+.auth-shell .auth-dust { position: absolute; bottom: 14px; width: 14px; height: 14px; margin-left: -7px; border-radius: 9999px; background: rgba(234, 179, 8, 0.5); pointer-events: none; }
+.auth-shell .auth-cactus {
+    position: absolute;
+    left: 33px;
+    bottom: 18px;
+    width: 54px;
+    height: 86px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transform-origin: 50% 100%;
+    animation: auth-cactus-sway 3.6s ease-in-out infinite;
 }
-@keyframes auth-spider-swing {
-    0%, 100% { transform: rotate(-4deg); }
-    50% { transform: rotate(4deg); }
+.auth-shell .auth-cactus.is-grabbed { animation: none; cursor: grabbing; }
+.auth-shell .auth-cactus svg { width: 100%; height: 100%; overflow: visible; }
+@keyframes auth-cactus-sway {
+    0%, 100% { transform: rotate(-0.8deg); }
+    35% { transform: rotate(1.8deg); }
+    65% { transform: rotate(-1.6deg); }
 }
-@media (max-width: 640px) {
-    .auth-shell .auth-web { width: 80px; height: 80px; }
+@media (max-width: 999px) {
+    .auth-shell .auth-oasis { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .auth-shell .auth-spider,
-    .auth-shell .auth-spider-swing { animation: none; }
+    .auth-shell .auth-cactus { animation: none; }
 }
 
 /* Campos: el borde y el contorno nunca cambian al enfocar, pulsar ni con el autocompletado abierto. */
@@ -901,7 +924,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 .auth-shell .auth-avatar.is-bot { overflow: hidden; }
 
 /*
- * Mundo escalado: formulario, telaraña, derechos reservados, botones y chat comparten un mismo zoom
+ * Mundo escalado: formulario, detalle de temporada, derechos reservados, botones y chat comparten un mismo zoom
  * (auth-fit.js). Las esquinas son las del mundo (la página), no las de la pantalla: si hay scroll,
  * para ver los botones y el texto legal de abajo hay que bajar.
  */

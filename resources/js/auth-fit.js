@@ -1,4 +1,4 @@
-// Pantallas de acceso: todo el contenido (formulario, telaraña, derechos reservados, botones y chat) vive en
+// Pantallas de acceso: todo el contenido (formulario, detalle de temporada, derechos reservados, botones y chat) vive en
 // un "mundo" que se escala con un zoom común, como el zoom de la página. La escala es la misma que la del marco
 // de la app (window.appAutoScale: lienzo de 1800x950, mínimo 75%), así todo se ve igual en cualquier pantalla.
 // El mundo ocupa exactamente la ventana (o su tamaño mínimo): las esquinas son las de la página, no las de la
