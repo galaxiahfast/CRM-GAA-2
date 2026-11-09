@@ -101,11 +101,18 @@
         }
         [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
-        html.module-dark-theme #main-content [data-time-clock] table :is(thead, tfoot),
         html.module-dark-theme #main-content [data-time-clock] table tbody,
         html.module-dark-theme #main-content [data-time-clock] table tr {
             background: var(--panel-surface) !important;
         }
+        html.module-dark-theme #main-content [data-time-clock] table :is(thead, tfoot),
+        html.module-dark-theme #main-content [data-time-clock] table thead tr {
+            background: var(--panel-header) !important;
+        }
+        /* Filas intercaladas: la primera con el fondo normal y la siguiente con el color del encabezado */
+        [data-time-clock] .clock-body tbody tr:nth-child(even) { background-color: var(--panel-header); }
+        [data-time-clock] .clock-body tbody tr.clock-row:hover { background-color: var(--panel-hover); }
+        html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(even) { background: var(--panel-header) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
         /* Iconos de acción sin recuadro: mover y eliminar */
         [data-time-clock] .clock-icon {
@@ -252,7 +259,7 @@
         </header>
         <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
     <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
-        <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
+        <div class="panel-header panel-border box-border h-[87px] border-b p-[20px]">
             <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
             <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
@@ -427,7 +434,7 @@
         @else
             {{-- Encabezado fijo: el scroll solo recorre las filas --}}
             <table class="clock-table clock-table-head w-full border-collapse text-left">
-                <thead class="panel-surface panel-border border-b">
+                <thead class="panel-header panel-border border-b">
                     <tr class="clock-head-row">
                         <th class="p-[20px] align-middle">Departamento o cliente</th>
                         <th class="p-[20px] align-middle">Actividad</th>
