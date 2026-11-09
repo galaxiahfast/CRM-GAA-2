@@ -738,7 +738,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
 .auth-shell .auth-sombrero {
     position: absolute;
     top: -39px;
-    left: calc(50% + 13px);
+    left: calc(50% + 20px);
     width: 126px;
     height: 66px;
     z-index: 1;
@@ -752,7 +752,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
    Con clic y arrastre se estiran como una liga y, al soltarlos, vuelven rebotando y levantan polvo. */
 .auth-shell .auth-oasis {
     position: absolute;
-    bottom: 50px;
+    bottom: 0;
     z-index: 5;
     width: 120px;
     height: 122px;
