@@ -83,8 +83,8 @@
             color: var(--panel-danger);
         }
         [data-time-clock] .clock-danger:hover { opacity: .8; }
-        /* Listas de cliente y actividad: siempre 5 opciones exactas (5 × 55px) y el desplazamiento se detiene en cada opción */
-        [data-time-clock] .clock-options { max-height: 275px; scroll-snap-type: y mandatory; }
+        /* Listas de cliente y actividad: siempre 5 opciones exactas (5 × 55px) y al dejar de desplazar el scroll se alinea a la opción más cercana */
+        [data-time-clock] .clock-options { max-height: 275px; }
         [data-time-clock] .clock-option {
             display: block;
             box-sizing: border-box;
@@ -97,7 +97,6 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             line-height: 15px;
-            scroll-snap-align: start;
         }
         [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
@@ -152,9 +151,8 @@
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
-            /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona) y el scroll se detiene en cada fila */
-            [data-time-clock] .clock-body { container-type: size; scroll-snap-type: y mandatory; }
-            [data-time-clock] .clock-body tbody tr { scroll-snap-align: start; }
+            /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona); al dejar de desplazar, el scroll se alinea a la fila más cercana */
+            [data-time-clock] .clock-body { container-type: size; }
             [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
             /* Departamento o cliente y actividad miden lo mismo: la tabla usa columnas fijas y se reparten el ancho sobrante */
             [data-time-clock] .clock-table { table-layout: fixed; }
@@ -346,7 +344,7 @@
 
                     <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
                         <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
                                 <template x-for="c in filteredCustomers" :key="c.id">
                                     <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
                                 </template>
@@ -414,7 +412,7 @@
 
                     <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Actividad">
                         <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
                                 <template x-for="s in filteredServices" :key="s.id">
                                     <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
                                 </template>
@@ -474,7 +472,7 @@
                 </thead>
             </table>
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-[424px] xl:flex-1">
-            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
+            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const row = $el.querySelector('tbody tr'); if (! row) return; const height = row.getBoundingClientRect().height; const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
                 <table class="clock-table w-full border-collapse text-left">
                     <tbody data-activity-sortable class="clock-rows">
                         @foreach ($todayEntries as $entry)
