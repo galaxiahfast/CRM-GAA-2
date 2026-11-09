@@ -112,6 +112,9 @@
         /* Filas intercaladas: la primera con el fondo normal y la siguiente con el color del encabezado */
         [data-time-clock] .clock-body tbody tr:nth-child(even) { background-color: var(--panel-header); }
         [data-time-clock] .clock-body tbody tr.clock-row:hover { background-color: var(--panel-hover); }
+        /* La actividad en progreso se marca con la fila en verde */
+        [data-time-clock] .clock-body tbody tr.clock-row.is-running { background-color: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)); }
+        html.module-dark-theme #main-content [data-time-clock] table tbody tr.clock-row.is-running { background: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(even) { background: var(--panel-header) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
         /* Iconos de acción sin recuadro: mover y eliminar */
@@ -478,7 +481,7 @@
                             <tr
                                 wire:key="time-entry-{{ $entry->id }}"
                                 data-activity-id="{{ $entry->id }}"
-                                class="clock-row panel-border border-b transition-[opacity,background-color] duration-150"
+                                class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 {{ $entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS ? 'is-running' : '' }}"
                                 x-data="{
                                     display: '00:00:00',
                                     timerId: null,
