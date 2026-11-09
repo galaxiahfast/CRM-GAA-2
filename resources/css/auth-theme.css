@@ -748,7 +748,7 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
-/* Cactus: plantados en montículos a la misma distancia del centro; se inclinan sin deformarse al pasar el puntero. */
+/* Cactus estáticos plantados en montículos a la misma distancia del centro. */
 .auth-shell .auth-oasis {
     position: absolute;
     bottom: 0;
@@ -791,17 +791,11 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     width: 54px;
     height: 86px;
     pointer-events: none;
-    transform-origin: 50% 100%;
-    transition: transform 180ms ease-out;
 }
 .auth-shell .auth-cactus svg { width: 100%; height: 100%; overflow: visible; }
 @media (max-width: 999px) {
     .auth-shell .auth-oasis { display: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .auth-shell .auth-cactus { transition: none; }
-}
-
 /* Campos: el borde y el contorno nunca cambian al enfocar, pulsar ni con el autocompletado abierto. */
 .auth-shell input.auth-input,
 .auth-shell input.auth-input:hover,

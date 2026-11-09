@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        {{-- Detalle de temporada: dos cactus plantados en sus montículos que se inclinan al pasar el puntero. --}}
+        {{-- Detalle de temporada: dos cactus estáticos plantados en sus montículos. --}}
         <div class="auth-oasis auth-oasis-left" aria-hidden="true">
             <i class="auth-shadow"></i>
             <div class="auth-cactus">
@@ -102,26 +102,4 @@
         <x-auth-assistant />
     </div>
 
-    <script>
-        (function () {
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-            document.querySelectorAll('.auth-oasis').forEach(function (oasis) {
-                var cactus = oasis.querySelector('.auth-cactus');
-                if (!cactus) return;
-
-                oasis.addEventListener('pointermove', function (event) {
-                    var bounds = oasis.getBoundingClientRect();
-                    var position = Math.max(-1, Math.min(1,
-                        (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2)
-                    ));
-                    cactus.style.transform = 'translateX(' + (position * 8).toFixed(1) + 'px) rotate(' + (position * 12).toFixed(1) + 'deg)';
-                });
-
-                oasis.addEventListener('pointerleave', function () {
-                    cactus.style.transform = '';
-                });
-            });
-        })();
-    </script>
 </div>
