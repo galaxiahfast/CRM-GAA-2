@@ -133,9 +133,9 @@
         [data-time-clock] .clock-table :is(th, td) { font-weight: 400; }
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
-            [data-time-clock] .clock-table :is(th, td):nth-child(n+2) { text-align: center; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { text-align: center; }
             /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
-            [data-time-clock] .clock-table :is(th, td):nth-child(n+2) { width: 160px; min-width: 160px; max-width: 160px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(n+3) { width: 160px; min-width: 160px; max-width: 160px; }
             [data-time-clock] .clock-table .clock-actions { justify-content: center; }
         }
 
@@ -159,7 +159,8 @@
                 color: var(--panel-muted);
             }
             [data-time-clock] .clock-table td:nth-child(1),
-            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1 / -1; }
+            [data-time-clock] .clock-table td:nth-child(2),
+            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
         }
         @media (max-width: 479px) {
@@ -422,7 +423,8 @@
                 <table class="clock-table w-full border-collapse text-left">
                     <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
                         <tr class="clock-head-row">
-                            <th class="min-w-[360px] p-[20px] align-middle">Cliente y actividad</th>
+                            <th class="min-w-[260px] p-[20px] align-middle">Departamento o cliente</th>
+                            <th class="min-w-[220px] p-[20px] align-middle">Actividad</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
@@ -470,9 +472,12 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
-                                <td data-label="Cliente y actividad" class="max-w-[520px] p-[20px] align-middle">
-                                    <div class="flex min-w-0 gap-[10px] leading-none" title="{{ $entry->customer->name ?? '--' }}"><span class="shrink-0">Departamento o cliente:</span><span class="min-w-0 truncate">{{ $entry->customer->name ?? '--' }}</span></div>
-                                    <div class="mt-[15px] flex min-w-0 gap-[10px] leading-none" title="{{ $entry->subService->sub_service ?? '--' }}"><span class="shrink-0">Actividad:</span><span class="min-w-0 truncate">{{ $entry->subService->sub_service ?? '--' }}</span></div>
+                                <td data-label="Departamento o cliente" class="max-w-[360px] p-[20px] align-middle">
+                                    <div class="truncate leading-none" title="{{ $entry->customer->name ?? '--' }}">{{ $entry->customer->name ?? '--' }}</div>
+                                </td>
+
+                                <td data-label="Actividad" class="max-w-[320px] p-[20px] align-middle">
+                                    <div class="truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
                                 </td>
 
                                 <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums" x-text="display">
