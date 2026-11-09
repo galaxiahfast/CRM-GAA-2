@@ -65,16 +65,7 @@
         }
         [data-time-clock] .clock-primary:hover { background-color: color-mix(in srgb, var(--clock-green) 20%, var(--panel-surface)); }
         [data-time-clock] .clock-primary:disabled { cursor: not-allowed; opacity: .6; }
-        [data-time-clock] .clock-pill {
-            display: inline-flex;
-            min-width: 130px;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
-            border-radius: 9999px;
-            padding: 5px 20px;
-            white-space: nowrap;
-        }
+        [data-time-clock] .clock-pill { white-space: nowrap; }
         [data-time-clock] .clock-button {
             display: inline-flex;
             width: 120px;
@@ -165,7 +156,6 @@
             [data-time-clock] .clock-table td:nth-child(1),
             [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
-            [data-time-clock] .clock-pill { min-width: 0; }
         }
         @media (max-width: 479px) {
             [data-time-clock] .clock-table tr { grid-template-columns: minmax(0, 1fr); }
