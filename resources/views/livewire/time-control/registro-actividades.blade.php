@@ -344,7 +344,7 @@
 
                     <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
                         <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
                                 <template x-for="c in filteredCustomers" :key="c.id">
                                     <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
                                 </template>
@@ -412,7 +412,7 @@
 
                     <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Actividad">
                         <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
                                 <template x-for="s in filteredServices" :key="s.id">
                                     <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
                                 </template>
@@ -472,7 +472,7 @@
                 </thead>
             </table>
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-[424px] xl:flex-1">
-            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const row = $el.querySelector('tbody tr'); if (! row) return; const height = row.getBoundingClientRect().height; const max = $el.scrollHeight - $el.clientHeight; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 1) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
+            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
                 <table class="clock-table w-full border-collapse text-left">
                     <tbody data-activity-sortable class="clock-rows">
                         @foreach ($todayEntries as $entry)
