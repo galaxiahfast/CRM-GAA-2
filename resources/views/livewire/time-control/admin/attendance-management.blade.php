@@ -7,7 +7,7 @@
     data-attendance-admin
     class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
     x-data="{
-        viewScale: 90,
+        viewScale: 100,
         isFullscreen: false,
         isCompact: window.innerWidth / window.appAutoScale() < 1024,
         scaledHeight: null,
@@ -166,7 +166,7 @@
             if (this.$refs.scaled) this.scaledHeight = Math.ceil(this.$refs.scaled.offsetHeight * (this.viewScale / 100));
         },
         setScale(value) {
-            this.viewScale = Math.min(100, Math.max(70, Number(value) || 90));
+            this.viewScale = Math.min(100, Math.max(70, Number(value) || 100));
             try { localStorage.setItem('admin-attendance-view-scale', String(this.viewScale)); } catch (error) {}
             this.$nextTick(() => this.syncHeight());
         },
@@ -230,7 +230,10 @@
             min-width: 0;
             padding: 0 15px;
             text-align: center;
+            font-size: 17px;
+            line-height: 1.3;
         }
+        .attendance-table-head .attendance-results-cell { font-size: 16px; }
         .attendance-results-cell:not(:last-child)::after {
             content: '';
             position: absolute;

@@ -60,11 +60,10 @@
     @scroll.window="if (previewOpen) positionPreview()"
     @resize.window="if (previewOpen) positionPreview()"
     @class([
-        'relative min-w-0 rounded-xl border p-3.5 transition-colors',
+        'permission-access-card relative min-w-0 rounded-xl border p-3.5 transition-colors',
         'border-[#1A3A6B] bg-[#EAF2FC]' => $selected,
         'border-[#D7E2F0] bg-white/65' => ! $selected,
         'has-[:checked]:border-[#1A3A6B] has-[:checked]:bg-[#EAF2FC]' => $editable,
-        'opacity-45' => ! $selected && ! $editable,
     ])
 >
     <div class="flex min-w-0 items-start gap-3">

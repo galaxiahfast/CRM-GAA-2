@@ -14,7 +14,7 @@
 
     $editingDisabled = $managementTab === 'editar' && ! filled($managementUserId);
     $deleteDisabled = $managementTab === 'eliminar' && ! filled($managementUserId);
-    $inputClasses = 'mt-[20px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400';
+    $inputClasses = 'mt-[20px] block w-full rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] leading-none text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400';
 @endphp
 
 <x-administration-form-modal
@@ -47,19 +47,19 @@
     <x-slot name="form">
         @if ($managementTab === 'editar')
             <section class="mb-[20px]" style="--admin-form-gap: 20px;">
-                <h2 class="mb-[10px] font-semibold text-black">Seleccionar usuario</h2>
+                <h2 class="admin-section-title mb-[20px]">Seleccionar usuario</h2>
                 <label for="management-edit-user" class="block text-[15px] font-medium text-gray-700">Usuario a editar</label>
                 <x-administration-search-picker style="margin-top: 20px;" input-id="management-edit-user" model="managementUserId" :selected="$managementUserId" :disabled="$lockedUserId !== null"
                     :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => mb_strtolower((string) $manageableUser->email)])"
                     placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
-                <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
+                <x-input-error for="managementUserId" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
             </section>
         @endif
 
         @if (in_array($managementTab, ['crear', 'editar'], true))
         <div class="flex flex-col gap-[20px] {{ $editingDisabled ? 'opacity-75' : '' }}">
             <section style="--admin-form-gap: 20px;">
-                <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
+                <h2 class="admin-section-title mb-[20px]">Datos personales</h2>
 
                 <div x-data="{
                         showPassword: @js($managementTab === 'crear'),
@@ -87,49 +87,49 @@
                     <div class="min-w-0">
                         <label for="name" class="block text-[15px] font-medium text-gray-700">Nombres</label>
                         <input id="name" type="text" maxlength="255" wire:model="name" @input="suggest()" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Nombre...">
-                        <x-input-error for="name" class="mt-2 text-[15px]" />
+                        <x-input-error for="name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="last_name" class="block text-[15px] font-medium text-gray-700">Apellidos</label>
                         <input id="last_name" type="text" maxlength="255" wire:model="last_name" @input="suggest()" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Apellidos...">
-                        <x-input-error for="last_name" class="mt-2 text-[15px]" />
+                        <x-input-error for="last_name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0 sm:col-span-2">
                         <label for="email" class="block text-[15px] font-medium text-gray-700">Correo electrónico</label>
                         <input id="email" type="email" maxlength="255" wire:model="email" class="{{ $inputClasses }}" autocomplete="off" @disabled($editingDisabled) placeholder="Correo electrónico...">
-                        <x-input-error for="email" class="mt-2 text-[15px]" />
+                        <x-input-error for="email" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="password" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
                         <div class="relative mt-[20px]">
-                            <input id="password" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Déjala vacía para conservar la actual' : 'Contraseña...' }}" @if ($managementTab === 'crear') @focus="if (! pwTouched) $event.target.select()" @input="if ($event.isTrusted) pwTouched = $event.target.value !== ''" @blur="if ($event.target.value === '') { pwTouched = false; suggest() }" @endif @disabled($editingDisabled)>
-                            <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
+                            <input id="password" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" placeholder="{{ $managementTab === 'editar' ? 'Opcional' : 'Contraseña...' }}" @if ($managementTab === 'crear') @focus="if (! pwTouched) $event.target.select()" @input="if ($event.isTrusted) pwTouched = $event.target.value !== ''" @blur="if ($event.target.value === '') { pwTouched = false; suggest() }" @endif @disabled($editingDisabled)>
+                            <button type="button" @click="showPassword = ! showPassword" class="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
                                 <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                             </button>
                         </div>
-                        <x-input-error for="password" class="mt-2 text-[15px]" />
+                        <x-input-error for="password" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0">
                         <label for="password_confirmation" class="block text-[15px] font-medium text-gray-700">{{ $managementTab === 'editar' ? 'Confirmar nueva contraseña' : 'Confirmar contraseña' }}</label>
                         <div class="relative mt-[20px]">
-                            <input id="password_confirmation" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" @if ($managementTab === 'crear') @focus="if (! pwTouched) $event.target.select()" @endif @disabled($editingDisabled) placeholder="{{ $managementTab === 'editar' ? 'Confirmar nueva contraseña...' : 'Confirmar contraseña...' }}">
-                            <button type="button" @click="showPassword = ! showPassword" class="absolute right-1 top-0 flex h-11 w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
+                            <input id="password_confirmation" type="password" :type="showPassword ? 'text' : 'password'" maxlength="255" wire:model="password_confirmation" class="{{ $inputClasses }} !mt-0 pr-12" autocomplete="new-password" @if ($managementTab === 'crear') @focus="if (! pwTouched) $event.target.select()" @endif @disabled($editingDisabled) placeholder="{{ $managementTab === 'editar' ? 'Repite la contraseña' : 'Confirmar contraseña...' }}">
+                            <button type="button" @click="showPassword = ! showPassword" class="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-md text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" :aria-label="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'" :title="showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'">
                                 <svg x-show="! showPassword" class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <svg x-show="showPassword" x-cloak class="h-[19px] w-[19px]" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3.2 3.9M6.6 6.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                             </button>
                         </div>
-                        <x-input-error for="password_confirmation" class="mt-2 text-[15px]" />
+                        <x-input-error for="password_confirmation" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
                 </div>
             </section>
 
             <section style="--admin-form-gap: 20px;">
-                <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
+                <h2 class="admin-section-title mb-[20px]">Perfil organizacional</h2>
 
                 <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -137,7 +137,7 @@
                         <x-administration-search-picker style="margin-top: 20px;" input-id="role_id" model="role_id" :selected="$role_id"
                             :items="$roles->map(fn ($role) => ['id' => $role->id, 'label' => $role->role])"
                             placeholder="Buscar rol..." empty-message="No se encontraron roles." :disabled="$editingDisabled" />
-                        <x-input-error for="role_id" class="mt-2 text-[15px]" />
+                        <x-input-error for="role_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0">
@@ -145,7 +145,7 @@
                         <x-administration-search-picker style="margin-top: 20px;" input-id="job_position_id" model="job_position_id" :selected="$job_position_id"
                             :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])"
                             placeholder="Buscar puesto..." empty-message="No se encontraron puestos." :disabled="$editingDisabled" />
-                        <x-input-error for="job_position_id" class="mt-2 text-[15px]" />
+                        <x-input-error for="job_position_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div class="min-w-0">
@@ -153,13 +153,13 @@
                         <x-administration-search-picker style="margin-top: 20px;" input-id="physical_area_id" model="physical_area_id" :selected="$physical_area_id"
                             :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])"
                             placeholder="Buscar área o departamento..." empty-message="No se encontraron áreas." :disabled="$editingDisabled" />
-                        <x-input-error for="physical_area_id" class="mt-2 text-[15px]" />
+                        <x-input-error for="physical_area_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
                 </div>
             </section>
 
             <section style="--admin-form-gap: 20px;">
-                <h2 class="mb-[10px] font-semibold text-black">Configuración del checador y nómina</h2>
+                <h2 class="admin-section-title mb-[20px]">Configuración del checador y nómina</h2>
 
                 <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                     <div class="min-w-0 sm:col-span-2">
@@ -167,20 +167,20 @@
                         <x-administration-search-picker style="margin-top: 20px;" input-id="employee_id" model="employee_id" :selected="$employee_id"
                             :items="$employeeIdSuggestions->map(fn ($suggestion) => ['id' => $suggestion->employeeID, 'label' => $suggestion->employeeID, 'meta' => trim((string) ($suggestion->personName ?: 'Nombre no disponible'))])"
                             placeholder="Opcional: buscar ID o persona..." empty-message="No hay IDs registrados en el checador." placement="bottom" results-id="create-employee-id-suggestions" :disabled="$editingDisabled" />
-                        <x-input-error for="employee_id" class="mt-2 text-[15px]" />
+                        <x-input-error for="employee_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     @if ($isHourlyPosition)
                         <div class="min-w-0">
                             <label for="hourly_rate" class="block text-[15px] font-medium text-gray-700">Precio por hora ($)</label>
                             <input id="hourly_rate" type="number" step="0.01" min="0" wire:model="hourly_rate" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Precio por hora...">
-                            <x-input-error for="hourly_rate" class="mt-2 text-[15px]" />
+                            <x-input-error for="hourly_rate" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                         </div>
 
                         <div class="min-w-0">
                             <label for="food_allowance" class="block text-[15px] font-medium text-gray-700">Apoyo económico por día ($)</label>
                             <input id="food_allowance" type="number" step="0.01" min="0" wire:model="food_allowance" class="{{ $inputClasses }}" @disabled($editingDisabled) placeholder="Apoyo económico por día...">
-                            <x-input-error for="food_allowance" class="mt-2 text-[15px]" />
+                            <x-input-error for="food_allowance" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                         </div>
                     @endif
                 </div>
@@ -194,7 +194,7 @@
                     <x-administration-search-picker style="margin-top: 20px;" input-id="management-delete-user" model="managementUserId" :selected="$managementUserId" :disabled="$lockedUserId !== null"
                         :items="$manageableUsers->map(fn ($manageableUser) => ['id' => $manageableUser->id, 'label' => trim($manageableUser->name.' '.$manageableUser->last_name), 'meta' => mb_strtolower((string) $manageableUser->email)])"
                         placeholder="Buscar usuario por nombre o correo..." empty-message="No se encontraron usuarios." />
-                    <x-input-error for="managementUserId" class="mt-2 text-[15px]" />
+                    <x-input-error for="managementUserId" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                 </section>
 
                 <section style="--admin-form-gap: 20px;" class="rounded-xl border p-5 transition-colors {{ $deleteDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
@@ -203,19 +203,19 @@
                     <div>
                         <label for="delete-confirmation-name" class="block text-[15px] font-medium text-gray-700">Repite el nombre completo</label>
                         <input id="delete-confirmation-name" type="text" wire:model.defer="deleteConfirmationName" class="{{ $inputClasses }}" placeholder="{{ $deleteDisabled ? 'Selecciona primero un usuario' : 'Escribe manualmente el nombre completo' }}" @disabled($deleteDisabled) autocomplete="off">
-                        <x-input-error for="deleteConfirmationName" class="mt-2 text-[15px]" />
+                        <x-input-error for="deleteConfirmationName" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div>
                         <label for="delete-confirmation-email" class="block text-[15px] font-medium text-gray-700">Confirma su correo electrónico</label>
                         <input id="delete-confirmation-email" type="email" wire:model.defer="deleteConfirmationEmail" class="{{ $inputClasses }}" placeholder="{{ $deleteDisabled ? 'Selecciona primero un usuario' : 'Escribe manualmente el correo exacto' }}" @disabled($deleteDisabled) autocomplete="off">
-                        <x-input-error for="deleteConfirmationEmail" class="mt-2 text-[15px]" />
+                        <x-input-error for="deleteConfirmationEmail" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
 
                     <div>
                         <label for="delete-confirmation-phrase" class="block text-[15px] font-medium text-gray-700">Escribe <strong class="text-red-700">ELIMINAR</strong> para confirmar</label>
                         <input id="delete-confirmation-phrase" type="text" wire:model.defer="deleteConfirmationPhrase" class="{{ $inputClasses }}" placeholder="ELIMINAR" @disabled($deleteDisabled) autocomplete="off">
-                        <x-input-error for="deleteConfirmationPhrase" class="mt-2 text-[15px]" />
+                        <x-input-error for="deleteConfirmationPhrase" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                     </div>
                     </div>
                 </section>
@@ -228,7 +228,7 @@
         <button
             type="button"
             wire:click="cancel"
-            class="inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0"
+            class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0"
         >
             Cancelar
         </button>
@@ -238,7 +238,7 @@
             wire:loading.attr="disabled"
             wire:target="save"
             @disabled($editingDisabled)
-            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-xl bg-black px-[20px] py-[12px] text-[15px] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
+            class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
         >
             <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -248,8 +248,8 @@
             <span wire:loading wire:target="save">Guardando...</span>
         </button>
         @else
-            <button type="button" wire:click="cancel" class="inline-flex min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] py-[12px] text-[15px] font-medium text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0">Cancelar</button>
-            <button type="button" wire:click="deleteManagedUser" wire:loading.attr="disabled" wire:target="deleteManagedUser" @disabled($deleteDisabled) class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">Eliminar</button>
+            <button type="button" wire:click="cancel" class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0">Cancelar</button>
+            <button type="button" wire:click="deleteManagedUser" wire:loading.attr="disabled" wire:target="deleteManagedUser" @disabled($deleteDisabled) class="inline-flex min-w-28 items-center justify-center rounded-xl bg-red-600 px-[20px] py-[15px] text-[15px] leading-none text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">Eliminar</button>
         @endif
     </x-slot>
 </x-administration-form-modal>

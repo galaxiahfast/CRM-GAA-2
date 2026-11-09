@@ -30,7 +30,7 @@
         <form wire:submit.prevent="{{ $submit }}">
             <header class="flex items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
                 <div class="flex min-w-0 items-center gap-[15px]">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+                    <div class="admin-title-icon flex shrink-0 items-center justify-center">
                         {{ $icon }}
                     </div>
 
@@ -47,7 +47,7 @@
                 <button
                     type="button"
                     wire:click="{{ $closeAction }}"
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-xl leading-none text-zinc-500 transition hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center text-xl leading-none text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0"
                     aria-label="Cerrar"
                 >
                     &times;
@@ -66,7 +66,7 @@
                 </div>
             </div>
 
-            <footer class="flex justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
+            <footer class="flex justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                 {{ $actions }}
             </footer>
         </form>

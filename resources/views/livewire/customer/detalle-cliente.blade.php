@@ -70,14 +70,18 @@
     @resize.window.debounce.150ms="isCompact = window.innerWidth / window.appAutoScale() < 1024; syncHeight()"
     class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden text-[15px]"
 >
+    {{-- Los estilos van a la cabecera de la página (una sola vez): dentro del componente se enviaban completos en cada actualización de Livewire. --}}
+    @push('styles')
     <x-panel-styles />
     <style>
         [data-customer-detail] .customer-guide { color: #15803d; }
         html.module-dark-theme [data-customer-detail] .customer-guide { color: #4ade80; }
     </style>
+    @endpush
 
-    <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
-        <div x-ref="scaled" class="origin-top-left" :style="isCompact ? 'width:100%;transform:none' : 'width:' + (10000 / viewScale) + '%;transform:scale(' + (viewScale / 100) + ')'">
+    {{-- Sin escala propia sobre el contenido: el zoom ya lo aplica el marco general y la escala dejaba un hueco al final. --}}
+    <div class="w-full">
+        <div x-ref="scaled">
             <div class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
                 @if (isset($notFound) && $notFound)
                     <section class="panel-surface panel-border overflow-hidden rounded-xl border">
@@ -107,10 +111,10 @@
                         // (no por un usuario fijo), así funciona igual en el servidor local y en el remoto.
                         $viewerId = auth()->id();
                         $accountantItems = $accountants
-                            ->map(fn ($accountant) => ['id' => $accountant->id, 'name' => $accountant->name, 'active' => (int) $accountant->pivot->status === 1])
+                            ->map(fn ($accountant) => ['id' => $accountant->id, 'name' => trim(preg_replace('/\s+/', ' ', $accountant->name.' '.$accountant->last_name)), 'active' => (int) $accountant->pivot->status === 1])
                             ->values();
                         if ($role === 'Administrador') {
-                            $viewerItem = $accountantItems->firstWhere('id', $viewerId) ?? ['id' => $viewerId, 'name' => auth()->user()->name, 'active' => true];
+                            $viewerItem = $accountantItems->firstWhere('id', $viewerId) ?? ['id' => $viewerId, 'name' => trim(preg_replace('/\s+/', ' ', auth()->user()->name.' '.auth()->user()->last_name)), 'active' => true];
                             $accountantItems = $accountantItems->reject(fn ($item) => $item['id'] === $viewerId)->prepend($viewerItem)->values();
                         }
                         $hasContact = $customer->phone || $customer->email || $customer->address;
@@ -146,9 +150,6 @@
                         </div>
 
                         <div class="flex w-full flex-wrap items-center gap-[20px] lg:w-auto">
-                            <a href="{{ route('section.guide', 'detalle-cliente') }}" title="Descargar la guía de Detalle del cliente en PDF" class="customer-guide inline-flex items-center gap-[10px] whitespace-nowrap leading-none hover:opacity-70">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>Guía PDF
-                            </a>
                             <x-panel-select id="customer-month" label="Mes" property="selectedMonth"
                                 :options="collect($months)->map(fn ($month) => ['value' => $month['number'], 'label' => $month['name']])->all()"
                                 class="min-w-[140px] flex-1 sm:w-44 sm:flex-none" />
@@ -171,28 +172,28 @@
                             @endif
                         </header>
 
-                        <div class="panel-line grid grid-cols-1 gap-px lg:grid-cols-3">
+                        <div class="panel-surface grid grid-cols-1 lg:grid-cols-3">
                             <!-- Contacto -->
-                            <div class="panel-surface min-w-0 p-[20px]">
+                            <div class="panel-surface panel-border min-w-0 border-t p-[20px] first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
                                 <span class="panel-accent block leading-none">Contacto</span>
                                 @if ($hasContact)
-                                    <ul class="mt-[15px] space-y-[20px]">
+                                    <ul class="mt-[15px] space-y-[15px]">
                                         @if ($customer->phone)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
-                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1z" /></svg>
-                                                <span class="min-w-0 break-words">+{{ $customer->codePhone }} {{ $customer->phone }}</span>
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-none">
+                                                <svg class="panel-muted -mt-[1.5px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1z" /></svg>
+                                                <span class="-my-[7.5px] min-w-0 break-words leading-[30px]">+{{ $customer->codePhone }} {{ $customer->phone }}</span>
                                             </li>
                                         @endif
                                         @if ($customer->email)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
-                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zM22 6l-10 7L2 6" /></svg>
-                                                <span class="min-w-0 break-words">{{ $customer->email }}</span>
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-none">
+                                                <svg class="panel-muted -mt-[1.5px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zM22 6l-10 7L2 6" /></svg>
+                                                <span class="-my-[7.5px] min-w-0 break-words leading-[30px]">{{ $customer->email }}</span>
                                             </li>
                                         @endif
                                         @if ($customer->address)
-                                            <li class="flex min-w-0 items-start gap-[10px] leading-[20px]">
-                                                <svg class="panel-muted mt-[1px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6z" /></svg>
-                                                <span class="min-w-0 break-words">{{ $customer->address }}</span>
+                                            <li class="flex min-w-0 items-start gap-[10px] leading-none">
+                                                <svg class="panel-muted -mt-[1.5px] h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6z" /></svg>
+                                                <span class="-my-[7.5px] min-w-0 break-words leading-[30px]">{{ $customer->address }}</span>
                                             </li>
                                         @endif
                                     </ul>
@@ -202,14 +203,14 @@
                             </div>
 
                             <!-- Contadores asignados -->
-                            <div class="panel-surface min-w-0 p-[20px]">
+                            <div class="panel-surface panel-border min-w-0 border-t p-[20px] first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
                                 <span class="panel-accent block leading-none">Contadores asignados</span>
                                 @if ($accountantItems->isNotEmpty())
                                     <ul class="mt-[15px] flex flex-wrap gap-[20px]">
                                         @foreach ($accountantItems as $accountantItem)
                                             <li class="flex min-w-0 max-w-full items-center gap-[10px] leading-none" title="{{ $accountantItem['name'] }}{{ $accountantItem['active'] ? '' : ' (inactivo)' }}">
-                                                <span class="panel-header panel-border panel-accent grid h-10 w-10 shrink-0 place-items-center rounded-full border uppercase">{{ mb_substr($accountantItem['name'], 0, 2) }}</span>
-                                                <span class="{{ $accountantItem['active'] ? '' : 'panel-muted' }} min-w-0 truncate">{{ $accountantItem['name'] }}</span>
+                                                <span class="panel-header panel-border panel-accent grid h-10 w-10 shrink-0 place-items-center rounded-full border uppercase">{{ mb_substr($accountantItem['name'], 0, 1) }}{{ ($pieces = explode(' ', $accountantItem['name'])) && count($pieces) > 1 ? mb_substr(end($pieces), 0, 1) : mb_substr($accountantItem['name'], 1, 1) }}</span>
+                                                <span class="{{ $accountantItem['active'] ? '' : 'panel-muted' }} min-w-0">{{ $accountantItem['name'] }}</span>
                                             </li>
                                         @endforeach
                                     </ul>
@@ -219,7 +220,7 @@
                             </div>
 
                             <!-- Avance del periodo -->
-                            <div class="panel-surface min-w-0 p-[20px]">
+                            <div class="panel-surface panel-border min-w-0 border-t p-[20px] first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
                                 <span class="panel-accent block leading-none">Avance del periodo</span>
                                 <div class="mt-[15px] flex min-w-0 items-center gap-[15px]">
                                     <div class="panel-tone-{{ $tone }} relative grid h-14 w-14 shrink-0 place-items-center" role="img" aria-label="Avance {{ $percentage }}%">
@@ -246,12 +247,17 @@
                                 <h2 class="panel-accent leading-none">Documentos del cliente</h2>
                                 <p class="mt-[10px] leading-tight">Elige un servicio y un apartado; después sube el acuse y el comprobante en PDF.</p>
                             </div>
-                            @if ($selectedServiceId)
-                                <div class="flex shrink-0 items-center gap-[10px] leading-none tabular-nums" title="Formatos cargados del servicio seleccionado en el periodo">
-                                    <span class="{{ ['red' => 'bg-red-500', 'amber' => 'bg-amber-500', 'green' => 'bg-emerald-500'][$tone] ?? 'bg-zinc-400' }} h-2 w-2 shrink-0 rounded-full"></span>
-                                    Formatos cargados: {{ $countPDFs }}/{{ $totalPdfAvailable }}
-                                </div>
-                            @endif
+                            <div class="flex shrink-0 flex-wrap items-center gap-x-[20px] gap-y-[15px]">
+                                @if ($selectedServiceId)
+                                    <div class="flex shrink-0 items-center gap-[10px] leading-none tabular-nums" title="Formatos cargados del servicio seleccionado en el periodo">
+                                        <span class="{{ ['red' => 'bg-red-500', 'amber' => 'bg-amber-500', 'green' => 'bg-emerald-500'][$tone] ?? 'bg-zinc-400' }} h-2 w-2 shrink-0 rounded-full"></span>
+                                        Formatos cargados: {{ $countPDFs }}/{{ $totalPdfAvailable }}
+                                    </div>
+                                @endif
+                                    <a href="{{ route('section.guide', 'detalle-cliente') }}" title="Descargar la guía de Detalle del cliente en PDF" class="customer-guide inline-flex items-center gap-[10px] whitespace-nowrap leading-none hover:opacity-70">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>Guía PDF
+                                    </a>
+                            </div>
                         </header>
 
                         @php
@@ -346,6 +352,7 @@
                                 @endif
 
                                 @if ($selectedSubServiceId === 1)
+                                    <div class="grid gap-[20px] xl:grid-cols-2 xl:gap-x-[50px]">
                                     @foreach ($states as $key => $state)
                                         @php
                                             $normalFiles = $pdfsDB['normal'][$state->id] ?? [
@@ -364,7 +371,7 @@
                                             $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
                                             $isDanger = $isOpen || $hasComplementaria;
                                         @endphp
-                                        <section wire:key="customer-state-{{ $state->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0">
+                                        <section wire:key="customer-state-{{ $state->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0 xl:border-t-0 xl:pt-0 xl:[&:nth-child(n+3)]:border-t xl:[&:nth-child(n+3)]:pt-[20px]">
                                             <div class="flex flex-col justify-between gap-[10px] sm:flex-row sm:items-center sm:gap-[20px]">
                                                 <span class="panel-accent min-w-0 leading-snug">{{ $state->name }}</span>
                                                 <button type="button" wire:click="toggleState({{ $state->id }})"
@@ -374,7 +381,7 @@
                                                 </button>
                                             </div>
 
-                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-[20px]">
                                                 <!-- Archivos Normales -->
                                                 <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
                                                     :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
@@ -398,7 +405,9 @@
                                             </div>
                                         </section>
                                     @endforeach
+                                    </div>
                                 @elseif ($selectedSubServiceId === 6)
+                                    <div class="grid gap-[20px] xl:grid-cols-2 xl:gap-x-[50px]">
                                     @foreach ($statements as $statement)
                                         @php
                                             $normalFiles = $pdfsDB['normal'][$statement->id] ?? [
@@ -417,7 +426,7 @@
                                             $buttonText = $hasComplementaria || $isOpen ? 'Eliminar' : 'Agregar';
                                             $isDanger = $isOpen || $hasComplementaria;
                                         @endphp
-                                        <section wire:key="customer-statement-{{ $statement->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0">
+                                        <section wire:key="customer-statement-{{ $statement->id }}" class="panel-border flex flex-col gap-[20px] border-t pt-[20px] first:border-t-0 first:pt-0 xl:border-t-0 xl:pt-0 xl:[&:nth-child(n+3)]:border-t xl:[&:nth-child(n+3)]:pt-[20px]">
                                             <div class="flex flex-col justify-between gap-[10px] sm:flex-row sm:items-center sm:gap-[20px]">
                                                 <span class="panel-accent min-w-0 leading-snug">{{ $statement->statement }}</span>
                                                 <button type="button" wire:click="toggleStatement({{ $statement->id }})"
@@ -427,7 +436,7 @@
                                                 </button>
                                             </div>
 
-                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                            <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-[20px]">
                                                 <!-- Archivos Normales -->
                                                 <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
                                                     :successMessage="$successMessage" fileType="Acuse" declarationType="Normal"
@@ -451,6 +460,7 @@
                                             </div>
                                         </section>
                                     @endforeach
+                                    </div>
                                 @else
                                     @php
                                         $normalFiles = $pdfsDB['normal'][$selectedSubServiceId] ?? [
@@ -463,7 +473,7 @@
                                         ];
                                     @endphp
 
-                                    <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))] gap-[20px]">
+                                    <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-[20px]">
                                         <!-- Archivos Normales -->
                                         <x-format-pdf model="pdfs.normal.acuse" :pdf="$normalFiles['acuse']"
                                             :successMessage="$successMessage" fileType="Acuse" declarationType="Normal" />

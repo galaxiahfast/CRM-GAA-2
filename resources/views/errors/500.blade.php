@@ -16,7 +16,9 @@
             </div>
             <h1 class="text-xl font-semibold text-gray-900">No pudimos completar la operación</h1>
             <p class="mt-3 leading-6 text-gray-500">El incidente fue registrado automáticamente. Puedes volver a intentar sin perder el acceso al resto del sistema.</p>
-            <p class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-[12px] text-gray-500">Referencia: <strong>{{ $reference }}</strong></p>
+            @isset($reference)
+                <p class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-[12px] text-gray-500">Referencia: <strong>{{ $reference }}</strong></p>
+            @endisset
             <div class="mt-6 flex justify-center gap-3">
                 <button type="button" onclick="history.back()" class="rounded-xl border border-[#1a3a6b] px-4 py-2.5 font-medium text-[#1a3a6b] hover:bg-blue-50">Volver</button>
                 <a href="{{ route('dashboard') }}" class="rounded-xl bg-[#1a3a6b] px-4 py-2.5 font-medium text-white hover:bg-[#16325d]">Ir al inicio</a>

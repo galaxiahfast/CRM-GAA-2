@@ -80,9 +80,9 @@
     {{-- Eliminar al usuario: abre la confirmación (hay que escribir su nombre completo), no borra directamente. --}}
     <button type="button"
         wire:click="requestDeleteUser({{ $node['id'] }})"
-        class="org-node-delete absolute right-[8px] top-[8px] z-20 inline-flex h-[24px] w-[24px] items-center justify-center rounded-md text-[color:var(--panel-danger)] transition-colors hover:bg-[var(--panel-danger-soft)] focus:outline-none focus:ring-0"
+        class="org-node-delete absolute right-[8px] top-[8px] z-20 inline-flex h-[24px] w-[24px] items-center justify-center panel-icon-button rounded-lg focus:outline-none focus:ring-0"
         title="Eliminar a {{ $node['name'] }}" aria-label="Eliminar a {{ $node['name'] }}">
-        <svg class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
     </button>
     </div>
 

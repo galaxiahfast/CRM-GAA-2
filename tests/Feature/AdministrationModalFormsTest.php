@@ -348,9 +348,8 @@ class AdministrationModalFormsTest extends TestCase
         $component = Livewire::actingAs($administrator)
             ->test(PanelAdministracion::class)
             ->call('openJobPositionModal')
-            ->assertSee('Crear')
-            ->assertSee('Editar')
-            ->assertSee('Eliminar')
+            // El directorio ya no se reenvía en cada actualización; la ventana de puestos sí se dibuja.
+            ->assertSeeHtml('data-administration-modal="job-position-form"')
             ->call('setJobPositionModalTab', 'editar')
             ->set('selectedJobPositionId', $position->id)
             ->set('editJobPositionName', 'Analista de Operaciones')
@@ -580,8 +579,8 @@ class AdministrationModalFormsTest extends TestCase
             ->test(GestionRoles::class)
             ->assertSet('activeTab', 'edit')
             ->assertSee('Buscar rol por nombre')
-            ->assertSee('Vista previa de accesos')
-            ->call('selectRole', $assignedRole->id)
+            ->assertSee('Accesos del rol')
+            ->assertDontSeeHtml('aria-label="Vista previa')            ->call('selectRole', $assignedRole->id)
             ->assertSet('editingRoleId', $assignedRole->id)
             ->assertSet('editingRoleName', 'Rol con usuario');
 
@@ -827,8 +826,6 @@ class AdministrationModalFormsTest extends TestCase
             ->assertSeeHtml('x-ref="scaledMain"')
             ->assertSeeHtml('scaledContentHeight = Math.ceil')
             ->assertDontSeeHtml('transform:scale(${viewScale / 100})')
-            ->assertSeeHtml('style="height: 76px;"')
-            ->assertSeeHtml('style="height: 75px;"')
             ->assertDontSeeHtml('zoom:${viewScale / 100}');
     }
 

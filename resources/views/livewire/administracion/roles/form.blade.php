@@ -2,7 +2,7 @@
     $isProtectedSystemRole = $mode === 'edit'
         && in_array($role, ['Administrador', 'Coordinador', 'Contador', 'Auxiliar'], true);
     $modalTitle = $mode === 'edit' ? 'Editar rol' : 'Crear nuevo rol';
-    $inputClasses = 'mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0';
+    $inputClasses = 'mt-[15px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] text-[15px] leading-[30px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0';
 @endphp
 
 <x-administration-form-modal
@@ -63,73 +63,53 @@
     @endunless
 
     <x-slot name="form">
-        <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+        <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-[20px]">
             <div class="mb-[10px]">
                 <h2 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Información del rol</h2>
             </div>
 
             <div class="grid grid-cols-1 gap-[15px]">
                 <div class="min-w-0">
-                    <label for="role" class="block text-[15px] font-medium text-gray-700">Rol</label>
+                    <label for="role" class="block text-[15px] leading-[30px] text-[#102A52]">Rol</label>
                     <input
                         id="role"
                         type="text"
                         maxlength="255"
                         wire:model.defer="role"
-                        class="{{ $inputClasses }} {{ $isProtectedSystemRole ? 'cursor-not-allowed text-gray-500' : '' }}"
+                        class="{{ $inputClasses }} {{ $isProtectedSystemRole ? 'cursor-not-allowed opacity-60' : '' }}"
                         @readonly($isProtectedSystemRole)
                     >
-                    <x-input-error for="role" class="mt-2 text-[15px]" />
+                    <x-input-error for="role" class="mt-[15px] text-[15px]" />
                 </div>
 
                 <div class="min-w-0">
-                    <label for="description" class="block text-[15px] font-medium text-gray-700">Descripción</label>
-                    <textarea id="description" maxlength="255" rows="4" wire:model.defer="description" class="mt-[10px] block w-full resize-none rounded-lg border border-[#B7CEEA] bg-transparent px-3 py-3 text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0"></textarea>
-                    <div class="mt-2 flex items-start justify-between gap-4">
+                    <label for="description" class="block text-[15px] leading-[30px] text-[#102A52]">Descripción</label>
+                    <textarea id="description" maxlength="255" rows="4" wire:model.defer="description" class="mt-[15px] block w-full resize-none rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] text-[15px] text-[#102A52] shadow-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0"></textarea>
+                    <div class="mt-[15px] flex items-start justify-between gap-[20px]">
                         <x-input-error for="description" class="text-[15px]" />
-                        <span class="ml-auto shrink-0 text-[15px] text-gray-400">Máximo 255 caracteres</span>
+                        <span class="ml-auto shrink-0 text-[15px] text-[#102A52]">Máximo 255 caracteres</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="mt-5 rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+        <section class="mt-[20px] rounded-xl border border-[#CAD7E7] bg-transparent p-[20px]">
             <div class="min-w-0">
                 <h2 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Permisos del rol</h2>
             </div>
 
-            <div class="mt-[15px] grid grid-cols-1 gap-[10px] md:grid-cols-2">
+            <div class="mt-[15px] grid grid-cols-1 gap-[20px] md:grid-cols-2">
                 @foreach ($permissionGroups as $group)
-                    <button type="button" wire:key="role-permission-group-{{ $group->id }}" wire:click="selectPermissionGroup({{ $group->id }})" class="min-w-0 rounded-xl border p-4 text-left transition focus:outline-none focus:ring-0 {{ (int) $permissionGroupId === (int) $group->id ? 'border-[#1A3A6B] bg-[#EAF2FC]' : 'border-[#CAD7E7] bg-white/55 hover:border-[#1A3A6B]' }}">
-                        <span class="flex items-center justify-between gap-3"><strong class="truncate text-[15px] text-[#102A52]">{{ mb_strtoupper($group->name) }}</strong><span class="shrink-0 rounded-full bg-[#DCE9F8] px-2.5 py-1 text-[11px] font-semibold text-[#1A3A6B]">{{ $group->permissions_count }} apartados</span></span>
-                        <span class="mt-3 flex flex-wrap gap-1.5">
-                            @foreach ($group->permissions->take(3) as $groupPermission)
-                                <span class="max-w-full truncate rounded-md border border-[#CAD7E7] bg-white/70 px-2 py-1 text-[10px] font-semibold uppercase text-[#1F4D86]">{{ $groupPermission->name }}</span>
-                            @endforeach
-                            @if ($group->permissions_count > 3)<span class="px-1 py-1 text-[10px] font-semibold text-[#55749D]">+{{ $group->permissions_count - 3 }}</span>@endif
-                        </span>
+                    <button type="button" wire:key="role-permission-group-{{ $group->id }}" wire:click="selectPermissionGroup({{ $group->id }})" aria-pressed="{{ (int) $permissionGroupId === (int) $group->id ? 'true' : 'false' }}" class="role-choice focus:outline-none focus:ring-0">
+                        <span class="min-w-0 truncate" title="{{ $group->name }}">{{ $group->name }}</span>
+                        <span class="role-choice-count" aria-label="{{ $group->permissions_count }} apartados">{{ $group->permissions_count }}</span>
                     </button>
                 @endforeach
-
             </div>
-            <x-input-error for="permissionGroupId" class="mt-2 text-[15px]" />
+            <x-input-error for="permissionGroupId" class="mt-[15px] text-[15px]" />
 
-            <div class="mt-[15px]">
-                @forelse ($availablePermissions->groupBy(fn ($permission) => $permission->module ?: 'General') as $module => $modulePermissions)
-                    <fieldset class="mb-[15px] rounded-xl border border-gray-200 bg-white p-4 last:mb-0">
-                        <legend class="px-2 text-[15px] font-semibold text-[#1A3A6B]">{{ $module }}</legend>
-
-                        <div class="grid grid-cols-1 gap-[10px] md:grid-cols-2">
-                            @foreach ($modulePermissions as $permission)
-                                <x-permission-access-card wire:key="role-permission-{{ $permission->id }}" :permission="$permission" :selected="in_array((int) $permission->id, $permissionIds, true)" />
-                            @endforeach
-                        </div>
-                    </fieldset>
-                @empty
-                    <div class="rounded-xl border border-gray-200 bg-white p-5 text-center">
-                        <p class="text-[15px] font-medium text-gray-700">No hay permisos activos en el catálogo.</p>
-                    </div>
-                @endforelse
+            <div class="mt-[20px]">
+                <x-role-permission-preview :permissions="$availablePermissions" :selected-ids="$permissionIds" />
             </div>
         </section>
     </x-slot>
@@ -138,7 +118,7 @@
         <button
             type="button"
             wire:click="cancel"
-            class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
+            class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0"
         >
             Cancelar
         </button>
@@ -147,7 +127,7 @@
             type="submit"
             wire:loading.attr="disabled"
             wire:target="save"
-            class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
+            class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-2 rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60"
         >
             <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

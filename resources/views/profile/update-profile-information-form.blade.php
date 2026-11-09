@@ -149,6 +149,17 @@
                 </div>
             </section>
 
+            @if ($this->isOwnProfile && $editing && $errors->any())
+                <div role="alert" class="no-print rounded-xl border border-red-600 px-[20px] py-[15px] text-[15px] leading-[30px] text-black">
+                    <p>No se guardaron los cambios. Corrige lo siguiente:</p>
+                    <ul class="list-inside list-disc">
+                        @foreach (collect($errors->all())->unique() as $message)
+                            <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <section class="profile-grid grid {{ $this->isOwnProfile ? 'min-h-[650px]' : '' }} min-w-[1000px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden rounded-xl border border-[#d4d4d8] bg-white">
                 <aside class="flex h-0 min-h-full flex-col overflow-hidden border-r border-[#d4d4d8] bg-white">
                     <div class="relative h-[150px] shrink-0 overflow-hidden bg-gradient-to-br from-black via-zinc-800 to-zinc-600">
@@ -364,7 +375,7 @@
                                     <div class="grid gap-[20px] xl:grid-cols-3">
                                         <div>
                                             <label for="current-password" class="mb-[10px] block leading-none text-[#1A3A6B]">1. Contraseña actual</label>
-                                            <input id="current-password" type="password" wire:model="currentPassword" autocomplete="current-password" placeholder="Tu contraseña" class="{{ $fieldClass }}">
+                                            <input id="current-password" type="password" wire:model="currentPassword" autocomplete="new-password" placeholder="Tu contraseña" class="{{ $fieldClass }}">
                                             <x-input-error for="currentPassword" class="mt-[10px]" />
                                         </div>
                                         <div>

@@ -29,6 +29,8 @@ class ProfileInformationTest extends TestCase
         $this->actingAs($user = User::factory()->create());
 
         Livewire::test(UpdateProfileInformationForm::class)
+            ->call('startEditing')
+            ->assertSet('editing', true)
             ->set('state', [
                 'name' => 'Test Name',
                 'last_name' => 'Updated Last Name',
@@ -37,7 +39,13 @@ class ProfileInformationTest extends TestCase
                 'instagram_url' => 'https://instagram.com/test',
                 'facebook_url' => 'https://facebook.com/test',
             ])
-            ->call('updateProfileInformation');
+            ->call('updateProfileInformation')
+            ->assertHasNoErrors()
+            ->assertSet('editing', false)
+            ->assertSee('Editar perfil')
+            ->assertDontSee('Guardar cambios')
+            ->assertSet('state.name', 'Test Name')
+            ->assertSet('state.profile_description', 'Descripción visible del perfil.');
 
         $this->assertEquals('Test Name', $user->fresh()->name);
         $this->assertEquals('Updated Last Name', $user->fresh()->last_name);
@@ -67,6 +75,34 @@ class ProfileInformationTest extends TestCase
             ->set('state.instagram_url', 'instagram sin url')
             ->call('updateProfileInformation')
             ->assertHasErrors(['instagram_url']);
+    }
+
+    public function test_a_failed_save_stays_in_edit_mode_and_explains_why(): void
+    {
+        $this->actingAs(User::factory()->create(['instagram_url' => 'instagram.com/sin-esquema']));
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->call('startEditing')
+            ->call('updateProfileInformation')
+            ->assertHasErrors(['instagram_url'])
+            ->assertSet('editing', true)
+            ->assertSee('No se guardaron los cambios');
+    }
+
+    public function test_an_autofilled_current_password_does_not_require_a_new_one(): void
+    {
+        $this->actingAs($user = User::factory()->create(['password' => Hash::make('actual-123')]));
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->call('startEditing')
+            ->set('currentPassword', 'actual-123')
+            ->set('state.name', 'Nombre nuevo')
+            ->call('updateProfileInformation')
+            ->assertHasNoErrors()
+            ->assertSet('editing', false);
+
+        $this->assertSame('Nombre nuevo', $user->fresh()->name);
+        $this->assertTrue(Hash::check('actual-123', $user->fresh()->password));
     }
 
     public function test_password_can_be_changed_from_profile_editing(): void

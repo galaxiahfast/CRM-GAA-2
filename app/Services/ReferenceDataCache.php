@@ -163,9 +163,35 @@ class ReferenceDataCache
     }
 
     /** @return array<string, array{label: string, description: string, items: array<int, array<string, mixed>>}> */
+    /**
+     * Sello que cambia cada vez que se reconstruye el directorio. Permite saber, sin leer los ~180 KB del directorio,
+     * si la pantalla ya tiene la versión vigente.
+     */
+    public function organizationDirectoryStamp(): string
+    {
+        $stampKey = self::ORGANIZATION_DIRECTORY_KEY.':stamp';
+        $stamp = Cache::get($stampKey);
+
+        if ($stamp === null) {
+            // Si el directorio no está en caché se reconstruye y deja su sello.
+            $this->organizationDirectory();
+            $stamp = Cache::get($stampKey, '0');
+        }
+
+        return (string) $stamp;
+    }
+
+    private function forgetDirectory(): void
+    {
+        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY);
+        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY.':stamp');
+    }
+
     public function organizationDirectory(): array
     {
         return Cache::remember(self::ORGANIZATION_DIRECTORY_KEY, now()->addMinutes(10), function (): array {
+            Cache::put(self::ORGANIZATION_DIRECTORY_KEY.':stamp', uniqid('dir', true), now()->addMinutes(10));
+
             $users = User::query()
                 ->with([
                     'role:id,role',
@@ -436,7 +462,7 @@ class ReferenceDataCache
     public function forgetAdministration(): void
     {
         Cache::forget(self::ADMINISTRATION_KEY);
-        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY);
+        $this->forgetDirectory();
         Cache::forget(self::CUSTOMER_CATALOG_KEY);
         Cache::forget(self::PERMISSION_CATALOG_KEY);
         Cache::forget(self::ASSIGNMENT_CATALOG_KEY);
@@ -445,7 +471,7 @@ class ReferenceDataCache
     public function forgetTimeControl(): void
     {
         Cache::forget(self::TIME_CONTROL_KEY);
-        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY);
+        $this->forgetDirectory();
         Cache::forget(self::ACTIVITY_CATALOG_KEY);
     }
 
@@ -457,13 +483,13 @@ class ReferenceDataCache
     public function forgetOrganizationDashboard(): void
     {
         Cache::forget(self::ORGANIZATION_DASHBOARD_KEY);
-        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY);
+        $this->forgetDirectory();
     }
 
     public function forgetManageableUsers(): void
     {
         Cache::forget(self::MANAGEABLE_USERS_KEY);
-        Cache::forget(self::ORGANIZATION_DIRECTORY_KEY);
+        $this->forgetDirectory();
     }
 
     public function forgetCustomerCatalog(): void

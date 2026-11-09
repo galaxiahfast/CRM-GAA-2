@@ -1,4 +1,4 @@
-<section wire:poll.30s class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Personas en línea">
+<section wire:poll.30s class="panel-surface panel-border flex flex-col overflow-hidden rounded-xl border xl:absolute xl:inset-x-0 xl:top-0 xl:max-h-full" aria-label="Personas en línea">
     <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
         <div class="min-w-0">
             <p class="panel-accent flex items-center gap-[10px] leading-none">
@@ -10,7 +10,7 @@
         <span class="leading-none">{{ count($rows) }} en línea</span>
     </header>
 
-    <div class="max-h-[420px] overflow-y-auto overflow-x-hidden" data-online-list>
+    <div class="max-h-[420px] min-h-0 flex-1 overflow-y-auto overflow-x-hidden xl:max-h-none" data-online-list>
         @foreach ($rows as $row)
             <div wire:key="online-{{ $row['id'] }}" class="panel-border border-b last:border-b-0">
                 <a href="{{ $row['url'] }}" class="home-row flex items-center gap-[15px] p-[20px]">
@@ -18,7 +18,7 @@
                         @if ($row['photo'])
                             <img src="{{ $row['photo'] }}" alt="" class="h-[40px] w-[40px] rounded-full object-cover" loading="lazy">
                         @else
-                            <span class="panel-header panel-border panel-text grid h-[40px] w-[40px] place-items-center rounded-full border !text-[12px]">{{ mb_strtoupper(mb_substr($row['name'], 0, 1)) }}</span>
+                            <span class="panel-header panel-border panel-text grid h-[40px] w-[40px] place-items-center rounded-full border !text-[13px]">{{ mb_strtoupper(mb_substr($row['name'], 0, 1)) }}</span>
                         @endif
                         <span class="absolute -bottom-px -right-px h-[10px] w-[10px] rounded-full border-2 border-[var(--panel-surface)] bg-emerald-500" aria-hidden="true"></span>
                     </span>

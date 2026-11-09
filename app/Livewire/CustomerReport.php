@@ -18,11 +18,15 @@ class CustomerReport extends Dashboard
 
     public function mount($customerId = null)
     {
+        $this->loadReport($customerId, (int) request()->query('year', now()->year));
+    }
+
+    protected function loadReport($customerId, int $requestedYear): void
+    {
         // El reporte solo necesita un cliente. Evitar parent::mount() impide
         // cargar y calcular el dashboard completo antes de abrir este detalle.
         $this->months = collect(json_decode(File::get(resource_path('/data/months.json')), true));
         $this->selectedMonth = now()->month - 1;
-        $requestedYear = (int) request()->query('year', now()->year);
         $this->selectedYear = in_array($requestedYear, $this->years, true) ? $requestedYear : now()->year;
         $this->customer = Customer::query()
             ->with(['services:id,service_id', 'states:id', 'statements:id'])

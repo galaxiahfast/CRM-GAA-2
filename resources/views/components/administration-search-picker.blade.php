@@ -27,19 +27,6 @@
     $pickerWireKey = $pickerId;
 @endphp
 
-<style>
-    /* Mismo scroll del formulario (3px, negro, sin flechas, siempre visible); el borde global de 2px lo ocultaba. */
-    body [role="listbox"].administration-picker-scrollbar { background-color: #ffffff !important; }
-    .administration-picker-scrollbar { scrollbar-width: thin; scrollbar-color: #1A3A6B transparent; }
-    @supports selector(::-webkit-scrollbar) {
-        .administration-picker-scrollbar { scrollbar-width: auto; scrollbar-color: auto; }
-        .administration-picker-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
-        .administration-picker-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .administration-picker-scrollbar::-webkit-scrollbar-thumb { min-height: 32px; border: 0; border-radius: 9999px; background: #1A3A6B; }
-        .administration-picker-scrollbar::-webkit-scrollbar-button, .administration-picker-scrollbar::-webkit-scrollbar-corner { display: none; width: 0; height: 0; }
-    }
-</style>
-
 <div
     wire:key="{{ $pickerWireKey }}"
     class="relative mt-[10px]"
@@ -80,7 +67,7 @@
             const space = opensAbove ? above : below;
             const height = Math.min(wanted, Math.max(1, Math.floor(space / itemHeight)) * itemHeight);
             const top = opensAbove ? rect.top - gap - height - 2 : rect.bottom + gap;
-            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; max-height: ${height + 2}px; z-index: 200100;`;
+            this.dropdownStyle = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; --picker-max: ${height + 2}px; z-index: 200100;`;
         },
         closeList() {
             this.query = '';
@@ -114,38 +101,43 @@
         @keydown.arrow-down.prevent="open = true; $nextTick(() => $refs.results?.querySelector('[role=option]')?.focus())"
         @disabled($disabled)
         placeholder="{{ $placeholder }}"
-        class="block h-11 w-full rounded-xl border bg-white px-[15px] pr-11 text-[15px] text-gray-800 shadow-none outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3] {{ $danger ? 'border-red-300' : 'border-[#d4d4d8]' }}"
+        class="block w-full rounded-xl border bg-white py-[15px] pl-[20px] pr-[48px] text-[15px] leading-none text-gray-800 shadow-none outline-none focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#F1F3F6] disabled:text-[#98A4B3] {{ $danger ? 'border-red-300' : 'border-[#d4d4d8]' }}"
         role="combobox"
         aria-autocomplete="list"
         aria-controls="{{ $pickerResultsId }}"
         :aria-expanded="open"
     >
 
-    <button type="button" @click="open ? closeList() : openList()" @disabled($disabled) class="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-[#55749D] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Mostrar todas las sugerencias">
+    <button type="button" @click="open ? closeList() : openList()" @disabled($disabled) class="admin-picker-chevron absolute inset-y-0 right-0 flex w-[48px] items-center justify-center focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Mostrar todas las sugerencias">
         <svg class="h-4 w-4" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
     </button>
 
     <template x-teleport="body">
-        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle + ' background-color: #ffffff;'" class="administration-picker-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-[#d4d4d8] bg-white shadow-lg" role="listbox">
-            @foreach ($normalizedItems as $option)
-                <button type="button"
-                    data-item-id="{{ $option['id'] }}"
-                    data-employee-id="{{ $option['id'] }}"
-                    data-person-name="{{ $option['meta'] }}"
-                    x-show="filteredOptions.some(option => String(option.id) === @js($option['id']))"
-                    @click="choose(@js($option))"
-                    @keydown.enter.prevent="choose(@js($option))"
-                    @disabled($option['disabled'])
-                    class="flex w-full min-w-0 items-center justify-between gap-[20px] px-[20px] py-[20px] text-left text-[15px] leading-none focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed bg-[#F1F3F6] opacity-55' : 'hover:bg-zinc-100 focus:bg-zinc-100' }}"
-                    role="option"
-                    :aria-selected="String(selectedId) === @js($option['id'])">
-                    <span class="min-w-0 flex-1 truncate text-[15px] font-normal leading-none text-black" style="text-overflow: ellipsis;">{{ $option['label'] }}</span>
-                    @if ($option['meta'] !== '')
-                        <span class="max-w-[45%] shrink-0 truncate text-[15px] leading-none text-black" style="text-overflow: ellipsis;">{{ $option['meta'] }}</span>
-                    @endif
-                </button>
-            @endforeach
-            <p x-show="filteredOptions.length === 0" class="truncate px-[20px] py-[20px] text-center text-[15px] leading-none text-black">{{ $emptyMessage }}</p>
+        <div id="{{ $pickerResultsId }}" x-ref="results" x-cloak x-show="open" :style="dropdownStyle" data-panel class="panel-border overflow-hidden rounded-xl border" role="listbox">
+            <div x-data="backupOverlayScroll()" x-effect="open; filteredOptions.length; $nextTick(() => update())" class="relative">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar overflow-y-auto overscroll-contain" style="max-height: var(--picker-max, 16rem);">
+                    @foreach ($normalizedItems as $option)
+                        <button type="button"
+                            data-item-id="{{ $option['id'] }}"
+                            data-employee-id="{{ $option['id'] }}"
+                            data-person-name="{{ $option['meta'] }}"
+                            x-show="filteredOptions.some(option => String(option.id) === @js($option['id']))"
+                            @click="choose(@js($option))"
+                            @keydown.enter.prevent="choose(@js($option))"
+                            @disabled($option['disabled'])
+                            class="panel-option flex w-full min-w-0 items-center justify-between gap-[20px] p-[20px] text-left leading-none focus:outline-none {{ $option['disabled'] ? 'cursor-not-allowed opacity-50' : '' }}"
+                            role="option"
+                            :aria-selected="String(selectedId) === @js($option['id'])">
+                            <span class="min-w-0 flex-1 truncate leading-none">{{ $option['label'] }}</span>
+                            @if ($option['meta'] !== '')
+                                <span class="max-w-[45%] shrink-0 truncate leading-none">{{ $option['meta'] }}</span>
+                            @endif
+                        </button>
+                    @endforeach
+                    <p x-show="filteredOptions.length === 0" class="truncate p-[20px] text-center leading-none">{{ $emptyMessage }}</p>
+                </div>
+                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+            </div>
         </div>
     </template>
 </div>

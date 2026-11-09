@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -42,6 +43,9 @@ class PanelAdministracion extends Component
 
     /** true cuando el componente se muestra como el apartado «Organigrama» (y no como Administración). */
     public bool $orgChartPage = false;
+
+    /** Sello del directorio que ya tiene la pantalla: el directorio (~180 KB) solo se reenvía cuando cambia. */
+    public string $directoryStamp = '';
 
     /** El árbol se arma después de abrir la pantalla (wire:init), para que el apartado abra al instante aunque haya muchos usuarios. */
     public bool $orgChartLoaded = false;
@@ -237,6 +241,15 @@ class PanelAdministracion extends Component
         $this->showRoleManagementModal = false;
     }
 
+    // Alpine puede resolver el cierre del modal anidado contra este componente padre.
+    // Mantener la misma acción evita un 500 al cerrar Roles durante una actualización.
+    public function cancel(): void
+    {
+        if ($this->showRoleManagementModal) {
+            $this->closeRoleManagement();
+        }
+    }
+
     public function openAssignmentModal(string $tab = 'crear', ?int $customerId = null): void
     {
         abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
@@ -269,8 +282,7 @@ class PanelAdministracion extends Component
     #[On('assignments-updated')]
     public function refreshOrganizationDirectory(): void
     {
-        // El render siguiente obtiene el directorio recién invalidado sin
-        // desmontar los formularios reutilizados por las tarjetas.
+        // El render siguiente obtiene el directorio recién invalidado: su sello cambia y se vuelve a enviar.
     }
 
     public function mount(OrganizationChartService $chartService): void
@@ -870,6 +882,18 @@ class PanelAdministracion extends Component
         $this->updatedUserFormSuperiorIds([]);
     }
 
+    /** Casilla del jefe directo: marcar elige a esa persona (y desmarca a la anterior); volver a marcarla quita al jefe. */
+    public function toggleSuperior(int $superiorId): void
+    {
+        if (in_array($superiorId, $this->normalizeHierarchyUserIds($this->userForm['superior_ids'] ?? []), true)) {
+            $this->clearSuperiorSelection();
+
+            return;
+        }
+
+        $this->selectSuperior($superiorId);
+    }
+
     /**
      * Mantiene las dos listas jerárquicas como conjuntos excluyentes durante
      * la edición, antes de que se persista cualquier relación.
@@ -963,36 +987,49 @@ class PanelAdministracion extends Component
             throw $exception;
         }
 
-        DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService) {
-            $user->update(array_filter([
-                'name' => $data['name'],
-                'last_name' => $data['last_name'] ?? null,
-                'email' => $data['email'],
-                'role_id' => $data['role_id'],
-                'employee_id' => filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null,
-                'password' => filled($data['password'] ?? null) ? $data['password'] : null,
-            ], fn ($value, $key) => $key !== 'password' || $value !== null, ARRAY_FILTER_USE_BOTH));
+        try {
+            DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService) {
+                $user->update(array_filter([
+                    'name' => $data['name'],
+                    'last_name' => $data['last_name'] ?? null,
+                    'email' => $data['email'],
+                    'role_id' => $data['role_id'],
+                    'employee_id' => filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null,
+                    'password' => filled($data['password'] ?? null) ? $data['password'] : null,
+                ], fn ($value, $key) => $key !== 'password' || $value !== null, ARRAY_FILTER_USE_BOTH));
 
-            $user->activeOrganizationalProfile()->updateOrCreate(
-                ['user_id' => $user->id, 'is_active' => true],
-                [
-                    'job_position_id' => filled($data['job_position_id'] ?? null) ? (int) $data['job_position_id'] : null,
-                    'physical_area_id' => filled($data['physical_area_id'] ?? null) ? (int) $data['physical_area_id'] : null,
-                    // SQL Server tiene estas columnas NOT NULL en instalaciones existentes.
-                    // Los valores monetarios solo aplican a Auxiliar; los demás usan cero.
-                    'hourly_rate' => $isHourlyPosition ? $data['hourly_rate'] : 0,
-                    'food_allowance' => $isHourlyPosition ? $data['food_allowance'] : 0,
-                    'valid_from' => now()->toDateString(),
-                ]
-            );
+                $user->activeOrganizationalProfile()->updateOrCreate(
+                    ['user_id' => $user->id, 'is_active' => true],
+                    [
+                        'job_position_id' => filled($data['job_position_id'] ?? null) ? (int) $data['job_position_id'] : null,
+                        'physical_area_id' => filled($data['physical_area_id'] ?? null) ? (int) $data['physical_area_id'] : null,
+                        // SQL Server tiene estas columnas NOT NULL en instalaciones existentes.
+                        // Los valores monetarios solo aplican a Auxiliar; los demás usan cero.
+                        'hourly_rate' => $isHourlyPosition ? $data['hourly_rate'] : 0,
+                        'food_allowance' => $isHourlyPosition ? $data['food_allowance'] : 0,
+                        'valid_from' => now()->toDateString(),
+                    ]
+                );
 
-            $this->syncHierarchyRelations(
-                $user,
-                $data['superior_ids'] ?? [],
-                $data['subordinate_ids'] ?? [],
-                $chartService
-            );
-        });
+                $this->syncHierarchyRelations(
+                    $user,
+                    $data['superior_ids'] ?? [],
+                    $data['subordinate_ids'] ?? [],
+                    $chartService
+                );
+            });
+        } catch (ValidationException $exception) {
+            // Por ejemplo, una relación jerárquica que formaría un ciclo: se avisa arriba y no se guarda nada.
+            $this->dispatch('notify', message: 'No se pudo guardar: '.$exception->validator->errors()->first(), type: 'error');
+
+            throw $exception;
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->dispatch('notify', message: 'No se pudo guardar el usuario. Inténtalo de nuevo; no se hizo ningún cambio.', type: 'error');
+            $this->addError('userForm.name', 'No se pudo guardar el usuario. Inténtalo de nuevo; no se hizo ningún cambio.');
+
+            return;
+        }
 
         if (filled($data['employee_id'] ?? null)) {
             $settingsService->saveGeneral(
@@ -1155,10 +1192,13 @@ class PanelAdministracion extends Component
             'assignments' => $permissionAccess->allows($currentUser, 'administration.assignments.manage'),
             'activities' => $isAdministrator && $permissionAccess->allows($currentUser, 'administration.organization.manage'),
         ]);
-        $organizationDirectory = array_intersect_key(
-            $references->organizationDirectory(),
-            $directoryAccess,
-        );
+        // En las actualizaciones de Livewire el directorio no se vuelve a calcular ni a enviar (la caja conserva lo que ya tiene).
+        $directoryStamp = $references->organizationDirectoryStamp();
+        $includeDirectory = ! request()->hasHeader('X-Livewire') || $directoryStamp !== $this->directoryStamp;
+        $this->directoryStamp = $directoryStamp;
+        $organizationDirectory = $includeDirectory
+            ? array_intersect_key($references->organizationDirectory(), $directoryAccess)
+            : [];
 
         $superiorCandidates = $needsHierarchyCandidates
             ? User::query()
@@ -1192,6 +1232,8 @@ class PanelAdministracion extends Component
             'organizationActivityCount' => $dashboard['activityCount'],
             'organizationAssignmentCounts' => $dashboard['assignmentCounts'],
             'organizationDirectory' => $organizationDirectory,
+            'includeDirectory' => $includeDirectory,
+            'directoryStampKey' => $directoryStamp,
             'physicalAreas' => $administrationReferences['physicalAreas'],
             'jobPositions' => $administrationReferences['jobPositions'],
             'roles' => $administrationReferences['roles'],

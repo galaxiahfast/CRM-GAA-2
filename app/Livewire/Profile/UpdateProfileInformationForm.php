@@ -157,7 +157,8 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
     public function updateProfileInformation(UpdatesUserProfileInformation $updater): void
     {
         $this->resetErrorBag();
-        $changingPassword = collect([$this->currentPassword, $this->newPassword, $this->newPasswordConfirmation])
+        // Solo se cambia la contraseña si se escribió una nueva: el navegador suele autocompletar la actual.
+        $changingPassword = collect([$this->newPassword, $this->newPasswordConfirmation])
             ->contains(fn ($value) => trim((string) $value) !== '');
 
         $rules = [
@@ -173,6 +174,9 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
         }
 
         $this->validate($rules, [
+            'currentPassword.required' => 'Escribe tu contraseña actual para cambiarla.',
+            'newPassword.required' => 'Escribe la nueva contraseña.',
+            'newPasswordConfirmation.required' => 'Confirma la nueva contraseña.',
             'currentPassword.current_password' => 'La contraseña actual no es correcta.',
             'newPassword.same' => 'La confirmación de la nueva contraseña no coincide.',
         ]);

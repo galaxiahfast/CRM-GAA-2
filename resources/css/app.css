@@ -224,7 +224,7 @@ input.auth-login-input.border-red-300[id][name]:focus-visible {
     z-index: 250;
     display: none;
     max-width: 260px;
-    padding: 10px 12px;
+    padding: 12.5px 20px;
     border: 1px solid #d4d4d8;
     border-radius: 10px;
     background: #fff;
@@ -232,7 +232,7 @@ input.auth-login-input.border-red-300[id][name]:focus-visible {
     box-shadow: 0 12px 30px rgb(0 0 0 / 14%);
     font-size: 14px;
     font-weight: 500;
-    line-height: 1.25;
+    line-height: 29px;
     pointer-events: none;
     white-space: nowrap;
 }

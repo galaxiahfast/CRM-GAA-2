@@ -51,7 +51,7 @@
 
                         <section class="rounded-xl border p-5 {{ $fieldsDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                             <div class="flex items-center justify-between gap-3"><h2 class="text-[13px] font-bold uppercase tracking-[.12em] {{ $fieldsDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Apartados incluidos</h2><span class="rounded-full bg-[#DCE9F8] px-3 py-1 text-[11px] font-semibold text-[#1A3A6B]">{{ count($permissionIds) }} seleccionados</span></div>
-                            <fieldset class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2" @disabled($fieldsDisabled || $activeTab === 'eliminar')>
+                            <fieldset class="mt-[10px] grid grid-cols-1 gap-[20px]" @disabled($fieldsDisabled || $activeTab === 'eliminar')>
                                 @foreach ($availablePermissions->groupBy(fn ($permission) => $permission->module ?: 'General') as $module => $modulePermissions)
                                     <div class="rounded-xl border border-[#CAD7E7] bg-white/50 p-4">
                                         <h3 class="mb-[10px] text-[11px] font-bold uppercase tracking-[.1em] text-[#55749D]">{{ $module }}</h3>
@@ -77,7 +77,7 @@
                         @endif
                     </div>
                 </x-slot>
-                <x-slot name="actions"><button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-white">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 font-semibold text-[#1A3A6B] disabled:opacity-50" @disabled($fieldsDisabled || ($activeTab === 'eliminar' && ($selectedGroup?->is_system || ($selectedGroup?->roles_count ?? 0) > 0)))>{{ $activeTab === 'eliminar' ? 'Eliminar' : ($activeTab === 'editar' ? 'Actualizar' : 'Guardar') }}</button></x-slot>
+                <x-slot name="actions"><button type="button" wire:click="closeModal" class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px]">Cancelar</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] disabled:opacity-50 {{ $activeTab === 'eliminar' ? 'border border-red-600 bg-red-600/10 text-red-600' : 'admin-btn admin-btn-primary' }}" @disabled($fieldsDisabled || ($activeTab === 'eliminar' && ($selectedGroup?->is_system || ($selectedGroup?->roles_count ?? 0) > 0)))>{{ $activeTab === 'eliminar' ? 'Eliminar' : ($activeTab === 'editar' ? 'Actualizar' : 'Guardar') }}</button></x-slot>
             </x-administration-form-modal>
         </div>
         @endteleport

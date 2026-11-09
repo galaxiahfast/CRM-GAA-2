@@ -880,7 +880,7 @@
 
         <footer @click.outside="profileMenuOpen = false" class="relative shrink-0 bg-zinc-100 px-[15px] py-[20px]">
             <div class="absolute left-[15px] right-[15px] top-0 border-t border-zinc-200" aria-hidden="true"></div>
-            <div x-show="profileMenuOpen" x-cloak class="z-[120] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :class="collapsed ? 'fixed bottom-[15px] left-[130px] w-[280px]' : 'absolute bottom-[calc(100%+20px)] left-[15px] right-[15px]'">
+            <div x-show="profileMenuOpen" x-cloak data-profile-menu class="fixed z-[120] w-[280px] overflow-hidden rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.16)]" :style="profileMenuOpen ? `left: ${$el.closest('#logo-sidebar').offsetWidth + 20}px; bottom: 20px;` : ''">
                 <a href="{{ route('soporte.preguntas') }}" class="group flex items-center gap-[15px] rounded-xl p-[15px] text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('soporte.preguntas') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }}">
                     <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('soporte.preguntas') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 19.5v-14Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-14Z"/></svg>
                     <span class="truncate">Centro de Ayuda</span>
@@ -1001,6 +1001,11 @@
                 };
 
                 const showCollapsedTooltip = (trigger) => {
+                    if (trigger.closest('[data-profile-menu]')) { hideCollapsedTooltip(); return; }
+
+                    // Con el menú de usuario abierto, el globo del botón taparía «Cerrar Sesión».
+                    if (trigger.getAttribute('aria-expanded') === 'true') { hideCollapsedTooltip(); return; }
+
                     if (sidebar.dataset.collapsed !== 'true') {
                         hideCollapsedTooltip();
                         return;
@@ -1020,13 +1025,15 @@
                         Math.max(10, triggerRect.top + ((triggerRect.height - tooltipRect.height) / 2)),
                     );
 
-                    tooltip.style.left = `${Math.round(sidebar.getBoundingClientRect().right + 10)}px`;
+                    tooltip.style.left = `${Math.round(sidebar.getBoundingClientRect().right + 20)}px`;
                     tooltip.style.top = `${Math.round(top)}px`;
                 };
 
                 sidebar.addEventListener('pointerover', (event) => {
                     const trigger = event.target.closest('a[href], button');
                     if (!trigger || !sidebar.contains(trigger) || trigger === activeTrigger) return;
+                    // Los globos no deben aparecer sobre el menú de usuario: ya muestra sus textos y los taparían.
+                    if (trigger.closest('[data-profile-menu]')) { hideCollapsedTooltip(); return; }
                     showCollapsedTooltip(trigger);
                 });
 
@@ -1040,6 +1047,10 @@
                     if (trigger && sidebar.contains(trigger)) showCollapsedTooltip(trigger);
                 });
                 sidebar.addEventListener('focusout', hideCollapsedTooltip);
+                sidebar.addEventListener('click', (event) => {
+                    const trigger = event.target.closest('a[href], button');
+                    if (trigger) setTimeout(() => { if (trigger.getAttribute('aria-expanded') === 'true') hideCollapsedTooltip(); }, 0);
+                });
                 menuScroller?.addEventListener('scroll', hideCollapsedTooltip, { passive: true });
                 window.addEventListener('resize', hideCollapsedTooltip, { passive: true });
 

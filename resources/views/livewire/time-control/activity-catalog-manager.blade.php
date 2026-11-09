@@ -364,7 +364,7 @@
                     </x-slot>
 
                     <x-slot name="actions">
-                        <button type="button" wire:click="closeModal" class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
+                        <button type="button" wire:click="closeModal" class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                             Cancelar
                         </button>
                         <button
@@ -372,7 +372,7 @@
                             wire:loading.attr="disabled"
                             wire:target="save"
                             @disabled(($activeTab === 'editar' && ! $selectedActivityId) || ($activeTab === 'eliminar' && (! $selectedActivityId || $selectedActivity?->isProtectedCatalogEntry())))
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg px-5 py-3 text-[15px] font-semibold transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white text-[#1A3A6B] hover:bg-[#E7F0FB]' }}"
+                            class="inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60 {{ $activeTab === 'eliminar' ? 'border border-red-600 bg-red-600/10 text-red-600' : 'admin-btn admin-btn-primary' }}"
                         >
                             <span wire:loading.remove wire:target="save">
                                 {{ $activeTab === 'crear' ? 'Guardar' : ($activeTab === 'editar' ? 'Guardar cambios' : 'Eliminar') }}

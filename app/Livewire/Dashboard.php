@@ -358,12 +358,17 @@ class Dashboard extends Component
         $this->dispatch('dashboard-page-changed');
     }
 
-    public function annualReport($customerId)
+    /** Cliente cuyo resumen anual está abierto en la ventana emergente (null = cerrada). */
+    public ?int $annualReportCustomerId = null;
+
+    public function annualReport($customerId): void
     {
-        return redirect()->route('dashboard.customer.report', [
-            'customerId' => $customerId,
-            'year' => $this->selectedYear,
-        ]);
+        $this->annualReportCustomerId = (int) $customerId;
+    }
+
+    public function closeAnnualReport(): void
+    {
+        $this->annualReportCustomerId = null;
     }
 
     public function redirectToCreateCustomer()

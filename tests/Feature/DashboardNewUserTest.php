@@ -40,7 +40,7 @@ class DashboardNewUserTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_annual_report_action_uses_a_valid_redirect_and_selected_year(): void
+    public function test_annual_report_opens_as_a_modal_for_the_selected_year(): void
     {
         $role = Role::create(['role' => 'Administrador', 'permission_profile' => Role::PROFILE_ADMINISTRATOR]);
         $user = User::create(['name' => 'Admin', 'email' => 'annual@test.mx', 'password' => Hash::make('secret123'), 'role_id' => $role->id]);
@@ -49,7 +49,11 @@ class DashboardNewUserTest extends TestCase
         Livewire::actingAs($user)->test(Dashboard::class)
             ->set('selectedYear', 2025)
             ->call('annualReport', $customer->id)
-            ->assertRedirect(route('dashboard.customer.report', ['customerId' => $customer->id, 'year' => 2025]));
+            ->assertSet('annualReportCustomerId', $customer->id)
+            ->assertSee('Desglose anual 2025')
+            ->call('closeAnnualReport')
+            ->assertSet('annualReportCustomerId', null)
+            ->assertDontSee('Desglose anual 2025');
     }
 
     public function test_dashboard_query_count_does_not_grow_with_the_number_of_customers(): void
@@ -103,15 +107,15 @@ class DashboardNewUserTest extends TestCase
 
         Livewire::actingAs($user)->test(Dashboard::class)
             ->assertSee('Mostrando 1–8 de 25')
-            ->assertSee('Cliente 1')
-            ->assertDontSee('Cliente 25')
+            ->assertSee('CLIENTE 1')
+            ->assertDontSee('CLIENTE 25')
             ->call('setCustomerPage', 2)
             ->assertSet('customerPage', 2)
             ->assertSee('Mostrando 9–16 de 25')
             ->call('setCustomerPage', 99)
             ->assertSet('customerPage', 4)
             ->assertSee('Mostrando 25–25 de 25')
-            ->assertSee('Cliente 25')
+            ->assertSee('CLIENTE 25')
             ->call('setCustomerColumns', 2)
             ->assertSet('customerColumns', 2)
             ->assertSet('customerPage', 7)

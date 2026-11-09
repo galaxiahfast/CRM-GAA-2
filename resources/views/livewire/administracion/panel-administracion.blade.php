@@ -62,9 +62,12 @@
     data-home
     class="administration-monochrome relative min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 overflow-hidden bg-white text-[15px] text-zinc-700"
 >
-    <x-panel-styles />
-    <x-home-styles />
-    <x-administration-modal-styles />
+    {{-- Los estilos van a la cabecera de la página (una sola vez): dentro del componente se enviaban completos en cada actualización de Livewire. --}}
+    @push('styles')
+        <x-panel-styles />
+        <x-home-styles />
+        <x-administration-modal-styles />
+    @endpush
 
     {{-- Aviso flotante (Usuario actualizado., Usuario eliminado., etc.): llega con el evento «notify» y se oculta solo. --}}
     <div
@@ -81,6 +84,7 @@
         <span x-text="text"></span>
     </div>
 
+    @push('styles')
     <style hidden>
         .administration-monochrome,
         .administration-monochrome > section,
@@ -168,10 +172,6 @@
         .unassigned-users-scrollbar {
             overscroll-behavior: contain;
         }
-        .unassigned-users-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B !important; border-radius: 9999px; }
-        .unassigned-users-scrollbar::-webkit-scrollbar-thumb:hover { background: #1A3A6B !important; }
         .administration-record-scroll {
             scrollbar-width: none !important;
             overscroll-behavior: contain;
@@ -249,23 +249,26 @@
         .administration-modal-scrollbar::-webkit-scrollbar { width: 6px; }
         .administration-modal-scrollbar::-webkit-scrollbar-track { background: #F3F3F3; border-radius: 9999px; }
         .administration-modal-scrollbar::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
-        /* Ventana de usuario: mismas reglas del modal de Usuarios (blanco, bordes #d4d4d8). */
-        .org-user-modal .hierarchy-selection-list {
-            min-height: 10rem;
-            max-height: 12rem;
-            padding: 0.5rem;
-            border: 1px solid #d4d4d8;
-            border-radius: 0.75rem;
-            background-color: #fff;
-            color: #000;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #1A3A6B #f4f4f5;
+        /* Listas de jefe y subordinados: mismo diseño que las listas del panel (filas de 20px, sin líneas ni grises). */
+        .org-user-modal .hierarchy-selection-list { max-height: 300px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+        .org-pick-box { border: 1px solid #d4d4d8; border-radius: 0.75rem; background-color: transparent; }
+        html.module-dark-theme .org-pick-box { border-color: #27272a; }
+        .org-pick-row { transition: background-color 150ms ease; }
+        .org-pick-row:hover { background-color: #f4f4f5; }
+        html.module-dark-theme .org-pick-row:hover { background-color: #131316; }
+        .org-pick-row input { accent-color: #15803d; }
+        html.module-dark-theme .org-pick-row input { accent-color: #4ade80; }
+        .org-pick-row .org-pick-name { color: inherit; }
+        .org-pick-row:has(input:checked) .org-pick-name { color: #1A3A6B; }
+        html.module-dark-theme .org-pick-row:has(input:checked) .org-pick-name { color: #6aa9ff; }
+        /* Campos y valores del formulario: en el modo oscuro usan el fondo de la página (no el gris), con borde fino. */
+        html.module-dark-theme #main-content .org-user-modal :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]),
+        html.module-dark-theme #main-content .org-user-modal [class*="bg-white"]:not(.org-user-modal) {
+            background-color: #09090b !important;
+            border-color: #27272a !important;
+            color: #ffffff !important;
         }
-        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar { width: 6px; }
-        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-track { background: #f4f4f5; border-radius: 9999px; }
-        .org-user-modal .hierarchy-selection-list::-webkit-scrollbar-thumb { background: #1A3A6B; border-radius: 9999px; }
-
+        html.module-dark-theme #main-content .org-user-modal :is(input, select, textarea):disabled { background-color: #0f0f12 !important; }
 
         /* Conectores del organigrama: línea de 2px, centrada exactamente en cada tarjeta, con esquinas redondeadas de 12px
            en la primera y la última rama. Cada .org-child mide lo que su tarjeta más 14px a cada lado, así las barras de
@@ -308,23 +311,12 @@
         }
 
         /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
-        #search-results,
-        #physical-area-results { scrollbar-width: auto; scrollbar-color: auto; }
-        #search-results::-webkit-scrollbar,
-        #physical-area-results::-webkit-scrollbar { width: 7px; height: 7px; }
-        #search-results::-webkit-scrollbar-track,
-        #physical-area-results::-webkit-scrollbar-track { background: transparent; }
-        #search-results::-webkit-scrollbar-thumb,
-        #physical-area-results::-webkit-scrollbar-thumb { background: #1A3A6B; border: 2px solid transparent; border-radius: 9999px; background-clip: padding-box; }
-        #search-results::-webkit-scrollbar-button,
-        #physical-area-results::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
-
         #fullscreen-toggle {
             outline: none !important;
             box-shadow: none !important;
             border: 1px solid var(--panel-border);
-            width: 50px;
-            height: 50px;
+            width: 47px;
+            height: 47px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -450,6 +442,7 @@
             background-color: #26262b !important;
         }
     </style>
+    @endpush
 
     <div class="w-full">
     <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
@@ -662,7 +655,12 @@
     @if ($canManageOrganization)
 
     @unless ($orgChartPage)
-    @include('livewire.administracion.partials.organization-directory')
+    {{-- wire:ignore: en las actualizaciones el directorio no se envía y la caja conserva su contenido; al cambiar la versión se reemplaza. --}}
+    <div wire:ignore wire:key="administration-organization-directory-slot-{{ $directoryStampKey }}">
+        @if ($includeDirectory)
+            @include('livewire.administracion.partials.organization-directory')
+        @endif
+    </div>
     @endunless
 
     @if ($orgChartPage)
@@ -748,14 +746,18 @@
                                 id="node-search-input"
                                 type="text" 
                                 placeholder="Buscar colaborador..."
-                                class="panel-surface panel-border panel-text rounded-lg border text-[15px]"
-                                style="height: 50px; min-width: 220px; width: 100%; padding: 0 16px; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
+                                class="panel-field rounded-xl border px-[20px] py-[15px] leading-none"
+                                style="min-width: 220px; width: 100%; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
                                 autocomplete="off"
                             >
-                            <div 
-                                id="search-results"
-                                style="position: absolute; top: calc(100% + 4px); right: 0; width: 400px; max-width: calc(100vw - 80px); background: var(--panel-surface); border: 1px solid var(--panel-border); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 100;"
-                            ></div>
+                            <div x-data="backupOverlayScroll()" style="position: absolute; top: calc(100% + 10px); right: 0; width: 400px; max-width: calc(100vw - 80px); z-index: 100;">
+                                <div
+                                    id="search-results" x-ref="scroller" @scroll="update()" @mouseenter="update()"
+                                    class="administration-form-scrollbar panel-surface panel-border rounded-xl border"
+                                    style="max-height: 300px; overflow-y: auto; overflow-x: hidden; display: none;"
+                                ></div>
+                                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                            </div>
                         </div>
 
                         <!-- Filtro por área con búsqueda -->
@@ -767,16 +769,20 @@
                             }" @click.away="open = false; query = ''" @keydown.escape.window="open = false; query = ''">
                             <input id="physical-area-filter" x-ref="areaInput" type="text" x-model="query" @focus="open = true" @input="open = true"
                                 :placeholder="selected && !open ? (areas.find(area => area.id === selected)?.name || 'Todas las áreas') : 'Todas las áreas'"
-                                class="panel-surface panel-border panel-text h-[50px] w-full rounded-lg border px-4 pr-10 text-[15px] focus:outline-none focus:ring-0"
+                                class="panel-field w-full rounded-xl border py-[15px] pl-[20px] pr-[48px] leading-none focus:outline-none focus:ring-0"
                                 autocomplete="off" aria-label="Buscar o filtrar por área">
                             <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.areaInput.focus())"
                                 class="absolute inset-y-0 right-0 flex w-10 items-center justify-center focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
                                 <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                             </button>
-                            <div x-cloak x-show="open" id="physical-area-results" class="panel-surface panel-border absolute left-0 right-0 top-[54px] max-h-[300px] overflow-y-auto rounded-lg border" style="z-index: 100;">
-                                <button type="button" @mousedown.prevent="choose('')" class="home-row panel-border block w-full border-b px-4 py-3 text-left text-[15px]">Todas las áreas</button>
-                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" x-text="area.name" class="home-row panel-border block w-full border-b px-4 py-3 text-left text-[15px]"></button></template>
-                                <div x-show="filteredAreas.length === 0" class="px-4 py-3 text-center text-sm">No se encontraron áreas</div>
+                            <div x-cloak x-show="open" class="panel-surface panel-border absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden rounded-xl border" style="z-index: 100;"
+                                x-data="backupOverlayScroll()" x-effect="open; $nextTick(() => update())">
+                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" id="physical-area-results" class="administration-form-scrollbar max-h-[300px] overflow-y-auto overflow-x-hidden">
+                                <button type="button" @mousedown.prevent="choose('')" class="panel-option block w-full truncate p-[20px] text-left leading-none">Todas las áreas</button>
+                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" :aria-selected="selected === area.id" x-text="area.name" class="panel-option block w-full truncate p-[20px] text-left leading-none"></button></template>
+                                <div x-show="filteredAreas.length === 0" class="p-[20px] text-center leading-none">No se encontraron áreas</div>
+                                </div>
+                                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
                         </div>
 
@@ -832,7 +838,8 @@
                     </div>
                     <span class="leading-none">{{ count($unassignedUsers) }}</span>
                 </header>
-                <div class="unassigned-users-scrollbar" style="height: 663px; overflow-y: auto; padding: 15px 20px;">
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative" style="height: 663px;">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="unassigned-users-scrollbar administration-form-scrollbar h-full overflow-y-auto" style="padding: 15px 20px;">
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     @if (! $orgChartLoaded)
                         <p class="text-[15px]" style="line-height: 1.3; margin: 0; padding: 0;">Cargando usuarios…</p>
@@ -886,6 +893,8 @@
                         </p>
                     @endif
                 </div>
+                </div>
+                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
             </section>
 
@@ -961,7 +970,7 @@
                     <section class="rounded-xl border border-[#CAD7E7] p-5">
                         <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Datos del puesto</h2>
                         <label for="new-job-position-name" class="block text-[15px] font-medium text-gray-700">Nombre del puesto</label>
-                        <input id="new-job-position-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newJobPositionName" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Contador Senior" autofocus>
+                        <input id="new-job-position-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newJobPositionName" class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Contador Senior" autofocus>
                         <x-input-error for="newJobPositionName" class="mt-2 text-[15px]" />
                         <fieldset class="mt-[15px]">
                             <legend class="block text-[15px] font-medium text-gray-700">Tipo de pago</legend>
@@ -997,7 +1006,7 @@
                             <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $jobPositionDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Datos del puesto</h2>
                             <div>
                                 <label for="edit-job-position-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
-                                <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" @disabled($jobPositionDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                                <input id="edit-job-position-name" type="text" maxlength="255" wire:model.defer="editJobPositionName" @disabled($jobPositionDisabled) class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
                                 <x-input-error for="editJobPositionName" class="mt-2 text-[15px]" />
                             </div>
                             <fieldset class="mt-[15px]" @disabled($jobPositionDisabled)>
@@ -1034,7 +1043,7 @@
                         <section class="rounded-xl border p-5 transition-colors {{ $jobPositionDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                             <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $jobPositionDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
                             <label for="delete-job-position-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre exacto</label>
-                            <input id="delete-job-position-confirmation" type="text" wire:model.defer="deleteJobPositionConfirmation" @disabled($jobPositionDisabled) autocomplete="off" placeholder="{{ $jobPositionDisabled ? 'Selecciona primero un puesto' : 'Nombre exacto del puesto' }}" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <input id="delete-job-position-confirmation" type="text" wire:model.defer="deleteJobPositionConfirmation" @disabled($jobPositionDisabled) autocomplete="off" placeholder="{{ $jobPositionDisabled ? 'Selecciona primero un puesto' : 'Nombre exacto del puesto' }}" class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
                             <x-input-error for="deleteJobPositionConfirmation" class="mt-2 text-[15px]" />
                         </section>
                     </div>
@@ -1044,11 +1053,11 @@
             <x-slot name="actions">
                 @if ($jobPositionModalTab === 'crear')
                 <button type="button" wire:click="closeJobPositionModal"
-                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
+                    class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                     Cancelar
                 </button>
                 <button type="submit" wire:loading.attr="disabled" wire:target="saveJobPosition"
-                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                     <svg wire:loading wire:target="saveJobPosition" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -1058,17 +1067,17 @@
                 </button>
                 @else
                     <button type="button" wire:click="closeJobPositionModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
+                        class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                         Cancelar
                     </button>
                     @if ($jobPositionModalTab === 'editar')
                         <button type="button" wire:click="updateJobPosition" wire:loading.attr="disabled" wire:target="updateJobPosition" @disabled($jobPositionDisabled)
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Actualizar
                         </button>
                     @else
                         <button type="button" wire:click="deleteJobPosition" wire:loading.attr="disabled" wire:target="deleteJobPosition" @disabled($jobPositionDisabled)
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            class="inline-flex min-w-28 items-center justify-center rounded-xl border border-red-600 bg-red-600/10 px-[20px] py-[15px] text-[15px] text-red-600 transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Eliminar
                         </button>
                     @endif
@@ -1109,7 +1118,7 @@
                     <section class="rounded-xl border border-[#CAD7E7] p-5">
                         <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Datos del área</h2>
                         <label for="new-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nombre del área o departamento</label>
-                        <input id="new-physical-area-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newPhysicalAreaName" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Auditoría" autofocus>
+                        <input id="new-physical-area-name" type="text" maxlength="255" autocomplete="off" wire:model.defer="newPhysicalAreaName" class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] shadow-none outline-none focus:border-[#B7CEEA] focus:outline-none focus:ring-0" placeholder="Ej. Auditoría" autofocus>
                         <x-input-error for="newPhysicalAreaName" class="mt-2 text-[15px]" />
                     </section>
                 @elseif ($physicalAreaModalTab === 'editar')
@@ -1131,7 +1140,7 @@
                         <section class="rounded-xl border p-5 transition-colors {{ $physicalAreaDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                             <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $physicalAreaDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Datos del área</h2>
                             <label for="edit-physical-area-name" class="block text-[15px] font-medium text-gray-700">Nuevo nombre</label>
-                            <input id="edit-physical-area-name" type="text" maxlength="255" wire:model.defer="editPhysicalAreaName" @disabled($physicalAreaDisabled) class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <input id="edit-physical-area-name" type="text" maxlength="255" wire:model.defer="editPhysicalAreaName" @disabled($physicalAreaDisabled) class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
                             <x-input-error for="editPhysicalAreaName" class="mt-2 text-[15px]" />
                         </section>
                     </div>
@@ -1154,7 +1163,7 @@
                         <section class="rounded-xl border p-5 transition-colors {{ $physicalAreaDisabled ? 'border-[#D5DDE8] bg-[#F1F3F6] opacity-75' : 'border-[#CAD7E7] bg-transparent' }}">
                             <h2 class="mb-[10px] text-[13px] font-bold uppercase leading-5 tracking-[.12em] {{ $physicalAreaDisabled ? 'text-[#8290A3]' : 'text-[#1A3A6B]' }}">Confirmar eliminación</h2>
                             <label for="delete-physical-area-confirmation" class="block text-[15px] font-medium text-gray-700">Escribe manualmente el nombre exacto</label>
-                            <input id="delete-physical-area-confirmation" type="text" wire:model.defer="deletePhysicalAreaConfirmation" @disabled($physicalAreaDisabled) autocomplete="off" placeholder="{{ $physicalAreaDisabled ? 'Selecciona primero un área' : 'Nombre exacto del área' }}" class="mt-[10px] block h-11 w-full rounded-lg border border-[#B7CEEA] bg-transparent px-3 text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
+                            <input id="delete-physical-area-confirmation" type="text" wire:model.defer="deletePhysicalAreaConfirmation" @disabled($physicalAreaDisabled) autocomplete="off" placeholder="{{ $physicalAreaDisabled ? 'Selecciona primero un área' : 'Nombre exacto del área' }}" class="mt-[10px] block w-full rounded-lg border border-[#B7CEEA] bg-transparent px-[20px] py-[15px] leading-none text-[15px] text-[#102A52] outline-none focus:border-[#B7CEEA] focus:ring-0 disabled:cursor-not-allowed disabled:border-[#D5DDE8] disabled:bg-[#E8EBF0] disabled:text-[#98A4B3]">
                             <x-input-error for="deletePhysicalAreaConfirmation" class="mt-2 text-[15px]" />
                         </section>
                     </div>
@@ -1164,11 +1173,11 @@
             <x-slot name="actions">
                 @if ($physicalAreaModalTab === 'crear')
                 <button type="button" wire:click="closePhysicalAreaModal"
-                    class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
+                    class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                     Cancelar
                 </button>
                 <button type="submit" wire:loading.attr="disabled" wire:target="savePhysicalArea"
-                    class="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
+                    class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">
                     <svg wire:loading wire:target="savePhysicalArea" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -1178,17 +1187,17 @@
                 </button>
                 @else
                     <button type="button" wire:click="closePhysicalAreaModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0">
+                        class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                         Cancelar
                     </button>
                     @if ($physicalAreaModalTab === 'editar')
                         <button type="button" wire:click="updatePhysicalArea" wire:loading.attr="disabled" wire:target="updatePhysicalArea" @disabled($physicalAreaDisabled)
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-white px-5 py-3 text-[15px] font-semibold text-[#1A3A6B] transition hover:bg-[#E7F0FB] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            class="admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Actualizar
                         </button>
                     @else
                         <button type="button" wire:click="deletePhysicalArea" wire:loading.attr="disabled" wire:target="deletePhysicalArea" @disabled($physicalAreaDisabled)
-                            class="inline-flex min-w-28 items-center justify-center rounded-lg bg-red-600 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
+                            class="inline-flex min-w-28 items-center justify-center rounded-xl border border-red-600 bg-red-600/10 px-[20px] py-[15px] text-[15px] text-red-600 transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50">
                             Eliminar
                         </button>
                     @endif
@@ -1234,21 +1243,21 @@
             data-administration-modal="permissions"
         >
             <div
-                class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[22px] border border-[#1A3A6B] bg-[#F7FAFE] shadow-2xl"
+                class="administration-form-panel relative flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl"
                 style="height: min(86vh, 760px); max-height: 86vh; font-size: 15px; overscroll-behavior: contain;"
             >
-                <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-white/10 bg-[#1A3A6B] p-5">
+                <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
                     <div class="flex min-w-0 items-center gap-[15px]">
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white">
+                        <div class="admin-title-icon flex shrink-0 items-center justify-center">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                         </div>
-                        <div class="flex min-w-0 flex-col gap-[10px]">
-                            <h2 id="permissions-modal-title" class="truncate text-[15px] font-semibold leading-none text-white" style="margin: 0;">
+                        <div class="flex min-w-0 flex-col gap-[15px]">
+                            <h1 id="permissions-modal-title" class="truncate text-[15px] leading-none text-black" style="margin: 0;">
                                 Gestionar permisos
-                            </h2>
-                            <p class="truncate text-[15px] leading-none text-[#C9E1FF]" style="margin: 0;">
+                            </h1>
+                            <p class="truncate text-[15px] leading-none text-black" style="margin: 0;">
                                 Accesos vigentes de Administrador y Auxiliar
                             </p>
                         </div>
@@ -1257,55 +1266,56 @@
                     <button
                         type="button"
                         wire:click="closePermissionsModal"
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-xl leading-none text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center text-xl leading-none text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0"
                         aria-label="Cerrar"
                     >
                         &times;
                     </button>
                 </header>
 
-                <div class="administration-modal-scrollbar organization-card-surface min-h-0 flex-1 overflow-y-auto" style="overscroll-behavior: contain;">
-                    <div class="flex flex-col gap-5 p-6 text-[15px]">
-                        <div class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar absolute inset-0 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
+                    <div class="flex flex-col gap-[20px] p-[20px] text-[15px]">
+                        <div class="rounded-xl border border-zinc-200 bg-transparent p-[20px]">
                             <div class="flex items-start gap-[15px]">
-                                <svg class="mt-0.5 h-5 w-5 shrink-0 text-[#1A3A6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <svg class="admin-title-icon h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <div class="min-w-0">
-                                    <p class="text-[15px] font-semibold text-gray-800">Configuración de acceso actual</p>
-                                    <p class="mt-2 text-[15px] leading-6 text-gray-500">
+                                    <p class="leading-none">Configuración de acceso actual</p>
+                                    <p class="mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px]">
                                         Esta vista refleja las reglas vigentes del sistema. La autorización continúa protegida por sus políticas y middleware actuales.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-[15px] md:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-[20px] md:grid-cols-2">
                             @foreach ($permissionProfiles as $roleName => $profile)
                                 @if ($roles->contains('role', $roleName))
-                                    <article class="flex min-w-0 flex-col rounded-xl border border-[#CAD7E7] bg-white/45 p-5" data-permission-role="{{ $roleName }}">
-                                        <div class="min-w-0 border-b border-gray-200 pb-[15px]">
-                                            <h3 class="truncate text-[15px] font-semibold text-gray-900" title="{{ $roleName }}">{{ $roleName }}</h3>
-                                            <span class="mt-[10px] inline-flex max-w-full rounded-full bg-blue-100 px-3 py-1 text-[15px] font-medium text-[#1A3A6B]">
+                                    <article class="flex min-w-0 flex-col rounded-xl border border-zinc-200 bg-transparent p-[20px]" data-permission-role="{{ $roleName }}">
+                                        <div class="min-w-0 border-b border-zinc-200 pb-[20px]">
+                                            <h3 class="admin-section-title truncate text-[15px] leading-none" title="{{ $roleName }}">{{ $roleName }}</h3>
+                                            <span class="mt-[15px] inline-flex max-w-full text-[15px] leading-none">
                                                 {{ $profile['label'] }}
                                             </span>
-                                            <p class="mt-[10px] text-[15px] leading-6 text-gray-500">{{ $profile['description'] }}</p>
+                                            <p class="mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px]">{{ $profile['description'] }}</p>
                                         </div>
 
-                                        <ul class="mt-[15px] flex flex-col gap-[10px]" aria-label="Permisos de {{ $roleName }}">
+                                        <ul class="mt-[20px] flex flex-col gap-[15px]" aria-label="Permisos de {{ $roleName }}">
                                             @foreach ($profile['permissions'] as $permission)
-                                                <li class="flex min-w-0 items-center gap-[10px] rounded-lg border border-gray-200 bg-white px-3 py-2.5">
-                                                    <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-white">
+                                                <li class="flex min-w-0 items-center gap-[10px] rounded-xl border border-zinc-200 bg-transparent px-[20px] py-[15px]">
+                                                    <span class="admin-title-icon flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-current">
                                                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                                         </svg>
                                                     </span>
-                                                    <span class="min-w-0 truncate text-[15px] text-gray-700" title="{{ $permission }}">{{ $permission }}</span>
+                                                    <span class="min-w-0 truncate text-[15px] leading-none" title="{{ $permission }}">{{ $permission }}</span>
                                                 </li>
                                             @endforeach
                                         </ul>
                                         @php($permissionRole = $roles->firstWhere('role', $roleName))
-                                        <button type="button" wire:click="openPermissionRoleEditor({{ $permissionRole->id }})" class="mt-[15px] inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#1A3A6B] px-4 text-[14px] font-semibold text-white hover:bg-[#15305a] focus:outline-none focus:ring-0">
+                                        <button type="button" wire:click="openPermissionRoleEditor({{ $permissionRole->id }})" class="admin-btn admin-btn-primary mt-[20px] inline-flex items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
                                             Editar {{ $roleName }}
                                         </button>
@@ -1314,25 +1324,27 @@
                             @endforeach
                         </div>
 
-                        <section class="rounded-xl border border-[#CAD7E7] bg-transparent p-5">
+                        <section class="rounded-xl border border-zinc-200 bg-transparent p-[20px]">
                             <h3 class="text-[13px] font-bold uppercase leading-5 tracking-[.12em] text-[#1A3A6B]">Grupos de permisos</h3>
-                            <div class="mt-[10px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
-                                <button type="button" wire:click="openRoleManagement('crear')" class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#B7CEEA] bg-white/50 px-4 text-[14px] font-semibold text-[#1A3A6B] hover:bg-[#EEF5FF]">
+                            <div class="mt-[20px] grid grid-cols-1 gap-[20px] sm:grid-cols-2">
+                                <button type="button" wire:click="openRoleManagement('crear')" class="admin-btn admin-btn-secondary inline-flex items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                                     <span class="text-lg">+</span> Agregar grupo
                                 </button>
-                                <button type="button" wire:click="openRoleManagement('eliminar')" class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#B7CEEA] bg-white/50 px-4 text-[14px] font-semibold text-[#1A3A6B] hover:bg-[#EEF5FF]">
+                                <button type="button" wire:click="openRoleManagement('eliminar')" class="admin-btn admin-btn-secondary inline-flex items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0">
                                     Administrar o eliminar grupos
                                 </button>
                             </div>
                         </section>
                     </div>
                 </div>
+                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                </div>
 
-                <footer class="flex flex-shrink-0 justify-end border-t border-white/10 bg-[#1A3A6B] p-5">
+                <footer class="flex flex-shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                     <button
                         type="button"
                         wire:click="closePermissionsModal"
-                        class="inline-flex min-w-28 items-center justify-center rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-[15px] font-medium text-white transition hover:bg-white/20 focus:outline-none focus:ring-0"
+                        class="admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] transition hover:opacity-90 focus:outline-none focus:ring-0"
                     >
                         Cerrar
                     </button>
@@ -1348,11 +1360,11 @@
 @if ($selectedUserDetails)
     {{-- Variables de estilo del formulario (en línea, para no mezclarse con otros bloques de PHP del panel). --}}
     @php($detailName = $selectedUserDetails['name'] ?? 'Usuario')
-    @php($detailInput = 'mt-[20px] block h-11 w-full rounded-xl border border-zinc-200 bg-white px-[15px] text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400')
+    @php($detailInput = 'mt-[20px] block w-full rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] leading-none text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400')
     @php($detailLabel = 'block text-[15px] font-medium text-gray-700')
-    @php($detailValue = 'mt-[20px] flex min-h-[44px] w-full cursor-default items-center break-words rounded-xl border border-zinc-200 bg-white px-[15px] py-[10px] text-[15px] text-black')
-    @php($detailSecondaryButton = 'inline-flex h-11 min-w-28 items-center justify-center rounded-xl border border-zinc-200 bg-white px-[20px] text-[15px] font-medium leading-none text-black transition hover:bg-zinc-100 focus:outline-none focus:ring-0')
-    @php($detailPrimaryButton = 'inline-flex h-11 min-w-28 items-center justify-center gap-[10px] rounded-xl bg-black px-[20px] text-[15px] font-semibold leading-none text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
+    @php($detailValue = 'mt-[20px] flex w-full cursor-default items-center break-words rounded-xl border border-zinc-200 bg-white px-[20px] py-[7.5px] text-[15px] leading-[30px] text-black')
+    @php($detailSecondaryButton = 'admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0')
+    @php($detailPrimaryButton = 'admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
     <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
         {{-- Mismo marco que el modal de Usuarios: blanco, bordes grises, 20px de relleno. --}}
         <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
@@ -1360,17 +1372,17 @@
             {{-- ===== ENCABEZADO (fijo) ===== --}}
             <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
                 <div class="flex min-w-0 items-center gap-[15px]">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-black">
+                    <div class="admin-title-icon flex shrink-0 items-center justify-center">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM5 21a7 7 0 0 1 14 0" />
                         </svg>
                     </div>
-                    <div class="flex min-w-0 flex-col gap-[10px]">
+                    <div class="flex min-w-0 flex-col gap-[15px]">
                         <h1 id="user-details-title" class="truncate pb-[3px] text-[15px] font-semibold leading-none text-black" title="{{ $detailName }}" style="margin: 0;">{{ $detailName }}</h1>
                         <p class="truncate pb-[3px] text-[15px] leading-none text-zinc-500" style="margin: 0;">{{ $isEditingUser ? 'Actualiza los datos de acceso y el perfil organizacional.' : 'Detalles del usuario' }}</p>
                     </div>
                 </div>
-                <button type="button" wire:click="closeUserDetails" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-xl leading-none text-zinc-500 transition hover:bg-zinc-100 hover:text-black focus:outline-none focus:ring-0" aria-label="Cerrar">&times;</button>
+                <button type="button" wire:click="closeUserDetails" class="flex h-10 w-10 shrink-0 items-center justify-center text-xl leading-none text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" aria-label="Cerrar">&times;</button>
             </header>
 
             @if ($isEditingUser)
@@ -1381,49 +1393,49 @@
                             <div class="p-[20px] text-[15px]">
                                 <div class="flex flex-col gap-[20px]">
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Datos personales</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Datos personales</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
                                                 <label for="edit-name" class="{{ $detailLabel }}">Nombre</label>
                                                 <input id="edit-name" type="text" class="{{ $detailInput }}" wire:model="userForm.name">
-                                                <x-input-error for="userForm.name" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="edit-last-name" class="{{ $detailLabel }}">Apellido</label>
                                                 <input id="edit-last-name" type="text" class="{{ $detailInput }}" wire:model="userForm.last_name">
-                                                <x-input-error for="userForm.last_name" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.last_name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-email" class="{{ $detailLabel }}">Email</label>
                                                 <input id="edit-email" type="email" class="{{ $detailInput }}" wire:model="userForm.email">
-                                                <x-input-error for="userForm.email" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.email" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                         </div>
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Perfil organizacional</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Perfil organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-role" class="{{ $detailLabel }}">Rol</label>
                                                 <x-administration-search-picker style="margin-top: 20px;" input-id="edit-role" model="userForm.role_id" :selected="$userForm['role_id'] ?? null" :items="$roles->map(fn ($availableRole) => ['id' => $availableRole->id, 'label' => $availableRole->role])" placeholder="Buscar rol..." empty-message="No se encontraron roles." />
-                                                <x-input-error for="userForm.role_id" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.role_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="edit-position" class="{{ $detailLabel }}">Puesto</label>
                                                 <x-administration-search-picker style="margin-top: 20px;" input-id="edit-position" model="userForm.job_position_id" :selected="$userForm['job_position_id'] ?? null" :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])" placeholder="Buscar puesto..." empty-message="No se encontraron puestos." />
-                                                <x-input-error for="userForm.job_position_id" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.job_position_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="edit-area" class="{{ $detailLabel }}">Área / departamento</label>
                                                 <x-administration-search-picker style="margin-top: 20px;" input-id="edit-area" model="userForm.physical_area_id" :selected="$userForm['physical_area_id'] ?? null" :items="$physicalAreas->map(fn ($area) => ['id' => $area->id, 'label' => $area->name])" placeholder="Buscar área o departamento..." empty-message="No se encontraron áreas." />
-                                                <x-input-error for="userForm.physical_area_id" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.physical_area_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                         </div>
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Configuración del checador{{ ($userForm['is_hourly_position'] ?? false) ? ' y nómina' : '' }}</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Configuración del checador{{ ($userForm['is_hourly_position'] ?? false) ? ' y nómina' : '' }}</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-employee-id" class="{{ $detailLabel }}">ID del reloj checador · opcional</label>
@@ -1450,7 +1462,7 @@
                                                     >
                                                     <button
                                                         type="button"
-                                                        class="absolute right-0 top-0 flex h-11 w-12 items-center justify-center text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0"
+                                                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0"
                                                         @click="open = !open"
                                                         aria-label="Mostrar sugerencias del reloj checador"
                                                     >
@@ -1479,7 +1491,7 @@
                                                                 data-person-name="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}"
                                                                 x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())"
                                                                 @click="search = $el.dataset.employeeId; $wire.set('userForm.employee_id', $el.dataset.employeeId); open = false"
-                                                                class="flex w-full min-w-0 items-center gap-4 px-4 py-3 text-left transition hover:bg-zinc-100 focus:bg-zinc-100 focus:outline-none focus:ring-0"
+                                                                class="flex w-full min-w-0 items-center gap-[15px] px-[20px] py-[15px] text-left transition hover:bg-zinc-100 focus:bg-zinc-100 focus:outline-none focus:ring-0"
                                                                 role="option"
                                                             >
                                                                 <span class="w-20 shrink-0 truncate text-[15px] text-black" title="{{ $employeeIdSuggestion->employeeID }}">{{ $employeeIdSuggestion->employeeID }}</span>
@@ -1488,88 +1500,90 @@
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                                <p class="mt-[6px] text-[15px] text-[#71717a]">Selecciona un ID registrado; la sugerencia muestra el nombre detectado por el checador.</p>
-                                                <x-input-error for="userForm.employee_id" class="mt-2 text-[15px]" />
+                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Selecciona un ID registrado; la sugerencia muestra el nombre detectado por el checador.</p>
+                                                <x-input-error for="userForm.employee_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
 
                                             @if ($userForm['is_hourly_position'] ?? false)
                                                 <div class="min-w-0">
                                                     <label for="edit-hourly-rate" class="{{ $detailLabel }}">Precio por hora</label>
                                                     <input id="edit-hourly-rate" type="number" step="0.01" class="{{ $detailInput }}" wire:model="userForm.hourly_rate">
-                                                    <x-input-error for="userForm.hourly_rate" class="mt-2 text-[15px]" />
+                                                    <x-input-error for="userForm.hourly_rate" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                                 </div>
                                                 <div class="min-w-0">
                                                     <label for="edit-food-allowance" class="{{ $detailLabel }}">Apoyo económico por día</label>
                                                     <input id="edit-food-allowance" type="number" step="0.01" class="{{ $detailInput }}" wire:model="userForm.food_allowance">
-                                                    <x-input-error for="userForm.food_allowance" class="mt-2 text-[15px]" />
+                                                    <x-input-error for="userForm.food_allowance" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                                 </div>
                                             @endif
                                         </div>
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Jerarquía</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Jerarquía</h2>
                                         <div class="flex flex-col gap-[20px]">
                                             <div class="min-w-0">
                                                 <span id="edit-superiors-label" class="{{ $detailLabel }}">Jefe directo</span>
-                                                <p class="mt-[6px] text-[15px] text-[#71717a]">Solo se permite uno y debe estar asignado al organigrama.</p>
-                                                <div id="edit-superiors" class="hierarchy-selection-list mt-[14px] block w-full text-[15px]" role="group" aria-labelledby="edit-superiors-label">
-                                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-zinc-100">
-                                                        <input type="radio" name="edit-superior" wire:click="clearSuperiorSelection" @checked(empty($userForm['superior_ids'])) class="h-4 w-4 shrink-0 border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                                        <span class="text-[15px] text-black">Sin jefe directo</span>
-                                                    </label>
-                                                    @forelse ($superiorCandidates as $superiorCandidate)
-                                                        <div wire:key="superior-candidate-{{ $superiorCandidate->id }}">
-                                                            <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-zinc-100">
-                                                                <input type="radio" name="edit-superior" value="{{ $superiorCandidate->id }}" wire:click="selectSuperior({{ $superiorCandidate->id }})" @checked(in_array($superiorCandidate->id, $userForm['superior_ids'] ?? [])) class="h-4 w-4 shrink-0 border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                                                <span class="min-w-0 flex-1" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ mb_strtolower((string) $superiorCandidate->email) }}">
-                                                                    <span class="block truncate text-[15px] text-black">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
-                                                                    <span class="mt-[5px] block truncate text-[15px] text-[#71717a]">{{ mb_strtolower((string) $superiorCandidate->email) }}</span>
-                                                                </span>
-                                                            </label>
-                                                        </div>
-                                                    @empty
-                                                        <p class="px-3 py-2.5 text-[15px] text-[#71717a]">No hay colaboradores asignados al organigrama.</p>
-                                                    @endforelse
+                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Marca a una sola persona; vuelve a marcarla para quitarla. Debe estar asignada al organigrama.</p>
+                                                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
+                                                    <div id="edit-superiors" x-ref="scroller" @scroll="update()" @mouseenter="update()" class="hierarchy-selection-list administration-form-scrollbar block w-full text-[15px]" role="group" aria-labelledby="edit-superiors-label">
+                                                        @forelse ($superiorCandidates as $superiorCandidate)
+                                                            <div wire:key="superior-candidate-{{ $superiorCandidate->id }}">
+                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[15px] p-[20px] text-left">
+                                                                    <input type="checkbox" value="{{ $superiorCandidate->id }}" wire:click="toggleSuperior({{ $superiorCandidate->id }})" @checked(in_array($superiorCandidate->id, $userForm['superior_ids'] ?? [])) class="h-4 w-4 shrink-0 focus:outline-none focus:ring-0">
+                                                                    <span class="flex min-w-0 flex-1 items-center gap-[20px]" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ mb_strtolower((string) $superiorCandidate->email) }}">
+                                                                        <span class="org-pick-name min-w-0 max-w-[55%] shrink-0 truncate leading-none">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
+                                                                        <span class="min-w-0 flex-1 truncate leading-none">{{ mb_strtolower((string) $superiorCandidate->email) }}</span>
+                                                                    </span>
+                                                                </label>
+                                                            </div>
+                                                        @empty
+                                                            <p class="p-[20px] leading-none">No hay colaboradores asignados al organigrama.</p>
+                                                        @endforelse
+                                                    </div>
+                                                    <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                 </div>
-                                                <x-input-error for="userForm.superior_ids" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.superior_ids" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
 
                                             <div class="min-w-0">
                                                 <span id="edit-subordinates-label" class="{{ $detailLabel }}">Subordinados directos</span>
-                                                <p class="mt-[6px] text-[15px] text-[#71717a]">Solo aparecen personas sin jefe o que ya te reportan directamente.</p>
-                                                <div id="edit-subordinates" class="hierarchy-selection-list mt-[14px] block w-full text-[15px]" role="group" aria-labelledby="edit-subordinates-label">
-                                                    @forelse ($subordinateCandidates as $subordinateCandidate)
-                                                        <div wire:key="subordinate-candidate-{{ $subordinateCandidate->id }}">
-                                                            <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-zinc-100">
-                                                                <input type="checkbox" value="{{ $subordinateCandidate->id }}" wire:model.live="userForm.subordinate_ids" class="h-4 w-4 shrink-0 rounded border-zinc-300 text-black focus:outline-none focus:ring-0 focus:ring-offset-0">
-                                                                <span class="min-w-0 flex-1" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ mb_strtolower((string) $subordinateCandidate->email) }}">
-                                                                    <span class="block truncate text-[15px] text-black">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span>
-                                                                    <span class="mt-[5px] block truncate text-[15px] text-[#71717a]">{{ mb_strtolower((string) $subordinateCandidate->email) }}</span>
-                                                                </span>
-                                                            </label>
-                                                        </div>
-                                                    @empty
-                                                        <p class="px-3 py-2.5 text-[15px] text-[#71717a]">No hay colaboradores disponibles.</p>
-                                                    @endforelse
+                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Solo aparecen personas sin jefe o que ya te reportan directamente.</p>
+                                                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
+                                                    <div id="edit-subordinates" x-ref="scroller" @scroll="update()" @mouseenter="update()" class="hierarchy-selection-list administration-form-scrollbar block w-full text-[15px]" role="group" aria-labelledby="edit-subordinates-label">
+                                                        @forelse ($subordinateCandidates as $subordinateCandidate)
+                                                            <div wire:key="subordinate-candidate-{{ $subordinateCandidate->id }}">
+                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[15px] p-[20px] text-left">
+                                                                    <input type="checkbox" value="{{ $subordinateCandidate->id }}" wire:model.live="userForm.subordinate_ids" class="h-4 w-4 shrink-0 focus:outline-none focus:ring-0">
+                                                                    <span class="flex min-w-0 flex-1 items-center gap-[20px]" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ mb_strtolower((string) $subordinateCandidate->email) }}">
+                                                                        <span class="org-pick-name min-w-0 max-w-[55%] shrink-0 truncate leading-none">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span>
+                                                                        <span class="min-w-0 flex-1 truncate leading-none">{{ mb_strtolower((string) $subordinateCandidate->email) }}</span>
+                                                                    </span>
+                                                                </label>
+                                                            </div>
+                                                        @empty
+                                                            <p class="p-[20px] leading-none">No hay colaboradores disponibles.</p>
+                                                        @endforelse
+                                                    </div>
+                                                    <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                 </div>
-                                                <x-input-error for="userForm.subordinate_ids" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.subordinate_ids" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                         </div>
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Contraseña</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Contraseña</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
                                                 <label for="edit-password" class="{{ $detailLabel }}">Nueva contraseña (opcional)</label>
                                                 <input id="edit-password" type="password" autocomplete="new-password" class="{{ $detailInput }}" wire:model="userForm.password">
-                                                <x-input-error for="userForm.password" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.password" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
                                                 <label for="edit-password-confirmation" class="{{ $detailLabel }}">Confirmar contraseña</label>
                                                 <input id="edit-password-confirmation" type="password" autocomplete="new-password" class="{{ $detailInput }}" wire:model="userForm.password_confirmation">
-                                                <x-input-error for="userForm.password_confirmation" class="mt-2 text-[15px]" />
+                                                <x-input-error for="userForm.password_confirmation" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                         </div>
                                     </section>
@@ -1583,7 +1597,7 @@
                     @if ($errors->any())
                         <div class="flex-shrink-0 border-t border-zinc-200 bg-white px-[20px] pt-[20px]" role="alert">
                             <p class="text-red-700">No se pudo guardar. Revisa lo siguiente:</p>
-                            <ul class="mt-[15px] flex flex-col gap-[10px]">
+                            <ul class="mt-[20px] flex flex-col gap-[15px]">
                                 @foreach (array_unique($errors->all()) as $message)
                                     <li class="text-red-700">{{ $message }}</li>
                                 @endforeach
@@ -1591,7 +1605,7 @@
                         </div>
                     @endif
 
-                    <footer class="flex flex-shrink-0 justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
+                    <footer class="flex flex-shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                         <button type="button" wire:click="cancelEditingUser" class="{{ $detailSecondaryButton }}">Cancelar</button>
                         <button type="submit" wire:loading.attr="disabled" wire:target="saveSelectedUser" class="{{ $detailPrimaryButton }}">
                             <svg wire:loading wire:target="saveSelectedUser" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -1613,7 +1627,7 @@
                             @if ($activeTab === 'datos')
                                 <div class="flex flex-col gap-[20px]">
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Datos generales</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Datos generales</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <span class="{{ $detailLabel }}">Nombre completo</span>
@@ -1647,7 +1661,7 @@
                                     </section>
 
                                     <section style="--admin-form-gap: 20px;">
-                                        <h2 class="mb-[10px] font-semibold text-black">Organizacional</h2>
+                                        <h2 class="admin-section-title mb-[20px]">Organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
                                                 <span class="{{ $detailLabel }}">Puesto</span>
@@ -1682,7 +1696,7 @@
 
                                     @if ($selectedUserDetails['is_hourly_position'] ?? false)
                                         <section style="--admin-form-gap: 20px;">
-                                            <h2 class="mb-[10px] font-semibold text-black">Datos de auxiliar</h2>
+                                            <h2 class="admin-section-title mb-[20px]">Datos de auxiliar</h2>
                                             <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                                 <div class="min-w-0">
                                                     <span class="{{ $detailLabel }}">Precio por hora</span>
@@ -1698,15 +1712,15 @@
                                 </div>
                             @elseif ($activeTab === 'eliminar')
                                 <section style="--admin-form-gap: 20px;">
-                                    <h2 class="mb-[10px] font-semibold text-black">¿Estás seguro de eliminar este usuario?</h2>
-                                    <p class="text-[15px] leading-relaxed text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
-                                    <p class="mt-[20px] text-[15px] leading-relaxed text-black">Para confirmar, escribe el nombre completo del usuario: <span class="text-red-700">{{ $detailName }}</span></p>
+                                    <h2 class="admin-section-title mb-[20px]">¿Estás seguro de eliminar este usuario?</h2>
+                                    <p class="-mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
+                                    <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Para confirmar, escribe el nombre completo del usuario: <span class="text-red-700">{{ $detailName }}</span></p>
                                     <label for="delete-user-confirmation" class="mt-[20px] {{ $detailLabel }}">Nombre completo</label>
                                     <input id="delete-user-confirmation" type="text" autocomplete="off" wire:model="deleteConfirmationName" class="{{ $detailInput }}" placeholder="Nombre completo del usuario">
                                     @error('deleteConfirmationName')
                                         <p class="mt-2 text-[15px] text-red-600" style="margin-bottom: 0;">{{ $message }}</p>
                                     @enderror
-                                    <button type="button" wire:click="deleteSelectedUser" class="mt-[20px] inline-flex h-11 w-full items-center justify-center rounded-xl bg-red-600 px-[20px] text-[15px] font-medium leading-none text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">Eliminar usuario permanentemente</button>
+                                    <button type="button" wire:click="deleteSelectedUser" class="mt-[20px] inline-flex w-full items-center justify-center rounded-xl bg-red-600 px-[20px] py-[15px] text-[15px] leading-none text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">Eliminar usuario permanentemente</button>
                                 </section>
                             @endif
                         </div>
@@ -1715,7 +1729,7 @@
                 </div>
 
                 {{-- ===== PIE CON BOTONES (fijo) ===== --}}
-                <footer class="flex flex-shrink-0 justify-end gap-[10px] border-t border-zinc-200 bg-white p-[20px]">
+                <footer class="flex flex-shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                     <button type="button" wire:click="closeUserDetails" class="{{ $detailSecondaryButton }}">Cerrar</button>
                     @if ($activeTab === 'datos')
                         <button type="button" wire:click="beginEditingUser" class="{{ $detailPrimaryButton }}">
@@ -1797,11 +1811,23 @@
             wrapper.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         }
 
+        // Vista inicial: el nodo principal (el primero del árbol) queda centrado en horizontal y justo debajo de los controles.
         function resetView() {
             scale = 1;
             translateX = 0;
             translateY = 0;
             updateTransform();
+
+            const root = document.querySelector('#org-tree-wrapper .org-node');
+            if (root) {
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const nodeRect = root.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                translateX = (containerRect.width / 2) - ((nodeRect.left + nodeRect.width / 2) - wrapperRect.left);
+                translateY = 110 - (nodeRect.top - wrapperRect.top);
+                updateTransform();
+            }
         }
 
         // Tras cada actualización de Livewire: si cambiaron las personas que se muestran (filtro por área) se parte de la vista
@@ -1812,6 +1838,8 @@
             isPanning = false;
             didDrag = false;
             panStartedOnNode = false;
+            // Primero se igualan las alturas de las tarjetas y después se centra, para medir el nodo ya con su tamaño final.
+            if (window.equalizeNodeHeights) window.equalizeNodeHeights();
             const signature = treeSignature();
             if (signature !== lastTreeSignature) {
                 lastTreeSignature = signature;
@@ -1819,7 +1847,6 @@
             } else {
                 updateTransform();
             }
-            if (window.equalizeNodeHeights) window.equalizeNodeHeights();
             allNodes = [];
         };
         const hookLivewire = () => window.Livewire?.hook('morphed', () => afterLivewireUpdate());
@@ -1976,7 +2003,7 @@
             if (!searchResults) return;
 
             if (results.length === 0) {
-                searchResults.innerHTML = '<div class="px-4 py-3 text-center text-[15px]">No se encontraron resultados</div>';
+                searchResults.innerHTML = '<div class="p-[20px] text-center leading-none">No se encontraron resultados</div>';
                 searchResults.style.display = 'block';
                 return;
             }
@@ -1984,19 +2011,20 @@
             searchResults.innerHTML = results.map((node) => {
                 const avatar = node.photo
                     ? `<img src="${escapeHtml(node.photo)}" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover">`
-                    : `<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">${escapeHtml(node.initials)}</span>`;
+                    : `<span class="panel-header panel-border panel-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-full border !text-[13px]">${escapeHtml(node.initials)}</span>`;
                 const details = [node.role, node.position, node.area].filter(Boolean).join(' · ');
-                return `<button type="button" class="search-result-item home-row panel-border flex w-full items-center gap-[15px] border-b p-[15px] text-left" data-id="${node.id}">
+                return `<button type="button" class="search-result-item panel-option flex w-full items-center gap-[15px] p-[20px] text-left" data-id="${node.id}">
                     ${avatar}
                     <span class="min-w-0 flex-1">
                         <span class="home-link block h-[15px] truncate leading-none">${escapeHtml(node.name)}</span>
-                        <span class="mt-[15px] block h-[15px] truncate leading-none">${escapeHtml(node.email.split('@')[0])}@</span>
-                        ${details ? `<span class="mt-[15px] block h-[15px] truncate leading-none">${escapeHtml(details)}</span>` : ''}
+                        <span class="mt-[15px] block h-[15px] truncate leading-none" title="${escapeHtml(node.email)}">${escapeHtml(node.email)}</span>
+                        ${details ? `<span class="mt-[15px] block h-[15px] truncate leading-none" title="${escapeHtml(details)}">${escapeHtml(details)}</span>` : ''}
                     </span>
                 </button>`;
             }).join('');
 
             searchResults.style.display = 'block';
+            searchResults.dispatchEvent(new Event('scroll'));
         }
 
         // Lleva la vista al nodo elegido y lo resalta un momento.

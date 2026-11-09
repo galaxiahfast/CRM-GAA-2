@@ -224,7 +224,10 @@
                     @endforeach
                 </div>
 
-                <livewire:home.online-users lazy />
+                {{-- En línea ahora: ocupa a lo sumo el alto de las cajas de accesos (columna izquierda) y crece conforme hay más personas --}}
+                <div class="relative min-w-0 xl:self-stretch">
+                    <livewire:home.online-users lazy />
+                </div>
             </div>
         </main>
     </div>
