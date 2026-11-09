@@ -427,7 +427,7 @@
                 <table class="clock-table w-full border-collapse text-left">
                     <thead class="panel-surface panel-border sticky top-0 z-10 border-b">
                         <tr class="clock-head-row">
-                            <th class="min-w-[260px] p-[20px] align-middle">Cliente y actividad</th>
+                            <th class="min-w-[360px] p-[20px] align-middle">Cliente y actividad</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
                             <th class="whitespace-nowrap p-[20px] text-left align-middle">Acción</th>
@@ -475,9 +475,9 @@
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
-                                <td data-label="Cliente y actividad" class="max-w-[420px] p-[20px] align-middle">
-                                    <div class="truncate leading-none" title="{{ $entry->customer->name ?? '--' }}">{{ $entry->customer->name ?? '--' }}</div>
-                                    <div class="mt-[15px] truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
+                                <td data-label="Cliente y actividad" class="max-w-[520px] p-[20px] align-middle">
+                                    <div class="flex min-w-0 gap-[10px] leading-none" title="{{ $entry->customer->name ?? '--' }}"><span class="shrink-0">Departamento o cliente:</span><span class="min-w-0 truncate">{{ $entry->customer->name ?? '--' }}</span></div>
+                                    <div class="mt-[15px] flex min-w-0 gap-[10px] leading-none" title="{{ $entry->subService->sub_service ?? '--' }}"><span class="shrink-0">Actividad:</span><span class="min-w-0 truncate">{{ $entry->subService->sub_service ?? '--' }}</span></div>
                                 </td>
 
                                 <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums" x-text="display">
