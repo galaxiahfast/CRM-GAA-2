@@ -241,13 +241,36 @@
                 <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
                 <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px]">
-                <p class="leading-none">
-                    <span class="mr-[10px]">Tiempo total</span>
-                    <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
-                </p>
-            </div>
+            <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
+        @php
+            $inProgressCount = $todayEntries->where('status', \App\Models\TimeEntry::STATUS_IN_PROGRESS)->count();
+            $pausedCount = $todayEntries->filter(fn ($entry) => in_array($entry->status, [\App\Models\TimeEntry::STATUS_PAUSED, \App\Models\TimeEntry::STATUS_FINISHED], true))->count();
+        @endphp
+        <div class="panel-border border-b">
+            <div class="-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="min-w-0 truncate">Tiempo total</span></span>
+                    <span class="mt-[15px] block truncate leading-none tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Acumulado de hoy</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span class="min-w-0 truncate">Actividades</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $todayEntries->count() }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Registradas hoy</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5.14v13.72L19 12 8 5.14z" /></svg><span class="min-w-0 truncate">En curso</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $inProgressCount }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Cronómetro activo</span>
+                </div>
+                <div class="panel-border block border-b border-r p-[20px]">
+                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M14 5v14" /></svg><span class="min-w-0 truncate">Pausadas</span></span>
+                    <span class="mt-[15px] block truncate leading-none">{{ $pausedCount }}</span>
+                    <span class="mt-[15px] block truncate leading-none">Listas para reanudar</span>
+                </div>
+            </div>
+        </div>
         <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
     <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
         <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
