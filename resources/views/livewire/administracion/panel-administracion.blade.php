@@ -23,13 +23,9 @@
     x-data="{
         administrationView: 'directory',
         viewScale: 100,
-        isFullscreen: false,
         scaledContentHeight: null,
         scaleObserver: null,
-        fullscreenHandler: null,
         init() {
-            this.fullscreenHandler = () => { this.isFullscreen = Boolean(document.fullscreenElement); };
-            document.addEventListener('fullscreenchange', this.fullscreenHandler);
             this.$nextTick(() => window.dispatchEvent(new CustomEvent('organization-chart-shown')));
             this.$nextTick(() => {
                 this.scaleObserver = new ResizeObserver(() => this.syncScaledContentHeight());
@@ -39,7 +35,6 @@
         },
         destroy() {
             this.scaleObserver?.disconnect();
-            document.removeEventListener('fullscreenchange', this.fullscreenHandler);
         },
         syncScaledContentHeight() {
             this.$nextTick(() => {
@@ -55,10 +50,6 @@
         zoomIn() {
             this.viewScale = Math.min(100, this.viewScale + 5);
             this.syncScaledContentHeight();
-        },
-        async toggleFullscreen() {
-            if (document.fullscreenElement) await document.exitFullscreen();
-            else await this.$root.requestFullscreen();
         },
         selectAdministrationView(view) {
             this.administrationView = view;
@@ -459,13 +450,6 @@
             background-color: #26262b !important;
         }
     </style>
-
-    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] text-black outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
-        </button>
-    </div>
 
     <div class="w-full">
     <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
