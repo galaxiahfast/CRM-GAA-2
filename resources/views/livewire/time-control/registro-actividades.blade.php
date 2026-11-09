@@ -130,8 +130,11 @@
         [data-time-clock] .clock-scroll::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
 
         /* Líneas verticales que dividen las columnas de la tabla (en celular y tablet cada fila es una tarjeta) */
+        [data-time-clock] .clock-table :is(th, td) { font-weight: 400; }
         @media (min-width: 1440px) {
             [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
+            [data-time-clock] .clock-table :is(th, td):nth-child(n+2) { text-align: center; }
+            [data-time-clock] .clock-table .clock-actions { justify-content: center; }
         }
 
         /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
@@ -420,7 +423,7 @@
                             <th class="min-w-[360px] p-[20px] align-middle">Cliente y actividad</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
-                            <th class="whitespace-nowrap p-[20px] text-left align-middle">Acción</th>
+                            <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
                         </tr>
                     </thead>
                     <tbody data-activity-sortable>
@@ -481,7 +484,7 @@
                                 </td>
 
                                 <td data-label="Acción" class="whitespace-nowrap p-[20px] align-middle">
-                                    <div class="flex items-center justify-start gap-[10px]">
+                                    <div class="clock-actions flex items-center justify-start gap-[10px]">
                                         @if ($entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS)
                                             <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Pausar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Pausar">
                                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
