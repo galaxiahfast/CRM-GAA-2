@@ -142,6 +142,9 @@
         /* Índice de filas: lo numera el navegador, así se actualiza solo al reordenar */
         [data-time-clock] .clock-rows { counter-reset: clock-row; }
         [data-time-clock] .clock-rows > tr { counter-increment: clock-row; }
+        /* Las filas se reordenan arrastrándolas con el clic apretado (los iconos conservan su clic normal) */
+        [data-time-clock] .clock-rows > tr { cursor: grab; }
+        [data-time-clock] .clock-rows > tr .clock-icon { cursor: pointer; }
         [data-time-clock] .clock-index::after { content: counter(clock-row); }
 
         /* Líneas verticales que dividen las columnas de la tabla (en celular y tablet cada fila es una tarjeta) */
@@ -556,17 +559,6 @@
                                                 </svg>
                                             </button>
                                         @endif
-                                        <button
-                                            type="button"
-                                            data-activity-drag-handle
-                                            class="clock-icon cursor-grab touch-none select-none active:cursor-grabbing"
-                                            aria-label="Mover {{ $entry->subService->sub_service ?? 'actividad' }}"
-                                            title="Mover actividad"
-                                        >
-                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/>
-                                            </svg>
-                                        </button>
                                         <button
                                             type="button"
                                             wire:click="requestDeletion({{ $entry->id }})"

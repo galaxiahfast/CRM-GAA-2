@@ -1,5 +1,8 @@
 const ROW_SELECTOR = '[data-activity-id]';
-const HANDLE_SELECTOR = '[data-activity-drag-handle]';
+// Lo que no debe iniciar un arrastre: los controles de la fila siguen funcionando con un clic normal.
+const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, label, [role="button"]';
+// Distancia mínima (px) con el clic apretado para considerar que se arrastra la fila.
+const DRAG_THRESHOLD = 6;
 
 const animateReflow = (rows, previousPositions) => {
     rows.forEach((row) => {
@@ -23,26 +26,38 @@ const initializeActivitySortable = (container) => {
     container.dataset.activitySortableReady = 'true';
 
     container.addEventListener('pointerdown', (event) => {
-        const handle = event.target.closest(HANDLE_SELECTOR);
-        if (!handle || event.button !== 0) return;
+        // Solo con el botón principal del ratón o lápiz; en pantallas táctiles la fila conserva su desplazamiento normal.
+        if (event.button !== 0 || event.pointerType === 'touch') return;
+        if (event.target.closest(INTERACTIVE_SELECTOR)) return;
 
-        const draggedRow = handle.closest(ROW_SELECTOR);
-        if (!draggedRow) return;
+        const draggedRow = event.target.closest(ROW_SELECTOR);
+        if (!draggedRow || draggedRow.parentNode !== container) return;
 
-        event.preventDefault();
-        handle.setPointerCapture?.(event.pointerId);
-
+        const startX = event.clientX;
+        const startY = event.clientY;
+        let dragging = false;
         let finished = false;
 
-        draggedRow.style.position = 'relative';
-        draggedRow.style.zIndex = '30';
-        draggedRow.style.pointerEvents = 'none';
-        draggedRow.style.backgroundColor = 'var(--panel-surface)';
-        draggedRow.style.boxShadow = '0 14px 35px rgba(0, 0, 0, 0.14)';
-        document.body.style.userSelect = 'none';
+        const startDragging = () => {
+            dragging = true;
+            window.getSelection()?.removeAllRanges();
+            draggedRow.style.position = 'relative';
+            draggedRow.style.zIndex = '30';
+            draggedRow.style.pointerEvents = 'none';
+            draggedRow.style.backgroundColor = 'var(--panel-surface)';
+            draggedRow.style.boxShadow = '0 14px 35px rgba(0, 0, 0, 0.14)';
+            draggedRow.style.cursor = 'grabbing';
+            document.body.style.userSelect = 'none';
+            document.body.style.cursor = 'grabbing';
+        };
 
         const move = (moveEvent) => {
             if (moveEvent.pointerId !== event.pointerId) return;
+
+            if (!dragging) {
+                if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < DRAG_THRESHOLD) return;
+                startDragging();
+            }
 
             moveEvent.preventDefault();
             if (moveEvent.clientY < 70) window.scrollBy(0, -12);
@@ -73,12 +88,17 @@ const initializeActivitySortable = (container) => {
             window.removeEventListener('pointerup', finish);
             window.removeEventListener('pointercancel', finish);
 
+            // Un clic sin desplazamiento no reordena nada.
+            if (!dragging) return;
+
             draggedRow.style.position = '';
             draggedRow.style.zIndex = '';
             draggedRow.style.pointerEvents = '';
             draggedRow.style.backgroundColor = '';
             draggedRow.style.boxShadow = '';
+            draggedRow.style.cursor = '';
             document.body.style.userSelect = '';
+            document.body.style.cursor = '';
 
             const order = [...container.querySelectorAll(ROW_SELECTOR)]
                 .map((row, index) => ({ order: index + 1, value: row.dataset.activityId }));
