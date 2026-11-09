@@ -136,6 +136,11 @@
         [data-time-clock] .clock-scroll::-webkit-scrollbar-track { background: transparent; }
         [data-time-clock] .clock-scroll::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
 
+        /* Líneas verticales que dividen las columnas de la tabla (en celular y tablet cada fila es una tarjeta) */
+        @media (min-width: 1440px) {
+            [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
+        }
+
         /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
         @media (max-width: 1439px) {
             [data-time-clock] .clock-table thead { display: none; }
@@ -157,9 +162,7 @@
             }
             [data-time-clock] .clock-table td:nth-child(1),
             [data-time-clock] .clock-table td:nth-child(2),
-            [data-time-clock] .clock-table td:nth-child(5),
-            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 1 / -1; }
-            [data-time-clock] .clock-table td:nth-child(6)::before { display: none; }
+            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 1 / -1; }
             [data-time-clock] .clock-table .clock-button { width: 100%; }
             [data-time-clock] .clock-pill { min-width: 0; }
         }
@@ -455,7 +458,6 @@
                             <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                             <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
                             <th class="whitespace-nowrap p-[20px] text-left align-middle">Acción</th>
-                            <th class="w-px whitespace-nowrap p-[20px] text-left align-middle"><span class="sr-only">Eliminar</span></th>
                         </tr>
                     </thead>
                     <tbody data-activity-sortable>
@@ -546,11 +548,6 @@
                                                 <span>Cerrada</span>
                                             </button>
                                         @endif
-                                    </div>
-                                </td>
-
-                                <td data-label="Mover o eliminar" class="w-px whitespace-nowrap p-[20px] align-middle">
-                                    <div class="flex items-center gap-[10px]">
                                         <button
                                             type="button"
                                             data-activity-drag-handle
