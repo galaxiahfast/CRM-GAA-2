@@ -160,7 +160,9 @@
             [data-time-clock] .clock-table .clock-actions { justify-content: center; }
         }
 
-        /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal */
+        /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal.
+           Celular (hasta 639px): N° y acción arriba, cliente y actividad a todo el ancho, tiempo y estado juntos.
+           Tablet (640px a 1439px): N°, cliente y acción en la primera fila; actividad, tiempo y estado en la segunda. */
         @media (max-width: 1439px) {
             [data-time-clock] .clock-table.clock-table-head { display: none; }
             [data-time-clock] .clock-table,
@@ -168,10 +170,10 @@
             [data-time-clock] .clock-table tr {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 15px 20px;
+                gap: 20px;
                 padding: 20px;
             }
-            [data-time-clock] .clock-table td { display: block; max-width: none; padding: 0; }
+            [data-time-clock] .clock-table td { display: block; min-width: 0; max-width: none; padding: 0; }
             [data-time-clock] .clock-table td[data-label]::before {
                 content: attr(data-label);
                 font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
@@ -179,11 +181,22 @@
                 margin-bottom: 5px;
                 color: var(--panel-muted);
             }
-            [data-time-clock] .clock-table td:nth-child(1),
-            [data-time-clock] .clock-table td:nth-child(2),
-            [data-time-clock] .clock-table td:nth-child(3),
-            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 1 / -1; }
-            [data-time-clock] .clock-table .clock-button { width: 100%; }
+            [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 2; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 1 / -1; grid-row: 3; }
+            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1; grid-row: 4; }
+            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 2; grid-row: 4; }
+            [data-time-clock] .clock-table .clock-actions { min-height: 24px; }
+        }
+        @media (min-width: 640px) and (max-width: 1439px) {
+            [data-time-clock] .clock-table tr { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) 160px; }
+            [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 2 / 4; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 4; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 1 / 3; grid-row: 2; }
+            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 3; grid-row: 2; }
+            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 4; grid-row: 2; }
         }
     </style>
 
@@ -292,7 +305,7 @@
             <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
         <form wire:submit="start" class="flex flex-col p-[20px] xl:flex-1">
-            <div class="flex flex-col gap-[20px] xl:flex-1 xl:justify-evenly">
+            <div class="flex flex-col gap-[20px] md:grid md:grid-cols-2 xl:flex xl:flex-1 xl:flex-col xl:justify-evenly">
                 <div
                     class="relative"
                     x-data="{
@@ -425,7 +438,7 @@
 
                 </div>
 
-                <div>
+                <div class="md:col-span-2 xl:col-span-1">
                     <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg>
                         <span>Acción</span>
@@ -446,7 +459,7 @@
                     </span>
                     </button>
                 </div>
-                <div class="panel-border flex flex-col gap-[20px] border-t pt-[20px]">
+                <div class="panel-border flex flex-col gap-[20px] border-t pt-[20px] md:col-span-2 xl:col-span-1">
                     <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link flex w-fit items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg><span>Guía PDF</span></a>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
