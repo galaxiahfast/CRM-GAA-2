@@ -23,6 +23,14 @@ const animateTo = (scroller, to) => {
         }
     };
     scroller._rowStepFrame = requestAnimationFrame(tick);
+
+    // Respaldo: si el navegador pausa la animación (pestaña en segundo plano), la fila igualmente termina alineada.
+    clearTimeout(scroller._rowStepTimer);
+    scroller._rowStepTimer = setTimeout(() => {
+        cancelAnimationFrame(scroller._rowStepFrame);
+        scroller.scrollTop = to;
+        scroller._rowStepTarget = undefined;
+    }, DURATION_MS + 60);
 };
 
 document.addEventListener('wheel', (event) => {
