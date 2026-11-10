@@ -46,6 +46,7 @@
 <div
     data-panel
     data-time-clock
+    x-data="clockQuickTour"
     class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] xl:flex xl:flex-col"
 >
     <x-panel-styles />
@@ -323,7 +324,7 @@
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
-                    <div class="relative">
+                    <div id="clock-tour-client" class="relative">
                         <input
                             type="text"
                             x-model="search"
@@ -391,7 +392,7 @@
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Actividad</span></label>
 
-                    <div class="relative">
+                    <div id="clock-tour-activity" class="relative">
                         <input
                             type="text"
                             x-model="search"
@@ -431,7 +432,7 @@
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg>
                         <span>Acción</span>
                     </div>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                    <button id="clock-tour-start" type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M8 5.14v13.72L19 12 8 5.14z"/>
@@ -449,6 +450,12 @@
                 </div>
             </div>
         </form>
+        <div class="px-[20px] pb-[20px]">
+            <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
+                Uso rápido
+            </button>
+        </div>
     </aside>
 
     <div
@@ -634,4 +641,33 @@
             </div>
         </div>
     @endif
+
+    <div x-cloak x-show="quickTourStep > 0" x-transition.opacity x-teleport="body" @click.stop @wheel.prevent @touchmove.prevent>
+        <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
+        <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
+        <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
+        <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
+
+        <div :style="spotlightStyle" class="pointer-events-auto z-[300001] rounded-xl border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(74,222,128,0.28)]" aria-hidden="true">
+            <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-semibold text-white shadow" x-text="quickTourStep"></span>
+        </div>
+
+        <section :style="popoverStyle" class="panel-surface panel-border z-[300002] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title" aria-live="polite">
+            <div class="mb-[15px] flex items-center justify-between gap-[15px]">
+                <span class="panel-accent text-sm" x-text="`Paso ${quickTourStep} de ${quickTourSteps.length}`"></span>
+                <button type="button" @click="closeQuickTour()" class="panel-icon-button rounded-lg p-[5px]" aria-label="Cerrar recorrido">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <h2 id="clock-tour-title" class="panel-text text-lg font-medium leading-[30px]" x-text="quickTourSteps[quickTourStep - 1]?.title"></h2>
+            <p class="panel-text mt-[10px] leading-[25px]" x-text="quickTourSteps[quickTourStep - 1]?.description"></p>
+            <div class="mt-[20px] flex items-center justify-between gap-[10px]">
+                <button type="button" @click="closeQuickTour()" class="clock-link px-[5px] py-[10px]">Saltar recorrido</button>
+                <div class="flex items-center gap-[10px]">
+                    <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-lg px-[15px] py-[10px]">Anterior</button>
+                    <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-lg px-[15px] py-[10px]" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                </div>
+            </div>
+        </section>
+    </div>
 </div>
