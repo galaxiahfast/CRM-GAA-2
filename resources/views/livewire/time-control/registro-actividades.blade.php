@@ -200,12 +200,8 @@
                 <p class="mt-[15px] leading-none">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
-        <div class="flex w-full min-w-0 flex-wrap items-start gap-[20px] lg:w-auto">
-            <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link inline-flex shrink-0 self-end items-center gap-[10px] leading-none">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
-                Guía PDF
-            </a>
-            <div class="min-w-0 lg:text-right">
+        <div class="w-full min-w-0 lg:w-auto lg:text-right">
+            <div class="min-w-0">
                 <p class="panel-accent leading-none">Organización</p>
                 <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
             </div>
@@ -453,10 +449,15 @@
             </div>
         </form>
         <div class="px-[20px] pb-[20px]">
+            <p class="mb-[20px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.5C10.5 5.4 8.4 5 6 5v13c2.4 0 4.5.4 6 1.5m0-13C13.5 5.4 15.6 5 18 5v13c-2.4 0-4.5.4-6 1.5m0-13v13" /></svg><span>Guía de uso</span></p>
             <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                 <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
                 Uso rápido
             </button>
+            <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link mt-[20px] inline-flex items-center gap-[10px] leading-none">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                Guía PDF
+            </a>
         </div>
     </aside>
 
@@ -493,6 +494,7 @@
                             <tr
                                 wire:key="time-entry-{{ $entry->id }}"
                                 data-activity-id="{{ $entry->id }}"
+                                @if ($loop->first) id="clock-tour-row" @endif
                                 class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 {{ $entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS ? 'is-running' : '' }}"
                                 x-data="{
                                     display: '00:00:00',
@@ -553,19 +555,19 @@
                                 <td data-label="Acción" class="whitespace-nowrap p-[20px] align-middle">
                                     <div class="clock-actions flex items-center justify-start gap-[10px]">
                                         @if ($entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS)
-                                            <button type="button" wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Pausar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Pausar">
+                                            <button type="button" @if ($loop->first) id="clock-tour-toggle" @endif wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Pausar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Pausar">
                                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M7 5h4v14H7V5zm6 0h4v14h-4V5z"/>
                                                 </svg>
                                             </button>
                                         @elseif ($entry->status !== \App\Models\TimeEntry::STATUS_AUTO_CLOSED)
-                                            <button type="button" wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Reanudar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Reanudar">
+                                            <button type="button" @if ($loop->first) id="clock-tour-toggle" @endif wire:click="resume({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Reanudar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Reanudar">
                                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M8 5.14v13.72L19 12 8 5.14z"/>
                                                 </svg>
                                             </button>
                                         @else
-                                            <button type="button" disabled class="clock-icon cursor-not-allowed opacity-50" aria-label="Cerrada automáticamente" title="Cerrada automáticamente">
+                                            <button type="button" @if ($loop->first) id="clock-tour-toggle" @endif disabled class="clock-icon cursor-not-allowed opacity-50" aria-label="Cerrada automáticamente" title="Cerrada automáticamente">
                                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                                 </svg>
@@ -573,6 +575,7 @@
                                         @endif
                                         <button
                                             type="button"
+                                            @if ($loop->first) id="clock-tour-delete" @endif
                                             wire:click="requestDeletion({{ $entry->id }})"
                                             wire:loading.attr="disabled"
                                             wire:target="requestDeletion({{ $entry->id }})"

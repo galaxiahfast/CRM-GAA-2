@@ -96,7 +96,9 @@ document.addEventListener('alpine:init', () => {
         maskRightStyle: '',
         maskBottomStyle: '',
         previousBodyOverflow: '',
-        quickTourSteps: [
+        // Solo se muestran los pasos cuyo elemento existe (los de la tabla necesitan al menos una actividad).
+        quickTourSteps: [],
+        allQuickTourSteps: [
             {
                 target: 'clock-tour-client',
                 title: '1. Elige un cliente',
@@ -111,6 +113,21 @@ document.addEventListener('alpine:init', () => {
                 target: 'clock-tour-start',
                 title: '3. Inicia el registro',
                 description: 'Con el cliente y la actividad elegidos, pulsa este botón. El recorrido no inicia ni guarda una actividad; solo te muestra dónde hacerlo.',
+            },
+            {
+                target: 'clock-tour-toggle',
+                title: '4. Pausa o reanuda una actividad',
+                description: 'En la columna Acción, el icono de pausa detiene el tiempo de la actividad en progreso y el de reanudar continúa una pausada. Si reanudas una mientras otra está en progreso, la otra se pausa sola.',
+            },
+            {
+                target: 'clock-tour-row',
+                title: '5. Cambia el orden de las filas',
+                description: 'Mantén apretado el clic sobre una fila, fuera de los iconos, y arrástrala hacia arriba o hacia abajo. Al soltarla se guarda el nuevo orden y la columna N° se actualiza sola.',
+            },
+            {
+                target: 'clock-tour-delete',
+                title: '6. Elimina una actividad',
+                description: 'La X borra la actividad y todo su tiempo. Te pedirá escribir su nombre exacto para confirmar. Si está en progreso, primero debes pausarla.',
             },
         ],
         init() {
@@ -150,6 +167,9 @@ document.addEventListener('alpine:init', () => {
             this.removeQuickTourListeners();
         },
         startQuickTour() {
+            this.quickTourSteps = this.allQuickTourSteps.filter((step) => document.getElementById(step.target));
+            if (! this.quickTourSteps.length) return;
+
             this.quickTourStep = 1;
             this.previousBodyOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
