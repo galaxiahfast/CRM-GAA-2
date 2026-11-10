@@ -113,26 +113,6 @@
         html.module-dark-theme #main-content [data-time-clock] table tbody tr.clock-row.is-running { background: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(odd) { background: var(--panel-header) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
-        /* Marcado del recorrido guiado: borde verde con un halo que pulsa suavemente y una insignia con el número del paso */
-        @keyframes clock-tour-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .45), 0 0 0 4px rgba(34, 197, 94, .18); }
-            70% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0), 0 0 0 4px rgba(34, 197, 94, .18); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 0 0 4px rgba(34, 197, 94, .18); }
-        }
-        [data-time-clock] .clock-tour-ring {
-            border: 2px solid var(--clock-green);
-            animation: clock-tour-pulse 1.8s ease-out infinite;
-            transition: left 250ms ease, top 250ms ease, width 250ms ease, height 250ms ease;
-        }
-        [data-time-clock] .clock-tour-badge {
-            background-color: var(--clock-green);
-            color: #ffffff;
-            box-shadow: 0 0 0 3px var(--panel-surface);
-        }
-        html:not(.module-dark-theme) [data-time-clock] .clock-tour-badge { color: #ffffff; }
-        @media (prefers-reduced-motion: reduce) {
-            [data-time-clock] .clock-tour-ring { animation: none; box-shadow: 0 0 0 4px rgba(34, 197, 94, .3); transition: none; }
-        }
         /* Iconos de acción sin recuadro: mover y eliminar */
         [data-time-clock] .clock-icon {
             display: inline-flex;
@@ -670,8 +650,8 @@
             <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
             <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
 
-            <div :style="spotlightStyle" class="clock-tour-ring pointer-events-auto z-[300001]" aria-hidden="true">
-                <span class="clock-tour-badge absolute -left-[12px] -top-[12px] grid h-6 w-6 place-items-center rounded-full text-[13px] font-normal leading-none" x-text="quickTourStep"></span>
+            <div :style="spotlightStyle" class="pointer-events-auto z-[300001] rounded-xl border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(74,222,128,0.28)]" aria-hidden="true">
+                <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-normal text-white shadow" x-text="quickTourStep"></span>
             </div>
 
             <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
