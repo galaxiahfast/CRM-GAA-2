@@ -1,6 +1,8 @@
 <div
     data-clock-particle-network
-    class="support-monochrome relative isolate min-h-[calc(var(--app-dvh)-90px)] w-full overflow-hidden bg-white text-[15px] text-zinc-700"
+    data-panel
+    data-support-chat
+    class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
     x-data="{
         viewScale: 90,
         isFullscreen: false,
@@ -32,9 +34,11 @@
     @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
     @keydown.escape.window="profilePhotoOpen = false"
 >
-    <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.55]" aria-hidden="true"></canvas>
+    <x-panel-styles />
 
-    <div class="no-print absolute left-1/2 top-[20px] z-30 flex -translate-x-1/2 items-center gap-[10px] rounded-xl border border-zinc-200 bg-white/95 px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
+    <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.18]" aria-hidden="true"></canvas>
+
+    <div class="no-print panel-surface panel-border fixed bottom-[20px] right-[20px] z-30 flex items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
         <input
             type="range"
             min="70"
@@ -42,15 +46,15 @@
             step="5"
             x-model.number="viewScale"
             @input="saveScale()"
-            class="h-1.5 w-[130px] cursor-pointer accent-black"
+            class="h-1.5 w-[110px] cursor-pointer accent-[var(--panel-accent)]"
             aria-label="Ajustar tamaño de la vista del Ticket"
         >
-        <span class="w-[42px] text-right text-[15px] font-semibold tabular-nums text-black" x-text="viewScale + '%'">90%</span>
-        <span class="h-5 w-px bg-zinc-200" aria-hidden="true"></span>
+        <span class="panel-text w-[42px] text-right text-[15px] font-semibold tabular-nums" x-text="viewScale + '%'">90%</span>
+        <span class="panel-line h-5 w-px" aria-hidden="true"></span>
         <button
             type="button"
             @click="toggleFullscreen($root)"
-            class="inline-flex cursor-pointer items-center justify-center rounded-lg p-[5px] text-black transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-black/15"
+            class="panel-icon-button inline-flex cursor-pointer items-center justify-center rounded-lg p-[5px] transition-colors"
             :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el Ticket en pantalla completa'"
             :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'"
         >
@@ -64,27 +68,27 @@
     </div>
 
     <div
-        class="relative z-10 min-h-[calc(var(--app-dvh)-90px)] min-w-[1200px] origin-top"
+        class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 origin-top flex-col"
         :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
     >
-    <header class="flex items-center justify-between gap-[20px] whitespace-nowrap border-b border-zinc-200 bg-white/75 p-[50px]">
-        <div class="flex items-center gap-[15px] text-zinc-500">
+    <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b px-[20px] py-[15px] sm:px-[30px] xl:px-[50px]">
+        <div class="panel-muted flex min-w-0 flex-wrap items-center gap-[10px] sm:gap-[15px]">
             <span class="font-medium">Soporte</span>
             <span class="text-gray-300">&gt;</span>
             <span class="font-medium">Centro de ayuda</span>
             <span class="text-gray-300">&gt;</span>
-            <a href="{{ route('soporte.ticket') }}" class="font-semibold text-black transition-colors hover:text-zinc-600">Ticket</a>
+            <a href="{{ route('soporte.ticket') }}" class="panel-text font-semibold transition-colors hover:opacity-75">Chat general</a>
         </div>
 
-        <div class="no-print flex items-center gap-[20px]">
-            <button type="button" wire:click="downloadPdf" wire:loading.attr="disabled" wire:target="downloadPdf" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium text-black transition-colors hover:text-zinc-600 disabled:cursor-wait disabled:opacity-60">
+        <div class="no-print flex flex-wrap items-center gap-[15px] sm:gap-[20px]">
+            <button type="button" wire:click="downloadPdf" wire:loading.attr="disabled" wire:target="downloadPdf" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium transition-colors disabled:cursor-wait disabled:opacity-60">
                 <svg wire:loading.remove wire:target="downloadPdf" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 <svg wire:loading wire:target="downloadPdf" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
                 <span>Descargar PDF</span>
             </button>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium text-black transition-colors hover:text-zinc-600">
+            <button type="button" onclick="window.print()" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium transition-colors">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" />
                 </svg>
@@ -93,29 +97,29 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full space-y-[20px] p-[50px]">
-        <section class="flex items-center justify-between gap-[20px]">
-            <div class="flex items-center gap-[20px]">
-                <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/75 text-black">
+    <main class="relative z-10 mx-auto flex w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
+        <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+            <div class="flex min-w-0 items-center gap-[15px]">
+                <span class="panel-surface panel-border panel-text flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border">
                     <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" />
                     </svg>
                 </span>
                 <div>
-                    <h1 class="text-xl font-semibold text-black">Chat general de soporte</h1>
-                    <p class="mt-[5px] text-[15px] text-zinc-500">Espacio compartido para conversar con todos los colaboradores.</p>
+                    <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
+                    <p class="panel-muted mt-[5px] leading-5">Espacio compartido para conversar con todos los colaboradores.</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-[10px] rounded-xl border border-emerald-200 bg-white/75 px-[20px] py-[15px] text-[15px] text-emerald-700">
+            <div class="panel-surface panel-border flex items-center gap-[10px] rounded-xl border px-[20px] py-[15px] text-[15px]">
                 <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 Disponible para todos los usuarios
             </div>
         </section>
 
-        <section data-support-chat-panel class="grid h-[700px] min-h-0 grid-cols-[360px_minmax(0,1fr)] overflow-hidden rounded-xl border border-zinc-200 bg-white/65 shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
-            <aside class="border-r border-zinc-200 bg-white/55">
-                <div data-support-profile-header class="flex items-center gap-[15px] border-b border-zinc-200 p-[20px]">
+        <section data-support-chat-panel class="panel-surface panel-border grid min-h-[680px] min-w-0 flex-1 grid-rows-[190px_minmax(0,1fr)] overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:grid-cols-[320px_minmax(0,1fr)] xl:grid-rows-1">
+            <aside class="panel-header panel-border min-h-0 overflow-y-auto border-b xl:overflow-hidden xl:border-b-0 xl:border-r">
+                <div data-support-profile-header class="panel-surface panel-border flex items-center gap-[15px] border-b p-[20px]">
                     @if (auth()->user()->profile_photo_path)
                         <button type="button" @click="showProfilePhoto(@js(url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/'))), @js(auth()->user()->name))" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-semibold text-white outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ auth()->user()->name }}">
                             <img src="{{ url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/')) }}" alt="Foto de {{ auth()->user()->name }}" class="h-full w-full object-cover">
@@ -583,28 +587,68 @@
     </template>
 
     <style>
-        html, body, .support-page-scrollbar, .support-chat-scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: #000 #fff;
+        [data-support-chat] {
+            --chat-green: #15803d;
         }
-        html::-webkit-scrollbar, body::-webkit-scrollbar, .support-page-scrollbar::-webkit-scrollbar, .support-chat-scrollbar::-webkit-scrollbar {
+        html.module-dark-theme [data-support-chat] { --chat-green: #4ade80; }
+        [data-support-chat] .clock-link { color: var(--chat-green); transition: opacity 150ms ease; }
+        [data-support-chat] .clock-link:hover { opacity: .75; }
+        [data-support-chat] [class~="text-black"],
+        [data-support-chat] [class~="text-zinc-700"],
+        [data-support-chat] [class~="text-gray-700"] { color: var(--panel-text) !important; }
+        [data-support-chat] [class~="text-zinc-500"],
+        [data-support-chat] [class~="text-zinc-600"],
+        [data-support-chat] [class~="text-zinc-400"],
+        [data-support-chat] [class~="text-gray-500"],
+        [data-support-chat] [class~="text-gray-400"],
+        [data-support-chat] [class~="text-gray-300"] { color: var(--panel-muted) !important; }
+        [data-support-chat] [class~="bg-white"],
+        [data-support-chat] [class~="bg-white/95"],
+        [data-support-chat] [class~="bg-white/90"],
+        [data-support-chat] [class~="bg-white/75"],
+        [data-support-chat] [class~="bg-white/70"],
+        [data-support-chat] [class~="bg-white/65"],
+        [data-support-chat] [class~="bg-white/60"],
+        [data-support-chat] [class~="bg-white/55"],
+        [data-support-chat] [class~="bg-white/35"] { background-color: var(--panel-surface) !important; }
+        [data-support-chat] [class~="bg-zinc-50"],
+        [data-support-chat] [class~="bg-zinc-100"] { background-color: var(--panel-subtle) !important; }
+        [data-support-chat] [class~="bg-black"] { background-color: var(--panel-button) !important; }
+        [data-support-chat] [class~="text-white"] { color: var(--panel-button-text) !important; }
+        [data-support-chat] [class~="border-zinc-200"],
+        [data-support-chat] [class~="border-zinc-300"] { border-color: var(--panel-border) !important; }
+        [data-support-chat] [class~="ring-zinc-200"] { --tw-ring-color: var(--panel-border) !important; }
+        [data-support-chat] [class~="hover:bg-zinc-100"]:hover,
+        [data-support-chat] [class~="focus:bg-zinc-100"]:focus { background-color: var(--panel-hover) !important; }
+        [data-support-chat] :is(input, textarea, select):focus,
+        [data-support-chat] :is(input, textarea, select):focus-visible {
+            border-color: var(--panel-border) !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        [data-support-chat] :is(input, textarea, select) { color-scheme: inherit; }
+        [data-support-chat] .support-chat-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: var(--panel-accent) var(--panel-surface);
+        }
+        [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
-        html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, .support-page-scrollbar::-webkit-scrollbar-track, .support-chat-scrollbar::-webkit-scrollbar-track {
-            background: #fff;
+        [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar-track {
+            background: var(--panel-surface);
         }
-        html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, .support-page-scrollbar::-webkit-scrollbar-thumb, .support-chat-scrollbar::-webkit-scrollbar-thumb {
-            background: #000;
+        [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--panel-accent);
             border-radius: 9999px;
         }
         .support-message-input {
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
-        .support-monochrome .support-message-input:focus,
-        .support-monochrome .support-message-input:focus-visible {
-            border-color: #d4d4d8 !important;
+        [data-support-chat] .support-message-input:focus,
+        [data-support-chat] .support-message-input:focus-visible {
+            border-color: var(--panel-border) !important;
             box-shadow: none !important;
             outline: none !important;
             --tw-ring-color: transparent !important;
@@ -617,8 +661,17 @@
         @media print {
             #main-nav, #logo-sidebar, .no-print { display: none !important; }
             #main-content { margin-left: 0 !important; padding-top: 0 !important; }
-            .support-page-scrollbar { overflow: visible !important; }
-            .support-page-scrollbar > div { min-width: 0 !important; }
+            [data-support-chat] { overflow: visible !important; }
+            [data-support-chat] > div { min-width: 0 !important; zoom: 1 !important; }
+        }
+
+        @media (max-width: 1279px) {
+            [data-support-chat-panel] { height: auto; }
+            [data-support-chat] main { min-height: 0; }
+        }
+        @media (max-width: 639px) {
+            [data-support-chat-panel] { grid-template-rows: minmax(220px, 32dvh) minmax(460px, 1fr); }
+            [data-support-chat] [data-support-online-users] { max-height: 100px; }
         }
     </style>
 </div>
