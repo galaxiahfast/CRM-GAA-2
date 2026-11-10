@@ -112,7 +112,7 @@
                     <aside class="prod-aside panel-scroll panel-border">
                         <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
                             <h2 class="panel-accent leading-none">Periodo de consulta</h2>
-                            <p class="prod-lines mt-[5px]">Selecciona las fechas.</p>
+                            <p class="prod-lines mt-[5px]">Seleccione periodo de fechas</p>
                         </div>
                         <div class="prod-form">
                             <div class="prod-dates">
