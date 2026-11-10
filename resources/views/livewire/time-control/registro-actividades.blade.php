@@ -232,7 +232,7 @@
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <div class="min-w-0">
-                <h1 class="panel-accent break-words text-[15px] font-normal leading-none">Cronómetro</h1>
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Cronómetro</h1>
                 <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
