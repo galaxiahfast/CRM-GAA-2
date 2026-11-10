@@ -16,7 +16,7 @@
         html, body { margin: 0; padding: 0; }
         .pdf-page { position: relative; box-sizing: content-box; width: 504pt; height: 646pt; margin: 0; padding: 90pt 54pt 54pt; overflow: hidden; page-break-after: always; }
         .pdf-page:last-child { page-break-after: auto; }
-        .page-decoration { position: absolute; top: 0; left: 0; width: 612pt; height: 792pt; }
+        .page-decoration { position: absolute; z-index: -1; top: 0; left: 0; width: 612pt; height: 792pt; }
         .meta { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
         .meta td { padding: 0; vertical-align: top; }
         .meta td:first-child { width: 37%; }
