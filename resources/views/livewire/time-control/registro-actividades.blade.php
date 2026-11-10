@@ -286,13 +286,13 @@
             <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
         <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-    <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
-        <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
+    <aside class="clock-scroll panel-border border-b xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto xl:border-b-0 xl:border-r">
+        <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
             <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
             <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
-        <form wire:submit="start" class="p-[20px]">
-            <div class="flex flex-col gap-[20px]">
+        <form wire:submit="start" class="flex flex-col p-[20px] xl:flex-1">
+            <div class="flex flex-col gap-[20px] xl:flex-1 xl:justify-evenly">
                 <div
                     class="relative"
                     x-data="{
@@ -446,7 +446,7 @@
                     </span>
                     </button>
                 </div>
-                <div class="panel-border grid gap-[20px] border-t pt-[20px]">
+                <div class="panel-border flex flex-col gap-[20px] border-t pt-[20px]">
                     <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link flex w-fit items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg><span>Guía PDF</span></a>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
