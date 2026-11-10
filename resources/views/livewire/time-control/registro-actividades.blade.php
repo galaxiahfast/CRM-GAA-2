@@ -501,7 +501,7 @@
             </thead>
         </table>
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
-            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
+            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="tbody tr" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
                 <table class="clock-table w-full border-collapse text-left">
                     @if ($todayEntries->isEmpty())
                         {{-- Actividad de ejemplo en ceros: se muestra mientras no haya registros reales y desaparece al iniciar la primera actividad --}}

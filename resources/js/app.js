@@ -3,6 +3,7 @@ import 'flowbite';
 import './auth-particle-network';
 import './auth-fit';
 import './activity-sortable';
+import './row-step-scroll';
 import './organization-sortable';
 import './clock-particle-network';
 
