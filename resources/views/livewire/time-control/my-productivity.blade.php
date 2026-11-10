@@ -59,7 +59,7 @@
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { height: 70px; padding: 0; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(90px, 26%) 40px; align-items: center; gap: 15px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) 76px minmax(90px, 1fr) 40px; align-items: center; gap: 15px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
@@ -151,8 +151,8 @@
 
                     <div class="prod-main">
                         <div class="prod-dist">
-                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer], ['title' => 'Distribución por actividad', 'items' => $byActivity]] as $distribution)
-                                <section class="prod-col panel-border">
+                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em']] as $distribution)
+                                <section class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
                                     <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
                                         <h3 class="prod-index panel-border leading-none">N°</h3>
                                         <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
