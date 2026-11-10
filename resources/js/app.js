@@ -218,17 +218,28 @@ document.addEventListener('alpine:init', () => {
             const target = document.getElementById(this.quickTourSteps[this.quickTourStep - 1]?.target);
             if (! target) return;
 
-            const rect = target.getBoundingClientRect();
+            // El marcado verde rodea el elemento con un margen de 8px y esquinas redondeadas, para que no quede pegado.
+            const raw = target.getBoundingClientRect();
+            const pad = 8;
+            const rect = {
+                left: raw.left - pad,
+                top: raw.top - pad,
+                right: raw.right + pad,
+                bottom: raw.bottom + pad,
+                width: raw.width + pad * 2,
+                height: raw.height + pad * 2,
+            };
             const left = Math.max(0, rect.left);
             const top = Math.max(0, rect.top);
             const right = Math.min(window.innerWidth, rect.right);
             const bottom = Math.min(window.innerHeight, rect.bottom);
             const width = Math.max(0, right - left);
             const height = Math.max(0, bottom - top);
-            const mask = 'position:fixed;background:rgba(10,12,18,.68);pointer-events:auto;';
-            const borderRadius = window.getComputedStyle(target).borderRadius || '12px';
+            const mask = 'position:fixed;background:rgba(10,12,18,.6);pointer-events:auto;';
+            const targetRadius = parseFloat(window.getComputedStyle(target).borderRadius) || 0;
+            const borderRadius = Math.min(Math.max(12, targetRadius + pad), Math.min(width, height) / 2);
 
-            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${borderRadius};`;
+            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${borderRadius}px;`;
             this.maskTopStyle = `${mask}left:0;top:0;width:100vw;height:${top}px;`;
             this.maskLeftStyle = `${mask}left:0;top:${top}px;width:${left}px;height:${height}px;`;
             this.maskRightStyle = `${mask}left:${right}px;top:${top}px;width:${Math.max(0, window.innerWidth - right)}px;height:${height}px;`;
