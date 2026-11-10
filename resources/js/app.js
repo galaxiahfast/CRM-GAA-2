@@ -218,9 +218,9 @@ document.addEventListener('alpine:init', () => {
             const target = document.getElementById(this.quickTourSteps[this.quickTourStep - 1]?.target);
             if (! target) return;
 
-            // Sin borde: solo se deja un espacio de 20px entre el elemento y el fondo atenuado.
+            // Sin borde: solo se deja un espacio de 10px entre el elemento y el fondo atenuado.
             const raw = target.getBoundingClientRect();
-            const pad = 20;
+            const pad = 10;
             const rect = {
                 left: raw.left - pad,
                 top: raw.top - pad,
