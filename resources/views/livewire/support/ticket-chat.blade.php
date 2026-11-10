@@ -96,7 +96,6 @@
                             @endforelse
                         </div>
                     </div>
-                </div>
             </aside>
 
             <div
