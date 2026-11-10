@@ -241,7 +241,7 @@
                 <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
-        <span class="panel-accent leading-none">— Sincronizado en tiempo real</span>
+        <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Sincronizado en tiempo real</span>
     </section>
 
     @if ($errors->has('timer') || $errors->has('customerId') || $errors->has('subServiceId'))
