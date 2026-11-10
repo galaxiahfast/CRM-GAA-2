@@ -37,6 +37,9 @@
         [data-productivity] .prod-primary:hover { background-color: color-mix(in srgb, var(--prod-green) 20%, var(--panel-surface)); }
         [data-productivity] .prod-primary:disabled { cursor: not-allowed; opacity: .6; }
         [data-productivity] .prod-list-wrap { position: relative; min-height: 0; }
+        [data-productivity] .prod-list { counter-reset: prodrow; }
+        [data-productivity] .prod-item { counter-increment: prodrow; cursor: grab; }
+        [data-productivity] .prod-counter::before { content: counter(prodrow); }
         /* Texto que puede partirse en varias líneas: 20px de espacio entre una línea y la siguiente */
         [data-productivity] .prod-lines { line-height: 35px; margin-bottom: -10px; }
 
@@ -60,10 +63,13 @@
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
-        [data-productivity] .prod-detail { max-height: 520px; overflow-y: auto; }
+        /* El detalle muestra siempre 7 filas exactas (7 × 70px); el encabezado de cada día cuenta como una fila */
+        [data-productivity] .prod-detail { position: relative; max-height: 490px; overflow-y: auto; }
+        [data-productivity] .prod-day-head { height: 70px; box-sizing: border-box; align-content: center; }
+        [data-productivity] .prod-row { cursor: grab; }
         [data-productivity] .prod-day + .prod-day { border-top-width: 1px; }
         [data-productivity] .prod-row:nth-child(even) > .prod-row-btn { background-color: var(--panel-header); }
-        [data-productivity] .prod-row-btn { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; gap: 20px; padding: 20px; text-align: left; cursor: pointer; }
+        [data-productivity] .prod-row-btn { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; gap: 20px; height: 69px; box-sizing: border-box; padding: 0 20px; text-align: left; cursor: pointer; }
         [data-productivity] .prod-row-btn:hover { background-color: var(--panel-hover) !important; }
         [data-productivity] .prod-row-btn > :nth-child(5) { grid-column: 2; grid-row: 1; }
         [data-productivity] .prod-row-btn > :nth-child(-n+4) { grid-column: 1; }
@@ -152,10 +158,10 @@
                                         <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
                                     </div>
                                     <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
-                                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="prod-list panel-scroll">
+                                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-activity-sortable data-sortable-local class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
-                                            <div class="prod-item prod-grid">
-                                                <span class="prod-index panel-border leading-none">{{ $loop->iteration }}</span>
+                                            <div class="prod-item prod-grid" data-activity-id="{{ $loop->index }}">
+                                                <span class="prod-index prod-counter panel-border leading-none"></span>
                                                 <div class="prod-cell prod-metrics">
                                                     <span class="truncate leading-none" title="{{ $name }}">{{ $name }}</span>
                                                     <span class="tabular-nums leading-none">{{ $fmt($seconds) }}</span>
@@ -187,17 +193,17 @@
                     <p class="leading-none">{{ count($entries) }} {{ count($entries) === 1 ? 'registro' : 'registros' }}</p>
                 </header>
                 <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative">
-                <div x-ref="scroller" @scroll="update()" class="prod-detail panel-scroll">
+                <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="prod-detail panel-scroll">
                     @forelse ($activityDetail['groups'] as $group)
-                        <section class="prod-day panel-border">
-                            <header class="panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
+                        <section class="prod-day panel-border" data-activity-sortable data-sortable-local>
+                            <header data-snap class="prod-day-head panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] overflow-hidden border-b p-[20px]">
                                 <h3 class="panel-accent leading-none">{{ $group['date'] }}</h3>
                                 <p class="leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }} <span class="ml-[20px]">Tiempo total <span class="tabular-nums">{{ $group['total_effective'] }}</span></span></p>
                             </header>
                             @foreach ($group['rows'] as $row)
                                 @php $rowId = $rowCounter++; @endphp
-                                <article class="prod-row panel-border border-b last:border-b-0">
-                                    <button type="button" @click="toggleRow({{ $rowId }})" :aria-expanded="isExpanded({{ $rowId }})" class="prod-row-btn focus:outline-none focus:ring-0">
+                                <article data-snap data-activity-id="{{ $rowId }}" class="prod-row panel-border border-b last:border-b-0">
+                                    <button type="button" @click="toggleRow({{ $rowId }})" :aria-expanded="isExpanded({{ $rowId }})" data-sortable-handle class="prod-row-btn focus:outline-none focus:ring-0">
                                         <span class="leading-none">{{ $row[$idxInicio] ?? '-' }} – {{ $row[$idxFin] ?? '-' }}</span>
                                         <span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span>
                                         <span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span>

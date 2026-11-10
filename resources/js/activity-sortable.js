@@ -28,7 +28,9 @@ const initializeActivitySortable = (container) => {
     container.addEventListener('pointerdown', (event) => {
         // Solo con el botón principal del ratón o lápiz; en pantallas táctiles la fila conserva su desplazamiento normal.
         if (event.button !== 0 || event.pointerType === 'touch') return;
-        if (event.target.closest(INTERACTIVE_SELECTOR)) return;
+        // Los botones con data-sortable-handle (filas que son un botón) también pueden arrastrarse; un clic simple sigue funcionando.
+        const interactive = event.target.closest(INTERACTIVE_SELECTOR);
+        if (interactive && !interactive.hasAttribute('data-sortable-handle')) return;
 
         const draggedRow = event.target.closest(ROW_SELECTOR);
         if (!draggedRow || draggedRow.parentNode !== container) return;
@@ -99,6 +101,14 @@ const initializeActivitySortable = (container) => {
             draggedRow.style.cursor = '';
             document.body.style.userSelect = '';
             document.body.style.cursor = '';
+
+            // Tras arrastrar un botón, el clic que dispara el navegador no debe abrir ni cerrar la fila.
+            const swallowClick = (clickEvent) => clickEvent.stopPropagation();
+            window.addEventListener('click', swallowClick, { capture: true, once: true });
+            setTimeout(() => window.removeEventListener('click', swallowClick, { capture: true }), 0);
+
+            // Orden solo visual (sin guardar): por ejemplo las distribuciones y el detalle de Productividad.
+            if (container.hasAttribute('data-sortable-local')) return;
 
             const order = [...container.querySelectorAll(ROW_SELECTOR)]
                 .map((row, index) => ({ order: index + 1, value: row.dataset.activityId }));
