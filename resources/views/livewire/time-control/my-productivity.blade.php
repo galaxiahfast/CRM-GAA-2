@@ -96,6 +96,7 @@
                 <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Mi productividad</h1>
                 <p class="prod-lines mt-[5px]">Consulta y analiza el tiempo dedicado a tus clientes y actividades.</p>
             </div>
+            <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Sincronizado en tiempo real</span>
         </section>
 
         <div class="prod-wrap">
