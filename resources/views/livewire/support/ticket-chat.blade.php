@@ -4,26 +4,6 @@
     data-support-chat
     class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
     x-data="{
-        viewScale: 90,
-        isFullscreen: false,
-        profilePhotoOpen: false,
-        profilePhotoUrl: '',
-        profilePhotoName: '',
-        saveScale() {
-            localStorage.setItem('support-ticket-view-scale', String(this.viewScale));
-        },
-        async toggleFullscreen(container) {
-            if (document.fullscreenElement === container) {
-                await document.exitFullscreen();
-                return;
-            }
-
-            if (document.fullscreenElement) {
-                await document.exitFullscreen();
-            }
-
-            await container.requestFullscreen();
-        },
         showProfilePhoto(url, name) {
             if (!url) return;
             this.profilePhotoUrl = url;
@@ -31,46 +11,13 @@
             this.profilePhotoOpen = true;
         }
     }"
-    @fullscreenchange.window="isFullscreen = document.fullscreenElement === $root"
     @keydown.escape.window="profilePhotoOpen = false"
 >
     <x-panel-styles />
 
     <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.18]" aria-hidden="true"></canvas>
 
-    <div class="no-print panel-surface panel-border fixed bottom-[20px] right-[20px] z-30 flex items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
-        <input
-            type="range"
-            min="70"
-            max="100"
-            step="5"
-            x-model.number="viewScale"
-            @input="saveScale()"
-            class="h-1.5 w-[110px] cursor-pointer accent-[var(--panel-accent)]"
-            aria-label="Ajustar tamaño de la vista del Ticket"
-        >
-        <span class="panel-text w-[42px] text-right text-[15px] font-normal tabular-nums" x-text="viewScale + '%'">90%</span>
-        <span class="panel-line h-5 w-px" aria-hidden="true"></span>
-        <button
-            type="button"
-            @click="toggleFullscreen($root)"
-            class="panel-icon-button inline-flex cursor-pointer items-center justify-center rounded-lg p-[5px] transition-colors"
-            :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Ver el Ticket en pantalla completa'"
-            :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'"
-        >
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/>
-            </svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/>
-            </svg>
-        </button>
-    </div>
-
-    <div
-        class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 origin-top flex-col"
-        :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
-    >
+    <div class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 flex-col">
     <main class="relative z-10 mx-auto flex w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="flex min-w-0 items-center gap-[15px]">
@@ -91,8 +38,17 @@
             </span>
         </section>
 
-        <section data-support-chat-panel class="panel-surface panel-border grid min-h-[680px] min-w-0 flex-1 grid-rows-[190px_minmax(0,1fr)] overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:grid-cols-[320px_minmax(0,1fr)] xl:grid-rows-1">
-            <aside class="panel-header panel-border min-h-0 overflow-y-auto border-b xl:overflow-hidden xl:border-b-0 xl:border-r">
+        <div data-support-chat-panel class="flex min-h-[680px] min-w-0 flex-1 flex-col gap-[30px] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:flex-row xl:gap-[50px]">
+            <aside class="panel-surface panel-border flex max-h-[520px] min-h-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:max-h-none xl:w-[360px] xl:shrink-0">
+                <header class="panel-header panel-border shrink-0 border-b p-[20px]">
+                    <div class="flex items-start justify-between gap-[20px]">
+                        <div class="min-w-0">
+                            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.13a9.4 9.4 0 0 0 4.12-.9 4 4 0 0 0-7.1-3.2M15 19.13v-.01a8.97 8.97 0 0 1-1.24 0m1.24 0A9 9 0 0 1 9 19.13m0 0a9.3 9.3 0 0 1-4.12-.9 4 4 0 0 1 7.1-3.2M9 19.13A9 9 0 0 1 7.76 19m4.24-9.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm8 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>En línea ahora</h2>
+                            <p class="chat-sub mt-[15px]">Quién está conectado al chat.</p>
+                        </div>
+                        <span class="shrink-0 leading-none">{{ count($onlineUsers) }} en línea</span>
+                    </div>
+                </header>
                 <div data-support-profile-header class="panel-surface panel-border flex items-center gap-[15px] border-b p-[20px]">
                     @if (auth()->user()->profile_photo_path)
                         <button type="button" @click="showProfilePhoto(@js(url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/'))), @js(auth()->user()->name))" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-normal text-white outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ auth()->user()->name }}">
@@ -109,7 +65,7 @@
                     </div>
                 </div>
 
-                <div class="space-y-[20px] p-[20px]">
+                <div class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto p-[20px]">
                     <div>
                         <p class="panel-accent text-[15px]">Chat del día</p>
                             <p class="mt-[10px] text-[15px] font-normal leading-6 text-zinc-600">{{ $todayLabel }}</p>
@@ -118,7 +74,6 @@
                     <div>
                         <div class="flex items-center justify-between gap-3">
                             <p class="panel-accent text-[15px]">Personas en línea</p>
-                            <span class="text-[15px] font-normal text-zinc-500">{{ count($onlineUsers) }} en línea</span>
                         </div>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
@@ -154,11 +109,10 @@
             </aside>
 
             <div
-                class="flex min-h-0 flex-col"
+                class="panel-surface panel-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
                 wire:poll.3s.visible="refreshMessages"
                 x-data="{
                     stayAtBottom: true,
-                    searchOpen: false,
                     searchQuery: '',
                     emojiOpen: false,
                     stickerOpen: false,
@@ -217,26 +171,16 @@
             >
                 <header data-support-chat-header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
                     <div>
-                        <h2 class="panel-accent">Conversación general</h2>
+                        <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg>Conversación general</h2>
                         <p class="mt-[5px] text-[15px] text-zinc-500">
                             <span x-text="currentDayLabel || 'Semana actual'">Semana actual</span>
                             <span> · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</span>
                         </p>
                     </div>
                     <div class="flex min-w-0 items-center gap-[20px]">
-                        <button
-                            type="button"
-                            x-show="!searchOpen"
-                            @click="searchOpen = true; $nextTick(() => $refs.searchInput.focus())"
-                            class="clock-link inline-flex items-center gap-[10px] bg-transparent p-0 text-[15px] transition-colors"
-                            aria-label="Buscar mensajes"
-                        >
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                            Buscar mensajes
-                        </button>
-                        <div x-show="searchOpen" x-cloak style="display: none;" class="relative w-[min(360px,calc(100vw-80px))]">
+                        <div class="relative w-[min(360px,calc(100vw-80px))]">
                             <svg class="pointer-events-none absolute left-[20px] top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                            <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" @keydown.escape.stop="searchQuery = ''; searchOpen = false" @blur="if (!searchQuery.trim()) searchOpen = false" type="text" placeholder="Buscar por nombre, correo o contenido…" class="panel-field w-full rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[50px] pr-[20px] text-[15px] text-zinc-700 outline-none transition">
+                            <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" @keydown.escape.stop="searchQuery = ''" type="text" placeholder="Buscar por nombre, correo o contenido…" class="panel-field w-full rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[50px] pr-[20px] text-[15px] text-zinc-700 outline-none transition">
                         </div>
                     </div>
                 </header>
@@ -521,7 +465,7 @@
                     </div>
                 </form>
             </div>
-        </section>
+        </div>
     </main>
 
     </div>
