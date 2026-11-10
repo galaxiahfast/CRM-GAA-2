@@ -212,28 +212,26 @@
         </div>
     </section>
 
-    @if ($errors->has('timer'))
-        @teleport('body')
+    @if ($errors->has('timer') || $errors->has('customerId') || $errors->has('subServiceId'))
             <div
                 data-panel
                 wire:key="clock-error-toast-{{ $errorToastVersion }}"
-                x-data="{ visible: true }"
-                x-init="setTimeout(() => visible = false, 4500)"
-                x-show="visible"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 -translate-y-3"
-                x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0"
-                x-transition:leave-end="opacity-0 -translate-y-3"
-                class="panel-surface fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[15px] rounded-xl border px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]"
+                class="panel-surface fixed left-1/2 top-[120px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[15px] rounded-xl border px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]"
                 style="border-color: var(--panel-danger-line); color: var(--panel-danger)"
                 role="alert"
             >
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
-                <span class="min-w-0 flex-1">{{ $errors->first('timer') }}</span>
+                <div class="min-w-0 flex-1 space-y-[10px] leading-[20px]">
+                    @foreach (['timer', 'customerId', 'subServiceId'] as $errorKey)
+                        @error($errorKey)
+                            <p>{{ $message }}</p>
+                        @enderror
+                    @endforeach
+                </div>
+                <button type="button" wire:click="dismissErrorToast" class="panel-icon-button rounded-lg p-[5px]" aria-label="Cerrar aviso">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
             </div>
-        @endteleport
     @endif
 
     <section
@@ -324,8 +322,9 @@
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
-                    <div id="clock-tour-client" class="relative">
+                    <div class="relative">
                         <input
+                            id="clock-tour-client"
                             type="text"
                             x-model="search"
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
@@ -354,9 +353,6 @@
                         </div>
                     </div>
 
-                    @error('customerId')
-                        <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
-                    @enderror
                 </div>
 
                 <div
@@ -392,8 +388,9 @@
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Actividad</span></label>
 
-                    <div id="clock-tour-activity" class="relative">
+                    <div class="relative">
                         <input
+                            id="clock-tour-activity"
                             type="text"
                             x-model="search"
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
@@ -422,9 +419,6 @@
                         </div>
                     </div>
 
-                    @error('subServiceId')
-                        <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
-                    @enderror
                 </div>
 
                 <div>
@@ -653,20 +647,20 @@
                 <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-semibold text-white shadow" x-text="quickTourStep"></span>
             </div>
 
-            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(380px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title" aria-live="polite">
-                <div class="mb-[15px] flex items-center justify-between gap-[15px]">
+            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(380px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border px-[20px] py-[15px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title" aria-live="polite">
+                <div class="mb-[20px] flex items-center justify-between gap-[15px]">
                     <span class="panel-accent text-sm" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></span>
                     <button type="button" @click="closeQuickTour()" class="panel-icon-button rounded-lg p-[5px]" aria-label="Cerrar recorrido">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></svg>
                     </button>
                 </div>
-                <h2 id="clock-tour-title" class="panel-text text-lg font-medium leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
-                <p class="panel-text mt-[10px] leading-[25px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
-                <div class="mt-[20px] flex items-center justify-between gap-[10px]">
+                <h2 id="clock-tour-title" class="panel-text text-lg font-medium leading-[20px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
+                <p class="panel-text mt-[20px] text-justify leading-[20px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                <div class="mt-[40px] flex items-center justify-between gap-[20px]">
                     <button type="button" @click="closeQuickTour()" class="clock-link px-[5px] py-[10px]">Saltar recorrido</button>
                     <div class="flex items-center gap-[10px]">
-                        <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-lg px-[15px] py-[10px]">Anterior</button>
-                        <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-lg px-[15px] py-[10px]" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                        <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-lg px-[20px] py-[15px]">Anterior</button>
+                        <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-lg px-[20px] py-[15px]" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
                     </div>
                 </div>
             </section>

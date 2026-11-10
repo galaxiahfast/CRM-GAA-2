@@ -31,7 +31,7 @@ class RegistroActividades extends Component
 
     public string $deleteConfirmation = '';
 
-    /** Cambia con cada error del cronómetro para que el aviso emergente vuelva a mostrarse. */
+    /** Cambia en cada intento para que los avisos emergentes vuelvan a mostrarse. */
     public int $errorToastVersion = 0;
 
     public function mount(): void
@@ -47,8 +47,15 @@ class RegistroActividades extends Component
         $this->errorToastVersion++;
     }
 
+    public function dismissErrorToast(): void
+    {
+        $this->resetValidation();
+    }
+
     public function start(TimerService $timer): void
     {
+        $this->errorToastVersion++;
+
         $this->validate([
             'customerId' => [
                 'required',
@@ -56,7 +63,12 @@ class RegistroActividades extends Component
             ],
             'subServiceId' => ['required', 'exists:sub_services,id'],
             'description' => ['nullable', 'string', 'max:500'],
-        ], [], [
+        ], [
+            'customerId.required' => 'Selecciona un cliente o departamento para iniciar la actividad.',
+            'customerId.exists' => 'El cliente seleccionado ya no está disponible.',
+            'subServiceId.required' => 'Selecciona una actividad para iniciar el registro.',
+            'subServiceId.exists' => 'La actividad seleccionada ya no está disponible.',
+        ], [
             'customerId' => 'cliente',
             'subServiceId' => 'actividad',
         ]);

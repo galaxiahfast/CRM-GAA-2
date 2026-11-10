@@ -199,24 +199,25 @@ document.addEventListener('alpine:init', () => {
             if (! target) return;
 
             const rect = target.getBoundingClientRect();
-            const padding = 7;
-            const left = Math.max(8, rect.left - padding);
-            const top = Math.max(8, rect.top - padding);
-            const right = Math.min(window.innerWidth - 8, rect.right + padding);
-            const bottom = Math.min(window.innerHeight - 8, rect.bottom + padding);
+            const left = Math.max(0, rect.left);
+            const top = Math.max(0, rect.top);
+            const right = Math.min(window.innerWidth, rect.right);
+            const bottom = Math.min(window.innerHeight, rect.bottom);
             const width = Math.max(0, right - left);
             const height = Math.max(0, bottom - top);
             const mask = 'position:fixed;background:rgba(10,12,18,.68);pointer-events:auto;';
+            const borderRadius = window.getComputedStyle(target).borderRadius || '12px';
 
-            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${borderRadius};`;
             this.maskTopStyle = `${mask}left:0;top:0;width:100vw;height:${top}px;`;
             this.maskLeftStyle = `${mask}left:0;top:${top}px;width:${left}px;height:${height}px;`;
             this.maskRightStyle = `${mask}left:${right}px;top:${top}px;width:${Math.max(0, window.innerWidth - right)}px;height:${height}px;`;
             this.maskBottomStyle = `${mask}left:0;top:${bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - bottom)}px;`;
 
-            const popoverWidth = Math.min(360, window.innerWidth - 32);
-            const popoverHeight = window.innerWidth < 500 ? 260 : 250;
-            const gutter = 16;
+            const dialog = document.querySelector('[aria-labelledby="clock-tour-title"]');
+            const popoverWidth = Math.min(380, window.innerWidth - 40);
+            const popoverHeight = dialog?.offsetHeight || (window.innerWidth < 500 ? 320 : 300);
+            const gutter = 20;
             const sideGap = 20;
             const rightSpace = window.innerWidth - rect.right - gutter;
             const leftSpace = rect.left - gutter;
