@@ -98,7 +98,7 @@
             white-space: nowrap;
             line-height: 15px;
         }
-        [data-time-clock] .clock-table .clock-head-row th { height: 60px; }
+        [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
         html.module-dark-theme #main-content [data-time-clock] table tbody,
         html.module-dark-theme #main-content [data-time-clock] table tr {
@@ -273,15 +273,23 @@
         data-total-open-start="{{ $todayOpenStart }}"
 
     >
-        <header class="panel-header panel-border flex flex-col gap-[20px] border-b p-[20px] xl:flex-row xl:items-center xl:justify-between">
-            <div class="min-w-0 xl:flex-1">
+        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+            <div class="min-w-0">
                 <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
-                <p class="mt-[15px] leading-none">Elige cliente y actividad para iniciar el registro.</p>
+                <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
-            <form wire:submit="start" class="w-full xl:w-auto xl:flex-[2]">
-            <div class="flex flex-wrap items-end gap-[20px] xl:justify-end">
+            <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
+        </header>
+        <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+    <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
+        <div class="panel-header panel-border box-border h-[87px] border-b p-[20px]">
+            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
+            <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
+        </div>
+        <form wire:submit="start" class="p-[20px]">
+            <div class="grid gap-[20px]">
                 <div
-                    class="relative min-w-[240px] w-full max-w-[360px] flex-1 basis-[280px]"
+                    class="relative"
                     x-data="{
                         open: false,
                         search: '',
@@ -311,7 +319,8 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <div class="relative min-w-0">
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
+
                     <div class="relative">
                         <input
                             type="text"
@@ -319,11 +328,11 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             :placeholder="selectedName || '-- Escribe o selecciona un cliente --'"
-                            class="panel-field h-[48px] w-full truncate rounded-xl border pl-[15px] pr-[48px] focus:outline-none focus:ring-0"
+                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[15px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
                             <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -345,11 +354,10 @@
                     @error('customerId')
                         <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
-                    </div>
                 </div>
 
                 <div
-                    class="relative min-w-[240px] w-full max-w-[360px] flex-1 basis-[280px]"
+                    class="relative"
                     x-data="{
                         open: false,
                         search: '',
@@ -379,7 +387,8 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <div class="relative min-w-0">
+                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
+
                     <div class="relative">
                         <input
                             type="text"
@@ -387,11 +396,11 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             :placeholder="selectedName || '-- Escribe o selecciona una actividad --'"
-                            class="panel-field h-[48px] w-full truncate rounded-xl border pl-[15px] pr-[48px] focus:outline-none focus:ring-0"
+                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[15px] flex cursor-pointer items-center" aria-label="Mostrar actividades">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar actividades">
                             <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -413,33 +422,29 @@
                     @error('subServiceId')
                         <span class="panel-tone-red mt-[15px] block">{{ $message }}</span>
                     @enderror
-                    </div>
                 </div>
 
-                <div class="flex w-full items-end sm:w-auto">
-                    <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex h-[48px] min-w-[190px] cursor-pointer items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
-                        <span class="flex w-full flex-row items-center justify-center gap-[10px]">
-                            <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M8 5.14v13.72L19 12 8 5.14z"/>
-                            </svg>
+                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span class="flex w-full flex-row items-center justify-center gap-[10px]">
+                        <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M8 5.14v13.72L19 12 8 5.14z"/>
+                        </svg>
 
-                            <svg wire:loading wire:target="start" class="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" style="display: none;">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                        <svg wire:loading wire:target="start" class="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" style="display: none;">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
 
-                            <span wire:loading.remove wire:target="start">Iniciar actividad</span>
-                            <span wire:loading wire:target="start" style="display: none;">Sincronizando...</span>
-                        </span>
-                    </button>
-                </div>
+                        <span wire:loading.remove wire:target="start">Iniciar actividad</span>
+                        <span wire:loading wire:target="start" style="display: none;">Sincronizando...</span>
+                    </span>
+                </button>
             </div>
-            </form>
-        </header>
-
+        </form>
+    </aside>
 
     <div
-        class="flex min-h-0 min-w-0 flex-col xl:flex-1"
+        class="flex min-h-0 min-w-0 flex-col"
     >
         @if ($todayEntries->isEmpty())
             <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
@@ -574,6 +579,7 @@
 
         @endif
     </div>
+        </div>
     </section>
     </main>
 
