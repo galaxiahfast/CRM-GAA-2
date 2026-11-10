@@ -273,17 +273,15 @@
         data-total-open-start="{{ $todayOpenStart }}"
 
     >
-        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
-            <div class="min-w-0">
+        <header class="panel-header panel-border flex flex-col gap-[20px] border-b p-[20px] xl:flex-row xl:items-center xl:justify-between">
+            <div class="min-w-0 xl:flex-1">
                 <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
-                <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
+                <p class="mt-[15px] leading-none">Elige cliente y actividad para iniciar el registro.</p>
             </div>
-            <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
-        </header>
-        <form wire:submit="start" class="panel-border border-b">
-            <div class="grid md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_260px]">
+            <form wire:submit="start" class="w-full xl:w-auto xl:flex-[2]">
+            <div class="flex flex-wrap items-end gap-[20px] xl:justify-end">
                 <div
-                    class="panel-border relative border-b p-[20px] md:border-r xl:border-b-0"
+                    class="relative min-w-[240px] w-full max-w-[360px] flex-1 basis-[280px]"
                     x-data="{
                         open: false,
                         search: '',
@@ -313,8 +311,6 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="panel-accent mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
-
                     <div class="relative min-w-0">
                     <div class="relative">
                         <input
@@ -323,11 +319,11 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             :placeholder="selectedName || '-- Escribe o selecciona un cliente --'"
-                            class="panel-field h-[52px] w-full truncate rounded-xl border pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
+                            class="panel-field h-[48px] w-full truncate rounded-xl border pl-[15px] pr-[48px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[15px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
                             <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -353,7 +349,7 @@
                 </div>
 
                 <div
-                    class="panel-border relative border-b p-[20px] xl:border-b-0 xl:border-r"
+                    class="relative min-w-[240px] w-full max-w-[360px] flex-1 basis-[280px]"
                     x-data="{
                         open: false,
                         search: '',
@@ -383,8 +379,6 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="panel-accent mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
-
                     <div class="relative min-w-0">
                     <div class="relative">
                         <input
@@ -393,11 +387,11 @@
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             :placeholder="selectedName || '-- Escribe o selecciona una actividad --'"
-                            class="panel-field h-[52px] w-full truncate rounded-xl border pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
+                            class="panel-field h-[48px] w-full truncate rounded-xl border pl-[15px] pr-[48px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
 
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar actividades">
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'service' }) }" class="absolute inset-y-0 right-[15px] flex cursor-pointer items-center" aria-label="Mostrar actividades">
                             <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -422,9 +416,8 @@
                     </div>
                 </div>
 
-                <div class="p-[20px] md:col-span-2 xl:col-span-1">
-                    <span class="mb-[15px] hidden h-[15px] xl:block" aria-hidden="true"></span>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex h-[52px] w-full cursor-pointer items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                <div class="flex w-full items-end sm:w-auto">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex h-[48px] min-w-[190px] cursor-pointer items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                         <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                             <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M8 5.14v13.72L19 12 8 5.14z"/>
@@ -441,7 +434,8 @@
                     </button>
                 </div>
             </div>
-        </form>
+            </form>
+        </header>
 
 
     <div
