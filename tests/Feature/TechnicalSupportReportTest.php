@@ -110,6 +110,47 @@ class TechnicalSupportReportTest extends TestCase
             ->assertSee('Chat de Soporte');
     }
 
+    public function test_the_sidebar_markup_stays_balanced_for_every_role(): void
+    {
+        $administratorRole = Role::query()->create([
+            'role' => 'Administrador',
+            'permission_profile' => Role::PROFILE_ADMINISTRATOR,
+        ]);
+
+        $users = [User::factory()->create(['role_id' => $administratorRole->id])];
+
+        foreach (['Coordinador', 'Contador', 'Auxiliar', 'Becario', 'Becario Senior'] as $roleName) {
+            $role = Role::query()->firstOrCreate(['role' => $roleName]);
+            $users[] = User::factory()->create(['role_id' => $role->id]);
+        }
+
+        foreach ($users as $user) {
+            $html = $this->actingAs($user)->get(route('inicio'))->assertOk()->getContent();
+            $html = preg_replace('#<(script|style)\b.*?</\1>#s', '', $html);
+
+            // Un cierre de más en el menú lateral saca el contenido de la página de su contenedor y la deja en blanco.
+            preg_match_all('#<(/?)(div|ul|li|nav|aside)(?![\w-])((?:"[^"]*"|\'[^\']*\'|[^\'">])*)>#', $html, $matches, PREG_SET_ORDER);
+
+            $stack = [];
+
+            foreach ($matches as [$tag, $closing, $name, $attributes]) {
+                if (str_ends_with(trim($attributes), '/')) {
+                    continue;
+                }
+
+                if ($closing === '') {
+                    $stack[] = $name;
+
+                    continue;
+                }
+
+                $this->assertSame($name, array_pop($stack), 'Cierre </'.$name.'> inesperado para el rol '.($user->role?->role ?? 'sin rol').'.');
+            }
+
+            $this->assertSame([], $stack, 'Etiquetas sin cerrar para el rol '.($user->role?->role ?? 'sin rol').'.');
+        }
+    }
+
     public function test_authenticated_user_can_open_report_section_and_pdf(): void
     {
         $user = User::factory()->create();

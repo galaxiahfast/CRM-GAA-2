@@ -805,7 +805,6 @@
                                         <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Reportes de Soporte</span>
                                     </a>
                                 </li>
-                    @endcanany
                                 @endcan
                                 @can('manage-backup-reports')
                                     <li class="m-0 w-full pb-0 pl-[27px] pr-0 pt-[20px]" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
@@ -818,6 +817,7 @@
                             </ul>
                         </div>
                     </li>
+                    @endcanany
 
                 <!-- ========================================================== -->
                 <!-- SECCIÓN: SOPORTE (oculta en modo compacto)                 -->
