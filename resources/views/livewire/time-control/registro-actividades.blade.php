@@ -190,6 +190,11 @@
 
         /* Tablet y laptop (760-1239): formulario en una fila */
         @container clock (min-width: 760px) {
+            /* La tarjeta ocupa todo el alto disponible: el formulario arriba y la tabla (o el mensaje vacío) llenan el resto */
+            [data-time-clock] .clock-card { flex: 1; min-height: 0; }
+            [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+            [data-time-clock] .clock-main { flex: 1; }
+            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
             [data-time-clock] .clock-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; }
             [data-time-clock] .clock-field-action { grid-column: auto; }
         }
@@ -484,7 +489,7 @@
 
     <div class="clock-main clock-scroll">
         @if ($todayEntries->isEmpty())
-            <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
+            <div class="flex min-h-[350px] flex-1 flex-col items-center justify-center px-[20px] text-center">
                 <span class="panel-border mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </span>
