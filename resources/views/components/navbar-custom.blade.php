@@ -281,6 +281,15 @@
                     </svg>
                 </a>
 
+                <a href="{{ route('soporte.ticket') }}"
+                    class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border-0 bg-transparent text-white transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-0"
+                    aria-label="Abrir chat de soporte"
+                    title="Chat de soporte">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 9 9 0 0 1-3.4-.7L3 21l1.9-5.1A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z" />
+                    </svg>
+                </a>
+
                 <a href="{{ route('profile.show') }}"
                     class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border-0 bg-transparent text-white transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-0"
                     aria-label="Abrir ajustes"
