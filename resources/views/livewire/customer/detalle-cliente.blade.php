@@ -535,7 +535,7 @@
                     default => 'panel-tone-green',
                 };
             @endphp
-            <div class="panel-surface panel-border fixed bottom-[30px] right-[20px] z-[70] flex w-[calc(100%-40px)] max-w-sm items-center gap-[15px] rounded-xl border p-[15px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:right-[30px] lg:bottom-[100px]"
+            <div class="app-zoom-overlay panel-surface panel-border fixed bottom-[30px] right-[20px] z-[70] flex w-[calc(100%-40px)] max-w-sm items-center gap-[15px] rounded-xl border p-[15px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:right-[30px] lg:bottom-[100px]"
                 role="alert" x-data="{ show: true }" x-show="show"
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-2"

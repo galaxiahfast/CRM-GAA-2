@@ -246,8 +246,11 @@ document.addEventListener('alpine:init', () => {
             this.maskBottomStyle = `${mask}left:0;top:${bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - bottom)}px;`;
 
             const dialog = document.querySelector('[aria-labelledby="clock-tour-title"]');
-            const popoverWidth = Math.min(440, window.innerWidth - 40);
-            const popoverHeight = dialog?.offsetHeight || (window.innerWidth < 500 ? 320 : 300);
+            // El mensaje está fuera del contenedor con zoom, así que se le aplica el mismo zoom de la aplicación
+            // (--app-zoom). Las medidas de abajo son píxeles visibles; al final se dividen entre el zoom.
+            const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+            const popoverWidth = Math.min(440 * zoom, window.innerWidth - 40);
+            const popoverHeight = dialog?.getBoundingClientRect().height || (window.innerWidth < 500 ? 320 : 300) * zoom;
             const gutter = 20;
             const sideGap = 20;
             const rightSpace = window.innerWidth - rect.right - gutter;
@@ -267,7 +270,7 @@ document.addEventListener('alpine:init', () => {
                 popoverTop = below ? rect.bottom + sideGap : Math.max(gutter, rect.top - popoverHeight - sideGap);
             }
 
-            this.popoverStyle = `position:fixed;left:${popoverLeft}px;top:${popoverTop}px;width:${popoverWidth}px;transform:translate(0,0);`;
+            this.popoverStyle = `position:fixed;zoom:${zoom};left:${popoverLeft / zoom}px;top:${popoverTop / zoom}px;width:${popoverWidth / zoom}px;max-width:none;transform:translate(0,0);`;
         },
     }));
 });

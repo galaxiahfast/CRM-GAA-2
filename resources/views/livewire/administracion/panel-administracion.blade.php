@@ -77,7 +77,7 @@
         x-cloak
         role="status"
         aria-live="polite"
-        class="panel-surface panel-border fixed left-1/2 top-[143px] z-[200002] flex max-w-[calc(100vw-40px)] -translate-x-1/2 items-center gap-[10px] rounded-xl border px-[20px] py-[15px] leading-none shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        class="app-zoom-overlay panel-surface panel-border fixed left-1/2 top-[143px] z-[200002] flex max-w-[calc(100vw-40px)] -translate-x-1/2 items-center gap-[10px] rounded-xl border px-[20px] py-[15px] leading-none shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
         style="display: none;"
     >
         <svg class="h-4 w-4 shrink-0" :class="kind === 'success' ? 'text-[#1A3A6B]' : 'text-[color:var(--panel-danger)]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5l2.7 2.7L16 9.5" /><circle cx="12" cy="12" r="9.5" /></svg>

@@ -6,10 +6,16 @@
         actionMenu: null,
         menuStyle: {},
         panelTop: '29px',
+        // La barra superior tiene el zoom de la aplicación: las medidas del navegador son visibles y hay que dividirlas entre el zoom.
+        navZoom() {
+            const nav = document.getElementById('main-nav');
+            return (nav && parseFloat(getComputedStyle(nav).zoom)) || 1;
+        },
         placePanel() {
             const nav = document.getElementById('main-nav');
             if (! nav) { return; }
-            this.panelTop = `${nav.getBoundingClientRect().bottom - this.$root.getBoundingClientRect().bottom}px`;
+            const zoom = this.navZoom();
+            this.panelTop = `${(nav.getBoundingClientRect().bottom - this.$root.getBoundingClientRect().bottom) / zoom}px`;
         },
         rowClick(id, event) {
             if (event.target.closest('[data-no-toggle]')) { return; }
@@ -19,11 +25,12 @@
         toggleMenu(id, event) {
             if (this.actionMenu === id) { this.actionMenu = null; return; }
             const rect = event.currentTarget.getBoundingClientRect();
-            const width = 300;
-            const height = 170;
+            const zoom = this.navZoom();
+            const width = 300 * zoom;
+            const height = 170 * zoom;
             const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
             const top = rect.bottom + 10 + height > window.innerHeight - 8 ? Math.max(8, rect.top - 10 - height) : rect.bottom + 10;
-            this.menuStyle = { top: `${top}px`, left: `${left}px` };
+            this.menuStyle = { top: `${top / zoom}px`, left: `${left / zoom}px` };
             this.actionMenu = id;
         }
     }"
@@ -68,7 +75,7 @@
         x-transition:leave-end="opacity-0 scale-95"
         :style="{ marginTop: panelTop }"
         class="notification-panel absolute right-0 z-[100] origin-top-right overflow-visible rounded-b-xl border border-[#d4d4d8] bg-white text-[15px] text-black shadow-[0_18px_45px_rgba(0,0,0,0.14)]"
-        style="display: none; width: min(480px, calc(100vw - 30px)); margin-top: 29px; border-top-width: 0; border-top-left-radius: 0; border-top-right-radius: 0;"
+        style="display: none; width: min(480px, calc((100vw - 30px) / var(--app-zoom, 1))); margin-top: 29px; border-top-width: 0; border-top-left-radius: 0; border-top-right-radius: 0;"
         aria-label="Panel de notificaciones"
     >
         @php

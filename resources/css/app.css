@@ -700,6 +700,11 @@ html.module-dark-theme::-webkit-scrollbar-thumb {
     zoom: var(--app-zoom);
 }
 
+/* Avisos y mensajes que se pintan fuera de #app-zoom (teleport al body) usan el mismo zoom para verse igual que el contenido. */
+.app-zoom-overlay {
+    zoom: var(--app-zoom, 1);
+}
+
 /* Apartados del menú lateral sin recuadro: solo se resalta el activo y el que tiene el cursor encima. */
 #logo-sidebar ul :is(a, button).bg-gray-50:not(:hover),
 html.module-dark-theme #logo-sidebar ul :is(a, button).bg-gray-50:not(:hover) {
