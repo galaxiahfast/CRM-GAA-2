@@ -370,7 +370,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
+                    <label class="mb-[20px] flex min-h-6 items-center leading-none">Cliente</label>
 
                     <div class="relative">
                         <input
@@ -436,7 +436,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Actividad</span></label>
+                    <label class="mb-[20px] flex min-h-6 items-center leading-none">Actividad</label>
 
                     <div class="relative">
                         <input
@@ -490,7 +490,7 @@
                     </button>
                 </div>
                 <div class="clock-guide panel-border border-t pt-[20px]">
-                    <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link flex w-fit items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg><span>Guía en PDF</span></a>
+                    <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link w-fit leading-none">Guía en PDF</a>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
                         Uso rápido
