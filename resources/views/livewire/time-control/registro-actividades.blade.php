@@ -369,11 +369,10 @@
                         }
                     }"
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
-                    @click.away="open = false; search = ''"
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Actividad</span></label>
 
-                    <div class="relative">
+                    <div class="relative" @click.outside="open = false; search = ''">
                         <input
                             id="clock-tour-activity"
                             type="text"
@@ -435,11 +434,10 @@
                         }
                     }"
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
-                    @click.away="open = false; search = ''"
                 >
                     <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
-                    <div class="relative">
+                    <div class="relative" @click.outside="open = false; search = ''">
                         <input
                             id="clock-tour-client"
                             type="text"
