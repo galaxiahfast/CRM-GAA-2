@@ -199,11 +199,14 @@
                 <p class="mt-[15px] leading-none">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
-        <div class="flex w-full min-w-0 flex-wrap items-center gap-[20px] lg:w-auto">
-            <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link inline-flex shrink-0 items-center gap-[10px] leading-none">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
-                Guía PDF
-            </a>
+        <div class="flex w-full min-w-0 flex-wrap items-start gap-[20px] lg:w-auto">
+            <div class="min-w-0">
+                <p class="panel-accent leading-none">Ayuda</p>
+                <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link mt-[15px] inline-flex shrink-0 items-center gap-[10px] leading-none">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                    Guía PDF
+                </a>
+            </div>
             <div class="min-w-0 lg:text-right">
                 <p class="panel-accent leading-none">Organización</p>
                 <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
