@@ -147,7 +147,8 @@
 
         /* ===== Diseño adaptable =====
            Todo depende del ancho de la tarjeta (no de la ventana), porque el menú lateral y el zoom de la aplicación
-           le quitan ancho. Por orden: celular (< 480), tablet pequeña (480-759), tablet y laptop (760-1239) y escritorio (1240 o más). */
+           le quitan ancho. Por orden: celular (< 480), tablet pequeña (480-759), tablet y laptop (760-1239) y escritorio (1240 o más).
+           Siempre hay 20px entre líneas de texto que se parten y entre los bloques del formulario. */
         [data-time-clock] .clock-wrap { container: clock / inline-size; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
         [data-time-clock] .clock-card { display: flex; flex-direction: column; width: 100%; }
         [data-time-clock] .clock-layout { display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -157,67 +158,40 @@
         [data-time-clock] .clock-guide { display: flex; flex-direction: column; gap: 20px; }
         [data-time-clock] .clock-guide > a { width: fit-content; }
         [data-time-clock] .clock-body { max-height: 600px; }
+        /* Texto que puede partirse en varias líneas: 20px de espacio entre una línea y la siguiente */
+        [data-time-clock] .clock-lines { line-height: 35px; margin-bottom: -10px; }
 
-        /* Tarjetas (< 760): cada actividad es una tarjeta, sin desplazamiento horizontal */
+        /* Tabla: columnas fijas y compactas (también en pantallas angostas, donde se desplaza en horizontal) */
+        [data-time-clock] .clock-table { table-layout: fixed; }
+        [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
+        [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 70px; min-width: 70px; max-width: 70px; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(4) { width: 110px; min-width: 110px; max-width: 110px; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(6) { width: 110px; min-width: 110px; max-width: 110px; }
+        [data-time-clock] .clock-table .clock-actions { justify-content: center; }
+
+        /* Celular y tablet pequeña (< 760): la tabla conserva su forma y se desplaza en horizontal con el scroll delgado */
         @container clock (max-width: 759px) {
-            [data-time-clock] .clock-table.clock-table-head { display: none; }
+            [data-time-clock] .clock-main { overflow: auto; max-height: min(600px, 75dvh); }
+            [data-time-clock] .clock-main .clock-table { min-width: 880px; }
+            [data-time-clock] .clock-main .clock-table-head { position: sticky; top: 0; z-index: 2; }
             [data-time-clock] .clock-body { max-height: none; overflow: visible; }
-            [data-time-clock] .clock-table, [data-time-clock] .clock-table tbody { display: block; }
-            [data-time-clock] .clock-table tr {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 20px;
-                padding: 20px;
-            }
-            [data-time-clock] .clock-table td { display: block; min-width: 0; max-width: none; padding: 0; }
-            [data-time-clock] .clock-table td[data-label]::before {
-                content: attr(data-label);
-                font-family: Poppins, ui-sans-serif, system-ui, sans-serif;
-                display: block;
-                margin-bottom: 5px;
-                color: var(--panel-muted);
-            }
-            [data-time-clock] .clock-table td:nth-child(2) > div, [data-time-clock] .clock-table td:nth-child(3) > div { white-space: normal; overflow-wrap: anywhere; }
-            [data-time-clock] .clock-table .clock-actions { min-height: 24px; }
-            /* Celular: N° y acción arriba, cliente y actividad a todo el ancho, tiempo y estado juntos */
-            [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 2; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
-            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 1 / -1; grid-row: 3; }
-            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1; grid-row: 4; }
-            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 2; grid-row: 4; }
         }
 
-        /* Tablet pequeña (480-759): formulario en dos columnas y tarjetas en una sola fila de datos */
+        /* Formulario en dos columnas desde 480 */
         @container clock (min-width: 480px) {
             [data-time-clock] .clock-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             [data-time-clock] .clock-field-action, [data-time-clock] .clock-guide { grid-column: 1 / -1; }
             [data-time-clock] .clock-guide { flex-direction: row; flex-wrap: wrap; align-items: center; }
             [data-time-clock] .clock-guide > button { flex: 1 1 220px; width: auto; }
         }
-        @container clock (min-width: 480px) and (max-width: 759px) {
-            [data-time-clock] .clock-table tr { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) 120px; }
-            [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 2; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 3; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(6) { grid-column: 4; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 2; grid-row: 2; }
-            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 3; grid-row: 2; }
-        }
 
-        /* Tablet y laptop (760-1239): formulario en una fila y tabla completa a todo el ancho */
+        /* Tablet y laptop (760-1239): formulario en una fila */
         @container clock (min-width: 760px) {
             [data-time-clock] .clock-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; }
             [data-time-clock] .clock-field-action { grid-column: auto; }
-            [data-time-clock] .clock-table { table-layout: fixed; }
-            [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
-            [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 70px; min-width: 70px; max-width: 70px; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(4) { width: 110px; min-width: 110px; max-width: 110px; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(6) { width: 110px; min-width: 110px; max-width: 110px; }
-            [data-time-clock] .clock-table .clock-actions { justify-content: center; }
         }
 
         /* Escritorio (1240 o más): formulario a la izquierda y tabla a la derecha, ajustados al alto de la pantalla */
@@ -250,13 +224,7 @@
             </span>
             <div class="min-w-0">
                 <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Cronómetro</h1>
-                <p class="mt-[15px] leading-none">Registra y administra el tiempo dedicado a tus actividades.</p>
-            </div>
-        </div>
-        <div class="w-full min-w-0 lg:w-auto lg:text-right">
-            <div class="min-w-0">
-                <p class="panel-accent leading-none">Organización</p>
-                <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
+                <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
     </section>
@@ -332,18 +300,21 @@
         data-total-open-start="{{ $todayOpenStart }}"
 
     >
-        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+        <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
             <div class="min-w-0">
                 <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
-                <p class="mt-[15px] leading-none">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
+                <p class="clock-lines mt-[5px]">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
-            <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
+            <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[20px]">
+                <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
+                <span class="leading-none">Tiempo total <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span></span>
+            </div>
         </header>
         <div class="clock-layout">
     <aside class="clock-aside clock-scroll panel-border border-b">
         <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
             <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
-            <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
+            <p class="clock-lines mt-[5px]">Selecciona dónde trabajarás.</p>
         </div>
         <form wire:submit="start" class="clock-form">
             <div class="clock-form-grid">
@@ -511,7 +482,7 @@
         </form>
     </aside>
 
-    <div class="clock-main">
+    <div class="clock-main clock-scroll">
         @if ($todayEntries->isEmpty())
             <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
                 <span class="panel-border mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border">
