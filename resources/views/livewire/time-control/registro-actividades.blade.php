@@ -246,7 +246,7 @@
                 destroy() { clearInterval(this.timer); }
             }"
         >
-            <span class="leading-none">Sincronizado en tiempo real</span>
+            <span class="panel-accent leading-none">Sincronizado en tiempo real</span>
             <span class="leading-none" x-text="date">{{ ucfirst(now($moduleTimezone)->locale('es')->translatedFormat('l, d \d\e F \d\e Y')) }}</span>
         </div>
     </section>
