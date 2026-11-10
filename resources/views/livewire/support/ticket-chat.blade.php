@@ -49,7 +49,7 @@
             class="h-1.5 w-[110px] cursor-pointer accent-[var(--panel-accent)]"
             aria-label="Ajustar tamaño de la vista del Ticket"
         >
-        <span class="panel-text w-[42px] text-right text-[15px] font-semibold tabular-nums" x-text="viewScale + '%'">90%</span>
+        <span class="panel-text w-[42px] text-right text-[15px] font-normal tabular-nums" x-text="viewScale + '%'">90%</span>
         <span class="panel-line h-5 w-px" aria-hidden="true"></span>
         <button
             type="button"
@@ -95,48 +95,48 @@
             <aside class="panel-header panel-border min-h-0 overflow-y-auto border-b xl:overflow-hidden xl:border-b-0 xl:border-r">
                 <div data-support-profile-header class="panel-surface panel-border flex items-center gap-[15px] border-b p-[20px]">
                     @if (auth()->user()->profile_photo_path)
-                        <button type="button" @click="showProfilePhoto(@js(url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/'))), @js(auth()->user()->name))" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-semibold text-white outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ auth()->user()->name }}">
+                        <button type="button" @click="showProfilePhoto(@js(url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/'))), @js(auth()->user()->name))" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-normal text-white outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ auth()->user()->name }}">
                             <img src="{{ url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/')) }}" alt="Foto de {{ auth()->user()->name }}" class="h-full w-full object-cover">
                         </button>
                     @else
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-semibold text-white">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-normal text-white">
                             {{ mb_strtoupper(mb_substr(auth()->user()->name ?? '?', 0, 1)) }}
                         </span>
                     @endif
                     <div class="min-w-0">
-                        <a href="{{ route('profile.show') }}" class="block truncate font-semibold text-black hover:text-zinc-600">{{ trim((auth()->user()->name ?? '').' '.(auth()->user()->last_name ?? '')) }}</a>
+                        <a href="{{ route('profile.show') }}" class="block truncate font-normal text-black hover:text-zinc-600">{{ trim((auth()->user()->name ?? '').' '.(auth()->user()->last_name ?? '')) }}</a>
                         <p class="mt-[5px] truncate text-[15px] text-zinc-500">{{ auth()->user()->email }}</p>
                     </div>
                 </div>
 
                 <div class="space-y-[20px] p-[20px]">
                     <div>
-                        <p class="text-[15px] font-semibold text-black">Chat del día</p>
-                            <p class="mt-[10px] text-[15px] font-medium leading-6 text-zinc-600">{{ $todayLabel }}</p>
+                        <p class="panel-accent text-[15px]">Chat del día</p>
+                            <p class="mt-[10px] text-[15px] font-normal leading-6 text-zinc-600">{{ $todayLabel }}</p>
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between gap-3">
-                            <p class="text-[15px] font-semibold text-black">Personas en línea</p>
-                            <span class="text-[15px] font-medium text-zinc-500">{{ count($onlineUsers) }} en línea</span>
+                            <p class="panel-accent text-[15px]">Personas en línea</p>
+                            <span class="text-[15px] font-normal text-zinc-500">{{ count($onlineUsers) }} en línea</span>
                         </div>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
                             @forelse ($onlineUsers as $onlineUser)
                                 <div wire:key="online-user-{{ $onlineUser['id'] }}" class="flex items-center gap-[10px] rounded-xl px-[10px] py-[10px] transition hover:bg-white/60">
                                     @if ($onlineUser['photo_url'])
-                                        <button type="button" @click="showProfilePhoto(@js($onlineUser['photo_url']), @js($onlineUser['name']))" class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-semibold text-black ring-1 ring-zinc-200 outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ $onlineUser['name'] }}">
+                                        <button type="button" @click="showProfilePhoto(@js($onlineUser['photo_url']), @js($onlineUser['name']))" class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200 outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ $onlineUser['name'] }}">
                                             <img src="{{ $onlineUser['photo_url'] }}" alt="Foto de {{ $onlineUser['name'] }}" class="h-full w-full rounded-full object-cover">
                                             <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-100" aria-label="En línea"></span>
                                         </button>
                                     @else
-                                        <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-semibold text-black ring-1 ring-zinc-200">
+                                        <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200">
                                             {{ $onlineUser['initials'] }}
                                             <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-100" aria-label="En línea"></span>
                                         </span>
                                     @endif
                                     <div class="min-w-0">
-                                        <a href="{{ $onlineUser['is_current'] ? route('profile.show') : route('profiles.show', $onlineUser['id']) }}" class="block truncate text-[15px] font-semibold text-black hover:text-zinc-600">
+                                        <a href="{{ $onlineUser['is_current'] ? route('profile.show') : route('profiles.show', $onlineUser['id']) }}" class="block truncate text-[15px] font-normal text-black hover:text-zinc-600">
                                             {{ $onlineUser['name'] }}
                                             @if ($onlineUser['is_current'])
                                                 <span class="font-normal text-gray-400">(Tú)</span>
@@ -215,9 +215,9 @@
                 @support-message-sent.window="$nextTick(() => { stayAtBottom = true; scrollToBottom(); updateReadingPosition() })"
                 @support-messages-refreshed.window="$nextTick(() => updateReadingPosition())"
             >
-                <header data-support-chat-header class="flex items-center justify-between gap-[20px] border-b border-zinc-200 p-[20px]">
+                <header data-support-chat-header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
                     <div>
-                        <h2 class="font-semibold text-black">Conversación general</h2>
+                        <h2 class="panel-accent">Conversación general</h2>
                         <p class="mt-[5px] text-[15px] text-zinc-500">
                             <span x-text="currentDayLabel || 'Semana actual'">Semana actual</span>
                             <span> · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</span>
@@ -227,7 +227,7 @@
                         <button
                             type="button"
                             @click="searchOpen = !searchOpen; if (searchOpen) $nextTick(() => $refs.searchInput.focus()); if (!searchOpen) searchQuery = ''"
-                            class="inline-flex items-center gap-[10px] bg-transparent p-0 text-[15px] font-medium transition-colors"
+                            class="inline-flex items-center gap-[10px] bg-transparent p-0 text-[15px] font-normal transition-colors"
                             :class="searchOpen ? 'text-black' : 'text-zinc-500 hover:text-black'"
                             aria-label="Buscar mensajes"
                             :aria-expanded="searchOpen"
@@ -235,7 +235,7 @@
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                             Buscar mensajes
                         </button>
-                        <span class="inline-flex items-center gap-[10px] whitespace-nowrap text-[15px] font-medium text-zinc-500" title="Los mensajes se actualizan automáticamente">
+                        <span class="inline-flex items-center gap-[10px] whitespace-nowrap text-[15px] font-normal text-zinc-500" title="Los mensajes se actualizan automáticamente">
                             <span class="relative flex h-3 w-3 items-center justify-center">
                                 <span class="absolute h-3 w-3 animate-ping rounded-full bg-black/15"></span>
                                 <span class="relative h-1.5 w-1.5 rounded-full bg-black"></span>
@@ -267,7 +267,7 @@
                 <div x-ref="messages" @scroll="trackPosition()" class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto bg-white/35 p-[20px]">
                     <div x-show="searchQuery && !hasSearchResults()" class="py-[40px] text-center" style="display: none;">
                         <svg class="mx-auto h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                        <p class="mt-[10px] text-[15px] font-medium text-gray-500">No se encontraron mensajes.</p>
+                        <p class="mt-[10px] text-[15px] font-normal text-gray-500">No se encontraron mensajes.</p>
                     </div>
                     @php
                         $visibleDateKey = null;
@@ -280,7 +280,7 @@
                         @if ($visibleDateKey !== $chatMessage['date_key'])
                             @php($visibleDateKey = $chatMessage['date_key'])
                             <div class="sticky top-0 z-10 !mt-0 flex items-center gap-[15px] bg-transparent" data-day-separator="{{ $chatMessage['date_key'] }}">
-                                <span class="w-full text-center text-[15px] font-semibold capitalize text-black">{{ $chatMessage['date_label'] }}</span>
+                                <span class="w-full text-center text-[15px] font-normal capitalize text-black">{{ $chatMessage['date_label'] }}</span>
                             </div>
                         @endif
                         <article
@@ -293,11 +293,11 @@
                             class="flex items-end gap-[15px] {{ $chatMessage['is_mine'] ? 'flex-row-reverse justify-start' : 'justify-start' }} {{ $chatMessage['sticker_url'] && $chatMessage['is_mine'] ? 'pl-[20px]' : '' }}"
                         >
                             @if ($chatMessage['photo_url'])
-                                <button type="button" @click="showProfilePhoto(@js($chatMessage['photo_url']), @js($chatMessage['name']))" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold outline-none focus:outline-none focus:ring-0 {{ $chatMessage['is_mine'] ? 'border border-black bg-black text-white' : 'border border-zinc-200 bg-zinc-100 text-black' }}" title="Ampliar foto de {{ $chatMessage['name'] }}" aria-label="Ampliar foto de {{ $chatMessage['name'] }}">
+                                <button type="button" @click="showProfilePhoto(@js($chatMessage['photo_url']), @js($chatMessage['name']))" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-normal outline-none focus:outline-none focus:ring-0 {{ $chatMessage['is_mine'] ? 'border border-black bg-black text-white' : 'border border-zinc-200 bg-zinc-100 text-black' }}" title="Ampliar foto de {{ $chatMessage['name'] }}" aria-label="Ampliar foto de {{ $chatMessage['name'] }}">
                                     <img src="{{ $chatMessage['photo_url'] }}" alt="Foto de {{ $chatMessage['name'] }}" class="h-full w-full rounded-full object-cover">
                                 </button>
                             @else
-                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold {{ $chatMessage['is_mine'] ? 'border border-black bg-black text-white' : 'border border-zinc-200 bg-zinc-100 text-black' }}" title="{{ $chatMessage['name'] }}">
+                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] font-normal {{ $chatMessage['is_mine'] ? 'border border-black bg-black text-white' : 'border border-zinc-200 bg-zinc-100 text-black' }}" title="{{ $chatMessage['name'] }}">
                                     {{ $initials ?: '?' }}
                                 </span>
                             @endif
@@ -305,7 +305,7 @@
                             <div class="max-w-[min(78%,760px)] rounded-xl border shadow-[0_3px_10px_rgba(0,0,0,0.04)] {{ $chatMessage['sticker_url'] ? 'border-transparent bg-transparent p-0 shadow-none' : 'p-[20px] '.($chatMessage['is_mine'] ? 'border-zinc-300 bg-zinc-50' : 'border-zinc-200 bg-white/90') }}">
                                 <div class="{{ $chatMessage['sticker_url'] ? 'hidden' : 'flex' }} min-w-0 items-start gap-[15px] border-b border-zinc-200 pb-[15px]">
                                     <div class="min-w-0 flex-1">
-                                        <a href="{{ $chatMessage['is_mine'] ? route('profile.show') : route('profiles.show', $chatMessage['user_id']) }}" class="block truncate font-semibold text-black hover:text-zinc-600">{{ $chatMessage['name'] }}</a>
+                                        <a href="{{ $chatMessage['is_mine'] ? route('profile.show') : route('profiles.show', $chatMessage['user_id']) }}" class="block truncate font-normal text-black hover:text-zinc-600">{{ $chatMessage['name'] }}</a>
                                         <p class="mt-[5px] truncate text-[15px] text-zinc-500">{{ $chatMessage['email'] }}</p>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-[10px]">
@@ -332,7 +332,7 @@
                                     @if ($chatMessage['sticker_url'])
                                         <div class="group">
                                             <div class="mb-[10px] flex items-center gap-[10px] text-[15px] {{ $chatMessage['is_mine'] ? 'justify-end text-right' : 'justify-start text-left' }}">
-                                                <a href="{{ $chatMessage['is_mine'] ? route('profile.show') : route('profiles.show', $chatMessage['user_id']) }}" class="max-w-[135px] truncate font-semibold text-black hover:text-zinc-600" title="Ver perfil de {{ $chatMessage['name'] }}">{{ $chatMessage['name'] }}</a>
+                                                <a href="{{ $chatMessage['is_mine'] ? route('profile.show') : route('profiles.show', $chatMessage['user_id']) }}" class="max-w-[135px] truncate font-normal text-black hover:text-zinc-600" title="Ver perfil de {{ $chatMessage['name'] }}">{{ $chatMessage['name'] }}</a>
                                                 <span class="shrink-0 text-zinc-500">{{ $chatMessage['time'] }}</span>
                                             </div>
                                             <div class="relative">
@@ -359,7 +359,7 @@
                                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
                                             </span>
                                             <span class="min-w-0 flex-1">
-                                                <span class="block truncate text-[15px] font-semibold">{{ $chatMessage['attachment_name'] }}</span>
+                                                <span class="block truncate text-[15px] font-normal">{{ $chatMessage['attachment_name'] }}</span>
                                                 <span class="mt-[5px] block text-[15px] text-zinc-500">{{ number_format(((int) $chatMessage['attachment_size']) / 1024, 1) }} KB</span>
                                             </span>
                                             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
@@ -387,7 +387,7 @@
                             <span class="flex h-16 w-16 items-center justify-center rounded-full border border-gray-200 text-gray-300">
                                 <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg>
                             </span>
-                            <p class="mt-4 font-semibold text-gray-600">Inicia la conversación del día</p>
+                            <p class="mt-4 font-normal text-gray-600">Inicia la conversación del día</p>
                             <p class="mt-1 max-w-sm text-[15px] text-gray-400">Escribe el primer mensaje para solicitar ayuda o conversar con los demás colaboradores.</p>
                         </div>
                     @endforelse
@@ -400,7 +400,7 @@
                                 <div class="mb-[15px] flex items-center gap-[15px] rounded-xl border border-zinc-200 bg-zinc-50 p-[15px]">
                                     <img src="{{ $image->temporaryUrl() }}" alt="Vista previa de la imagen" class="h-16 w-16 shrink-0 rounded-lg object-cover">
                                     <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[15px] font-semibold text-black">{{ $image->getClientOriginalName() }}</p>
+                                        <p class="truncate text-[15px] font-normal text-black">{{ $image->getClientOriginalName() }}</p>
                                         <p class="mt-[5px] text-[15px] text-zinc-500">Imagen lista para enviar</p>
                                     </div>
                                     <button type="button" wire:click="removeImage" class="inline-flex shrink-0 items-center justify-center rounded-lg p-[10px] text-red-700 transition-colors hover:bg-red-50" aria-label="Quitar imagen" title="Quitar imagen">
@@ -414,7 +414,7 @@
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
                                     </span>
                                     <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[15px] font-semibold text-black">{{ $attachment->getClientOriginalName() }}</p>
+                                        <p class="truncate text-[15px] font-normal text-black">{{ $attachment->getClientOriginalName() }}</p>
                                         <p class="mt-[5px] text-[15px] text-zinc-500">Archivo listo para enviar</p>
                                     </div>
                                     <button type="button" wire:click="removeAttachment" class="inline-flex shrink-0 items-center justify-center rounded-lg p-[10px] text-red-700 transition-colors hover:bg-red-50" aria-label="Quitar archivo" title="Quitar archivo">
@@ -437,20 +437,20 @@
                             ></textarea>
 
                             <div class="mt-[10px] flex items-center gap-[10px]">
-                                <label for="support-chat-image" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black transition-colors hover:bg-zinc-100">
+                                <label for="support-chat-image" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.48-8.48"/></svg>
                                     Adjuntar imagen
                                 </label>
                                 <input id="support-chat-image" type="file" wire:model="image" accept="image/jpeg,image/png,image/webp" class="sr-only">
 
-                                <label for="support-chat-file" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black transition-colors hover:bg-zinc-100">
+                                <label for="support-chat-file" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6"/></svg>
                                     Adjuntar archivo
                                 </label>
                                 <input id="support-chat-file" type="file" wire:model="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip" class="sr-only">
 
                                 <div class="relative" @click.outside="emojiOpen = false">
-                                    <button type="button" @click="emojiOpen = !emojiOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black transition-colors hover:bg-zinc-100" :aria-expanded="emojiOpen">
+                                    <button type="button" @click="emojiOpen = !emojiOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100" :aria-expanded="emojiOpen">
                                         <span class="text-[20px] leading-none">😊</span>
                                         Emojis
                                     </button>
@@ -462,7 +462,7 @@
                                 </div>
 
                                 <div class="relative" @click.outside="stickerOpen = false">
-                                    <button type="button" @click="stickerOpen = !stickerOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-medium text-black transition-colors hover:bg-zinc-100" :aria-expanded="stickerOpen">
+                                    <button type="button" @click="stickerOpen = !stickerOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100" :aria-expanded="stickerOpen">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 12a8 8 0 1 1-8-8h4a4 4 0 0 1 4 4v4Zm0 0a4 4 0 0 1-4 4h-4v4"/></svg>
                                         Stickers
                                     </button>
@@ -485,7 +485,7 @@
                             @if ($mentionSuggestions !== [])
                                 <div data-mention-suggestions class="absolute bottom-[calc(100%+10px)] left-0 z-30 w-full max-w-[440px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_18px_45px_rgba(0,0,0,0.12)]">
                                     <div class="border-b border-zinc-200 p-[20px]">
-                                        <p class="text-[15px] font-semibold text-black">Mencionar en el mensaje</p>
+                                        <p class="text-[15px] font-normal text-black">Mencionar en el mensaje</p>
                                         <p class="mt-[5px] text-[15px] text-zinc-500">Selecciona una persona o notifica a todos.</p>
                                     </div>
                                     <div class="support-chat-scrollbar max-h-[300px] overflow-y-auto p-2">
@@ -501,7 +501,7 @@
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                                                     </span>
                                                 @else
-                                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[15px] font-semibold text-black transition group-hover:bg-white">
+                                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[15px] font-normal text-black transition group-hover:bg-white">
                                                         @if ($suggestion['photo_url'])
                                                             <img src="{{ $suggestion['photo_url'] }}" alt="Foto de {{ $suggestion['name'] }}" class="h-full w-full object-cover">
                                                         @else
@@ -510,7 +510,7 @@
                                                     </span>
                                                 @endif
                                                 <span class="min-w-0 flex-1">
-                                                    <span class="block truncate text-[15px] font-semibold text-gray-700">{{ $suggestion['name'] }}</span>
+                                                    <span class="block truncate text-[15px] font-normal text-gray-700">{{ $suggestion['name'] }}</span>
                                                     <span class="mt-[5px] block truncate text-[15px] text-zinc-500">{{ $suggestion['email'] }}</span>
                                                 </span>
                                                 <svg class="h-4 w-4 shrink-0 text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -526,7 +526,7 @@
                             <p class="mt-[10px] text-[12px] text-gray-400">Escribe @ para mencionar · Enter para enviar</p>
                         </div>
                         <button type="submit" wire:loading.attr="disabled" wire:target="sendMessage"
-                            class="inline-flex shrink-0 items-center justify-center gap-[10px] self-start rounded-xl bg-black px-[20px] py-[15px] font-normal text-white transition-colors hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-60">
+                            class="chat-primary inline-flex shrink-0 items-center justify-center gap-[10px] self-start rounded-xl px-[20px] py-[15px] font-normal disabled:cursor-wait disabled:opacity-60">
                             <svg wire:loading.remove wire:target="sendMessage" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l14-7-4 14-3-6-7-1zm7 1l7-8" /></svg>
                             <svg wire:loading wire:target="sendMessage" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
                             <span>Enviar</span>
@@ -555,7 +555,7 @@
             </button>
             <div class="flex max-h-[90vh] max-w-[90vw] flex-col items-center gap-[20px]" @click.stop>
                 <img :src="profilePhotoUrl" :alt="'Foto ampliada de ' + profilePhotoName" class="max-h-[78vh] max-w-[82vw] rounded-full border-[6px] border-white object-contain shadow-2xl">
-                <p class="rounded-full bg-white px-[20px] py-[10px] text-[15px] font-semibold text-black" x-text="profilePhotoName"></p>
+                <p class="rounded-full bg-white px-[20px] py-[10px] text-[15px] font-normal text-black" x-text="profilePhotoName"></p>
             </div>
         </div>
     </template>
@@ -565,6 +565,14 @@
             --chat-green: #15803d;
         }
         html.module-dark-theme [data-support-chat] { --chat-green: #4ade80; }
+        [data-support-chat] * { font-weight: 400; }
+        [data-support-chat] .chat-primary {
+            border: 1px solid var(--chat-green);
+            background-color: color-mix(in srgb, var(--chat-green) 12%, var(--panel-surface));
+            color: var(--chat-green);
+            transition: background-color 150ms ease;
+        }
+        [data-support-chat] .chat-primary:hover { background-color: color-mix(in srgb, var(--chat-green) 20%, var(--panel-surface)); }
         [data-support-chat] .clock-link { color: var(--chat-green); transition: opacity 150ms ease; }
         [data-support-chat] .clock-link:hover { opacity: .75; }
         [data-support-chat] [class~="text-black"],
