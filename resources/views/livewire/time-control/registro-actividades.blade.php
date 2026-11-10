@@ -500,15 +500,37 @@
                 </tr>
             </thead>
         </table>
-        @if ($todayEntries->isEmpty())
-            <div class="flex min-h-[350px] flex-1 flex-col items-center justify-center px-[20px] text-center">
-                <p class="panel-accent leading-[30px]">Tu jornada aún no tiene registros</p>
-                <p class="leading-[30px]">Selecciona un cliente y una actividad para comenzar.</p>
-            </div>
-        @else
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
             <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
                 <table class="clock-table w-full border-collapse text-left">
+                    @if ($todayEntries->isEmpty())
+                        {{-- Actividad de ejemplo en ceros: se muestra mientras no haya registros reales y desaparece al iniciar la primera actividad --}}
+                        <tbody class="clock-rows" wire:key="clock-example-row">
+                            <tr id="clock-tour-row" class="clock-row clock-example panel-border border-b">
+                                <td data-label="N°" class="clock-index whitespace-nowrap p-[20px] align-middle tabular-nums"></td>
+                                <td data-label="Departamento o cliente" class="p-[20px] align-middle">
+                                    <div class="truncate leading-none">Cliente de ejemplo</div>
+                                </td>
+                                <td data-label="Actividad" class="p-[20px] align-middle">
+                                    <div class="truncate leading-none">Actividad de ejemplo</div>
+                                </td>
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums">00:00:00</td>
+                                <td data-label="Estado" class="whitespace-nowrap p-[20px] align-middle">
+                                    <span class="clock-pill panel-tone-gray">Ejemplo</span>
+                                </td>
+                                <td data-label="Acciones" class="whitespace-nowrap p-[20px] align-middle">
+                                    <div class="clock-actions flex items-center justify-start gap-[10px]" aria-hidden="true">
+                                        <button type="button" id="clock-tour-toggle" tabindex="-1" disabled class="clock-icon clock-icon-go cursor-not-allowed opacity-50">
+                                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72L19 12 8 5.14z"/></svg>
+                                        </button>
+                                        <button type="button" id="clock-tour-delete" tabindex="-1" disabled class="clock-icon clock-icon-danger cursor-not-allowed opacity-50">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    @else
                     <tbody data-activity-sortable class="clock-rows">
                         @foreach ($todayEntries as $entry)
                             <tr
@@ -612,9 +634,10 @@
                             </tr>
                         @endforeach
                     </tbody>
-                    @if ($todayEntries->count() < 7)
+                    @endif
+                    @if (max($todayEntries->count(), 1) < 7)
                         <tbody class="clock-placeholder-rows" aria-hidden="true">
-                            @for ($slot = $todayEntries->count(); $slot < 7; $slot++)
+                            @for ($slot = max($todayEntries->count(), 1); $slot < 7; $slot++)
                                 <tr wire:key="clock-placeholder-{{ $slot }}" class="panel-border border-b {{ $slot % 2 === 0 ? 'is-striped' : '' }}">
                                     @for ($column = 0; $column < 6; $column++)
                                         <td></td>
@@ -627,8 +650,6 @@
             </div>
             <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
-
-        @endif
     </div>
         </div>
     </section>

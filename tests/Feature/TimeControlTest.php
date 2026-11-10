@@ -180,6 +180,20 @@ class TimeControlTest extends TestCase
             ->assertSeeHtml('clock-error-toast-2');
     }
 
+    public function test_the_clock_shows_an_example_row_until_a_real_activity_starts(): void
+    {
+        ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
+
+        $component = Livewire::actingAs($aux)->test(\App\Livewire\TimeControl\RegistroActividades::class);
+        $component->assertSee('Cliente de ejemplo')->assertSee('Actividad de ejemplo');
+
+        app(TimerService::class)->start($aux, $customer->id, $sub->id);
+
+        Livewire::actingAs($aux)->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->assertDontSee('Cliente de ejemplo')
+            ->assertDontSee('Actividad de ejemplo');
+    }
+
     public function test_the_quick_tour_can_point_at_the_row_controls(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();
