@@ -36,10 +36,7 @@
         }
         [data-productivity] .prod-primary:hover { background-color: color-mix(in srgb, var(--prod-green) 20%, var(--panel-surface)); }
         [data-productivity] .prod-primary:disabled { cursor: not-allowed; opacity: .6; }
-        [data-productivity] .prod-scroll { scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; overscroll-behavior: contain; }
-        [data-productivity] .prod-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-        [data-productivity] .prod-scroll::-webkit-scrollbar-track { background: transparent; }
-        [data-productivity] .prod-scroll::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
+        [data-productivity] .prod-list-wrap { position: relative; min-height: 0; }
         /* Texto que puede partirse en varias líneas: 20px de espacio entre una línea y la siguiente */
         [data-productivity] .prod-lines { line-height: 35px; margin-bottom: -10px; }
 
@@ -88,7 +85,8 @@
             [data-productivity] .prod-main { min-height: 0; }
             [data-productivity] .prod-dist { min-height: 0; flex: 1; grid-template-rows: minmax(0, 1fr); }
             [data-productivity] .prod-col { min-height: 0; }
-            [data-productivity] .prod-list { min-height: 0; max-height: none; flex: 1; }
+            [data-productivity] .prod-list-wrap { flex: 1; }
+            [data-productivity] .prod-list { position: absolute; inset: 0; max-height: none; }
         }
     </style>
 
@@ -98,17 +96,20 @@
                 <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Mi productividad</h1>
                 <p class="prod-lines mt-[5px]">Consulta y analiza el tiempo dedicado a tus clientes y actividades.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-[20px]">
-                <a href="{{ route('time.index') }}" class="prod-link leading-none">Cronómetro</a>
-                <a href="{{ route('time.dashboard') }}" class="prod-link leading-none">Panel de control</a>
-            </div>
         </section>
 
         <div class="prod-wrap">
             <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">
+                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
+                    <div class="min-w-0">
+                        <h2 class="panel-accent leading-none">Productividad del periodo</h2>
+                        <p class="prod-lines mt-[5px]">Tienes {{ count($entries) }} {{ count($entries) === 1 ? 'registro' : 'registros' }} con un tiempo efectivo de <span class="tabular-nums">{{ $fmt($totalSeconds) }}</span>.</p>
+                    </div>
+                    <p class="leading-none">Del {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->format('d/m/Y') }}</p>
+                </header>
                 <div class="prod-layout">
-                    <aside class="prod-aside prod-scroll panel-border">
-                        <div class="panel-header panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
+                    <aside class="prod-aside panel-scroll panel-border">
+                        <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
                             <h2 class="panel-accent leading-none">Periodo de consulta</h2>
                             <p class="prod-lines mt-[5px]">Selecciona las fechas.</p>
                         </div>
@@ -136,18 +137,18 @@
                     </aside>
 
                     <div class="prod-main">
-                        <header class="panel-header panel-border box-border flex h-[87px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] overflow-hidden border-b p-[20px]">
+                        <header class="panel-surface panel-border box-border flex h-[87px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] overflow-hidden border-b p-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Resumen del periodo</h2>
                                 <p class="prod-lines mt-[5px]">Distribución del tiempo registrado.</p>
                             </div>
-                            <p class="leading-none">Horas efectivas <span class="tabular-nums">{{ $fmt($totalSeconds) }}</span></p>
                         </header>
                         <div class="prod-dist">
                             @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer], ['title' => 'Distribución por actividad', 'items' => $byActivity]] as $distribution)
                                 <section class="prod-col panel-border">
                                     <h3 class="panel-accent panel-border shrink-0 border-b p-[20px] leading-none">{{ $distribution['title'] }}</h3>
-                                    <div class="prod-list prod-scroll">
+                                    <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
+                                    <div x-ref="scroller" @scroll="update()" class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
                                             <div class="prod-item">
                                                 <div class="flex items-center justify-between gap-[20px] leading-none">
@@ -160,6 +161,8 @@
                                         @empty
                                             <p class="p-[20px] text-center">Sin datos en este periodo.</p>
                                         @endforelse
+                                    </div>
+                                    <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                     </div>
                                 </section>
                             @endforeach
@@ -178,7 +181,8 @@
                     </div>
                     <p class="leading-none">{{ count($entries) }} {{ count($entries) === 1 ? 'registro' : 'registros' }}</p>
                 </header>
-                <div class="prod-detail prod-scroll">
+                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative">
+                <div x-ref="scroller" @scroll="update()" class="prod-detail panel-scroll">
                     @forelse ($activityDetail['groups'] as $group)
                         <section class="prod-day panel-border">
                             <header class="panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
@@ -210,6 +214,8 @@
                             <p class="prod-lines mt-[5px]">Ajusta el periodo o inicia una actividad desde el cronómetro.</p>
                         </div>
                     @endforelse
+                </div>
+                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
             </section>
         </div>
