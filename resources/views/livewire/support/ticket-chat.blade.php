@@ -70,12 +70,16 @@
 
                 <div class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto p-[20px]">
                     <div>
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
+                        <div class="flex items-start gap-[10px]">
+                            <svg class="panel-muted mt-[5px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                                <circle cx="12" cy="8" r="3.25" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+                            </svg>
+                            <div class="min-w-0 text-left">
                                 <p class="panel-accent text-[15px]">En línea ahora</p>
                                 <p class="mt-[5px] text-[15px] font-normal leading-[30px] text-zinc-600">Quién está conectado al chat.</p>
+                                <p class="mt-[5px] text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</p>
                             </div>
-                            <span class="shrink-0 text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</span>
                         </div>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
