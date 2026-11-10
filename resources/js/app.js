@@ -235,10 +235,11 @@ document.addEventListener('alpine:init', () => {
             const bottom = Math.min(window.innerHeight, rect.bottom);
             const width = Math.max(0, right - left);
             const height = Math.max(0, bottom - top);
-            const mask = 'position:fixed;background:rgba(10,12,18,.68);pointer-events:auto;';
-            const borderRadius = window.getComputedStyle(target).borderRadius || '12px';
+            // Las franjas solo bloquean los clics; el oscurecido lo dibuja la sombra del recuadro para poder redondear las esquinas.
+            const mask = 'position:fixed;background:transparent;pointer-events:auto;';
+            const borderRadius = Math.min(12, Math.min(width, height) / 2);
 
-            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${borderRadius};`;
+            this.spotlightStyle = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;border-radius:${borderRadius}px;box-shadow:0 0 0 100vmax rgba(10,12,18,.68);`;
             this.maskTopStyle = `${mask}left:0;top:0;width:100vw;height:${top}px;`;
             this.maskLeftStyle = `${mask}left:0;top:${top}px;width:${left}px;height:${height}px;`;
             this.maskRightStyle = `${mask}left:${right}px;top:${top}px;width:${Math.max(0, window.innerWidth - right)}px;height:${height}px;`;
