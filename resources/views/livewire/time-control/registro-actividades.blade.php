@@ -205,7 +205,7 @@
             [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
             [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-form { display: flex; flex-direction: column; flex: 1; }
-            [data-time-clock] .clock-form-grid { display: flex; flex-direction: column; flex: 1; justify-content: space-evenly; }
+            [data-time-clock] .clock-form-grid { display: flex; flex-direction: column; flex: 1; gap: 0; justify-content: space-evenly; }
             [data-time-clock] .clock-guide { flex-direction: column; align-items: stretch; }
             [data-time-clock] .clock-guide > button { flex: none; width: 100%; }
             [data-time-clock] .clock-main { flex: 1; }
