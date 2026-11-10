@@ -133,7 +133,7 @@
                     @enderror
 
                     <!-- Cabecera y periodo -->
-                    <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                    <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                             @if ($customer->url_photo)
                                 <img class="panel-border h-12 w-12 shrink-0 rounded-full border object-cover"
@@ -241,7 +241,7 @@
                     </section>
 
                     <!-- Documentos del cliente (sin overflow-hidden para que las listas desplegables no se corten) -->
-                    <section class="panel-surface panel-border mt-[30px] rounded-xl border">
+                    <section class="panel-surface panel-border mt-0 rounded-xl border sm:mt-[10px] xl:mt-[30px]">
                         <header class="panel-header panel-border flex flex-col justify-between gap-[10px] rounded-t-[11px] border-b p-[20px] md:flex-row md:items-center md:gap-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Documentos del cliente</h2>

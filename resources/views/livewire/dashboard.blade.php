@@ -54,7 +54,7 @@
     <main class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
             @if (! $dashboardReady)
                 <div class="animate-pulse space-y-[20px]" role="status" aria-label="Cargando panel">
-                    <div class="mb-[30px] flex items-center gap-[15px]">
+                    <div class="mb-0 flex items-center gap-[15px] sm:mb-[10px] xl:mb-[30px]">
                         <div class="panel-header h-[50px] w-[50px] rounded-xl"></div>
                         <div class="space-y-[15px]">
                             <div class="panel-header h-5 w-40 rounded-lg"></div>
@@ -72,7 +72,7 @@
                 @endphp
 
                 <!-- Cabecera: título y subtítulo a la izquierda; filtros a la derecha -->
-                <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                         <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
                             <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
@@ -145,7 +145,7 @@
                         $customerPages = collect([1, ...range(max(1, $currentCustomerPage - 2), min($lastCustomerPage, $currentCustomerPage + 2)), $lastCustomerPage])->unique()->sort()->values();
                     @endphp
 
-                <section class="panel-surface panel-border {{ $canManageCustomers ? 'mt-[30px]' : '' }} overflow-hidden rounded-xl border" aria-label="Informe de clientes">
+                <section class="panel-surface panel-border {{ $canManageCustomers ? 'mt-0 sm:mt-[10px] xl:mt-[30px]' : '' }} overflow-hidden rounded-xl border" aria-label="Informe de clientes">
                     <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                         <div class="min-w-0">
                             <p class="panel-accent flex items-center gap-[10px] leading-none">

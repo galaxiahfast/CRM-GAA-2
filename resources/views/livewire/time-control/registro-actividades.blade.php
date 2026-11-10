@@ -214,7 +214,7 @@
         }
     </style>
 
-    <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
+    <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">

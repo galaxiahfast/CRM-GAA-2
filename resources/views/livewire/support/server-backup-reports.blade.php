@@ -676,7 +676,7 @@
                 ></span>
 
                 <!-- Cabecera: título y subtítulo a la izquierda; servicio y estado a la derecha -->
-                <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+                <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                         {{-- El recuadro mide lo mismo que el bloque de texto (título 20 px + 15 px + subtítulo), así la distancia al menú es la misma que la de abajo --}}
                         <span class="panel-surface panel-border panel-text grid h-[40px] w-[40px] shrink-0 place-items-center rounded-xl border">
@@ -925,7 +925,7 @@
                 </section>
 
                 <!-- Envío automático semanal: caja aparte, separada 50 px de la de arriba (20 px de la página + 30 px) -->
-                <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Envío automático">
+                <section class="panel-surface panel-border mt-0 overflow-hidden rounded-xl border sm:mt-[10px] xl:mt-[30px]" aria-label="Envío automático">
                     @php
                         $weekly = (array) config('backup-reports.weekly', []);
                         $weeklyEnabled = (bool) ($weekly['enabled'] ?? false);
@@ -1051,7 +1051,7 @@
                             $selectableServers = collect($servers)->pluck('key')->values()->all();
                             $serverErrorTotal = collect($serverMeta)->sum('errors');
                         @endphp
-                        <section class="panel-surface panel-border mt-[30px] overflow-hidden rounded-xl border" aria-label="Servidores y perfiles">
+                        <section class="panel-surface panel-border mt-0 overflow-hidden rounded-xl border sm:mt-[10px] xl:mt-[30px]" aria-label="Servidores y perfiles">
                             <span
                                 class="hidden"
                                 wire:key="backup-selection-{{ md5(json_encode([$selectableServers, $selectableProfiles])) }}"

@@ -166,7 +166,7 @@
 
         <main class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
             <!-- Cabecera: título y subtítulo a la izquierda; rol y fecha a la derecha -->
-            <section class="mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+            <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                 <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                     <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
                         <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
@@ -195,7 +195,7 @@
 
             <div class="grid items-start gap-y-[20px] xl:gap-x-[50px] xl:grid-cols-[minmax(0,1fr)_400px]">
                 {{-- Accesos: una caja por grupo, con cabecera gris y celdas separadas por líneas de 1px --}}
-                <div class="flex min-w-0 flex-col gap-[50px]">
+                <div class="flex min-w-0 flex-col gap-[20px] sm:gap-[30px] xl:gap-[50px]">
                     @foreach ($sections as $title => $cards)
                         @php([$metaIcon, $metaNote] = $sectionMeta[$title] ?? ['dashboard', ''])
                         <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="{{ $title }}">

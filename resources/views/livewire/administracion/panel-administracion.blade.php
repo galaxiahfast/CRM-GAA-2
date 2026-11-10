@@ -445,7 +445,7 @@
     @endpush
 
     <div class="w-full">
-    <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
+    <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
     <!-- Cabecera: mismo patrón que el inicio (cuadro con ícono, título azul, subtítulo y datos a la derecha) -->
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
@@ -665,7 +665,7 @@
 
     @if ($orgChartPage)
     <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" class="flex flex-col gap-[50px]" wire:init="loadOrgChartData">
+    <div id="organigrama-principal" class="flex flex-col gap-[20px] sm:gap-[30px] xl:gap-[50px]" wire:init="loadOrgChartData">
         <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen del organigrama">
             <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                 <div class="min-w-0">
