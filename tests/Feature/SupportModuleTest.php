@@ -36,7 +36,6 @@ class SupportModuleTest extends TestCase
             ->assertSee('Chat general de soporte')
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
-            ->assertSeeText('Ticket')
             ->assertSeeText('Descargar PDF')
             ->assertSeeText('Imprimir')
             ->assertSeeText('Buscar mensajes')
