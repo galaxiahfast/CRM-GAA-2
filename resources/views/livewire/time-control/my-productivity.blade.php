@@ -59,7 +59,7 @@
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { height: 70px; padding: 0; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(40px, 80px) 40px; align-items: center; gap: 15px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(90px, 26%) 40px; align-items: center; gap: 15px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
