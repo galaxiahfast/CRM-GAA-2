@@ -46,8 +46,8 @@
                 <header class="panel-header panel-border shrink-0 border-b p-[20px]">
                     <div class="flex items-start justify-between gap-[20px]">
                         <div class="min-w-0">
-                            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.13a9.4 9.4 0 0 0 4.12-.9 4 4 0 0 0-7.1-3.2M15 19.13v-.01a8.97 8.97 0 0 1-1.24 0m1.24 0A9 9 0 0 1 9 19.13m0 0a9.3 9.3 0 0 1-4.12-.9 4 4 0 0 1 7.1-3.2M9 19.13A9 9 0 0 1 7.76 19m4.24-9.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm8 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>En línea ahora</h2>
-                            <p class="chat-sub mt-[15px]">Quién está conectado al chat.</p>
+                            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>En línea ahora</h2>
+                            <p class="chat-sub mt-[15px] whitespace-nowrap">Quién está conectado al chat.</p>
                         </div>
                         <span class="shrink-0 leading-none">{{ count($onlineUsers) }} en línea</span>
                     </div>
@@ -69,14 +69,8 @@
                 </div>
 
                 <div class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto p-[20px]">
-                    <div>
-                        <div class="flex items-center gap-[10px]">
-                            <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                            <p class="panel-accent text-[15px]">En línea ahora</p>
-                            <span class="ml-auto shrink-0 text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</span>
-                        </div>
-
-                        <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
+                <div class="support-chat-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
+                        <div data-support-online-users class="support-chat-scrollbar max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
                             @forelse ($onlineUsers as $onlineUser)
                                 <div wire:key="online-user-{{ $onlineUser['id'] }}" class="flex items-center gap-[10px] rounded-xl px-[10px] py-[10px] transition hover:bg-white/60">
                                     @if ($onlineUser['photo_url'])
