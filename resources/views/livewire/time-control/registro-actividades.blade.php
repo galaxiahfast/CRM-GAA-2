@@ -389,7 +389,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6h11M9 12h11M9 18h11M4 6l1.5 1.5L8 5m-4 7 1.5 1.5L8 11m-4 7 1.5 1.5L8 17" /></svg><span>Actividad</span></label>
+                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg><span>Actividad</span></label>
 
                     <div class="relative">
                         <input
@@ -428,7 +428,7 @@
 
                 <div>
                     <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none">
-                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m10 8 6 4-6 4V8z"/></svg>
+                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg>
                         <span>Acción</span>
                     </div>
                     <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
