@@ -57,4 +57,16 @@ return [
             ['question' => '¿Qué significan los estados?', 'answer' => 'La columna Estado indica si la actividad está en progreso, pausada o cerrada.', 'steps' => ['En progreso: la fila va en verde y el tiempo sigue corriendo.', 'Pausada: el tiempo está detenido y puedes reanudarla.', 'Cerrada: el sistema la cerró automáticamente y ya no se puede reanudar.']],
         ],
     ],
+    'productividad' => [
+        'label' => 'Mi productividad',
+        'menu' => 'Actividades › Control de Horas › Productividad',
+        'summary' => 'Consulta cuánto tiempo dedicaste a cada cliente y a cada actividad en el periodo que elijas, revisa el detalle de cada día y exporta la información.',
+        'items' => [
+            ['question' => '¿Cómo cambio el periodo?', 'answer' => 'En Periodo de consulta elige las fechas Desde y Hasta y presiona Consultar periodo.', 'steps' => ['Selecciona la fecha Desde y la fecha Hasta.', 'Presiona Consultar periodo.', 'El encabezado muestra el rango consultado y las listas se actualizan.']],
+            ['question' => '¿Qué muestran las distribuciones?', 'answer' => 'Distribución por cliente y por actividad indican el tiempo, la barra y el porcentaje que representa cada uno del total del periodo.', 'steps' => ['Revisa la columna de tiempo de cada fila.', 'La barra y el porcentaje muestran cuánto pesa frente al total.', 'Desplázate con la rueda del ratón: cada giro mueve una fila y siempre se ven siete.']],
+            ['question' => '¿Cómo cambio el orden de las filas?', 'answer' => 'Arrastra una fila con el clic apretado hasta la posición que quieras; el orden es solo visual.', 'steps' => ['Mantén presionado el clic sobre una fila de las distribuciones o del detalle.', 'Muévela hacia arriba o hacia abajo.', 'Suelta el clic: la columna N° se actualiza. Al consultar otro periodo se restablece el orden original.']],
+            ['question' => '¿Cómo veo el detalle de una actividad?', 'answer' => 'En Detalle de actividades por día presiona una fila para abrirla.', 'steps' => ['Busca el día y la actividad en el detalle.', 'Presiona la fila para ver tiempo total, puesto profesional, área física y observaciones.', 'Vuelve a presionarla para cerrarla.']],
+            ['question' => '¿Cómo exporto la información?', 'answer' => 'Usa CSV, TXT o PDF en el encabezado del primer bloque.', 'steps' => ['Elige el periodo y presiona Consultar periodo.', 'En el encabezado selecciona el formato: CSV, TXT o PDF.', 'El archivo se descarga con el periodo consultado.']],
+        ],
+    ],
 ];

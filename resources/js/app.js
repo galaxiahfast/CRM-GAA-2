@@ -88,7 +88,7 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    window.Alpine.data('clockQuickTour', () => ({
+    window.Alpine.data('clockQuickTour', (customSteps = null) => ({
         quickTourStep: 0,
         spotlightStyle: '',
         popoverStyle: '',
@@ -99,7 +99,8 @@ document.addEventListener('alpine:init', () => {
         previousBodyOverflow: '',
         // Solo se muestran los pasos cuyo elemento existe (los de la tabla necesitan al menos una actividad).
         quickTourSteps: [],
-        allQuickTourSteps: [
+        // Los pasos del Cronómetro por defecto; otras secciones (Productividad) pasan los suyos.
+        allQuickTourSteps: customSteps ?? [
             {
                 target: 'clock-tour-activity',
                 title: '1. Elige una actividad',

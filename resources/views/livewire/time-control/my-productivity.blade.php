@@ -7,11 +7,20 @@
     $idxTiempo = $colIndex['Tiempo efectivo'] ?? 4; $idxPuesto = $colIndex['Puesto profesional'] ?? 5;
     $idxArea = $colIndex['Área física'] ?? 6; $idxObservaciones = $colIndex['Observaciones'] ?? 7;
     $rowCounter = 0;
+    $tourSteps = [
+        ['target' => 'prod-tour-period', 'title' => '1. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
+        ['target' => 'prod-tour-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado, las distribuciones y el detalle con las fechas elegidas.'],
+        ['target' => 'prod-tour-export', 'title' => '3. Exporta la información', 'description' => 'Descarga el periodo consultado en CSV, TXT o PDF. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-tour-clients', 'title' => '4. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
+        ['target' => 'prod-tour-activities', 'title' => '5. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
+        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Presiona una fila para ver el tiempo total, el puesto profesional, el área física y las observaciones de esa actividad.'],
+    ];
 @endphp
 
 <div
     data-panel
     data-productivity
+    x-data="clockQuickTour(@js($tourSteps))"
     class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
 >
     <x-panel-styles />
@@ -65,6 +74,10 @@
         [data-productivity] .prod-metrics > :nth-child(4) { grid-column: 5; }
         [data-productivity] .prod-metrics > :nth-child(3), [data-productivity] .prod-metrics > :nth-child(4) { margin-left: 20px; }
         [data-productivity] .prod-metrics > :nth-child(4) { min-width: 1.9em; text-align: right; }
+        /* Los tiempos quedan alineados a la derecha, en la misma columna en todas las filas */
+        [data-productivity] .prod-metrics > :nth-child(2) { min-width: 4.4em; text-align: right; }
+        [data-productivity] .prod-guide { display: flex; flex-direction: column; gap: 20px; }
+        [data-productivity] .prod-guide > a { width: fit-content; }
         [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) minmax(20px, 1fr) max-content minmax(50px, 150px) max-content; align-items: center; gap: 0; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
@@ -124,7 +137,12 @@
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
                         <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                     </div>
-                    <p class="leading-none">Tiempo total <span class="tabular-nums">{{ $fmt($totalSeconds) }}</span></p>
+                    <div id="prod-tour-export" class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px] leading-none">
+                        <span>Exportar información</span>
+                        @foreach ($exportFormats as $format)
+                            <button type="button" wire:click="export('{{ $format }}')" wire:loading.attr="disabled" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">{{ strtoupper($format) }}</button>
+                        @endforeach
+                    </div>
                 </header>
                 <div class="prod-layout">
                     <aside class="prod-aside panel-scroll panel-border">
@@ -133,7 +151,7 @@
                             <p class="prod-lines mt-[5px]">Seleccione periodo de fechas</p>
                         </div>
                         <div class="prod-form">
-                            <div class="prod-dates">
+                            <div id="prod-tour-period" class="prod-dates">
                                 <label class="block">
                                     <span class="prod-label">Desde</span>
                                     <input type="date" wire:model="from" class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0">
@@ -143,22 +161,19 @@
                                     <input type="date" wire:model="to" class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0">
                                 </label>
                             </div>
-                            <button type="button" wire:click="applyFilters" class="prod-primary w-full focus:outline-none focus:ring-0">Consultar periodo</button>
-                            <div class="panel-border border-t pt-[20px]">
-                                <span class="prod-label">Exportar información</span>
-                                <div class="flex gap-[10px]">
-                                    @foreach ($exportFormats as $format)
-                                        <button type="button" wire:click="export('{{ $format }}')" wire:loading.attr="disabled" class="prod-primary min-w-0 flex-1 px-[10px] focus:outline-none focus:ring-0">{{ strtoupper($format) }}</button>
-                                    @endforeach
-                                </div>
+                            <button id="prod-tour-consult" type="button" wire:click="applyFilters" class="prod-primary w-full focus:outline-none focus:ring-0">Consultar periodo</button>
+                            <div class="panel-border border-t" aria-hidden="true"></div>
+                            <div class="prod-guide">
+                                <a href="{{ route('section.guide', 'productividad') }}" title="Descargar la guía de Mi productividad en PDF" class="prod-label prod-link leading-none">Descargar guía PDF</a>
+                                <button type="button" @click="startQuickTour()" class="prod-primary min-h-[48px] w-full focus:outline-none focus:ring-0">Tutorial rápido</button>
                             </div>
                         </div>
                     </aside>
 
                     <div class="prod-main">
                         <div class="prod-dist">
-                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em']] as $distribution)
-                                <section class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
+                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities']] as $distribution)
+                                <section id="{{ $distribution['tourId'] }}" class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
                                     <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
                                         <h3 class="prod-index panel-border leading-none">N°</h3>
                                         <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
@@ -190,7 +205,7 @@
         </div>
 
         <div class="prod-wrap">
-            <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Detalle de actividades por día" x-data="{ expandedRows: new Set(), toggleRow(id) { this.expandedRows.has(id) ? this.expandedRows.delete(id) : this.expandedRows.add(id) }, isExpanded(id) { return this.expandedRows.has(id) } }">
+            <section id="prod-tour-detail" class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Detalle de actividades por día" x-data="{ expandedRows: new Set(), toggleRow(id) { this.expandedRows.has(id) ? this.expandedRows.delete(id) : this.expandedRows.add(id) }, isExpanded(id) { return this.expandedRows.has(id) } }">
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Detalle de actividades por día</h2>
@@ -237,4 +252,28 @@
             </section>
         </div>
     </main>
+
+    <template x-teleport="body">
+        <div data-panel data-productivity x-cloak x-show="quickTourStep > 0" x-transition.opacity class="pointer-events-none fixed inset-0 z-[299999]" style="background:transparent" @click.stop @wheel.prevent @touchmove.prevent>
+            <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
+
+            <div :style="spotlightStyle" class="pointer-events-auto z-[300001]" aria-hidden="true"></div>
+
+            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
+                <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>
+                <h2 id="clock-tour-title" class="mt-[15px] leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
+                <p class="mt-[15px] text-justify leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                <div class="mt-[20px] flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px]">
+                    <button type="button" @click="closeQuickTour()" class="prod-link whitespace-nowrap leading-none">Saltar recorrido</button>
+                    <div class="flex items-center gap-[20px] whitespace-nowrap">
+                        <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-xl px-[20px] py-[15px] leading-none">Anterior</button>
+                        <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="prod-primary leading-none" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </template>
 </div>

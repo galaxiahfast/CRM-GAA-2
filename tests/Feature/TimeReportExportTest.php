@@ -150,6 +150,22 @@ class TimeReportExportTest extends TestCase
         $this->assertSame('Mi productividad', $report->title);
     }
 
+    public function test_my_productivity_offers_its_pdf_guide_and_quick_tour(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+
+        Livewire::actingAs($aux)->test(MyProductivity::class)
+            ->assertSee('Tutorial rápido')
+            ->assertSee('Descargar guía PDF')
+            ->assertSeeHtml(route('section.guide', 'productividad'))
+            ->assertSeeHtml('id="prod-tour-export"');
+
+        $this->actingAs($aux)
+            ->get(route('section.guide', 'productividad'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_user_can_export_every_format(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();
