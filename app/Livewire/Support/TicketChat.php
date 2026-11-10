@@ -247,8 +247,16 @@ class TicketChat extends Component
     {
         $this->ensureCurrentGreeting();
         $this->messages = $this->recentMessages();
+        $this->markChatSeen();
         $this->refreshOnlineUsers();
         $this->dispatch('support-messages-refreshed');
+    }
+
+    /** Marca el chat como leído para el globo de mensajes pendientes del menú superior. */
+    private function markChatSeen(): void
+    {
+        DB::table('users')->where('id', auth()->id())->update(['support_chat_seen_at' => now()]);
+        $this->dispatch('support-chat-seen');
     }
 
     public function deleteMessage(int $messageId): void
