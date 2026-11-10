@@ -1,3 +1,6 @@
+@php
+    $chatToday = ucfirst(now(config('support.timezone', 'America/Mexico_City'))->locale('es')->translatedFormat('l, d \d\e F \d\e Y'));
+@endphp
 <div
     data-clock-particle-network
     data-panel
@@ -35,10 +38,17 @@
                 </div>
             </div>
 
-            <span class="panel-muted inline-flex items-center gap-[10px] text-[15px] leading-[30px]">
-                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                Disponible para todos los usuarios
-            </span>
+            <div class="flex min-w-0 flex-col items-start gap-[15px] lg:items-end">
+                <span class="panel-muted inline-flex items-center gap-[10px] text-[15px] leading-none">
+                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    Disponible para todos los usuarios
+                </span>
+                <span class="leading-none">{{ $chatToday }}</span>
+                <a href="{{ route('section.guide', 'chat-soporte') }}" title="Descargar la guía del Chat general de soporte en PDF" class="clock-link inline-flex items-center gap-[10px] leading-none">
+                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                    Guía PDF
+                </a>
+            </div>
         </section>
 
         <div data-support-chat-panel class="min-h-[620px] min-w-0 flex-1" style="display:grid;grid-template-columns:360px minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:50px;align-items:stretch;height:max(620px,calc(var(--app-dvh) - 330px));">
