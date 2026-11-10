@@ -327,8 +327,8 @@
                 <p class="clock-lines mt-[5px]">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[20px]">
-                <span class="leading-none">Actividades: {{ $todayEntries->count() }}</span>
-                <span class="leading-none">Tiempo total: <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span></span>
+                <span class="leading-none">Actividades {{ $todayEntries->count() }}</span>
+                <span class="leading-none">Tiempo total <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span></span>
             </div>
         </header>
         <div class="clock-layout">
