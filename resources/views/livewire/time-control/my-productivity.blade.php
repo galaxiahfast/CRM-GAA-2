@@ -104,9 +104,8 @@
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
-                        <p class="prod-lines mt-[5px]">Distribución del tiempo registrado por cliente y actividad.</p>
+                        <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                     </div>
-                    <p class="leading-none">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                 </header>
                 <div class="prod-layout">
                     <aside class="prod-aside panel-scroll panel-border">
