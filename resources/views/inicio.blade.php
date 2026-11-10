@@ -86,7 +86,9 @@
     if (Gate::allows('manage-delivery-notes')) {
         $documents[] = ['Hoja de entrega', 'Genera hojas de entrega de equipo.', route('soporte.hoja-entrega'), 'delivery'];
     }
-    $documents[] = ['Reportes de soporte', 'Genera y consulta reportes de servicios técnicos.', route('soporte.reportes-tecnicos'), 'report'];
+    if (Gate::allows('view-support-reports')) {
+        $documents[] = ['Reportes de soporte', 'Genera y consulta reportes de servicios técnicos.', route('soporte.reportes-tecnicos'), 'report'];
+    }
     if (Gate::allows('manage-backup-reports')) {
         $documents[] = ['Reporte de respaldos', 'Revisa el estado de los respaldos por servidor.', route('soporte.reportes-respaldos'), 'server'];
     }

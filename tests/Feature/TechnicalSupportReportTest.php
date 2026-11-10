@@ -79,6 +79,37 @@ class TechnicalSupportReportTest extends TestCase
         $this->get(route('soporte.reportes-tecnicos'))->assertRedirect(route('login'));
     }
 
+    public function test_interns_cannot_see_or_open_the_support_reports_but_everyone_sees_the_support_chat(): void
+    {
+        // El rol con id 1 se trata como administrador, así que se crea primero.
+        Role::query()->firstOrCreate(['role' => 'Administrador']);
+
+        foreach (['Becario', 'Becario Senior'] as $roleName) {
+            $role = Role::query()->firstOrCreate(['role' => $roleName]);
+            $intern = User::factory()->create(['role_id' => $role->id]);
+
+            $this->actingAs($intern)->get(route('soporte.reportes-tecnicos'))->assertForbidden();
+            $this->actingAs($intern)->get(route('soporte.reportes-tecnicos.history'))->assertForbidden();
+            $this->actingAs($intern)->get(route('inicio'))
+                ->assertOk()
+                ->assertDontSee('Genera y consulta reportes de servicios técnicos.')
+                ->assertDontSeeHtml('data-sidebar-label="Reportes de Soporte"')
+                ->assertSee('Chat de Soporte');
+        }
+
+        foreach (['Administrador', 'Coordinador', 'Contador', 'Auxiliar'] as $roleName) {
+            $role = Role::query()->firstOrCreate(['role' => $roleName]);
+            $user = User::factory()->create(['role_id' => $role->id]);
+
+            $this->actingAs($user)->get(route('soporte.reportes-tecnicos'))->assertOk();
+            $this->actingAs($user)->get(route('inicio'))
+                ->assertOk()
+                ->assertSee('Genera y consulta reportes de servicios técnicos.')
+                ->assertSeeHtml('data-sidebar-label="Reportes de Soporte"')
+                ->assertSee('Chat de Soporte');
+        }
+    }
+
     public function test_authenticated_user_can_open_report_section_and_pdf(): void
     {
         $user = User::factory()->create();

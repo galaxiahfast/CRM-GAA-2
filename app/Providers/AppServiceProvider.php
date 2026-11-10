@@ -121,6 +121,12 @@ class AppServiceProvider extends ServiceProvider
 
             return $roleName !== '' && ! str_contains($roleName, 'becario');
         };
+        // Los reportes de soporte no se muestran a los becarios (mismo criterio que los respaldos).
+        Gate::define('view-support-reports', function (User $user): bool {
+            $roleName = Str::lower(Str::ascii((string) ($user->role?->role ?? $user->role?->name ?? '')));
+
+            return ! str_contains($roleName, 'becario');
+        });
         Gate::define('access-system-backups', $canAccessSystemBackups);
         Gate::define('upload-system-backups', $canAccessSystemBackups);
         Gate::define('manage-system-backups', function (User $user): bool {
