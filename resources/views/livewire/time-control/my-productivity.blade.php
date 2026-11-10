@@ -56,6 +56,7 @@
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { padding: 0; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(40px, 80px) 40px; align-items: center; gap: 15px; min-height: 59px; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
@@ -153,13 +154,11 @@
                                         @forelse ($distribution['items'] as $name => $seconds)
                                             <div class="prod-item prod-grid">
                                                 <span class="prod-index panel-border leading-none">{{ $loop->iteration }}</span>
-                                                <div class="prod-cell">
-                                                    <div class="flex items-center justify-between gap-[20px] leading-none">
-                                                        <span class="truncate" title="{{ $name }}">{{ $name }}</span>
-                                                        <span class="shrink-0 tabular-nums">{{ $fmt($seconds) }}</span>
-                                                    </div>
-                                                    <div class="prod-track mt-[15px]"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
-                                                    <p class="mt-[15px] text-right leading-none">{{ $pct($seconds, $totalSeconds) }}%</p>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span class="truncate leading-none" title="{{ $name }}">{{ $name }}</span>
+                                                    <span class="tabular-nums leading-none">{{ $fmt($seconds) }}</span>
+                                                    <div class="prod-track"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
+                                                    <span class="text-right tabular-nums leading-none">{{ $pct($seconds, $totalSeconds) }}%</span>
                                                 </div>
                                             </div>
                                         @empty
