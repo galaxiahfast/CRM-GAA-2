@@ -379,7 +379,7 @@
                             x-model="search"
                             @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
-                            :placeholder="selectedName || '-- Escribe o busca un cliente --'"
+                            :placeholder="selectedName || 'Escribe o busca un cliente'"
                             class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
@@ -445,7 +445,7 @@
                             x-model="search"
                             @focus="open = true; $dispatch('open-dropdown', { id: 'service' })"
                             @click="open = true; $dispatch('open-dropdown', { id: 'service' })"
-                            :placeholder="selectedName || '-- Escribe o busca una actividad --'"
+                            :placeholder="selectedName || 'Escribe o busca una actividad'"
                             class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
                             @keydown.escape="open = false"
                         >
