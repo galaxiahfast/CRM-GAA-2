@@ -200,13 +200,10 @@
             </div>
         </div>
         <div class="flex w-full min-w-0 flex-wrap items-start gap-[20px] lg:w-auto">
-            <div class="min-w-0">
-                <p class="panel-accent leading-none">Ayuda</p>
-                <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link mt-[15px] inline-flex shrink-0 items-center gap-[10px] leading-none">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
-                    Guía PDF
-                </a>
-            </div>
+            <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link inline-flex shrink-0 self-end items-center gap-[10px] leading-none">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                Guía PDF
+            </a>
             <div class="min-w-0 lg:text-right">
                 <p class="panel-accent leading-none">Organización</p>
                 <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
@@ -429,7 +426,12 @@
                     @enderror
                 </div>
 
-                <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
+                <div>
+                    <div class="mb-[20px] flex items-center gap-[10px] leading-none">
+                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg>
+                        <span>Acción</span>
+                    </div>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M8 5.14v13.72L19 12 8 5.14z"/>
@@ -443,7 +445,8 @@
                         <span wire:loading.remove wire:target="start">Iniciar actividad</span>
                         <span wire:loading wire:target="start" style="display: none;">Sincronizando...</span>
                     </span>
-                </button>
+                    </button>
+                </div>
             </div>
         </form>
     </aside>
