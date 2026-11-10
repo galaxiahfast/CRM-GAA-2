@@ -323,7 +323,7 @@
     >
         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
             <div class="min-w-0">
-                <h2 class="panel-accent leading-none">Registro de actividades</h2>
+                <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>Registro de actividades</span></h2>
                 <p class="clock-lines mt-[5px]">Selecciona dónde trabajarás y consulta el tiempo registrado hoy por cliente y actividad.</p>
             </div>
             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[20px]">
@@ -334,7 +334,7 @@
         <div class="clock-layout">
     <aside class="clock-aside clock-scroll panel-border border-b">
         <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
-            <h2 class="panel-accent leading-none">Nuevo registro</h2>
+            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
             <p class="clock-lines mt-[5px]">Selecciona dónde trabajarás.</p>
         </div>
         <form wire:submit="start" class="clock-form">
@@ -472,7 +472,7 @@
                 </div>
 
                 <div class="clock-field clock-field-action">
-                    <div class="mb-[20px] flex min-h-6 items-center leading-none">Acción</div>
+                    <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg><span>Acción</span></div>
                     <button id="clock-tour-start" type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
