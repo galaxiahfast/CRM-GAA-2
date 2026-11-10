@@ -71,32 +71,6 @@
         class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 origin-top flex-col"
         :style="`width: ${10000 / viewScale}%; margin-left: ${(100 - (10000 / viewScale)) / 2}%; transform: scale(${viewScale / 100});`"
     >
-    <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b px-[20px] py-[15px] sm:px-[30px] xl:px-[50px]">
-        <div class="panel-muted flex min-w-0 flex-wrap items-center gap-[10px] sm:gap-[15px]">
-            <span class="font-medium">Soporte</span>
-            <span class="text-gray-300">&gt;</span>
-            <span class="font-medium">Centro de ayuda</span>
-            <span class="text-gray-300">&gt;</span>
-            <a href="{{ route('soporte.ticket') }}" class="panel-text font-semibold transition-colors hover:opacity-75">Chat general</a>
-        </div>
-
-        <div class="no-print flex flex-wrap items-center gap-[15px] sm:gap-[20px]">
-            <button type="button" wire:click="downloadPdf" wire:loading.attr="disabled" wire:target="downloadPdf" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium transition-colors disabled:cursor-wait disabled:opacity-60">
-                <svg wire:loading.remove wire:target="downloadPdf" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <svg wire:loading wire:target="downloadPdf" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                <span>Descargar PDF</span>
-            </button>
-            <button type="button" onclick="window.print()" class="clock-link inline-flex items-center gap-[10px] border-0 bg-transparent p-0 font-medium transition-colors">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10zM9 7V3h6v4" />
-                </svg>
-                <span>Imprimir</span>
-            </button>
-        </div>
-    </header>
-
     <main class="relative z-10 mx-auto flex w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="flex min-w-0 items-center gap-[15px]">
@@ -107,14 +81,14 @@
                 </span>
                 <div>
                     <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
-                    <p class="panel-muted mt-[5px] leading-5">Espacio compartido para conversar con todos los colaboradores.</p>
+                    <p class="panel-muted mt-[15px] leading-[30px]">Espacio compartido para conversar con todos los colaboradores.</p>
                 </div>
             </div>
 
-            <div class="panel-surface panel-border flex items-center gap-[10px] rounded-xl border px-[20px] py-[15px] text-[15px]">
+            <span class="panel-muted inline-flex items-center gap-[10px] text-[15px] leading-[30px]">
                 <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 Disponible para todos los usuarios
-            </div>
+            </span>
         </section>
 
         <section data-support-chat-panel class="panel-surface panel-border grid min-h-[680px] min-w-0 flex-1 grid-rows-[190px_minmax(0,1fr)] overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:grid-cols-[320px_minmax(0,1fr)] xl:grid-rows-1">
@@ -627,6 +601,7 @@
             outline: none !important;
         }
         [data-support-chat] :is(input, textarea, select) { color-scheme: inherit; }
+        [data-support-chat] p { line-height: 30px; }
         [data-support-chat] .support-chat-scrollbar {
             scrollbar-width: thin;
             scrollbar-color: var(--panel-accent) var(--panel-surface);
