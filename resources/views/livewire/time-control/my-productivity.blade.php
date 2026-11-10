@@ -106,6 +106,7 @@
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
                         <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                     </div>
+                    <p class="leading-none">Tiempo total <span class="tabular-nums">{{ $fmt($totalSeconds) }}</span></p>
                 </header>
                 <div class="prod-layout">
                     <aside class="prod-aside panel-scroll panel-border">
