@@ -55,8 +55,8 @@
         [data-productivity] .prod-grid { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: stretch; }
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
-        [data-productivity] .prod-item { padding: 0; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(40px, 80px) 40px; align-items: center; gap: 15px; min-height: 59px; padding-top: 14px; padding-bottom: 14px; }
+        [data-productivity] .prod-item { height: 70px; padding: 0; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(40px, 80px) 40px; align-items: center; gap: 15px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
@@ -90,7 +90,9 @@
             [data-productivity] .prod-dist { min-height: 0; flex: 1; grid-template-rows: minmax(0, 1fr); }
             [data-productivity] .prod-col { min-height: 0; }
             [data-productivity] .prod-list-wrap { flex: 1; }
-            [data-productivity] .prod-list { position: absolute; inset: 0; max-height: none; }
+            /* La lista muestra siempre 7 filas exactas, igual que la tabla del Cronómetro */
+            [data-productivity] .prod-list { position: absolute; inset: 0; max-height: none; container-type: size; }
+            [data-productivity] .prod-item { height: max(59px, calc(100cqh / 7)); }
         }
     </style>
 
@@ -150,7 +152,7 @@
                                         <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
                                     </div>
                                     <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
-                                    <div x-ref="scroller" @scroll="update()" class="prod-list panel-scroll">
+                                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
                                             <div class="prod-item prod-grid">
                                                 <span class="prod-index panel-border leading-none">{{ $loop->iteration }}</span>
