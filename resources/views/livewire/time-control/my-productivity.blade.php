@@ -104,7 +104,7 @@
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
-                        <p class="prod-lines mt-[5px]">Tienes {{ count($entries) }} {{ count($entries) === 1 ? 'registro' : 'registros' }} con un tiempo efectivo de <span class="tabular-nums">{{ $fmt($totalSeconds) }}</span>.</p>
+                        <p class="prod-lines mt-[5px]">Distribución del tiempo registrado por cliente y actividad.</p>
                     </div>
                     <p class="leading-none">Del {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->format('d/m/Y') }}</p>
                 </header>
@@ -138,16 +138,10 @@
                     </aside>
 
                     <div class="prod-main">
-                        <header class="panel-surface panel-border box-border flex h-[87px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] overflow-hidden border-b p-[20px]">
-                            <div class="min-w-0">
-                                <h2 class="panel-accent leading-none">Resumen del periodo</h2>
-                                <p class="prod-lines mt-[5px]">Distribución del tiempo registrado.</p>
-                            </div>
-                        </header>
                         <div class="prod-dist">
                             @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer], ['title' => 'Distribución por actividad', 'items' => $byActivity]] as $distribution)
                                 <section class="prod-col panel-border">
-                                    <h3 class="panel-accent panel-border shrink-0 border-b p-[20px] leading-none">{{ $distribution['title'] }}</h3>
+                                    <h3 class="panel-accent panel-border box-border flex h-[87px] shrink-0 items-center border-b p-[20px] leading-none">{{ $distribution['title'] }}</h3>
                                     <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
                                     <div x-ref="scroller" @scroll="update()" class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
