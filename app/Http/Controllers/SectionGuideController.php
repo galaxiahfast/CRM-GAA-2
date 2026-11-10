@@ -15,6 +15,7 @@ class SectionGuideController extends Controller
             'detalle-cliente' => 'detalle_cliente',
             'panel-control' => 'panel_control_horas',
             'supervision-horas' => 'supervision_horas',
+            'cronometro' => 'cronometro',
         ];
 
         abort_unless(isset($categories[$section]), 404);

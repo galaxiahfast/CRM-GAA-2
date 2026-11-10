@@ -45,4 +45,16 @@ return [
             ['question' => '¿Qué opciones de exportación hay?', 'answer' => 'Puedes descargar un reporte individual, uno grupal o el consolidado general cuando el informe está actualizado.', 'steps' => ['Genera un informe con los colaboradores necesarios.', 'En Resultado del reporte elige Reporte individual, grupal o general.', 'También puedes usar Descargar PDF en la cabecera o Imprimir.']],
         ],
     ],
+    'cronometro' => [
+        'label' => 'Cronómetro',
+        'menu' => 'Actividades › Control de Horas › Cronómetro',
+        'summary' => 'Registra el tiempo que dedicas a cada cliente o departamento y a cada actividad durante el día. Solo puede haber una actividad en progreso: al iniciar otra, la anterior se pausa automáticamente.',
+        'items' => [
+            ['question' => '¿Cómo inicio una actividad?', 'answer' => 'Elige el departamento o cliente y la actividad, y presiona Iniciar actividad.', 'steps' => ['En Nuevo registro, abre la lista de Cliente y selecciona el departamento o cliente.', 'Abre la lista de Actividad y selecciona la actividad.', 'Presiona Iniciar actividad: la fila aparece en la tabla marcada en verde y el tiempo comienza a contar.']],
+            ['question' => '¿Cómo pauso o reanudo una actividad?', 'answer' => 'Cada fila tiene un icono de pausa o de reanudar en la columna Acción.', 'steps' => ['Localiza la fila de la actividad en la tabla.', 'Presiona el icono de pausa para detener el tiempo, o el de reanudar para continuar.', 'Si reanudas una actividad mientras otra está en progreso, la otra se pausa sola.']],
+            ['question' => '¿Cómo cambio el orden de las actividades?', 'answer' => 'Arrastra la fila con el clic apretado hasta la posición que quieras.', 'steps' => ['Mantén presionado el clic sobre la fila, fuera de los iconos.', 'Desplaza el cursor hacia arriba o hacia abajo.', 'Suelta el clic: el orden se guarda y la columna N° se actualiza.']],
+            ['question' => '¿Cómo elimino una actividad?', 'answer' => 'Usa la X de la fila y escribe el nombre exacto de la actividad para confirmar.', 'steps' => ['Si la actividad está en progreso, primero páusala.', 'Presiona la X de su fila.', 'Escribe el nombre de la actividad tal como aparece y confirma. No se pueden eliminar actividades cerradas automáticamente ni corregidas por un administrador.']],
+            ['question' => '¿Qué significan los estados?', 'answer' => 'La columna Estado indica si la actividad está en progreso, pausada o cerrada.', 'steps' => ['En progreso: la fila va en verde y el tiempo sigue corriendo.', 'Pausada: el tiempo está detenido y puedes reanudarla.', 'Cerrada: el sistema la cerró automáticamente y ya no se puede reanudar.']],
+        ],
+    ],
 ];

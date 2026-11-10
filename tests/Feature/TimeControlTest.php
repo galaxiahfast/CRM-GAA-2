@@ -180,6 +180,21 @@ class TimeControlTest extends TestCase
             ->assertSeeHtml('clock-error-toast-2');
     }
 
+    public function test_the_clock_offers_its_pdf_guide(): void
+    {
+        ['aux' => $aux] = $this->seedCatalog();
+
+        Livewire::actingAs($aux)
+            ->test(\App\Livewire\TimeControl\RegistroActividades::class)
+            ->assertSee('Guía PDF')
+            ->assertSeeHtml(route('section.guide', 'cronometro'));
+
+        $this->actingAs($aux)
+            ->get(route('section.guide', 'cronometro'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_user_deletes_a_paused_activity_only_after_typing_its_exact_name(): void
     {
         ['aux' => $aux, 'customer' => $customer, 'sub' => $sub] = $this->seedCatalog();

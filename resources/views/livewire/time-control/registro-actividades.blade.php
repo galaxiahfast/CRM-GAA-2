@@ -104,17 +104,13 @@
         html.module-dark-theme #main-content [data-time-clock] table tr {
             background: var(--panel-surface) !important;
         }
-        html.module-dark-theme #main-content [data-time-clock] table :is(thead, tfoot),
-        html.module-dark-theme #main-content [data-time-clock] table thead tr {
-            background: var(--panel-header) !important;
-        }
-        /* Filas intercaladas: la primera con el fondo normal y la siguiente con el color del encabezado */
-        [data-time-clock] .clock-body tbody tr:nth-child(even) { background-color: var(--panel-header); }
+        /* Filas intercaladas: la primera con el color del encabezado y la siguiente con el fondo normal */
+        [data-time-clock] .clock-body tbody tr:nth-child(odd) { background-color: var(--panel-header); }
         [data-time-clock] .clock-body tbody tr.clock-row:hover { background-color: var(--panel-hover); }
         /* La actividad en progreso se marca con la fila en verde */
         [data-time-clock] .clock-body tbody tr.clock-row.is-running { background-color: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)); }
         html.module-dark-theme #main-content [data-time-clock] table tbody tr.clock-row.is-running { background: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)) !important; }
-        html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(even) { background: var(--panel-header) !important; }
+        html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(odd) { background: var(--panel-header) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
         /* Iconos de acción sin recuadro: mover y eliminar */
         [data-time-clock] .clock-icon {
@@ -203,9 +199,15 @@
                 <p class="mt-[15px] leading-none">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
-        <div class="w-full min-w-0 lg:w-auto lg:text-right">
-            <p class="panel-accent leading-none">Organización</p>
-            <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
+        <div class="flex w-full min-w-0 flex-wrap items-center gap-[20px] lg:w-auto">
+            <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link inline-flex shrink-0 items-center gap-[10px] leading-none">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                Guía PDF
+            </a>
+            <div class="min-w-0 lg:text-right">
+                <p class="panel-accent leading-none">Organización</p>
+                <p class="mt-[15px] flex items-center gap-[10px] leading-none lg:justify-end"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>Sincronizado en tiempo real</p>
+            </div>
         </div>
     </section>
 
@@ -282,7 +284,7 @@
         </header>
         <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
     <aside class="clock-scroll panel-border border-b xl:min-h-0 xl:overflow-y-auto xl:border-b-0 xl:border-r">
-        <div class="panel-header panel-border box-border h-[87px] border-b p-[20px]">
+        <div class="panel-surface panel-border box-border h-[87px] border-b p-[20px]">
             <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
             <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
@@ -319,7 +321,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
+                    <label class="mb-[20px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
 
                     <div class="relative">
                         <input
@@ -387,7 +389,7 @@
                     @open-dropdown.window="if ($event.detail.id !== 'service') open = false"
                     @click.away="open = false; search = ''"
                 >
-                    <label class="mb-[15px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
+                    <label class="mb-[20px] flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg><span>Actividad</span></label>
 
                     <div class="relative">
                         <input
@@ -457,7 +459,7 @@
         @else
             {{-- Encabezado fijo: el scroll solo recorre las filas --}}
             <table class="clock-table clock-table-head w-full border-collapse text-left">
-                <thead class="panel-header panel-border border-b">
+                <thead class="panel-surface panel-border border-b">
                     <tr class="clock-head-row">
                         <th class="whitespace-nowrap p-[20px] align-middle">N°</th>
                         <th class="p-[20px] align-middle">Departamento o cliente</th>
