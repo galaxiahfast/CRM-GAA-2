@@ -483,19 +483,20 @@
     </template>
 
     <style>
-        [data-support-chat-panel] { container: support-chat / inline-size; }
-        @container support-chat (min-width: 900px) {
-            [data-support-chat-panel] {
-                height: calc(var(--app-dvh) - 330px);
-                min-height: 620px;
-                flex-direction: row;
-                gap: 50px;
-            }
-            [data-support-chat-panel] > aside {
-                width: 360px;
-                max-height: none;
-                flex-shrink: 0;
-            }
+        [data-support-chat-panel] {
+            display: grid !important;
+            grid-template-columns: 360px minmax(0, 1fr);
+            align-items: stretch;
+            gap: 30px;
+        }
+        [data-support-chat-panel] > aside {
+            width: 360px;
+            min-width: 360px;
+            max-height: none;
+        }
+        [data-support-chat-panel] > :last-child { min-width: 0; }
+        @media (min-width: 1280px) {
+            [data-support-chat-panel] { gap: 50px; }
         }
         [data-support-chat] {
             --chat-green: #15803d;
@@ -590,7 +591,6 @@
             [data-support-chat] main { min-height: 0; }
         }
         @media (max-width: 639px) {
-            [data-support-chat-panel] { grid-template-rows: minmax(220px, 32dvh) minmax(460px, 1fr); }
             [data-support-chat] [data-support-online-users] { max-height: 100px; }
         }
     </style>
