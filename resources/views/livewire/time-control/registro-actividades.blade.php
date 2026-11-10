@@ -655,13 +655,13 @@
                 <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-normal text-white shadow" x-text="quickTourStep"></span>
             </div>
 
-            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(380px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
+            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
                 <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>
                 <h2 id="clock-tour-title" class="mt-[15px] leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
-                <p class="mt-[15px] text-left leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
-                <div class="mt-[20px] flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
-                    <button type="button" @click="closeQuickTour()" class="clock-link leading-none">Saltar recorrido</button>
-                    <div class="flex items-center gap-[20px]">
+                <p class="mt-[15px] text-justify leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                <div class="mt-[20px] flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px]">
+                    <button type="button" @click="closeQuickTour()" class="clock-link whitespace-nowrap leading-none">Saltar recorrido</button>
+                    <div class="flex items-center gap-[20px] whitespace-nowrap">
                         <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-xl px-[20px] py-[15px] leading-none">Anterior</button>
                         <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-xl px-[20px] py-[15px] leading-none" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
                     </div>

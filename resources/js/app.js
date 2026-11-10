@@ -215,7 +215,7 @@ document.addEventListener('alpine:init', () => {
             this.maskBottomStyle = `${mask}left:0;top:${bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - bottom)}px;`;
 
             const dialog = document.querySelector('[aria-labelledby="clock-tour-title"]');
-            const popoverWidth = Math.min(380, window.innerWidth - 40);
+            const popoverWidth = Math.min(440, window.innerWidth - 40);
             const popoverHeight = dialog?.offsetHeight || (window.innerWidth < 500 ? 320 : 300);
             const gutter = 20;
             const sideGap = 20;
