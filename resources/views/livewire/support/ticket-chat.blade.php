@@ -45,7 +45,7 @@
             <aside class="panel-surface panel-border flex w-[360px] max-h-none min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="grid-column:1;grid-row:1;">
                 <header class="panel-header panel-border shrink-0 border-b p-[20px]">
                     <div class="flex items-start gap-[10px]">
-                        <svg class="panel-accent mt-[5px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                        <svg class="panel-accent h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
                             <circle cx="12" cy="8" r="3.25" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
                         </svg>
