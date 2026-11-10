@@ -214,12 +214,28 @@ document.addEventListener('alpine:init', () => {
             this.maskRightStyle = `${mask}left:${right}px;top:${top}px;width:${Math.max(0, window.innerWidth - right)}px;height:${height}px;`;
             this.maskBottomStyle = `${mask}left:0;top:${bottom}px;width:100vw;height:${Math.max(0, window.innerHeight - bottom)}px;`;
 
-            const popoverWidth = Math.min(380, window.innerWidth - 32);
-            const popoverHeight = window.innerWidth < 500 ? 260 : 240;
-            const popoverLeft = Math.min(window.innerWidth - popoverWidth - 16, Math.max(16, rect.left + rect.width / 2 - popoverWidth / 2));
-            const below = rect.bottom + 16 + popoverHeight <= window.innerHeight;
-            const popoverTop = below ? rect.bottom + 16 : Math.max(16, rect.top - popoverHeight - 16);
-            this.popoverStyle = `position:fixed;left:${popoverLeft}px;top:${popoverTop}px;width:${popoverWidth}px;`;
+            const popoverWidth = Math.min(360, window.innerWidth - 32);
+            const popoverHeight = window.innerWidth < 500 ? 260 : 250;
+            const gutter = 16;
+            const sideGap = 20;
+            const rightSpace = window.innerWidth - rect.right - gutter;
+            const leftSpace = rect.left - gutter;
+            let popoverLeft;
+            let popoverTop;
+
+            if (rightSpace >= popoverWidth + sideGap) {
+                popoverLeft = rect.right + sideGap;
+                popoverTop = Math.min(window.innerHeight - popoverHeight - gutter, Math.max(gutter, rect.top + rect.height / 2 - popoverHeight / 2));
+            } else if (leftSpace >= popoverWidth + sideGap) {
+                popoverLeft = rect.left - popoverWidth - sideGap;
+                popoverTop = Math.min(window.innerHeight - popoverHeight - gutter, Math.max(gutter, rect.top + rect.height / 2 - popoverHeight / 2));
+            } else {
+                popoverLeft = Math.min(window.innerWidth - popoverWidth - gutter, Math.max(gutter, rect.left + rect.width / 2 - popoverWidth / 2));
+                const below = rect.bottom + sideGap + popoverHeight <= window.innerHeight;
+                popoverTop = below ? rect.bottom + sideGap : Math.max(gutter, rect.top - popoverHeight - sideGap);
+            }
+
+            this.popoverStyle = `position:fixed;left:${popoverLeft}px;top:${popoverTop}px;width:${popoverWidth}px;transform:translate(0,0);`;
         },
     }));
 });

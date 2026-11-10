@@ -642,32 +642,34 @@
         </div>
     @endif
 
-    <div x-cloak x-show="quickTourStep > 0" x-transition.opacity x-teleport="body" @click.stop @wheel.prevent @touchmove.prevent>
-        <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
-        <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
-        <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
-        <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
+    <template x-teleport="body">
+        <div data-panel data-time-clock x-cloak x-show="quickTourStep > 0" x-transition.opacity class="pointer-events-none fixed inset-0 z-[299999]" style="background:transparent" @click.stop @wheel.prevent @touchmove.prevent>
+            <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
 
-        <div :style="spotlightStyle" class="pointer-events-auto z-[300001] rounded-xl border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(74,222,128,0.28)]" aria-hidden="true">
-            <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-semibold text-white shadow" x-text="quickTourStep"></span>
-        </div>
-
-        <section :style="popoverStyle" class="panel-surface panel-border z-[300002] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title" aria-live="polite">
-            <div class="mb-[15px] flex items-center justify-between gap-[15px]">
-                <span class="panel-accent text-sm" x-text="`Paso ${quickTourStep} de ${quickTourSteps.length}`"></span>
-                <button type="button" @click="closeQuickTour()" class="panel-icon-button rounded-lg p-[5px]" aria-label="Cerrar recorrido">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></svg>
-                </button>
+            <div :style="spotlightStyle" class="pointer-events-auto z-[300001] rounded-xl border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(74,222,128,0.28)]" aria-hidden="true">
+                <span class="absolute -left-[13px] -top-[13px] grid h-7 w-7 place-items-center rounded-full bg-emerald-500 text-[13px] font-semibold text-white shadow" x-text="quickTourStep"></span>
             </div>
-            <h2 id="clock-tour-title" class="panel-text text-lg font-medium leading-[30px]" x-text="quickTourSteps[quickTourStep - 1]?.title"></h2>
-            <p class="panel-text mt-[10px] leading-[25px]" x-text="quickTourSteps[quickTourStep - 1]?.description"></p>
-            <div class="mt-[20px] flex items-center justify-between gap-[10px]">
-                <button type="button" @click="closeQuickTour()" class="clock-link px-[5px] py-[10px]">Saltar recorrido</button>
-                <div class="flex items-center gap-[10px]">
-                    <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-lg px-[15px] py-[10px]">Anterior</button>
-                    <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-lg px-[15px] py-[10px]" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+
+            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(380px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title" aria-live="polite">
+                <div class="mb-[15px] flex items-center justify-between gap-[15px]">
+                    <span class="panel-accent text-sm" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></span>
+                    <button type="button" @click="closeQuickTour()" class="panel-icon-button rounded-lg p-[5px]" aria-label="Cerrar recorrido">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
                 </div>
-            </div>
-        </section>
-    </div>
+                <h2 id="clock-tour-title" class="panel-text text-lg font-medium leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
+                <p class="panel-text mt-[10px] leading-[25px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                <div class="mt-[20px] flex items-center justify-between gap-[10px]">
+                    <button type="button" @click="closeQuickTour()" class="clock-link px-[5px] py-[10px]">Saltar recorrido</button>
+                    <div class="flex items-center gap-[10px]">
+                        <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-lg px-[15px] py-[10px]">Anterior</button>
+                        <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="clock-primary rounded-lg px-[15px] py-[10px]" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </template>
 </div>
