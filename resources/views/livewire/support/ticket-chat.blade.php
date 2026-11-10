@@ -74,14 +74,14 @@
     <main class="relative z-10 mx-auto flex w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="flex min-w-0 items-center gap-[15px]">
-                <span class="panel-surface panel-border panel-text flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border">
-                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" />
+                <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
+                    <svg class="h-[30px] w-[30px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" />
                     </svg>
                 </span>
-                <div>
-                    <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
-                    <p class="panel-muted mt-[15px] leading-[30px]">Espacio compartido para conversar con todos los colaboradores.</p>
+                <div class="min-w-0">
+                    <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
+                    <p class="chat-sub mt-[15px]">Espacio compartido para conversar con todos los colaboradores.</p>
                 </div>
             </div>
 
@@ -223,25 +223,21 @@
                             <span> · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-[20px]">
+                    <div class="flex min-w-0 items-center gap-[20px]">
                         <button
                             type="button"
-                            @click="searchOpen = !searchOpen; if (searchOpen) $nextTick(() => $refs.searchInput.focus()); if (!searchOpen) searchQuery = ''"
-                            class="inline-flex items-center gap-[10px] bg-transparent p-0 text-[15px] font-normal transition-colors"
-                            :class="searchOpen ? 'text-black' : 'text-zinc-500 hover:text-black'"
+                            x-show="!searchOpen"
+                            @click="searchOpen = true; $nextTick(() => $refs.searchInput.focus())"
+                            class="clock-link inline-flex items-center gap-[10px] bg-transparent p-0 text-[15px] transition-colors"
                             aria-label="Buscar mensajes"
-                            :aria-expanded="searchOpen"
                         >
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                             Buscar mensajes
                         </button>
-                        <span class="inline-flex items-center gap-[10px] whitespace-nowrap text-[15px] font-normal text-zinc-500" title="Los mensajes se actualizan automáticamente">
-                            <span class="relative flex h-3 w-3 items-center justify-center">
-                                <span class="absolute h-3 w-3 animate-ping rounded-full bg-black/15"></span>
-                                <span class="relative h-1.5 w-1.5 rounded-full bg-black"></span>
-                            </span>
-                            Actualización automática
-                        </span>
+                        <div x-show="searchOpen" x-cloak style="display: none;" class="relative w-[min(360px,calc(100vw-80px))]">
+                            <svg class="pointer-events-none absolute left-[20px] top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
+                            <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" @keydown.escape.stop="searchQuery = ''; searchOpen = false" @blur="if (!searchQuery.trim()) searchOpen = false" type="text" placeholder="Buscar por nombre, correo o contenido…" class="panel-field w-full rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[50px] pr-[20px] text-[15px] text-zinc-700 outline-none transition">
+                        </div>
                     </div>
                 </header>
 
@@ -254,15 +250,6 @@
                     <p class="text-justify leading-6">La conversación conserva únicamente los mensajes del día. Al comenzar un nuevo día, los mensajes anteriores se eliminan automáticamente.</p>
                 </div>
 
-                <div x-show="searchOpen" x-transition class="border-b border-zinc-200 p-[20px]" style="display: none;">
-                    <div class="relative">
-                        <svg class="pointer-events-none absolute left-[15px] top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
-                        <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" type="text" placeholder="Buscar por nombre, correo o contenido…" class="w-full rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[45px] pr-[40px] text-[15px] text-zinc-700 outline-none transition focus:border-black focus:ring-2 focus:ring-black/10">
-                        <button x-show="searchQuery" @click="searchQuery = ''; $refs.searchInput.focus()" type="button" class="absolute right-[10px] top-1/2 flex -translate-y-1/2 items-center justify-center bg-transparent p-[10px] text-zinc-400 hover:text-black" aria-label="Limpiar búsqueda">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                </div>
 
                 <div x-ref="messages" @scroll="trackPosition()" class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto bg-white/35 p-[20px]">
                     <div x-show="searchQuery && !hasSearchResults()" class="py-[40px] text-center" style="display: none;">
@@ -610,6 +597,7 @@
         }
         [data-support-chat] :is(input, textarea, select) { color-scheme: inherit; }
         [data-support-chat] p { line-height: 30px; }
+        [data-support-chat] p.chat-sub { line-height: 1; }
         [data-support-chat] .support-chat-scrollbar {
             scrollbar-width: thin;
             scrollbar-color: var(--panel-accent) var(--panel-surface);
