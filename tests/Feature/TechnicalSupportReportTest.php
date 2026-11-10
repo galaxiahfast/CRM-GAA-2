@@ -79,35 +79,35 @@ class TechnicalSupportReportTest extends TestCase
         $this->get(route('soporte.reportes-tecnicos'))->assertRedirect(route('login'));
     }
 
-    public function test_interns_cannot_see_or_open_the_support_reports_but_everyone_sees_the_support_chat(): void
+    public function test_only_administrators_can_see_or_open_the_support_reports_but_everyone_sees_the_support_chat(): void
     {
         // El rol con id 1 se trata como administrador, así que se crea primero.
-        Role::query()->firstOrCreate(['role' => 'Administrador']);
+        $administratorRole = Role::query()->create([
+            'role' => 'Administrador',
+            'permission_profile' => Role::PROFILE_ADMINISTRATOR,
+        ]);
 
-        foreach (['Becario', 'Becario Senior'] as $roleName) {
+        foreach (['Coordinador', 'Contador', 'Auxiliar', 'Becario', 'Becario Senior'] as $roleName) {
             $role = Role::query()->firstOrCreate(['role' => $roleName]);
-            $intern = User::factory()->create(['role_id' => $role->id]);
+            $user = User::factory()->create(['role_id' => $role->id]);
 
-            $this->actingAs($intern)->get(route('soporte.reportes-tecnicos'))->assertForbidden();
-            $this->actingAs($intern)->get(route('soporte.reportes-tecnicos.history'))->assertForbidden();
-            $this->actingAs($intern)->get(route('inicio'))
+            $this->actingAs($user)->get(route('soporte.reportes-tecnicos'))->assertForbidden();
+            $this->actingAs($user)->get(route('soporte.reportes-tecnicos.history'))->assertForbidden();
+            $this->actingAs($user)->get(route('inicio'))
                 ->assertOk()
                 ->assertDontSee('Genera y consulta reportes de servicios técnicos.')
                 ->assertDontSeeHtml('data-sidebar-label="Reportes de Soporte"')
                 ->assertSee('Chat de Soporte');
         }
 
-        foreach (['Administrador', 'Coordinador', 'Contador', 'Auxiliar'] as $roleName) {
-            $role = Role::query()->firstOrCreate(['role' => $roleName]);
-            $user = User::factory()->create(['role_id' => $role->id]);
+        $administrator = User::factory()->create(['role_id' => $administratorRole->id]);
 
-            $this->actingAs($user)->get(route('soporte.reportes-tecnicos'))->assertOk();
-            $this->actingAs($user)->get(route('inicio'))
-                ->assertOk()
-                ->assertSee('Genera y consulta reportes de servicios técnicos.')
-                ->assertSeeHtml('data-sidebar-label="Reportes de Soporte"')
-                ->assertSee('Chat de Soporte');
-        }
+        $this->actingAs($administrator)->get(route('soporte.reportes-tecnicos'))->assertOk();
+        $this->actingAs($administrator)->get(route('inicio'))
+            ->assertOk()
+            ->assertSee('Genera y consulta reportes de servicios técnicos.')
+            ->assertSeeHtml('data-sidebar-label="Reportes de Soporte"')
+            ->assertSee('Chat de Soporte');
     }
 
     public function test_authenticated_user_can_open_report_section_and_pdf(): void
@@ -222,7 +222,7 @@ class TechnicalSupportReportTest extends TestCase
             ->assertSee('ST-20261028-0012');
     }
 
-    public function test_report_can_only_be_deleted_by_its_creator_or_an_administrator(): void
+    public function test_report_can_only_be_deleted_by_an_administrator(): void
     {
         $administratorRole = Role::query()->create([
             'role' => 'Administrador',
@@ -235,37 +235,29 @@ class TechnicalSupportReportTest extends TestCase
         $creatorReport = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0012')->firstOrFail();
         $creatorReport->update(['created_by' => $creator->id]);
 
-        $this->actingAs($otherUser)
-            ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
-            ->assertForbidden();
+        // Solo los administradores entran a los reportes de soporte: ni siquiera quien lo creó puede borrarlo.
+        foreach ([$otherUser, $creator] as $user) {
+            $this->actingAs($user)
+                ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
+                ->assertForbidden();
+        }
 
         $this->assertDatabaseHas('technical_support_reports', ['id' => $creatorReport->id]);
 
-        $this->actingAs($creator)
+        $this->actingAs($administrator)
             ->delete(route('soporte.reportes-tecnicos.destroy', $creatorReport))
             ->assertRedirect();
 
         $this->assertSoftDeleted('technical_support_reports', [
             'id' => $creatorReport->id,
-            'deleted_by' => $creator->id,
+            'deleted_by' => $administrator->id,
         ]);
         $this->assertDatabaseHas('technical_support_report_movements', [
             'folio' => 'ST-20261028-0012',
             'action' => TechnicalSupportReportMovement::ACTION_DELETED,
-            'user_id' => $creator->id,
-            'user_name' => $creator->name,
-            'user_email' => $creator->email,
-        ]);
-
-        $adminReport = TechnicalSupportReport::query()->where('folio', 'ST-20261028-0011')->firstOrFail();
-
-        $this->actingAs($administrator)
-            ->delete(route('soporte.reportes-tecnicos.destroy', $adminReport))
-            ->assertRedirect();
-
-        $this->assertSoftDeleted('technical_support_reports', [
-            'id' => $adminReport->id,
-            'deleted_by' => $administrator->id,
+            'user_id' => $administrator->id,
+            'user_name' => $administrator->name,
+            'user_email' => $administrator->email,
         ]);
     }
 
