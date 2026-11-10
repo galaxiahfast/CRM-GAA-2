@@ -100,14 +100,14 @@ document.addEventListener('alpine:init', () => {
         quickTourSteps: [],
         allQuickTourSteps: [
             {
-                target: 'clock-tour-client',
-                title: '1. Elige un cliente',
-                description: 'Busca y selecciona el cliente o departamento donde realizaste el trabajo.',
+                target: 'clock-tour-activity',
+                title: '1. Elige una actividad',
+                description: 'Busca la actividad que vas a registrar y selecciónala de la lista.',
             },
             {
-                target: 'clock-tour-activity',
-                title: '2. Elige una actividad',
-                description: 'Busca la actividad que vas a registrar y selecciónala de la lista.',
+                target: 'clock-tour-client',
+                title: '2. Elige un cliente',
+                description: 'Busca y selecciona el cliente o departamento donde realizaste el trabajo.',
             },
             {
                 target: 'clock-tour-start',

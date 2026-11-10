@@ -344,72 +344,6 @@
                     x-data="{
                         open: false,
                         search: '',
-                        customers: {{ json_encode($customers) }},
-                        selectedId: @entangle('customerId'),
-                        selectedName: '',
-                        init() {
-                            if (this.selectedId) {
-                                let match = this.customers.find(c => c.id == this.selectedId);
-                                if (match) this.selectedName = match.search_name.toUpperCase();
-                            }
-                            $watch('selectedId', value => {
-                                if (! value) { this.selectedName = ''; this.search = ''; }
-                            });
-                        },
-                        select(id, name) {
-                            this.selectedId = id;
-                            this.selectedName = name;
-                            this.search = '';
-                            this.open = false;
-                        },
-                        get filteredCustomers() {
-                            if (this.search === '') return this.customers;
-                            return this.customers.filter(c => c.search_name.includes(this.search.toLowerCase()));
-                        }
-                    }"
-                    @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
-                    @click.away="open = false; search = ''"
-                >
-                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
-
-                    <div class="relative">
-                        <input
-                            id="clock-tour-client"
-                            type="text"
-                            x-model="search"
-                            @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
-                            @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
-                            :placeholder="selectedName || 'Escribe o busca un cliente'"
-                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
-                            @keydown.escape="open = false"
-                        >
-
-                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
-                            <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
-                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
-                                <template x-for="c in filteredCustomers" :key="c.id">
-                                    <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
-                                </template>
-                                <p x-show="filteredCustomers.length === 0" x-cloak class="clock-option">Sin resultados.</p>
-                            </div>
-                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div
-                    class="clock-field relative"
-                    x-data="{
-                        open: false,
-                        search: '',
                         services: {{ json_encode($subServices) }},
                         selectedId: @entangle('subServiceId'),
                         selectedName: '',
@@ -464,6 +398,72 @@
                                     <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
                                 </template>
                                 <p x-show="filteredServices.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                            </div>
+                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div
+                    class="clock-field relative"
+                    x-data="{
+                        open: false,
+                        search: '',
+                        customers: {{ json_encode($customers) }},
+                        selectedId: @entangle('customerId'),
+                        selectedName: '',
+                        init() {
+                            if (this.selectedId) {
+                                let match = this.customers.find(c => c.id == this.selectedId);
+                                if (match) this.selectedName = match.search_name.toUpperCase();
+                            }
+                            $watch('selectedId', value => {
+                                if (! value) { this.selectedName = ''; this.search = ''; }
+                            });
+                        },
+                        select(id, name) {
+                            this.selectedId = id;
+                            this.selectedName = name;
+                            this.search = '';
+                            this.open = false;
+                        },
+                        get filteredCustomers() {
+                            if (this.search === '') return this.customers;
+                            return this.customers.filter(c => c.search_name.includes(this.search.toLowerCase()));
+                        }
+                    }"
+                    @open-dropdown.window="if ($event.detail.id !== 'customer') open = false"
+                    @click.away="open = false; search = ''"
+                >
+                    <label class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 00-16 0m8-10a4 4 0 100-8 4 4 0 000 8z" /></svg><span>Cliente</span></label>
+
+                    <div class="relative">
+                        <input
+                            id="clock-tour-client"
+                            type="text"
+                            x-model="search"
+                            @focus="open = true; $dispatch('open-dropdown', { id: 'customer' })"
+                            @click="open = true; $dispatch('open-dropdown', { id: 'customer' })"
+                            :placeholder="selectedName || 'Escribe o busca un cliente'"
+                            class="panel-field w-full truncate rounded-xl border py-[15px] pl-[20px] pr-[56px] focus:outline-none focus:ring-0"
+                            @keydown.escape="open = false"
+                        >
+
+                        <button type="button" @click.stop="open = !open; if(open) { $dispatch('open-dropdown', { id: 'customer' }) }" class="absolute inset-y-0 right-[20px] flex cursor-pointer items-center" aria-label="Mostrar clientes">
+                            <svg class="h-4 w-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
+                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                                <template x-for="c in filteredCustomers" :key="c.id">
+                                    <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
+                                </template>
+                                <p x-show="filteredCustomers.length === 0" x-cloak class="clock-option">Sin resultados.</p>
                             </div>
                             <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                         </div>
