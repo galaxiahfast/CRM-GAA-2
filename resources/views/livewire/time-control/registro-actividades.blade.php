@@ -650,7 +650,7 @@
             <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
             <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
 
-            <div :style="spotlightStyle" class="pointer-events-auto z-[300001] rounded-xl border-2 border-[color:var(--panel-text)]" aria-hidden="true"></div>
+            <div :style="spotlightStyle" class="pointer-events-auto z-[300001]" aria-hidden="true"></div>
 
             <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
                 <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>

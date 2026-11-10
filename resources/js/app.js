@@ -218,7 +218,17 @@ document.addEventListener('alpine:init', () => {
             const target = document.getElementById(this.quickTourSteps[this.quickTourStep - 1]?.target);
             if (! target) return;
 
-            const rect = target.getBoundingClientRect();
+            // Sin borde: solo se deja un espacio de 20px entre el elemento y el fondo atenuado.
+            const raw = target.getBoundingClientRect();
+            const pad = 20;
+            const rect = {
+                left: raw.left - pad,
+                top: raw.top - pad,
+                right: raw.right + pad,
+                bottom: raw.bottom + pad,
+                width: raw.width + pad * 2,
+                height: raw.height + pad * 2,
+            };
             const left = Math.max(0, rect.left);
             const top = Math.max(0, rect.top);
             const right = Math.min(window.innerWidth, rect.right);
