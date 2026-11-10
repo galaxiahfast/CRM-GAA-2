@@ -507,6 +507,19 @@
     </aside>
 
     <div class="clock-main clock-scroll">
+        {{-- Encabezado fijo, incluso cuando todavía no hay actividades --}}
+        <table class="clock-table clock-table-head w-full border-collapse text-left">
+            <thead class="panel-surface panel-border border-b">
+                <tr class="clock-head-row">
+                    <th class="whitespace-nowrap p-[20px] align-middle">N°</th>
+                    <th class="p-[20px] align-middle">Departamento o cliente</th>
+                    <th class="p-[20px] align-middle">Actividad</th>
+                    <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
+                    <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
+                    <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
+                </tr>
+            </thead>
+        </table>
         @if ($todayEntries->isEmpty())
             <div class="flex min-h-[350px] flex-1 flex-col items-center justify-center px-[20px] text-center">
                 <span class="panel-border mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border">
@@ -516,19 +529,6 @@
                 <p class="leading-[30px]">Selecciona un cliente y una actividad para comenzar.</p>
             </div>
         @else
-            {{-- Encabezado fijo: el scroll solo recorre las filas --}}
-            <table class="clock-table clock-table-head w-full border-collapse text-left">
-                <thead class="panel-surface panel-border border-b">
-                    <tr class="clock-head-row">
-                        <th class="whitespace-nowrap p-[20px] align-middle">N°</th>
-                        <th class="p-[20px] align-middle">Departamento o cliente</th>
-                        <th class="p-[20px] align-middle">Actividad</th>
-                        <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
-                        <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
-                        <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
-                    </tr>
-                </thead>
-            </table>
             <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
             <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
                 <table class="clock-table w-full border-collapse text-left">
