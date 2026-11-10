@@ -106,7 +106,7 @@
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
                         <p class="prod-lines mt-[5px]">Distribución del tiempo registrado por cliente y actividad.</p>
                     </div>
-                    <p class="leading-none">Del {{ \Illuminate\Support\Carbon::parse($from)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->format('d/m/Y') }}</p>
+                    <p class="leading-none">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                 </header>
                 <div class="prod-layout">
                     <aside class="prod-aside panel-scroll panel-border">
