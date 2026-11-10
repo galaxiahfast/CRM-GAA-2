@@ -232,6 +232,25 @@
                 <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
+        <div
+            class="flex min-w-0 flex-col items-start gap-[15px] lg:items-end lg:text-right"
+            x-data="{
+                date: '',
+                timer: null,
+                refresh() {
+                    const value = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: @js($moduleTimezone) }).format(new Date());
+                    this.date = value.charAt(0).toLocaleUpperCase('es-MX') + value.slice(1);
+                },
+                init() { this.refresh(); this.timer = setInterval(() => this.refresh(), 30000); },
+                destroy() { clearInterval(this.timer); }
+            }"
+        >
+            <span class="inline-flex items-center gap-[10px] leading-none">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                Sincronizado en tiempo real
+            </span>
+            <span class="leading-none" x-text="date">{{ ucfirst(now($moduleTimezone)->locale('es')->translatedFormat('l, d \d\e F \d\e Y')) }}</span>
+        </div>
     </section>
 
     @if ($errors->has('timer') || $errors->has('customerId') || $errors->has('subServiceId'))
