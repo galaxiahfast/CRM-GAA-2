@@ -70,13 +70,12 @@
 
                 <div class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto p-[20px]">
                     <div>
-                        <p class="panel-accent text-[15px]">Chat del día</p>
-                            <p class="mt-[10px] text-[15px] font-normal leading-6 text-zinc-600">{{ $todayLabel }}</p>
-                    </div>
-
-                    <div>
                         <div class="flex items-center justify-between gap-3">
-                            <p class="panel-accent text-[15px]">Personas en línea</p>
+                            <div class="min-w-0">
+                                <p class="panel-accent text-[15px]">En línea ahora</p>
+                                <p class="mt-[5px] text-[15px] font-normal leading-[30px] text-zinc-600">Quién está conectado al chat.</p>
+                            </div>
+                            <span class="shrink-0 text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</span>
                         </div>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
