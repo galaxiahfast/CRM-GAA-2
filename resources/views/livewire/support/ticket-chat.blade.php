@@ -41,8 +41,8 @@
             </span>
         </section>
 
-        <div data-support-chat-panel class="flex min-h-[680px] min-w-0 flex-1 flex-col gap-[30px]">
-            <aside class="panel-surface panel-border flex max-h-[520px] min-h-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
+        <div data-support-chat-panel class="flex min-h-[680px] min-w-0 flex-1 flex-row gap-[30px] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:gap-[50px]">
+            <aside class="panel-surface panel-border flex w-[360px] max-h-none min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
                 <header class="panel-header panel-border shrink-0 border-b p-[20px]">
                     <div class="flex items-center justify-between gap-[15px]">
                         <h2 class="panel-accent flex items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>En línea ahora</h2>
