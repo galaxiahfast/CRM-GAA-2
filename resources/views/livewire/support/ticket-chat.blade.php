@@ -4,6 +4,9 @@
     data-support-chat
     class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
     x-data="{
+        profilePhotoOpen: false,
+        profilePhotoUrl: '',
+        profilePhotoName: '',
         showProfilePhoto(url, name) {
             if (!url) return;
             this.profilePhotoUrl = url;
