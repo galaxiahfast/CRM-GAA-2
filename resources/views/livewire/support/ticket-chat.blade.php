@@ -73,9 +73,8 @@
                         <div class="flex items-center gap-[10px]">
                             <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>
                             <p class="panel-accent text-[15px]">En línea ahora</p>
-                            <span class="shrink-0 text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</span>
+                            <span class="ml-auto shrink-0 text-[15px] font-normal text-zinc-600">{{ count($onlineUsers) }} en línea</span>
                         </div>
-                        <p class="mt-[5px] whitespace-nowrap text-[14px] font-normal leading-[30px] text-zinc-600">Quién está conectado al chat.</p>
 
                         <div data-support-online-users class="support-chat-scrollbar mt-[20px] max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
                             @forelse ($onlineUsers as $onlineUser)
