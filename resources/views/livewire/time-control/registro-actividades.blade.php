@@ -231,13 +231,8 @@
     <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-            <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
-                <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </span>
             <div class="min-w-0">
-                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Cronómetro</h1>
+                <h1 class="panel-accent break-words text-[15px] font-normal leading-none">Cronómetro</h1>
                 <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
             </div>
         </div>
