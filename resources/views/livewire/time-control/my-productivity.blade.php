@@ -52,7 +52,10 @@
         [data-productivity] .prod-col { display: flex; min-width: 0; flex-direction: column; }
         [data-productivity] .prod-col + .prod-col { border-top-width: 1px; }
         [data-productivity] .prod-list { max-height: 360px; overflow-y: auto; }
-        [data-productivity] .prod-item { padding: 20px; }
+        [data-productivity] .prod-grid { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: stretch; }
+        [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
+        [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
+        [data-productivity] .prod-item { padding: 0; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
@@ -141,17 +144,23 @@
                         <div class="prod-dist">
                             @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer], ['title' => 'Distribución por actividad', 'items' => $byActivity]] as $distribution)
                                 <section class="prod-col panel-border">
-                                    <h3 class="panel-accent panel-border box-border flex h-[87px] shrink-0 items-center border-b p-[20px] leading-none">{{ $distribution['title'] }}</h3>
+                                    <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
+                                        <h3 class="prod-index panel-border leading-none">N°</h3>
+                                        <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
+                                    </div>
                                     <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
                                     <div x-ref="scroller" @scroll="update()" class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
-                                            <div class="prod-item">
-                                                <div class="flex items-center justify-between gap-[20px] leading-none">
-                                                    <span class="truncate" title="{{ $name }}">{{ $name }}</span>
-                                                    <span class="shrink-0 tabular-nums">{{ $fmt($seconds) }}</span>
+                                            <div class="prod-item prod-grid">
+                                                <span class="prod-index panel-border leading-none">{{ $loop->iteration }}</span>
+                                                <div class="prod-cell">
+                                                    <div class="flex items-center justify-between gap-[20px] leading-none">
+                                                        <span class="truncate" title="{{ $name }}">{{ $name }}</span>
+                                                        <span class="shrink-0 tabular-nums">{{ $fmt($seconds) }}</span>
+                                                    </div>
+                                                    <div class="prod-track mt-[15px]"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
+                                                    <p class="mt-[15px] text-right leading-none">{{ $pct($seconds, $totalSeconds) }}%</p>
                                                 </div>
-                                                <div class="prod-track mt-[15px]"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
-                                                <p class="mt-[15px] text-right leading-none">{{ $pct($seconds, $totalSeconds) }}%</p>
                                             </div>
                                         @empty
                                             <p class="p-[20px] text-center">Sin datos en este periodo.</p>
