@@ -183,7 +183,7 @@
         /* Formulario en dos columnas desde 480 */
         @container clock (min-width: 480px) {
             [data-time-clock] .clock-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            [data-time-clock] .clock-field-action, [data-time-clock] .clock-guide { grid-column: 1 / -1; }
+            [data-time-clock] .clock-field-action, [data-time-clock] .clock-divider, [data-time-clock] .clock-guide { grid-column: 1 / -1; }
             [data-time-clock] .clock-guide { flex-direction: row; flex-wrap: wrap; align-items: center; }
             [data-time-clock] .clock-guide > button { flex: 1 1 220px; width: auto; }
         }
@@ -206,7 +206,8 @@
             [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-form { display: flex; flex-direction: column; flex: 1; }
             [data-time-clock] .clock-form-grid { display: flex; flex-direction: column; flex: 1; gap: 0; justify-content: space-between; }
-            [data-time-clock] .clock-guide { flex-direction: column; align-items: stretch; }
+            [data-time-clock] .clock-field, [data-time-clock] .clock-guide { display: contents; }
+            [data-time-clock] .clock-field > label, [data-time-clock] .clock-field-action > div:first-child { margin-bottom: 0; }
             [data-time-clock] .clock-guide > button { flex: none; width: 100%; }
             [data-time-clock] .clock-main { flex: 1; }
             [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
@@ -389,17 +390,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                    </div>
 
-                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Actividad">
-                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
-                                <template x-for="s in filteredServices" :key="s.id">
-                                    <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
-                                </template>
-                                <p x-show="filteredServices.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                        <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Actividad">
+                            <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                                <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                                    <template x-for="s in filteredServices" :key="s.id">
+                                        <button type="button" role="option" @click="select(s.id, s.search_name.toUpperCase())" :aria-selected="selectedId == s.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="s.search_name.toUpperCase()"></button>
+                                    </template>
+                                    <p x-show="filteredServices.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                                </div>
+                                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
-                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                         </div>
                     </div>
 
@@ -455,17 +456,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                    </div>
 
-                    <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
-                        <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
-                                <template x-for="c in filteredCustomers" :key="c.id">
-                                    <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
-                                </template>
-                                <p x-show="filteredCustomers.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                        <div x-show="open" x-cloak class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox" aria-label="Cliente">
+                            <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                                <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / 55) * 55)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-options relative overflow-y-auto overscroll-contain">
+                                    <template x-for="c in filteredCustomers" :key="c.id">
+                                        <button type="button" role="option" @click="select(c.id, c.search_name.toUpperCase())" :aria-selected="selectedId == c.id ? 'true' : 'false'" class="panel-option clock-option focus:outline-none focus:ring-0" x-text="c.search_name.toUpperCase()"></button>
+                                    </template>
+                                    <p x-show="filteredCustomers.length === 0" x-cloak class="clock-option">Sin resultados.</p>
+                                </div>
+                                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
-                            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                         </div>
                     </div>
 
@@ -489,7 +490,8 @@
                     </span>
                     </button>
                 </div>
-                <div class="clock-guide panel-border border-t pt-[20px]">
+                <div class="clock-divider panel-border border-t" aria-hidden="true"></div>
+                <div class="clock-guide">
                     <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link flex w-fit items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg><span>Guía en PDF</span></a>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
