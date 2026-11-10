@@ -107,11 +107,16 @@
         }
         /* Filas intercaladas: la primera con el color del encabezado y la siguiente con el fondo normal */
         [data-time-clock] .clock-body tbody tr:nth-child(odd) { background-color: var(--panel-header); }
+        [data-time-clock] .clock-placeholder-rows { display: none; }
+        [data-time-clock] .clock-body tbody.clock-placeholder-rows tr { background-color: var(--panel-surface); }
+        [data-time-clock] .clock-body tbody.clock-placeholder-rows tr.is-striped { background-color: var(--panel-header); }
         [data-time-clock] .clock-body tbody tr.clock-row:hover { background-color: var(--panel-hover); }
         /* La actividad en progreso se marca con la fila en verde */
         [data-time-clock] .clock-body tbody tr.clock-row.is-running { background-color: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)); }
         html.module-dark-theme #main-content [data-time-clock] table tbody tr.clock-row.is-running { background: color-mix(in srgb, var(--clock-green) 12%, var(--panel-surface)) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tbody tr:nth-child(odd) { background: var(--panel-header) !important; }
+        html.module-dark-theme #main-content [data-time-clock] table tbody.clock-placeholder-rows tr { background: var(--panel-surface) !important; }
+        html.module-dark-theme #main-content [data-time-clock] table tbody.clock-placeholder-rows tr.is-striped { background: var(--panel-header) !important; }
         html.module-dark-theme #main-content [data-time-clock] table tr.clock-row:hover { background: var(--panel-hover) !important; }
         /* Iconos de acción sin recuadro: mover y eliminar */
         [data-time-clock] .clock-icon {
@@ -196,6 +201,8 @@
             [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
             [data-time-clock] .clock-main { flex: 1; }
             [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
+            [data-time-clock] .clock-placeholder-rows { display: table-row-group; }
+            [data-time-clock] .clock-placeholder-rows td { height: 60px; }
             [data-time-clock] .clock-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; }
             [data-time-clock] .clock-field-action { grid-column: auto; }
         }
@@ -630,6 +637,17 @@
                             </tr>
                         @endforeach
                     </tbody>
+                    @if ($todayEntries->count() < 7)
+                        <tbody class="clock-placeholder-rows" aria-hidden="true">
+                            @for ($slot = $todayEntries->count(); $slot < 7; $slot++)
+                                <tr wire:key="clock-placeholder-{{ $slot }}" class="panel-border border-b {{ $slot % 2 === 0 ? 'is-striped' : '' }}">
+                                    @for ($column = 0; $column < 6; $column++)
+                                        <td></td>
+                                    @endfor
+                                </tr>
+                            @endfor
+                        </tbody>
+                    @endif
                 </table>
             </div>
             <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
