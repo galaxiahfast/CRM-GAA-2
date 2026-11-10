@@ -23,7 +23,9 @@
         .meta td:first-child { width: 37%; }
         .meta td:last-child { width: 63%; text-align: right; }
         .document-heading { width: 100%; margin: 0 0 18pt; border-collapse: collapse; table-layout: fixed; }
-        .document-heading td { width: 50%; padding: 0; vertical-align: top; }
+        .document-heading td { padding: 0; vertical-align: top; }
+        .document-heading td:first-child { width: 40%; }
+        .document-heading td:last-child { width: 60%; }
         .document-heading td:first-child { text-align: left; }
         .document-heading td:last-child { text-align: right; }
         .addressee { margin: 0 0 18pt; text-align: justify; }
