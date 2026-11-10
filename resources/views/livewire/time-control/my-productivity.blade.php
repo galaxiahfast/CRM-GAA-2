@@ -59,7 +59,12 @@
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { height: 70px; padding: 0; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) 76px minmax(60px, 120px) 40px; justify-content: start; align-items: center; gap: 20px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+        /* Tiempo, barra y porcentaje van pegados a la derecha; el nombre queda a la izquierda */
+        [data-productivity] .prod-metrics > :nth-child(2) { grid-column: 3; }
+        [data-productivity] .prod-metrics > :nth-child(3) { grid-column: 4; }
+        [data-productivity] .prod-metrics > :nth-child(4) { grid-column: 5; }
+        [data-productivity] .prod-metrics > :nth-child(3), [data-productivity] .prod-metrics > :nth-child(4) { margin-left: 20px; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) minmax(20px, 1fr) 76px minmax(50px, 90px) 40px; align-items: center; gap: 0; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
