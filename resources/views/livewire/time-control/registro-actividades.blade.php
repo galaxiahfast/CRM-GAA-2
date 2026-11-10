@@ -47,7 +47,7 @@
     data-panel
     data-time-clock
     x-data="clockQuickTour"
-    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] xl:flex xl:flex-col"
+    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] flex flex-col"
 >
     <x-panel-styles />
 
@@ -143,30 +143,26 @@
         [data-time-clock] .clock-rows > tr .clock-icon { cursor: pointer; }
         [data-time-clock] .clock-index::after { content: counter(clock-row); }
 
-        /* Líneas verticales que dividen las columnas de la tabla (en celular y tablet cada fila es una tarjeta) */
         [data-time-clock] .clock-table :is(th, td) { font-weight: 400; }
-        @media (min-width: 1440px) {
-            [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
-            [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
-            /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona); al dejar de desplazar, el scroll se alinea a la fila más cercana */
-            [data-time-clock] .clock-body { container-type: size; }
-            [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
-            /* Departamento o cliente y actividad miden lo mismo: la tabla usa columnas fijas y se reparten el ancho sobrante */
-            [data-time-clock] .clock-table { table-layout: fixed; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
-            [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 80px; min-width: 80px; max-width: 80px; }
-            /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
-            [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { width: 160px; min-width: 160px; max-width: 160px; }
-            [data-time-clock] .clock-table .clock-actions { justify-content: center; }
-        }
 
-        /* Celular y tablet: cada actividad se muestra como tarjeta, sin desplazamiento horizontal.
-           Celular (hasta 639px): N° y acción arriba, cliente y actividad a todo el ancho, tiempo y estado juntos.
-           Tablet (640px a 1439px): N°, cliente y acción en la primera fila; actividad, tiempo y estado en la segunda. */
-        @media (max-width: 1439px) {
+        /* ===== Diseño adaptable =====
+           Todo depende del ancho de la tarjeta (no de la ventana), porque el menú lateral y el zoom de la aplicación
+           le quitan ancho. Por orden: celular (< 480), tablet pequeña (480-759), tablet y laptop (760-1239) y escritorio (1240 o más). */
+        [data-time-clock] .clock-wrap { container: clock / inline-size; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+        [data-time-clock] .clock-card { display: flex; flex-direction: column; width: 100%; }
+        [data-time-clock] .clock-layout { display: grid; grid-template-columns: minmax(0, 1fr); }
+        [data-time-clock] .clock-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+        [data-time-clock] .clock-form { padding: 20px; }
+        [data-time-clock] .clock-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+        [data-time-clock] .clock-guide { display: flex; flex-direction: column; gap: 20px; }
+        [data-time-clock] .clock-guide > a { width: fit-content; }
+        [data-time-clock] .clock-body { max-height: 600px; }
+
+        /* Tarjetas (< 760): cada actividad es una tarjeta, sin desplazamiento horizontal */
+        @container clock (max-width: 759px) {
             [data-time-clock] .clock-table.clock-table-head { display: none; }
-            [data-time-clock] .clock-table,
-            [data-time-clock] .clock-table tbody { display: block; }
+            [data-time-clock] .clock-body { max-height: none; overflow: visible; }
+            [data-time-clock] .clock-table, [data-time-clock] .clock-table tbody { display: block; }
             [data-time-clock] .clock-table tr {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -181,26 +177,70 @@
                 margin-bottom: 5px;
                 color: var(--panel-muted);
             }
+            [data-time-clock] .clock-table td:nth-child(2) > div, [data-time-clock] .clock-table td:nth-child(3) > div { white-space: normal; overflow-wrap: anywhere; }
+            [data-time-clock] .clock-table .clock-actions { min-height: 24px; }
+            /* Celular: N° y acción arriba, cliente y actividad a todo el ancho, tiempo y estado juntos */
             [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
             [data-time-clock] .clock-table td:nth-child(6) { grid-column: 2; grid-row: 1; }
             [data-time-clock] .clock-table td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
             [data-time-clock] .clock-table td:nth-child(3) { grid-column: 1 / -1; grid-row: 3; }
             [data-time-clock] .clock-table td:nth-child(4) { grid-column: 1; grid-row: 4; }
             [data-time-clock] .clock-table td:nth-child(5) { grid-column: 2; grid-row: 4; }
-            [data-time-clock] .clock-table .clock-actions { min-height: 24px; }
         }
-        @media (min-width: 640px) and (max-width: 1439px) {
-            [data-time-clock] .clock-table tr { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr) 160px; }
+
+        /* Tablet pequeña (480-759): formulario en dos columnas y tarjetas en una sola fila de datos */
+        @container clock (min-width: 480px) {
+            [data-time-clock] .clock-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            [data-time-clock] .clock-field-action, [data-time-clock] .clock-guide { grid-column: 1 / -1; }
+            [data-time-clock] .clock-guide { flex-direction: row; flex-wrap: wrap; align-items: center; }
+            [data-time-clock] .clock-guide > button { flex: 1 1 220px; width: auto; }
+        }
+        @container clock (min-width: 480px) and (max-width: 759px) {
+            [data-time-clock] .clock-table tr { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) 120px; }
             [data-time-clock] .clock-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 2 / 4; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(2) { grid-column: 2; grid-row: 1; }
+            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 3; grid-row: 1; }
             [data-time-clock] .clock-table td:nth-child(6) { grid-column: 4; grid-row: 1; }
-            [data-time-clock] .clock-table td:nth-child(3) { grid-column: 1 / 3; grid-row: 2; }
-            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 3; grid-row: 2; }
-            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 4; grid-row: 2; }
+            [data-time-clock] .clock-table td:nth-child(4) { grid-column: 2; grid-row: 2; }
+            [data-time-clock] .clock-table td:nth-child(5) { grid-column: 3; grid-row: 2; }
+        }
+
+        /* Tablet y laptop (760-1239): formulario en una fila y tabla completa a todo el ancho */
+        @container clock (min-width: 760px) {
+            [data-time-clock] .clock-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; }
+            [data-time-clock] .clock-field-action { grid-column: auto; }
+            [data-time-clock] .clock-table { table-layout: fixed; }
+            [data-time-clock] .clock-table :is(th, td):not(:last-child) { border-right: 1px solid var(--panel-border); }
+            [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 70px; min-width: 70px; max-width: 70px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(4) { width: 110px; min-width: 110px; max-width: 110px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(6) { width: 110px; min-width: 110px; max-width: 110px; }
+            [data-time-clock] .clock-table .clock-actions { justify-content: center; }
+        }
+
+        /* Escritorio (1240 o más): formulario a la izquierda y tabla a la derecha, ajustados al alto de la pantalla */
+        @container clock (min-width: 1240px) {
+            [data-time-clock] .clock-card { flex: 1; min-height: 0; }
+            [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+            [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
+            [data-time-clock] .clock-form { display: flex; flex-direction: column; flex: 1; }
+            [data-time-clock] .clock-form-grid { display: flex; flex-direction: column; flex: 1; justify-content: space-evenly; }
+            [data-time-clock] .clock-guide { flex-direction: column; align-items: stretch; }
+            [data-time-clock] .clock-guide > button { flex: none; width: 100%; }
+            [data-time-clock] .clock-main { flex: 1; }
+            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
+            /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona); al dejar de desplazar, el scroll se alinea a la fila más cercana */
+            [data-time-clock] .clock-body { position: absolute; inset: 0; max-height: none; container-type: size; }
+            [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+            /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
+            [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 80px; min-width: 80px; max-width: 80px; }
+            [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { width: 160px; min-width: 160px; max-width: 160px; }
         }
     </style>
 
-    <main class="relative z-10 flex w-full flex-col gap-[50px] xl:min-h-0 xl:flex-1 p-[20px] sm:p-[30px] xl:p-[50px]">
+    <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[50px] p-[20px] sm:p-[30px] xl:p-[50px]">
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
@@ -251,8 +291,9 @@
         @endteleport
     @endif
 
+    <div class="clock-wrap">
     <section
-        class="panel-surface panel-border overflow-hidden rounded-xl border xl:flex xl:min-h-0 xl:flex-1 xl:flex-col"
+        class="clock-card panel-surface panel-border overflow-hidden rounded-xl border"
         aria-label="Registro de actividades"
         x-data="{
             totalDisplay: '00:00:00',
@@ -298,16 +339,16 @@
             </div>
             <span class="leading-none">{{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} hoy</span>
         </header>
-        <div class="grid min-h-[460px] xl:min-h-0 xl:flex-1 xl:grid-rows-[minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-    <aside class="clock-scroll panel-border border-b xl:flex xl:min-h-0 xl:flex-col xl:overflow-y-auto xl:border-b-0 xl:border-r">
+        <div class="clock-layout">
+    <aside class="clock-aside clock-scroll panel-border border-b">
         <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
             <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" /></svg><span>Nuevo registro</span></h2>
             <p class="mt-[15px] leading-none">Selecciona dónde trabajarás.</p>
         </div>
-        <form wire:submit="start" class="flex flex-col p-[20px] xl:flex-1">
-            <div class="flex flex-col gap-[20px] md:grid md:grid-cols-2 xl:flex xl:flex-1 xl:flex-col xl:justify-evenly">
+        <form wire:submit="start" class="clock-form">
+            <div class="clock-form-grid">
                 <div
-                    class="relative"
+                    class="clock-field relative"
                     x-data="{
                         open: false,
                         search: '',
@@ -373,7 +414,7 @@
                 </div>
 
                 <div
-                    class="relative"
+                    class="clock-field relative"
                     x-data="{
                         open: false,
                         search: '',
@@ -438,7 +479,7 @@
 
                 </div>
 
-                <div class="md:col-span-2 xl:col-span-1">
+                <div class="clock-field clock-field-action">
                     <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg>
                         <span>Acción</span>
@@ -459,7 +500,7 @@
                     </span>
                     </button>
                 </div>
-                <div class="panel-border flex flex-col gap-[20px] border-t pt-[20px] md:col-span-2 xl:col-span-1">
+                <div class="clock-guide panel-border border-t pt-[20px]">
                     <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-link flex w-fit items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg><span>Guía PDF</span></a>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9a2.5 2.5 0 014.8.9c0 1.7-2.3 2.1-2.3 3.6m0 2.5h.01"/></svg>
@@ -470,9 +511,7 @@
         </form>
     </aside>
 
-    <div
-        class="flex min-h-0 min-w-0 flex-col"
-    >
+    <div class="clock-main">
         @if ($todayEntries->isEmpty())
             <div class="flex min-h-[350px] flex-col items-center justify-center px-[20px] text-center">
                 <span class="panel-border mb-[15px] flex h-12 w-12 items-center justify-center rounded-full border">
@@ -495,8 +534,8 @@
                     </tr>
                 </thead>
             </table>
-            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative xl:min-h-[424px] xl:flex-1">
-            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative max-h-[600px] overflow-auto overscroll-contain xl:absolute xl:inset-0 xl:max-h-none">
+            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
+            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
                 <table class="clock-table w-full border-collapse text-left">
                     <tbody data-activity-sortable class="clock-rows">
                         @foreach ($todayEntries as $entry)
@@ -610,6 +649,7 @@
     </div>
         </div>
     </section>
+    </div>
     </main>
 
     @if ($showDeleteModal)
