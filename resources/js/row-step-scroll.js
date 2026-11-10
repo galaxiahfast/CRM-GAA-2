@@ -1,10 +1,29 @@
-// Desplazamiento fila por fila con la rueda del ratón: cada giro mueve exactamente una fila (animado), así las listas con
-// "7 filas exactas" nunca quedan a medias y no hace falta corregir la posición después (esa corrección se veía como un salto).
+// Desplazamiento fila por fila con la rueda del ratón: cada giro mueve exactamente una fila, con una animación corta, así las
+// listas con "7 filas exactas" nunca quedan a medias y no hace falta corregir la posición después (esa corrección se veía como un salto).
 // Se activa con data-row-step="<selector de las filas>" en el contenedor con scroll.
-const WHEEL_THRESHOLD = 30;
-const LOCK_MS = 230;
+const WHEEL_THRESHOLD = 30; // píxeles de rueda acumulados para mover una fila
+const DURATION_MS = 110; // duración de la animación de cada paso
 
 const rowTops = (scroller, selector) => [...scroller.querySelectorAll(selector)].map((row) => row.offsetTop);
+
+// Anima el scroll hasta "to"; si llega otro paso mientras tanto, continúa desde la posición actual hacia la nueva fila.
+const animateTo = (scroller, to) => {
+    cancelAnimationFrame(scroller._rowStepFrame);
+    const from = scroller.scrollTop;
+    const start = performance.now();
+    const tick = (now) => {
+        const progress = Math.min(1, (now - start) / DURATION_MS);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        scroller.scrollTop = from + (to - from) * eased;
+        if (progress < 1) {
+            scroller._rowStepFrame = requestAnimationFrame(tick);
+        } else {
+            scroller.scrollTop = to;
+            scroller._rowStepTarget = undefined;
+        }
+    };
+    scroller._rowStepFrame = requestAnimationFrame(tick);
+};
 
 document.addEventListener('wheel', (event) => {
     if (event.ctrlKey || event.deltaY === 0) return;
@@ -27,8 +46,8 @@ document.addEventListener('wheel', (event) => {
 
     event.preventDefault();
 
-    if (scroller._rowStepLock) return;
-
+    // Un giro en sentido contrario descarta lo acumulado.
+    if (scroller._rowStepAcc && Math.sign(scroller._rowStepAcc) !== direction) scroller._rowStepAcc = 0;
     scroller._rowStepAcc = (scroller._rowStepAcc || 0) + (event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY);
     if (Math.abs(scroller._rowStepAcc) < WHEEL_THRESHOLD) return;
     scroller._rowStepAcc = 0;
@@ -39,10 +58,5 @@ document.addEventListener('wheel', (event) => {
     const target = Math.min(max, Math.max(0, candidates[0]));
 
     scroller._rowStepTarget = target;
-    scroller._rowStepLock = true;
-    scroller.scrollTo({ top: target, behavior: 'smooth' });
-    setTimeout(() => {
-        scroller._rowStepLock = false;
-        scroller._rowStepTarget = undefined;
-    }, LOCK_MS);
+    animateTo(scroller, target);
 }, { passive: false });
