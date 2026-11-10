@@ -471,7 +471,7 @@
                 </div>
 
                 <div class="clock-field clock-field-action">
-                    <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg><span>Acción</span></div>
+                    <div class="mb-[20px] flex min-h-6 items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z" /></svg><span>Acciones</span></div>
                     <button id="clock-tour-start" type="submit" wire:loading.attr="disabled" wire:target="start" class="clock-primary inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60">
                     <span class="flex w-full flex-row items-center justify-center gap-[10px]">
                         <svg wire:loading.remove wire:target="start" class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -510,7 +510,7 @@
                     <th class="p-[20px] align-middle">Actividad</th>
                     <th class="whitespace-nowrap p-[20px] align-middle">Tiempo</th>
                     <th class="whitespace-nowrap p-[20px] align-middle">Estado</th>
-                    <th class="whitespace-nowrap p-[20px] align-middle">Acción</th>
+                    <th class="whitespace-nowrap p-[20px] align-middle">Acciones</th>
                 </tr>
             </thead>
         </table>
@@ -589,7 +589,7 @@
                                     </span>
                                 </td>
 
-                                <td data-label="Acción" class="whitespace-nowrap p-[20px] align-middle">
+                                <td data-label="Acciones" class="whitespace-nowrap p-[20px] align-middle">
                                     <div class="clock-actions flex items-center justify-start gap-[10px]">
                                         @if ($entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS)
                                             <button type="button" @if ($loop->first) id="clock-tour-toggle" @endif wire:click="pause({{ $entry->id }})" wire:loading.attr="disabled" class="clock-icon clock-icon-go disabled:cursor-wait disabled:opacity-50" aria-label="Pausar {{ $entry->subService->sub_service ?? 'actividad' }}" title="Pausar">
