@@ -44,13 +44,11 @@
         <div data-support-chat-panel class="flex min-h-[680px] min-w-0 flex-1 flex-col gap-[30px] xl:h-[calc(var(--app-dvh)-330px)] xl:min-h-[620px] xl:flex-row xl:gap-[50px]">
             <aside class="panel-surface panel-border flex max-h-[520px] min-h-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)] xl:max-h-none xl:w-[360px] xl:shrink-0">
                 <header class="panel-header panel-border shrink-0 border-b p-[20px]">
-                    <div class="flex items-start justify-between gap-[20px]">
-                        <div class="min-w-0">
-                            <h2 class="panel-accent flex items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>En línea ahora</h2>
-                            <p class="chat-sub mt-[15px] whitespace-nowrap">Quién está conectado al chat.</p>
-                        </div>
+                    <div class="flex items-center justify-between gap-[15px]">
+                        <h2 class="panel-accent flex items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>En línea ahora</h2>
                         <span class="shrink-0 leading-none">{{ count($onlineUsers) }} en línea</span>
                     </div>
+                    <p class="chat-sub mt-[15px] whitespace-nowrap">Quién está conectado al chat.</p>
                 </header>
                 <div data-support-profile-header class="panel-surface panel-border flex items-center gap-[15px] border-b p-[20px]">
                     @if (auth()->user()->profile_photo_path)
@@ -68,7 +66,6 @@
                     </div>
                 </div>
 
-                <div class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto p-[20px]">
                 <div class="support-chat-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                         <div data-support-online-users class="support-chat-scrollbar max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
                             @forelse ($onlineUsers as $onlineUser)
