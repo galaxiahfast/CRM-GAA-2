@@ -49,10 +49,10 @@
                             <circle cx="12" cy="8" r="3.25" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
                         </svg>
-                        <div class="min-w-0 text-left">
-                            <h2 class="panel-accent leading-none">En línea ahora</h2>
-                            <p class="chat-sub mt-[15px] whitespace-nowrap">Quién está conectado al chat.</p>
-                            <p class="mt-[15px] leading-none">{{ count($onlineUsers) }} en línea</p>
+                        <div class="online-summary min-w-0 space-y-[15px] text-left">
+                            <h2 class="panel-accent">En línea ahora</h2>
+                            <p class="chat-sub whitespace-nowrap">Quién está conectado al chat.</p>
+                            <p>{{ count($onlineUsers) }} en línea</p>
                         </div>
                     </div>
                 </header>
@@ -554,6 +554,7 @@
         [data-support-chat] :is(input, textarea, select) { color-scheme: inherit; }
         [data-support-chat] p { line-height: 30px; }
         [data-support-chat] p.chat-sub { line-height: 1; }
+        [data-support-chat] .online-summary :is(h2, p) { line-height: 15px; }
         [data-support-chat] .support-chat-scrollbar {
             scrollbar-width: thin;
             scrollbar-color: var(--panel-accent) var(--panel-surface);
