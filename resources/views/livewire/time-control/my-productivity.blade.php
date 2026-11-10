@@ -61,7 +61,7 @@
         [data-productivity] .prod-item { height: 70px; padding: 0; }
         [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) 76px minmax(90px, 1fr) 40px; align-items: center; gap: 20px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
-        [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
+        [data-productivity] .prod-track { width: 80%; height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
         /* El detalle muestra siempre 7 filas exactas (7 × 70px); el encabezado de cada día cuenta como una fila */
         [data-productivity] .prod-detail { position: relative; max-height: 490px; overflow-y: auto; }
