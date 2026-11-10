@@ -59,7 +59,7 @@
         [data-productivity] .prod-index { display: flex; align-items: center; justify-content: center; border-right-width: 1px; }
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { height: 70px; padding: 0; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) minmax(90px, 1fr) 76px 40px; align-items: center; gap: 20px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) 76px minmax(90px, 1fr) 40px; align-items: center; gap: 20px; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
@@ -164,8 +164,8 @@
                                                 <span class="prod-index prod-counter panel-border leading-none"></span>
                                                 <div class="prod-cell prod-metrics">
                                                     <span class="truncate leading-none" title="{{ $name }}">{{ $name }}</span>
-                                                    <div class="prod-track"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
                                                     <span class="tabular-nums leading-none">{{ $fmt($seconds) }}</span>
+                                                    <div class="prod-track"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
                                                     <span class="text-right tabular-nums leading-none">{{ $pct($seconds, $totalSeconds) }}%</span>
                                                 </div>
                                             </div>
