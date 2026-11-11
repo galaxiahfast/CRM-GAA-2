@@ -2,6 +2,8 @@
 
 namespace App\Services\ManagerControl;
 
+use Illuminate\Support\Facades\Cache;
+
 /**
  * Consultas SELECT (únicas, parametrizadas) sobre el legacy ManagerControl.
  * Los identificadores salen de config('managercontrol.schema') y se validan contra una lista blanca
@@ -14,6 +16,13 @@ class ManagerControlRepository
 
     /** @return list<array{id: int, name: string}> */
     public function employees(): array
+    {
+        // La lista casi no cambia: se recuerda 10 minutos para no consultar SQL Server en cada interacción de la pantalla.
+        return Cache::remember('managercontrol:employees:'.md5(serialize(config('managercontrol.schema.employees')).config('managercontrol.host').config('managercontrol.database')), now()->addMinutes(10), fn (): array => $this->loadEmployees());
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    private function loadEmployees(): array
     {
         $e = $this->table('employees');
         $name = $this->nameExpression($e['name']);

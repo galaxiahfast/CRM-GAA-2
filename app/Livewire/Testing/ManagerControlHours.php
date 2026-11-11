@@ -2,12 +2,16 @@
 
 namespace App\Livewire\Testing;
 
+use App\Models\ManagerControlEmployeeLink;
+use App\Models\User;
 use App\Services\ManagerControl\HoursSummary;
 use App\Services\ManagerControl\ManagerControlException;
 use App\Services\ManagerControl\ManagerControlRepository;
+use App\Services\ManagerControl\NameMatcher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -43,6 +47,18 @@ class ManagerControlHours extends Component
 
     public bool $detailLoaded = false;
 
+    // Asignación usuario del CRM => colaborador de ManagerControl (id elegido en cada fila).
+    public array $links = [];
+
+    public ?string $linkNotice = null;
+
+    public ?string $linkError = null;
+
+    // Filtros del bloque de asignación: todos | assigned | unassigned, y búsqueda por nombre o correo.
+    public string $linkFilter = 'all';
+
+    public string $linkSearch = '';
+
     public function mount(): void
     {
         $this->authorizeAccess();
@@ -52,6 +68,110 @@ class ManagerControlHours extends Component
         $this->appliedTo = $this->to;
         $this->detailFrom = $this->appliedDetailFrom = $this->from;
         $this->detailTo = $this->appliedDetailTo = $this->to;
+
+        if (! $this->ownMode()) {
+            // Todas las filas empiezan con valor ('' = sin asignar) para que el selector de cada fila pueda enlazarse.
+            $this->links = User::query()->orderBy('name')->orderBy('last_name')->limit(300)->pluck('id')->mapWithKeys(fn ($id): array => [$id => ''])->all();
+            foreach (ManagerControlEmployeeLink::query()->pluck('legacy_employee_id', 'user_id') as $userId => $legacyId) {
+                $this->links[$userId] = (string) $legacyId;
+            }
+        }
+    }
+
+    public function saveLink(int $userId): void
+    {
+        $this->authorizeAdminOnly();
+        $this->linkNotice = $this->linkError = null;
+
+        $legacyId = (string) ($this->links[$userId] ?? '');
+        if (! ctype_digit($legacyId) || (int) $legacyId < 1) {
+            $this->linkError = 'Elija un colaborador de ManagerControl para asignar.';
+
+            return;
+        }
+        $user = User::query()->find($userId);
+        if ($user === null) {
+            $this->linkError = 'El usuario del CRM ya no existe.';
+
+            return;
+        }
+
+        try {
+            $employee = collect(app(ManagerControlRepository::class)->employees())->firstWhere('id', (int) $legacyId);
+        } catch (ManagerControlException $e) {
+            $this->reportFailure($e);
+
+            return;
+        }
+        if ($employee === null) {
+            $this->linkError = 'El colaborador elegido no existe en ManagerControl.';
+
+            return;
+        }
+        if (ManagerControlEmployeeLink::query()->where('legacy_employee_id', $employee['id'])->where('user_id', '!=', $userId)->exists()) {
+            $this->linkError = 'Ese colaborador ya está asignado a otro usuario del CRM.';
+
+            return;
+        }
+
+        ManagerControlEmployeeLink::query()->updateOrCreate(
+            ['user_id' => $userId],
+            ['legacy_employee_id' => $employee['id'], 'legacy_employee_name' => $employee['name']],
+        );
+        $this->links[$userId] = (string) $employee['id'];
+        $this->linkNotice = "Asignado: {$user->name} {$user->last_name} → {$employee['name']}.";
+    }
+
+    public function setLinkFilter(string $filter): void
+    {
+        $this->authorizeAdminOnly();
+        $this->linkFilter = in_array($filter, ['all', 'assigned', 'unassigned'], true) ? $filter : 'all';
+    }
+
+    public function removeLink(int $userId): void
+    {
+        $this->authorizeAdminOnly();
+        $this->linkNotice = $this->linkError = null;
+
+        ManagerControlEmployeeLink::query()->where('user_id', $userId)->delete();
+        $this->links[$userId] = '';
+        $this->linkNotice = 'Asignación quitada.';
+    }
+
+    private function authorizeAdminOnly(): void
+    {
+        abort_unless(! $this->ownMode() && Gate::allows('view-legacy-managercontrol'), 403);
+    }
+
+    /** @return array{0: list<array<string, mixed>>, 1: array<int, string>, 2: array<string, int>} */
+    private function linkRows(array $employees): array
+    {
+        $saved = ManagerControlEmployeeLink::query()->pluck('legacy_employee_name', 'user_id')->all();
+        $matcher = new NameMatcher;
+        $rows = [];
+        foreach (User::query()->orderBy('name')->orderBy('last_name')->limit(300)->get(['id', 'name', 'last_name', 'email']) as $user) {
+            $suggestion = null;
+            if (! isset($saved[$user->id]) && $employees !== []) {
+                $match = $matcher->bestMatch(trim($user->name.' '.$user->last_name), $employees);
+                $suggestion = $match['employee'] ? ['id' => $match['employee']['id'], 'name' => $match['employee']['name'], 'score' => $match['score']] : null;
+            }
+            $rows[] = ['id' => $user->id, 'name' => trim($user->name.' '.$user->last_name), 'email' => $user->email, 'suggestion' => $suggestion];
+        }
+
+        $counts = ['all' => count($rows), 'assigned' => count(array_filter($rows, fn (array $r): bool => isset($saved[$r['id']])))];
+        $counts['unassigned'] = $counts['all'] - $counts['assigned'];
+
+        $needle = Str::lower(Str::ascii(trim($this->linkSearch)));
+        $rows = array_values(array_filter($rows, function (array $row) use ($saved, $needle): bool {
+            $isAssigned = isset($saved[$row['id']]);
+            if (($this->linkFilter === 'assigned' && ! $isAssigned) || ($this->linkFilter === 'unassigned' && $isAssigned)) {
+                return false;
+            }
+
+            return $needle === '' || str_contains(Str::lower(Str::ascii($row['name'].' '.$row['email'])), $needle);
+        }));
+
+        return [$rows, $saved, $counts];
     }
 
     protected function authorizeAccess(): void
@@ -94,7 +214,7 @@ class ManagerControlHours extends Component
         }
         if ($this->employeeForQuery() === null) {
             $this->detailLoaded = false;
-            $this->error = 'Seleccione un colaborador antes de consultar.';
+            $this->error = $this->ownMode() ? null : 'Seleccione un colaborador antes de consultar.';
 
             return;
         }
@@ -124,7 +244,7 @@ class ManagerControlHours extends Component
         }
         if ($this->employeeForQuery() === null) {
             $this->loaded = false;
-            $this->error = 'Seleccione un colaborador antes de consultar.';
+            $this->error = $this->ownMode() ? null : 'Seleccione un colaborador antes de consultar.';
 
             return;
         }
@@ -164,10 +284,16 @@ class ManagerControlHours extends Component
             $this->loaded = $this->detailLoaded = false;
         }
 
+        $employees = $this->ownMode() ? [] : $this->employees;
+        [$linkRows, $linkSaved, $linkCounts] = $this->ownMode() ? [[], [], ['all' => 0, 'assigned' => 0, 'unassigned' => 0]] : $this->linkRows($employees);
+
         return view('livewire.testing.managercontrol-hours', [
+            'linkRows' => $linkRows,
+            'linkSaved' => $linkSaved,
+            'linkCounts' => $linkCounts,
             'summary' => $summary,
             'detail' => $detail,
-            'employees' => $this->ownMode() ? [] : $this->employees,
+            'employees' => $employees,
             'ownMode' => $this->ownMode(),
             'matchedName' => $this->matchedName(),
             'pdfRoute' => $this->ownMode() ? 'testing.own-hours.pdf' : 'testing.managercontrol.pdf',

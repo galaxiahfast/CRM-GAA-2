@@ -744,14 +744,16 @@
                                 </li>
 @endif
 @can('view-legacy-own-hours')
+@unless (auth()->user()->isAdmin())
 <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('testing.own-hours.index') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('testing.own-hours.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('testing.own-hours.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6.5L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-9.5V3" /></svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Prueba becarios</span>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control Gerencial</span>
                                     </a>
                                 </li>
+@endunless
 @endcan
 @if ($isTimeAdmin || $canTimeProductivity)
 <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">

@@ -2,9 +2,8 @@
 
 namespace App\Livewire\Testing;
 
+use App\Services\ManagerControl\LegacyEmployeeResolver;
 use App\Services\ManagerControl\ManagerControlException;
-use App\Services\ManagerControl\ManagerControlRepository;
-use App\Services\ManagerControl\NameMatcher;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -41,34 +40,24 @@ class ManagerControlOwnHours extends ManagerControlHours
         return $this->match()['employee']['name'] ?? null;
     }
 
+    // Sin asignación ni coincidencia no se muestra ningún aviso: la pantalla queda en ceros y el encabezado dice «sin asignar».
     protected function employeeForQuery(): ?int
     {
-        $employee = $this->match()['employee'];
-        if ($employee === null) {
-            $this->error = $this->match()['status'] === 'ambiguous'
-                ? 'Hay más de un colaborador de ManagerControl con un nombre muy parecido al tuyo; pide a un administrador que lo confirme.'
-                : 'No se encontró en ManagerControl un colaborador con nombre parecido al tuyo (mínimo 70 % de coincidencia).';
-
-            return null;
-        }
-
-        return $employee['id'];
+        return $this->match()['employee']['id'] ?? null;
     }
 
-    /** @return array{status: string, employee: ?array{id: int, name: string}, score: float} */
+    /** @return array{status: string, employee: ?array{id: int, name: string}} */
     private function match(): array
     {
         if ($this->matchCache !== null) {
             return $this->matchCache;
         }
-        $user = auth()->user();
 
         try {
-            $fullName = trim(($user->name ?? '').' '.($user->last_name ?? ''));
-            $result = (new NameMatcher)->bestMatch($fullName, app(ManagerControlRepository::class)->employees());
+            $result = app(LegacyEmployeeResolver::class)->forUser(auth()->user());
         } catch (ManagerControlException $e) {
             $this->reportFailure($e);
-            $result = ['status' => 'error', 'employee' => null, 'score' => 0.0];
+            $result = ['status' => 'error', 'employee' => null];
         }
 
         return $this->matchCache = $result;

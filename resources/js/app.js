@@ -78,6 +78,76 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Selector con búsqueda (escribir para filtrar) para asignar un colaborador de ManagerControl.
+    window.Alpine.data('legacyEmployeePicker', (model, employees) => ({
+        value: model,
+        employees,
+        open: false,
+        q: '',
+        active: 0,
+        left: 16,
+        top: 16,
+        width: 320,
+        init() {
+            this.reposition = () => { if (this.open) this.position(); };
+            window.addEventListener('resize', this.reposition);
+            document.addEventListener('scroll', this.reposition, true);
+        },
+        destroy() {
+            window.removeEventListener('resize', this.reposition);
+            document.removeEventListener('scroll', this.reposition, true);
+        },
+        normalize(text) {
+            return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        },
+        get label() {
+            const found = this.employees.find((employee) => String(employee.id) === String(this.value ?? ''));
+            return found ? found.name : '';
+        },
+        get filtered() {
+            const tokens = this.normalize(this.q).split(/\s+/).filter(Boolean);
+            const list = tokens.length
+                ? this.employees.filter((employee) => { const name = this.normalize(employee.name); return tokens.every((token) => name.includes(token)); })
+                : this.employees;
+            return list.slice(0, 80);
+        },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.q = '';
+                this.active = 0;
+                this.$nextTick(() => { this.position(); this.$refs.search && this.$refs.search.focus(); });
+            }
+        },
+        choose(employee) {
+            this.value = employee ? String(employee.id) : '';
+            this.open = false;
+        },
+        move(delta) {
+            const max = this.filtered.length - 1;
+            this.active = Math.max(0, Math.min(max, this.active + delta));
+            this.$nextTick(() => { const el = this.$refs.list && this.$refs.list.querySelector('[data-active="true"]'); el && el.scrollIntoView({ block: 'nearest' }); });
+        },
+        pick() {
+            const employee = this.filtered[this.active];
+            if (employee) this.choose(employee);
+        },
+        position() {
+            // Igual que el calendario: el panel está fuera del contenedor con zoom; se mide en píxeles visibles y se divide entre el zoom.
+            const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+            const rect = this.$refs.trigger.getBoundingClientRect();
+            const panelHeight = this.$refs.panel ? this.$refs.panel.getBoundingClientRect().height : 340 * zoom;
+            const gap = 10;
+            const width = Math.min(rect.width, window.innerWidth - 32);
+            const left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
+            const top = rect.bottom + gap + panelHeight < window.innerHeight
+                ? rect.bottom + gap : Math.max(16, rect.top - gap - panelHeight);
+            this.width = width / zoom;
+            this.left = left / zoom;
+            this.top = top / zoom;
+        },
+    }));
+
     window.Alpine.data('backupOverlayScroll', () => ({
         visible: false,
         height: 32,

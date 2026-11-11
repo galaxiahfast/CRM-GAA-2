@@ -180,6 +180,12 @@
         }
         /* Tabla del registro de ManagerControl: N°, Departamento o cliente, Actividad, Descripción y Tiempo */
         [data-productivity] .mc-grid { grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 130px; }
+        @container prod (min-width: 1240px) { [data-productivity] #prod-tour-links { min-height: max(600px, calc(var(--app-dvh) - 348px)); } }
+        [data-productivity] #prod-tour-links .prod-main { flex: 1; min-height: 0; }
+        [data-productivity].prod-calendar .mc-option { display: block; width: 100%; min-height: 40px; padding: 10px 15px; border: 1px solid transparent; border-radius: 8px; text-align: left; color: var(--panel-text); cursor: pointer; }
+        [data-productivity].prod-calendar .mc-option:hover, [data-productivity].prod-calendar .mc-option.is-active { background-color: var(--panel-hover); }
+        [data-productivity].prod-calendar .mc-option.is-selected { border-color: var(--panel-accent); color: var(--panel-accent); }
+        [data-productivity] .mc-link-grid { grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1.3fr) 200px; }
         [data-productivity] .mc-alert { border: 1px solid var(--panel-border); border-radius: 12px; padding: 20px; background-color: var(--panel-header); }
         [data-productivity] .prod-detail-card .prod-main > * { min-width: 900px; }
     </style>
@@ -187,8 +193,8 @@
     <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="min-w-0 max-w-full">
-                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $ownMode ? 'Prueba becarios' : 'Pruebas · ManagerControl' }}</h1>
-                <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades del sistema de escritorio legacy, localizadas por la coincidencia de tu nombre. Consulta de solo lectura.' : 'Horas laboradas del sistema de escritorio legacy. Consulta de solo lectura: no se escribe nada en su base de datos.' }}</p>
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $ownMode ? 'Control Gerencial' : 'Pruebas · ManagerControl' }}</h1>
+                <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades de ManagerControl, el sistema de escritorio. Consulta de solo lectura.' : 'Horas laboradas del sistema de escritorio legacy. Consulta de solo lectura: no se escribe nada en su base de datos.' }}</p>
             </div>
             <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Solo lectura</span>
         </section>
@@ -209,7 +215,7 @@
                     </div>
                     <div id="prod-tour-employee" class="flex flex-wrap items-center gap-[20px]">
                         @if ($ownMode)
-                            <span class="leading-none">Colaborador: {{ $matchedName ?? 'sin coincidencia' }}</span>
+                            <span class="leading-none">Colaborador: {{ $matchedName ?? 'sin asignar' }}</span>
                         @else
                             <label for="mc-employee" class="leading-none">Colaborador</label>
                             <select id="mc-employee" wire:model="employeeId" class="panel-field min-h-[50px] min-w-[240px] rounded-xl border px-[20px] focus:outline-none focus:ring-0">
@@ -365,5 +371,93 @@
                 </div>
             </section>
         </div>
+
+        @unless ($ownMode)
+        <div class="prod-wrap">
+            <section id="prod-tour-links" x-data="{ legacyEmployees: @js($employees) }" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Asignar usuarios del CRM a colaboradores de ManagerControl">
+                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
+                    <div class="min-w-0">
+                        <h2 class="panel-accent leading-none">Asignar usuario del CRM</h2>
+                        <p class="prod-lines mt-[5px]">Elige a qué colaborador de ManagerControl corresponde cada usuario. Control Gerencial usa esta asignación.</p>
+                        <p class="prod-lines mt-[5px]" role="status">
+                            @if ($linkError)
+                                <span class="panel-accent" data-testid="link-error">{{ $linkError }}</span>
+                            @elseif ($linkNotice)
+                                <span data-testid="link-notice">{{ $linkNotice }}</span>
+                            @else
+                                {{ $linkCounts['assigned'] }} asignado(s) de {{ $linkCounts['all'] }}
+                            @endif
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-[20px]">
+                        <nav class="flex flex-wrap items-center gap-[20px]" aria-label="Filtrar usuarios">
+                            @foreach (['all' => 'Todos', 'assigned' => 'Asignados', 'unassigned' => 'No asignados'] as $key => $label)
+                                <button type="button" wire:click="setLinkFilter('{{ $key }}')" @class(['leading-none cursor-pointer focus:outline-none focus:ring-0', 'panel-accent' => $linkFilter === $key, 'prod-link' => $linkFilter !== $key]) @if ($linkFilter === $key) aria-current="true" @endif>{{ $label }} ({{ $linkCounts[$key] }})</button>
+                            @endforeach
+                        </nav>
+                        <input type="search" wire:model.live.debounce.300ms="linkSearch" placeholder="Buscar usuario…" aria-label="Buscar usuario del CRM" class="panel-field min-h-[50px] min-w-[220px] rounded-xl border px-[20px] focus:outline-none focus:ring-0">
+                    </div>
+                </header>
+                <div class="prod-main">
+                    <div class="prod-detail-cols prod-dgrid mc-link-grid panel-surface panel-border box-border h-[87px] shrink-0 border-b" aria-hidden="true">
+                        <span class="prod-dcell prod-dindex panel-border">N°</span>
+                        <span class="prod-dcell panel-border">Usuario del CRM</span>
+                        <span class="prod-dcell panel-border">Colaborador de ManagerControl</span>
+                        <span class="prod-dcell panel-border" style="justify-content:center">Acción</span>
+                    </div>
+                    <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
+                        <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
+                            @forelse ($linkRows as $row)
+                                <article data-snap wire:key="link-{{ $row['id'] }}" x-data="legacyEmployeePicker($wire.entangle('links.{{ $row['id'] }}'), legacyEmployees)" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-mc-picker]')) open = false" class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
+                                    <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
+                                    <span class="prod-dcell panel-border" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:15px">
+                                        <span class="max-w-full truncate leading-none" title="{{ $row['name'] }}">{{ $row['name'] }}</span>
+                                        @if ($row['suggestion'])
+                                            <button type="button" @click="value = '{{ $row['suggestion']['id'] }}'" class="prod-link max-w-full cursor-pointer truncate text-left leading-none focus:outline-none focus:ring-0" title="Usar el colaborador sugerido por parecido de nombre">Sugerido: {{ $row['suggestion']['name'] }} ({{ round($row['suggestion']['score']) }} %)</button>
+                                        @endif
+                                    </span>
+                                    <span class="prod-dcell panel-border">
+                                        <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open" aria-haspopup="listbox" aria-label="Colaborador de ManagerControl para {{ $row['name'] }}" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px] focus:outline-none focus:ring-0">
+                                            <span class="truncate" x-text="label || 'Sin asignar'">Sin asignar</span>
+                                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-cloak x-ref="panel" data-panel data-productivity data-prod-calendar data-mc-picker :style="`left:${left}px;top:${top}px;width:${width}px`" :class="open ? '' : 'hidden'" class="app-zoom-overlay prod-calendar panel-surface panel-border panel-text fixed rounded-xl border p-[15px]" role="dialog" aria-label="Elegir colaborador de ManagerControl">
+                                                <input x-ref="search" x-model="q" @input="active = 0" @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter.prevent="pick()" type="search" placeholder="Escribe para buscar…" aria-label="Buscar colaborador de ManagerControl" class="panel-field mb-[15px] min-h-[44px] w-full rounded-xl border px-[15px] focus:outline-none focus:ring-0">
+                                                <div x-ref="list" role="listbox" class="panel-scroll" style="max-height:260px;overflow-y:auto">
+                                                    <button type="button" @click="choose(null)" class="mc-option" role="option">Sin asignar</button>
+                                                    <template x-for="(employee, index) in filtered" :key="employee.id">
+                                                        <button type="button" @click="choose(employee)" @mouseenter="active = index" :data-active="active === index" :class="{ 'is-active': active === index, 'is-selected': String(value) === String(employee.id) }" class="mc-option" role="option" x-text="employee.name"></button>
+                                                    </template>
+                                                    <p x-show="filtered.length === 0" class="px-[15px] py-[10px]">Sin resultados</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </span>
+                                    <span class="prod-dcell panel-border" style="justify-content:center;gap:20px">
+                                        <button type="button" wire:click="saveLink({{ $row['id'] }})" wire:loading.attr="disabled" wire:target="saveLink({{ $row['id'] }})" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Asignar</button>
+                                        @if (isset($linkSaved[$row['id']]))
+                                            <button type="button" wire:click="removeLink({{ $row['id'] }})" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Quitar</button>
+                                        @endif
+                                    </span>
+                                </article>
+                            @empty
+                                <article data-snap class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
+                                    <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
+                                    <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ $linkSearch !== '' || $linkFilter !== 'all' ? 'Sin usuarios con ese filtro' : 'Usuario de ejemplo' }}</span></span>
+                                    <span class="prod-dcell panel-border"><span class="truncate leading-none">Colaborador de ejemplo</span></span>
+                                    <span class="prod-dcell panel-border" style="justify-content:center"><span class="leading-none">Asignar</span></span>
+                                </article>
+                            @endforelse
+                            @for ($slot = max(count($linkRows), 1); $slot < 7; $slot++)
+                                <div class="prod-blank-row prod-dgrid mc-link-grid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
+                            @endfor
+                        </div>
+                        <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                    </div>
+                </div>
+            </section>
+        </div>
+        @endunless
     </main>
 </div>

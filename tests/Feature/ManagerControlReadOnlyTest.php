@@ -184,6 +184,7 @@ XML;
             ->assertSee('Cliente A')->assertSee('Impuestos')->assertSee('04:00:00')
             ->assertSeeHtml('prod-day-head')->assertSee('Registro de horas por día');
 
+        \Illuminate\Support\Facades\Cache::flush();
         $failing = new class implements ReadOnlyConnection
         {
             public function select(string $sql, array $bindings = []): array
@@ -266,7 +267,7 @@ XML;
 
         Livewire::actingAs($user)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
             ->set('employeeId', '8')
-            ->assertSee('Prueba becarios')->assertSee('Prueba Becario Legacy')->assertSee('Cliente A');
+            ->assertSee('Control Gerencial')->assertSee('Prueba Becario Legacy')->assertSee('Cliente A');
 
         $hoursQueries = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')));
         $this->assertNotEmpty($hoursQueries);
@@ -275,12 +276,86 @@ XML;
         }
     }
 
-    public function test_own_screen_reports_when_there_is_no_name_match(): void
+    public function test_own_screen_has_no_warning_banner_when_there_is_no_match(): void
     {
         $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 8, 'name' => 'Otra Persona Distinta']], $this->sampleHours()));
 
         Livewire::actingAs($this->user('Auxiliar', 'sin-match@datamid.test'))
             ->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
-            ->assertSee('No se encontró en ManagerControl');
+            ->assertDontSee('No se pudo consultar ManagerControl')
+            ->assertDontSee('No se encontró en ManagerControl')
+            ->assertSee('sin asignar')
+            ->assertSee('Cliente de ejemplo');
+    }
+
+    public function test_admin_can_assign_and_remove_a_crm_user_and_the_assignment_wins_over_the_name(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno'], ['id' => 8, 'name' => 'Persona Dos']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+        $admin = $this->user('Administrador', 'admin-link@datamid.test');
+        $becario = $this->user('Auxiliar', 'bec-link@datamid.test');
+        $otro = $this->user('Auxiliar', 'otro-link@datamid.test');
+
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)
+            ->assertSee('Asignar usuario del CRM')
+            ->set("links.{$becario->id}", '8')->call('saveLink', $becario->id)
+            ->assertSee('Asignado:')
+            ->set("links.{$otro->id}", '8')->call('saveLink', $otro->id)
+            ->assertSee('Ese colaborador ya está asignado a otro usuario del CRM.')
+            ->set("links.{$otro->id}", '999')->call('saveLink', $otro->id)
+            ->assertSee('no existe en ManagerControl');
+
+        $this->assertDatabaseHas('managercontrol_employee_links', ['user_id' => $becario->id, 'legacy_employee_id' => 8, 'legacy_employee_name' => 'Persona Dos']);
+        $this->assertDatabaseMissing('managercontrol_employee_links', ['user_id' => $otro->id]);
+
+        $db->queries = [];
+        Livewire::actingAs($becario)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)->assertSee('Persona Dos');
+        foreach (array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')) as [, $bindings]) {
+            $this->assertSame(8, $bindings[0]);
+        }
+
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)->call('removeLink', $becario->id)->assertSee('Asignación quitada.');
+        $this->assertDatabaseMissing('managercontrol_employee_links', ['user_id' => $becario->id]);
+    }
+
+    public function test_assignment_block_filters_by_assigned_unassigned_and_search(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno']]));
+        $admin = $this->user('Administrador', 'admin-filter@datamid.test');
+        $asignado = $this->user('Auxiliar', 'asignado-f@datamid.test');
+        $asignado->forceFill(['name' => 'Zeta', 'last_name' => 'Asignada'])->save();
+        $libre = $this->user('Auxiliar', 'libre-f@datamid.test');
+        $libre->forceFill(['name' => 'Omega', 'last_name' => 'Libre'])->save();
+        \App\Models\ManagerControlEmployeeLink::query()->create(['user_id' => $asignado->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Persona Uno']);
+
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)
+            ->call('setLinkFilter', 'assigned')->assertSee('Zeta Asignada')->assertDontSee('Omega Libre')
+            ->call('setLinkFilter', 'unassigned')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada')
+            ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada')
+            ->assertSee('No asignados (');
+    }
+
+    public function test_control_gerencial_menu_is_for_everyone_except_administrators(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 8, 'name' => 'Persona Dos']]));
+        $admin = $this->user('Administrador', 'adm-menu@datamid.test');
+        $intern = $this->user('Auxiliar', 'int-menu@datamid.test');
+
+        $this->assertTrue(\Illuminate\Support\Facades\Gate::forUser($intern)->allows('view-legacy-own-hours'));
+
+        $this->actingAs($intern)->get(route('profile.show'))->assertOk()->assertSee('>Control Gerencial<', false);
+        $this->flushSession();
+        $this->actingAs($admin)->get(route('profile.show'))->assertOk()->assertDontSee('>Control Gerencial<', false);
+        $this->flushSession();
+    }
+
+    public function test_non_admins_cannot_manage_assignments(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 8, 'name' => 'Persona Dos']]));
+        $becario = $this->user('Auxiliar', 'bec-forbid@datamid.test');
+
+        Livewire::actingAs($becario)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
+            ->set('links', [$becario->id => '8'])->call('saveLink', $becario->id)->assertForbidden();
+        $this->assertDatabaseCount('managercontrol_employee_links', 0);
     }
 }

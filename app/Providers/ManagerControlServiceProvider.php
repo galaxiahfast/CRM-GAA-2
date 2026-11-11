@@ -22,8 +22,8 @@ class ManagerControlServiceProvider extends ServiceProvider
         // Pruebas con el legacy ManagerControl: solo Administrador.
         Gate::define('view-legacy-managercontrol', fn (User $user): bool => $user->isAdmin());
 
-        // Prueba becarios: cada usuario con acceso a Mi productividad (y los administradores) ve SOLO sus propias actividades.
-        Gate::define('view-legacy-own-hours', fn (User $user): bool => $user->isAdmin()
-            || app(PermissionAccessService::class)->allows($user, 'time-control.productivity.view'));
+        // Control Gerencial (ManagerControl): cualquier usuario con acceso a Mi productividad ve SUS propias actividades.
+        // El menú se oculta a los administradores, que entran por «Pruebas».
+        Gate::define('view-legacy-own-hours', fn (User $user): bool => app(PermissionAccessService::class)->allows($user, 'time-control.productivity.view'));
     }
 }
