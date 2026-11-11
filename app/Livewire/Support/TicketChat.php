@@ -740,11 +740,11 @@ class TicketChat extends Component
         }
 
         if (Str::contains($text, ['cronometro', 'temporizador', 'actividad', 'control de horas', 'registrar tiempo'])) {
-            return 'Entra a Actividades > Control de horas > Cronómetro. Selecciona el cliente y la actividad, y después pulsa Iniciar actividad. Solo puede existir un cronómetro activo a la vez.';
+            return 'Entra a Monitoreo > Control de Actividades > Cronómetro. Selecciona el cliente y la actividad, y después pulsa Iniciar actividad. Solo puede existir un cronómetro activo a la vez.';
         }
 
         if (Str::contains($text, ['reloj checador', 'entrada', 'salida', 'marcar hora', 'asistencia'])) {
-            return 'Puedes consultar tus registros en Actividades > Control de horas > Reloj checador. Ahí encontrarás entradas, salidas y el resumen del periodo seleccionado.';
+            return 'Puedes consultar tus registros en Monitoreo > Control de Horas > Reloj checador. Ahí encontrarás entradas, salidas y el resumen del periodo seleccionado.';
         }
 
         if (Str::contains($text, ['perfil', 'foto', 'correo', 'nombre', 'apellido', 'cuenta'])) {

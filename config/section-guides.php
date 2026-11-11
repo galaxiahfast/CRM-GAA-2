@@ -25,7 +25,7 @@ return [
     ],
     'panel_control_horas' => [
         'label' => 'Panel de Control de Horas',
-        'menu' => 'Actividades › Control de Horas › Panel de Control',
+        'menu' => 'Monitoreo › Control de Actividades › Panel de Control',
         'summary' => 'Consulta las horas y la productividad de un colaborador dentro de un periodo, con gráficas por día, cliente y actividad.',
         'items' => [
             ['question' => '¿Cómo consulto un periodo?', 'answer' => 'Elige las fechas y presiona Buscar. Si tienes acceso administrativo, selecciona primero al colaborador.', 'steps' => ['Abre Panel de Control en Control de Horas.', 'Si aparece el filtro Colaborador, busca por ID, nombre o correo y selecciona a la persona.', 'Define Fecha inicial y Fecha final.', 'Presiona Buscar para actualizar las cifras y las gráficas.']],
@@ -36,7 +36,7 @@ return [
     ],
     'supervision_horas' => [
         'label' => 'Supervisión de Horas',
-        'menu' => 'Actividades › Control de Horas › Supervisión de Horas',
+        'menu' => 'Monitoreo › Control de Horas › Supervisión de Horas',
         'summary' => 'Permite seleccionar colaboradores, preparar un informe de horas, revisar sus actividades y exportar resultados individuales o consolidados.',
         'items' => [
             ['question' => '¿Cómo preparo un informe?', 'answer' => 'En Informe general selecciona los colaboradores y el periodo que deseas revisar.', 'steps' => ['Abre Supervisión de Horas y permanece en Informe general.', 'Selecciona a uno o varios colaboradores.', 'Define el periodo y genera el reporte para consultar los resultados.']],
@@ -47,7 +47,7 @@ return [
     ],
     'cronometro' => [
         'label' => 'Cronómetro',
-        'menu' => 'Actividades › Control de Horas › Cronómetro',
+        'menu' => 'Monitoreo › Control de Actividades › Cronómetro',
         'summary' => 'Registra el tiempo que dedicas a cada cliente o departamento y a cada actividad durante el día. Solo puede haber una actividad en progreso: al iniciar otra, la anterior se pausa automáticamente.',
         'items' => [
             ['question' => '¿Cómo inicio una actividad?', 'answer' => 'Elige el departamento o cliente y la actividad, y presiona Iniciar actividad.', 'steps' => ['En Nuevo registro, abre la lista de Cliente y selecciona el departamento o cliente.', 'Abre la lista de Actividad y selecciona la actividad.', 'Presiona Iniciar actividad: la fila aparece en la tabla marcada en verde y el tiempo comienza a contar.']],
@@ -59,14 +59,25 @@ return [
     ],
     'productividad' => [
         'label' => 'Mi productividad',
-        'menu' => 'Actividades › Control de Horas › Productividad',
+        'menu' => 'Monitoreo › Control de Actividades › Productividad',
         'summary' => 'Consulta cuánto tiempo dedicaste a cada cliente y a cada actividad en el periodo que elijas, revisa el detalle de cada día y exporta la información.',
         'items' => [
             ['question' => '¿Cómo cambio el periodo?', 'answer' => 'En Periodo de consulta elige las fechas Desde y Hasta y presiona Consultar periodo.', 'steps' => ['Selecciona la fecha Desde y la fecha Hasta.', 'Presiona Consultar periodo.', 'El encabezado muestra el rango consultado y las listas se actualizan.']],
             ['question' => '¿Qué muestran las distribuciones?', 'answer' => 'Distribución por cliente y por actividad indican el tiempo, la barra y el porcentaje que representa cada uno del total del periodo.', 'steps' => ['Revisa la columna de tiempo de cada fila.', 'La barra y el porcentaje muestran cuánto pesa frente al total.', 'Desplázate con la rueda del ratón: cada giro mueve una fila y siempre se ven siete.']],
             ['question' => '¿Cómo cambio el orden de las filas?', 'answer' => 'Arrastra una fila con el clic apretado hasta la posición que quieras; el orden es solo visual.', 'steps' => ['Mantén presionado el clic sobre una fila de las distribuciones o del detalle.', 'Muévela hacia arriba o hacia abajo.', 'Suelta el clic: la columna N° se actualiza. Al consultar otro periodo se restablece el orden original.']],
-            ['question' => '¿Cómo veo el detalle de una actividad?', 'answer' => 'En Detalle de actividades por día presiona una fila para abrirla.', 'steps' => ['Busca el día y la actividad en el detalle.', 'Presiona la fila para ver tiempo total, puesto profesional, área física y observaciones.', 'Vuelve a presionarla para cerrarla.']],
+            ['question' => '¿Dónde veo el detalle de una actividad?', 'answer' => 'Detalle de actividades por día muestra cada actividad con todos sus datos en la misma fila.', 'steps' => ['Busca el día y la actividad en el detalle.', 'En la fila verás el horario, la actividad y el cliente.', 'Pasa el cursor sobre el horario para ver el tiempo que tomó la actividad.', 'El detalle tiene su propio periodo, independiente del resumen de arriba.']],
             ['question' => '¿Cómo exporto la información?', 'answer' => 'Usa CSV, TXT o PDF en el encabezado del primer bloque.', 'steps' => ['Elige el periodo y presiona Consultar periodo.', 'En el encabezado selecciona el formato: CSV, TXT o PDF.', 'El archivo se descarga con el periodo consultado.']],
+        ],
+    ],
+    'productividad_detalle' => [
+        'label' => 'Detalle de actividades por día',
+        'menu' => 'Monitoreo › Control de Actividades › Productividad › Detalle de actividades por día',
+        'summary' => 'Consulta el registro completo de tus actividades día por día en el periodo que elijas, con su horario, cliente, tiempo y datos adicionales. Su periodo es independiente del bloque de arriba.',
+        'items' => [
+            ['question' => '¿Cómo cambio el periodo del detalle?', 'answer' => 'Este bloque tiene sus propias fechas: no se modifican con las del resumen de arriba.', 'steps' => ['En Periodo de consulta del detalle elige Desde y Hasta.', 'Presiona Consultar periodo.', 'El encabezado muestra el rango y la lista se actualiza.']],
+            ['question' => '¿Dónde veo los datos de una actividad?', 'answer' => 'Cada fila del detalle muestra su horario, actividad y cliente, sin abrir nada.', 'steps' => ['Busca el día y la actividad.', 'En la fila verás el horario, la actividad y el cliente.', 'Pasa el cursor sobre el horario para ver el tiempo que tomó la actividad.', 'Si un nombre no cabe, pasa el cursor sobre él para verlo completo.']],
+            ['question' => '¿Cómo cambio el orden de las filas?', 'answer' => 'Arrastra una fila dentro de su día; el orden es solo visual.', 'steps' => ['Mantén presionado el clic sobre una fila.', 'Muévela hacia arriba o hacia abajo.', 'Suelta el clic. Al consultar otro periodo se restablece el orden.']],
+            ['question' => '¿Cómo descargo el reporte?', 'answer' => 'Usa Descargar reporte PDF en el encabezado del detalle.', 'steps' => ['Elige el periodo y presiona Consultar periodo.', 'Presiona Descargar reporte PDF.', 'El archivo se descarga con el periodo del detalle.']],
         ],
     ],
 ];

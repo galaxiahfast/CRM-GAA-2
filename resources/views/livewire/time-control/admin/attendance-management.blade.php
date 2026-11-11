@@ -139,6 +139,7 @@
                     this.open = true;
                 },
                 get displayValue() {
+                    if (! this.value) return 'Elige la hora';
                     return `${this.hour}:${this.minute}:${this.second} ${this.period}`;
                 }
             };
@@ -900,7 +901,7 @@
                              }"
                              class="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden bg-black/50 p-[20px]"
                              wire:keydown.escape.window="closeModal">
-                            <div id="attendance-edit-modal" data-panel @click.away="$wire.closeModal()" class="attendance-edit-modal panel-surface panel-border flex w-full max-w-[680px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-height: min(720px, calc(100dvh - 40px));">
+                            <div id="attendance-edit-modal" data-panel @click.away="if (! $event.target.closest('.attendance-time-popover')) $wire.closeModal()" class="attendance-edit-modal panel-surface panel-border flex w-full max-w-[680px] flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-height: min(720px, calc(100dvh - 40px));">
                                 <div class="panel-header panel-border flex shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                                     <div class="flex min-w-0 items-center gap-[15px]">
                                         <span class="panel-surface panel-border panel-text grid h-10 w-10 shrink-0 place-items-center rounded-xl border">

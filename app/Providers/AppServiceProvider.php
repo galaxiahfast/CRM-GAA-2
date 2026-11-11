@@ -116,20 +116,12 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-delivery-notes', fn (User $user): bool => $user->isAdmin());
         Gate::define('manage-backup-reports', fn (User $user): bool => $user->isAdmin());
-        $canAccessSystemBackups = function (User $user): bool {
-            $roleName = Str::lower(Str::ascii((string) ($user->role?->role ?? $user->role?->name ?? '')));
-
-            return $roleName !== '' && ! str_contains($roleName, 'becario');
-        };
         // Los reportes de soporte son solo para administradores.
         Gate::define('view-support-reports', fn (User $user): bool => $user->isAdmin());
-        Gate::define('access-system-backups', $canAccessSystemBackups);
-        Gate::define('upload-system-backups', $canAccessSystemBackups);
-        Gate::define('manage-system-backups', function (User $user): bool {
-            $roleName = Str::lower(Str::ascii((string) ($user->role?->role ?? $user->role?->name ?? '')));
-
-            return $user->isAdmin() || str_contains($roleName, 'contador');
-        });
+        // Gestión de Respaldos: solo administradores (los demás roles, incluidos los becarios, no tienen acceso).
+        Gate::define('access-system-backups', fn (User $user): bool => $user->isAdmin());
+        Gate::define('upload-system-backups', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manage-system-backups', fn (User $user): bool => $user->isAdmin());
     }
 
     private function restoreTulumBackupDefaultsFromStaleConfigCache(): void

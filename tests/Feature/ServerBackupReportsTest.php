@@ -304,7 +304,7 @@ HTML);
         $admin = $this->userWithRole('Administrador', 'admin-menu@datamid.test');
         $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
 
-        $activitiesPosition = strpos($html, '>Actividades<');
+        $activitiesPosition = strpos($html, '>Monitoreo<');
         $managementPosition = strpos($html, '>Gestión de Respaldos<');
         $documentsPosition = strpos($html, '>Documentos<');
         $deliveryPosition = strpos($html, '>Hoja de Entrega<');

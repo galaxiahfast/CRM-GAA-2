@@ -149,23 +149,23 @@
                 </div>
             @elseif (request()->routeIs('time.index'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
-                    <span>Actividades</span>
+                    <span>Monitoreo</span>
                     <span class="text-white">›</span>
-                    <span>Control de Horas</span>
+                    <span>Control de Actividades</span>
                     <span class="text-white">›</span>
                     <span class="text-white">Cronómetro</span>
                 </div>
             @elseif (request()->routeIs('time.reports'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
-                    <span>Actividades</span>
+                    <span>Monitoreo</span>
                     <span class="text-white">›</span>
-                    <span>Control de Horas</span>
+                    <span>Control de Actividades</span>
                     <span class="text-white">›</span>
                     <span class="text-white">Productividad</span>
                 </div>
             @elseif (request()->routeIs('time.admin.attendance', 'time.attendance'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
-                    <span>Actividades</span>
+                    <span>Monitoreo</span>
                     <span class="text-white">›</span>
                     <span>Control de Horas</span>
                     <span class="text-white">›</span>
@@ -173,7 +173,7 @@
                 </div>
             @elseif (request()->routeIs('activity-backups.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
-                    <span>Actividades</span>
+                    <span>Monitoreo</span>
                     <span class="text-white">›</span>
                     <span class="text-white">Gestión de Respaldos</span>
                 </div>
@@ -610,35 +610,36 @@
 
 
                 <!-- ========================================================== -->
-                <!-- SECCIÓN: ACTIVIDADES (oculta en modo compacto)            -->
+                <!-- SECCIÓN: MONITOREO (oculta en modo compacto)               -->
                 <!-- ========================================================== -->
                 <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
-                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Actividades</span>
+                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Monitoreo</span>
                 </li>
 
                 <!-- ========================================================== -->
-                <!-- SUBMENÚ: Control de Horas (para TODOS los usuarios)       -->
+                <!-- SUBMENÚS: Control de Horas y Control de Actividades       -->
                 <!-- ========================================================== -->
-                @if ($canTimeControl && $canTimeSupervision)
-                    <!-- ADMINISTRADOR: Submenú con Supervisión, Panel de Control y Reloj Checador -->
-                    <li x-data="{ openTimeControl: window.sidebarOpenGet('time'), init() { this.$watch('openTimeControl', (value) => window.sidebarOpenSet('time', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
-                        <button @click="openTimeControl = !openTimeControl" 
+                @php $isTimeAdmin = $canTimeControl && $canTimeSupervision; @endphp
+                @if ($canTimeControl)
+                    @if ($isTimeAdmin || $canTimeClock)
+                    <li x-data="{ open: window.sidebarOpenGet('time-hours'), init() { this.$watch('open', (value) => window.sidebarOpenSet('time-hours', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
+                        <button @click="open = !open"
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time.attendance', 'time.admin.attendance', 'time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <div class="flex items-center">
-                                <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                                <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time.attendance', 'time.admin.attendance', 'time.admin.dashboard') ? 'text-green-600' : 'text-gray-400' }}" />
                                 <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control de Horas</span>
                             </div>
                             <div class="ml-[15px] shrink-0">
                                 <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
-                                    :class="{ 'rotate-180': openTimeControl, 'rotate-0': !openTimeControl }"
+                                    :class="{ 'rotate-180': open, 'rotate-0': !open }"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
                         </button>
                         <!-- Sub-elementos del submenú -->
-                        <div x-show="openTimeControl" 
+                        <div x-show="open"
                             x-transition:enter="transition ease-out duration-150"
                             x-transition:enter-start="opacity-0 -translate-y-2"
                             x-transition:enter-end="opacity-100 translate-y-0"
@@ -646,13 +647,13 @@
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 -translate-y-2"
                             :class="collapsed ? 'pl-[15px]' : 'block'"
-                            class="relative mt-0 dynamic-sub-menu" 
+                            class="relative mt-0 dynamic-sub-menu"
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
                             <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
-                                <!-- Sub-elemento: Reloj Checador -->
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+@if ($isTimeAdmin)
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.attendance') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -660,19 +661,7 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
                                     </a>
                                 </li>
-                                <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('time.dashboard') }}"
-                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.dashboard') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                                        </svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
-                                    </a>
-                                </li>
-                                <!-- Sub-elemento: Supervisión de horas -->
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.admin.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.admin.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -682,29 +671,41 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Supervisión de Horas</span>
                                     </a>
                                 </li>
+@elseif ($canTimeClock)
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('time.attendance') }}" 
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.attendance') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A11.916 11.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
+                                    </a>
+                                </li>
+@endif
                             </ul>
                         </div>
                     </li>
-                @elseif ($canTimeControl)
-                    <!-- USUARIO NORMAL: Submenú con Cronómetro, Reloj Checador, Productividad, Panel de Control -->
-                    <li x-data="{ openTimeControl: window.sidebarOpenGet('time'), init() { this.$watch('openTimeControl', (value) => window.sidebarOpenSet('time', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
-                        <button @click="openTimeControl = !openTimeControl" 
+                    @endif
+                    @if ($isTimeAdmin || $canTimeActivities || $canTimeProductivity)
+                    <li x-data="{ open: window.sidebarOpenGet('time-activities'), init() { this.$watch('open', (value) => window.sidebarOpenSet('time-activities', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
+                        <button @click="open = !open"
                             :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 cursor-pointer font-medium {{ request()->routeIs('time.index', 'time.reports', 'time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <div class="flex items-center">
-                                <x-hugeicons-clock-01 class="w-5 h-5 transition-colors {{ request()->routeIs('time') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                                <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control de Horas</span>
+                                <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.index', 'time.reports', 'time.dashboard') ? 'text-green-600' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l3-8 4 16 3-8h4" /></svg>
+                                <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control de Actividades</span>
                             </div>
                             <div class="ml-[15px] shrink-0">
                                 <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
-                                    :class="{ 'rotate-180': openTimeControl, 'rotate-0': !openTimeControl }"
+                                    :class="{ 'rotate-180': open, 'rotate-0': !open }"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
                         </button>
                         <!-- Sub-elementos del submenú -->
-                        <div x-show="openTimeControl" 
+                        <div x-show="open"
                             x-transition:enter="transition ease-out duration-150"
                             x-transition:enter-start="opacity-0 -translate-y-2"
                             x-transition:enter-end="opacity-100 translate-y-0"
@@ -712,14 +713,13 @@
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 -translate-y-2"
                             :class="collapsed ? 'pl-[15px]' : 'block'"
-                            class="relative mt-0 dynamic-sub-menu" 
+                            class="relative mt-0 dynamic-sub-menu"
                             style="display: none;">
                             <!-- Línea vertical siempre visible -->
                             <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                             <ul class="space-y-0 w-full">
-                                <!-- Sub-elemento: Cronómetro -->
-                                @if ($canTimeActivities)
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+@if (! $isTimeAdmin && $canTimeActivities)
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.index') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -730,23 +730,9 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Cronómetro</span>
                                     </a>
                                 </li>
-                                @endif
-                                <!-- Sub-elemento: Reloj Checador -->
-                                @if ($canTimeClock)
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                    <a href="{{ route('time.attendance') }}" 
-                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.attendance') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('time.attendance') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A11.916 11.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" stroke-width="2" stroke-linecap="round"/>
-                                        </svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Reloj Checador</span>
-                                    </a>
-                                </li>
-                                @endif
-                                <!-- Sub-elemento: Mi Productividad -->
-                                @if ($canTimeProductivity)
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+@endif
+@if (! $isTimeAdmin && $canTimeProductivity)
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.reports') }}" 
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.reports') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -756,8 +742,19 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Productividad</span>
                                     </a>
                                 </li>
-                                <!-- Sub-elemento: Panel de Control -->
-                                <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+@endif
+@can('view-legacy-own-hours')
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                    <a href="{{ route('testing.own-hours.index') }}"
+                                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                        class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('testing.own-hours.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('testing.own-hours.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6.5L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-9.5V3" /></svg>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Prueba becarios</span>
+                                    </a>
+                                </li>
+@endcan
+@if ($isTimeAdmin || $canTimeProductivity)
+<li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                     <a href="{{ route('time.dashboard') }}"
                                         :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('time.dashboard') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
@@ -767,10 +764,11 @@
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Panel de Control</span>
                                     </a>
                                 </li>
-                                @endif
+@endif
                             </ul>
                         </div>
                     </li>
+                    @endif
                 @endif
 
                 @can('access-system-backups')
@@ -783,6 +781,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7" />
                             </svg>
                             <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Gestión de Respaldos</span>
+                        </a>
+                    </li>
+                @endcan
+
+                @can('view-legacy-managercontrol')
+                    <li class="relative pt-[20px] px-[15px] pb-0 m-0">
+                        <a href="{{ route('testing.managercontrol.index') }}" data-sidebar-label="Pruebas"
+                            :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                            class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('testing.managercontrol.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                            <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('testing.managercontrol.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6.5L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-9.5V3" /></svg>
+                            <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Pruebas</span>
                         </a>
                     </li>
                 @endcan

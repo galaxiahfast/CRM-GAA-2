@@ -94,7 +94,7 @@ Route::middleware([
     // carga original para ejecutarse únicamente cuando el usuario lo solicita.
     Route::view('/inicio', 'inicio')->name('inicio');
     Route::get('/guias/{section}.pdf', SectionGuideController::class)
-        ->whereIn('section', ['inicio', 'detalle-cliente', 'panel-control', 'supervision-horas', 'cronometro', 'productividad', 'chat-soporte'])
+        ->whereIn('section', ['inicio', 'detalle-cliente', 'panel-control', 'supervision-horas', 'cronometro', 'productividad', 'productividad-detalle', 'chat-soporte'])
         ->name('section.guide');
 
     Route::get('/perfiles', ProfileDirectory::class)->name('profiles.index');
@@ -254,6 +254,24 @@ Route::middleware([
     Route::get('/time/admin/online', ActiveTimers::class)
         ->middleware('access.permission:time-control.supervision.view')
         ->name('time.admin.online');
+
+    // Pruebas: lectura (solo lectura) del legacy ManagerControl. Solo Administrador (403 al resto).
+    Route::prefix('pruebas/managercontrol')
+        ->middleware('can:view-legacy-managercontrol')
+        ->name('testing.managercontrol.')
+        ->group(function () {
+            Route::get('/', \App\Livewire\Testing\ManagerControlHours::class)->name('index');
+            Route::get('/reporte.pdf', \App\Http\Controllers\Testing\ManagerControlPdfController::class)->name('pdf');
+        });
+
+    // Prueba becarios: cada usuario ve SOLO sus actividades de ManagerControl (nombre con >70 % de coincidencia).
+    Route::prefix('prueba-becarios')
+        ->middleware('can:view-legacy-own-hours')
+        ->name('testing.own-hours.')
+        ->group(function () {
+            Route::get('/', \App\Livewire\Testing\ManagerControlOwnHours::class)->name('index');
+            Route::get('/reporte.pdf', \App\Http\Controllers\Testing\ManagerControlOwnPdfController::class)->name('pdf');
+        });
 
     // Respaldos privados por sede y cliente (todos excepto Becarios).
     Route::prefix('actividades/respaldos')

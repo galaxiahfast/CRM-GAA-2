@@ -27,7 +27,8 @@ class PdfExporter implements ReportExporter
     {
         $html = $this->renderHtml($data);
         $isAttendanceReport = $this->isAttendanceReport($data);
-        $cacheKey = 'report-pdf:v7:'.hash('sha256', serialize([
+        $isProductivityReport = $this->isProductivityReport($data);
+        $cacheKey = 'report-pdf:v16:'.hash('sha256', serialize([
             $data->title,
             $data->filenameBase,
             $data->meta,
@@ -35,21 +36,24 @@ class PdfExporter implements ReportExporter
         ]));
 
         $encodedPdf = Cache::store('file')->remember($cacheKey, now()->addMinutes(10), static fn () => base64_encode(Pdf::loadHTML($html)
-            ->setPaper('a4', $isAttendanceReport ? 'landscape' : 'portrait')
+            ->setPaper($isProductivityReport ? 'letter' : 'a4', $isAttendanceReport ? 'landscape' : 'portrait')
             ->setOptions([
-                'defaultFont' => $isAttendanceReport ? 'DejaVu Sans Mono' : 'Helvetica',
+                'defaultFont' => $isAttendanceReport || $isProductivityReport ? 'DejaVu Sans Mono' : 'Helvetica',
                 'isRemoteEnabled' => false,
                 'isPhpEnabled' => false,
                 'isJavascriptEnabled' => false,
                 'isFontSubsettingEnabled' => false,
             ])
             ->output()));
-
         return base64_decode($encodedPdf, true) ?: '';
     }
 
     private function renderHtml(ReportData $data): string
     {
+        if ($this->isProductivityReport($data)) {
+            return $this->renderProductivityHtml($data);
+        }
+
         $isAttendanceReport = $this->isAttendanceReport($data);
         $html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><style>'
             .'body{font-family:Helvetica,Arial,sans-serif;font-size:11px;color:#1f2937;margin:24px}'
@@ -191,6 +195,127 @@ class PdfExporter implements ReportExporter
     private function isAttendanceReport(ReportData $data): bool
     {
         return str_starts_with($data->filenameBase, 'reloj-checador-');
+    }
+
+    private function isProductivityReport(ReportData $data): bool
+    {
+        return str_starts_with($data->filenameBase, 'mi-productividad_');
+    }
+
+    private function renderProductivityHtml(ReportData $data): string
+    {
+        $pages = $this->productivityPages($data);
+
+        return view('pdf.productivity-report', [
+            'report' => $data,
+            'pages' => $pages,
+            'headerDecorations' => $this->productivityImages(public_path('img/delivery-notes/datamid-header.png'), count($pages)),
+            'logos' => $this->productivityImages(public_path('img/delivery-notes/datamid-logo.png'), count($pages)),
+            'footerDecorations' => $this->productivityImages(public_path('img/delivery-notes/datamid-footer.png'), count($pages)),
+        ])->render();
+    }
+
+    /** @return list<array{intro: bool, blocks: array<int, array<string, mixed>>}> */
+    private function productivityPages(ReportData $data): array
+    {
+        $blocks = [];
+
+        foreach ($data->sections as $sectionIndex => $section) {
+            if ($section->dayGroups === null) {
+                $chunks = [];
+                $chunk = [];
+                $height = 43;
+                foreach ($section->rows as $row) {
+                    $rowHeight = 23 + 12 * max(0, (int) ceil(mb_strlen((string) ($row[0] ?? '')) / 52) - 1);
+                    if ($chunk !== [] && $height + $rowHeight > 300) {
+                        $chunks[] = ['rows' => $chunk, 'height' => $height];
+                        $chunk = [];
+                        $height = 43;
+                    }
+                    $chunk[] = $row;
+                    $height += $rowHeight;
+                }
+                $chunks[] = ['rows' => $chunk, 'height' => $height];
+                foreach ($chunks as $chunkIndex => $part) {
+                    $blocks[] = [
+                        'kind' => 'summary', 'number' => $sectionIndex + 1,
+                        'title' => $section->title, 'columns' => $section->columns,
+                        'rows' => $part['rows'], 'height' => $part['height'],
+                        'continued' => $chunkIndex > 0,
+                    ];
+                }
+                continue;
+            }
+
+            if ($section->dayGroups === []) {
+                $blocks[] = ['kind' => 'empty-detail', 'number' => $sectionIndex + 1, 'title' => $section->title, 'height' => 43];
+            }
+
+            $columns = array_flip($section->columns);
+            foreach ($section->dayGroups ?? [] as $group) {
+                $chunks = [];
+                $chunk = [];
+                $height = 65;
+                foreach ($group['rows'] as $row) {
+                    $activity = (string) ($row[$columns['Actividad']] ?? '');
+                    $customer = (string) ($row[$columns['Cliente']] ?? '');
+                    $position = (string) ($row[$columns['Puesto profesional']] ?? '');
+                    $area = (string) ($row[$columns['Área física']] ?? '');
+                    $observation = (string) ($row[$columns['Observaciones']] ?? '');
+                    $mainLines = max(2,
+                        (int) ceil(mb_strlen($activity) / 29) + (int) ceil(mb_strlen($customer) / 29),
+                        (int) ceil(mb_strlen($position) / 25) + (int) ceil(mb_strlen($area) / 25),
+                    );
+                    $rowHeight = 17 + 13 * $mainLines + ($observation !== '' && $observation !== '—' ? 18 + 13 * (int) ceil(mb_strlen($observation) / 68) : 0);
+                    if ($chunk !== [] && $height + $rowHeight > 500) {
+                        $chunks[] = ['rows' => $chunk, 'height' => $height];
+                        $chunk = [];
+                        $height = 65;
+                    }
+                    $chunk[] = $row;
+                    $height += $rowHeight;
+                }
+                $chunks[] = ['rows' => $chunk, 'height' => $height];
+                foreach ($chunks as $chunkIndex => $part) {
+                    $blocks[] = [
+                        'kind' => 'detail', 'number' => $sectionIndex + 1,
+                        'title' => $section->title, 'columns' => $columns,
+                        'date' => $group['date'], 'total' => $group['total_effective'] ?? '00:00:00',
+                        'rows' => $part['rows'], 'height' => $part['height'],
+                        'continued' => $chunkIndex > 0,
+                    ];
+                }
+            }
+        }
+
+        $pages = [['intro' => true, 'blocks' => []]];
+        $used = 165;
+        foreach ($blocks as $block) {
+            if ($used + $block['height'] > 550) {
+                $pages[] = ['intro' => false, 'blocks' => []];
+                $used = 0;
+            }
+            $pages[array_key_last($pages)]['blocks'][] = $block;
+            $used += $block['height'] + 15;
+        }
+
+        return $pages;
+    }
+
+    /** @return list<string|null> */
+    private function productivityImages(string $path, int $pages): array
+    {
+        if (! is_file($path)) {
+            return array_fill(0, $pages, null);
+        }
+
+        $mime = mime_content_type($path) ?: 'image/png';
+        $contents = (string) file_get_contents($path);
+
+        return array_map(
+            static fn (int $page): string => 'data:'.$mime.';base64,'.base64_encode($contents."DATAMID-PAGE-{$page}"),
+            range(1, $pages),
+        );
     }
 
     /** @param list<string> $columns @param list<string|int> $row */

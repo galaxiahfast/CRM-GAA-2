@@ -1,0 +1,286 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Livewire\Testing\ManagerControlHours;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\ManagerControl\ConfigFileParser;
+use App\Services\ManagerControl\HoursSummary;
+use App\Services\ManagerControl\ManagerControlException;
+use App\Services\ManagerControl\ManagerControlRepository;
+use App\Services\ManagerControl\ReadOnlyConnection;
+use App\Services\ManagerControl\ReadOnlyGuard;
+use App\Services\ManagerControl\ReadOnlyViolation;
+use App\Services\ManagerControl\TotalHoursPdf;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+/** Todo con una conexión SIMULADA: nunca se toca la base real de ManagerControl. */
+class ManagerControlReadOnlyTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const XML = <<<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <connectionStrings>
+    <add name="DefaultConnectionString" connectionString="Data Source=SRV-PRUEBA\INSTANCIA;Initial Catalog=BaseDePrueba;User ID=usuario_falso;password=clave-falsa-123" providerName="System.Data.SqlClient"/>
+    <!--<add name="DefaultConnectionString" connectionString="Data Source=COMENTADO\X;Initial Catalog=Otra;User ID=a;password=b" providerName="System.Data.SqlClient" />-->
+  </connectionStrings>
+</configuration>
+XML;
+
+    private function fakeConnection(array $employees = [], array $hours = []): ReadOnlyConnection
+    {
+        return new class($employees, $hours) implements ReadOnlyConnection
+        {
+            public array $queries = [];
+
+            public function __construct(private array $employees, private array $hours) {}
+
+            public function select(string $sql, array $bindings = []): array
+            {
+                ReadOnlyGuard::assertReadOnly($sql);
+                $this->queries[] = [$sql, $bindings];
+
+                return str_contains($sql, 'AS work_date') ? $this->hours : $this->employees;
+            }
+
+            public function diagnostics(): array
+            {
+                return ['engine' => 'Microsoft SQL Server', 'version' => 'Simulado', 'database' => 'Prueba', 'login' => 'ro', 'can_write' => false, 'write_roles' => []];
+            }
+        };
+    }
+
+    private function user(string $roleName, string $email): User
+    {
+        $role = Role::query()->firstOrCreate(['role' => $roleName]);
+        $user = User::query()->create([
+            'name' => 'Prueba', 'last_name' => 'Legacy', 'email' => $email,
+            'password' => Hash::make('secret'), 'role_id' => $role->id,
+        ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        return $user;
+    }
+
+    private function sampleHours(): array
+    {
+        return [
+            ['work_date' => '2026-11-02', 'customer' => 'Cliente A', 'activity' => 'Contabilidad', 'description' => 'Pólizas', 'hours' => '1.5'],
+            ['work_date' => '2026-11-02', 'customer' => 'Cliente B', 'activity' => 'Contabilidad', 'description' => '', 'hours' => '0.5'],
+            ['work_date' => '2026-11-03', 'customer' => 'Cliente A', 'activity' => 'Impuestos', 'description' => 'IVA', 'hours' => '2'],
+        ];
+    }
+
+    public function test_parser_extracts_server_instance_and_database_without_exposing_credentials(): void
+    {
+        $info = (new ConfigFileParser)->parseXml(self::XML);
+
+        $this->assertSame('SRV-PRUEBA', $info['host']);
+        $this->assertSame('INSTANCIA', $info['instance']);
+        $this->assertSame('BaseDePrueba', $info['database']);
+        $this->assertTrue($info['file_has_credentials']);
+        $this->assertStringNotContainsString('clave-falsa-123', json_encode($info));
+        $this->assertStringNotContainsString('usuario_falso', json_encode($info));
+    }
+
+    public function test_parser_handles_port_and_rejects_dtd_and_missing_connection(): void
+    {
+        $parsed = (new ConfigFileParser)->parseConnectionString('Data Source=tcp:10.0.0.5,1433;Initial Catalog=X');
+        $this->assertSame(['10.0.0.5', null, 1433], [$parsed['host'], $parsed['instance'], $parsed['port']]);
+
+        $this->expectException(ManagerControlException::class);
+        (new ConfigFileParser)->parseXml('<!DOCTYPE foo [<!ENTITY x SYSTEM "file:///etc/passwd">]><configuration/>');
+    }
+
+    public function test_parser_fails_loudly_when_the_named_connection_is_missing(): void
+    {
+        $this->expectException(ManagerControlException::class);
+        (new ConfigFileParser)->parseXml(self::XML, 'NoExiste');
+    }
+
+    public function test_guard_accepts_select_and_rejects_every_kind_of_write(): void
+    {
+        ReadOnlyGuard::assertReadOnly('SELECT a FROM [dbo].[T] WHERE b = ?');
+        ReadOnlyGuard::assertReadOnly("SELECT 'update' AS texto FROM T");
+
+        foreach ([
+            'INSERT INTO T VALUES (1)', 'UPDATE T SET a = 1', 'DELETE FROM T', 'DROP TABLE T', 'TRUNCATE TABLE T',
+            'EXEC sp_who', 'SELECT * INTO copia FROM T', 'SELECT 1; DELETE FROM T', '/* x */ UPDATE T SET a = 1',
+            "SELECT 1 -- ok\nUPDATE T SET a = 1", 'WITH x AS (SELECT 1) DELETE FROM T', 'SELECT * FROM OPENROWSET(\'a\')', '',
+        ] as $sql) {
+            try {
+                ReadOnlyGuard::assertReadOnly($sql);
+                $this->fail("Debió rechazar: {$sql}");
+            } catch (ReadOnlyViolation) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    public function test_repository_only_sends_selects_with_bound_parameters(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Ana']], $this->sampleHours());
+        $repository = new ManagerControlRepository($db);
+
+        $rows = $repository->workedHours(7, '2026-11-01', '2026-11-15');
+
+        $this->assertCount(3, $rows);
+        $this->assertSame(5400, $rows[0]['seconds']);
+        [$sql, $bindings] = $db->queries[0];
+        $this->assertSame([7, '2026-11-01', '2026-11-15'], $bindings);
+        $this->assertStringNotContainsString('2026-11', $sql);
+    }
+
+    public function test_repository_rejects_unsafe_schema_identifiers(): void
+    {
+        config(['managercontrol.schema.hours.table' => 'ControlHoras; DROP TABLE x']);
+
+        $this->expectException(ManagerControlException::class);
+        (new ManagerControlRepository($this->fakeConnection()))->workedHours(1, '2026-11-01', '2026-11-02');
+    }
+
+    public function test_hour_values_are_converted_to_seconds(): void
+    {
+        $this->assertSame(5400, ManagerControlRepository::toSeconds('1.5'));
+        $this->assertSame(3720, ManagerControlRepository::toSeconds('01:02'));
+        config(['managercontrol.hours_unit' => 'minutes']);
+        $this->assertSame(90, ManagerControlRepository::toSeconds('1.5'));
+    }
+
+    public function test_only_administrators_can_open_the_screen_and_the_pdf(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 7, 'name' => 'Ana']], $this->sampleHours()));
+        $admin = $this->user('Administrador', 'admin-mc@datamid.test');
+        $aux = $this->user('Auxiliar', 'aux-mc@datamid.test');
+        $pdfUrl = route('testing.managercontrol.pdf', ['employee' => 7, 'from' => '2026-11-01', 'to' => '2026-11-15']);
+
+        $this->actingAs($admin)->get(route('testing.managercontrol.index'))->assertOk()->assertSee('Registro de horas');
+        $this->actingAs($admin)->get($pdfUrl)->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+        $this->flushSession();
+        $this->actingAs($aux)->get(route('testing.managercontrol.index'))->assertForbidden();
+        $this->actingAs($aux)->get($pdfUrl)->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->flushSession();
+        $this->get(route('testing.managercontrol.index'))->assertRedirect();
+    }
+
+    public function test_screen_shows_distributions_and_surfaces_connection_errors(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 7, 'name' => 'Ana']], $this->sampleHours()));
+
+        Livewire::actingAs($this->user('Administrador', 'admin-lw@datamid.test'))
+            ->test(ManagerControlHours::class)
+            ->assertSet('to', now(config('app.timezone') === 'UTC' ? 'America/Mexico_City' : config('app.timezone'))->toDateString())
+            ->set('employeeId', '7')
+            ->call('applyFilters')
+            ->call('applyDetailFilters')
+            ->assertSee('Cliente A')->assertSee('Impuestos')->assertSee('04:00:00')
+            ->assertSeeHtml('prod-day-head')->assertSee('Registro de horas por día');
+
+        $failing = new class implements ReadOnlyConnection
+        {
+            public function select(string $sql, array $bindings = []): array
+            {
+                throw new ManagerControlException('Sin conexión simulada.');
+            }
+
+            public function diagnostics(): array
+            {
+                throw new ManagerControlException('Sin conexión simulada.');
+            }
+        };
+        $this->app->instance(ReadOnlyConnection::class, $failing);
+
+        Livewire::actingAs($this->user('Administrador', 'admin-lw2@datamid.test'))
+            ->test(ManagerControlHours::class)
+            ->assertSee('Sin conexión simulada.');
+    }
+
+    public function test_default_period_is_fifteen_days_inclusive(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection());
+
+        $component = Livewire::actingAs($this->user('Administrador', 'admin-per@datamid.test'))->test(ManagerControlHours::class);
+
+        $this->assertSame(14, (int) \Illuminate\Support\Carbon::parse($component->get('from'))->diffInDays($component->get('to')));
+    }
+
+    public function test_pdf_replicates_the_total_hours_report_layout(): void
+    {
+        $summary = HoursSummary::fromRows(array_map(fn ($r) => [
+            'date' => $r['work_date'], 'customer' => $r['customer'], 'activity' => $r['activity'],
+            'description' => $r['description'], 'seconds' => ManagerControlRepository::toSeconds($r['hours']),
+        ], $this->sampleHours()));
+        $pdf = new TotalHoursPdf;
+        $html = $pdf->html(['id' => 7, 'name' => 'Ana Pérez'], '2026-11-01', '2026-11-15', $summary);
+
+        foreach (['Total de Horas Laboradas', 'Del 01/11/2026 Al 15/11/2026', 'Ana Pérez', 'Cliente A', 'Impuestos', 'Total acumulado: 04:00:00', 'data:image/png;base64'] as $expected) {
+            $this->assertStringContainsString($expected, $html);
+        }
+        $this->assertStringStartsWith('%PDF', $pdf->render(['id' => 7, 'name' => 'Ana Pérez'], '2026-11-01', '2026-11-15', $summary));
+    }
+
+    public function test_test_connection_command_reports_read_only_session_without_secrets(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection());
+        config(['managercontrol.host' => 'srv.local', 'managercontrol.database' => 'Base', 'managercontrol.username' => 'ro_user', 'managercontrol.password' => 'super-secreta-xyz']);
+
+        $this->artisan('managercontrol:test-connection')
+            ->expectsOutputToContain('Microsoft SQL Server')
+            ->expectsOutputToContain('Conexión correcta y de solo lectura.')
+            ->doesntExpectOutputToContain('super-secreta-xyz')
+            ->assertSuccessful();
+    }
+
+    public function test_name_matcher_requires_seventy_percent_and_a_unique_match(): void
+    {
+        $matcher = new \App\Services\ManagerControl\NameMatcher;
+        $employees = [
+            ['id' => 1, 'name' => 'Juan Carlos Pérez López'],
+            ['id' => 2, 'name' => 'María Fernanda Gómez Ruiz'],
+            ['id' => 3, 'name' => 'Luis Hernández Soto'],
+        ];
+
+        $this->assertSame(1, $matcher->bestMatch('Juan Pérez', $employees)['employee']['id']);
+        $this->assertSame(2, $matcher->bestMatch('Maria Fernanda Gomez', $employees)['employee']['id']);
+        $this->assertSame('none', $matcher->bestMatch('Pedro Ramírez Cruz', $employees)['status']);
+
+        $twins = [['id' => 1, 'name' => 'Ana López Díaz'], ['id' => 2, 'name' => 'Ana López Díez']];
+        $this->assertSame('ambiguous', $matcher->bestMatch('Ana López', $twins)['status']);
+        $this->assertSame(1, $matcher->bestMatch('Ana López Díaz', $twins)['employee']['id']);
+    }
+
+    public function test_own_screen_shows_only_the_matched_employee_and_ignores_client_supplied_ids(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Prueba Becario Legacy'], ['id' => 8, 'name' => 'Otra Persona Distinta']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+        $user = $this->user('Auxiliar', 'bec-mc@datamid.test');
+        $user->forceFill(['name' => 'Prueba', 'last_name' => 'Becario Legacy'])->save();
+
+        Livewire::actingAs($user)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
+            ->set('employeeId', '8')
+            ->assertSee('Prueba becarios')->assertSee('Prueba Becario Legacy')->assertSee('Cliente A');
+
+        $hoursQueries = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')));
+        $this->assertNotEmpty($hoursQueries);
+        foreach ($hoursQueries as [, $bindings]) {
+            $this->assertSame(7, $bindings[0]);
+        }
+    }
+
+    public function test_own_screen_reports_when_there_is_no_name_match(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 8, 'name' => 'Otra Persona Distinta']], $this->sampleHours()));
+
+        Livewire::actingAs($this->user('Auxiliar', 'sin-match@datamid.test'))
+            ->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
+            ->assertSee('No se encontró en ManagerControl');
+    }
+}

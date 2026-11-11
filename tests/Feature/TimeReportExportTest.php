@@ -66,24 +66,17 @@ class TimeReportExportTest extends TestCase
         return compact('aux', 'admin', 'customer', 'sub');
     }
 
-    public function test_my_productivity_defaults_to_current_day(): void
+    public function test_my_productivity_defaults_to_the_last_fifteen_days(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+        $start = now()->subDays(14)->toDateString();
 
         Livewire::actingAs($aux)->test(MyProductivity::class)
-            ->assertSet('from', now()->toDateString())
-            ->assertSet('to', now()->toDateString());
-    }
-
-    public function test_my_productivity_defaults_to_the_users_latest_activity_date(): void
-    {
-        ['aux' => $aux] = $this->seedWithEntry();
-        $latestActivityDate = now()->subDays(4)->toDateString();
-        TimeEntry::query()->where('user_id', $aux->id)->update(['entry_date' => $latestActivityDate]);
-
-        Livewire::actingAs($aux)->test(MyProductivity::class)
-            ->assertSet('from', $latestActivityDate)
-            ->assertSet('to', $latestActivityDate);
+            ->assertSet('from', $start)
+            ->assertSet('to', $today)
+            ->assertSet('detailFrom', $start)
+            ->assertSet('detailTo', $today);
     }
 
     public function test_admin_dashboard_preloads_a_collaborator_and_the_last_fifteen_days(): void
@@ -150,6 +143,40 @@ class TimeReportExportTest extends TestCase
         $this->assertSame('Mi productividad', $report->title);
     }
 
+    public function test_my_productivity_shows_example_rows_when_the_period_has_no_activity(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+
+        Livewire::actingAs($aux)->test(MyProductivity::class)
+            ->set('from', '2000-01-01')
+            ->set('to', '2000-01-01')
+            ->assertSee('Cliente de ejemplo')
+            ->assertSee('Actividad de ejemplo');
+    }
+
+    public function test_the_activity_detail_has_its_own_period_guide_and_pdf(): void
+    {
+        ['aux' => $aux] = $this->seedWithEntry();
+        $today = now()->toDateString();
+
+        Livewire::actingAs($aux)->test(MyProductivity::class)
+            ->assertSet('detailFrom', now()->subDays(14)->toDateString())
+            ->assertSet('detailTo', $today)
+            ->set('detailFrom', '2000-01-01')
+            ->set('detailTo', '2000-01-01')
+            ->assertSet('from', now()->subDays(14)->toDateString())
+            ->assertSet('to', $today)
+            ->assertSeeHtml(route('section.guide', 'productividad-detalle'))
+            ->assertSeeHtml('id="prod-d-consult"')
+            ->call('exportDetail', 'pdf')
+            ->assertFileDownloaded('mi-productividad_2000-01-01_2000-01-01.pdf');
+
+        $this->actingAs($aux)
+            ->get(route('section.guide', 'productividad-detalle'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+    }
+
     public function test_my_productivity_offers_its_pdf_guide_and_quick_tour(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();
@@ -166,17 +193,24 @@ class TimeReportExportTest extends TestCase
             ->assertHeader('Content-Type', 'application/pdf');
     }
 
-    public function test_user_can_export_every_format(): void
+    public function test_user_can_download_only_the_pdf_report(): void
     {
         ['aux' => $aux] = $this->seedWithEntry();
         $today = now()->toDateString();
 
-        foreach (['csv', 'pdf', 'txt'] as $format) {
+        Livewire::actingAs($aux)->test(MyProductivity::class)
+            ->assertSee('Descargar reporte PDF')
+            ->assertDontSee('>CSV<', false)
+            ->assertDontSee('>TXT<', false)
+            ->set('from', $today)
+            ->set('to', $today)
+            ->call('export', 'pdf')
+            ->assertFileDownloaded("mi-productividad_{$today}_{$today}.pdf");
+
+        foreach (['csv', 'txt'] as $format) {
             Livewire::actingAs($aux)->test(MyProductivity::class)
-                ->set('from', $today)
-                ->set('to', $today)
                 ->call('export', $format)
-                ->assertFileDownloaded("mi-productividad_{$today}_{$today}.{$format}");
+                ->assertNotFound();
         }
     }
 

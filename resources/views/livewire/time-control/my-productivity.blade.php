@@ -7,20 +7,30 @@
     $idxTiempo = $colIndex['Tiempo efectivo'] ?? 4; $idxPuesto = $colIndex['Puesto profesional'] ?? 5;
     $idxArea = $colIndex['Área física'] ?? 6; $idxObservaciones = $colIndex['Observaciones'] ?? 7;
     $rowCounter = 0;
+    // Total del día con horas de tres cifras (puede pasar de 100 horas): 000h 00m 00s
+    $padTotal = fn (string $text) => preg_replace_callback('/^(\d+)h/', fn ($m) => str_pad($m[1], 3, '0', STR_PAD_LEFT).'h', $text);
+    // Cada cifra ocupa el mismo ancho para que los horarios queden alineados aunque un "1" mida menos que un "0".
+    $digits = fn (string $text) => new \Illuminate\Support\HtmlString(preg_replace('/\d/', '<span class="prod-dg">$0</span>', e($text)));
+    $detailTourSteps = [
+        ['target' => 'prod-d-period', 'title' => '1. Elige el periodo del detalle', 'description' => 'Este periodo es independiente del de arriba: solo afecta al Detalle de actividades por día.'],
+        ['target' => 'prod-d-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el detalle con las fechas elegidas.'],
+        ['target' => 'prod-d-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo del detalle. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada fila muestra el horario, la actividad y el cliente. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
+    ];
     $tourSteps = [
         ['target' => 'prod-tour-period', 'title' => '1. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
         ['target' => 'prod-tour-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado, las distribuciones y el detalle con las fechas elegidas.'],
-        ['target' => 'prod-tour-export', 'title' => '3. Exporta la información', 'description' => 'Descarga el periodo consultado en CSV, TXT o PDF. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-tour-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
         ['target' => 'prod-tour-clients', 'title' => '4. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
         ['target' => 'prod-tour-activities', 'title' => '5. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
-        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Presiona una fila para ver el tiempo total, el puesto profesional, el área física y las observaciones de esa actividad.'],
+        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Cada fila muestra el horario, la actividad y el cliente. Pasa el cursor sobre el horario para ver el tiempo que tomó. Este bloque tiene su propio periodo, guía y reporte.'],
     ];
 @endphp
 
 <div
     data-panel
     data-productivity
-    x-data="clockQuickTour(@js($tourSteps))"
+    x-data="clockQuickTour(@js($tourSteps), @js(['detail' => $detailTourSteps]))"
     class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
 >
     <x-panel-styles />
@@ -31,6 +41,14 @@
         html.module-dark-theme [data-productivity] { --prod-green: #4ade80; }
         [data-productivity] .prod-link { color: var(--prod-green); transition: opacity 150ms ease; }
         [data-productivity] .prod-link:hover { opacity: .75; }
+        [data-productivity].prod-calendar { z-index: 200000; }
+        [data-productivity].prod-calendar.prod-calendar-over-tour { z-index: 300003; }
+        [data-productivity].prod-calendar { width: min(320px, calc((100vw - 32px) / var(--app-zoom, 1))); max-height: calc((100dvh - 32px) / var(--app-zoom, 1)); overflow-y: auto; box-shadow: 0 14px 35px rgba(0, 0, 0, .18); }
+        [data-productivity].prod-calendar .prod-calendar-day { display: inline-flex; aspect-ratio: 1; align-items: center; justify-content: center; min-width: 0; border: 1px solid transparent; border-radius: 8px; color: var(--panel-text); }
+        [data-productivity].prod-calendar .prod-calendar-day:hover { background-color: var(--panel-hover); }
+        [data-productivity].prod-calendar .prod-calendar-day.is-outside { opacity: .5; }
+        [data-productivity].prod-calendar .prod-calendar-day.is-today { border-color: var(--panel-border); }
+        [data-productivity].prod-calendar .prod-calendar-day.is-selected { border-color: var(--panel-accent); background-color: color-mix(in srgb, var(--panel-accent) 14%, var(--panel-surface)); color: var(--panel-accent); opacity: 1; }
         [data-productivity] .prod-primary {
             display: inline-flex;
             align-items: center;
@@ -48,17 +66,24 @@
         [data-productivity] .prod-list-wrap { position: relative; min-height: 0; }
         [data-productivity] .prod-list { counter-reset: prodrow; }
         [data-productivity] .prod-item { counter-increment: prodrow; cursor: grab; }
+        [data-productivity] .prod-blank { counter-increment: none; cursor: default; }
         [data-productivity] .prod-counter::before { content: counter(prodrow); }
         /* Texto que puede partirse en varias líneas: 20px de espacio entre una línea y la siguiente */
         [data-productivity] .prod-lines { line-height: 35px; margin-bottom: -10px; }
 
         /* ===== Diseño adaptable: depende del ancho de cada tarjeta (el menú lateral y el zoom le quitan ancho) ===== */
         [data-productivity] .prod-wrap { container: prod / inline-size; }
+        [data-productivity] .prod-summary-wrap { display: flex; flex-direction: column; }
+        [data-productivity] .prod-summary-card { display: flex; flex-direction: column; flex: 1; min-height: 0; }
         [data-productivity] .prod-layout { display: grid; grid-template-columns: minmax(0, 1fr); }
         [data-productivity] .prod-aside { min-width: 0; border-bottom-width: 1px; }
         [data-productivity] .prod-form { display: grid; gap: 20px; padding: 20px; }
         [data-productivity] .prod-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
         [data-productivity] .prod-label { display: block; min-height: 24px; margin-bottom: 20px; line-height: 24px; }
+        [data-productivity] .prod-date-trigger { display: flex; min-height: 50px; align-items: center; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer; }
+        [data-productivity] .prod-guide-link { display: inline-flex; min-height: 24px; align-items: center; }
+        [data-productivity] .prod-consult { display: grid; gap: 20px; }
+        [data-productivity] .prod-consult .prod-label { margin-bottom: 0; }
         [data-productivity] .prod-main { display: flex; min-width: 0; flex-direction: column; }
         [data-productivity] .prod-dist { display: grid; grid-template-columns: minmax(0, 1fr); }
         [data-productivity] .prod-col { display: flex; min-width: 0; flex-direction: column; }
@@ -69,24 +94,49 @@
         [data-productivity] .prod-cell { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 20px; }
         [data-productivity] .prod-item { height: 70px; padding: 0; }
         /* Tiempo, barra y porcentaje van pegados a la derecha; el nombre queda a la izquierda */
-        [data-productivity] .prod-metrics > :nth-child(2) { grid-column: 3; }
-        [data-productivity] .prod-metrics > :nth-child(3) { grid-column: 4; }
-        [data-productivity] .prod-metrics > :nth-child(4) { grid-column: 5; }
-        [data-productivity] .prod-metrics > :nth-child(3), [data-productivity] .prod-metrics > :nth-child(4) { margin-left: 20px; }
-        [data-productivity] .prod-metrics > :nth-child(4) { min-width: 1.9em; text-align: right; }
+        /* El nombre ocupa todo el espacio libre y termina 20px antes del tiempo; tiempo, barra y porcentaje van pegados a la derecha, 20px entre cada uno */
+        [data-productivity] .prod-metrics > :nth-child(n+2) { margin-left: 20px; }
+        /* El nombre mide lo mismo que su texto (no todo el ancho de la columna); si es largo se corta con "…" */
+        [data-productivity] .prod-metrics > :nth-child(1) { justify-self: start; max-width: 100%; }
+        /* Línea que separa el nombre de los datos (tiempo, barra y porcentaje) */
+        /* Tiempo: ancho fijo (las cifras de la fuente no miden lo mismo) para que la línea y la barra queden alineadas en todas las filas; 20px a cada lado de la línea */
+        [data-productivity] .prod-metrics > :nth-child(2) { position: relative; margin-left: 40px; width: 4.3em; text-align: left; }
+        [data-productivity] .prod-metrics > :nth-child(2)::before { content: ''; position: absolute; top: -200px; bottom: -200px; left: -20px; border-left: 1px solid var(--panel-border); pointer-events: none; visibility: visible; }
+        [data-productivity] .prod-metrics { overflow: hidden; }
+        [data-productivity] .prod-metrics > :nth-child(4) { width: 2.4em; text-align: right; }
         /* Los tiempos quedan alineados a la derecha, en la misma columna en todas las filas */
-        [data-productivity] .prod-metrics > :nth-child(2) { min-width: 4.4em; text-align: right; }
         [data-productivity] .prod-guide { display: flex; flex-direction: column; gap: 20px; }
         [data-productivity] .prod-guide > a { width: fit-content; }
-        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, var(--prod-name-w)) minmax(20px, 1fr) max-content minmax(50px, 150px) max-content; align-items: center; gap: 0; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+        [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) max-content minmax(50px, min(230px, 34%)) max-content; align-items: center; gap: 0; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
         [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
         /* El detalle muestra siempre 7 filas exactas (7 × 70px); el encabezado de cada día cuenta como una fila */
         [data-productivity] .prod-detail { position: relative; max-height: 490px; overflow-y: auto; }
-        [data-productivity] .prod-day-head { height: 70px; box-sizing: border-box; align-content: center; }
+        [data-productivity] .prod-blank-row { height: 70px; box-sizing: border-box; }
+        [data-productivity] .prod-blank-row:nth-child(odd) { background-color: var(--panel-header); }
+        [data-productivity] .prod-detail-card { display: flex; flex-direction: column; }
+        [data-productivity] .prod-detail-wrap { position: relative; min-height: 0; }
+        [data-productivity] .prod-detail-cols { display: grid; }
+        /* Tabla del detalle: columnas separadas por líneas, 20px de espacio a cada lado y 15px entre las líneas de texto de una celda */
+        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 130px 205px minmax(0, 1fr) minmax(0, 1fr); }
+        [data-productivity] .prod-dcell { display: flex; min-width: 0; align-items: center; box-sizing: border-box; padding: 0 20px; border-right-width: 1px; }
+        [data-productivity] .prod-dgrid > .prod-dcell:last-child { border-right-width: 0; }
+        [data-productivity] .prod-dindex { justify-content: center; padding: 0; }
+        [data-productivity] .prod-dg { display: inline-block; width: 0.64em; text-align: center; }
+        [data-productivity] .prod-dcell[data-label="Horario"] { justify-content: center; }
+        [data-productivity] .prod-dcell[data-label="Horario"] > span { width: auto; max-width: 100%; }
+        [data-productivity] .prod-detail { counter-reset: prodd; }
+        [data-productivity] .prod-drow { counter-increment: prodd; min-height: 70px; box-sizing: border-box; cursor: grab; }
+        [data-productivity] .prod-dcounter::before { content: counter(prodd); }
+        [data-productivity] .prod-drow:nth-child(even) { background-color: var(--panel-header); }
+        [data-productivity] .prod-drow:hover { background-color: var(--panel-hover); }
+        /* Fila del día: usa las mismas columnas y líneas de la tabla, con un tono azul muy suave para distinguirla de las actividades */
+        [data-productivity] .prod-day-head { height: 70px; box-sizing: border-box; background-color: color-mix(in srgb, var(--panel-accent) 9%, var(--panel-surface)); }
         [data-productivity] .prod-row { cursor: grab; }
-        [data-productivity] .prod-day + .prod-day { border-top-width: 1px; }
+        /* La última fila de cada día ya trae su línea inferior: no se agrega otra arriba del día siguiente (evita la línea doble) */
+        /* La numeración (N°) empieza en 1 en cada día */
+        [data-productivity] .prod-day { counter-reset: prodd; }
         [data-productivity] .prod-row:nth-child(even) > .prod-row-btn { background-color: var(--panel-header); }
         [data-productivity] .prod-row-btn { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; gap: 20px; height: 69px; box-sizing: border-box; padding: 0 20px; text-align: left; cursor: pointer; }
         [data-productivity] .prod-row-btn:hover { background-color: var(--panel-hover) !important; }
@@ -106,11 +156,21 @@
             [data-productivity] .prod-row-btn > :nth-child(-n+4) { grid-column: auto; }
             [data-productivity] .prod-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
-        /* Escritorio (1000 o más): periodo y exportación a la izquierda, resumen a la derecha, con alto fijo */
-        @container prod (min-width: 1000px) {
-            [data-productivity] .prod-layout { height: 600px; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-            [data-productivity] .prod-aside { min-height: 0; overflow-y: auto; border-bottom-width: 0; border-right-width: 1px; }
-            [data-productivity] .prod-dates { grid-template-columns: minmax(0, 1fr); }
+        /* Pantallas angostas: la tabla conserva su forma y se desplaza en horizontal con el scroll delgado */
+        [data-productivity] .prod-detail-card .prod-main { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; }
+        [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar { height: 4px; }
+        [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-track { background: transparent; }
+        [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
+        [data-productivity] .prod-detail-card .prod-main > * { min-width: 760px; }
+        /* Escritorio: la tarjeta principal ocupa el alto disponible, como en Cronómetro. */
+        @container prod (min-width: 1240px) {
+            [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
+            [data-productivity] .prod-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+            [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; border-bottom-width: 0; border-right-width: 1px; }
+            [data-productivity] .prod-form { display: flex; flex: 1; flex-direction: column; gap: 0; justify-content: space-between; }
+            [data-productivity] .prod-dates, [data-productivity] .prod-date-field, [data-productivity] .prod-consult, [data-productivity] .prod-guide { display: contents; }
+            [data-productivity] .prod-label, [data-productivity] .prod-guide-link { min-height: 0; margin-bottom: 0; line-height: 15px; }
+            [data-productivity] .prod-primary { min-height: 50px; padding-top: 0; padding-bottom: 0; line-height: 15px; }
             [data-productivity] .prod-main { min-height: 0; }
             [data-productivity] .prod-dist { min-height: 0; flex: 1; grid-template-rows: minmax(0, 1fr); }
             [data-productivity] .prod-col { min-height: 0; }
@@ -118,6 +178,12 @@
             /* La lista muestra siempre 7 filas exactas, igual que la tabla del Cronómetro */
             [data-productivity] .prod-list { position: absolute; inset: 0; max-height: none; container-type: size; }
             [data-productivity] .prod-item { height: max(59px, calc(100cqh / 7)); }
+            /* Detalle por día: tarjeta de alto fijo con 7 filas exactas */
+            /* Mismo alto que la tarjeta de arriba, para que las filas de ambas midan lo mismo */
+            [data-productivity] .prod-detail-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
+            [data-productivity] .prod-detail-wrap { flex: 1; }
+            [data-productivity] .prod-detail { position: absolute; inset: 0; max-height: none; container-type: size; }
+            [data-productivity] .prod-detail .prod-day-head, [data-productivity] .prod-detail .prod-blank-row, [data-productivity] .prod-detail .prod-drow { height: max(59px, calc(100cqh / 7)); }
         }
     </style>
 
@@ -130,55 +196,32 @@
             <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Sincronizado en tiempo real</span>
         </section>
 
-        <div class="prod-wrap">
-            <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">
+        <div class="prod-wrap prod-summary-wrap">
+            <section class="prod-summary-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
                         <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                     </div>
-                    <div id="prod-tour-export" class="flex flex-wrap items-center gap-x-[20px] gap-y-[15px] leading-none">
-                        <span>Exportar información</span>
-                        @foreach ($exportFormats as $format)
-                            <button type="button" wire:click="export('{{ $format }}')" wire:loading.attr="disabled" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">{{ strtoupper($format) }}</button>
-                        @endforeach
+                    <div id="prod-tour-export" class="flex flex-wrap items-center gap-[15px]">
+                        <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" wire:target="export('pdf')" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">Descargar reporte PDF</button>
                     </div>
                 </header>
                 <div class="prod-layout">
-                    <aside class="prod-aside panel-scroll panel-border">
-                        <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
-                            <h2 class="panel-accent leading-none">Periodo de consulta</h2>
-                            <p class="prod-lines mt-[5px]">Seleccione periodo de fechas</p>
-                        </div>
-                        <div class="prod-form">
-                            <div id="prod-tour-period" class="prod-dates">
-                                <label class="block">
-                                    <span class="prod-label">Desde</span>
-                                    <input type="date" wire:model="from" class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0">
-                                </label>
-                                <label class="block">
-                                    <span class="prod-label">Hasta</span>
-                                    <input type="date" wire:model="to" class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0">
-                                </label>
-                            </div>
-                            <button id="prod-tour-consult" type="button" wire:click="applyFilters" class="prod-primary w-full focus:outline-none focus:ring-0">Consultar periodo</button>
-                            <div class="panel-border border-t" aria-hidden="true"></div>
-                            <div class="prod-guide">
-                                <a href="{{ route('section.guide', 'productividad') }}" title="Descargar la guía de Mi productividad en PDF" class="prod-label prod-link leading-none">Descargar guía PDF</a>
-                                <button type="button" @click="startQuickTour()" class="prod-primary min-h-[48px] w-full focus:outline-none focus:ring-0">Tutorial rápido</button>
-                            </div>
-                        </div>
-                    </aside>
+                    <x-productivity-period-aside
+                        from-prop="from" to-prop="to" :values="['from' => $from, 'to' => $to]"
+                        consult-method="applyFilters" consult-id="prod-tour-consult" period-id="prod-tour-period"
+                        guide="productividad" guide-title="Descargar la guía de Mi productividad en PDF" />
 
                     <div class="prod-main">
                         <div class="prod-dist">
-                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities']] as $distribution)
+                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients', 'example' => 'Cliente de ejemplo'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities', 'example' => 'Actividad de ejemplo']] as $distribution)
                                 <section id="{{ $distribution['tourId'] }}" class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
                                     <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
                                         <h3 class="prod-index panel-border leading-none">N°</h3>
                                         <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
                                     </div>
-                                    <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
+                                    <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
                                     <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step=".prod-item" data-activity-sortable data-sortable-local class="prod-list panel-scroll">
                                         @forelse ($distribution['items'] as $name => $seconds)
                                             <div class="prod-item prod-grid" data-activity-id="{{ $loop->index }}">
@@ -191,10 +234,30 @@
                                                 </div>
                                             </div>
                                         @empty
-                                            <p class="p-[20px] text-center">Sin datos en este periodo.</p>
+                                            {{-- Fila de ejemplo en ceros: se muestra mientras no haya datos en el periodo --}}
+                                            <div class="prod-item prod-grid">
+                                                <span class="prod-index prod-counter panel-border leading-none"></span>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span class="truncate leading-none">{{ $distribution['example'] }}</span>
+                                                    <span class="tabular-nums leading-none">00:00:00</span>
+                                                    <div class="prod-track"><div class="prod-fill" style="width: 0%"></div></div>
+                                                    <span class="text-right tabular-nums leading-none">0%</span>
+                                                </div>
+                                            </div>
                                         @endforelse
+                                        @for ($slot = max(count($distribution['items']), 1); $slot < 7; $slot++)
+                                            <div class="prod-item prod-grid prod-blank" aria-hidden="true">
+                                                <span class="prod-index panel-border"></span>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span></span>
+                                                    <span class="tabular-nums leading-none" style="visibility:hidden">00:00:00</span>
+                                                    <div class="prod-track" style="visibility:hidden"></div>
+                                                    <span class="text-right tabular-nums leading-none" style="visibility:hidden">0%</span>
+                                                </div>
+                                            </div>
+                                        @endfor
                                     </div>
-                                    <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                    <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                     </div>
                                 </section>
                             @endforeach
@@ -205,49 +268,97 @@
         </div>
 
         <div class="prod-wrap">
-            <section id="prod-tour-detail" class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Detalle de actividades por día" x-data="{ expandedRows: new Set(), toggleRow(id) { this.expandedRows.has(id) ? this.expandedRows.delete(id) : this.expandedRows.add(id) }, isExpanded(id) { return this.expandedRows.has(id) } }">
+            <section id="prod-tour-detail" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Detalle de actividades por día" x-data="{ expandedRows: new Set(), toggleRow(id) { this.expandedRows.has(id) ? this.expandedRows.delete(id) : this.expandedRows.add(id) }, isExpanded(id) { return this.expandedRows.has(id) } }">
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Detalle de actividades por día</h2>
-                        <p class="prod-lines mt-[5px]">Consulta el registro completo del periodo seleccionado.</p>
+                        <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($detailFrom)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($detailTo)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
                     </div>
-                    <p class="leading-none">{{ count($entries) }} {{ count($entries) === 1 ? 'registro' : 'registros' }}</p>
+                    <div id="prod-d-export" class="flex flex-wrap items-center gap-[15px]">
+                        <button type="button" wire:click="exportDetail('pdf')" wire:loading.attr="disabled" wire:target="exportDetail('pdf')" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">Descargar reporte PDF</button>
+                    </div>
                 </header>
-                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="relative">
-                <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
-                    @forelse ($activityDetail['groups'] as $group)
-                        <section class="prod-day panel-border" data-activity-sortable data-sortable-local>
-                            <header data-snap class="prod-day-head panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] overflow-hidden border-b p-[20px]">
-                                <h3 class="panel-accent leading-none">{{ $group['date'] }}</h3>
-                                <p class="leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }} <span class="ml-[20px]">Tiempo total <span class="tabular-nums">{{ $group['total_effective'] }}</span></span></p>
-                            </header>
-                            @foreach ($group['rows'] as $row)
-                                @php $rowId = $rowCounter++; @endphp
-                                <article data-snap data-activity-id="{{ $rowId }}" class="prod-row panel-border border-b last:border-b-0">
-                                    <button type="button" @click="toggleRow({{ $rowId }})" :aria-expanded="isExpanded({{ $rowId }})" data-sortable-handle class="prod-row-btn focus:outline-none focus:ring-0">
-                                        <span class="leading-none">{{ $row[$idxInicio] ?? '-' }} – {{ $row[$idxFin] ?? '-' }}</span>
-                                        <span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span>
-                                        <span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span>
-                                        <span class="tabular-nums leading-none">{{ $row[$idxTiempo] ?? '00:00:00' }}</span>
-                                        <svg class="h-4 w-4 transition-transform" :class="isExpanded({{ $rowId }}) && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
-                                    </button>
-                                    <dl x-show="isExpanded({{ $rowId }})" x-collapse style="display:none" class="prod-info panel-border panel-surface border-t">
-                                        <div><dt class="panel-accent leading-none">Tiempo total realizado</dt><dd class="mt-[15px] tabular-nums leading-none">{{ $row[$idxTiempo] ?? '00:00:00' }}</dd></div>
-                                        <div><dt class="panel-accent leading-none">Puesto profesional</dt><dd class="mt-[15px] leading-none">{{ $row[$idxPuesto] ?? '—' }}</dd></div>
-                                        <div><dt class="panel-accent leading-none">Área física</dt><dd class="mt-[15px] leading-none">{{ $row[$idxArea] ?? '—' }}</dd></div>
-                                        <div><dt class="panel-accent leading-none">Observaciones</dt><dd class="mt-[15px]">{{ $row[$idxObservaciones] ?? '—' }}</dd></div>
-                                    </dl>
-                                </article>
-                            @endforeach
-                        </section>
-                    @empty
-                        <div class="flex min-h-[260px] flex-col items-center justify-center px-[20px] text-center">
-                            <p class="panel-accent leading-none">Sin actividades registradas</p>
-                            <p class="prod-lines mt-[5px]">Ajusta el periodo o inicia una actividad desde el cronómetro.</p>
+                <div class="prod-layout">
+                    <x-productivity-period-aside
+                        from-prop="detailFrom" to-prop="detailTo" :values="['detailFrom' => $detailFrom, 'detailTo' => $detailTo]"
+                        consult-method="applyDetailFilters" consult-id="prod-d-consult" period-id="prod-d-period"
+                        guide="productividad-detalle" guide-title="Descargar la guía del Detalle de actividades en PDF" tour-set="detail" />
+
+                    <div class="prod-main">
+                        <div class="prod-detail-cols prod-dgrid panel-surface panel-border box-border h-[87px] shrink-0 border-b" aria-hidden="true">
+                            <span class="prod-dcell prod-dindex panel-border">N°</span>
+                            <span class="prod-dcell panel-border" style="justify-content:center">Horario</span>
+                            <span class="prod-dcell panel-border">Actividad</span>
+                            <span class="prod-dcell panel-border">Cliente</span>
                         </div>
-                    @endforelse
-                </div>
-                <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        <div id="prod-d-list" data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
+                                @forelse ($activityDetail['groups'] as $group)
+                                    <section class="prod-day panel-border" data-activity-sortable data-sortable-local>
+                                        @php $dayClients = collect($group['rows'])->pluck($idxCliente)->filter()->unique()->count(); @endphp
+                                        <header data-snap class="prod-day-head prod-dgrid panel-border border-b">
+                                            <span class="prod-dcell prod-dindex panel-border panel-accent"><span class="whitespace-nowrap leading-none">{{ $digits(preg_replace('/^(\d{2})\/(\d{2})\/\d{2}(\d{2})$/', '$1/$2/$3', (string) $group['date'])) }}</span></span>
+                                            <span class="prod-dcell panel-border justify-center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal((string) $group['total_effective'])) }}</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }}</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ $dayClients }} cliente{{ $dayClients === 1 ? '' : 's' }}</span></span>
+                                        </header>
+                                        @foreach ($group['rows'] as $row)
+                                            @php $rowId = $rowCounter++; @endphp
+                                            <article data-snap data-activity-id="{{ $rowId }}" class="prod-drow prod-dgrid panel-border border-b">
+                                                <span class="prod-dcell prod-dindex prod-dcounter panel-border" data-label="N°"></span>
+                                                <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
+                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits(($row[$idxInicio] ?? '-').' – '.($row[$idxFin] ?? '-')) }}</span>
+                                                    <template x-teleport="body">
+                                                        <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: {{ $row[$idxTiempo] ?? '00:00:00' }}<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
+                                                    </template>
+                                                </span></span>
+                                                <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
+                                                <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
+                                            </article>
+                                        @endforeach
+                                    </section>
+                                @empty
+                                    {{-- Día de ejemplo en ceros: se muestra mientras no haya actividades en el periodo --}}
+                                    <section class="prod-day panel-border">
+                                        <header data-snap class="prod-day-head prod-dgrid panel-border border-b">
+                                            <span class="prod-dcell prod-dindex panel-border panel-accent"><span class="whitespace-nowrap leading-none">{{ $digits(now()->format('d/m/y')) }}</span></span>
+                                            <span class="prod-dcell panel-border justify-center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">0 actividades</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">0 clientes</span></span>
+                                        </header>
+                                        <article data-snap class="prod-drow prod-dgrid panel-border border-b">
+                                            <span class="prod-dcell prod-dindex prod-dcounter panel-border" data-label="N°"></span>
+                                            <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
+                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits('00:00:00 – 00:00:00') }}</span>
+                                                    <template x-teleport="body">
+                                                        <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: 00:00:00<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
+                                                    </template>
+                                                </span></span>
+                                            <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
+                                            <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
+                                        </article>
+                                    </section>
+                                @endforelse
+                                @php
+                                    $detailLines = collect($activityDetail['groups'])->sum(fn ($group) => 1 + count($group['rows']));
+                                    $detailLines = $detailLines > 0 ? $detailLines : 2;
+                                @endphp
+                                @if ($detailLines < 7)
+                                    <div class="prod-day panel-border" aria-hidden="true">
+                                        @for ($slot = $detailLines; $slot < 7; $slot++)
+                                            <div class="prod-blank-row prod-dgrid panel-border border-b">
+                                                <span class="prod-dcell prod-dindex panel-border"></span>
+                                                <span class="prod-dcell panel-border"></span>
+                                                <span class="prod-dcell panel-border"></span>
+                                                <span class="prod-dcell panel-border"></span>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                @endif
+                            </div>
+                            <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
@@ -260,7 +371,7 @@
             <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
             <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
 
-            <div :style="spotlightStyle" class="pointer-events-auto z-[300001]" aria-hidden="true"></div>
+            <div :style="spotlightStyle" :class="quickTourSteps[quickTourStep - 1]?.target === 'prod-tour-period' ? 'pointer-events-none' : 'pointer-events-auto'" class="z-[300001]" aria-hidden="true"></div>
 
             <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
                 <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>

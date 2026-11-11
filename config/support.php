@@ -306,16 +306,16 @@ return [
             ],
         ],
         'control_horas' => [
-            'label' => 'Control de Horas',
+            'label' => 'Monitoreo',
             'icon' => 'reloj',
-            'menu' => 'Actividades › Control de Horas',
-            'summary' => 'Control de Horas reúne las herramientas para registrar y revisar el tiempo de trabajo: el Cronómetro para llevar cada actividad, el Reloj Checador para consultar tus marcas, Productividad para revisar tu periodo, el Panel de Control con sus gráficas y, para quien tiene permiso, Supervisión de Horas. Según tu rol verás solo algunas de estas opciones.',
+            'menu' => 'Monitoreo',
+            'summary' => 'Monitoreo reúne las herramientas para registrar y revisar el tiempo de trabajo: el Cronómetro para llevar cada actividad, el Reloj Checador para consultar tus marcas, Productividad para revisar tu periodo, el Panel de Control con sus gráficas y, para quien tiene permiso, Supervisión de Horas. Según tu rol verás solo algunas de estas opciones.',
             'items' => [
                 'cronometro' => [
                     'question' => '¿Cómo inicio una actividad en el Cronómetro?',
                     'answer' => 'En “Nuevo registro” elige el Cliente y la Actividad y presiona “Iniciar actividad”. El cronómetro empieza a contar de inmediato.',
                     'steps' => [
-                        'Entra a Actividades › Control de Horas › Cronómetro.',
+                        'Entra a Monitoreo › Control de Actividades › Cronómetro.',
                         'En Cliente, escribe o selecciona el cliente donde trabajarás.',
                         'En Actividad, escribe o selecciona la actividad que realizarás.',
                         'Presiona “Iniciar actividad”.',
@@ -325,7 +325,7 @@ return [
                     'question' => '¿Cómo consulto mis marcas del reloj checador?',
                     'answer' => 'Elige Fecha Inicio y Fecha Fin y presiona “Revisar Horas”. Por defecto se consultan los últimos 15 días.',
                     'steps' => [
-                        'Entra a Actividades › Control de Horas › Reloj Checador.',
+                        'Entra a Monitoreo › Control de Horas › Reloj Checador.',
                         'Selecciona Fecha Inicio y Fecha Fin.',
                         'Presiona “Revisar Horas”.',
                         'Consulta el tiempo neto, las horas decimales, el pago base, el bono y el total del periodo.',
@@ -335,7 +335,7 @@ return [
                     'question' => '¿Cómo consulto mi productividad de un periodo?',
                     'answer' => 'En “Periodo de consulta” elige Desde y Hasta y presiona “Consultar periodo”.',
                     'steps' => [
-                        'Entra a Actividades › Control de Horas › Productividad.',
+                        'Entra a Monitoreo › Control de Actividades › Productividad.',
                         'En Desde y Hasta selecciona las fechas.',
                         'Presiona “Consultar periodo”.',
                         'Revisa el resumen y el detalle del periodo.',
@@ -345,7 +345,7 @@ return [
                     'question' => '¿Cómo consulto un periodo en el Panel de Control?',
                     'answer' => 'En “Filtros de productividad” elige la fecha inicial y la final y presiona Buscar. Si eres administrador, también seleccionas al colaborador.',
                     'steps' => [
-                        'Entra a Actividades › Control de Horas › Panel de Control.',
+                        'Entra a Monitoreo › Control de Actividades › Panel de Control.',
                         'Si eres administrador, busca al colaborador por ID, nombre o correo.',
                         'Define la Fecha inicial y la Fecha final.',
                         'Presiona Buscar.',
@@ -356,7 +356,7 @@ return [
         'gestion_respaldos' => [
             'label' => 'Gestión de Respaldos',
             'icon' => 'respaldo',
-            'menu' => 'Actividades › Gestión de Respaldos',
+            'menu' => 'Monitoreo › Gestión de Respaldos',
             'summary' => 'Gestión de Respaldos compara los respaldos de CONTPAQi que están en el servidor con los que ya se copiaron a la memoria externa. Permite respaldar empresas, revisar el estado de cada una, consultar el historial y descargar la guía técnica de configuración.',
             'items' => [
                 'carpeta_destino' => [
@@ -615,7 +615,7 @@ return [
                     'steps' => [
                         'Recorre la lista de categorías de la primera columna.',
                         'Cada categoría indica cuántas preguntas contiene.',
-                        'Control de Horas reúne en una sola categoría el Cronómetro, el Reloj Checador, Productividad, el Panel de Control y Supervisión de Horas.',
+                        'Monitoreo reúne en una sola categoría Control de Actividades (Cronómetro, Panel de Control y Productividad) y Control de Horas (Reloj Checador y Supervisión de Horas).',
                         'Algunos apartados, como Administración u Hoja de Entrega, solo están disponibles según tu rol, aunque su guía aparece aquí.',
                     ],
                 ],

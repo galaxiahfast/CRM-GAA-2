@@ -478,6 +478,7 @@
                 <div class="clock-divider panel-border border-t" aria-hidden="true"></div>
                 <div class="clock-guide">
                     <a href="{{ route('section.guide', 'cronometro') }}" title="Descargar la guía del Cronómetro en PDF" class="clock-form-label clock-link leading-none">Descargar guía PDF</a>
+                    <div class="panel-border w-full border-t" aria-hidden="true"></div>
                     <button type="button" @click="startQuickTour()" class="clock-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">
                         Tutorial rápido
                     </button>
@@ -500,7 +501,7 @@
                 </tr>
             </thead>
         </table>
-            <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
+            <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="clock-body-wrap relative">
             <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('tbody tr'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="tbody tr" class="panel-scroll clock-body relative overflow-auto overscroll-contain">
                 <table class="clock-table w-full border-collapse text-left">
                     @if ($todayEntries->isEmpty())
@@ -648,7 +649,7 @@
                     @endif
                 </table>
             </div>
-            <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+            <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
             </div>
     </div>
         </div>

@@ -8,6 +8,76 @@ import './organization-sortable';
 import './clock-particle-network';
 
 document.addEventListener('alpine:init', () => {
+    window.Alpine.data('productivityDatePicker', (model) => ({
+        value: model,
+        open: false,
+        cursor: new Date(),
+        left: 16,
+        top: 16,
+        init() {
+            this.resetCursor();
+            this.reposition = () => { if (this.open) this.position(); };
+            window.addEventListener('resize', this.reposition);
+            document.addEventListener('scroll', this.reposition, true);
+        },
+        destroy() {
+            window.removeEventListener('resize', this.reposition);
+            document.removeEventListener('scroll', this.reposition, true);
+        },
+        resetCursor() {
+            const parts = String(this.value || '').split('-').map(Number);
+            this.cursor = parts.length === 3 && parts.every(Number.isFinite)
+                ? new Date(parts[0], parts[1] - 1, 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        },
+        get formattedValue() {
+            const parts = String(this.value || '').split('-');
+            // Formato 11/11/26 (el año con dos cifras)
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}` : 'Elige una fecha';
+        },
+        // Cada cifra va en una caja de ancho fijo para que todas las fechas midan lo mismo (un "1" es más angosto que un "0").
+        get formattedHtml() {
+            return this.formattedValue.replace(/\d/g, '<span class="prod-dg">$&</span>');
+        },
+        get monthLabel() {
+            const label = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(this.cursor);
+            return label.charAt(0).toUpperCase() + label.slice(1);
+        },
+        get days() {
+            const start = new Date(this.cursor.getFullYear(), this.cursor.getMonth(), 1);
+            start.setDate(start.getDate() - (start.getDay() + 6) % 7);
+            return Array.from({ length: 42 }, (_, index) => {
+                const date = new Date(start);
+                date.setDate(start.getDate() + index);
+                return { date, key: this.toIso(date), outside: date.getMonth() !== this.cursor.getMonth() };
+            });
+        },
+        toIso(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        },
+        isToday(date) { return this.toIso(date) === this.toIso(new Date()); },
+        changeMonth(delta) { this.cursor = new Date(this.cursor.getFullYear(), this.cursor.getMonth() + delta, 1); },
+        selectDate(date) { this.value = this.toIso(date); this.cursor = new Date(date.getFullYear(), date.getMonth(), 1); this.open = false; },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) { this.resetCursor(); this.$nextTick(() => this.position()); }
+        },
+        position() {
+            // El calendario está fuera del contenedor con zoom y recibe el mismo zoom de la aplicación (--app-zoom).
+            // Las medidas se calculan en píxeles visibles y al final se dividen entre el zoom.
+            const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+            const rect = this.$refs.trigger.getBoundingClientRect();
+            const width = Math.min(320 * zoom, window.innerWidth - 32);
+            const height = 352 * zoom; // alto fijo del calendario (siempre 6 semanas)
+            // 10px entre el calendario y el campo; si abajo no cabe, se abre hacia arriba con la misma distancia.
+            const gap = 10;
+            const left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
+            const top = rect.bottom + gap + height < window.innerHeight
+                ? rect.bottom + gap : Math.max(16, rect.top - gap - height);
+            this.left = left / zoom;
+            this.top = top / zoom;
+        },
+    }));
+
     window.Alpine.data('backupOverlayScroll', () => ({
         visible: false,
         height: 32,
@@ -17,7 +87,15 @@ document.addEventListener('alpine:init', () => {
         left: 0,
         observer: null,
         stopHorizontalDrag: null,
+        // Con data-scroll-on-hover el indicador de scroll solo se muestra mientras el cursor está sobre el contenedor.
+        hoverOnly: false,
+        hovering: false,
         init() {
+            this.hoverOnly = this.$el.hasAttribute('data-scroll-on-hover');
+            if (this.hoverOnly) {
+                this.$el.addEventListener('mouseenter', () => { this.hovering = true; this.update(); });
+                this.$el.addEventListener('mouseleave', () => { this.hovering = false; this.update(); });
+            }
             this.$nextTick(() => {
                 this.update();
                 this.observer = new ResizeObserver(() => this.update());
@@ -64,8 +142,9 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.visible = scroller.clientHeight > 0 && scroller.scrollHeight > scroller.clientHeight;
-            if (this.visible) {
+            const canScroll = scroller.clientHeight > 0 && scroller.scrollHeight > scroller.clientHeight;
+            this.visible = canScroll && (!this.hoverOnly || this.hovering);
+            if (canScroll) {
                 const offset = Number(scroller.dataset.scrollTopOffset || 0);
                 const bottomOffset = Number(scroller.dataset.scrollBottomOffset || 0);
                 const viewport = Math.max(1, scroller.clientHeight - offset - bottomOffset);
@@ -88,7 +167,7 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    window.Alpine.data('clockQuickTour', (customSteps = null) => ({
+    window.Alpine.data('clockQuickTour', (customSteps = null, tourSets = {}) => ({
         quickTourStep: 0,
         spotlightStyle: '',
         popoverStyle: '',
@@ -99,6 +178,7 @@ document.addEventListener('alpine:init', () => {
         previousBodyOverflow: '',
         // Solo se muestran los pasos cuyo elemento existe (los de la tabla necesitan al menos una actividad).
         quickTourSteps: [],
+        tourSets,
         // Los pasos del Cronómetro por defecto; otras secciones (Productividad) pasan los suyos.
         allQuickTourSteps: customSteps ?? [
             {
@@ -168,8 +248,9 @@ document.addEventListener('alpine:init', () => {
             }
             this.removeQuickTourListeners();
         },
-        startQuickTour() {
-            this.quickTourSteps = this.allQuickTourSteps.filter((step) => document.getElementById(step.target));
+        startQuickTour(set = null) {
+            const source = set && this.tourSets[set] ? this.tourSets[set] : this.allQuickTourSteps;
+            this.quickTourSteps = source.filter((step) => document.getElementById(step.target));
             if (! this.quickTourSteps.length) return;
 
             this.quickTourStep = 1;

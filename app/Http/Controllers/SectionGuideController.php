@@ -17,6 +17,7 @@ class SectionGuideController extends Controller
             'supervision-horas' => 'supervision_horas',
             'cronometro' => 'cronometro',
             'productividad' => 'productividad',
+            'productividad-detalle' => 'productividad_detalle',
             'chat-soporte' => 'chat_soporte',
         ];
 

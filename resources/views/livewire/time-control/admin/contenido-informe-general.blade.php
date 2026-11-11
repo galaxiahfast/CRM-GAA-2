@@ -72,7 +72,7 @@
 
         <div style="margin:0 -50px;padding:50px;border-bottom:1px solid #e4e4e7;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:80px;white-space:nowrap;">
             <div style="display:flex;align-items:center;gap:15px;color:#71717a;font-size:15px;">
-                <span>Actividades</span><span style="color:#d4d4d8">&gt;</span><span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span><span style="font-weight:600;color:#000">Supervisión de Horas</span>
+                <span>Monitoreo</span><span style="color:#d4d4d8">&gt;</span><span>Control de Horas</span><span style="color:#d4d4d8">&gt;</span><span style="font-weight:600;color:#000">Supervisión de Horas</span>
             </div>
             <div style="display:flex;align-items:center;gap:30px;font-size:15px;">
                 <a href="{{ route('section.guide', 'supervision-horas') }}" title="Descargar la guía de Supervisión de Horas en PDF" style="display:inline-flex;align-items:center;gap:10px;color:#15803d;text-decoration:none;white-space:nowrap;">

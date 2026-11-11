@@ -85,7 +85,7 @@ class BackupStorageManagerTest extends TestCase
         ]);
     }
 
-    public function test_every_role_except_interns_can_open_the_backup_manager(): void
+    public function test_only_administrators_can_open_the_backup_manager(): void
     {
         $admin = $this->user('Administrador', 'admin-storage@datamid.test');
         $accountant = $this->user('Contador', 'contador-storage@datamid.test');
@@ -103,61 +103,36 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('wire:poll.15s="refreshSharedExportStatus"', false)
             ->assertDontSee('Generar respaldo de la empresa')
             ->assertDontSee('Configura y genera los respaldos fácilmente.')
-            ->assertDontSee('Servidor conectado')
-            ->assertDontSee('Subir respaldos')
-            ->assertDontSee('Eliminar respaldo')
-            ->assertDontSee('Cancelar subida');
-        $this->assertTrue(Gate::forUser($accountant)->allows('manage-system-backups'));
-        $this->assertFalse(Gate::forUser($auxiliary)->allows('manage-system-backups'));
-        $this->assertTrue(Gate::forUser($auxiliary)->allows('access-system-backups'));
-        $this->assertTrue(Gate::forUser($auxiliary)->allows('upload-system-backups'));
-        $this->assertTrue(Gate::forUser($coordinator)->allows('upload-system-backups'));
-        $this->assertFalse(Gate::forUser($intern)->allows('access-system-backups'));
-        $this->assertFalse(Gate::forUser($intern)->allows('upload-system-backups'));
-        $this->assertFalse(Gate::forUser($seniorIntern)->allows('upload-system-backups'));
+            ->assertDontSee('Servidor conectado');
 
-        $this->flushSession()->actingAs($auxiliary)->get(route('activity-backups.index'))->assertOk();
-        $this->flushSession()->actingAs($coordinator)->get(route('activity-backups.index'))->assertOk();
-        $this->flushSession()->actingAs($intern)->get(route('activity-backups.index'))->assertForbidden();
-        $this->flushSession()->actingAs($seniorIntern)->get(route('activity-backups.index'))->assertForbidden();
+        // Solo el administrador tiene acceso: ningún otro rol, incluidos los becarios, puede entrar ni subir respaldos.
+        foreach (['access-system-backups', 'upload-system-backups', 'manage-system-backups'] as $ability) {
+            $this->assertTrue(Gate::forUser($admin)->allows($ability), $ability.' admin');
+            foreach ([$accountant, $auxiliary, $coordinator, $intern, $seniorIntern] as $other) {
+                $this->assertFalse(Gate::forUser($other)->allows($ability), $ability.' '.$other->email);
+            }
+        }
+
+        foreach ([$accountant, $auxiliary, $coordinator, $intern, $seniorIntern] as $other) {
+            $this->flushSession()->actingAs($other)->get(route('activity-backups.index'))->assertForbidden();
+        }
 
         $upload = [
             'site' => 'merida',
             'product' => 'contabilidad',
-            'file_name' => 'auxiliar.zip',
+            'file_name' => 'respaldo.zip',
             'mime_type' => 'application/zip',
             'size' => 100,
-            'fingerprint' => 'auxiliar:upload',
+            'fingerprint' => 'admin:upload',
         ];
-        $this->flushSession()->actingAs($auxiliary)
+        $this->flushSession()->actingAs($admin)
             ->postJson(route('activity-backups.uploads.initialize'), $upload)
             ->assertOk();
-        $this->flushSession()->actingAs($intern)
-            ->postJson(route('activity-backups.uploads.initialize'), array_merge($upload, ['fingerprint' => 'intern:upload']))
-            ->assertForbidden();
-
-        $existing = BackupUpload::query()->create([
-            'upload_key' => hash('sha256', 'managed-backup'),
-            'site' => 'merida',
-            'product' => 'contabilidad',
-            'user_id' => $admin->id,
-            'original_name' => 'administrado.zip',
-            'extension' => 'zip',
-            'size' => 100,
-            'chunk_size' => 100,
-            'total_chunks' => 1,
-            'uploaded_chunks' => [0],
-            'received_bytes' => 100,
-            'status' => BackupUpload::STATUS_COMPLETED,
-            'last_activity_at' => now(),
-            'completed_at' => now(),
-        ]);
-        $this->flushSession()->actingAs($auxiliary)
-            ->postJson(route('activity-backups.uploads.initialize'), array_merge($upload, [
-                'fingerprint' => 'auxiliary:replacement',
-                'replace_upload_id' => $existing->id,
-            ]))
-            ->assertForbidden();
+        foreach ([$accountant, $auxiliary, $coordinator, $intern, $seniorIntern] as $other) {
+            $this->flushSession()->actingAs($other)
+                ->postJson(route('activity-backups.uploads.initialize'), array_merge($upload, ['fingerprint' => $other->email.':upload']))
+                ->assertForbidden();
+        }
     }
 
     public function test_authorized_user_can_download_the_infrastructure_guide_without_secrets(): void
@@ -565,7 +540,7 @@ class BackupStorageManagerTest extends TestCase
         Bus::assertNotDispatched(CopyContpaqiBackups::class);
     }
 
-    public function test_all_users_see_the_same_active_export_and_queued_cancellation_releases_it(): void
+    public function test_all_administrators_see_the_same_active_export_and_queued_cancellation_releases_it(): void
     {
         $date = now()->format('Ymd');
         File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", str_repeat('b', 1024));
@@ -574,7 +549,7 @@ class BackupStorageManagerTest extends TestCase
         $catalog = app(ContpaqiBackupCatalog::class);
         $record = collect($catalog->dashboard(now()->toDateString())['records'])->firstWhere('complete', true);
         $owner = $this->user('Administrador', 'owner-shared-export@datamid.test');
-        $viewer = $this->user('Auxiliar', 'viewer-shared-export@datamid.test');
+        $viewer = $this->user('Administrador', 'viewer-shared-export@datamid.test');
         $state = app(ContpaqiBackupExport::class)->create(
             now()->toDateString(),
             [$record['id']],

@@ -13,9 +13,9 @@
             <!-- Header Superior con Migas de Pan -->
             <div class="time-dashboard-topbar" style="position: relative; padding: 50px; border-bottom: 1px solid #e4e4e7; background-color: rgba(255,255,255,.75); display: flex; align-items: center; justify-content: space-between; min-width: 0; gap: 30px;">
                 <div style="display: flex; align-items: center; gap: 15px; font-size: 15px; color: #6b7280; white-space: nowrap; flex-shrink: 0;">
-                    <span style="font-weight: 500;">Actividades</span>
+                    <span style="font-weight: 500;">Monitoreo</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
-                    <span style="font-weight: 500;">Control de Horas</span>
+                    <span style="font-weight: 500;">Control de Actividades</span>
                     <span style="color: #d1d5db; font-weight: 300;">></span>
                     <a href="{{ route('time.dashboard') }}" style="color: #000; font-weight: 600; text-decoration: none;">Panel de control</a>
                 </div>
