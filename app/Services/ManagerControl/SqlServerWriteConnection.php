@@ -50,6 +50,33 @@ class SqlServerWriteConnection implements WriteConnection
         });
     }
 
+    public function diagnostics(): array
+    {
+        $pdo = $this->pdo();
+        $object = '['.config('managercontrol.schema.hours.db_schema', 'dbo').'].['.config('managercontrol.schema.hours.table').']';
+        try {
+            // Consulta fija (solo lectura de metadatos): no recibe datos de la persona y no escribe nada.
+            $row = $pdo->query("SELECT SUSER_NAME() AS login_name, DB_NAME() AS db_name, "
+                ."ISNULL(HAS_PERMS_BY_NAME('{$object}', 'OBJECT', 'SELECT'), 0) AS can_select, "
+                ."ISNULL(HAS_PERMS_BY_NAME('{$object}', 'OBJECT', 'INSERT'), 0) AS can_insert, "
+                ."ISNULL(HAS_PERMS_BY_NAME('{$object}', 'OBJECT', 'UPDATE'), 0) AS can_update, "
+                ."ISNULL(HAS_PERMS_BY_NAME('{$object}', 'OBJECT', 'DELETE'), 0) AS can_delete, "
+                .'ISNULL(IS_ROLEMEMBER(\'db_owner\'), 0) AS is_owner')->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new ManagerControlException('No se pudo revisar la cuenta de escritura (código '.$e->getCode().').', 0, $e);
+        }
+
+        return [
+            'login' => (string) ($row['login_name'] ?? ''),
+            'database' => (string) ($row['db_name'] ?? ''),
+            'select' => (bool) ($row['can_select'] ?? false),
+            'insert' => (bool) ($row['can_insert'] ?? false),
+            'update' => (bool) ($row['can_update'] ?? false),
+            'delete' => (bool) ($row['can_delete'] ?? false),
+            'db_owner' => (bool) ($row['is_owner'] ?? false),
+        ];
+    }
+
     private function guard(string $sql, string $verb): void
     {
         $table = (string) config('managercontrol.schema.hours.table');

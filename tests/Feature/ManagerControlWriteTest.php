@@ -77,6 +77,11 @@ class ManagerControlWriteTest extends TestCase
 
                 return 1;
             }
+
+            public function diagnostics(): array
+            {
+                return ['login' => 'crm_captura', 'database' => 'Prueba', 'select' => true, 'insert' => true, 'update' => true, 'delete' => false, 'db_owner' => false];
+            }
         };
         $this->app->instance(WriteConnection::class, $this->writes);
     }
@@ -332,6 +337,39 @@ class ManagerControlWriteTest extends TestCase
         }
         $this->assertStringNotContainsString('modo de solo lectura', $guide);
         $this->assertStringNotContainsString('nunca escribe', $guide);
+    }
+
+    public function test_the_write_check_command_reports_permissions_without_writing(): void
+    {
+        // Escritura apagada: el comando lo dice y falla.
+        $this->artisan('managercontrol:test-write')->expectsOutputToContain('DESACTIVADA')->assertFailed();
+
+        // Con la cuenta correcta (SELECT, INSERT y UPDATE; sin DELETE): todo bien y nada se escribe.
+        $this->enableWrites();
+        $this->artisan('managercontrol:test-write')
+            ->expectsOutputToContain('crm_captura')->expectsOutputToContain('dar de baja es un UPDATE')
+            ->expectsOutputToContain('No se escribió nada en la base.')->assertSuccessful();
+        $this->assertSame([], $this->writes->calls);
+
+        // Si faltan permisos, dice cuáles y qué ejecutar en SQL Server.
+        $this->app->instance(WriteConnection::class, new class implements WriteConnection
+        {
+            public function insert(string $sql, array $bindings): int
+            {
+                return 0;
+            }
+
+            public function update(string $sql, array $bindings): int
+            {
+                return 0;
+            }
+
+            public function diagnostics(): array
+            {
+                return ['login' => 'crm_captura', 'database' => 'Prueba', 'select' => true, 'insert' => true, 'update' => false, 'delete' => false, 'db_owner' => false];
+            }
+        });
+        $this->artisan('managercontrol:test-write')->expectsOutputToContain('Faltan permisos: UPDATE')->assertFailed();
     }
 
     public function test_the_write_connection_only_accepts_insert_or_update_on_the_hours_table(): void
