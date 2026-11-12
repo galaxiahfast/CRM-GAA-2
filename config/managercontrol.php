@@ -52,6 +52,29 @@ return [
         'max_past_days' => (int) env('MANAGERCONTROL_WRITE_MAX_PAST_DAYS', 400),
     ],
 
+    // Cuenta independiente para importar catálogos. Nunca se usa para registrar horas.
+    'catalog_write' => [
+        'enabled' => (bool) env('MANAGERCONTROL_CATALOG_WRITE_ENABLED', false),
+        'username' => env('MANAGERCONTROL_CATALOG_WRITE_USERNAME'),
+        'password' => env('MANAGERCONTROL_CATALOG_WRITE_PASSWORD'),
+    ],
+    // Departamento de ManagerControl para cada categoría del CRM (confirmado para la empresa/ejercicio 1/3).
+    'catalog_departments' => [
+        'Atención a Clientes' => 45,
+        'Auditoría y Revisión' => 11,
+        'Consultoría Fiscal' => 35,
+        'Contabilidad' => 41,
+        'Control Administrativo' => 45,
+        'Declaraciones e Informativas' => 41,
+        'Facturación Electrónica' => 41,
+        'Impuestos Especiales' => 41,
+        'Impuestos Estatales' => 41,
+        'Impuestos Federales' => 41,
+        'Nómina y Seguridad Social' => 44,
+        'Servicio Visual QA' => 43,
+        'Trámites y Gestoría' => 35,
+    ],
+
     /*
     | Mapa del esquema. Los nombres por defecto son una INFERENCIA a partir de las clases del
     | legacy (ControlHoras, Empleado, Cliente, Actividad) y deben confirmarse con
@@ -83,9 +106,9 @@ return [
         ],
         'employees' => ['db_schema' => 'Catalogos', 'table' => 'Empleados', 'id' => 'IDEmpleado', 'name' => ['Nombres', 'ApellidoPaterno', 'ApellidoMaterno'], 'deleted' => 'Baja', 'department_id' => 'IDDepartamento', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'username' => 'NombreUsuario', 'rate' => 'Precio'],
         'departments' => ['db_schema' => 'Catalogos', 'table' => 'Departamentos', 'id' => 'IDDepartamento', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio'],
-        'customers' => ['db_schema' => 'Catalogos', 'table' => 'Clientes', 'id' => 'IDCliente', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
-        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre', 'section_id' => 'IDSeccion', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        'customers' => ['db_schema' => 'Catalogos', 'table' => 'Clientes', 'id' => 'IDCliente', 'name' => 'Nombre', 'rfc' => 'RFC', 'source_username' => 'NombreUsuario', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre', 'source_username' => 'NombreUsuario', 'section_id' => 'IDSeccion', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
         // «Cuenta/Concepto» de la app de escritorio: agrupa las actividades (Actividades.IDSeccion). Solo sirve para elegir; el registro no la guarda.
-        'sections' => ['db_schema' => 'Catalogos', 'table' => 'Secciones', 'id' => 'IDSeccion', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        'sections' => ['db_schema' => 'Catalogos', 'table' => 'Secciones', 'id' => 'IDSeccion', 'name' => 'Nombre', 'source_username' => 'NombreUsuario', 'department_id' => 'IDDepartamento', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
     ],
 ];

@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\User;
 use App\Services\Authorization\PermissionAccessService;
 use App\Services\ManagerControl\LegacyEmployeeResolver;
+use App\Services\ManagerControl\CatalogInsertConnection;
 use App\Services\ManagerControl\ManagerControlException;
 use App\Services\ManagerControl\ReadOnlyConnection;
 use App\Services\ManagerControl\SqlServerReadOnlyConnection;
+use App\Services\ManagerControl\SqlServerCatalogInsertConnection;
 use App\Services\ManagerControl\SqlServerWriteConnection;
 use App\Services\ManagerControl\WriteConnection;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +23,7 @@ class ManagerControlServiceProvider extends ServiceProvider
         $this->app->scoped(ReadOnlyConnection::class, SqlServerReadOnlyConnection::class);
         // Conexión de escritura aparte (apagada mientras MANAGERCONTROL_WRITE_ENABLED=false).
         $this->app->scoped(WriteConnection::class, SqlServerWriteConnection::class);
+        $this->app->scoped(CatalogInsertConnection::class, SqlServerCatalogInsertConnection::class);
     }
 
     public function boot(): void

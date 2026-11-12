@@ -682,17 +682,17 @@
                                                 <div class="min-w-0 sm:col-span-2" @if (isset($formAuto['customer'])) data-mc-auto @endif>
                                                     <label for="mc-form-customer" class="mb-[20px] block">Cliente</label>
                                                     <x-panel-select id="mc-form-customer" label="Cliente" property="formCustomer" searchable floating rows="4" placeholder="Buscar cliente…"
-                                                        :options="collect($formCustomers)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name']])->all()" />
+                                                        :options="collect($formCustomers)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name'].' · '.(($item['source'] ?? 'managercontrol') === 'crm' ? 'CRM' : 'ManagerControl')])->all()" />
                                                 </div>
                                                 <div class="min-w-0 sm:col-span-2" @if (isset($formAuto['section'])) data-mc-auto @endif>
                                                     <label for="mc-form-section" class="mb-[20px] block">Cuenta/Concepto</label>
                                                     <x-panel-select id="mc-form-section" label="Cuenta/Concepto" property="formSection" searchable floating rows="4" placeholder="Buscar cuenta o concepto…"
-                                                        :options="collect($formSections)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name']])->all()" />
+                                                        :options="collect($formSections)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name'].' · '.(($item['source'] ?? 'managercontrol') === 'crm' ? 'CRM' : 'ManagerControl')])->all()" />
                                                 </div>
                                                 <div class="min-w-0 sm:col-span-2" @if (isset($formAuto['activity'])) data-mc-auto @endif>
                                                     <label for="mc-form-activity" class="mb-[20px] block">Actividad</label>
                                                     <x-panel-select wire:key="mc-form-activity-{{ $formSection ?: 'all' }}" id="mc-form-activity" label="Actividad" property="formActivity" searchable floating rows="4" placeholder="Buscar actividad…"
-                                                        :options="collect($formActivities)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name']])->all()" />
+                                                        :options="collect($formActivities)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name'].' · '.(($item['source'] ?? 'managercontrol') === 'crm' ? 'CRM' : 'ManagerControl')])->all()" />
                                                 </div>
                                             </div>
                                         </section>

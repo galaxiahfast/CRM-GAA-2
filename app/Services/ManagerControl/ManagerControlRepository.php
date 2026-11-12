@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
  */
 class ManagerControlRepository
 {
+    public const CATALOG_LIMIT = 2000;
+
     public function __construct(private readonly ReadOnlyConnection $db) {}
 
     /** @return list<array{id: int, name: string}> */
@@ -85,7 +87,7 @@ class ManagerControlRepository
      * Clientes, cuentas/conceptos (secciones) o actividades activos de la empresa/ejercicio (para capturar o editar una actividad).
      * Las actividades traen además su cuenta/concepto (section_id).
      *
-     * @return list<array{id: int, name: string, section_id?: int}>
+     * @return list<array{id: int, name: string, source: string, section_id?: int, department_id?: int, rfc?: string}>
      */
     public function catalog(string $key): array
     {
@@ -96,14 +98,39 @@ class ManagerControlRepository
         return Cache::remember($this->cacheKey($key), now()->addMinutes(10), function () use ($key): array {
             $t = $this->table($key);
             $bindings = [];
-            $sectionColumn = isset($t['section_id']) ? ", {$t['section_id']} AS section_id" : '';
-            $sql = "SELECT TOP (2000) {$t['id']} AS id, {$t['name']} AS name{$sectionColumn} FROM {$t['table']} WHERE 1 = 1"
+            $extra = (isset($t['section_id']) ? ", {$t['section_id']} AS section_id" : '')
+                .(isset($t['department_id']) ? ", {$t['department_id']} AS department_id" : '')
+                .(isset($t['rfc']) ? ", {$t['rfc']} AS rfc" : '')
+                .(isset($t['source_username']) ? ", {$t['source_username']} AS source_username" : '');
+            $sql = 'SELECT TOP ('.self::CATALOG_LIMIT.") {$t['id']} AS id, {$t['name']} AS name{$extra} FROM {$t['table']} WHERE 1 = 1"
                 .(isset($t['deleted']) ? " AND ISNULL({$t['deleted']}, 0) = 0" : '')
                 .$this->scope('', $t, $bindings)
                 ." ORDER BY {$t['name']}";
 
-            return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])] + ($sectionColumn !== '' ? ['section_id' => (int) ($r['section_id'] ?? 0)] : []), $this->db->select($sql, $bindings));
+            return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name']),
+                'source' => trim((string) ($r['source_username'] ?? '')) === 'CRM-GAA' ? 'crm' : 'managercontrol']
+                + (isset($t['section_id']) ? ['section_id' => (int) ($r['section_id'] ?? 0)] : [])
+                + (isset($t['department_id']) ? ['department_id' => (int) ($r['department_id'] ?? 0)] : [])
+                + (isset($t['rfc']) ? ['rfc' => trim((string) ($r['rfc'] ?? ''))] : []), $this->db->select($sql, $bindings));
         });
+    }
+
+    /** @return list<int> */
+    public function departmentIds(): array
+    {
+        $d = $this->table('departments');
+        $bindings = [];
+        $sql = "SELECT {$d['id']} AS id FROM {$d['table']} WHERE 1 = 1".$this->scope('', $d, $bindings);
+
+        return array_map(fn (array $row): int => (int) $row['id'], $this->db->select($sql, $bindings));
+    }
+
+    public function forgetCatalog(string $key): void
+    {
+        if (! in_array($key, ['customers', 'sections', 'activities'], true)) {
+            throw new ManagerControlException('Catálogo no permitido.');
+        }
+        Cache::forget($this->cacheKey($key));
     }
 
     /**
