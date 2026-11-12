@@ -446,9 +446,12 @@ XML;
         ], $this->sampleHours()));
 
         $html = (new TotalHoursPdf)->originalHtml(['id' => 7, 'name' => 'Ana Pérez'], 'Contabilidad', '2026-11-01', '2026-11-15', $summary);
-        foreach (['GONZÁLEZ, ALONZO Y ASOCIADOS S.C.P', 'Total de Horas Laboradas', '01/11/2026', '15/11/2026', 'Ana Pérez', 'Contabilidad', 'Supervisó', 'Revisó', '4.00', '02/11/2026'] as $expected) {
+        foreach (['GONZÁLEZ, ALONZO Y ASOCIADOS S.C.P', 'Total de Horas Laboradas', '01/11/2026', '15/11/2026', 'Ana Pérez', 'Contabilidad', 'Supervisó', 'Revisó', '4.0', '2/11/26', '3/11/26', '1.5', '0.5'] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }
+        // Igual que el original: agrupado por día, sin descripciones
+        $this->assertStringNotContainsString('Pólizas', $html);
+        $this->assertStringNotContainsString('4.00', $html);
 
         $admin = $this->user('Administrador', 'admin-orig@datamid.test');
         $this->actingAs($admin)

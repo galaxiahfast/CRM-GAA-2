@@ -19,20 +19,25 @@
         .meta { left: 0; font-size: 8.1pt; }
         .meta b { font-size: 8.75pt; }
         .meta .v { position: absolute; left: 72pt; top: -0.6pt; }
-        table { width: 486.8pt; border-collapse: collapse; }
+        table { width: 512.8pt; border-collapse: collapse; }
         th { padding: 0 0 6pt; text-align: left; font-size: 8.75pt; font-weight: bold; vertical-align: bottom; }
         td { padding: 2.5pt 0; vertical-align: top; word-wrap: break-word; }
         td.c-client, th.c-client { padding-right: 8pt; }
         td.c-activity, th.c-activity { padding-right: 8pt; }
         .c-hours { text-align: right; }
-        .desc { display: block; margin-top: 1.5pt; }
+        /* El original agrupa por día: la fecha va sola en su renglón, sin descripción, y cada día cierra con su subtotal en negritas */
+        td.c-date { padding-top: 7pt; }
+        tr.day td { padding: 7pt 0 1pt; }
+        tr.item td { padding: 1pt 0; }
+        tr.sub td { padding: 1pt 0 0; }
+        .c-sub { width: 26pt; text-align: right; font-weight: bold; font-size: 8.75pt; }
         .empty { padding-top: 6pt; }
         .closing { position: relative; height: 40pt; margin-top: 30pt; page-break-inside: avoid; }
         .closing > * { position: absolute; white-space: nowrap; }
         .sign-line { top: 11pt; width: 120pt; border-top: 1pt solid #000; }
         .sign-label { top: 17pt; width: 120pt; text-align: center; font-size: 8.75pt; font-weight: bold; }
         .total { left: 348pt; top: 0; font-size: 8.75pt; font-weight: bold; }
-        .total-value { right: 0; top: 0; font-size: 8.75pt; font-weight: bold; }
+        .total-value { right: -26pt; top: 0; font-size: 8.75pt; font-weight: bold; }
         .page-number { position: fixed; right: -29.2pt; bottom: -20pt; font-size: 8.95pt; }
         .page-number:after { content: counter(page); }
     </style>
@@ -53,25 +58,33 @@
     <table>
         <thead>
             {{-- Mismas columnas que el original: Fecha en 82.3pt, Cliente en 130.3pt, Actividades en 328.3pt y Horas alineadas a 569.1pt --}}
-            <tr><th class="c-date" style="width: 9.86%">Fecha</th><th class="c-client" style="width: 40.67%">Cliente</th><th class="c-activity" style="width: 41.43%">Actividades</th><th class="c-hours" style="width: 8.04%">Horas</th></tr>
+            <tr><th class="c-date" style="width: 9.35%">Fecha</th><th class="c-client" style="width: 38.6%">Cliente</th><th class="c-activity" style="width: 39.3%">Actividades</th><th class="c-hours" style="width: 7.65%">Horas</th><th class="c-sub" style="width: 5.1%"></th></tr>
         </thead>
         <tbody>
-            @forelse ($rows as $row)
-                <tr>
-                    <td class="c-date">{{ \Illuminate\Support\Carbon::parse($row['date'])->format('d/m/Y') }}</td>
-                    <td class="c-client">{{ $row['customer'] }}</td>
-                    <td class="c-activity">{{ $row['activity'] }}@if ($row['description'] !== '')<span class="desc">{{ $row['description'] }}</span>@endif</td>
-                    <td class="c-hours">{{ number_format($row['seconds'] / 3600, 2) }}</td>
-                </tr>
+            @php
+                $byDay = collect($rows)->groupBy('date')->sortKeys();
+            @endphp
+            @forelse ($byDay as $date => $dayRows)
+                <tr class="day"><td class="c-date" colspan="5" style="padding-top: 7pt">{{ \Illuminate\Support\Carbon::parse($date)->format('j/n/y') }}</td></tr>
+                @foreach ($dayRows->sortBy(fn ($row) => mb_strtolower($row['customer'].'|'.$row['activity'])) as $row)
+                    <tr class="item">
+                        <td class="c-date"></td>
+                        <td class="c-client">{{ $row['customer'] }}</td>
+                        <td class="c-activity">{{ $row['activity'] }}</td>
+                        <td class="c-hours">{{ number_format($row['seconds'] / 3600, 1) }}</td>
+                        <td class="c-sub"></td>
+                    </tr>
+                @endforeach
+                <tr class="sub"><td colspan="4"></td><td class="c-sub">{{ number_format($dayRows->sum('seconds') / 3600, 1) }}</td></tr>
             @empty
-                <tr><td colspan="4" class="empty"></td></tr>
+                <tr><td colspan="5" class="empty"></td></tr>
             @endforelse
         </tbody>
     </table>
 
     <div class="closing">
         <div class="total">Total de Horas Laboradas:</div>
-        <div class="total-value">{{ number_format($totalSeconds / 3600, 2) }}</div>
+        <div class="total-value">{{ number_format($totalSeconds / 3600, 1) }}</div>
         <div class="sign-line" style="left: 0"></div>
         <div class="sign-label" style="left: 0">Supervisó</div>
         <div class="sign-line" style="left: 162pt"></div>
