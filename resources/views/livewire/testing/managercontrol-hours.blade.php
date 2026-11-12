@@ -415,7 +415,6 @@
                                 <div x-cloak x-show="{{ $slot }} < 7 - visibleRows" :class="(fillerOffset + {{ $slot }}) % 2 === 1 ? 'mc-stripe' : ''" class="prod-blank-row prod-dgrid mc-grid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
                             @endfor
                         </div>
-                        <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
                     </div>
                 </div>
@@ -604,7 +603,6 @@
                                 <div class="prod-blank-row prod-dgrid mc-link-grid panel-border border-b" :class="{ 'mc-stripe': (visibleIds.length + n - 1) % 2 === 1 }" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
                             </template>
                         </div>
-                        <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
                 </div>
                 </div>
