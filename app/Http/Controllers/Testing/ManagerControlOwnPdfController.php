@@ -19,6 +19,8 @@ class ManagerControlOwnPdfController extends Controller
         $data = $request->validate([
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+            // «managercontrol» = formato original de ManagerControl (Registro de horas por día).
+            'formato' => ['nullable', 'in:crm,managercontrol'],
         ]);
         $user = $request->user();
 
@@ -27,7 +29,9 @@ class ManagerControlOwnPdfController extends Controller
             abort_if($match['employee'] === null, 404, 'No tienes un colaborador de ManagerControl asignado.');
             $employee = $match['employee'];
             $summary = HoursSummary::fromRows($repository->workedHours($employee['id'], $data['from'], $data['to']));
-            $content = $pdf->render($employee, $data['from'], $data['to'], $summary);
+            $content = ($data['formato'] ?? 'crm') === 'managercontrol'
+                ? $pdf->renderOriginal($employee, $repository->employeeDepartment($employee['id']), $data['from'], $data['to'], $summary)
+                : $pdf->render($employee, $data['from'], $data['to'], $summary);
         } catch (ManagerControlException $e) {
             Log::warning('ManagerControl PDF propio (solo lectura): '.$e->getMessage());
             abort(503, $e->getMessage());

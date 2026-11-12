@@ -80,4 +80,37 @@ return [
             ['question' => '¿Cómo descargo el reporte?', 'answer' => 'Usa Descargar reporte PDF en el encabezado del detalle.', 'steps' => ['Elige el periodo y presiona Consultar periodo.', 'Presiona Descargar reporte PDF.', 'El archivo se descarga con el periodo del detalle.']],
         ],
     ],
+    'managercontrol' => [
+        'label' => 'ManagerControl',
+        'menu' => 'Monitoreo › Control Gerencial',
+        'summary' => 'Consulta, en modo de solo lectura, las horas laboradas registradas en ManagerControl: tiempo por cliente y por actividad en el periodo que elijas.',
+        'items' => [
+            ['question' => '¿Cómo elijo a la persona?', 'answer' => 'Al entrar se elige sola la persona con más actividades del periodo. Puedes cambiarla en el buscador del encabezado.', 'steps' => ['Haz clic en Buscar colaborador.', 'Escribe parte del nombre.', 'Elige a la persona: las tablas se actualizan solas.']],
+            ['question' => '¿Cómo cambio el periodo?', 'answer' => 'En Periodo de consulta elige Desde y Hasta y presiona Consultar periodo.', 'steps' => ['Selecciona la fecha Desde y la fecha Hasta.', 'Presiona Consultar periodo.', 'Las distribuciones se actualizan con el nuevo periodo.']],
+            ['question' => '¿Qué muestran las distribuciones?', 'answer' => 'El tiempo, la barra y el porcentaje de cada cliente y de cada actividad respecto al total del periodo.', 'steps' => ['Revisa el tiempo de cada fila.', 'La barra y el porcentaje muestran cuánto pesa frente al total.', 'Gira la rueda del ratón para moverte una fila a la vez.']],
+            ['question' => '¿Cómo descargo el reporte?', 'answer' => 'Usa Descargar reporte PDF en el encabezado del bloque.', 'steps' => ['Elige a la persona y el periodo.', 'Presiona Descargar reporte PDF.', 'Se descarga el Total de Horas Laboradas con el periodo consultado.']],
+            ['question' => '¿Se puede modificar ManagerControl desde aquí?', 'answer' => 'No. La conexión es de solo lectura: el CRM solo consulta y nunca escribe en la base de ManagerControl.', 'steps' => ['Los cambios de horas se hacen en el sistema de escritorio ManagerControl.', 'Vuelve a consultar el periodo para ver los datos actualizados.']],
+        ],
+    ],
+    'managercontrol_detalle' => [
+        'label' => 'Registro de horas por día',
+        'menu' => 'Monitoreo › Control Gerencial › Registro de horas por día',
+        'summary' => 'Revisa día por día los registros de ManagerControl: departamento o cliente, actividad, descripción y tiempo. Su periodo es independiente del bloque de arriba.',
+        'items' => [
+            ['question' => '¿Cómo cambio el periodo del registro?', 'answer' => 'Este bloque tiene sus propias fechas Desde y Hasta.', 'steps' => ['Elige las fechas en su Periodo de consulta.', 'Presiona Consultar periodo.', 'Solo cambia este bloque.']],
+            ['question' => '¿Qué indica la fila de cada día?', 'answer' => 'Muestra la fecha, cuántos clientes, registros y descripciones hubo y el tiempo total del día.', 'steps' => ['Busca la fila con la fecha.', 'Debajo están los registros de ese día.']],
+            ['question' => '¿Cómo descargo el reporte?', 'answer' => 'Usa Descargar reporte PDF en el encabezado del bloque.', 'steps' => ['Elige el periodo y presiona Consultar periodo.', 'Presiona Descargar reporte PDF.']],
+        ],
+    ],
+    'managercontrol_asignar' => [
+        'label' => 'Asignar usuario del CRM',
+        'menu' => 'Monitoreo › Control Gerencial › Asignar usuario del CRM',
+        'summary' => 'Relaciona cada usuario del CRM con su colaborador de ManagerControl. Control Gerencial usa esta relación para mostrar a cada usuario solo sus actividades.',
+        'items' => [
+            ['question' => '¿Cómo asigno un colaborador?', 'answer' => 'Haz clic en la celda Colaborador de ManagerControl de la fila del usuario y elige a la persona.', 'steps' => ['Haz clic en la celda.', 'Escribe parte del nombre.', 'Elige a la persona: se guarda sola.']],
+            ['question' => '¿Cómo quito una asignación?', 'answer' => 'Usa la × que aparece en la celda cuando el usuario tiene colaborador.', 'steps' => ['Presiona la × de la celda.', 'La celda vuelve a Sin asignar.']],
+            ['question' => '¿Cómo encuentro a un usuario?', 'answer' => 'Usa Buscar en Filtro de usuarios: busca por nombre o correo.', 'steps' => ['Escribe en Buscar.', 'La lista se reduce mientras escribes.']],
+            ['question' => '¿Puede un colaborador estar en dos usuarios?', 'answer' => 'No. Cada colaborador de ManagerControl solo puede asignarse a un usuario del CRM.', 'steps' => ['Quita primero la asignación anterior.', 'Después asígnalo al otro usuario.']],
+        ],
+    ],
 ];

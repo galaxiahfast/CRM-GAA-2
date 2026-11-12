@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Support\SupportGuidePdfService;
 use App\Services\Authorization\PermissionAccessService;
+use App\Services\Support\SupportGuidePdfService;
 use Symfony\Component\HttpFoundation\Response;
 
 class SectionGuideController extends Controller
@@ -19,12 +19,19 @@ class SectionGuideController extends Controller
             'productividad' => 'productividad',
             'productividad-detalle' => 'productividad_detalle',
             'chat-soporte' => 'chat_soporte',
+            'managercontrol' => 'managercontrol',
+            'managercontrol-detalle' => 'managercontrol_detalle',
+            'managercontrol-asignar' => 'managercontrol_asignar',
         ];
 
         abort_unless(isset($categories[$section]), 404);
 
         if ($section === 'panel-control') {
             abort_unless($permissions->allows(auth()->user(), 'time-control.productivity.view'), 403);
+        } elseif (in_array($section, ['managercontrol', 'managercontrol-detalle'], true)) {
+            abort_unless(\Illuminate\Support\Facades\Gate::any(['view-legacy-managercontrol', 'view-legacy-own-hours']), 403);
+        } elseif ($section === 'managercontrol-asignar') {
+            abort_unless(\Illuminate\Support\Facades\Gate::allows('view-legacy-managercontrol'), 403);
         } elseif ($section === 'supervision-horas') {
             abort_unless($permissions->allows(auth()->user(), 'time-control.supervision.view'), 403);
         }

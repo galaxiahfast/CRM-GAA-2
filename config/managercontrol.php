@@ -32,8 +32,23 @@ return [
     'query_timeout' => 15,
     'max_rows' => 5000,
 
-    // Ejercicio de la app de escritorio (opcional): si se define, se filtra por su columna exercise_id.
-    'exercise_id' => env('MANAGERCONTROL_EXERCISE_ID'),
+    // Empresa y Ejercicio, como al entrar a la app de escritorio. La tabla de horas tiene llave (IDEmpresa, IDEjercicio, IDRegistroDiario)
+    // y la base guarda varias empresas: TODAS las consultas (y escrituras) se limitan a estos dos valores.
+    // 1 / 3 = «GONZÁLEZ ALONZO Y ASOCIADOS S.C.P.-CONTABILIDAD», ejercicio «ENERO 2010- DICIEMBRE 2010» (el que usa la oficina).
+    'company_id' => env('MANAGERCONTROL_COMPANY_ID', 1),
+    'exercise_id' => env('MANAGERCONTROL_EXERCISE_ID', 3),
+
+    /*
+    | Escritura (agregar, editar y dar de baja actividades). APAGADA por defecto: el CRM es de solo lectura
+    | hasta que el responsable de la base cree una cuenta con permisos SOLO sobre ControlTiempos.RegistroDiario
+    | (ver docs/managercontrol-escritura.md). Usa credenciales propias, distintas de las de lectura.
+    */
+    'write' => [
+        'enabled' => (bool) env('MANAGERCONTROL_WRITE_ENABLED', false),
+        'username' => env('MANAGERCONTROL_WRITE_USERNAME'),
+        'password' => env('MANAGERCONTROL_WRITE_PASSWORD'),
+        'max_hours' => 24.0,
+    ],
 
     /*
     | Mapa del esquema. Los nombres por defecto son una INFERENCIA a partir de las clases del
@@ -50,14 +65,23 @@ return [
             'employee_id' => 'IDEmpleado',
             'customer_id' => 'IDCliente',
             'activity_id' => 'IDActividad',
+            'id' => 'IDRegistroDiario',
+            'company_id' => 'IDEmpresa',
             'exercise_id' => 'IDEjercicio',
             'date' => 'FechaRegistro',
             'hours' => 'HoraLaborada',
             'description' => 'Descripcion',
             'deleted' => 'Baja',
+            // Columnas que llena ManagerControl al capturar (confirmado con los datos): ver docs/managercontrol-escritura.md
+            'created_at' => 'FechaCreacion',
+            'username' => 'NombreUsuario',
+            'rate' => 'Precio',
+            'subtotal' => 'SubTotal',
+            'section_id' => 'IDSeccion',
         ],
-        'employees' => ['db_schema' => 'Catalogos', 'table' => 'Empleados', 'id' => 'IDEmpleado', 'name' => ['Nombres', 'ApellidoPaterno', 'ApellidoMaterno'], 'deleted' => 'Baja'],
-        'customers' => ['db_schema' => 'Catalogos', 'table' => 'Clientes', 'id' => 'IDCliente', 'name' => 'Nombre'],
-        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre'],
+        'employees' => ['db_schema' => 'Catalogos', 'table' => 'Empleados', 'id' => 'IDEmpleado', 'name' => ['Nombres', 'ApellidoPaterno', 'ApellidoMaterno'], 'deleted' => 'Baja', 'department_id' => 'IDDepartamento', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'username' => 'NombreUsuario', 'rate' => 'Precio'],
+        'departments' => ['db_schema' => 'Catalogos', 'table' => 'Departamentos', 'id' => 'IDDepartamento', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio'],
+        'customers' => ['db_schema' => 'Catalogos', 'table' => 'Clientes', 'id' => 'IDCliente', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
     ],
 ];

@@ -18,13 +18,17 @@ class ManagerControlPdfController extends Controller
             'employee' => ['required', 'integer', 'min:1'],
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+            // «managercontrol» = formato original de ManagerControl (Registro de horas por día).
+            'formato' => ['nullable', 'in:crm,managercontrol'],
         ]);
 
         try {
             $employee = $repository->employee((int) $data['employee']);
             abort_if($employee === null, 404, 'Colaborador no encontrado en ManagerControl.');
             $summary = HoursSummary::fromRows($repository->workedHours($employee['id'], $data['from'], $data['to']));
-            $content = $pdf->render($employee, $data['from'], $data['to'], $summary);
+            $content = ($data['formato'] ?? 'crm') === 'managercontrol'
+                ? $pdf->renderOriginal($employee, $repository->employeeDepartment($employee['id']), $data['from'], $data['to'], $summary)
+                : $pdf->render($employee, $data['from'], $data['to'], $summary);
         } catch (ManagerControlException $e) {
             Log::warning('ManagerControl PDF (solo lectura): '.$e->getMessage());
             abort(503, $e->getMessage());

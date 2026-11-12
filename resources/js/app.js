@@ -79,9 +79,10 @@ document.addEventListener('alpine:init', () => {
     }));
 
     // Selector con búsqueda (escribir para filtrar) para asignar un colaborador de ManagerControl.
-    window.Alpine.data('legacyEmployeePicker', (model, employees) => ({
+    window.Alpine.data('legacyEmployeePicker', (model, employees, onPick = null) => ({
         value: model,
         employees,
+        onPick,
         open: false,
         q: '',
         active: 0,
@@ -97,6 +98,10 @@ document.addEventListener('alpine:init', () => {
             window.removeEventListener('resize', this.reposition);
             document.removeEventListener('scroll', this.reposition, true);
         },
+        idHtml(value) { return 'ID ' + String(value).padStart(5, '0').replace(/[0-9]/g, (digit) => `<span style='display:inline-block;width:0.64em;text-align:center'>${digit}</span>`); },
+        initials(text) {
+            return String(text || '').trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join('').toUpperCase();
+        },
         normalize(text) {
             return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
@@ -111,22 +116,25 @@ document.addEventListener('alpine:init', () => {
                 : this.employees;
             return list.slice(0, 80);
         },
-        toggle() {
-            this.open = !this.open;
-            if (this.open) {
-                this.q = '';
-                this.active = 0;
-                this.$nextTick(() => { this.position(); this.$refs.search && this.$refs.search.focus(); });
-            }
+        openList() {
+            if (this.open) return;
+            this.open = true;
+            this.q = '';
+            this.active = 0;
+            this.$nextTick(() => this.position());
         },
         choose(employee) {
-            this.value = employee ? String(employee.id) : '';
+            const next = employee ? String(employee.id) : '';
+            const changed = next !== String(this.value ?? '');
+            this.value = next;
             this.open = false;
+            // Al elegir se guarda solo (sin botón «Asignar»); con la × se quita la asignación.
+            if (changed && typeof this.onPick === 'function') this.onPick(next);
         },
         move(delta) {
             const max = this.filtered.length - 1;
             this.active = Math.max(0, Math.min(max, this.active + delta));
-            this.$nextTick(() => { const el = this.$refs.list && this.$refs.list.querySelector('[data-active="true"]'); el && el.scrollIntoView({ block: 'nearest' }); });
+            this.$nextTick(() => { const el = this.$refs.panel && this.$refs.panel.querySelector('[data-active="true"]'); el && el.scrollIntoView({ block: 'nearest' }); });
         },
         pick() {
             const employee = this.filtered[this.active];
@@ -135,7 +143,11 @@ document.addEventListener('alpine:init', () => {
         position() {
             // Igual que el calendario: el panel está fuera del contenedor con zoom; se mide en píxeles visibles y se divide entre el zoom.
             const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
-            const rect = this.$refs.trigger.getBoundingClientRect();
+            // El panel ocupa la celda completa menos 10px a cada lado de sus líneas.
+            const cell = this.$refs.trigger.closest('.prod-dcell') || this.$refs.trigger;
+            const cellRect = cell.getBoundingClientRect();
+            const inset = cell === this.$refs.trigger ? 0 : 10 * zoom;
+            const rect = { left: cellRect.left + inset, width: cellRect.width - inset * 2, top: cellRect.top, bottom: cellRect.bottom };
             const panelHeight = this.$refs.panel ? this.$refs.panel.getBoundingClientRect().height : 340 * zoom;
             const gap = 10;
             const width = Math.min(rect.width, window.innerWidth - 32);
@@ -330,8 +342,9 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('scroll', this.quickTourViewportHandler, true);
             window.addEventListener('keydown', this.quickTourKeyHandler);
             this.$nextTick(() => {
+                this.revealQuickTourTarget();
                 this.updateQuickTourPosition();
-                this.$refs.quickTourNext?.focus();
+                this.$refs.quickTourNext?.focus({ preventScroll: true });
             });
         },
         nextQuickTourStep() {
@@ -342,8 +355,9 @@ document.addEventListener('alpine:init', () => {
 
             this.quickTourStep++;
             this.$nextTick(() => {
+                this.revealQuickTourTarget();
                 this.updateQuickTourPosition();
-                this.$refs.quickTourNext?.focus();
+                this.$refs.quickTourNext?.focus({ preventScroll: true });
             });
         },
         previousQuickTourStep() {
@@ -351,8 +365,9 @@ document.addEventListener('alpine:init', () => {
 
             this.quickTourStep--;
             this.$nextTick(() => {
+                this.revealQuickTourTarget();
                 this.updateQuickTourPosition();
-                this.$refs.quickTourNext?.focus();
+                this.$refs.quickTourNext?.focus({ preventScroll: true });
             });
         },
         closeQuickTour() {
@@ -364,6 +379,23 @@ document.addEventListener('alpine:init', () => {
             window.removeEventListener('resize', this.quickTourViewportHandler);
             window.removeEventListener('scroll', this.quickTourViewportHandler, true);
             window.removeEventListener('keydown', this.quickTourKeyHandler);
+        },
+        // Si lo que se explica está fuera de la vista o debajo de la barra superior fija, la página se desplaza
+        // hasta dejarlo visible; el resaltado y la ventana se recolocan mientras se desplaza.
+        revealQuickTourTarget() {
+            const target = document.getElementById(this.quickTourSteps[this.quickTourStep - 1]?.target);
+            if (! target) return;
+
+            const rect = target.getBoundingClientRect();
+            const navBottom = document.getElementById('main-nav')?.getBoundingClientRect().bottom ?? 0;
+            const margin = 20;
+            const hidden = rect.top < navBottom + margin || rect.bottom > window.innerHeight - margin;
+            if (! hidden) return;
+
+            const fitsBelowNav = rect.height <= window.innerHeight - navBottom - margin * 2;
+            target.scrollIntoView({ behavior: 'smooth', block: fitsBelowNav ? 'center' : 'start' });
+            // Respaldo: cuando termina el desplazamiento suave se vuelve a colocar todo.
+            setTimeout(() => this.updateQuickTourPosition(), 450);
         },
         updateQuickTourPosition() {
             if (! this.quickTourStep) return;

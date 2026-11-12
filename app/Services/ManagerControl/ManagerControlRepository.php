@@ -18,7 +18,7 @@ class ManagerControlRepository
     public function employees(): array
     {
         // La lista casi no cambia: se recuerda 10 minutos para no consultar SQL Server en cada interacción de la pantalla.
-        return Cache::remember('managercontrol:employees:'.md5(serialize(config('managercontrol.schema.employees')).config('managercontrol.host').config('managercontrol.database')), now()->addMinutes(10), fn (): array => $this->loadEmployees());
+        return Cache::remember($this->cacheKey('employees'), now()->addMinutes(10), fn (): array => $this->loadEmployees());
     }
 
     /** @return list<array{id: int, name: string}> */
@@ -26,28 +26,89 @@ class ManagerControlRepository
     {
         $e = $this->table('employees');
         $name = $this->nameExpression($e['name']);
-        $sql = "SELECT TOP (500) {$e['id']} AS id, {$name} AS name FROM {$e['table']}"
-            .(isset($e['deleted']) ? " WHERE ISNULL({$e['deleted']}, 0) = 0" : '')
+        $bindings = [];
+        $sql = "SELECT TOP (500) {$e['id']} AS id, {$name} AS name FROM {$e['table']} WHERE 1 = 1"
+            .(isset($e['deleted']) ? " AND ISNULL({$e['deleted']}, 0) = 0" : '')
+            .$this->scope('', $e, $bindings)
             ." ORDER BY {$name}";
 
-        return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])], $this->db->select($sql));
+        return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])], $this->db->select($sql, $bindings));
     }
 
     /** @return array{id: int, name: string}|null */
     public function employee(int $id): ?array
     {
         $e = $this->table('employees');
-        $sql = "SELECT TOP (1) {$e['id']} AS id, {$this->nameExpression($e['name'])} AS name FROM {$e['table']} WHERE {$e['id']} = ?";
-        $row = $this->db->select($sql, [$id])[0] ?? null;
+        $bindings = [$id];
+        $sql = "SELECT TOP (1) {$e['id']} AS id, {$this->nameExpression($e['name'])} AS name FROM {$e['table']} WHERE {$e['id']} = ?".$this->scope('', $e, $bindings);
+        $row = $this->db->select($sql, $bindings)[0] ?? null;
 
         return $row ? ['id' => (int) $row['id'], 'name' => trim((string) $row['name'])] : null;
     }
 
     /**
-     * Horas laboradas de un colaborador entre dos fechas (ambas incluidas): fecha, cliente, actividad,
-     * descripción y tiempo, ya en segundos.
+     * Datos que ManagerControl copia al capturar horas: el usuario y el precio por hora del colaborador.
      *
-     * @return list<array{date: string, customer: string, activity: string, description: string, seconds: int}>
+     * @return array{username: string, rate: float}|null
+     */
+    public function employeeCaptureData(int $id): ?array
+    {
+        $e = $this->table('employees');
+        if (! isset($e['username'], $e['rate'])) {
+            return null;
+        }
+        $bindings = [$id];
+        $sql = "SELECT TOP (1) {$e['username']} AS username, {$e['rate']} AS rate FROM {$e['table']} WHERE {$e['id']} = ?".$this->scope('', $e, $bindings);
+        $row = $this->db->select($sql, $bindings)[0] ?? null;
+
+        return $row ? ['username' => trim((string) $row['username']), 'rate' => (float) $row['rate']] : null;
+    }
+
+    /** Departamento del colaborador (para el reporte con el formato original de ManagerControl). */
+    public function employeeDepartment(int $id): ?string
+    {
+        $e = $this->table('employees');
+        if (! isset($e['department_id']) || config('managercontrol.schema.departments') === null) {
+            return null;
+        }
+        $d = $this->table('departments');
+        $bindings = [$id];
+        $sql = "SELECT TOP (1) d.{$d['name']} AS name FROM {$e['table']} e LEFT JOIN {$d['table']} d ON d.{$d['id']} = e.{$e['department_id']}"
+            .$this->joinScope('d', $d, 'e', $e)
+            ." WHERE e.{$e['id']} = ?".$this->scope('e', $e, $bindings);
+        $name = trim((string) ($this->db->select($sql, $bindings)[0]['name'] ?? ''));
+
+        return $name !== '' ? $name : null;
+    }
+
+    /**
+     * Clientes o actividades activos de la empresa/ejercicio (para capturar o editar una actividad).
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function catalog(string $key): array
+    {
+        if (! in_array($key, ['customers', 'activities'], true)) {
+            throw new ManagerControlException('Catálogo no permitido.');
+        }
+
+        return Cache::remember($this->cacheKey($key), now()->addMinutes(10), function () use ($key): array {
+            $t = $this->table($key);
+            $bindings = [];
+            $sql = "SELECT TOP (2000) {$t['id']} AS id, {$t['name']} AS name FROM {$t['table']} WHERE 1 = 1"
+                .(isset($t['deleted']) ? " AND ISNULL({$t['deleted']}, 0) = 0" : '')
+                .$this->scope('', $t, $bindings)
+                ." ORDER BY {$t['name']}";
+
+            return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])], $this->db->select($sql, $bindings));
+        });
+    }
+
+    /**
+     * Horas laboradas de un colaborador entre dos fechas (ambas incluidas): fecha, cliente, actividad,
+     * descripción y tiempo (en segundos), más los ids que hacen falta para editar un registro.
+     *
+     * @return list<array{id: int, date: string, customer: string, activity: string, description: string, seconds: int, customer_id: int, activity_id: int, hours: float}>
      */
     public function workedHours(int $employeeId, string $from, string $to): array
     {
@@ -55,32 +116,96 @@ class ManagerControlRepository
         $c = $this->table('customers');
         $a = $this->table('activities');
         $limit = max(1, (int) config('managercontrol.max_rows', 5000));
+        $id = isset($h['id']) ? "h.{$h['id']}" : '0';
 
-        $sql = "SELECT TOP ({$limit}) h.{$h['date']} AS work_date, c.{$c['name']} AS customer, a.{$a['name']} AS activity, "
-            ."h.{$h['description']} AS description, h.{$h['hours']} AS hours "
+        $sql = "SELECT TOP ({$limit}) {$id} AS record_id, h.{$h['date']} AS work_date, c.{$c['name']} AS customer, a.{$a['name']} AS activity, "
+            ."h.{$h['description']} AS description, h.{$h['hours']} AS hours, h.{$h['customer_id']} AS customer_id, h.{$h['activity_id']} AS activity_id "
             ."FROM {$h['table']} h "
-            ."LEFT JOIN {$c['table']} c ON c.{$c['id']} = h.{$h['customer_id']} "
-            ."LEFT JOIN {$a['table']} a ON a.{$a['id']} = h.{$h['activity_id']} "
+            ."LEFT JOIN {$c['table']} c ON c.{$c['id']} = h.{$h['customer_id']}".$this->joinScope('c', $c, 'h', $h).' '
+            ."LEFT JOIN {$a['table']} a ON a.{$a['id']} = h.{$h['activity_id']}".$this->joinScope('a', $a, 'h', $h).' '
             ."WHERE h.{$h['employee_id']} = ? AND h.{$h['date']} >= ? AND h.{$h['date']} < DATEADD(day, 1, CAST(? AS date))";
         $bindings = [$employeeId, $from, $to];
 
         if (isset($h['deleted'])) {
             $sql .= " AND ISNULL(h.{$h['deleted']}, 0) = 0";
         }
-        $exerciseId = config('managercontrol.exercise_id');
-        if (filled($exerciseId)) {
-            $sql .= " AND h.{$h['exercise_id']} = ?";
-            $bindings[] = (int) $exerciseId;
-        }
-        $sql .= " ORDER BY h.{$h['date']}";
+        $sql .= $this->scope('h', $h, $bindings);
+        $sql .= " ORDER BY h.{$h['date']}".(isset($h['id']) ? ", h.{$h['id']}" : '');
 
         return array_map(fn (array $r): array => [
+            'id' => (int) ($r['record_id'] ?? 0),
             'date' => substr((string) ($r['work_date'] instanceof \DateTimeInterface ? $r['work_date']->format('Y-m-d') : $r['work_date']), 0, 10),
             'customer' => trim((string) ($r['customer'] ?? '')) ?: 'Sin cliente',
             'activity' => trim((string) ($r['activity'] ?? '')) ?: 'Sin actividad',
             'description' => trim((string) ($r['description'] ?? '')),
             'seconds' => self::toSeconds($r['hours'] ?? 0),
+            'customer_id' => (int) ($r['customer_id'] ?? 0),
+            'activity_id' => (int) ($r['activity_id'] ?? 0),
+            'hours' => (float) ($r['hours'] ?? 0),
         ], $this->db->select($sql, $bindings));
+    }
+
+    /**
+     * Colaboradores con más registros (actividades) en el periodo, de mayor a menor. Una sola consulta agregada;
+     * el resultado se recuerda 5 minutos para que la pantalla abra al instante.
+     *
+     * @return list<int>
+     */
+    public function topEmployeeIds(string $from, string $to, int $limit = 5): array
+    {
+        return Cache::remember($this->cacheKey('top:'.$from.$to.$limit), now()->addMinutes(5), function () use ($from, $to, $limit): array {
+            $h = $this->table('hours');
+            $limit = max(1, min(20, $limit));
+            $sql = "SELECT TOP ({$limit}) h.{$h['employee_id']} AS id, COUNT(*) AS total FROM {$h['table']} h "
+                ."WHERE h.{$h['date']} >= ? AND h.{$h['date']} < DATEADD(day, 1, CAST(? AS date))";
+            $bindings = [$from, $to];
+            if (isset($h['deleted'])) {
+                $sql .= " AND ISNULL(h.{$h['deleted']}, 0) = 0";
+            }
+            $sql .= $this->scope('h', $h, $bindings);
+            $sql .= " GROUP BY h.{$h['employee_id']} ORDER BY COUNT(*) DESC, h.{$h['employee_id']}";
+
+            return array_map(fn (array $r): int => (int) $r['id'], $this->db->select($sql, $bindings));
+        });
+    }
+
+    /** Identificadores validados de una tabla del mapa (para el servicio de escritura). */
+    public function identifiers(string $key): array
+    {
+        return $this->table($key);
+    }
+
+    /** Condición de Empresa y Ejercicio (los valores van como parámetros). */
+    private function scope(string $alias, array $map, array &$bindings): string
+    {
+        $prefix = $alias !== '' ? $alias.'.' : '';
+        $sql = '';
+        foreach (['company_id', 'exercise_id'] as $key) {
+            if (isset($map[$key]) && filled(config("managercontrol.{$key}"))) {
+                $sql .= " AND {$prefix}{$map[$key]} = ?";
+                $bindings[] = (int) config("managercontrol.{$key}");
+            }
+        }
+
+        return $sql;
+    }
+
+    /** En los JOIN, el catálogo debe ser de la misma Empresa y Ejercicio que el registro. */
+    private function joinScope(string $alias, array $map, string $otherAlias, array $other): string
+    {
+        $sql = '';
+        foreach (['company_id', 'exercise_id'] as $key) {
+            if (isset($map[$key], $other[$key])) {
+                $sql .= " AND {$alias}.{$map[$key]} = {$otherAlias}.{$other[$key]}";
+            }
+        }
+
+        return $sql;
+    }
+
+    private function cacheKey(string $name): string
+    {
+        return 'managercontrol:'.$name.':'.md5(serialize(config('managercontrol.schema')).config('managercontrol.host').config('managercontrol.database').config('managercontrol.company_id').'/'.config('managercontrol.exercise_id'));
     }
 
     /** Convierte el valor de horas del legacy a segundos según MANAGERCONTROL_HOURS_UNIT. */

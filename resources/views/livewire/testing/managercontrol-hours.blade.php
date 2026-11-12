@@ -16,14 +16,20 @@
         ['target' => 'prod-d-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo del detalle. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
         ['target' => 'prod-d-list', 'title' => '4. Registro por día', 'description' => 'Cada día muestra su total y debajo cada registro con cliente, actividad, descripción y tiempo. Gira la rueda del ratón para moverte una fila a la vez.'],
     ];
+    $linksTourSteps = [
+        ['target' => 'mc-l-search', 'title' => '1. Busca un usuario', 'description' => 'Escribe parte del nombre o del correo del usuario del CRM.'],
+        ['target' => 'mc-l-assigned', 'title' => '2. Revisa cuántos van', 'description' => 'Asignados muestra cuántos usuarios del CRM ya tienen su colaborador de ManagerControl.'],
+        ['target' => 'mc-l-list', 'title' => '3. Asigna el colaborador', 'description' => 'Haz clic en la celda Colaborador de ManagerControl, escribe para buscar y elige a la persona: se guarda sola. La × quita la asignación.'],
+    ];
     $padTotal = fn (int $seconds) => sprintf('%03dh %02dm %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
     $detailRows = 0;
+    $nextStripe = false; // rayado: la primera fila siempre va en blanco
 @endphp
 
 <div
     data-panel
     data-productivity
-    x-data="clockQuickTour(@js($tourSteps), @js(['detail' => $detailTourSteps]))"
+    x-data="clockQuickTour(@js($tourSteps), @js(['detail' => $detailTourSteps, 'links' => $linksTourSteps]))"
     class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
 >
     <x-panel-styles />
@@ -101,7 +107,7 @@
         [data-productivity] .prod-guide { display: flex; flex-direction: column; gap: 20px; }
         [data-productivity] .prod-guide > a { width: fit-content; }
         [data-productivity] .prod-metrics { display: grid; grid-template-columns: minmax(0, 1fr) max-content minmax(50px, min(230px, 34%)) max-content; align-items: center; gap: 0; height: 100%; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
-        [data-productivity] .prod-item:nth-child(odd) { background-color: var(--panel-header); }
+        [data-productivity] .prod-item:nth-child(even) { background-color: var(--panel-header); } /* la primera fila va con fondo blanco */
         [data-productivity] .prod-track { height: 6px; overflow: hidden; border-radius: 9999px; background-color: var(--panel-track); }
         [data-productivity] .prod-fill { height: 100%; border-radius: 9999px; background-color: var(--panel-accent); }
         /* El detalle muestra siempre 7 filas exactas (7 × 70px); el encabezado de cada día cuenta como una fila */
@@ -179,13 +185,16 @@
             [data-productivity] .prod-detail .prod-day-head, [data-productivity] .prod-detail .prod-blank-row, [data-productivity] .prod-detail .prod-drow { height: max(59px, calc(100cqh / 7)); }
         }
         /* Tabla del registro de ManagerControl: N°, Departamento o cliente, Actividad, Descripción y Tiempo */
-        [data-productivity] .mc-grid { grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 130px; }
+        [data-productivity] .mc-grid { grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 130px 100px; }
+        [data-productivity] .mc-action { display: inline-flex; height: 28px; width: 28px; align-items: center; justify-content: center; border-radius: 8px; }
+        [data-productivity] button.mc-action:hover { background-color: var(--panel-hover); }
         @container prod (min-width: 1240px) { [data-productivity] #prod-tour-links { min-height: max(600px, calc(var(--app-dvh) - 348px)); } }
         [data-productivity] #prod-tour-links .prod-main { flex: 1; min-height: 0; }
-        [data-productivity].prod-calendar .mc-option { display: block; width: 100%; min-height: 40px; padding: 10px 15px; border: 1px solid transparent; border-radius: 8px; text-align: left; color: var(--panel-text); cursor: pointer; }
-        [data-productivity].prod-calendar .mc-option:hover, [data-productivity].prod-calendar .mc-option.is-active { background-color: var(--panel-hover); }
-        [data-productivity].prod-calendar .mc-option.is-selected { border-color: var(--panel-accent); color: var(--panel-accent); }
-        [data-productivity] .mc-link-grid { grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1.3fr) 200px; }
+        [data-productivity].prod-calendar .panel-option.is-active { background-color: var(--panel-subtle); }
+        [data-productivity] .prod-detail .prod-drow:nth-child(n), [data-productivity] .prod-detail .prod-blank-row:nth-child(n) { background-color: var(--panel-surface); }
+        [data-productivity] .prod-detail .mc-stripe.mc-stripe { background-color: var(--panel-header); }
+        [data-productivity] .prod-detail .prod-drow.prod-drow:hover { background-color: var(--panel-hover); }
+        [data-productivity] .mc-link-grid { grid-template-columns: 90px repeat(3, minmax(0, 1fr)) minmax(0, 1.3fr); }
         [data-productivity] .mc-alert { border: 1px solid var(--panel-border); border-radius: 12px; padding: 20px; background-color: var(--panel-header); }
         [data-productivity] .prod-detail-card .prod-main > * { min-width: 900px; }
     </style>
@@ -193,10 +202,18 @@
     <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="min-w-0 max-w-full">
-                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $ownMode ? 'Control Gerencial' : 'Pruebas · ManagerControl' }}</h1>
-                <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades de ManagerControl, el sistema de escritorio. Consulta de solo lectura.' : 'Horas laboradas del sistema de escritorio legacy. Consulta de solo lectura: no se escribe nada en su base de datos.' }}</p>
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $ownMode ? 'Control Gerencial' : 'ManagerControl' }}</h1>
+                <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades de ManagerControl.' : 'Horas laboradas por colaborador.' }}</p>
             </div>
-            <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Solo lectura</span>
+            @if ($ownMode)
+                <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Solo lectura</span>
+            @else
+                <div id="prod-tour-employee" class="flex flex-wrap items-center gap-[20px]">
+                    <x-panel-select id="mc-employee" label="Colaborador" property="employeeId" searchable placeholder="Buscar colaborador…"
+                        :options="collect($employees)->map(fn ($employee) => ['value' => (string) $employee['id'], 'label' => $employee['name']])->all()"
+                        class="min-w-[280px]" />
+                </div>
+            @endif
         </section>
 
         @if ($error)
@@ -213,20 +230,11 @@
                         <h2 class="panel-accent leading-none">Productividad del periodo</h2>
                         <p class="prod-lines mt-[5px]">Del {{ $longDate($appliedFrom) }} al {{ $longDate($appliedTo) }}</p>
                     </div>
-                    <div id="prod-tour-employee" class="flex flex-wrap items-center gap-[20px]">
-                        @if ($ownMode)
-                            <span class="leading-none">Colaborador: {{ $matchedName ?? 'sin asignar' }}</span>
-                        @else
-                            <label for="mc-employee" class="leading-none">Colaborador</label>
-                            <select id="mc-employee" wire:model="employeeId" class="panel-field min-h-[50px] min-w-[240px] rounded-xl border px-[20px] focus:outline-none focus:ring-0">
-                                <option value="">Seleccione…</option>
-                                @foreach ($employees as $employee)
-                                    <option value="{{ $employee['id'] }}">{{ $employee['name'] }}</option>
-                                @endforeach
-                            </select>
-                        @endif
+                    <div @if ($ownMode) id="prod-tour-employee" @endif class="flex flex-wrap items-center gap-[20px]">
                         @if ($loaded)
                             <a href="{{ route($pdfRoute, $pdfExtra + ['from' => $appliedFrom, 'to' => $appliedTo]) }}" class="prod-link leading-none">Descargar reporte PDF</a>
+                        @else
+                            <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Elige un colaborador para descargar el reporte">Descargar reporte PDF</span>
                         @endif
                     </div>
                 </header>
@@ -234,11 +242,11 @@
                     <x-productivity-period-aside
                         from-prop="from" to-prop="to" :values="['from' => $from, 'to' => $to]"
                         consult-method="applyFilters" consult-id="prod-tour-consult" period-id="prod-tour-period"
-                        guide="productividad" guide-title="Descargar la guía de productividad en PDF" />
+                        guide="managercontrol" guide-title="Descargar la guía de ManagerControl en PDF" />
 
                     <div class="prod-main">
                         <div class="prod-dist">
-                            @foreach ([['title' => 'Distribución por cliente', 'items' => $summary->byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients', 'example' => 'Cliente de ejemplo'], ['title' => 'Distribución por actividad', 'items' => $summary->byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities', 'example' => 'Actividad de ejemplo']] as $distribution)
+                            @foreach ([['title' => 'Distribución por cliente', 'items' => $summary->byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients'], ['title' => 'Distribución por actividad', 'items' => $summary->byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities']] as $distribution)
                                 <section id="{{ $distribution['tourId'] }}" class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
                                     <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
                                         <h3 class="prod-index panel-border leading-none">N°</h3>
@@ -246,7 +254,7 @@
                                     </div>
                                     <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
                                     <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step=".prod-item" class="prod-list panel-scroll">
-                                        @forelse ($distribution['items'] as $name => $seconds)
+                                        @foreach ($distribution['items'] as $name => $seconds)
                                             <div class="prod-item prod-grid">
                                                 <span class="prod-index prod-counter panel-border leading-none"></span>
                                                 <div class="prod-cell prod-metrics">
@@ -256,19 +264,8 @@
                                                     <span class="text-right tabular-nums leading-none">{{ $pct($seconds, $summary->totalSeconds) }}%</span>
                                                 </div>
                                             </div>
-                                        @empty
-                                            {{-- Fila de ejemplo en ceros mientras no haya datos --}}
-                                            <div class="prod-item prod-grid">
-                                                <span class="prod-index prod-counter panel-border leading-none"></span>
-                                                <div class="prod-cell prod-metrics">
-                                                    <span class="truncate leading-none">{{ $distribution['example'] }}</span>
-                                                    <span class="tabular-nums leading-none">00:00:00</span>
-                                                    <div class="prod-track"><div class="prod-fill" style="width: 0%"></div></div>
-                                                    <span class="text-right tabular-nums leading-none">0%</span>
-                                                </div>
-                                            </div>
-                                        @endforelse
-                                        @for ($slot = max(count($distribution['items']), 1); $slot < 7; $slot++)
+                                        @endforeach
+                                        @for ($slot = count($distribution['items']); $slot < 7; $slot++)
                                             <div class="prod-item prod-grid prod-blank" aria-hidden="true">
                                                 <span class="prod-index panel-border"></span>
                                                 <div class="prod-cell prod-metrics">
@@ -295,13 +292,19 @@
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Registro de horas por día</h2>
-                        <p class="prod-lines mt-[5px]">Del {{ $longDate($appliedDetailFrom) }} al {{ $longDate($appliedDetailTo) }} · Total {{ $fmt($detail->totalSeconds) }}</p>
+                        <p class="prod-lines mt-[5px]">Del {{ $longDate($appliedDetailFrom) }} al {{ $longDate($appliedDetailTo) }}</p>
+                        @if ($writeNotice)<p class="prod-lines mt-[5px]" role="status" data-testid="write-notice">{{ $writeNotice }}</p>@endif
                     </div>
-                    <div id="prod-d-export" class="flex flex-wrap items-center gap-[15px]">
-                        @if ($detailLoaded)
-                            <a href="{{ route($pdfRoute, $pdfExtra + ['from' => $appliedDetailFrom, 'to' => $appliedDetailTo]) }}" class="prod-link leading-none">Descargar reporte PDF</a>
+                    <div id="prod-d-export" class="flex flex-wrap items-center gap-[20px]">
+                        @if ($canWrite)
+                            <button type="button" wire:click="openCreate" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Agregar actividad</button>
                         @else
-                            <span class="leading-none">Elige colaborador y consulta el periodo</span>
+                            <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Solo lectura: agregar, editar y dar de baja se activará cuando se den los permisos de escritura en ManagerControl.">Agregar actividad</span>
+                        @endif
+                        @if ($detailLoaded)
+                            <a href="{{ route($pdfRoute, $pdfExtra + ['from' => $appliedDetailFrom, 'to' => $appliedDetailTo, 'formato' => 'managercontrol']) }}" class="prod-link leading-none">Descargar reporte PDF</a>
+                        @else
+                            <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Elige un colaborador para descargar el reporte">Descargar reporte PDF</span>
                         @endif
                     </div>
                 </header>
@@ -309,7 +312,7 @@
                     <x-productivity-period-aside
                         from-prop="detailFrom" to-prop="detailTo" :values="['detailFrom' => $detailFrom, 'detailTo' => $detailTo]"
                         consult-method="applyDetailFilters" consult-id="prod-d-consult" period-id="prod-d-period"
-                        guide="productividad-detalle" guide-title="Descargar la guía del Detalle de actividades en PDF" tour-set="detail" />
+                        guide="managercontrol-detalle" guide-title="Descargar la guía del Registro de horas por día en PDF" tour-set="detail" />
 
                     <div class="prod-main">
                     <div class="prod-detail-cols prod-dgrid mc-grid panel-surface panel-border box-border h-[87px] shrink-0 border-b" aria-hidden="true">
@@ -318,51 +321,44 @@
                         <span class="prod-dcell panel-border">Actividad</span>
                         <span class="prod-dcell panel-border">Descripción</span>
                         <span class="prod-dcell panel-border" style="justify-content:center">Tiempo</span>
+                        <span class="prod-dcell panel-border" style="justify-content:center">Acción</span>
                     </div>
                     <div id="prod-d-list" data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
                         <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
-                            @forelse ($detail->byDay as $date => $dayRows)
+                            @foreach ($detail->byDay as $date => $dayRows)
                                 @php $detailRows += 1 + count($dayRows); @endphp
                                 <section class="prod-day panel-border">
                                     <header data-snap class="prod-day-head prod-dgrid mc-grid panel-border border-b">
-                                        <span class="prod-dcell prod-dindex panel-border panel-accent"><span class="whitespace-nowrap leading-none">{{ $digits(\Illuminate\Support\Carbon::parse($date)->format('d/m/y')) }}</span></span>
+                                        <span class="prod-dcell prod-dindex panel-border"><span class="whitespace-nowrap leading-none">{{ $digits(\Illuminate\Support\Carbon::parse($date)->format('d/m/y')) }}</span></span>
                                         <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count(array_unique(array_column($dayRows, 'customer'))) }} cliente(s)</span></span>
                                         <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count($dayRows) }} registro(s)</span></span>
-                                        <span class="prod-dcell panel-border"></span>
+                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count(array_filter(array_column($dayRows, 'description'), fn ($text) => $text !== '')) }} descripción(es)</span></span>
                                         <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal(array_sum(array_column($dayRows, 'seconds')))) }}</span></span>
+                                        <span class="prod-dcell panel-border"></span>
                                     </header>
                                     @foreach ($dayRows as $row)
-                                        <article data-snap class="prod-drow prod-dgrid mc-grid panel-border border-b">
+                                        <article data-snap class="prod-drow prod-dgrid mc-grid panel-border border-b {{ $loop->iteration % 2 === 0 ? 'mc-stripe' : '' }}">
                                             <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['customer'] }}">{{ $row['customer'] }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['activity'] }}">{{ $row['activity'] }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['description'] }}">{{ $row['description'] !== '' ? $row['description'] : '—' }}</span></span>
                                             <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($fmt($row['seconds'])) }}</span></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center;gap:10px">
+                                                @if ($canWrite)
+                                                    <button type="button" wire:click="openEdit({{ $row['id'] }})" class="mc-action prod-link focus:outline-none focus:ring-0" title="Editar actividad" aria-label="Editar actividad"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m16.9 4.6 2.5 2.5M4 20l4.2-1 10.9-10.9a1.8 1.8 0 0 0-2.5-2.5L5.7 16.5 4 20Z"/></svg></button>
+                                                    <button type="button" wire:click="deleteRecord({{ $row['id'] }})" wire:confirm="¿Dar de baja esta actividad en ManagerControl?" class="mc-action panel-accent focus:outline-none focus:ring-0" title="Dar de baja" aria-label="Dar de baja la actividad"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18"/></svg></button>
+                                                @else
+                                                    <span class="mc-action" style="opacity:.35" title="Solo lectura: agregar, editar y dar de baja se activará cuando se den los permisos de escritura en ManagerControl." aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m16.9 4.6 2.5 2.5M4 20l4.2-1 10.9-10.9a1.8 1.8 0 0 0-2.5-2.5L5.7 16.5 4 20Z"/></svg></span>
+                                                    <span class="mc-action" style="opacity:.35" title="Solo lectura: agregar, editar y dar de baja se activará cuando se den los permisos de escritura en ManagerControl." aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18"/></svg></span>
+                                                @endif
+                                            </span>
                                         </article>
                                     @endforeach
+                                    @php $nextStripe = count($dayRows) % 2 === 1; @endphp
                                 </section>
-                            @empty
-                                {{-- Día de ejemplo en ceros mientras no haya datos --}}
-                                @php $detailRows = 2; @endphp
-                                <section class="prod-day panel-border">
-                                    <header data-snap class="prod-day-head prod-dgrid mc-grid panel-border border-b">
-                                        <span class="prod-dcell prod-dindex panel-border panel-accent"><span class="whitespace-nowrap leading-none">{{ $digits(now()->format('d/m/y')) }}</span></span>
-                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">0 cliente(s)</span></span>
-                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">0 registro(s)</span></span>
-                                        <span class="prod-dcell panel-border"></span>
-                                        <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
-                                    </header>
-                                    <article data-snap class="prod-drow prod-dgrid mc-grid panel-border border-b">
-                                        <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
-                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">Cliente de ejemplo</span></span>
-                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">Actividad de ejemplo</span></span>
-                                        <span class="prod-dcell panel-border"><span class="truncate leading-none">Descripción de ejemplo</span></span>
-                                        <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('00:00:00') }}</span></span>
-                                    </article>
-                                </section>
-                            @endforelse
+                            @endforeach
                             @for ($slot = $detailRows; $slot < 7; $slot++)
-                                <div class="prod-blank-row prod-dgrid mc-grid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
+                                <div class="prod-blank-row prod-dgrid mc-grid panel-border border-b {{ $nextStripe ? 'mc-stripe' : '' }}" aria-hidden="true">@php $nextStripe = ! $nextStripe; @endphp<span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
                             @endfor
                         </div>
                         <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
@@ -374,90 +370,202 @@
 
         @unless ($ownMode)
         <div class="prod-wrap">
-            <section id="prod-tour-links" x-data="{ legacyEmployees: @js($employees) }" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Asignar usuarios del CRM a colaboradores de ManagerControl">
+            <section id="prod-tour-links" x-data="{
+                legacyEmployees: @js($employees),
+                linkQ: '',
+                linkIndex: @js(collect($linkRows)->map(fn ($row) => ['id' => $row['id'], 'text' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($row['name'].' '.$row['email'].' '.$row['role']))])->values()),
+                norm(text) { return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); },
+                get visibleIds() { const tokens = this.norm(this.linkQ).split(/\s+/).filter(Boolean); return this.linkIndex.filter(row => tokens.every(token => row.text.includes(token))).map(row => row.id); },
+                stripe(id) { return this.visibleIds.indexOf(id) % 2 === 1; },
+                get fillers() { return Math.max(0, 7 - this.visibleIds.length); }
+            }" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Asignar usuarios del CRM a colaboradores de ManagerControl">
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Asignar usuario del CRM</h2>
-                        <p class="prod-lines mt-[5px]">Elige a qué colaborador de ManagerControl corresponde cada usuario. Control Gerencial usa esta asignación.</p>
-                        <p class="prod-lines mt-[5px]" role="status">
-                            @if ($linkError)
-                                <span class="panel-accent" data-testid="link-error">{{ $linkError }}</span>
-                            @elseif ($linkNotice)
-                                <span data-testid="link-notice">{{ $linkNotice }}</span>
-                            @else
-                                {{ $linkCounts['assigned'] }} asignado(s) de {{ $linkCounts['all'] }}
-                            @endif
-                        </p>
+                        <p class="prod-lines mt-[5px]">Relaciona cada usuario con su colaborador.</p>
+
                     </div>
-                    <div class="flex flex-wrap items-center gap-[20px]">
-                        <nav class="flex flex-wrap items-center gap-[20px]" aria-label="Filtrar usuarios">
-                            @foreach (['all' => 'Todos', 'assigned' => 'Asignados', 'unassigned' => 'No asignados'] as $key => $label)
-                                <button type="button" wire:click="setLinkFilter('{{ $key }}')" @class(['leading-none cursor-pointer focus:outline-none focus:ring-0', 'panel-accent' => $linkFilter === $key, 'prod-link' => $linkFilter !== $key]) @if ($linkFilter === $key) aria-current="true" @endif>{{ $label }} ({{ $linkCounts[$key] }})</button>
-                            @endforeach
-                        </nav>
-                        <input type="search" wire:model.live.debounce.300ms="linkSearch" placeholder="Buscar usuario…" aria-label="Buscar usuario del CRM" class="panel-field min-h-[50px] min-w-[220px] rounded-xl border px-[20px] focus:outline-none focus:ring-0">
-                    </div>
+                    <p class="shrink-0 text-right leading-none" role="status">
+                        @if ($linkError)
+                            <span class="panel-accent" data-testid="link-error">{{ $linkError }}</span>
+                        @elseif ($linkNotice)
+                            <span data-testid="link-notice">{{ $linkNotice }}</span>
+                        @endif
+                    </p>
                 </header>
+                <div class="prod-layout">
+                    <aside class="prod-aside panel-scroll panel-border">
+                        <div class="panel-surface panel-border box-border h-[87px] shrink-0 border-b p-[20px]">
+                            <h2 class="panel-accent leading-none">Filtro de usuarios</h2>
+                            <p class="prod-lines mt-[5px]">Busca y elige qué usuarios ver</p>
+                        </div>
+                        <div class="prod-form">
+                            <div style="display: contents">
+                                <span class="prod-label">Buscar</span>
+                                <input id="mc-l-search" type="search" x-model="linkQ" placeholder="Buscar usuario…" aria-label="Buscar usuario del CRM" class="panel-field min-h-[50px] w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0">
+                            </div>
+                            <div style="display: contents">
+                                <span class="prod-label">Asignados</span>
+                                <div id="mc-l-assigned" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px]" aria-live="polite"><span class="whitespace-nowrap">{{ $linkCounts['assigned'] }} de {{ $linkCounts['all'] }}</span></div>
+                            </div>
+                            <div style="display: contents">
+                                <span class="prod-label">No asignados</span>
+                                <div id="mc-l-unassigned" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px]" aria-live="polite"><span class="whitespace-nowrap">{{ $linkCounts['unassigned'] }} de {{ $linkCounts['all'] }}</span></div>
+                            </div>
+                            <div class="panel-border border-t" aria-hidden="true"></div>
+                            <div class="prod-guide">
+                                <a href="{{ route('section.guide', 'managercontrol-asignar') }}" title="Descargar la guía de Asignar usuario del CRM en PDF" class="prod-guide-link prod-link leading-none">Descargar guía PDF</a>
+                                <div class="panel-border border-t" aria-hidden="true"></div>
+                                <button type="button" @click="startQuickTour('links')" class="prod-primary min-h-[48px] w-full focus:outline-none focus:ring-0">Tutorial rápido</button>
+                            </div>
+                        </div>
+                    </aside>
+
                 <div class="prod-main">
                     <div class="prod-detail-cols prod-dgrid mc-link-grid panel-surface panel-border box-border h-[87px] shrink-0 border-b" aria-hidden="true">
                         <span class="prod-dcell prod-dindex panel-border">N°</span>
                         <span class="prod-dcell panel-border">Usuario del CRM</span>
+                        <span class="prod-dcell panel-border">Correo</span>
+                        <span class="prod-dcell panel-border">Rol</span>
                         <span class="prod-dcell panel-border">Colaborador de ManagerControl</span>
-                        <span class="prod-dcell panel-border" style="justify-content:center">Acción</span>
                     </div>
-                    <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
+                    <div id="mc-l-list" data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
                         <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
-                            @forelse ($linkRows as $row)
-                                <article data-snap wire:key="link-{{ $row['id'] }}" x-data="legacyEmployeePicker($wire.entangle('links.{{ $row['id'] }}'), legacyEmployees)" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-mc-picker]')) open = false" class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
+                            @foreach ($linkRows as $row)
+                                <article data-snap wire:key="link-{{ $row['id'] }}" x-data="legacyEmployeePicker($wire.entangle('links.{{ $row['id'] }}'), legacyEmployees, (value) => value ? $wire.saveLink({{ $row['id'] }}) : $wire.removeLink({{ $row['id'] }}))" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-mc-picker]')) open = false" x-show="visibleIds.includes({{ $row['id'] }})" :class="{ 'mc-stripe': stripe({{ $row['id'] }}) }" class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
                                     <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
                                     <span class="prod-dcell panel-border" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:15px">
                                         <span class="max-w-full truncate leading-none" title="{{ $row['name'] }}">{{ $row['name'] }}</span>
-                                        @if ($row['suggestion'])
-                                            <button type="button" @click="value = '{{ $row['suggestion']['id'] }}'" class="prod-link max-w-full cursor-pointer truncate text-left leading-none focus:outline-none focus:ring-0" title="Usar el colaborador sugerido por parecido de nombre">Sugerido: {{ $row['suggestion']['name'] }} ({{ round($row['suggestion']['score']) }} %)</button>
-                                        @endif
                                     </span>
+                                    <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['email'] }}">{{ $row['email'] ?: '—' }}</span></span>
+                                    <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['role'] }}">{{ $row['role'] ?: '—' }}</span></span>
                                     <span class="prod-dcell panel-border">
-                                        <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open" aria-haspopup="listbox" aria-label="Colaborador de ManagerControl para {{ $row['name'] }}" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px] focus:outline-none focus:ring-0">
-                                            <span class="truncate" x-text="label || 'Sin asignar'">Sin asignar</span>
-                                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                                        </button>
+                                        <div x-ref="trigger" @click="if (! open) $refs.field.focus()" class="flex h-full w-full cursor-text items-center gap-[10px]">
+                                            <input type="text" x-ref="field" autocomplete="off" role="combobox" aria-haspopup="listbox" :aria-expanded="open" aria-label="Colaborador de ManagerControl para {{ $row['name'] }}"
+                                                :placeholder="label || 'Sin asignar'" :value="open ? q : label"
+                                                @focus="openList()" @click="openList()" @input="q = $event.target.value; active = 0; open = true"
+                                                @keydown.arrow-down.prevent="open = true; move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter.prevent="pick()"
+                                                class="panel-text min-w-0 flex-1 truncate leading-none" style="border:0 !important; box-shadow:none !important; outline:none !important; padding:0 !important; margin:0; background:transparent !important; min-height:0; height:auto; color:inherit; --tw-ring-shadow:0 0 #0000;">
+                                            <button x-show="value" x-cloak type="button" tabindex="-1" @click.stop="choose(null)" aria-label="Quitar asignación" title="Quitar asignación" class="shrink-0 leading-none focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18" /></svg></button>
+                                            <button type="button" tabindex="-1" @click="open ? open = false : $refs.field.focus()" aria-label="Mostrar opciones" class="shrink-0 leading-none focus:outline-none focus:ring-0">
+                                                <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
+                                            </button>
+                                        </div>
                                         <template x-teleport="body">
-                                            <div x-cloak x-ref="panel" data-panel data-productivity data-prod-calendar data-mc-picker :style="`left:${left}px;top:${top}px;width:${width}px`" :class="open ? '' : 'hidden'" class="app-zoom-overlay prod-calendar panel-surface panel-border panel-text fixed rounded-xl border p-[15px]" role="dialog" aria-label="Elegir colaborador de ManagerControl">
-                                                <input x-ref="search" x-model="q" @input="active = 0" @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter.prevent="pick()" type="search" placeholder="Escribe para buscar…" aria-label="Buscar colaborador de ManagerControl" class="panel-field mb-[15px] min-h-[44px] w-full rounded-xl border px-[15px] focus:outline-none focus:ring-0">
-                                                <div x-ref="list" role="listbox" class="panel-scroll" style="max-height:260px;overflow-y:auto">
-                                                    <button type="button" @click="choose(null)" class="mc-option" role="option">Sin asignar</button>
-                                                    <template x-for="(employee, index) in filtered" :key="employee.id">
-                                                        <button type="button" @click="choose(employee)" @mouseenter="active = index" :data-active="active === index" :class="{ 'is-active': active === index, 'is-selected': String(value) === String(employee.id) }" class="mc-option" role="option" x-text="employee.name"></button>
-                                                    </template>
-                                                    <p x-show="filtered.length === 0" class="px-[15px] py-[10px]">Sin resultados</p>
+                                            <div x-cloak x-ref="panel" data-panel data-productivity data-prod-calendar data-mc-picker :style="`left:${left}px;top:${top}px;width:${width}px`" :class="open ? '' : 'hidden'" class="app-zoom-overlay prod-calendar panel-surface panel-border panel-text fixed overflow-hidden rounded-xl border" style="padding:0" role="listbox" aria-label="Elegir colaborador de ManagerControl">
+                                                <div x-data="backupOverlayScroll()" x-effect="open; q; $nextTick(() => update())" class="relative">
+                                                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" @scroll.debounce.150ms="(() => { const rows = [...$el.querySelectorAll('.panel-option')]; if (! rows.length) return; const height = rows[0].offsetHeight; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.round($el.scrollTop / height) * height); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" data-row-step=".panel-option" class="panel-scroll relative overflow-y-auto overscroll-contain" style="height: 400px;">
+                                                        <template x-for="(employee, index) in filtered" :key="employee.id">
+                                                            <button type="button" @click="choose(employee)" @mouseenter="active = index" :data-active="active === index" :class="{ 'is-active': active === index }" :aria-selected="String(value) === String(employee.id)" role="option" class="panel-option flex h-[80px] w-full items-center gap-[15px] px-[20px] text-left leading-none focus:outline-none focus:ring-0">
+                                                                <span class="min-w-0 flex-1">
+                                                                    <span class="block truncate" x-text="employee.name"></span>
+                                                                    <span class="mt-[15px] block truncate" x-html="idHtml(employee.id)"></span>
+                                                                </span>
+                                                            </button>
+                                                        </template>
+                                                        <p x-show="filtered.length === 0" class="p-[20px] leading-none">Sin resultados</p>
+                                                    </div>
+                                                    <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                 </div>
                                             </div>
                                         </template>
                                     </span>
-                                    <span class="prod-dcell panel-border" style="justify-content:center;gap:20px">
-                                        <button type="button" wire:click="saveLink({{ $row['id'] }})" wire:loading.attr="disabled" wire:target="saveLink({{ $row['id'] }})" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Asignar</button>
-                                        @if (isset($linkSaved[$row['id']]))
-                                            <button type="button" wire:click="removeLink({{ $row['id'] }})" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Quitar</button>
-                                        @endif
-                                    </span>
                                 </article>
-                            @empty
-                                <article data-snap class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
-                                    <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
-                                    <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ $linkSearch !== '' || $linkFilter !== 'all' ? 'Sin usuarios con ese filtro' : 'Usuario de ejemplo' }}</span></span>
-                                    <span class="prod-dcell panel-border"><span class="truncate leading-none">Colaborador de ejemplo</span></span>
-                                    <span class="prod-dcell panel-border" style="justify-content:center"><span class="leading-none">Asignar</span></span>
-                                </article>
-                            @endforelse
-                            @for ($slot = max(count($linkRows), 1); $slot < 7; $slot++)
-                                <div class="prod-blank-row prod-dgrid mc-link-grid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
-                            @endfor
+                            @endforeach
+                            <template x-for="n in fillers" :key="'blank-' + n">
+                                <div class="prod-blank-row prod-dgrid mc-link-grid panel-border border-b" :class="{ 'mc-stripe': (visibleIds.length + n - 1) % 2 === 1 }" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
+                            </template>
                         </div>
                         <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
+                </div>
                 </div>
             </section>
         </div>
         @endunless
     </main>
+
+    @if ($formOpen)
+        <div class="fixed inset-0 z-[150000] flex items-center justify-center p-[20px]" style="background: rgba(10, 18, 35, .45)" role="dialog" aria-modal="true" aria-labelledby="mc-form-title" wire:keydown.escape="closeForm">
+            <section class="panel-surface panel-border w-full max-w-[560px] overflow-hidden rounded-xl border" style="max-height: calc(100dvh - 40px); overflow-y: auto">
+                <header class="panel-header panel-border border-b p-[20px]">
+                    <h2 id="mc-form-title" class="panel-accent leading-none">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h2>
+                    <p class="prod-lines mt-[5px]">Se guarda en ManagerControl con el precio por hora del colaborador.</p>
+                </header>
+                <div class="grid gap-[20px] p-[20px]">
+                    <div x-data="productivityDatePicker($wire.entangle('formDate'))" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-prod-calendar]')) open = false">
+                        <span class="prod-label" id="mc-form-date-label">Fecha</span>
+                        <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open" aria-labelledby="mc-form-date-label" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px] focus:outline-none focus:ring-0">
+                            <span x-html="formattedHtml" class="whitespace-nowrap"></span>
+                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>
+                        </button>
+                        <template x-teleport="body">
+                            <div x-cloak data-panel data-productivity data-prod-calendar :style="`left:${left}px;top:${top}px;z-index:200500`" :class="open ? '' : 'hidden'" class="app-zoom-overlay prod-calendar panel-surface panel-border panel-text panel-scroll fixed rounded-xl border p-[20px]" role="dialog" aria-label="Seleccionar fecha">
+                                <div class="mb-[15px] flex items-center justify-between gap-[10px]">
+                                    <strong class="panel-accent font-medium" x-text="monthLabel"></strong>
+                                    <div class="flex gap-[5px]">
+                                        <button type="button" @click="changeMonth(-1)" aria-label="Mes anterior" class="panel-border hover:bg-[color:var(--panel-hover)] h-9 w-9 rounded-lg border">‹</button>
+                                        <button type="button" @click="changeMonth(1)" aria-label="Mes siguiente" class="panel-border hover:bg-[color:var(--panel-hover)] h-9 w-9 rounded-lg border">›</button>
+                                    </div>
+                                </div>
+                                <div class="mb-[5px] grid grid-cols-7 text-center text-xs panel-muted"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+                                <div class="grid grid-cols-7 gap-[2px]">
+                                    <template x-for="day in days" :key="day.key">
+                                        <button type="button" @click="selectDate(day.date)" class="prod-calendar-day text-sm" :class="{ 'is-outside': day.outside, 'is-today': isToday(day.date), 'is-selected': value === day.key }" :aria-label="day.date.toLocaleDateString('es-MX', { dateStyle: 'full' })" x-text="day.date.getDate()"></button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div>
+                        <span class="prod-label">Cliente</span>
+                        <x-panel-select id="mc-form-customer" label="Cliente" property="formCustomer" searchable placeholder="Buscar cliente…"
+                            :options="collect($formCustomers)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name']])->all()" />
+                    </div>
+                    <div>
+                        <span class="prod-label">Actividad</span>
+                        <x-panel-select id="mc-form-activity" label="Actividad" property="formActivity" searchable placeholder="Buscar actividad…"
+                            :options="collect($formActivities)->map(fn ($item) => ['value' => (string) $item['id'], 'label' => $item['name']])->all()" />
+                    </div>
+                    <div>
+                        <label class="prod-label" for="mc-form-hours">Horas (en décimas: 0.5 = 30 minutos)</label>
+                        <input id="mc-form-hours" type="text" inputmode="decimal" wire:model="formHours" placeholder="0.0" class="panel-field min-h-[50px] w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0">
+                    </div>
+                    <div>
+                        <label class="prod-label" for="mc-form-description">Descripción</label>
+                        <textarea id="mc-form-description" wire:model="formDescription" rows="3" maxlength="2000" class="panel-field w-full rounded-xl border px-[20px] py-[15px] focus:outline-none focus:ring-0"></textarea>
+                    </div>
+                    @if ($formError)<p class="panel-accent prod-lines" role="alert" data-testid="form-error">{{ $formError }}</p>@endif
+                </div>
+                <footer class="panel-border flex items-center justify-between gap-[20px] border-t p-[20px]">
+                    <button type="button" wire:click="closeForm" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Cancelar</button>
+                    <button type="button" wire:click="saveRecord" wire:loading.attr="disabled" wire:target="saveRecord" class="prod-primary focus:outline-none focus:ring-0">{{ $editingId ? 'Guardar cambios' : 'Agregar' }}</button>
+                </footer>
+            </section>
+        </div>
+    @endif
+
+    <template x-teleport="body">
+        <div data-panel data-productivity x-cloak x-show="quickTourStep > 0" x-transition.opacity class="pointer-events-none fixed inset-0 z-[299999]" style="background:transparent" @click.stop @wheel.prevent @touchmove.prevent>
+            <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
+            <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
+
+            <div :style="spotlightStyle" :class="quickTourSteps[quickTourStep - 1]?.target === 'prod-tour-period' ? 'pointer-events-none' : 'pointer-events-auto'" class="z-[300001]" aria-hidden="true"></div>
+
+            <section :style="popoverStyle" class="panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
+                <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>
+                <h2 id="clock-tour-title" class="mt-[15px] leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
+                <p class="mt-[15px] text-justify leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                <div class="mt-[20px] flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px]">
+                    <button type="button" @click="closeQuickTour()" class="prod-link whitespace-nowrap leading-none">Saltar recorrido</button>
+                    <div class="flex items-center gap-[20px] whitespace-nowrap">
+                        <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-xl px-[20px] py-[15px] leading-none">Anterior</button>
+                        <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="prod-primary leading-none" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </template>
 </div>

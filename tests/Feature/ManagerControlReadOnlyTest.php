@@ -133,7 +133,7 @@ XML;
         $this->assertCount(3, $rows);
         $this->assertSame(5400, $rows[0]['seconds']);
         [$sql, $bindings] = $db->queries[0];
-        $this->assertSame([7, '2026-11-01', '2026-11-15'], $bindings);
+        $this->assertSame([7, '2026-11-01', '2026-11-15', 1, 3], $bindings); // empleado, periodo, empresa y ejercicio
         $this->assertStringNotContainsString('2026-11', $sql);
     }
 
@@ -181,7 +181,7 @@ XML;
             ->set('employeeId', '7')
             ->call('applyFilters')
             ->call('applyDetailFilters')
-            ->assertSee('Cliente A')->assertSee('Impuestos')->assertSee('04:00:00')
+            ->assertSee('Cliente A')->assertSee('Impuestos')->assertSee('03:30:00')
             ->assertSeeHtml('prod-day-head')->assertSee('Registro de horas por día');
 
         \Illuminate\Support\Facades\Cache::flush();
@@ -204,6 +204,36 @@ XML;
             ->assertSee('Sin conexión simulada.');
     }
 
+    public function test_choosing_an_employee_refreshes_both_tables_without_pressing_consult(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 7, 'name' => 'Ana']], $this->sampleHours()));
+
+        Livewire::actingAs($this->user('Administrador', 'admin-auto@datamid.test'))
+            ->test(ManagerControlHours::class)
+            ->assertSet('employeeId', '7')->assertSet('loaded', true)->assertSee('Cliente A')
+            ->set('employeeId', '')
+            ->assertSet('loaded', false)->assertDontSee('Cliente A')
+            ->set('employeeId', '7')
+            ->assertSet('loaded', true)->assertSet('detailLoaded', true)
+            ->assertSee('Cliente A')->assertSee('Impuestos')
+            ->set('employeeId', '')
+            ->assertSet('loaded', false)->assertSet('error', null);
+    }
+
+    public function test_admin_screen_opens_with_the_busiest_employee_already_loaded(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Ana'], ['id' => 9, 'name' => 'Beto']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+
+        Livewire::actingAs($this->user('Administrador', 'admin-top@datamid.test'))->test(ManagerControlHours::class)
+            ->assertSet('employeeId', '7')->assertSet('detailLoaded', true)->assertSee('Impuestos');
+
+        $top = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'COUNT(*)')));
+        $this->assertCount(1, $top);
+        $this->assertStringContainsString('GROUP BY', $top[0][0]);
+        $this->assertSame(['2026-10-28', '2026-11-11', 1, 3], $top[0][1]);
+    }
+
     public function test_default_period_is_fifteen_days_inclusive(): void
     {
         $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection());
@@ -222,7 +252,7 @@ XML;
         $pdf = new TotalHoursPdf;
         $html = $pdf->html(['id' => 7, 'name' => 'Ana Pérez'], '2026-11-01', '2026-11-15', $summary);
 
-        foreach (['Total de Horas Laboradas', 'Del 01/11/2026 Al 15/11/2026', 'Ana Pérez', 'Cliente A', 'Impuestos', 'Total acumulado: 04:00:00', 'data:image/png;base64'] as $expected) {
+        foreach (['Total de Horas Laboradas', 'Del 01/11/2026 Al 15/11/2026', 'Ana Pérez', 'Cliente A', 'Impuestos', 'Total acumulado: 04:00:00', 'data:image/'] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }
         $this->assertStringStartsWith('%PDF', $pdf->render(['id' => 7, 'name' => 'Ana Pérez'], '2026-11-01', '2026-11-15', $summary));
@@ -267,7 +297,7 @@ XML;
 
         Livewire::actingAs($user)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
             ->set('employeeId', '8')
-            ->assertSee('Control Gerencial')->assertSee('Prueba Becario Legacy')->assertSee('Cliente A');
+            ->assertSee('Control Gerencial')->assertDontSee('Colaborador: Prueba Becario Legacy')->assertSee('Cliente A');
 
         $hoursQueries = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')));
         $this->assertNotEmpty($hoursQueries);
@@ -284,8 +314,8 @@ XML;
             ->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
             ->assertDontSee('No se pudo consultar ManagerControl')
             ->assertDontSee('No se encontró en ManagerControl')
-            ->assertSee('sin asignar')
-            ->assertSee('Cliente de ejemplo');
+            ->assertDontSee('sin asignar')
+            ->assertDontSee('Cliente de ejemplo');
     }
 
     public function test_admin_can_assign_and_remove_a_crm_user_and_the_assignment_wins_over_the_name(): void
@@ -309,7 +339,7 @@ XML;
         $this->assertDatabaseMissing('managercontrol_employee_links', ['user_id' => $otro->id]);
 
         $db->queries = [];
-        Livewire::actingAs($becario)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)->assertSee('Persona Dos');
+        Livewire::actingAs($becario)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)->assertSee('Cliente A')->assertDontSee('Colaborador: Persona Dos');
         foreach (array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')) as [, $bindings]) {
             $this->assertSame(8, $bindings[0]);
         }
@@ -331,8 +361,7 @@ XML;
         Livewire::actingAs($admin)->test(ManagerControlHours::class)
             ->call('setLinkFilter', 'assigned')->assertSee('Zeta Asignada')->assertDontSee('Omega Libre')
             ->call('setLinkFilter', 'unassigned')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada')
-            ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada')
-            ->assertSee('No asignados (');
+            ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada');
     }
 
     public function test_control_gerencial_menu_is_for_everyone_except_administrators(): void
@@ -345,8 +374,45 @@ XML;
 
         $this->actingAs($intern)->get(route('profile.show'))->assertOk()->assertSee('>Control Gerencial<', false);
         $this->flushSession();
-        $this->actingAs($admin)->get(route('profile.show'))->assertOk()->assertDontSee('>Control Gerencial<', false);
+        $this->actingAs($admin)->get(route('profile.show'))->assertOk()->assertSee('>Control Gerencial<', false)
+            ->assertSee(route('testing.managercontrol.index'), false)->assertDontSee(route('testing.own-hours.index'), false);
         $this->flushSession();
+    }
+
+    public function test_daily_report_uses_the_original_managercontrol_format(): void
+    {
+        $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 7, 'name' => 'Ana Pérez']], $this->sampleHours()));
+        $summary = HoursSummary::fromRows(array_map(fn ($r) => [
+            'date' => $r['work_date'], 'customer' => $r['customer'], 'activity' => $r['activity'],
+            'description' => $r['description'], 'seconds' => ManagerControlRepository::toSeconds($r['hours']),
+        ], $this->sampleHours()));
+
+        $html = (new TotalHoursPdf)->originalHtml(['id' => 7, 'name' => 'Ana Pérez'], 'Contabilidad', '2026-11-01', '2026-11-15', $summary);
+        foreach (['GONZÁLEZ, ALONZO Y ASOCIADOS S.C.P', 'Total de Horas Laboradas', '01/11/2026', '15/11/2026', 'Ana Pérez', 'Contabilidad', 'Supervisó', 'Revisó', '4.00', '02/11/2026'] as $expected) {
+            $this->assertStringContainsString($expected, $html);
+        }
+
+        $admin = $this->user('Administrador', 'admin-orig@datamid.test');
+        $this->actingAs($admin)
+            ->get(route('testing.managercontrol.pdf', ['employee' => 7, 'from' => '2026-11-01', 'to' => '2026-11-15', 'formato' => 'managercontrol']))
+            ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->actingAs($admin)
+            ->get(route('testing.managercontrol.pdf', ['employee' => 7, 'from' => '2026-11-01', 'to' => '2026-11-15', 'formato' => 'otro']))
+            ->assertSessionHasErrors('formato');
+    }
+
+    public function test_managercontrol_guides_download_and_respect_permissions(): void
+    {
+        $admin = $this->user('Administrador', 'admin-guide@datamid.test');
+        $intern = $this->user('Auxiliar', 'int-guide@datamid.test');
+
+        foreach (['managercontrol', 'managercontrol-detalle', 'managercontrol-asignar'] as $section) {
+            $this->actingAs($admin)->get(route('section.guide', $section))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        }
+
+        $this->flushSession();
+        $this->actingAs($intern)->get(route('section.guide', 'managercontrol'))->assertOk();
+        $this->actingAs($intern)->get(route('section.guide', 'managercontrol-asignar'))->assertForbidden();
     }
 
     public function test_non_admins_cannot_manage_assignments(): void

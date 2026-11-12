@@ -136,7 +136,7 @@
         background-color: var(--panel-surface);
         color: var(--panel-text);
     }
-    .panel-option:hover { background-color: var(--panel-subtle); }
+    .panel-option:hover, .panel-option.is-active { background-color: var(--panel-subtle); }
     html.module-dark-theme [data-panel] .panel-option:hover { background-color: var(--panel-hover); }
     .panel-option[aria-selected="true"] { color: var(--panel-accent); }
     .panel-scroll {
