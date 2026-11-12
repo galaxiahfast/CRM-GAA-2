@@ -47,3 +47,24 @@ php artisan managercontrol:sync-catalogs --apply
 El primer comando `sync-catalogs` solo muestra la vista previa. `--apply` comprueba los tres permisos antes de insertar. Si la conexión falla a mitad del proceso, se puede repetir: los registros insertados se reconocen por RFC/nombre y los vínculos ya guardados se reutilizan. Después de importar, el comando limpia la caché de los tres catálogos.
 
 Los clientes sin país, estado, ciudad o domicilio usan el marcador `.` que ya emplea la base de ManagerControl. Se copia el domicilio, teléfono y correo disponibles en el CRM. `TipoPersona` se determina por la longitud del RFC: 12 caracteres para moral y 13 para física; un RFC con otra longitud se deja para revisión.
+
+## Revisión del 2026-11-12
+
+- Respaldo previo (solo lectura) de `Catalogos.Clientes`, `Catalogos.Secciones`, `Catalogos.Actividades` y `Catalogos.Departamentos` en `storage/app/managercontrol-backups/2026-11-12_203719` (JSON y CSV, con `resumen.json` y huellas SHA-256). La carpeta no se sube a Git.
+- El RFC genérico del SAT (`XAXX010101000`) y sus variantes mal capturadas (`XXAX01010100`, `XXX010101000`) ya no cuentan como "RFC distinto": el cliente se reconoce por su nombre.
+- `catalog_manual_links.customers` en `config/managercontrol.php` vincula 64 clientes que ya existían en ManagerControl con otro nombre (sin "SA DE CV", errores de captura o apellidos en otro orden), confirmados con las iniciales del RFC. Si el cliente está repetido en ManagerControl se usa el que tiene más horas registradas.
+- `catalog_hold.customers` deja 5 clientes sin importar hasta que alguien confirme si ya existen.
+- Resultado de la vista previa: 130 clientes vinculados a registros existentes, 9 clientes nuevos, 13 cuentas y 11 actividades por importar, 5 pendientes.
+
+### Usar la cuenta de captura existente
+
+Si no se define `MANAGERCONTROL_CATALOG_WRITE_USERNAME`, la importación usa la cuenta de captura (`MANAGERCONTROL_WRITE_USERNAME`). Un administrador de SQL Server debe otorgarle, una sola vez:
+
+```sql
+USE [ControlTiempos_Contabilidad];
+GRANT SELECT, INSERT ON [Catalogos].[Clientes] TO [crm_captura];
+GRANT SELECT, INSERT ON [Catalogos].[Secciones] TO [crm_captura];
+GRANT SELECT, INSERT ON [Catalogos].[Actividades] TO [crm_captura];
+```
+
+No se necesita `UPDATE`, `DELETE` ni `ALTER`. Después basta con `MANAGERCONTROL_CATALOG_WRITE_ENABLED=true` en el `.env`.

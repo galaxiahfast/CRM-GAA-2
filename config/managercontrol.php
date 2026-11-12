@@ -55,8 +55,92 @@ return [
     // Cuenta independiente para importar catálogos. Nunca se usa para registrar horas.
     'catalog_write' => [
         'enabled' => (bool) env('MANAGERCONTROL_CATALOG_WRITE_ENABLED', false),
-        'username' => env('MANAGERCONTROL_CATALOG_WRITE_USERNAME'),
-        'password' => env('MANAGERCONTROL_CATALOG_WRITE_PASSWORD'),
+        // Si no se define una cuenta propia, usa la cuenta de captura (crm_captura) una vez que el administrador de
+        // SQL Server le otorgue SELECT e INSERT sobre los tres catálogos (ver docs/managercontrol-catalogos.md).
+        'username' => env('MANAGERCONTROL_CATALOG_WRITE_USERNAME', env('MANAGERCONTROL_WRITE_USERNAME')),
+        'password' => env('MANAGERCONTROL_CATALOG_WRITE_PASSWORD', env('MANAGERCONTROL_WRITE_PASSWORD')),
+    ],
+    // Vínculos manuales (id del CRM => id en ManagerControl), revisados uno por uno el 2026-11-12 contra el respaldo
+    // storage/app/managercontrol-backups/2026-11-12_203719. Son clientes que YA existen en ManagerControl con otro nombre
+    // (sin "SA DE CV", con errores de captura o con los apellidos en otro orden) y que se habrían duplicado. Se confirmaron
+    // con las iniciales del RFC del CRM. Cuando el cliente está repetido en ManagerControl se usa el que tiene más horas.
+    'catalog_manual_links' => [
+        'customers' => [
+            7 => 389,    // GIL CUEVAS LILIA MARIA = LILIA GIL CUEVAS
+            9 => 655,    // MARIA GUADALUPE MOLINA (MOZG) = GUADALUPE MOLINA ZALDIVAR
+            10 => 40,    // LISSIE MIREYA FUENTE MORENO = ...FUENTES MORENO
+            11 => 362,   // MARIA EUGENIA DE ATOCHA GONZALEZ (GOEE) = MARIA EUGENIA GONZALEZ ESCALANTE
+            13 => 124,   // CARLOS ENRIQUE GUILLERMO (GUCC) = CARLOS GUILLERMO CASTILLO (27 registros; el 306 solo 1)
+            17 => 731,   // ALBERTO MATA (MAMA) = ALBERTO MATA MENDOZA (33 registros; el 545 solo 2)
+            19 => 125,   // ALBERTO RENE GONZALEZ (GOEA) = ALBERTO RENE GONZALEZ ESCALANTE
+            20 => 654,   // LUIS BAQUEDANO PEON = LUIS AUGUSTO BAQUEDANO PEON
+            21 => 2783,  // VANESSA NOEMY HEREDIA (HEMV) = VANESA HEREDIA MEJIA
+            22 => 111,   // JORGE ALBERTO HEREDIA (HEMJ) = HEREDIA MEJIA JORGE ALBERTO (243 registros; el 81 solo 19)
+            23 => 679,   // JULIETA DEL CARMEN MENDICUTI (MEMJ) = JULIETA MENDICUTI MOGUEL
+            24 => 457,   // MARIA TERESA RIVERA (RIDT) = MARIA TERESA RIVERA DAMIAN
+            26 => 711,   // BUENFIL KELLEHER BERNARDO = BERNARDO BUENFIL
+            29 => 698,   // AIDA GABRIELA MEJIA (MECA) = GABRIELA MEJIA CACERES
+            30 => 2785,  // ALEJANDRO RUIZ ROSSELL (repetido 2785 y 2789, ninguno con horas)
+            37 => 565,   // GRUPO PROBEEF S DE PR DE RL DE CV = GRUPO PROBEEF
+            38 => 610,   // DECOME SA DE CV = DECOME
+            40 => 609,   // GRUPO AGROPECUARIO EL PARAJE
+            42 => 309,   // PATRONATO DE ASISTENCIA SOCIAL Y CULTURAL DE HUNUCMA = PATRONATO DE HUNUCMA
+            44 => 657,   // CARLOS ARIEL MENDEZ FRANCO
+            46 => 540,   // MANUEL JESUS OXTE CABRERA = MANUEL OXTE CABRERA
+            48 => 528,   // DISTRIBUIDORA MAYORISTA DE CRISTALES
+            51 => 636,   // TRANSPORTES Y MUDANZAS QUALITY (RFC con letras invertidas en ManagerControl)
+            52 => 2795,  // ROQUE EMILIANO AVILA WALSON (44 registros; el 3800 ninguno)
+            55 => 28,    // BAQUEDANO CASADO LUIS EUGENIO = LUIS EUGENIO BAQUEDANO CASADO
+            56 => 66,    // ALEJANDRO ARTURO ORTEGA (OENA) = ALEJANDRO ORTEGA NOVELO
+            59 => 68,    // RICARDO PENICHE (PERR) = RICARDO PENICHE RODRIGUEZ
+            60 => 95,    // JORGE ALBERTO HEREDIA TRUJILLO (1341 registros; el 494 tiene 261)
+            61 => 29,    // LUZ MARGARITA MEJIA (MECL) = LUZ MARGARIATA MEJIA CACERES
+            64 => 516,   // JIMENA HERNANDEZ (HESJ) = JIMENA HERNANDEZ SALAZAR
+            70 => 589,   // PATRICIO CORREA MILLET
+            72 => 564,   // COMERCIALIZADORA PROBEFF = COMERCIALIADORA PROBEEF
+            73 => 300,   // FERNANDO MATA ALCOCER
+            74 => 727,   // PEDRO MATA ALCOCER
+            75 => 90,    // HUMBERTO MEDINA ALBORNOS (MEAH) = HUMBERTO MEDINA
+            76 => 91,    // TOMASA GAMBOA PERAZA
+            77 => 301,   // JULIO CESAR SOSA (SOMJ) = JULIO CESAR SOSA MENDOZA
+            78 => 60,    // MARTIN GELACIO MORFINEZ (MOMM) = MARTIN MORFINES MENDOZA (83 registros; el 498 tiene 47)
+            80 => 13,    // MARTIN HILARIO ARGAEZ (AAGM) = MARTIN ARGAEZ GONZALEZ
+            81 => 458,   // BACCSA INDUSTRIAL = BACSA INDUSTRIA SA DE CV (611 registros; el 1764 tiene 45)
+            83 => 745,   // JORGE BUENFIL KELLEHER = JORGE BUENFIL
+            86 => 113,   // JUAN JOSE CARDEÑA MANZANERO = JUAN CARDEÑA MAZANERO
+            87 => 500,   // COHERSA DEL SURESTE
+            88 => 21,    // COMPONENTES ELECTRONICOS INDUSTRIALES
+            90 => 535,   // EDGARDO ESQUILANO MARTINEZ (EUME) = EDGARDO ESQUILIANO
+            94 => 3799,  // FLEXIARRIENDO
+            95 => 602,   // FRIGO INSUMOS
+            99 => 532,   // ILE VICTORIA URIBE
+            101 => 454,  // JIM MANN'S MERIDA PROPERTIES = JIM MANNS MERIDA
+            110 => 455,  // MONTONA SOLAR
+            125 => 48,   // DOLPHIN DEVELOPMENT CORPORATION
+            126 => 741,  // FELIX ENRIQUE MEDINA MADRIAGA = FELIX MEDINA MADARIAGA
+            127 => 4824, // GRUPO CERVECERO LA HACH = LA JACH
+            128 => 443,  // GUILLERMO EMILIO HERNANDEZ SALAZAR (HESG) = GUILLERMO HERNNDEZ
+            131 => 109,  // OPERACION E INTEGRACION EFICIENTE DE MEXICO
+            133 => 114,  // RECURSOS HUMANOS VIDRIOS Y ALUMINIOS
+            134 => 744,  // LA PROVENCE 33
+            136 => 513,  // LUCIA DEL ROSARIO MONTALVO GAMBOA = LUCIA MONTALVO
+            137 => 719,  // MARCO ANTONIO CAB CHAN = MARCO ANTONIO CAB (263 registros; el 720 tiene 123)
+            138 => 704,  // MELISSA ALEJANDRA SEGURA PACHECO = MELLISA SEGURA
+            139 => 398,  // MILDRED CRISTINA RAMIREZ ARMENTA (mismo RFC)
+            140 => 70,   // RAFAEL ALEJANDRO GAMBOA QUINTAL = RAFAEL GAMBOA QUINTAL
+            145 => 721,  // NORMA ANGELICA ROSSELL GARCIA (ROGN) = NORMA GARCIA ROSEL
+            146 => 4826, // MIARIA DEL PILAR SOSA CAMARA = MARIA PILAR SOSA CAMARA
+        ],
+    ],
+    // Clientes que se dejan sin importar hasta que alguien confirme si ya existen en ManagerControl.
+    'catalog_hold' => [
+        'customers' => [
+            12 => 'JULIO MEJIA SALAZAR: ¿es JULIO MEJIA (#475)? El RFC del CRM tiene fecha 2015.',
+            16 => 'CARLOS ANTONIO GRANJA PEREZ: ManagerControl tiene CARLOS ANTONIO GRANJA RICALDE (#54), con otro segundo apellido.',
+            116 => 'SISTEMAS ELECTRONICOS PENINSULARES: ¿es SISTEMAS ELECTRICOS (#606)?',
+            118 => 'TRANSPORTES FRIGO INN: ¿es TRANSPORTE FRIGO (#603)?',
+            151 => 'Despacho López Mezquita QA: es un cliente de prueba del CRM y su RFC no es válido.',
+        ],
     ],
     // Departamento de ManagerControl para cada categoría del CRM (confirmado para la empresa/ejercicio 1/3).
     'catalog_departments' => [

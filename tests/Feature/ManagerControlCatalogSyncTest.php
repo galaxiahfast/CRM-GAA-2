@@ -132,4 +132,104 @@ class ManagerControlCatalogSyncTest extends TestCase
         $this->assertDatabaseCount('managercontrol_catalog_links', 0);
         $this->assertSame('managercontrol', app(\App\Services\ManagerControl\ManagerControlRepository::class)->catalog('customers')[0]['source']);
     }
+
+    public function test_a_generic_remote_rfc_does_not_block_linking_by_name(): void
+    {
+        SubService::query()->delete();
+        Service::query()->delete();
+        Customer::query()->delete();
+        Customer::query()->create(['name' => 'Cliente con RFC generico', 'rfc' => 'ABC010101AB1']);
+        Customer::query()->create(['name' => 'Otro cliente', 'rfc' => 'DEF020202AB2']);
+
+        $remote = new class implements ReadOnlyConnection
+        {
+            public function select(string $sql, array $bindings = []): array
+            {
+                return str_contains($sql, '[Catalogos].[Clientes]')
+                    ? [
+                        ['id' => 60, 'name' => 'CLIENTE CON RFC GENÉRICO', 'rfc' => 'XAXX010101000', 'source_username' => 'LEGACY'],
+                        ['id' => 61, 'name' => 'Otro cliente', 'rfc' => 'XXAX01010100', 'source_username' => 'LEGACY'],
+                    ]
+                    : [];
+            }
+
+            public function diagnostics(): array
+            {
+                return [];
+            }
+        };
+        $this->app->instance(ReadOnlyConnection::class, $remote);
+        $result = app(CatalogSynchronizer::class)->run();
+
+        // Ambos son el mismo cliente: se vinculan con el registro existente y no se crea un duplicado
+        $this->assertSame(0, $result['counts']['customers']['conflict']);
+        $this->assertSame(2, $result['counts']['customers']['matched']);
+        $this->assertSame(0, $result['counts']['customers']['would_create']);
+    }
+
+    public function test_a_manual_link_resolves_a_customer_repeated_in_managercontrol(): void
+    {
+        SubService::query()->delete();
+        Service::query()->delete();
+        Customer::query()->delete();
+        $customer = Customer::query()->create(['name' => 'Cliente repetido', 'rfc' => 'ABC010101AB1']);
+        config()->set('managercontrol.catalog_manual_links.customers', [$customer->id => 71]);
+
+        $remote = new class implements ReadOnlyConnection
+        {
+            public function select(string $sql, array $bindings = []): array
+            {
+                return str_contains($sql, '[Catalogos].[Clientes]')
+                    ? [
+                        ['id' => 70, 'name' => 'Cliente repetido', 'rfc' => 'XAXX010101000', 'source_username' => 'LEGACY'],
+                        ['id' => 71, 'name' => 'Cliente  repetido', 'rfc' => 'XAXX010101000', 'source_username' => 'LEGACY'],
+                    ]
+                    : [];
+            }
+
+            public function diagnostics(): array
+            {
+                return [];
+            }
+        };
+        $this->app->instance(ReadOnlyConnection::class, $remote);
+
+        // sin vínculo manual seguiría pendiente; con él se usa el elegido
+        $result = app(CatalogSynchronizer::class)->run();
+        $this->assertSame(0, $result['counts']['customers']['conflict']);
+        $this->assertSame(1, $result['counts']['customers']['matched']);
+
+        config()->set('managercontrol.catalog_manual_links.customers', [$customer->id => 999]);
+        $broken = app(CatalogSynchronizer::class)->run();
+        $this->assertSame(1, $broken['counts']['customers']['conflict']);
+    }
+
+    public function test_customers_on_hold_are_neither_imported_nor_linked(): void
+    {
+        SubService::query()->delete();
+        Service::query()->delete();
+        Customer::query()->delete();
+        $customer = Customer::query()->create(['name' => 'Cliente en espera', 'rfc' => 'ABC010101AB1']);
+        config()->set('managercontrol.catalog_manual_links.customers', []);
+        config()->set('managercontrol.catalog_hold.customers', [$customer->id => 'Confirmar si ya existe.']);
+
+        $remote = new class implements ReadOnlyConnection
+        {
+            public function select(string $sql, array $bindings = []): array
+            {
+                return [];
+            }
+
+            public function diagnostics(): array
+            {
+                return [];
+            }
+        };
+        $this->app->instance(ReadOnlyConnection::class, $remote);
+        $result = app(CatalogSynchronizer::class)->run();
+
+        $this->assertSame(1, $result['counts']['customers']['conflict']);
+        $this->assertSame(0, $result['counts']['customers']['would_create']);
+        $this->assertStringContainsString('Confirmar si ya existe.', $result['issues'][0]['reason']);
+    }
 }

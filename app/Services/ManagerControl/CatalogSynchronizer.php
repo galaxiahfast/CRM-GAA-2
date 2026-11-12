@@ -63,6 +63,27 @@ class CatalogSynchronizer
 
                 continue;
             }
+            // En espera de confirmación: no se importa ni se vincula hasta que alguien lo revise.
+            $hold = config('managercontrol.catalog_hold.customers')[$id] ?? null;
+            if (is_string($hold) && $hold !== '') {
+                $this->issue($counts, $issues, 'customers', $id, 'Pendiente de confirmar: '.$hold);
+
+                continue;
+            }
+            // Vínculo manual aprobado: el cliente ya existe en ManagerControl con otro nombre o está repetido allá.
+            $manualId = (int) (config('managercontrol.catalog_manual_links.customers')[$id] ?? 0);
+            if ($manualId > 0) {
+                $manual = collect($remoteCustomers)->firstWhere('id', $manualId);
+                if ($manual === null) {
+                    $this->issue($counts, $issues, 'customers', $id, "El vínculo manual apunta al cliente #{$manualId}, que no existe en ManagerControl.");
+
+                    continue;
+                }
+                $counts['customers']['matched']++;
+                $this->saveLink($apply, 'customers', $id, $manualId, 'matched');
+
+                continue;
+            }
             if (! in_array(strlen($rfc), [12, 13], true) || mb_strlen($name) > 200 || $name === '') {
                 $this->issue($counts, $issues, 'customers', $id, 'Nombre o RFC inválido para el catálogo remoto.');
 
@@ -262,6 +283,17 @@ class CatalogSynchronizer
 
     private function validRfc(string $value): bool
     {
-        return in_array(strlen($this->rfc($value)), [12, 13], true);
+        $rfc = $this->rfc($value);
+
+        return in_array(strlen($rfc), [12, 13], true) && ! $this->genericRfc($rfc);
+    }
+
+    /**
+     * RFC genérico del SAT (XAXX010101000, XEXX010101000) o sus variantes mal capturadas en ManagerControl
+     * (XXAX01010100, XXX010101000...). No identifica a un contribuyente: el cliente se reconoce por su nombre.
+     */
+    private function genericRfc(string $rfc): bool
+    {
+        return str_starts_with($rfc, 'X') && str_contains($rfc, '010101');
     }
 }
