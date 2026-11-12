@@ -494,8 +494,9 @@
                 legacyEmployees: @js($employees),
                 linkQ: '',
                 linkIndex: @js(collect($linkRows)->map(fn ($row) => ['id' => $row['id'], 'text' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($row['name'].' '.$row['email'].' '.$row['role']))])->values()),
+                visibleIds: @js(collect($linkRows)->pluck('id')->values()),
                 norm(text) { return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); },
-                get visibleIds() { const tokens = this.norm(this.linkQ).split(/\s+/).filter(Boolean); return this.linkIndex.filter(row => tokens.every(token => row.text.includes(token))).map(row => row.id); },
+                filterUsers(query) { const tokens = this.norm(query).split(/\s+/).filter(Boolean); this.visibleIds = this.linkIndex.filter(row => tokens.every(token => row.text.includes(token))).map(row => row.id); },
                 stripe(id) { return this.visibleIds.indexOf(id) % 2 === 1; },
                 get fillers() { return Math.max(0, 7 - this.visibleIds.length); }
             }" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Asignar usuarios del CRM a colaboradores de ManagerControl">
@@ -522,7 +523,7 @@
                         <div class="prod-form">
                             <div style="display: contents">
                                 <span class="prod-label">Buscar</span>
-                                <input id="mc-l-search" type="search" x-model="linkQ" placeholder="Buscar usuario…" aria-label="Buscar usuario del CRM" class="panel-field min-h-[50px] w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0">
+                                <input id="mc-l-search" type="search" x-model="linkQ" @input="filterUsers($event.target.value)" placeholder="Buscar usuario…" aria-label="Buscar usuario del CRM" class="panel-field min-h-[50px] w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0">
                             </div>
                             <div style="display: contents">
                                 <span class="prod-label">Asignados</span>

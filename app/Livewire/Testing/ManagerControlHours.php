@@ -391,7 +391,8 @@ class ManagerControlHours extends Component
     {
         try {
             $repository = app(ManagerControlRepository::class);
-            $last = $repository->mostUsedCapture($employeeId);
+            $last = Cache::remember($this->auxiliaryCacheKey('last-capture', $employeeId), now()->addSeconds(30),
+                fn (): ?array => $repository->mostUsedCapture($employeeId));
             if ($last === null) {
                 return;
             }
@@ -413,7 +414,10 @@ class ManagerControlHours extends Component
     private function loadMarks(int $employeeId): void
     {
         try {
-            $this->formMarks = app(ManagerControlRepository::class)->activityDates($employeeId, Carbon::parse($this->today())->subDays(400)->toDateString(), Carbon::parse($this->today())->addDays(60)->toDateString());
+            $from = Carbon::parse($this->today())->subDays(400)->toDateString();
+            $to = Carbon::parse($this->today())->addDays(60)->toDateString();
+            $this->formMarks = Cache::remember($this->auxiliaryCacheKey('activity-dates', $employeeId, $from, $to), now()->addSeconds(30),
+                fn (): array => app(ManagerControlRepository::class)->activityDates($employeeId, $from, $to));
         } catch (ManagerControlException $e) {
             $this->formMarks = [];
             Log::warning('ManagerControl (días con actividad): '.$e->getMessage());
@@ -455,7 +459,7 @@ class ManagerControlHours extends Component
         if ($employeeId === null) {
             return;
         }
-        $row = collect(app(ManagerControlRepository::class)->workedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo))->firstWhere('id', $recordId);
+        $row = collect($this->cachedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo))->firstWhere('id', $recordId);
         if ($row === null) {
             $this->fail('Registro no disponible', 'Ese registro ya no está en el periodo consultado. Vuelve a consultar la tabla.');
 
@@ -514,6 +518,7 @@ class ManagerControlHours extends Component
             return;
         }
         $this->writeNotice = $this->editingId === null ? 'Actividad agregada en ManagerControl.' : 'Actividad actualizada en ManagerControl.';
+        $this->forgetCachedHours($employeeId);
         // La tabla muestra solo los encabezados de cada día: se despliega el día que se acaba de guardar para verlo.
         $this->dispatch('mc-day-open', date: $this->formDate);
         $this->formOpen = false;
@@ -528,7 +533,7 @@ class ManagerControlHours extends Component
         if ($employeeId === null) {
             return;
         }
-        $row = collect(app(ManagerControlRepository::class)->workedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo))->firstWhere('id', $recordId);
+        $row = collect($this->cachedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo))->firstWhere('id', $recordId);
         if ($row === null) {
             $this->fail('Registro no disponible', 'Ese registro ya no está en el periodo consultado. Vuelve a consultar la tabla.');
 
@@ -569,6 +574,7 @@ class ManagerControlHours extends Component
         }
         try {
             app(ManagerControlWriter::class)->delete($recordId, $employeeId, auth()->user());
+            $this->forgetCachedHours($employeeId);
             $this->writeNotice = 'Actividad dada de baja en ManagerControl.';
         } catch (ManagerControlException $e) {
             $this->fail('No se pudo dar de baja la actividad', $e->getMessage());
@@ -603,6 +609,7 @@ class ManagerControlHours extends Component
         $this->error = null;
         $this->appliedDetailFrom = $this->detailFrom;
         $this->appliedDetailTo = $this->detailTo;
+        Cache::forget($this->hoursCacheKey($this->employeeForQuery(), $this->appliedDetailFrom, $this->appliedDetailTo));
         $this->detailLoaded = true;
     }
 
@@ -633,6 +640,7 @@ class ManagerControlHours extends Component
         $this->error = null;
         $this->appliedFrom = $this->from;
         $this->appliedTo = $this->to;
+        Cache::forget($this->hoursCacheKey($this->employeeForQuery(), $this->appliedFrom, $this->appliedTo));
         $this->loaded = true;
     }
 
@@ -648,6 +656,34 @@ class ManagerControlHours extends Component
         }
     }
 
+    private function hoursCacheKey(int $employeeId, string $from, string $to): string
+    {
+        return $this->auxiliaryCacheKey('hours', $employeeId, $from, $to);
+    }
+
+    private function auxiliaryCacheKey(string $kind, int $employeeId, string $from = '', string $to = ''): string
+    {
+        return 'managercontrol:ui-'.$kind.':'.hash('sha256', serialize([
+            config('managercontrol.host'), config('managercontrol.database'), config('managercontrol.schema'),
+            config('managercontrol.company_id'), config('managercontrol.exercise_id'), $employeeId, $from, $to,
+        ]));
+    }
+
+    private function cachedHours(int $employeeId, string $from, string $to): array
+    {
+        return Cache::remember($this->hoursCacheKey($employeeId, $from, $to), now()->addSeconds(15),
+            fn (): array => app(ManagerControlRepository::class)->workedHours($employeeId, $from, $to));
+    }
+
+    private function forgetCachedHours(int $employeeId): void
+    {
+        Cache::forget($this->hoursCacheKey($employeeId, $this->appliedFrom, $this->appliedTo));
+        Cache::forget($this->hoursCacheKey($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo));
+        Cache::forget($this->auxiliaryCacheKey('last-capture', $employeeId));
+        Cache::forget($this->auxiliaryCacheKey('activity-dates', $employeeId,
+            Carbon::parse($this->today())->subDays(400)->toDateString(), Carbon::parse($this->today())->addDays(60)->toDateString()));
+    }
+
     public function render()
     {
         $summary = HoursSummary::fromRows([]);
@@ -655,13 +691,13 @@ class ManagerControlHours extends Component
         $employeeId = $this->employeeForQuery();
         try {
             if ($employeeId !== null && $this->loaded) {
-                $summary = HoursSummary::fromRows(app(ManagerControlRepository::class)->workedHours($employeeId, $this->appliedFrom, $this->appliedTo));
+                $summary = HoursSummary::fromRows($this->cachedHours($employeeId, $this->appliedFrom, $this->appliedTo));
             }
             if ($employeeId !== null && $this->detailLoaded) {
                 $samePeriod = $this->loaded && $this->appliedFrom === $this->appliedDetailFrom && $this->appliedTo === $this->appliedDetailTo;
                 $detail = $samePeriod
                     ? $summary
-                    : HoursSummary::fromRows(app(ManagerControlRepository::class)->workedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo));
+                    : HoursSummary::fromRows($this->cachedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo));
             }
         } catch (ManagerControlException $e) {
             $this->reportFailure($e);

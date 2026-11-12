@@ -386,6 +386,22 @@ XML;
             ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada');
     }
 
+    public function test_searching_assignments_reuses_hours_but_consulting_refreshes_them(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+        $admin = $this->user('Administrador', 'admin-cache@datamid.test');
+
+        $screen = Livewire::actingAs($admin)->test(ManagerControlHours::class);
+        $db->queries = [];
+
+        $screen->set('linkSearch', 'persona')->assertSee('Asignar usuario del CRM');
+        $this->assertCount(0, array_filter($db->queries, fn (array $query): bool => str_contains($query[0], 'AS work_date')));
+
+        $screen->call('applyFilters');
+        $this->assertCount(1, array_filter($db->queries, fn (array $query): bool => str_contains($query[0], 'AS work_date')));
+    }
+
     public function test_control_gerencial_menu_is_for_everyone_except_administrators(): void
     {
         $this->app->instance(ReadOnlyConnection::class, $this->fakeConnection([['id' => 8, 'name' => 'Persona Dos']]));
