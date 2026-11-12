@@ -231,7 +231,8 @@ XML;
         $top = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'COUNT(*)')));
         $this->assertCount(1, $top);
         $this->assertStringContainsString('GROUP BY', $top[0][0]);
-        $this->assertSame(['2026-10-28', '2026-11-11', 1, 3], $top[0][1]);
+        $today = \Carbon\Carbon::now('America/Mexico_City');
+        $this->assertSame([$today->copy()->subDays(14)->toDateString(), $today->toDateString(), 1, 3], $top[0][1]);
     }
 
     public function test_default_period_is_fifteen_days_inclusive(): void
@@ -329,7 +330,7 @@ XML;
         Livewire::actingAs($admin)->test(ManagerControlHours::class)
             ->assertSee('Asignar usuario del CRM')
             ->set("links.{$becario->id}", '8')->call('saveLink', $becario->id)
-            ->assertSee('Asignado:')
+            ->assertSee('colaboradores en ManagerControl')->assertDontSee('usuarios del CRM ·')->assertDontSee('Asignado:')
             ->set("links.{$otro->id}", '8')->call('saveLink', $otro->id)
             ->assertSee('Ese colaborador ya está asignado a otro usuario del CRM.')
             ->set("links.{$otro->id}", '999')->call('saveLink', $otro->id)
@@ -344,7 +345,7 @@ XML;
             $this->assertSame(8, $bindings[0]);
         }
 
-        Livewire::actingAs($admin)->test(ManagerControlHours::class)->call('removeLink', $becario->id)->assertSee('Asignación quitada.');
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)->call('removeLink', $becario->id)->assertDontSee('Asignación quitada.');
         $this->assertDatabaseMissing('managercontrol_employee_links', ['user_id' => $becario->id]);
     }
 

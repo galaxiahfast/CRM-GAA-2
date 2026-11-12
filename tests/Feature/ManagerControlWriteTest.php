@@ -31,6 +31,10 @@ class ManagerControlWriteTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        \Illuminate\Support\Carbon::setTestNow('2026-11-12 10:00:00');
+
+        // Las pruebas nunca dependen del .env real: la escritura parte apagada y se enciende con enableWrites().
+        config(['managercontrol.write.enabled' => false, 'managercontrol.write.username' => null, 'managercontrol.write.password' => null]);
 
         $this->app->instance(ReadOnlyConnection::class, new class implements ReadOnlyConnection
         {
@@ -40,9 +44,11 @@ class ManagerControlWriteTest extends TestCase
 
                 return match (true) {
                     str_contains($sql, 'AS username') => [['username' => 'ANA.PEREZ', 'rate' => 120.0]],
+                    str_contains($sql, 'AS customer_id') && ! str_contains($sql, 'AS work_date') => [['customer_id' => 10, 'activity_id' => 20]],
+                    str_contains($sql, '[Secciones]') => [['id' => 5, 'name' => 'Cuenta A'], ['id' => 6, 'name' => 'Cuenta B']],
                     str_contains($sql, '[Clientes]') && ! str_contains($sql, 'AS work_date') => [['id' => 10, 'name' => 'Cliente A'], ['id' => 11, 'name' => 'Cliente B']],
-                    str_contains($sql, '[Actividades]') && ! str_contains($sql, 'AS work_date') => [['id' => 20, 'name' => 'Contabilidad']],
-                    str_contains($sql, 'AS work_date') => [['record_id' => 555, 'work_date' => '2026-11-10', 'customer' => 'Cliente A', 'activity' => 'Contabilidad', 'description' => 'Pólizas', 'hours' => '1.5', 'customer_id' => 10, 'activity_id' => 20]],
+                    str_contains($sql, '[Actividades]') && ! str_contains($sql, 'AS work_date') => [['id' => 20, 'name' => 'Contabilidad', 'section_id' => 5], ['id' => 21, 'name' => 'Nóminas', 'section_id' => 6]],
+                    str_contains($sql, 'AS work_date') => [['record_id' => 555, 'work_date' => '2026-11-10', 'customer' => 'Cliente A', 'activity' => 'Contabilidad', 'description' => 'Existente', 'hours' => '1.5', 'customer_id' => 10, 'activity_id' => 20]],
                     str_contains($sql, 'COUNT(*)') => [['id' => 7, 'total' => 1]],
                     default => [['id' => 7, 'name' => 'Ana Pérez'], ['id' => 8, 'name' => 'Beto Díaz']],
                 };
@@ -123,7 +129,9 @@ class ManagerControlWriteTest extends TestCase
         $this->assertSame('insert', $kind);
         $this->assertStringStartsWith('INSERT INTO [ControlTiempos].[RegistroDiario] ([IDEmpresa], [IDEjercicio], [NombreUsuario], [IDEmpleado]', $sql);
         $this->assertStringContainsString('OUTPUT INSERTED.[IDRegistroDiario]', $sql);
-        $this->assertStringContainsString('GETDATE(), 0, ?, ?, 0)', $sql);
+        $this->assertStringEndsWith('CAST(? AS date), ?, ?)', $sql);
+        $this->assertStringNotContainsString('FechaCreacion', $sql);
+        $this->assertStringNotContainsString('IDSeccion', $sql);
         // empresa, ejercicio, usuario del colaborador, colaborador, actividad, cliente, horas, descripción, fecha, precio y subtotal
         $this->assertSame([1, 3, 'ANA.PEREZ', 7, 20, 10, 1.5, 'Pólizas', '2026-11-10', 120.0, 180.0], $bindings);
         $this->assertDatabaseHas('managercontrol_audits', ['action' => 'create', 'legacy_record_id' => 9001, 'legacy_employee_id' => 7, 'user_id' => $actor->id]);
@@ -150,6 +158,32 @@ class ManagerControlWriteTest extends TestCase
         $this->assertDatabaseCount('managercontrol_audits', 2);
     }
 
+    public function test_time_is_captured_like_the_desktop_app(): void
+    {
+        $this->assertSame(2.22, ManagerControlWriter::parseHours('2:13'));
+        $this->assertSame(9.67, ManagerControlWriter::parseHours('9:40'));
+        $this->assertSame(2.5, ManagerControlWriter::parseHours('2.5'));
+        $this->assertSame(0.0, ManagerControlWriter::parseHours('abc'));
+
+        $this->enableWrites();
+        app(ManagerControlWriter::class)->create(7, $this->data(['hours' => '2:13']));
+        $bindings = $this->writes->calls[0][2];
+        $this->assertSame(2.2, $bindings[6]);   // HoraLaborada en décimas
+        $this->assertSame(266.4, $bindings[10]); // SubTotal = 120 × 2.22, como el escritorio
+    }
+
+    public function test_edit_does_not_overwrite_a_record_changed_from_the_desktop(): void
+    {
+        $this->enableWrites();
+        $expected = ['date' => '2026-11-10', 'customer_id' => 10, 'activity_id' => 20, 'hours' => 1.5, 'description_raw' => 'Pólizas '];
+
+        app(ManagerControlWriter::class)->update(555, 7, $this->data(['hours' => '2']), null, $expected);
+
+        [, $sql, $bindings] = $this->writes->calls[0];
+        $this->assertStringEndsWith('AND [IDCliente] = ? AND [IDActividad] = ? AND [HoraLaborada] = ? AND [FechaRegistro] = CAST(? AS date) AND [Descripcion] = ?', $sql);
+        $this->assertSame([10, 20, '1.5', '2026-11-10', 'Pólizas '], array_slice($bindings, -5));
+    }
+
     public function test_invalid_data_is_rejected_with_a_clear_message(): void
     {
         $this->enableWrites();
@@ -164,6 +198,140 @@ class ManagerControlWriteTest extends TestCase
             }
         }
         $this->assertSame([], $this->writes->calls);
+    }
+
+    public function test_the_writer_protects_the_database_from_bad_or_repeated_captures(): void
+    {
+        $this->enableWrites();
+        $writer = app(ManagerControlWriter::class);
+
+        $rejected = [
+            'fecha futura' => $this->data(['date' => '2026-11-13']),
+            'fecha demasiado antigua' => $this->data(['date' => '2025-01-01']),
+            // ya hay 1.5 h ese día: 1.5 + 23 pasaría de 24
+            'pasa de 24 h al día' => $this->data(['hours' => '23']),
+            // idéntica a la que ya existe ese día (doble clic)
+            'actividad duplicada' => $this->data(['description' => 'Existente']),
+        ];
+        foreach ($rejected as $case => $data) {
+            try {
+                $writer->create(7, $data);
+                $this->fail("Debió rechazar: {$case}");
+            } catch (ManagerControlException $e) {
+                $this->assertNotSame('', $e->getMessage(), $case);
+            }
+        }
+        $this->assertSame([], $this->writes->calls);
+
+        // Editar no cuenta el propio registro (555) en el total del día ni como duplicado de sí mismo.
+        $writer->update(555, 7, $this->data(['hours' => '23.5', 'description' => 'Existente']));
+        $this->assertSame('update', $this->writes->calls[0][0]);
+    }
+
+    public function test_errors_and_the_delete_confirmation_use_the_panel_dialog(): void
+    {
+        $this->enableWrites();
+        $this->user('Administrador', 'first-admin3@datamid.test'); // el rol con id 1 es administrador en la app
+        $aux = $this->user('Auxiliar', 'aux-dialog@datamid.test');
+        ManagerControlEmployeeLink::query()->create(['user_id' => $aux->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Ana Pérez']);
+
+        $component = Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            ->call('openCreate')
+            // Sin cliente ni tiempo: el error sale en una ventana emergente y el formulario sigue abierto.
+            ->set('formCustomer', '')->set('formHours', '')
+            ->call('saveRecord')
+            ->assertSet('formOpen', true)
+            ->assertSet('dialog.kind', 'error')
+            // el error sale arriba al centro, sin botones, y se va solo a los 3 segundos
+            ->assertSeeHtml('data-mc-toast')->assertSeeHtml('setTimeout(() => $wire.closeDialog(), 3000)')->assertDontSee('Entendido')
+            ->call('closeDialog')->assertSet('dialog', null);
+        $this->assertSame([], $this->writes->calls);
+
+        // Dar de baja pide confirmación con el diseño del panel; solo al confirmar se escribe.
+        $component->call('closeForm')->call('askDelete', 555)
+            ->assertSet('dialog.kind', 'confirm')->assertSeeHtml('data-mc-dialog')->assertSee('Dar de baja la actividad')
+            // se ve como el formulario de la actividad, pero bloqueado
+            ->assertSee('Qué se hizo en la actividad')->assertSee('Cuenta A')->assertSee('Cliente A')->assertSeeHtml('aria-disabled="true"');
+        $this->assertSame([], $this->writes->calls);
+        $component->call('confirmDelete')->assertSet('dialog', null)->assertSee('Actividad dada de baja en ManagerControl.');
+        $this->assertSame('update', $this->writes->calls[0][0]);
+        $this->assertStringContainsString('[Baja] = 1', $this->writes->calls[0][1]);
+    }
+
+    public function test_the_day_table_shows_only_headers_and_unfolds_each_day(): void
+    {
+        $admin = $this->user('Administrador', 'admin-fold@datamid.test');
+
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)
+            // cada día es un encabezado clicable con sus actividades ocultas hasta desplegarlo
+            ->assertSeeHtml('role="button"')->assertSeeHtml('aria-expanded')->assertSeeHtml("x-show=\"openDays['2026-11-10']\"")
+            ->assertSeeHtml('data-testid="day-date"')->assertSeeHtml('title="Martes, 10 de noviembre de 2026"')->assertSeeText('Mar,')->assertSeeText('noviembre')
+            ->assertSeeHtml('@mc-day-open.window');
+    }
+
+    public function test_the_day_time_balloon_compares_with_the_clock_without_writing_anything(): void
+    {
+        $this->user('Administrador', 'first-admin4@datamid.test'); // el rol con id 1 es administrador en la app
+        $aux = $this->user('Auxiliar', 'aux-clock@datamid.test');
+        ManagerControlEmployeeLink::query()->create(['user_id' => $aux->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Ana Pérez']);
+
+        // Sin ID de checador: el globo lo explica.
+        Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            ->assertSeeHtml('data-testid="clock-balloon"')->assertSee('no tiene ID de checador asignado');
+
+        // Con marcas del día 10/11 (08:00 a 16:00 = 8 h) frente a 1.5 h capturadas en ManagerControl.
+        $aux->forceFill(['employee_id' => '88'])->save();
+        foreach (['08:00:00' => 'IN', '16:00:00' => 'OUT'] as $time => $direction) {
+            \Illuminate\Support\Facades\DB::table('control_de_horas')->insert([
+                'employeeID' => '88', 'personName' => 'Ana', 'authDateTime' => "2026-11-10 {$time}", 'authDate' => '2026-11-10', 'authTime' => $time, 'direction' => $direction,
+            ]);
+        }
+        Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            ->assertSeeText('Comparación con el reloj checador')->assertSeeText('Reloj checador')
+            ->assertSeeText('008h 00m 00s')->assertSeeText('001h 30m 00s')->assertSeeText('−006h 30m 00s')
+            ->assertSeeText('En ManagerControl hay menos tiempo que en el reloj checador.')
+            // dispareja: el globo trae una advertencia
+            ->assertSeeText('Advertencia: el tiempo del día no coincide.')->assertSeeHtml('data-testid="clock-warning"');
+
+        // Si coincide (1:30 en el reloj y 1.5 h en ManagerControl) no hay advertencia.
+        \Illuminate\Support\Facades\DB::table('control_de_horas')->where('employeeID', '88')->delete();
+        foreach (['09:00:00' => 'IN', '10:30:00' => 'OUT'] as $time => $direction) {
+            \Illuminate\Support\Facades\DB::table('control_de_horas')->insert([
+                'employeeID' => '88', 'personName' => 'Ana', 'authDateTime' => "2026-11-10 {$time}", 'authDate' => '2026-11-10', 'authTime' => $time, 'direction' => $direction,
+            ]);
+        }
+        Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)->assertSeeText('Los tiempos coinciden.')->assertDontSeeHtml('data-testid="clock-warning"');
+
+        // Marcas impares: no se puede comparar y se avisa.
+        \Illuminate\Support\Facades\DB::table('control_de_horas')->insert([
+            'employeeID' => '88', 'personName' => 'Ana', 'authDateTime' => '2026-11-10 17:00:00', 'authDate' => '2026-11-10', 'authTime' => '17:00:00', 'direction' => 'IN',
+        ]);
+        Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)->assertSeeText('Marcas incompletas')->assertSeeText('número impar de marcas');
+
+        // Solo lectura: el globo nunca escribe nada en ManagerControl.
+        $this->assertSame([], $this->writes->calls);
+    }
+
+    public function test_tutorials_and_guides_describe_the_current_screen(): void
+    {
+        $admin = $this->user('Administrador', 'admin-tour@datamid.test');
+        $aux = $this->user('Auxiliar', 'aux-tour@datamid.test');
+        ManagerControlEmployeeLink::query()->create(['user_id' => $aux->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Ana Pérez']);
+
+        // El administrador elige colaborador; el usuario no, así que su recorrido empieza en el registro por día.
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)
+            ->assertSee('1. Elige el colaborador')->assertSee('2. Registro de horas por d')
+            ->assertSee('Agrega actividades y descarga el reporte')->assertDontSee('(solo lectura)');
+        Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            ->assertDontSee('Elige el colaborador')->assertSee('1. Registro de horas por d')->assertSee('2. Elige el periodo de Productividad');
+
+        // Las guías PDF hablan de captura, calendario, reloj checador y errores (ya no de «solo lectura»).
+        $guide = json_encode(config('section-guides.managercontrol'), JSON_UNESCAPED_UNICODE);
+        foreach (['Agregar actividad', 'verde', 'reloj checador', 'Dar de baja', 'Solicitar agregar nuevo cliente o actividad', '3 segundos'] as $text) {
+            $this->assertStringContainsString($text, $guide);
+        }
+        $this->assertStringNotContainsString('modo de solo lectura', $guide);
+        $this->assertStringNotContainsString('nunca escribe', $guide);
     }
 
     public function test_the_write_connection_only_accepts_insert_or_update_on_the_hours_table(): void
@@ -201,8 +369,38 @@ class ManagerControlWriteTest extends TestCase
             ->assertDontSeeHtml('wire:click="openCreate"')
             ->call('openCreate')
             ->assertSet('formOpen', false)
-            ->assertSee('ManagerControl está en modo de solo lectura');
+            ->assertSet('dialog.kind', 'error')
+            ->assertSee('ManagerControl está en solo lectura');
         $this->assertSame([], $this->writes->calls);
+    }
+
+    public function test_the_form_remembers_the_last_capture_filters_activities_by_account_and_marks_days(): void
+    {
+        $this->enableWrites();
+        $this->user('Administrador', 'first-admin2@datamid.test'); // el rol con id 1 es administrador en la app
+        $aux = $this->user('Auxiliar', 'aux-last@datamid.test');
+        ManagerControlEmployeeLink::query()->create(['user_id' => $aux->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Ana Pérez']);
+
+        $component = Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            ->call('openCreate')
+            // Cliente, cuenta y actividad de la última captura ya vienen elegidos; fecha de hoy, tiempo y descripción en blanco.
+            ->assertSet('formCustomer', '10')->assertSet('formActivity', '20')->assertSet('formSection', '5')
+            ->assertSet('formHours', '')->assertSet('formDescription', '')
+            ->assertSet('formMarks', ['2026-11-10'])
+            // lo que se llenó solo (cliente, cuenta y actividad; la fecha de hoy no) se marca para verse en gris y se avisa
+            ->assertSet('formAuto', ['customer' => true, 'section' => true, 'activity' => true])
+            ->assertSeeHtml('data-mc-auto ')->assertDontSee('Lo que está en gris')
+            ->assertSee('Cuenta/Concepto');
+
+        // Al elegir un campo deja de ser automático.
+        $component->set('formCustomer', '11')->assertSet('formAuto', ['section' => true, 'activity' => true]);
+
+        // Al elegir otra cuenta, la actividad que no pertenece a ella se limpia; al elegir una actividad se ajusta su cuenta.
+        $component->set('formSection', '6')->assertSet('formActivity', '')
+            ->set('formActivity', '20')->assertSet('formSection', '5');
+
+        // El formulario ya no lista las actividades del día (eso se ve en la tabla, que despliega cada día).
+        $component->set('formDate', '2026-11-10')->assertDontSee('Actividades de este día');
     }
 
     public function test_with_writes_on_a_user_adds_an_activity_and_the_tables_refresh(): void
@@ -213,6 +411,8 @@ class ManagerControlWriteTest extends TestCase
         ManagerControlEmployeeLink::query()->create(['user_id' => $aux->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Ana Pérez']);
 
         Livewire::actingAs($aux)->test(ManagerControlOwnHours::class)
+            // en lugar de «Solo lectura», un enlace al chat general para pedir clientes o actividades nuevos
+            ->assertSee('Solicitar agregar nuevo cliente o actividad')->assertSeeHtml(route('soporte.ticket'))->assertDontSee('— Solo lectura')
             ->assertSeeHtml('wire:click="openCreate"')
             ->call('openCreate')->assertSet('formOpen', true)
             ->set('formCustomer', '10')->set('formActivity', '20')->set('formHours', '1.5')->set('formDescription', 'Pólizas')

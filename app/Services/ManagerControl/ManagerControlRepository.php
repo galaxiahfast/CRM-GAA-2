@@ -82,26 +82,79 @@ class ManagerControlRepository
     }
 
     /**
-     * Clientes o actividades activos de la empresa/ejercicio (para capturar o editar una actividad).
+     * Clientes, cuentas/conceptos (secciones) o actividades activos de la empresa/ejercicio (para capturar o editar una actividad).
+     * Las actividades traen además su cuenta/concepto (section_id).
      *
-     * @return list<array{id: int, name: string}>
+     * @return list<array{id: int, name: string, section_id?: int}>
      */
     public function catalog(string $key): array
     {
-        if (! in_array($key, ['customers', 'activities'], true)) {
+        if (! in_array($key, ['customers', 'activities', 'sections'], true)) {
             throw new ManagerControlException('Catálogo no permitido.');
         }
 
         return Cache::remember($this->cacheKey($key), now()->addMinutes(10), function () use ($key): array {
             $t = $this->table($key);
             $bindings = [];
-            $sql = "SELECT TOP (2000) {$t['id']} AS id, {$t['name']} AS name FROM {$t['table']} WHERE 1 = 1"
+            $sectionColumn = isset($t['section_id']) ? ", {$t['section_id']} AS section_id" : '';
+            $sql = "SELECT TOP (2000) {$t['id']} AS id, {$t['name']} AS name{$sectionColumn} FROM {$t['table']} WHERE 1 = 1"
                 .(isset($t['deleted']) ? " AND ISNULL({$t['deleted']}, 0) = 0" : '')
                 .$this->scope('', $t, $bindings)
                 ." ORDER BY {$t['name']}";
 
-            return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])], $this->db->select($sql, $bindings));
+            return array_map(fn (array $r): array => ['id' => (int) $r['id'], 'name' => trim((string) $r['name'])] + ($sectionColumn !== '' ? ['section_id' => (int) ($r['section_id'] ?? 0)] : []), $this->db->select($sql, $bindings));
         });
+    }
+
+    /**
+     * Días (Y-m-d) en que el colaborador tiene al menos una actividad, entre dos fechas. Una sola consulta agregada.
+     *
+     * @return list<string>
+     */
+    public function activityDates(int $employeeId, string $from, string $to): array
+    {
+        $h = $this->table('hours');
+        $bindings = [$employeeId, $from, $to];
+        $sql = "SELECT DISTINCT CONVERT(varchar(10), CAST({$h['date']} AS date), 23) AS work_date FROM {$h['table']} "
+            ."WHERE {$h['employee_id']} = ? AND {$h['date']} >= ? AND {$h['date']} < DATEADD(day, 1, CAST(? AS date))"
+            .(isset($h['deleted']) ? " AND ISNULL({$h['deleted']}, 0) = 0" : '')
+            .$this->scope('', $h, $bindings)
+            .' ORDER BY work_date';
+
+        return array_values(array_map(fn (array $r): string => substr((string) $r['work_date'], 0, 10), $this->db->select($sql, $bindings)));
+    }
+
+    /**
+     * Cliente y actividad que el colaborador MÁS usa (la combinación más repetida en los últimos 90 días; si no hay, en toda su
+     * historia; a igualdad, la más reciente), para dejarlos ya elegidos en la siguiente captura. Lee la base, así también cuenta
+     * lo capturado desde la app de escritorio.
+     *
+     * @return array{customer_id: int, activity_id: int}|null
+     */
+    public function mostUsedCapture(int $employeeId): ?array
+    {
+        $h = $this->table('hours');
+        if (! isset($h['id'])) {
+            return null;
+        }
+        $since = \Illuminate\Support\Carbon::now('America/Mexico_City')->subDays(90)->toDateString();
+        foreach ([$since, null] as $from) {
+            $bindings = [$employeeId];
+            $sql = "SELECT TOP (1) {$h['customer_id']} AS customer_id, {$h['activity_id']} AS activity_id, COUNT(*) AS uses, MAX({$h['id']}) AS last_id FROM {$h['table']} WHERE {$h['employee_id']} = ?"
+                .(isset($h['deleted']) ? " AND ISNULL({$h['deleted']}, 0) = 0" : '');
+            if ($from !== null) {
+                $sql .= " AND {$h['date']} >= ?";
+                $bindings[] = $from;
+            }
+            $sql .= $this->scope('', $h, $bindings)
+                ." GROUP BY {$h['customer_id']}, {$h['activity_id']} ORDER BY COUNT(*) DESC, MAX({$h['id']}) DESC";
+            $row = $this->db->select($sql, $bindings)[0] ?? null;
+            if ($row) {
+                return ['customer_id' => (int) $row['customer_id'], 'activity_id' => (int) $row['activity_id']];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -138,6 +191,7 @@ class ManagerControlRepository
             'customer' => trim((string) ($r['customer'] ?? '')) ?: 'Sin cliente',
             'activity' => trim((string) ($r['activity'] ?? '')) ?: 'Sin actividad',
             'description' => trim((string) ($r['description'] ?? '')),
+            'description_raw' => (string) ($r['description'] ?? ''),
             'seconds' => self::toSeconds($r['hours'] ?? 0),
             'customer_id' => (int) ($r['customer_id'] ?? 0),
             'activity_id' => (int) ($r['activity_id'] ?? 0),

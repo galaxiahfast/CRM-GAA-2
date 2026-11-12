@@ -8,8 +8,10 @@ import './organization-sortable';
 import './clock-particle-network';
 
 document.addEventListener('alpine:init', () => {
-    window.Alpine.data('productivityDatePicker', (model) => ({
+    window.Alpine.data('productivityDatePicker', (model, marks = []) => ({
         value: model,
+        // Días (Y-m-d) que se pintan en verde: los que ya tienen actividades.
+        marks,
         open: false,
         cursor: new Date(),
         left: 16,
@@ -48,7 +50,8 @@ document.addEventListener('alpine:init', () => {
             return Array.from({ length: 42 }, (_, index) => {
                 const date = new Date(start);
                 date.setDate(start.getDate() + index);
-                return { date, key: this.toIso(date), outside: date.getMonth() !== this.cursor.getMonth() };
+                const key = this.toIso(date);
+                return { date, key, outside: date.getMonth() !== this.cursor.getMonth(), marked: this.marks.includes(key) };
             });
         },
         toIso(date) {
@@ -70,9 +73,11 @@ document.addEventListener('alpine:init', () => {
             const height = 352 * zoom; // alto fijo del calendario (siempre 6 semanas)
             // 10px entre el calendario y el campo; si abajo no cabe, se abre hacia arriba con la misma distancia.
             const gap = 10;
-            const left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
-            const top = rect.bottom + gap + height < window.innerHeight
-                ? rect.bottom + gap : Math.max(16, rect.top - gap - height);
+            // Centrado respecto a su campo (sin salirse de la ventana).
+            const left = Math.max(16, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 16));
+            // Debajo del campo; si no cabe, encima; si tampoco, flota pegado al borde visible (sin encogerse).
+            const wanted = rect.bottom + gap + height < window.innerHeight ? rect.bottom + gap : rect.top - gap - height;
+            const top = Math.max(16, Math.min(wanted, window.innerHeight - height - 16));
             this.left = left / zoom;
             this.top = top / zoom;
         },

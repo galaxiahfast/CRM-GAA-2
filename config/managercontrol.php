@@ -47,7 +47,9 @@ return [
         'enabled' => (bool) env('MANAGERCONTROL_WRITE_ENABLED', false),
         'username' => env('MANAGERCONTROL_WRITE_USERNAME'),
         'password' => env('MANAGERCONTROL_WRITE_PASSWORD'),
-        'max_hours' => 24.0,
+        'max_hours' => 24,
+        // Días hacia atrás que se permite capturar (nunca fechas futuras).
+        'max_past_days' => (int) env('MANAGERCONTROL_WRITE_MAX_PAST_DAYS', 400),
     ],
 
     /*
@@ -82,6 +84,8 @@ return [
         'employees' => ['db_schema' => 'Catalogos', 'table' => 'Empleados', 'id' => 'IDEmpleado', 'name' => ['Nombres', 'ApellidoPaterno', 'ApellidoMaterno'], 'deleted' => 'Baja', 'department_id' => 'IDDepartamento', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'username' => 'NombreUsuario', 'rate' => 'Precio'],
         'departments' => ['db_schema' => 'Catalogos', 'table' => 'Departamentos', 'id' => 'IDDepartamento', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio'],
         'customers' => ['db_schema' => 'Catalogos', 'table' => 'Clientes', 'id' => 'IDCliente', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
-        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        'activities' => ['db_schema' => 'Catalogos', 'table' => 'Actividades', 'id' => 'IDActividad', 'name' => 'Nombre', 'section_id' => 'IDSeccion', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
+        // «Cuenta/Concepto» de la app de escritorio: agrupa las actividades (Actividades.IDSeccion). Solo sirve para elegir; el registro no la guarda.
+        'sections' => ['db_schema' => 'Catalogos', 'table' => 'Secciones', 'id' => 'IDSeccion', 'name' => 'Nombre', 'company_id' => 'IDEmpresa', 'exercise_id' => 'IDEjercicio', 'deleted' => 'Baja'],
     ],
 ];

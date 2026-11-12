@@ -43,7 +43,7 @@ class SqlServerWriteConnection implements WriteConnection
             $statement->execute(array_values($bindings));
             $count = $statement->rowCount();
             if ($count !== 1) {
-                throw new ManagerControlException('El registro no existe, ya fue dado de baja o no pertenece al colaborador.');
+                throw new ManagerControlException('No se guardó: el registro ya no existe, fue dado de baja o se modificó desde ManagerControl mientras lo editabas. Vuelve a cargar la tabla e inténtalo de nuevo.');
             }
 
             return $count;

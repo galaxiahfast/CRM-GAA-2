@@ -7,6 +7,12 @@
     'icon' => null,
     'searchable' => false,
     'placeholder' => 'Seleccione…',
+    // Con «floating» la lista se pinta fuera de su contenedor (en el body), por encima de todo, y no mueve ni recorta el formulario donde está.
+    'floating' => false,
+    // Filas visibles a la vez en la lista con buscador (cada fila mide 80px).
+    'rows' => 5,
+    // El indicador de scroll solo se ve con el puntero encima (por defecto, en las listas flotantes de los formularios).
+    'hoverScroll' => false,
 ])
 
 @php
@@ -37,12 +43,44 @@
             return tokens.length ? this.options.filter(option => { const label = this.norm(option.label); return tokens.every(token => label.includes(token)); }) : this.options;
         },
         active: 0,
+        uid: 'ps-' + Math.random().toString(36).slice(2),
+        left: 16,
+        top: 16,
+        width: 320,
+        init() {
+            if (! {{ $floating ? 'true' : 'false' }}) return;
+            this.reposition = () => { if (this.open) this.position(); };
+            window.addEventListener('resize', this.reposition);
+            document.addEventListener('scroll', this.reposition, true);
+        },
+        destroy() {
+            if (! this.reposition) return;
+            window.removeEventListener('resize', this.reposition);
+            document.removeEventListener('scroll', this.reposition, true);
+        },
+        // Lista flotante: mismo zoom que la página (se mide en píxeles visibles y se divide entre el zoom); 10px bajo la caja o, si no cabe, encima.
+        position() {
+            const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+            const rect = this.$root.getBoundingClientRect();
+            const list = document.querySelector('[data-panel-select-list=\'' + this.uid + '\']');
+            const height = list ? list.getBoundingClientRect().height : {{ $rows * 80 }} * zoom;
+            const gap = 10;
+            const width = Math.min(rect.width, window.innerWidth - 32);
+            const left = Math.max(16, Math.min(rect.left, window.innerWidth - width - 16));
+            const wanted = rect.bottom + gap + height < window.innerHeight ? rect.bottom + gap : rect.top - gap - height;
+            // Nunca se sale de la pantalla: se mantiene dentro de la ventana con 16px de margen.
+            const top = Math.max(16, Math.min(wanted, window.innerHeight - height - 16));
+            this.width = width / zoom;
+            this.left = left / zoom;
+            this.top = top / zoom;
+        },
         openList() {
             if (this.open) return;
             this.open = true;
             this.q = '';
             this.active = 0;
             this.$nextTick(() => {
+                if ({{ $floating ? 'true' : 'false' }}) this.position();
                 const scroller = this.$root.querySelector('.panel-scroll');
                 const selected = scroller?.querySelector('[aria-selected=true]');
                 // La lista de 5 filas exactas se abre alineada a la fila elegida (sin cortar ninguna).
@@ -61,6 +99,7 @@
             if (! this.open) return;
             this.q = '';
             this.$nextTick(() => {
+                if ({{ $floating ? 'true' : 'false' }}) this.position();
                 const scroller = this.$root.querySelector('.panel-scroll');
                 const selected = scroller?.querySelector('[aria-selected=true]');
                 if (scroller && selected) scroller.scrollTop = Math.max(0, selected.offsetTop - (scroller.clientHeight - selected.offsetHeight) / 2);
@@ -74,7 +113,7 @@
             }
         }
     }"
-    @click.outside="open = false"
+    @click.outside="if (! $event.target.closest('[data-panel-select-list]')) open = false"
     @keydown.escape.window="open = false"
     {{ $attributes->class(['relative']) }}
 >
@@ -103,9 +142,14 @@
     </button>
     @endif
 
+    @if ($floating)
+    <template x-teleport="body">
+    <div x-cloak x-show="open" x-init="$nextTick(() => position())" :data-panel-select-list="uid" data-panel data-productivity :style="{ left: left + 'px', top: top + 'px', width: width + 'px', zIndex: 200600 }" class="app-zoom-overlay panel-surface panel-border fixed overflow-hidden rounded-xl border shadow-2xl" role="listbox">
+    @else
     <div x-cloak x-show="open" class="panel-surface panel-border absolute left-0 top-full z-40 mt-[10px] w-full overflow-hidden rounded-xl border" role="listbox">
-        <div x-data="backupOverlayScroll()" x-effect="open; q; $nextTick(() => update())" class="relative">
-            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" @scroll.debounce.150ms="(() => { if (! $el.hasAttribute('data-row-step')) return; const rows = [...$el.querySelectorAll('.panel-option')]; if (! rows.length) return; const height = rows[0].offsetHeight; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.round($el.scrollTop / height) * height); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" :data-row-step="@js($searchable ? '.panel-option' : null)" :style="@js($searchable ? 'height: 400px;' : 'max-height: 275px;')" class="panel-scroll relative overflow-y-auto overscroll-contain">
+    @endif
+        <div @if ($floating || $hoverScroll) data-scroll-on-hover @endif x-data="backupOverlayScroll()" x-effect="open; q; $nextTick(() => update())" class="relative">
+            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" @scroll.debounce.150ms="(() => { if (! $el.hasAttribute('data-row-step')) return; const rows = [...$el.querySelectorAll('.panel-option')]; if (! rows.length) return; const height = rows[0].offsetHeight; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.round($el.scrollTop / height) * height); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" :data-row-step="@js($searchable ? '.panel-option' : null)" :style="@js($searchable ? 'height: '.($rows * 80).'px;' : 'max-height: 275px;')" class="panel-scroll relative overflow-y-auto overscroll-contain">
                 <template x-for="(option, index) in shown" :key="option.value">
                     @if ($searchable)
                     <button type="button" role="option" :aria-selected="String(option.value) === String(value)" :data-active="active === index" :class="{ 'is-active': active === index }" @mouseenter="active = index" @click="pick(option)"
@@ -125,4 +169,5 @@
             <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
         </div>
     </div>
+    @if ($floating)</template>@endif
 </div>
