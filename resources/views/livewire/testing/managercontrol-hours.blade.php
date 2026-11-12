@@ -157,7 +157,8 @@
             [data-productivity] .prod-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
         /* Pantallas angostas: la tabla conserva su forma y se desplaza en horizontal con el scroll delgado */
-        [data-productivity] .prod-detail-card .prod-main { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; }
+        /* Este contenedor solo desplaza en horizontal; el desplazamiento vertical pertenece a .prod-detail. */
+        [data-productivity] .prod-detail-card .prod-main { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: var(--panel-accent) transparent; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar { height: 4px; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-track { background: transparent; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
@@ -415,6 +416,7 @@
                                 <div x-cloak x-show="{{ $slot }} < 7 - visibleRows" :class="(fillerOffset + {{ $slot }}) % 2 === 1 ? 'mc-stripe' : ''" class="prod-blank-row prod-dgrid mc-grid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
                             @endfor
                         </div>
+                        <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
                     </div>
                 </div>
@@ -603,6 +605,7 @@
                                 <div class="prod-blank-row prod-dgrid mc-link-grid panel-border border-b" :class="{ 'mc-stripe': (visibleIds.length + n - 1) % 2 === 1 }" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
                             </template>
                         </div>
+                        <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                     </div>
                 </div>
                 </div>
