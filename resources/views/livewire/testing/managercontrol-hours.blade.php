@@ -676,7 +676,7 @@
                                                 </template>
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <label for="mc-form-hours" class="mb-[20px] block">Tiempo (horas)</label>
+                                                    <label for="mc-form-hours" class="mb-[20px] block">Tiempo (horas decimales)</label>
                                                     <input id="mc-form-hours" type="text" inputmode="decimal" autocomplete="off" wire:model="formHours" placeholder="Ej. 2.5" class="mc-field panel-field block w-full rounded-xl border px-[20px] focus:outline-none focus:ring-0">
                                                 </div>
                                                 <div class="min-w-0 sm:col-span-2" @if (isset($formAuto['customer'])) data-mc-auto @endif>
@@ -783,7 +783,7 @@
                                                 <div class="mc-locked panel-field flex w-full items-center rounded-xl border px-[20px]" aria-disabled="true"><span class="min-w-0 flex-1 truncate leading-none">{{ $locked['date'] }}</span></div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="mb-[20px] block">Tiempo (horas)</span>
+                                                <span class="mb-[20px] block">Tiempo (horas decimales)</span>
                                                 <div class="mc-locked panel-field flex w-full items-center rounded-xl border px-[20px]" aria-disabled="true"><span class="min-w-0 flex-1 truncate leading-none">{{ $locked['time'] }}</span></div>
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
