@@ -84,10 +84,12 @@ document.addEventListener('alpine:init', () => {
     }));
 
     // Selector con búsqueda (escribir para filtrar) para asignar un colaborador de ManagerControl.
-    window.Alpine.data('legacyEmployeePicker', (model, employees, onPick = null) => ({
+    window.Alpine.data('legacyEmployeePicker', (model, employees, onPick = null, suggested = null) => ({
         value: model,
         employees,
         onPick,
+        // Coincidencia de nombre sugerida para este usuario (solo mientras no tiene colaborador): va primera en la lista.
+        suggested,
         open: false,
         q: '',
         active: 0,
@@ -116,9 +118,12 @@ document.addEventListener('alpine:init', () => {
         },
         get filtered() {
             const tokens = this.normalize(this.q).split(/\s+/).filter(Boolean);
-            const list = tokens.length
+            let list = tokens.length
                 ? this.employees.filter((employee) => { const name = this.normalize(employee.name); return tokens.every((token) => name.includes(token)); })
                 : this.employees;
+            if (!tokens.length && this.suggested && !this.value) {
+                list = [this.employees.find((employee) => String(employee.id) === String(this.suggested.id)) || this.suggested, ...list.filter((employee) => String(employee.id) !== String(this.suggested.id))];
+            }
             return list.slice(0, 80);
         },
         openList() {

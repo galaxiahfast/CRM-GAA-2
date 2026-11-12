@@ -319,6 +319,26 @@ XML;
             ->assertDontSee('Cliente de ejemplo');
     }
 
+    public function test_admin_gets_name_suggestions_and_can_assign_them_all_at_once(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno'], ['id' => 8, 'name' => 'Persona Dos']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+        $admin = $this->user('Administrador', 'admin-sug@datamid.test');
+        $uno = User::query()->create(['name' => 'Persona', 'last_name' => 'Uno', 'email' => 'uno-sug@datamid.test', 'password' => Hash::make('secret'), 'role_id' => $admin->role_id]);
+        $dos = User::query()->create(['name' => 'Persona', 'last_name' => 'Dos', 'email' => 'dos-sug@datamid.test', 'password' => Hash::make('secret'), 'role_id' => $admin->role_id]);
+
+        // Cada usuario sin colaborador muestra su coincidencia de nombre y hay un botón para asignarlas todas.
+        Livewire::actingAs($admin)->test(ManagerControlHours::class)
+            ->assertSeeHtml('data-testid="assign-suggested"')->assertSeeHtml('data-testid="accept-suggestion"')
+            ->assertSee('Asignar sugeridos (2)')
+            ->call('assignSuggested')
+            ->assertSee('Se asignaron 2 usuarios con su coincidencia de nombre.')
+            ->assertDontSeeHtml('data-testid="assign-suggested"');
+
+        $this->assertDatabaseHas('managercontrol_employee_links', ['user_id' => $uno->id, 'legacy_employee_id' => 7]);
+        $this->assertDatabaseHas('managercontrol_employee_links', ['user_id' => $dos->id, 'legacy_employee_id' => 8]);
+    }
+
     public function test_admin_can_assign_and_remove_a_crm_user_and_the_assignment_wins_over_the_name(): void
     {
         $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno'], ['id' => 8, 'name' => 'Persona Dos']], $this->sampleHours());
@@ -331,13 +351,14 @@ XML;
             ->assertSee('Asignar usuario del CRM')
             ->set("links.{$becario->id}", '8')->call('saveLink', $becario->id)
             ->assertSee('colaboradores en ManagerControl')->assertDontSee('usuarios del CRM ·')->assertDontSee('Asignado:')
+            // el mismo colaborador SÍ puede estar en varias cuentas
             ->set("links.{$otro->id}", '8')->call('saveLink', $otro->id)
-            ->assertSee('Ese colaborador ya está asignado a otro usuario del CRM.')
+            ->assertDontSee('ya está asignado')
             ->set("links.{$otro->id}", '999')->call('saveLink', $otro->id)
             ->assertSee('no existe en ManagerControl');
 
         $this->assertDatabaseHas('managercontrol_employee_links', ['user_id' => $becario->id, 'legacy_employee_id' => 8, 'legacy_employee_name' => 'Persona Dos']);
-        $this->assertDatabaseMissing('managercontrol_employee_links', ['user_id' => $otro->id]);
+        $this->assertDatabaseHas('managercontrol_employee_links', ['user_id' => $otro->id, 'legacy_employee_id' => 8]);
 
         $db->queries = [];
         Livewire::actingAs($becario)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)->assertSee('Cliente A')->assertDontSee('Colaborador: Persona Dos');

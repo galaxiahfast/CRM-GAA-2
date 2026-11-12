@@ -9,7 +9,9 @@ use App\Services\ManagerControl\HoursSummary;
 use App\Services\ManagerControl\ManagerControlException;
 use App\Services\ManagerControl\ManagerControlRepository;
 use App\Services\ManagerControl\ManagerControlWriter;
+use App\Services\ManagerControl\NameMatcher;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -175,18 +177,38 @@ class ManagerControlHours extends Component
 
             return;
         }
-        if (ManagerControlEmployeeLink::query()->where('legacy_employee_id', $employee['id'])->where('user_id', '!=', $userId)->exists()) {
-            $this->linkError = 'Ese colaborador ya está asignado a otro usuario del CRM.';
-
-            return;
-        }
-
         ManagerControlEmployeeLink::query()->updateOrCreate(
             ['user_id' => $userId],
             ['legacy_employee_id' => $employee['id'], 'legacy_employee_name' => $employee['name']],
         );
         $this->links[$userId] = (string) $employee['id'];
-        $this->linkNotice = "Asignado: {$user->name} {$user->last_name} → {$employee['name']}.";
+        Cache::forget($this->suggestionCacheKey());
+    }
+
+    /** Asigna de una vez a todos los usuarios sin colaborador su coincidencia de nombre (70 % o más y sin empate). Solo escribe en la base del CRM. */
+    public function assignSuggested(): void
+    {
+        $this->authorizeAdminOnly();
+        $this->linkNotice = $this->linkError = null;
+        try {
+            $employees = $this->employees;
+        } catch (ManagerControlException $e) {
+            $this->reportFailure($e);
+
+            return;
+        }
+        [$rows, $saved] = $this->linkRows($employees);
+        $suggestions = $this->linkSuggestions($this->linkUsers(), $saved, $employees);
+        $count = 0;
+        foreach ($suggestions as $userId => $employee) {
+            ManagerControlEmployeeLink::query()->updateOrCreate(['user_id' => $userId], ['legacy_employee_id' => $employee['id'], 'legacy_employee_name' => $employee['name']]);
+            $this->links[$userId] = (string) $employee['id'];
+            $count++;
+        }
+        Cache::forget($this->suggestionCacheKey());
+        $this->linkNotice = $count === 0
+            ? 'No hay coincidencias de nombre para asignar.'
+            : ($count === 1 ? 'Se asignó 1 usuario con su coincidencia de nombre.' : "Se asignaron {$count} usuarios con su coincidencia de nombre.");
     }
 
     public function setLinkFilter(string $filter): void
@@ -202,7 +224,6 @@ class ManagerControlHours extends Component
 
         ManagerControlEmployeeLink::query()->where('user_id', $userId)->delete();
         $this->links[$userId] = '';
-        $this->linkNotice = 'Asignación quitada.';
     }
 
     private function authorizeAdminOnly(): void
@@ -210,14 +231,56 @@ class ManagerControlHours extends Component
         abort_unless(! $this->ownMode() && Gate::allows('view-legacy-managercontrol'), 403);
     }
 
-    /** @return array{0: list<array<string, mixed>>, 1: array<int, string>, 2: array<string, int>} */
-    private function linkRows(array $employees): array
+    /** @return list<array{id: int, name: string, email: string, role: string}> */
+    private function linkUsers(): array
     {
-        $saved = ManagerControlEmployeeLink::query()->pluck('legacy_employee_name', 'user_id')->all();
         $rows = [];
         foreach (User::query()->with('role:id,role')->orderBy('name')->orderBy('last_name')->limit(300)->get(['id', 'name', 'last_name', 'email', 'role_id']) as $user) {
             $rows[] = ['id' => $user->id, 'name' => trim($user->name.' '.$user->last_name), 'email' => (string) $user->email, 'role' => (string) ($user->role?->role ?? '')];
         }
+
+        return $rows;
+    }
+
+    private function suggestionCacheKey(): string
+    {
+        return 'managercontrol:link-suggestions';
+    }
+
+    /**
+     * Coincidencia de nombre (70 % o más y sin empate) para cada usuario del CRM que aún no tiene colaborador.
+     * Se recuerda un rato para no recalcular en cada movimiento de la pantalla.
+     *
+     * @param  list<array{id: int, name: string}>  $users
+     * @param  array<int, string>  $saved
+     * @param  list<array{id: int, name: string}>  $employees
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function linkSuggestions(array $users, array $saved, array $employees): array
+    {
+        $pending = array_values(array_filter($users, fn (array $user): bool => ! isset($saved[$user['id']])));
+        $key = $this->suggestionCacheKey().':'.md5(json_encode([array_map(fn ($u) => [$u['id'], $u['name']], $pending), array_map(fn ($e) => [$e['id'], $e['name']], $employees)]));
+
+        return Cache::remember($key, now()->addMinutes(5), function () use ($pending, $employees): array {
+            $matcher = new NameMatcher;
+            $result = [];
+            foreach ($pending as $user) {
+                $match = $matcher->bestMatch($user['name'], $employees);
+                if ($match['status'] === 'match') {
+                    $result[$user['id']] = ['id' => $match['employee']['id'], 'name' => $match['employee']['name']];
+                }
+            }
+
+            return $result;
+        });
+    }
+
+    /** @return array{0: list<array<string, mixed>>, 1: array<int, string>, 2: array<string, int>, 3: array<int, array{id: int, name: string}>} */
+    private function linkRows(array $employees): array
+    {
+        $saved = ManagerControlEmployeeLink::query()->pluck('legacy_employee_name', 'user_id')->all();
+        $rows = $this->linkUsers();
+        $suggestions = $employees === [] ? [] : $this->linkSuggestions($rows, $saved, $employees);
 
         $counts = ['all' => count($rows), 'assigned' => count(array_filter($rows, fn (array $r): bool => isset($saved[$r['id']])))];
         $counts['unassigned'] = $counts['all'] - $counts['assigned'];
@@ -232,7 +295,7 @@ class ManagerControlHours extends Component
             return $needle === '' || str_contains(Str::lower(Str::ascii($row['name'].' '.$row['email'])), $needle);
         }));
 
-        return [$rows, $saved, $counts];
+        return [$rows, $saved, $counts, $suggestions];
     }
 
     protected function authorizeAccess(): void
@@ -606,12 +669,13 @@ class ManagerControlHours extends Component
         }
 
         $employees = $this->ownMode() ? [] : $this->employees;
-        [$linkRows, $linkSaved, $linkCounts] = $this->ownMode() ? [[], [], ['all' => 0, 'assigned' => 0, 'unassigned' => 0]] : $this->linkRows($employees);
+        [$linkRows, $linkSaved, $linkCounts, $linkSuggestions] = $this->ownMode() ? [[], [], ['all' => 0, 'assigned' => 0, 'unassigned' => 0], []] : $this->linkRows($employees);
 
         return view('livewire.testing.managercontrol-hours', [
             'linkRows' => $linkRows,
             'linkSaved' => $linkSaved,
             'linkCounts' => $linkCounts,
+            'linkSuggestions' => $linkSuggestions,
             'summary' => $summary,
             'detail' => $detail,
             'employees' => $employees,

@@ -16,10 +16,15 @@ class ClockComparison
 {
     public function __construct(private readonly AttendanceService $attendance, private readonly AttendanceSettingsService $settings) {}
 
-    /** Usuario del CRM asignado a un colaborador de ManagerControl. */
+    /**
+     * Usuario del CRM asignado a un colaborador de ManagerControl. Un colaborador puede estar en varias cuentas:
+     * se usa la primera que tenga ID de checador (si ninguna lo tiene, la primera).
+     */
     public function userForLegacyEmployee(int $legacyEmployeeId): ?User
     {
-        return ManagerControlEmployeeLink::query()->where('legacy_employee_id', $legacyEmployeeId)->first()?->user;
+        $users = ManagerControlEmployeeLink::query()->with('user')->where('legacy_employee_id', $legacyEmployeeId)->orderBy('id')->get()->pluck('user')->filter();
+
+        return $users->first(fn (User $user): bool => filled(trim((string) $user->employee_id))) ?? $users->first();
     }
 
     /**

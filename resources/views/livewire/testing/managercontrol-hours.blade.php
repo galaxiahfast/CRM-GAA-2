@@ -21,7 +21,8 @@
     $linksTourSteps = [
         ['target' => 'mc-l-search', 'title' => '1. Busca un usuario', 'description' => 'Escribe parte del nombre o del correo del usuario del CRM.'],
         ['target' => 'mc-l-assigned', 'title' => '2. Revisa cuántos van', 'description' => 'Asignados y No asignados muestran cuántos usuarios del CRM ya tienen su colaborador de ManagerControl y cuántos faltan.'],
-        ['target' => 'mc-l-list', 'title' => '3. Asigna el colaborador', 'description' => 'Haz clic en la celda Colaborador de ManagerControl, escribe para buscar y elige a la persona: se guarda sola. La × quita la asignación.'],
+        ['target' => 'mc-l-list', 'title' => '3. Asigna el colaborador', 'description' => 'Haz clic en la celda Colaborador de ManagerControl, escribe para buscar y elige a la persona: se guarda sola. Si hay una sugerencia por nombre, presiona Asignar. El mismo colaborador puede estar en varias cuentas. La × quita la asignación.'],
+        ['target' => 'mc-l-search', 'title' => '4. Asigna a todos de una vez', 'description' => 'Asignar sugeridos (si aparece) asigna a cada usuario sin colaborador su coincidencia de nombre de 70 % o más y sin empate. Solo escribe en el CRM, nunca en ManagerControl.'],
     ];
     $padTotal = fn (int $seconds) => sprintf('%03dh %02dm %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 @endphp
@@ -530,6 +531,14 @@
                                 <span class="prod-label">No asignados</span>
                                 <div id="mc-l-unassigned" class="prod-date-trigger panel-field w-full rounded-xl border px-[20px] py-[12px]" aria-live="polite"><span class="whitespace-nowrap">{{ $linkCounts['unassigned'] }} de {{ $linkCounts['all'] }}</span></div>
                             </div>
+                            @if (count($linkSuggestions) > 0 || $linkNotice)
+                                <div style="display: contents">
+                                    @if (count($linkSuggestions) > 0)
+                                        <button type="button" wire:click="assignSuggested" wire:loading.attr="disabled" wire:target="assignSuggested" class="prod-link text-left leading-none focus:outline-none focus:ring-0" data-testid="assign-suggested" title="Asigna a cada usuario sin colaborador su coincidencia de nombre (70 % o más y sin empate)">Asignar sugeridos ({{ count($linkSuggestions) }})</button>
+                                    @endif
+                                    @if ($linkNotice)<p class="leading-none" role="status" data-testid="link-notice">{{ $linkNotice }}</p>@endif
+                                </div>
+                            @endif
                             <div class="panel-border border-t" aria-hidden="true"></div>
                             <div class="prod-guide">
                                 <a href="{{ route('section.guide', 'managercontrol-asignar') }}" title="Descargar la guía de Asignar usuario del CRM en PDF" class="prod-guide-link prod-link leading-none">Descargar guía PDF</a>
@@ -550,7 +559,7 @@
                     <div id="mc-l-list" data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
                         <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
                             @foreach ($linkRows as $row)
-                                <article data-snap wire:key="link-{{ $row['id'] }}" x-data="legacyEmployeePicker($wire.entangle('links.{{ $row['id'] }}'), legacyEmployees, (value) => value ? $wire.saveLink({{ $row['id'] }}) : $wire.removeLink({{ $row['id'] }}))" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-mc-picker]')) open = false" x-show="visibleIds.includes({{ $row['id'] }})" :class="{ 'mc-stripe': stripe({{ $row['id'] }}) }" class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
+                                <article data-snap wire:key="link-{{ $row['id'] }}" x-data="legacyEmployeePicker($wire.entangle('links.{{ $row['id'] }}'), legacyEmployees, (value) => value ? $wire.saveLink({{ $row['id'] }}) : $wire.removeLink({{ $row['id'] }}), @js($linkSuggestions[$row['id']] ?? null))" @keydown.escape.window="open = false" @click.window="if (open && !$el.contains($event.target) && !$event.target.closest('[data-mc-picker]')) open = false" x-show="visibleIds.includes({{ $row['id'] }})" :class="{ 'mc-stripe': stripe({{ $row['id'] }}) }" class="prod-drow prod-dgrid mc-link-grid panel-border border-b">
                                     <span class="prod-dcell prod-dindex prod-dcounter panel-border"></span>
                                     <span class="prod-dcell panel-border" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:15px">
                                         <span class="max-w-full truncate leading-none" title="{{ $row['name'] }}">{{ $row['name'] }}</span>
@@ -560,10 +569,11 @@
                                     <span class="prod-dcell panel-border">
                                         <div x-ref="trigger" @click="if (! open) $refs.field.focus()" class="flex h-full w-full cursor-text items-center gap-[10px]">
                                             <input type="text" x-ref="field" autocomplete="off" role="combobox" aria-haspopup="listbox" :aria-expanded="open" aria-label="Colaborador de ManagerControl para {{ $row['name'] }}"
-                                                :placeholder="label || 'Sin asignar'" :value="open ? q : label"
+                                                :placeholder="label || (suggested ? 'Sugerido: ' + suggested.name : 'Sin asignar')" :value="open ? q : label"
                                                 @focus="openList()" @click="openList()" @input="q = $event.target.value; active = 0; open = true"
                                                 @keydown.arrow-down.prevent="open = true; move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter.prevent="pick()"
                                                 class="panel-text min-w-0 flex-1 truncate leading-none" style="border:0 !important; box-shadow:none !important; outline:none !important; padding:0 !important; margin:0; background:transparent !important; min-height:0; height:auto; color:inherit; --tw-ring-shadow:0 0 #0000;">
+                                            <button x-show="! value && suggested" x-cloak type="button" tabindex="-1" @click.stop="choose(suggested)" aria-label="Asignar el colaborador sugerido" title="Asignar el colaborador sugerido" class="prod-link shrink-0 leading-none focus:outline-none focus:ring-0" data-testid="accept-suggestion">Asignar</button>
                                             <button x-show="value" x-cloak type="button" tabindex="-1" @click.stop="choose(null)" aria-label="Quitar asignación" title="Quitar asignación" class="shrink-0 leading-none focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18" /></svg></button>
                                             <button type="button" tabindex="-1" @click="open ? open = false : $refs.field.focus()" aria-label="Mostrar opciones" class="shrink-0 leading-none focus:outline-none focus:ring-0">
                                                 <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" /></svg>
