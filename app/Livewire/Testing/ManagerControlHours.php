@@ -182,7 +182,6 @@ class ManagerControlHours extends Component
             ['legacy_employee_id' => $employee['id'], 'legacy_employee_name' => $employee['name']],
         );
         $this->links[$userId] = (string) $employee['id'];
-        Cache::forget($this->suggestionCacheKey());
     }
 
     /** Asigna de una vez a todos los usuarios sin colaborador su coincidencia de nombre (70 % o más y sin empate). Solo escribe en la base del CRM. */
@@ -197,15 +196,13 @@ class ManagerControlHours extends Component
 
             return;
         }
-        [$rows, $saved] = $this->linkRows($employees);
-        $suggestions = $this->linkSuggestions($this->linkUsers(), $saved, $employees);
+        [, , , $suggestions] = $this->linkRows($employees);
         $count = 0;
         foreach ($suggestions as $userId => $employee) {
             ManagerControlEmployeeLink::query()->updateOrCreate(['user_id' => $userId], ['legacy_employee_id' => $employee['id'], 'legacy_employee_name' => $employee['name']]);
             $this->links[$userId] = (string) $employee['id'];
             $count++;
         }
-        Cache::forget($this->suggestionCacheKey());
         $this->linkNotice = $count === 0
             ? 'No hay coincidencias de nombre para asignar.'
             : ($count === 1 ? 'Se asignó 1 usuario con su coincidencia de nombre.' : "Se asignaron {$count} usuarios con su coincidencia de nombre.");
@@ -248,8 +245,8 @@ class ManagerControlHours extends Component
     }
 
     /**
-     * Coincidencia de nombre (70 % o más y sin empate) para cada usuario del CRM que aún no tiene colaborador.
-     * Se recuerda un rato para no recalcular en cada movimiento de la pantalla.
+     * Coincidencia de nombre (70 % o más y sin empate). Se calculan una sola vez para todos los usuarios;
+     * al asignar uno solo se filtra el resultado, sin repetir la comparación de todos los nombres.
      *
      * @param  list<array{id: int, name: string}>  $users
      * @param  array<int, string>  $saved
@@ -258,13 +255,12 @@ class ManagerControlHours extends Component
      */
     private function linkSuggestions(array $users, array $saved, array $employees): array
     {
-        $pending = array_values(array_filter($users, fn (array $user): bool => ! isset($saved[$user['id']])));
-        $key = $this->suggestionCacheKey().':'.md5(json_encode([array_map(fn ($u) => [$u['id'], $u['name']], $pending), array_map(fn ($e) => [$e['id'], $e['name']], $employees)]));
+        $key = $this->suggestionCacheKey().':'.md5(json_encode([array_map(fn ($u) => [$u['id'], $u['name']], $users), array_map(fn ($e) => [$e['id'], $e['name']], $employees)]));
 
-        return Cache::remember($key, now()->addMinutes(5), function () use ($pending, $employees): array {
+        $matches = Cache::remember($key, now()->addMinutes(5), function () use ($users, $employees): array {
             $matcher = new NameMatcher;
             $result = [];
-            foreach ($pending as $user) {
+            foreach ($users as $user) {
                 $match = $matcher->bestMatch($user['name'], $employees);
                 if ($match['status'] === 'match') {
                     $result[$user['id']] = ['id' => $match['employee']['id'], 'name' => $match['employee']['name']];
@@ -273,6 +269,8 @@ class ManagerControlHours extends Component
 
             return $result;
         });
+
+        return array_filter($matches, fn (int $userId): bool => ! isset($saved[$userId]), ARRAY_FILTER_USE_KEY);
     }
 
     /** @return array{0: list<array<string, mixed>>, 1: array<int, string>, 2: array<string, int>, 3: array<int, array{id: int, name: string}>} */

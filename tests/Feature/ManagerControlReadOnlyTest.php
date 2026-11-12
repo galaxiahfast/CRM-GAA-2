@@ -319,6 +319,26 @@ XML;
             ->assertDontSee('Cliente de ejemplo');
     }
 
+    public function test_own_pdf_uses_the_assigned_employee_even_if_another_id_is_sent(): void
+    {
+        $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno'], ['id' => 8, 'name' => 'Persona Dos']], $this->sampleHours());
+        $this->app->instance(ReadOnlyConnection::class, $db);
+        $user = $this->user('Auxiliar', 'own-pdf@datamid.test');
+        \App\Models\ManagerControlEmployeeLink::query()->create(['user_id' => $user->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Persona Uno']);
+
+        $response = $this->actingAs($user)->get(route('testing.own-hours.pdf', [
+            'employee' => 8, 'from' => '2026-11-01', 'to' => '2026-11-15', 'formato' => 'managercontrol',
+        ]));
+
+        $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $hoursQueries = array_filter($db->queries, fn (array $query): bool => str_contains($query[0], 'AS work_date'));
+        $this->assertNotEmpty($hoursQueries);
+        foreach ($hoursQueries as [, $bindings]) {
+            $this->assertSame(7, $bindings[0]);
+        }
+    }
+
     public function test_admin_gets_name_suggestions_and_can_assign_them_all_at_once(): void
     {
         $db = $this->fakeConnection([['id' => 7, 'name' => 'Persona Uno'], ['id' => 8, 'name' => 'Persona Dos']], $this->sampleHours());

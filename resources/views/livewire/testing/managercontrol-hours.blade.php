@@ -585,7 +585,7 @@
                                             <div x-cloak x-ref="panel" data-panel data-productivity data-prod-calendar data-mc-picker :style="`left:${left}px;top:${top}px;width:${width}px`" :class="open ? '' : 'hidden'" class="app-zoom-overlay prod-calendar panel-surface panel-border panel-text fixed overflow-hidden rounded-xl border" style="padding:0" role="listbox" aria-label="Elegir colaborador de ManagerControl">
                                                 <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="open; q; $nextTick(() => update())" class="relative">
                                                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" @scroll.debounce.150ms="(() => { const rows = [...$el.querySelectorAll('.panel-option')]; if (! rows.length) return; const height = rows[0].offsetHeight; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.round($el.scrollTop / height) * height); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" data-row-step=".panel-option" class="panel-scroll relative overflow-y-auto overscroll-contain" style="height: 400px;">
-                                                        <template x-for="(employee, index) in filtered" :key="employee.id">
+                                                        <template x-for="(employee, index) in open ? filtered : []" :key="employee.id">
                                                             <button type="button" @click="choose(employee)" @mouseenter="active = index" :data-active="active === index" :class="{ 'is-active': active === index }" :aria-selected="String(value) === String(employee.id)" role="option" class="panel-option flex h-[80px] w-full items-center gap-[15px] px-[20px] text-left leading-none focus:outline-none focus:ring-0">
                                                                 <span class="min-w-0 flex-1">
                                                                     <span class="block truncate" x-text="employee.name"></span>
@@ -593,7 +593,7 @@
                                                                 </span>
                                                             </button>
                                                         </template>
-                                                        <p x-show="filtered.length === 0" class="p-[20px] leading-none">Sin resultados</p>
+                                                        <p x-show="open && filtered.length === 0" class="p-[20px] leading-none">Sin resultados</p>
                                                     </div>
                                                     <span x-show="visible" x-cloak class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                 </div>
