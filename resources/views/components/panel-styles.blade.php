@@ -158,6 +158,10 @@
         background: var(--panel-accent);
         pointer-events: none;
     }
+    /* Con data-scroll-on-hover el indicador solo se ve con el puntero encima. Va también en CSS (además del JS) para que se vea igual
+       aunque el JS compilado del servidor esté desactualizado. */
+    [data-scroll-on-hover] .panel-scroll-thumb { opacity: 0; transition: opacity 120ms ease; }
+    [data-scroll-on-hover]:hover .panel-scroll-thumb { opacity: 1; }
 
     /* Anillos de avance (componente compartido): pista, texto y colores según el tema */
     /* Mismo tamaño de aro en todo el panel (el componente trae 75px fijos y es compartido con otras pantallas) */

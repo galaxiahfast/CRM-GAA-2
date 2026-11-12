@@ -244,6 +244,10 @@
         [data-mc-modal] .mc-modal-close:hover { opacity: .7; }
         /* Calendario del formulario: flota por encima de todo y mantiene su tamaño completo (nunca se encoge ni lleva scroll) */
         [data-productivity].prod-calendar[data-mc-calendar] { z-index: 200500; max-height: none; overflow: visible; }
+        /* Las áreas con scroll propio del panel nunca muestran la barra nativa del navegador (azul, con flechas): solo el indicador del panel,
+           que aparece con el puntero encima. Va con !important para que la regla global de scroll delgado no la pise en ningún equipo. */
+        [data-productivity] .panel-scroll, [data-mc-modal] .panel-scroll { scrollbar-width: none !important; scrollbar-color: transparent transparent !important; }
+        [data-productivity] .panel-scroll::-webkit-scrollbar, [data-mc-modal] .panel-scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
         /* Días con actividades: en verde (se ve igual en el tema claro y en el oscuro) */
         [data-productivity].prod-calendar .prod-calendar-day.is-marked { color: var(--prod-green); border-color: var(--prod-green); background-color: color-mix(in srgb, var(--prod-green) 12%, var(--panel-surface)); }
         [data-productivity].prod-calendar .prod-calendar-day.is-marked.is-selected { background-color: color-mix(in srgb, var(--prod-green) 28%, var(--panel-surface)); }
