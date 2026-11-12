@@ -469,8 +469,7 @@ class ManagerControlHours extends Component
         $this->formCustomer = (string) $row['customer_id'];
         $this->formActivity = (string) $row['activity_id'];
         $this->formSection = (string) (collect($this->catalogSafe('activities'))->firstWhere('id', $row['activity_id'])['section_id'] ?? '');
-        $minutes = (int) round($row['hours'] * 60);
-        $this->formHours = intdiv($minutes, 60).':'.str_pad((string) ($minutes % 60), 2, '0', STR_PAD_LEFT);
+        $this->formHours = rtrim(rtrim(number_format((float) $row['hours'], 2, '.', ''), '0'), '.');
         $this->formDescription = $row['description'];
         $this->dialog = null;
         $this->formAuto = [];
@@ -553,7 +552,7 @@ class ManagerControlHours extends Component
             'subtitle' => 'Dejará de contar en ManagerControl y en los reportes.',
             'fields' => [
                 'date' => Carbon::parse($row['date'])->format('d/m/y'),
-                'time' => intdiv($minutes, 60).':'.str_pad((string) ($minutes % 60), 2, '0', STR_PAD_LEFT),
+                'time' => rtrim(rtrim(number_format($minutes / 60, 2, '.', ''), '0'), '.'),
                 'customer' => $row['customer'],
                 'section' => $sectionName,
                 'activity' => $row['activity'],
