@@ -765,6 +765,7 @@
                                         class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('testing.own-hours.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                                         <svg class="w-5 h-5 transition-colors {{ request()->routeIs('testing.own-hours.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6.5L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-9.5V3" /></svg>
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control Gerencial</span>
+                                        <svg class="ms-[15px] h-4 w-4 shrink-0 text-green-600" :class="collapsed ? 'hidden' : 'block'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" role="img" aria-label="Con el formato de ManagerControl" data-mc-format-check><title>Ya tiene el formato de ManagerControl</title><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
                                     </a>
                                 </li>
 @endunless
@@ -808,6 +809,7 @@
                             class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('testing.managercontrol.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
                             <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('testing.managercontrol.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6M10 3v6.5L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-9.5V3" /></svg>
                             <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Control Gerencial</span>
+                                        <svg class="ms-[15px] h-4 w-4 shrink-0 text-green-600" :class="collapsed ? 'hidden' : 'block'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" role="img" aria-label="Con el formato de ManagerControl" data-mc-format-check><title>Ya tiene el formato de ManagerControl</title><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
                         </a>
                     </li>
                 @endcan
