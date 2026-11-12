@@ -70,7 +70,9 @@ return [
             9 => 655,    // MARIA GUADALUPE MOLINA (MOZG) = GUADALUPE MOLINA ZALDIVAR
             10 => 40,    // LISSIE MIREYA FUENTE MORENO = ...FUENTES MORENO
             11 => 362,   // MARIA EUGENIA DE ATOCHA GONZALEZ (GOEE) = MARIA EUGENIA GONZALEZ ESCALANTE
+            12 => 475,   // JULIO MEJIA SALAZAR = JULIO MEJIA (confirmado por el usuario)
             13 => 124,   // CARLOS ENRIQUE GUILLERMO (GUCC) = CARLOS GUILLERMO CASTILLO (27 registros; el 306 solo 1)
+            16 => 14,    // CARLOS ANTONIO GRANJA PEREZ = CARLOS GRANJA RICALDE (confirmado; 1220 registros, el 54 solo 25)
             17 => 731,   // ALBERTO MATA (MAMA) = ALBERTO MATA MENDOZA (33 registros; el 545 solo 2)
             19 => 125,   // ALBERTO RENE GONZALEZ (GOEA) = ALBERTO RENE GONZALEZ ESCALANTE
             20 => 654,   // LUIS BAQUEDANO PEON = LUIS AUGUSTO BAQUEDANO PEON
@@ -116,6 +118,8 @@ return [
             99 => 532,   // ILE VICTORIA URIBE
             101 => 454,  // JIM MANN'S MERIDA PROPERTIES = JIM MANNS MERIDA
             110 => 455,  // MONTONA SOLAR
+            116 => 606,  // SISTEMAS ELECTRONICOS PENINSULARES = SISTEMAS ELECTRICOS (confirmado)
+            118 => 603,  // TRANSPORTES FRIGO INN = TRANSPORTE FRIGO (confirmado)
             125 => 48,   // DOLPHIN DEVELOPMENT CORPORATION
             126 => 741,  // FELIX ENRIQUE MEDINA MADRIAGA = FELIX MEDINA MADARIAGA
             127 => 4824, // GRUPO CERVECERO LA HACH = LA JACH
@@ -135,10 +139,6 @@ return [
     // Clientes que se dejan sin importar hasta que alguien confirme si ya existen en ManagerControl.
     'catalog_hold' => [
         'customers' => [
-            12 => 'JULIO MEJIA SALAZAR: ¿es JULIO MEJIA (#475)? El RFC del CRM tiene fecha 2015.',
-            16 => 'CARLOS ANTONIO GRANJA PEREZ: ManagerControl tiene CARLOS ANTONIO GRANJA RICALDE (#54), con otro segundo apellido.',
-            116 => 'SISTEMAS ELECTRONICOS PENINSULARES: ¿es SISTEMAS ELECTRICOS (#606)?',
-            118 => 'TRANSPORTES FRIGO INN: ¿es TRANSPORTE FRIGO (#603)?',
             151 => 'Despacho López Mezquita QA: es un cliente de prueba del CRM y su RFC no es válido.',
         ],
     ],

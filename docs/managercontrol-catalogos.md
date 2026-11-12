@@ -53,7 +53,7 @@ Los clientes sin país, estado, ciudad o domicilio usan el marcador `.` que ya e
 - Respaldo previo (solo lectura) de `Catalogos.Clientes`, `Catalogos.Secciones`, `Catalogos.Actividades` y `Catalogos.Departamentos` en `storage/app/managercontrol-backups/2026-11-12_203719` (JSON y CSV, con `resumen.json` y huellas SHA-256). La carpeta no se sube a Git.
 - El RFC genérico del SAT (`XAXX010101000`) y sus variantes mal capturadas (`XXAX01010100`, `XXX010101000`) ya no cuentan como "RFC distinto": el cliente se reconoce por su nombre.
 - `catalog_manual_links.customers` en `config/managercontrol.php` vincula 64 clientes que ya existían en ManagerControl con otro nombre (sin "SA DE CV", errores de captura o apellidos en otro orden), confirmados con las iniciales del RFC. Si el cliente está repetido en ManagerControl se usa el que tiene más horas registradas.
-- `catalog_hold.customers` deja 5 clientes sin importar hasta que alguien confirme si ya existen.
+- `catalog_hold.customers` deja sin importar solo el cliente de prueba #151 (Despacho López Mezquita QA). Los otros 4 los confirmó el usuario y se vincularon: #12→475, #16→14, #116→606, #118→603.
 - Resultado de la vista previa: 130 clientes vinculados a registros existentes, 9 clientes nuevos, 13 cuentas y 11 actividades por importar, 5 pendientes.
 
 ### Usar la cuenta de captura existente
