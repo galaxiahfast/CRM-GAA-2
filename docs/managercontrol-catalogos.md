@@ -53,7 +53,7 @@ Los clientes sin país, estado, ciudad o domicilio usan el marcador `.` que ya e
 - Respaldo previo (solo lectura) de `Catalogos.Clientes`, `Catalogos.Secciones`, `Catalogos.Actividades` y `Catalogos.Departamentos` en `storage/app/managercontrol-backups/2026-11-12_203719` (JSON y CSV, con `resumen.json` y huellas SHA-256). La carpeta no se sube a Git.
 - El RFC genérico del SAT (`XAXX010101000`) y sus variantes mal capturadas (`XXAX01010100`, `XXX010101000`) ya no cuentan como "RFC distinto": el cliente se reconoce por su nombre.
 - `catalog_manual_links.customers` en `config/managercontrol.php` vincula 64 clientes que ya existían en ManagerControl con otro nombre (sin "SA DE CV", errores de captura o apellidos en otro orden), confirmados con las iniciales del RFC. Si el cliente está repetido en ManagerControl se usa el que tiene más horas registradas.
-- `catalog_hold.customers` deja sin importar solo el cliente de prueba #151 (Despacho López Mezquita QA). Los otros 4 los confirmó el usuario y se vincularon: #12→475, #16→14, #116→606, #118→603.
+- `catalog_hold.customers` quedó vacío: con la base del servidor el cliente #151 es "Datamid del Sureste" (real) y sí se importa. Los otros 4 los confirmó el usuario y se vincularon: #12→475, #16→14, #116→606, #118→603.
 - Resultado de la vista previa: 130 clientes vinculados a registros existentes, 9 clientes nuevos, 13 cuentas y 11 actividades por importar, 5 pendientes.
 
 ### Usar la cuenta de captura existente
@@ -68,3 +68,13 @@ GRANT SELECT, INSERT ON [Catalogos].[Actividades] TO [crm_captura];
 ```
 
 No se necesita `UPDATE`, `DELETE` ni `ALTER`. Después basta con `MANAGERCONTROL_CATALOG_WRITE_ENABLED=true` en el `.env`.
+
+### Base del servidor (2026-11-12)
+
+La primera importación se hizo con la base local del desarrollo, que estaba desactualizada. Se reemplazó por el volcado `gaa.sql` del servidor (respaldo de la local en `storage/app/db-backups/`, ignorado por Git) y se volvió a sincronizar: 2 clientes nuevos (Celorium Corporate Group, Cocomaya de Yucatán) y 7 actividades nuevas. Quedaron creados por error en ManagerControl, a partir de datos de prueba locales, la cuenta `Servicio Visual QA` (#395) y su actividad `Emisión y gestión de facturas` (#867). Como la cuenta de captura no tiene `UPDATE`, un administrador de SQL Server puede darlas de baja:
+
+```sql
+USE [ControlTiempos_Contabilidad];
+UPDATE [Catalogos].[Actividades] SET [Baja] = 1 WHERE [IDActividad] = 867 AND [NombreUsuario] = 'CRM-GAA';
+UPDATE [Catalogos].[Secciones] SET [Baja] = 1 WHERE [IDSeccion] = 395 AND [NombreUsuario] = 'CRM-GAA';
+```

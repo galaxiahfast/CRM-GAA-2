@@ -137,10 +137,9 @@ return [
         ],
     ],
     // Clientes que se dejan sin importar hasta que alguien confirme si ya existen en ManagerControl.
+    // (vacío: con la base del servidor, el #151 es "Datamid del Sureste", un cliente real que sí se importa)
     'catalog_hold' => [
-        'customers' => [
-            151 => 'Despacho López Mezquita QA: es un cliente de prueba del CRM y su RFC no es válido.',
-        ],
+        'customers' => [],
     ],
     // Departamento de ManagerControl para cada categoría del CRM (confirmado para la empresa/ejercicio 1/3).
     'catalog_departments' => [
