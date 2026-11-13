@@ -7,6 +7,8 @@
     $idxTiempo = $colIndex['Tiempo efectivo'] ?? 4; $idxPuesto = $colIndex['Puesto profesional'] ?? 5;
     $idxArea = $colIndex['Área física'] ?? 6; $idxObservaciones = $colIndex['Observaciones'] ?? 7;
     $rowCounter = 0;
+    // Tiempo de cada actividad con el mismo formato del encabezado del día (000h 00m 00s)
+    $hms = fn (string $time): string => preg_replace_callback('/^(\d+):(\d{2}):(\d{2})$/', fn ($m) => sprintf('%03dh %sm %ss', (int) $m[1], $m[2], $m[3]), $time);
     // Total del día con horas de tres cifras (puede pasar de 100 horas): 000h 00m 00s
     $padTotal = fn (string $text) => preg_replace_callback('/^(\d+)h/', fn ($m) => str_pad($m[1], 3, '0', STR_PAD_LEFT).'h', $text);
     // Cada cifra ocupa el mismo ancho para que los horarios queden alineados aunque un "1" mida menos que un "0".
@@ -15,7 +17,7 @@
         ['target' => 'prod-d-period', 'title' => '1. Elige el periodo del detalle', 'description' => 'Este periodo es independiente del de arriba: solo afecta al Detalle de actividades por día.'],
         ['target' => 'prod-d-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el detalle con las fechas elegidas.'],
         ['target' => 'prod-d-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo del detalle. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
-        ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada día se resume en su fila azul (número de actividades, clientes y tiempo total); cada actividad muestra su horario, la actividad, el cliente y su duración. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
+        ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada día se resume en su fila azul (de qué hora a qué hora trabajaste, número de actividades, fecha y tiempo total). Haz clic en un día para desplegar sus actividades; solo uno se mantiene abierto a la vez. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
     ];
     $tourSteps = [
         ['target' => 'prod-tour-period', 'title' => '1. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
@@ -23,7 +25,7 @@
         ['target' => 'prod-tour-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
         ['target' => 'prod-tour-clients', 'title' => '4. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
         ['target' => 'prod-tour-activities', 'title' => '5. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
-        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Cada actividad muestra su horario, la actividad, el cliente y cuánto duró; el día se resume en su fila azul. Este bloque tiene su propio periodo, guía y reporte.'],
+        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Cada día se resume en su fila azul y se despliega con un clic (solo uno a la vez); cada actividad muestra su horario, la actividad, el cliente y cuánto duró. Este bloque tiene su propio periodo, guía y reporte.'],
     ];
 @endphp
 
@@ -119,7 +121,7 @@
         [data-productivity] .prod-detail-wrap { position: relative; min-height: 0; }
         [data-productivity] .prod-detail-cols { display: grid; }
         /* Tabla del detalle: columnas separadas por líneas, 20px de espacio a cada lado y 15px entre las líneas de texto de una celda */
-        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 130px 205px minmax(0, 1fr) minmax(0, 1fr) 150px; }
+        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 130px 205px minmax(0, 1fr) minmax(0, 1fr) 150px 70px; }
         [data-productivity] .prod-dcell { display: flex; min-width: 0; align-items: center; box-sizing: border-box; padding: 0 20px; border-right-width: 1px; }
         [data-productivity] .prod-dgrid > .prod-dcell:last-child { border-right-width: 0; }
         [data-productivity] .prod-dindex { justify-content: center; padding: 0; }
@@ -130,6 +132,8 @@
         [data-productivity] .prod-drow { counter-increment: prodd; min-height: 70px; box-sizing: border-box; cursor: grab; }
         [data-productivity] .prod-dcounter::before { content: counter(prodd); }
         [data-productivity] .prod-drow:nth-child(even) { background-color: var(--panel-header); }
+        [data-productivity] .prod-blank-row:nth-child(n) { background-color: var(--panel-surface); }
+        [data-productivity] .prod-blank-row.mc-stripe:nth-child(n) { background-color: var(--panel-header); }
         [data-productivity] .prod-drow:hover { background-color: var(--panel-hover); }
         /* Fila del día: usa las mismas columnas y líneas de la tabla, con un tono azul muy suave para distinguirla de las actividades */
         [data-productivity] .prod-day-head { height: 70px; box-sizing: border-box; background-color: color-mix(in srgb, var(--panel-accent) 9%, var(--panel-surface)); }
@@ -161,7 +165,7 @@
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar { height: 4px; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-track { background: transparent; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
-        [data-productivity] .prod-detail-card .prod-main > * { min-width: 760px; }
+        [data-productivity] .prod-detail-card .prod-main > *, [data-productivity] .prod-detail-card .prod-main > .contents > * { min-width: 760px; }
         /* Escritorio: la tarjeta principal ocupa el alto disponible, como en Cronómetro. */
         @container prod (min-width: 1240px) {
             [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
@@ -293,24 +297,48 @@
                             <span class="prod-dcell panel-border">Actividad</span>
                             <span class="prod-dcell panel-border">Cliente</span>
                             <span class="prod-dcell panel-border" style="justify-content:center">Duración</span>
+                            <span class="prod-dcell panel-border"></span>
                         </div>
+                        @php
+                            // Un día por clave; el ejemplo (sin actividades) también se puede contraer
+                            $dayKeys = collect($activityDetail['groups'])->map(fn ($group) => (string) $group['date'])->all();
+                            $dayCounts = collect($activityDetail['groups'])->mapWithKeys(fn ($group) => [(string) $group['date'] => count($group['rows'])])->all();
+                            if ($dayKeys === []) { $dayCounts = ['ejemplo' => 1]; }
+                            $chevron = '<svg class="h-4 w-4 shrink-0 transition-transform" :class="openDays[\'KEY\'] ? \'rotate-180\' : \'\'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6"/></svg>';
+                        @endphp
+                        {{-- Solo se ven los encabezados de cada día; al hacer clic en uno se despliegan sus actividades y el que estaba abierto se contrae --}}
+                        <div class="contents" x-data="{
+                            openDays: {{ $dayKeys === [] ? '{ ejemplo: true }' : '{}' }},
+                            dayCounts: @js($dayCounts),
+                            toggleDay(day) { this.openDays = this.openDays[day] ? {} : { [day]: true }; },
+                            get dayList() { return Object.keys(this.dayCounts); },
+                            get visibleRows() { return this.dayList.reduce((total, day) => total + 1 + (this.openDays[day] ? this.dayCounts[day] : 0), 0); },
+                            // El rayado de las filas vacías continúa el de la última fila visible (la primera siempre en blanco)
+                            get fillerOffset() { const last = this.dayList[this.dayList.length - 1]; return last !== undefined && this.openDays[last] ? this.dayCounts[last] % 2 : 0; }
+                        }">
                         <div id="prod-d-list" data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-detail-wrap">
-                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
+                            <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const tops = [...$el.querySelectorAll('[data-snap]')].filter((e) => e.offsetParent !== null).map((e) => e.offsetTop); if (! tops.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step="[data-snap]" class="prod-detail panel-scroll">
                                 @forelse ($activityDetail['groups'] as $group)
-                                    <section class="prod-day panel-border" data-activity-sortable data-sortable-local>
-                                        @php $dayClients = collect($group['rows'])->pluck($idxCliente)->filter()->unique()->count(); @endphp
-                                        <header data-snap class="prod-day-head prod-dgrid panel-border border-b">
-                                            @php
-                                                $dt = \Illuminate\Support\Carbon::createFromFormat('d/m/Y', (string) $group['date'])->locale('es');
-                                                $weekday = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$dt->dayOfWeekIso - 1];
-                                            @endphp
+                                    @php
+                                        $dayKey = (string) $group['date'];
+                                        $dt = \Illuminate\Support\Carbon::createFromFormat('d/m/Y', $dayKey)->locale('es');
+                                        $weekday = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$dt->dayOfWeekIso - 1];
+                                        // Horario del día: la hora en que empezó la primera actividad y la hora en que terminó la última
+                                        $starts = collect($group['rows'])->pluck($idxInicio)->filter(fn ($v) => preg_match('/^\d{2}:\d{2}:\d{2}$/', (string) $v))->sort()->values();
+                                        $ends = collect($group['rows'])->pluck($idxFin)->filter(fn ($v) => preg_match('/^\d{2}:\d{2}:\d{2}$/', (string) $v))->sort()->values();
+                                        $dayRange = ($starts->first() ?? '-').' – '.($ends->last() ?? '-');
+                                    @endphp
+                                    <section class="prod-day panel-border">
+                                        <header data-snap role="button" tabindex="0" @click="toggleDay('{{ $dayKey }}')" @keydown.enter.prevent="toggleDay('{{ $dayKey }}')" @keydown.space.prevent="toggleDay('{{ $dayKey }}')" :aria-expanded="openDays['{{ $dayKey }}'] ? 'true' : 'false'" aria-label="Mostrar u ocultar las actividades del día" class="prod-day-head prod-dgrid panel-border cursor-pointer border-b focus:outline-none focus:ring-0">
                                             <span class="prod-dcell prod-dindex panel-border"><span class="whitespace-nowrap leading-none">{{ $digits('0') }}</span></span>
-                                            <span class="prod-dcell panel-border justify-center"><span class="truncate leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }}</span></span>
+                                            <span class="prod-dcell panel-border" data-label="Horario"><span class="whitespace-nowrap leading-none">{{ $digits($dayRange) }}</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }}</span></span>
                                             {{-- Fecha larga como en Control Gerencial: solo el día de la semana va abreviado (3 letras, ancho fijo) para que todas queden alineadas --}}
                                             <span class="prod-dcell panel-border"><span class="truncate whitespace-nowrap leading-none" title="{{ ucfirst($dt->translatedFormat('l, j \d\e F \d\e Y')) }}" data-testid="day-date"><span class="inline-block" style="width:2.15em">{{ $weekday }},</span> {{ $digits($dt->format('d')) }} de {{ $dt->translatedFormat('F') }} de {{ $digits($dt->format('Y')) }}</span></span>
-                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ $dayClients }} cliente{{ $dayClients === 1 ? '' : 's' }}</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal((string) $group['total_effective'])) }}</span></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center">{!! str_replace('KEY', $dayKey, $chevron) !!}</span>
                                         </header>
+                                        <div x-cloak x-show="openDays['{{ $dayKey }}']" data-activity-sortable data-sortable-local>
                                         @foreach ($group['rows'] as $row)
                                             @php $rowId = $rowCounter++; @endphp
                                             <article data-snap data-activity-id="{{ $rowId }}" class="prod-drow prod-dgrid panel-border border-b">
@@ -318,30 +346,34 @@
                                                 <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
                                                     <span class="block whitespace-nowrap text-center leading-none">{{ $digits(($row[$idxInicio] ?? '-').' – '.($row[$idxFin] ?? '-')) }}</span>
                                                     <template x-teleport="body">
-                                                        <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: {{ $row[$idxTiempo] ?? '00:00:00' }}<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
+                                                        <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: {{ $hms((string) ($row[$idxTiempo] ?? '0:00:00')) }}<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
                                                     </template>
                                                 </span></span>
                                                 <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
-                                                <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal(preg_replace_callback('/^(\d+):(\d{2}):(\d{2})$/', fn ($m) => ((int) $m[1]).'h '.$m[2].'m '.$m[3].'s', (string) ($row[$idxTiempo] ?? '0:00:00')))) }}</span></span>
+                                                <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($hms((string) ($row[$idxTiempo] ?? '0:00:00'))) }}</span></span>
+                                                <span class="prod-dcell panel-border"></span>
                                             </article>
                                         @endforeach
+                                        </div>
                                     </section>
                                 @empty
                                     {{-- Día de ejemplo en ceros: se muestra mientras no haya actividades en el periodo --}}
+                                    @php
+                                        $dt = now()->locale('es');
+                                        $weekday = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$dt->dayOfWeekIso - 1];
+                                    @endphp
                                     <section class="prod-day panel-border">
-                                        <header data-snap class="prod-day-head prod-dgrid panel-border border-b">
-                                            @php
-                                                $dt = now()->locale('es');
-                                                $weekday = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$dt->dayOfWeekIso - 1];
-                                            @endphp
+                                        <header data-snap role="button" tabindex="0" @click="toggleDay('ejemplo')" @keydown.enter.prevent="toggleDay('ejemplo')" @keydown.space.prevent="toggleDay('ejemplo')" :aria-expanded="openDays['ejemplo'] ? 'true' : 'false'" aria-label="Mostrar u ocultar las actividades del día" class="prod-day-head prod-dgrid panel-border cursor-pointer border-b focus:outline-none focus:ring-0">
                                             <span class="prod-dcell prod-dindex panel-border"><span class="whitespace-nowrap leading-none">{{ $digits('0') }}</span></span>
-                                            <span class="prod-dcell panel-border justify-center"><span class="truncate leading-none">0 actividades</span></span>
+                                            <span class="prod-dcell panel-border" data-label="Horario"><span class="whitespace-nowrap leading-none">{{ $digits('00:00:00 – 00:00:00') }}</span></span>
+                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">0 actividades</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate whitespace-nowrap leading-none"><span class="inline-block" style="width:2.15em">{{ $weekday }},</span> {{ $digits($dt->format('d')) }} de {{ $dt->translatedFormat('F') }} de {{ $digits($dt->format('Y')) }}</span></span>
-                                            <span class="prod-dcell panel-border"><span class="truncate leading-none">0 clientes</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center">{!! str_replace('KEY', 'ejemplo', $chevron) !!}</span>
                                         </header>
-                                        <article data-snap class="prod-drow prod-dgrid panel-border border-b">
+                                        <div x-cloak x-show="openDays['ejemplo']" data-activity-sortable data-sortable-local>
+                                            <article data-snap class="prod-drow prod-dgrid panel-border border-b">
                                             <span class="prod-dcell prod-dindex prod-dcounter panel-border" data-label="N°"></span>
                                             <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
                                                     <span class="block whitespace-nowrap text-center leading-none">{{ $digits('00:00:00 – 00:00:00') }}</span>
@@ -352,28 +384,17 @@
                                             <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
+                                            <span class="prod-dcell panel-border"></span>
                                         </article>
+                                        </div>
                                     </section>
                                 @endforelse
-                                @php
-                                    $detailLines = collect($activityDetail['groups'])->sum(fn ($group) => 1 + count($group['rows']));
-                                    $detailLines = $detailLines > 0 ? $detailLines : 2;
-                                @endphp
-                                @if ($detailLines < 7)
-                                    <div class="prod-day panel-border" aria-hidden="true">
-                                        @for ($slot = $detailLines; $slot < 7; $slot++)
-                                            <div class="prod-blank-row prod-dgrid panel-border border-b">
-                                                <span class="prod-dcell prod-dindex panel-border"></span>
-                                                <span class="prod-dcell panel-border"></span>
-                                                <span class="prod-dcell panel-border"></span>
-                                                <span class="prod-dcell panel-border"></span>
-                                                <span class="prod-dcell panel-border"></span>
-                                            </div>
-                                        @endfor
-                                    </div>
-                                @endif
+                                @for ($slot = 0; $slot < 7; $slot++)
+                                    <div x-cloak x-show="{{ $slot }} < 7 - visibleRows" :class="(fillerOffset + {{ $slot }}) % 2 === 1 ? 'mc-stripe' : ''" class="prod-blank-row prod-dgrid panel-border border-b" aria-hidden="true"><span class="prod-dcell prod-dindex panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span><span class="prod-dcell panel-border"></span></div>
+                                @endfor
                             </div>
                             <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        </div>
                         </div>
                     </div>
                 </div>

@@ -178,7 +178,7 @@ class MyProductivityPeriodTest extends TestCase
             ->assertSeeHtml('<span class="prod-dg">'.now()->format('y')[0].'</span><span class="prod-dg">'.now()->format('y')[1].'</span>');
     }
 
-    public function test_the_day_row_counts_distinct_clients(): void
+    public function test_the_day_row_shows_the_activity_count_and_the_long_date(): void
     {
         $other = Customer::create(['name' => 'Cliente B', 'rfc' => 'XAXX010101001', 'created_by' => $this->aux->id]);
         $this->entryDaysAgo(1, 1);
@@ -186,7 +186,8 @@ class MyProductivityPeriodTest extends TestCase
 
         Livewire::actingAs($this->aux)->test(MyProductivity::class)
             ->assertSee('2 actividades')
-            ->assertSee('2 clientes');
+            ->assertDontSee('2 clientes')
+            ->assertSeeHtml('data-testid="day-date"');
     }
 
     public function test_the_activity_detail_export_uses_the_detail_period_only(): void
