@@ -11,7 +11,7 @@ use Tests\TestCase;
 /**
  * Menú lateral: la sección "Monitoreo" reúne dos apartados desplegables.
  * Primero Control de Horas (Reloj Checador) y después Control de Actividades
- * (Cronómetro, Productividad y Gráficos de Control, en ese orden).
+ * (Cronómetro, Productividad y Gráficos Generales, en ese orden).
  */
 class SidebarMonitoringMenuTest extends TestCase
 {
@@ -75,9 +75,9 @@ class SidebarMonitoringMenuTest extends TestCase
         $this->assertNotFalse($clock);
         $this->assertLessThan($activities, $clock);
 
-        // Control de Actividades: Cronómetro y Productividad (una sola página) y después Gráficos de Control
+        // Control de Actividades: Cronómetro y Productividad (una sola página) y después Gráficos Generales
         $stopwatch = strpos($html, '>Cronómetro<', $activities);
-        $panel = strpos($html, '>Gráficos de Control<', $activities);
+        $panel = strpos($html, '>Gráficos Generales<', $activities);
         $this->assertNotFalse($stopwatch);
         $this->assertNotFalse($panel);
         $this->assertLessThan($panel, $stopwatch);
@@ -100,7 +100,7 @@ class SidebarMonitoringMenuTest extends TestCase
 
         $clock = strpos($html, '>Reloj Checador<', $hours);
         $supervision = strpos($html, '>Supervisión de Horas<', $hours);
-        $panel = strpos($html, '>Gráficos de Control<', $activities);
+        $panel = strpos($html, '>Gráficos Generales<', $activities);
         $this->assertNotFalse($clock);
         $this->assertNotFalse($supervision);
         $this->assertLessThan($activities, $clock);

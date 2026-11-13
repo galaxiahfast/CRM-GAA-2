@@ -19,7 +19,7 @@
 <body>
     <div class="header">
         <h1>Reporte de Control de Horas</h1>
-        <p>Gráficos de Control - Tiempo trabajado</p>
+        <p>Gráficos Generales - Tiempo trabajado</p>
         <p><strong>Usuario:</strong> {{ $selectedUser ? $selectedUser->name . ' ' . $selectedUser->last_name : 'N/A' }}</p>
         <p><strong>Periodo:</strong> {{ $start->format('d/m/Y') }} - {{ $end->format('d/m/Y') }}</p>
         <p><strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }}</p>

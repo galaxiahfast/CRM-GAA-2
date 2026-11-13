@@ -15,7 +15,7 @@ return [
     'help_recipient_email' => env('SUPPORT_HELP_RECIPIENT_EMAIL', 'administrador@datamid.com.mx'),
 
     // Una categoría por cada apartado del menú lateral, en el mismo orden del menú.
-    // Las opciones de Control de Horas (Cronómetro, Reloj Checador, Productividad, Gráficos de Control
+    // Las opciones de Control de Horas (Cronómetro, Reloj Checador, Productividad, Gráficos Generales
     // y Supervisión de Horas) comparten una sola categoría.
     // Cada categoría lleva 4 preguntas; 'steps' alimenta la guía en PDF.
     'questions' => [
@@ -309,7 +309,7 @@ return [
             'label' => 'Monitoreo',
             'icon' => 'reloj',
             'menu' => 'Monitoreo',
-            'summary' => 'Monitoreo reúne las herramientas para registrar y revisar el tiempo de trabajo: el Cronómetro para llevar cada actividad, el Reloj Checador para consultar tus marcas, Productividad para revisar tu periodo, los Gráficos de Control con sus gráficas y, para quien tiene permiso, Supervisión de Horas. Según tu rol verás solo algunas de estas opciones.',
+            'summary' => 'Monitoreo reúne las herramientas para registrar y revisar el tiempo de trabajo: el Cronómetro para llevar cada actividad, el Reloj Checador para consultar tus marcas, Productividad para revisar tu periodo, los Gráficos Generales con sus gráficas y, para quien tiene permiso, Supervisión de Horas. Según tu rol verás solo algunas de estas opciones.',
             'items' => [
                 'cronometro' => [
                     'question' => '¿Cómo inicio una actividad en el Cronómetro?',
@@ -342,10 +342,10 @@ return [
                     ],
                 ],
                 'panel_control' => [
-                    'question' => '¿Cómo consulto un periodo en los Gráficos de Control?',
+                    'question' => '¿Cómo consulto un periodo en los Gráficos Generales?',
                     'answer' => 'En “Filtros de productividad” elige la fecha inicial y la final y presiona Buscar. Si eres administrador, también seleccionas al colaborador.',
                     'steps' => [
-                        'Entra a Monitoreo › Control de Actividades › Gráficos de Control.',
+                        'Entra a Monitoreo › Control de Actividades › Gráficos Generales.',
                         'Si eres administrador, busca al colaborador por ID, nombre o correo.',
                         'Define la Fecha inicial y la Fecha final.',
                         'Presiona Buscar.',
@@ -615,7 +615,7 @@ return [
                     'steps' => [
                         'Recorre la lista de categorías de la primera columna.',
                         'Cada categoría indica cuántas preguntas contiene.',
-                        'Monitoreo reúne en una sola categoría Control de Actividades (Cronómetro, Gráficos de Control y Productividad) y Control de Horas (Reloj Checador y Supervisión de Horas).',
+                        'Monitoreo reúne en una sola categoría Control de Actividades (Cronómetro, Gráficos Generales y Productividad) y Control de Horas (Reloj Checador y Supervisión de Horas).',
                         'Algunos apartados, como Administración u Hoja de Entrega, solo están disponibles según tu rol, aunque su guía aparece aquí.',
                     ],
                 ],
