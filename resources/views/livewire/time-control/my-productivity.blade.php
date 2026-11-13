@@ -164,7 +164,8 @@
         [data-productivity] .prod-detail-card .prod-main > * { min-width: 760px; }
         /* Escritorio: la tarjeta principal ocupa el alto disponible, como en Cronómetro. */
         @container prod (min-width: 1240px) {
-                        [data-productivity] .prod-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+            [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
+            [data-productivity] .prod-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
             [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; border-bottom-width: 0; border-right-width: 1px; }
             [data-productivity] .prod-form { display: flex; flex: 1; flex-direction: column; gap: 0; justify-content: space-between; }
             [data-productivity] .prod-dates, [data-productivity] .prod-date-field, [data-productivity] .prod-consult, [data-productivity] .prod-guide { display: contents; }
@@ -173,14 +174,16 @@
             [data-productivity] .prod-main { min-height: 0; }
             [data-productivity] .prod-dist { min-height: 0; flex: 1; grid-template-rows: minmax(0, 1fr); }
             [data-productivity] .prod-col { min-height: 0; }
-            [data-productivity] .prod-list-wrap { flex: none; height: 427px; }
+            [data-productivity] .prod-list-wrap { flex: 1; }
             /* La lista muestra siempre 7 filas exactas, igual que la tabla del Cronómetro */
             [data-productivity] .prod-list { position: absolute; inset: 0; max-height: none; container-type: size; }
-            [data-productivity] .prod-item { height: 61px; }
+            [data-productivity] .prod-item { height: max(59px, calc(100cqh / 7)); }
             /* Detalle por día: tarjeta de alto fijo con 7 filas exactas */
-                                    [data-productivity] .prod-detail-wrap { flex: none; height: 427px; }
+            /* Mismo alto que la tarjeta de arriba, para que las filas de ambas midan lo mismo */
+            [data-productivity] .prod-detail-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
+            [data-productivity] .prod-detail-wrap { flex: 1; }
             [data-productivity] .prod-detail { position: absolute; inset: 0; max-height: none; container-type: size; }
-            [data-productivity] .prod-detail .prod-day-head, [data-productivity] .prod-detail .prod-blank-row, [data-productivity] .prod-detail .prod-drow { height: 61px; min-height: 0; }
+            [data-productivity] .prod-detail .prod-day-head, [data-productivity] .prod-detail .prod-blank-row, [data-productivity] .prod-detail .prod-drow { height: max(59px, calc(100cqh / 7)); }
         }
     </style>
 
