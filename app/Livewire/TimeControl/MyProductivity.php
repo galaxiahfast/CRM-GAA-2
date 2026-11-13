@@ -2,7 +2,8 @@
 
 namespace App\Livewire\TimeControl;
 
-use App\Services\Reports\ReportExportManager;
+use App\Services\ManagerControl\HoursSummary;
+use App\Services\ManagerControl\TotalHoursPdf;
 use App\Services\TimeControl\TimeReportService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
@@ -88,24 +89,49 @@ class MyProductivity extends Component
         // Los datos se actualizan en render() con $detailFrom y $detailTo.
     }
 
-    public function exportDetail(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    public function exportDetail(string $format, TimeReportService $reports): StreamedResponse
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
         abort_unless($format === 'pdf', 404);
 
-        $report = $reports->userReport(auth()->user(), $this->detailFrom, $this->detailTo);
-
-        return $exporter->download($format, $report);
+        return $this->downloadHoursPdf($reports, $this->detailFrom, $this->detailTo);
     }
 
-    public function export(string $format, TimeReportService $reports, ReportExportManager $exporter): StreamedResponse
+    public function export(string $format, TimeReportService $reports): StreamedResponse
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
         abort_unless($format === 'pdf', 404);
 
-        $report = $reports->userReport(auth()->user(), $this->from, $this->to);
+        return $this->downloadHoursPdf($reports, $this->from, $this->to);
+    }
 
-        return $exporter->download($format, $report);
+    /**
+     * Los dos reportes (productividad del periodo y detalle por día) usan el mismo formato del PDF de
+     * «Registro de horas por día»: todo agrupado por día, sin descripciones, con subtotal diario y total.
+     */
+    private function downloadHoursPdf(TimeReportService $reports, string $from, string $to): StreamedResponse
+    {
+        $user = auth()->user();
+        $entries = $reports->userProductivity($user->id, $from, $to)['entries'];
+
+        $rows = $entries->map(fn ($entry) => [
+            'date' => $entry->entry_date->format('Y-m-d'),
+            'customer' => (string) ($entry->customer->name ?? '—'),
+            'activity' => (string) ($entry->subService->sub_service ?? '—'),
+            'description' => '',
+            'seconds' => (int) $entry->total_duration_seconds,
+        ])->values()->all();
+
+        $department = $user->activeOrganizationalProfile()->with('physicalArea')->first()?->physicalArea?->name;
+        $content = app(TotalHoursPdf::class)->renderOriginal(
+            ['id' => (int) $user->id, 'name' => trim($user->name.' '.($user->last_name ?? ''))],
+            $department,
+            $from,
+            $to,
+            HoursSummary::fromRows($rows),
+        );
+
+        return response()->streamDownload(fn () => print ($content), 'mi-productividad_'.$from.'_'.$to.'.pdf', ['Content-Type' => 'application/pdf']);
     }
 
     public function render(TimeReportService $reports)
