@@ -28,7 +28,7 @@ class ActivityHubTest extends TestCase
         return $user;
     }
 
-    public function test_the_stopwatch_comes_first_and_the_productivity_blocks_follow_on_the_same_page(): void
+    public function test_the_stopwatch_comes_first_then_the_daily_detail_and_then_the_period_productivity(): void
     {
         $user = $this->user('Auxiliar', 'hub-aux@datamid.test');
 
@@ -40,8 +40,9 @@ class ActivityHubTest extends TestCase
         $this->assertNotFalse($clock);
         $this->assertNotFalse($productivity);
         $this->assertNotFalse($detail);
-        $this->assertLessThan($productivity, $clock);
-        $this->assertLessThan($detail, $productivity);
+        // Cronómetro, luego el detalle por día y al final la productividad del periodo
+        $this->assertLessThan($detail, $clock);
+        $this->assertLessThan($productivity, $detail);
         // Un solo título para toda la página
         $this->assertSame(1, substr_count($html, '<h1'));
         $this->assertStringContainsString('Cronómetro y productividad', $html);
