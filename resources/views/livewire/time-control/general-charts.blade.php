@@ -195,10 +195,8 @@
         /* Misma altura (87px) que el encabezado «Periodo de consulta» del formulario, para que las líneas del panel queden alineadas */
         [data-general-charts] .gc-tabs { display: flex; height: 87px; box-sizing: border-box; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 20px; overflow: hidden; }
         [data-general-charts] .gc-tablist { display: flex; flex-wrap: nowrap; gap: 20px; flex-shrink: 0; }
-        /* Mismos 20px a los lados y 15px arriba/abajo que el resto de los botones del módulo (p. ej. .prod-primary) */
-        [data-general-charts] .gc-tab { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--panel-border); border-radius: 12px; padding: 15px 20px; background-color: var(--panel-surface); color: var(--panel-text); line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease; }
-        [data-general-charts] .gc-tab:hover { background-color: var(--panel-hover); }
-        [data-general-charts] .gc-tab[aria-selected="true"] { border-color: var(--prod-green); background-color: color-mix(in srgb, var(--prod-green) 12%, var(--panel-surface)); color: var(--prod-green); }
+        [data-general-charts] .gc-tab { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 0; padding: 15px 0; background: transparent; color: var(--panel-text); line-height: 1; white-space: nowrap; cursor: pointer; transition: color 150ms ease; }
+        [data-general-charts] .gc-tab:hover, [data-general-charts] .gc-tab[aria-selected="true"] { color: var(--prod-green); }
         [data-general-charts] .gc-filters { display: flex; flex-wrap: nowrap; flex-shrink: 0; gap: 20px; }
         [data-general-charts] .gc-filters > * { width: 240px; max-width: 100%; flex-shrink: 0; }
         [data-general-charts] .gc-chart-area { position: relative; display: flex; min-height: 420px; flex: 1; flex-direction: column; }
