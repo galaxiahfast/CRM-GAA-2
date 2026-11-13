@@ -742,6 +742,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Cronómetro</span>
+                                        <svg class="ms-[15px] h-4 w-4 shrink-0 text-green-600" :class="collapsed ? 'hidden' : 'block'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" role="img" aria-label="Con el formato final" data-mc-format-check><title>Ya tiene el formato final</title><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
                                     </a>
                                 </li>
 @endif
