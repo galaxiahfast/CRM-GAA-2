@@ -232,71 +232,84 @@ const positionTooltip = (el, point) => {
     arrow.classList.toggle('border-r', !below);
 };
 
-const externalTooltip = (context, comp, config) => {
-    const { chart, tooltip } = context;
-    if (!comp.tooltipEl) comp.tooltipEl = buildTooltipEl();
-    const el = comp.tooltipEl;
+// ===== Qué barra/día está bajo el cursor =====
+// El zoom del apartado (--app-zoom) usa la propiedad CSS `zoom`, que estira el lienzo: su tamaño «de verdad»
+// (canvas.width) no es el mismo que ocupa en pantalla (getBoundingClientRect). El manejo de ratón que trae
+// Chart.js no tiene esto en cuenta y señalaba un día o una barra distinta de la que se tocaba (siempre la
+// misma cantidad de lugares de más). Por eso aquí se calcula a mano, con el mismo reescalado que usa el
+// globo, en qué índice cae el cursor, y se le dice directamente al gráfico cuál mostrar. El globo se rellena
+// y se posiciona aquí mismo (no por el plugin de tooltip de Chart.js, nunca se dispara con `events: []`).
+//
+// `tipHolder` es un objeto normal (no un dato reactivo de Alpine) donde se guarda el globo de este gráfico:
+// Chart.js y su `chart` tienen referencias circulares y getters internos que, envueltos en el proxy reactivo
+// de Alpine/Livewire, terminaban en un desbordamiento de pila al leerlos.
+const attachManualHover = (chart, canvas, categoryAxisKey, tipHolder, config) => {
+    const activate = (index) => {
+        if (!tipHolder.el) tipHolder.el = buildTooltipEl();
+        const el = tipHolder.el;
 
-    if (tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
-        el.classList.add('hidden');
+        if (index === null) {
+            chart.setActiveElements([]);
+            chart.update('none');
+            el.classList.add('hidden');
 
-        return;
-    }
+            return;
+        }
 
-    const index = tooltip.dataPoints[0].dataIndex;
-    if (config.kind === 'day') fillDayTooltip(el, config, index);
-    else fillRankTooltip(el, config, index);
+        const scale = chart.scales[categoryAxisKey];
+        const x = categoryAxisKey === 'x' ? scale.getPixelForTick(index) : chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+        const y = categoryAxisKey === 'y' ? scale.getPixelForTick(index) : chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+        chart.setActiveElements([{ datasetIndex: 0, index }]);
+        // update('none'): sin animación (si no, la barra tardaba los 250ms de la gráfica en resaltarse) y sin
+        // rehacer el montaje completo (layout/leyenda), que es lo que rompía el gráfico con update() a secas.
+        chart.update('none');
 
-    // tooltip.caretX/Y vienen en el tamaño interno del lienzo; con el zoom del apartado (--app-zoom, vía CSS `zoom`)
-    // ese tamaño no coincide con el que ocupa en pantalla (getBoundingClientRect), así que hay que reescalarlo.
-    const rect = chart.canvas.getBoundingClientRect();
-    const scaleX = rect.width / chart.canvas.width;
-    const scaleY = rect.height / chart.canvas.height;
-    positionTooltip(el, { x: rect.left + tooltip.caretX * scaleX, y: rect.top + tooltip.caretY * scaleY });
-    el.classList.remove('hidden');
+        if (config.kind === 'day') fillDayTooltip(el, config, index);
+        else fillRankTooltip(el, config, index);
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = rect.width / canvas.width;
+        const scaleY = rect.height / canvas.height;
+        positionTooltip(el, { x: rect.left + x * scaleX, y: rect.top + y * scaleY });
+        el.classList.remove('hidden');
+    };
+
+    canvas.addEventListener('mousemove', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const localX = (event.clientX - rect.left) * scaleX;
+        const localY = (event.clientY - rect.top) * scaleY;
+        const scale = chart.scales[categoryAxisKey];
+        const pixel = categoryAxisKey === 'x' ? localX : localY;
+        // Fuera del área de la gráfica no hay barra que señalar.
+        if (localX < chart.chartArea.left || localX > chart.chartArea.right || localY < chart.chartArea.top || localY > chart.chartArea.bottom) {
+            activate(null);
+
+            return;
+        }
+        let index = scale.getValueForPixel(pixel);
+        if (index === undefined || index === null) { activate(null); return; }
+        index = Math.max(0, Math.min(scale.ticks.length - 1, Math.round(index)));
+        activate(index);
+    });
+    canvas.addEventListener('mouseleave', () => activate(null));
 };
 
 document.addEventListener('alpine:init', () => {
-    window.Alpine.data('generalChart', (config) => ({
-        chart: null,
-        drawing: false,
-        tooltipEl: null,
-        sizeObserver: null,
-        themeObserver: null,
-        empty: !(config.values || []).some((value) => value > 0),
+    window.Alpine.data('generalChart', (config) => {
+        // Fuera de los datos reactivos de Alpine a propósito (variables normales de la función, no `this.x`):
+        // Chart.js guarda referencias circulares y getters internos que, envueltos en el proxy reactivo de
+        // Alpine/Livewire, terminaban en un desbordamiento de pila («Maximum call stack size exceeded») nada
+        // más leerlos. Solo `empty` es reactivo porque la plantilla lo usa con x-show.
+        let chart = null;
+        let drawing = false;
+        const tipHolder = { el: null };
+        let sizeObserver = null;
+        let themeObserver = null;
 
-        init() {
-            this.sizeObserver = new ResizeObserver(() => {
-                if (!this.chart && this.$el.clientWidth > 0 && this.$el.clientHeight > 0) this.draw();
-            });
-            this.sizeObserver.observe(this.$el);
-            // El primer aviso del ResizeObserver a veces no llega (p. ej. si la pestaña ya estaba visible al
-            // observar): sin esto el lienzo se queda con su tamaño por defecto (300×150) y luego se ve
-            // estirado y desalineado. Se insiste unas cuantas veces hasta que el dibujo quede hecho.
-            this.draw();
-            [50, 150, 400, 900].forEach((delay) => {
-                setTimeout(() => { if (!this.chart) this.draw(); }, delay);
-            });
-            // Cambio de tema claro/oscuro: se redibuja con los colores nuevos
-            this.themeObserver = new MutationObserver(() => {
-                // Se cambian los colores sobre el mismo gráfico (sin destruirlo y volver a crearlo): hacerlo
-                // de la otra forma, justo cuando aún se estaba creando por primera vez, podía dejarlo roto.
-                if (this.chart) this.applyColors(this.colors());
-            });
-            this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        },
-
-        destroy() {
-            this.sizeObserver?.disconnect();
-            this.themeObserver?.disconnect();
-            this.chart?.destroy();
-            this.chart = null;
-            this.tooltipEl?.remove();
-            this.tooltipEl = null;
-        },
-
-        colors() {
-            const style = getComputedStyle(this.$el);
+        const colors = (el) => {
+            const style = getComputedStyle(el);
             const read = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
 
             return {
@@ -310,11 +323,10 @@ document.addEventListener('alpine:init', () => {
                 green: read('--prod-green', '#15803d'),
                 font: style.fontFamily || 'Poppins, sans-serif',
             };
-        },
+        };
 
         // Repinta un gráfico ya creado con los colores del tema actual (claro/oscuro), sin destruirlo.
-        applyColors(c) {
-            const chart = this.chart;
+        const applyColors = (c) => {
             if (!chart) return;
 
             chart.data.datasets[0].backgroundColor = c.bar;
@@ -334,20 +346,19 @@ document.addEventListener('alpine:init', () => {
             chart.$tabularColor = c.text;
             chart.$tabularFont = c.font;
             chart.update();
-        },
+        };
 
-        async draw() {
-            // Varios disparadores (el ResizeObserver y los reintentos de init()) pueden llamar a draw() casi a la
-            // vez; sin este candado, dos podían quedar esperando Chart.js a la vez y crear el gráfico dos veces
-            // sobre el mismo lienzo (uno de los dos queda con un tamaño insignificante y se ve estirado).
-            if (this.drawing || this.chart) return;
-            this.drawing = true;
+        const draw = async (el, canvas) => {
+            // Varios disparadores (el ResizeObserver y los reintentos de init()) pueden llamar a draw() casi a
+            // la vez; sin este candado, dos podían quedar esperando Chart.js a la vez y crear el gráfico dos
+            // veces sobre el mismo lienzo (uno de los dos queda con un tamaño insignificante y se ve estirado).
+            if (drawing || chart) return;
+            drawing = true;
             const Chart = await waitForChart();
-            if (!Chart || this.chart || !this.$refs.canvas || this.$el.clientWidth === 0) { this.drawing = false; return; }
+            if (!Chart || chart || !canvas || el.clientWidth === 0) { drawing = false; return; }
 
-            const c = this.colors();
+            const c = colors(el);
             const font = { family: c.font, size: 15, weight: '400' };
-            const tooltip = { enabled: false, external: (context) => externalTooltip(context, this, config) };
             const grid = { color: c.border, drawTicks: false };
             const ticks = { color: c.text, font, padding: 10 };
             // Mismo texto y tamaño, pero invisible: Chart.js sigue reservando el espacio del eje y tabularAxesPlugin
@@ -355,7 +366,7 @@ document.addEventListener('alpine:init', () => {
             const tabularTicks = { ...ticks, color: 'transparent' };
 
             if (config.kind === 'day') {
-                this.chart = new Chart(this.$refs.canvas, {
+                chart = new Chart(canvas, {
                     data: {
                         labels: config.labels,
                         datasets: [
@@ -384,10 +395,12 @@ document.addEventListener('alpine:init', () => {
                         responsive: true,
                         maintainAspectRatio: false,
                         animation: { duration: 250 },
-                        interaction: { mode: 'index', intersect: false },
+                        // El manejo de ratón automático de Chart.js no tiene en cuenta el zoom del apartado y
+                        // señalaba un día distinto del que se tocaba; se apaga y se calcula a mano (más abajo).
+                        events: [],
                         plugins: {
                             legend: { display: false },
-                            tooltip,
+                            tooltip: { enabled: false },
                         },
                         scales: {
                             x: { grid: { display: false }, border: { color: c.border }, ticks: { ...tabularTicks, maxRotation: 0, autoSkip: true } },
@@ -396,16 +409,17 @@ document.addEventListener('alpine:init', () => {
                     },
                     plugins: [tabularAxesPlugin],
                 });
-                this.chart.$tabularAxes = { x: true, y: true };
-                this.chart.$tabularFont = c.font;
-                this.chart.$tabularColor = c.text;
-                this.drawing = false;
+                chart.$tabularAxes = { x: true, y: true };
+                chart.$tabularFont = c.font;
+                chart.$tabularColor = c.text;
+                attachManualHover(chart, canvas, 'x', tipHolder, config);
+                drawing = false;
 
                 return;
             }
 
             // Ranking por cliente o por actividad: barras horizontales con el tiempo y el porcentaje del total
-            this.chart = new Chart(this.$refs.canvas, {
+            chart = new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels: config.labels,
@@ -422,10 +436,10 @@ document.addEventListener('alpine:init', () => {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 250 },
-                    interaction: { mode: 'index', intersect: false },
+                    events: [],
                     plugins: {
                         legend: { display: false },
-                        tooltip,
+                        tooltip: { enabled: false },
                     },
                     scales: {
                         x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
@@ -434,10 +448,44 @@ document.addEventListener('alpine:init', () => {
                 },
                 plugins: [tabularAxesPlugin],
             });
-            this.chart.$tabularAxes = { x: true };
-            this.chart.$tabularFont = c.font;
-            this.chart.$tabularColor = c.text;
-            this.drawing = false;
-        },
-    }));
+            chart.$tabularAxes = { x: true };
+            chart.$tabularFont = c.font;
+            chart.$tabularColor = c.text;
+            attachManualHover(chart, canvas, 'y', tipHolder, config);
+            drawing = false;
+        };
+
+        return {
+            empty: !(config.values || []).some((value) => value > 0),
+
+            init() {
+                sizeObserver = new ResizeObserver(() => {
+                    if (!chart && this.$el.clientWidth > 0 && this.$el.clientHeight > 0) draw(this.$el, this.$refs.canvas);
+                });
+                sizeObserver.observe(this.$el);
+                // El primer aviso del ResizeObserver a veces no llega (p. ej. si la pestaña ya estaba visible al
+                // observar): sin esto el lienzo se queda con su tamaño por defecto (300×150) y luego se ve
+                // estirado y desalineado. Se insiste unas cuantas veces hasta que el dibujo quede hecho.
+                draw(this.$el, this.$refs.canvas);
+                [50, 150, 400, 900].forEach((delay) => {
+                    setTimeout(() => { if (!chart) draw(this.$el, this.$refs.canvas); }, delay);
+                });
+                // Cambio de tema claro/oscuro: se repinta con los colores nuevos (sin destruir el gráfico: hacerlo
+                // justo cuando aún se estaba creando por primera vez podía dejarlo roto).
+                themeObserver = new MutationObserver(() => {
+                    if (chart) applyColors(colors(this.$el));
+                });
+                themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            },
+
+            destroy() {
+                sizeObserver?.disconnect();
+                themeObserver?.disconnect();
+                chart?.destroy();
+                chart = null;
+                tipHolder.el?.remove();
+                tipHolder.el = null;
+            },
+        };
+    });
 });
