@@ -307,14 +307,13 @@ document.addEventListener('alpine:init', () => {
                         // El manejo de ratón automático de Chart.js no tiene en cuenta el zoom del apartado y
                         // señalaba un día distinto del que se tocaba; se apaga y se calcula a mano (más abajo).
                         events: [],
-                        layout: { padding: { top: 90 } },
                         plugins: {
                             legend: { display: false },
                             tooltip: { enabled: false },
                         },
                         scales: {
                             x: { grid: { display: false }, border: { color: c.border }, ticks: { ...tabularTicks, maxRotation: 0, autoSkip: true } },
-                            y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
+                            y: { beginAtZero: true, grace: '30%', grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         },
                     },
                     plugins: [tabularAxesPlugin, hoverLabelPlugin],
@@ -350,13 +349,12 @@ document.addEventListener('alpine:init', () => {
                     maintainAspectRatio: false,
                     animation: { duration: 250 },
                     events: [],
-                    layout: { padding: { right: 130 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
                     },
                     scales: {
-                        x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
+                        x: { beginAtZero: true, grace: '20%', grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         y: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, autoSkip: false, callback(value) { return shorten(this.getLabelForValue(value), 28); } } },
                     },
                 },
