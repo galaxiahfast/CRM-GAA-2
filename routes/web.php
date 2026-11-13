@@ -224,7 +224,7 @@ Route::middleware([
     // ==========================================
 
     // Operativo (Auxiliar / Coordinador / Contador / Administrador)
-    Route::get('/time', RegistroActividades::class)
+    Route::get('/time', \App\Livewire\TimeControl\ActivityHub::class)
         ->middleware('access.permission:activities.manage')
         ->name('time.index');
 
@@ -236,8 +236,9 @@ Route::middleware([
         ->middleware('access.permission:time-control.productivity.view')
         ->name('time.dashboard-data');
 
+    // La productividad ahora vive debajo del cronómetro; los administradores conservan esta página propia.
     Route::get('/time/reports', MyProductivity::class)
-        ->middleware('access.permission:time-control.productivity.view')
+        ->middleware(['access.permission:time-control.productivity.view', \App\Http\Middleware\RedirectProductivityToActivityHub::class])
         ->name('time.reports');
 
     Route::get('/time/attendance', AttendanceClock::class)

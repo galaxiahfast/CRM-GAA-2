@@ -75,15 +75,13 @@ class SidebarMonitoringMenuTest extends TestCase
         $this->assertNotFalse($clock);
         $this->assertLessThan($activities, $clock);
 
-        // Control de Actividades: Cronómetro, Productividad y Panel de Control (en ese orden)
-        $stopwatch = strpos($html, '>Cronómetro<', $activities);
-        $productivity = strpos($html, '>Productividad<', $activities);
+        // Control de Actividades: Cronómetro y Productividad (una sola página) y después Panel de Control
+        $stopwatch = strpos($html, '>Cronómetro y Productividad<', $activities);
         $panel = strpos($html, '>Panel de Control<', $activities);
         $this->assertNotFalse($stopwatch);
-        $this->assertNotFalse($productivity);
         $this->assertNotFalse($panel);
-        $this->assertLessThan($productivity, $stopwatch);
-        $this->assertLessThan($panel, $productivity);
+        $this->assertLessThan($panel, $stopwatch);
+        $this->assertStringNotContainsString('>Productividad<', $html);
 
         // Cada apartado se abre y se cierra por separado y recuerda su estado
         $this->assertStringContainsString("sidebarOpenGet('time-hours')", $html);

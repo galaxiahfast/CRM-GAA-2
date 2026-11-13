@@ -164,7 +164,7 @@
                     </div>
                     <div class="no-print flex flex-wrap items-center gap-[10px]">
                         <a href="{{ route('time.index') }}" class="panel-button-secondary inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Cronómetro <span>›</span></a>
-                        <a href="{{ route('time.reports') }}" class="panel-button-secondary inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Productividad <span>›</span></a>
+                        <a href="{{ route('time.index').'#productividad' }}" class="panel-button-secondary inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Productividad <span>›</span></a>
                         <a href="{{ route('time.dashboard') }}" class="panel-button inline-flex h-11 items-center gap-[10px] rounded-xl px-[20px]">Panel de control <span>›</span></a>
                     </div>
                 </section>

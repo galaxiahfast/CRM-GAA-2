@@ -70,7 +70,7 @@
         $activities[] = ['Reloj Checador', 'Registra tu entrada, salida y descansos.', route('time.attendance'), 'clock'];
     }
     if ($permissions->allows($user, 'time-control.productivity.view')) {
-        $activities[] = ['Mi productividad', 'Revisa tu avance y tus horas.', route('time.reports'), 'chart'];
+        $activities[] = ['Mi productividad', 'Revisa tu avance y tus horas.', route('time.index').'#productividad', 'chart'];
     }
     if ($permissions->allows($user, 'time-control.supervision.view')) {
         $activities[] = ['Supervisión de horas', 'Consulta y corrige la asistencia del equipo.', route('time.admin.attendance'), 'eye'];

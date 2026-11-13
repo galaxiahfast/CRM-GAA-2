@@ -46,8 +46,9 @@
 <div
     data-panel
     data-time-clock
+    @if ($withProductivity) data-with-productivity @endif
     x-data="clockQuickTour"
-    class="relative isolate min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 text-[15px] flex flex-col"
+    class="relative isolate {{ $embedded ? '' : 'min-h-[calc(var(--app-dvh)-123px)]' }} w-full min-w-0 text-[15px] flex flex-col"
 >
     <x-panel-styles />
 
@@ -232,8 +233,8 @@
     <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <div class="min-w-0">
-                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Cronómetro</h1>
-                <p class="clock-lines mt-[5px]">Registra y administra el tiempo dedicado a tus actividades.</p>
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $withProductivity ? 'Cronómetro y productividad' : 'Cronómetro' }}</h1>
+                <p class="clock-lines mt-[5px]">{{ $withProductivity ? 'Registra el tiempo de tus actividades y consulta tu productividad.' : 'Registra y administra el tiempo dedicado a tus actividades.' }}</p>
             </div>
         </div>
         <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Sincronizado en tiempo real</span>

@@ -6,6 +6,7 @@ use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\TimeReportService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -20,9 +21,15 @@ class MyProductivity extends Component
 
     public string $detailTo;
 
-    public function mount(): void
+    /** Se muestra dentro de la página Cronómetro y productividad: sin título ni alto mínimo propios. */
+    #[Locked]
+    public bool $embedded = false;
+
+    public function mount(bool $embedded = false): void
     {
         abort_unless(Gate::allows('operate-time-tracking'), 403);
+        $this->embedded = $embedded;
+
         // Periodo inicial de 15 días: hoy y los 14 días anteriores (los dos extremos cuentan).
         $to = $this->localToday();
         $from = $this->defaultFrom();

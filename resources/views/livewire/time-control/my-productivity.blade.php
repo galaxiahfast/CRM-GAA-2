@@ -31,7 +31,7 @@
     data-panel
     data-productivity
     x-data="clockQuickTour(@js($tourSteps), @js(['detail' => $detailTourSteps]))"
-    class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
+    class="relative isolate flex {{ $embedded ? '' : 'min-h-[calc(var(--app-dvh)-123px)]' }} w-full min-w-0 flex-col text-[15px]"
 >
     <x-panel-styles />
 
@@ -188,6 +188,7 @@
     </style>
 
     <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
+        @unless ($embedded)
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="min-w-0 max-w-full">
                 <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Mi productividad</h1>
@@ -195,6 +196,7 @@
             </div>
             <span class="panel-accent inline-flex items-center gap-[10px] leading-none"><span aria-hidden="true">—</span>Sincronizado en tiempo real</span>
         </section>
+        @endunless
 
         <div class="prod-wrap prod-summary-wrap">
             <section class="prod-summary-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">

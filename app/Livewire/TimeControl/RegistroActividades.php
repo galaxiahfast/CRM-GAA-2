@@ -12,6 +12,7 @@ use App\Services\TimeControl\TimerService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -34,8 +35,19 @@ class RegistroActividades extends Component
     /** Cambia en cada intento para que los avisos emergentes vuelvan a mostrarse. */
     public int $errorToastVersion = 0;
 
-    public function mount(): void
+    /** Se muestra dentro de la página Cronómetro y productividad: sin alto mínimo propio y con el título compartido. */
+    #[Locked]
+    public bool $embedded = false;
+
+    /** Indica que debajo de este bloque se muestra la productividad. */
+    #[Locked]
+    public bool $withProductivity = false;
+
+    public function mount(bool $embedded = false, bool $withProductivity = false): void
     {
+        $this->embedded = $embedded;
+        $this->withProductivity = $withProductivity;
+
         if (auth()->user()->isAdmin()) {
             $this->redirect('/time/admin', navigate: false);
         }
