@@ -24,11 +24,11 @@ return [
         ],
     ],
     'panel_control_horas' => [
-        'label' => 'Panel de Control de Horas',
-        'menu' => 'Monitoreo › Control de Actividades › Panel de Control',
+        'label' => 'Gráficos de Control de Horas',
+        'menu' => 'Monitoreo › Control de Actividades › Gráficos de Control',
         'summary' => 'Consulta las horas y la productividad de un colaborador dentro de un periodo, con gráficas por día, cliente y actividad.',
         'items' => [
-            ['question' => '¿Cómo consulto un periodo?', 'answer' => 'Elige las fechas y presiona Buscar. Si tienes acceso administrativo, selecciona primero al colaborador.', 'steps' => ['Abre Panel de Control en Control de Horas.', 'Si aparece el filtro Colaborador, busca por ID, nombre o correo y selecciona a la persona.', 'Define Fecha inicial y Fecha final.', 'Presiona Buscar para actualizar las cifras y las gráficas.']],
+            ['question' => '¿Cómo consulto un periodo?', 'answer' => 'Elige las fechas y presiona Buscar. Si tienes acceso administrativo, selecciona primero al colaborador.', 'steps' => ['Abre Gráficos de Control en Control de Horas.', 'Si aparece el filtro Colaborador, busca por ID, nombre o correo y selecciona a la persona.', 'Define Fecha inicial y Fecha final.', 'Presiona Buscar para actualizar las cifras y las gráficas.']],
             ['question' => '¿Qué muestra el resumen?', 'answer' => 'El resumen reúne horas, promedios y la distribución general del periodo consultado.', 'steps' => ['Realiza la búsqueda del periodo.', 'Selecciona Abrir informe en la tarjeta Resumen.', 'Revisa los totales y vuelve a las gráficas cuando termines.']],
             ['question' => '¿Cómo reviso las gráficas?', 'answer' => 'Las gráficas muestran el tiempo por día y su distribución por cliente y actividad.', 'steps' => ['Después de Buscar, recorre las gráficas con los controles anterior y siguiente.', 'Consulta el título y las etiquetas de cada gráfica para identificar el desglose.', 'Si cambias el periodo o colaborador, presiona Buscar otra vez.']],
             ['question' => '¿Cómo exporto o imprimo el resultado?', 'answer' => 'La barra superior tiene Descargar PDF e Imprimir para el resultado visible.', 'steps' => ['Selecciona el colaborador y periodo que necesitas.', 'Presiona Buscar y confirma que el resultado corresponda a la consulta.', 'Usa Descargar PDF para guardar una copia o Imprimir para enviarla a la impresora.']],
