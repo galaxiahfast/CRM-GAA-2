@@ -100,7 +100,11 @@
             white-space: nowrap;
             line-height: 15px;
         }
-        [data-time-clock] .clock-table .clock-head-row th { height: 87px; }
+        [data-time-clock] .clock-table .clock-head-row th { height: 87px; padding-top: 0; padding-bottom: 0; }
+        /* El encabezado mide 87px exactos (igual que "Nuevo registro") con su línea dentro de esa altura: así las dos líneas quedan al mismo nivel */
+        [data-time-clock] .clock-table-head { border-collapse: separate; border-spacing: 0; }
+        [data-time-clock] .clock-table-head thead { border-bottom-width: 0; }
+        [data-time-clock] .clock-table-head th { border-bottom: 1px solid var(--panel-border); }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa el mismo negro que el resto */
         html.module-dark-theme #main-content [data-time-clock] table tbody,
         html.module-dark-theme #main-content [data-time-clock] table tr {
@@ -201,9 +205,9 @@
             [data-time-clock] .clock-card { flex: 1; min-height: 0; }
             [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
             [data-time-clock] .clock-main { flex: 1; }
-            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
+            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 427px; }
             [data-time-clock] .clock-placeholder-rows { display: table-row-group; }
-            [data-time-clock] .clock-placeholder-rows td { height: 60px; }
+            [data-time-clock] .clock-placeholder-rows td { height: 61px; }
             [data-time-clock] .clock-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 220px; }
             [data-time-clock] .clock-field-action { grid-column: auto; }
         }
@@ -219,10 +223,10 @@
             [data-time-clock] .clock-field > label, [data-time-clock] .clock-field-action > div:first-child { margin-bottom: 0; }
             [data-time-clock] .clock-guide > button { flex: none; width: 100%; }
             [data-time-clock] .clock-main { flex: 1; }
-            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 424px; }
+            [data-time-clock] .clock-body-wrap { flex: 1; min-height: 427px; }
             /* La zona de filas muestra siempre 7 filas exactas (la altura de cada fila es 1/7 de la zona); al dejar de desplazar, el scroll se alinea a la fila más cercana */
             [data-time-clock] .clock-body { position: absolute; inset: 0; max-height: none; container-type: size; }
-            [data-time-clock] .clock-body tbody td { height: max(59px, calc(100cqh / 7)); box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
+            [data-time-clock] .clock-body tbody td { height: 61px; box-sizing: border-box; padding-top: 14px; padding-bottom: 14px; }
             /* Tiempo, estado y acción miden lo mismo (lo que ocupa "En progreso") para que la tabla no se mueva al cambiar de estado */
             [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 80px; min-width: 80px; max-width: 80px; }
             [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { width: 160px; min-width: 160px; max-width: 160px; }

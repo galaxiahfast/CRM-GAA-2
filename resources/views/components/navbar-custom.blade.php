@@ -153,7 +153,7 @@
                     <span class="text-white">›</span>
                     <span>Control de Actividades</span>
                     <span class="text-white">›</span>
-                    <span class="text-white">Cronómetro y Productividad</span>
+                    <span class="text-white">Cronómetro</span>
                 </div>
             @elseif (request()->routeIs('time.reports'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
@@ -741,7 +741,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Cronómetro y Productividad</span>
+                                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Cronómetro</span>
                                     </a>
                                 </li>
 @endif
