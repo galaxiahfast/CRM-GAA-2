@@ -98,7 +98,7 @@ const hoverLabelPlugin = {
         ctx.font = `600 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
         const padding = 20;
         const pointer = 8;
-        const gap = 4;
+        const gap = 20;
         const boxW = ctx.measureText(text).width + padding * 2;
         const boxH = fontSize + padding * 2;
 
@@ -118,24 +118,36 @@ const hoverLabelPlugin = {
         ctx.fillStyle = chart.$hoverSurface || '#ffffff';
         ctx.strokeStyle = chart.$hoverBorder || '#d4d4d8';
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 6);
-        else ctx.rect(boxX, boxY, boxW, boxH);
-        ctx.fill();
-        ctx.stroke();
-
-        // La punta nace del borde más cercano a la barra y conserva su orientación.
+        const radius = 6;
         ctx.beginPath();
         if (meta.horizontal) {
             const tipY = Math.max(boxY + 12, Math.min(meta.y, boxY + boxH - 12));
-            ctx.moveTo(boxX, tipY - pointer);
-            ctx.lineTo(boxX - pointer, tipY);
+            ctx.moveTo(boxX + radius, boxY);
+            ctx.lineTo(boxX + boxW - radius, boxY);
+            ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius);
+            ctx.lineTo(boxX + boxW, boxY + boxH - radius);
+            ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH);
+            ctx.lineTo(boxX + radius, boxY + boxH);
+            ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius);
             ctx.lineTo(boxX, tipY + pointer);
+            ctx.lineTo(boxX - pointer, tipY);
+            ctx.lineTo(boxX, tipY - pointer);
+            ctx.lineTo(boxX, boxY + radius);
+            ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
         } else {
             const tipX = Math.max(boxX + 12, Math.min(meta.x, boxX + boxW - 12));
-            ctx.moveTo(tipX - pointer, boxY + boxH);
-            ctx.lineTo(tipX, boxY + boxH + pointer);
+            ctx.moveTo(boxX + radius, boxY);
+            ctx.lineTo(boxX + boxW - radius, boxY);
+            ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius);
+            ctx.lineTo(boxX + boxW, boxY + boxH - radius);
+            ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH);
             ctx.lineTo(tipX + pointer, boxY + boxH);
+            ctx.lineTo(tipX, boxY + boxH + pointer);
+            ctx.lineTo(tipX - pointer, boxY + boxH);
+            ctx.lineTo(boxX + radius, boxY + boxH);
+            ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius);
+            ctx.lineTo(boxX, boxY + radius);
+            ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
         }
         ctx.closePath();
         ctx.fill();
@@ -295,7 +307,7 @@ document.addEventListener('alpine:init', () => {
                         // El manejo de ratón automático de Chart.js no tiene en cuenta el zoom del apartado y
                         // señalaba un día distinto del que se tocaba; se apaga y se calcula a mano (más abajo).
                         events: [],
-                        layout: { padding: { top: 70 } },
+                        layout: { padding: { top: 90 } },
                         plugins: {
                             legend: { display: false },
                             tooltip: { enabled: false },
@@ -338,7 +350,7 @@ document.addEventListener('alpine:init', () => {
                     maintainAspectRatio: false,
                     animation: { duration: 250 },
                     events: [],
-                    layout: { padding: { right: 110 } },
+                    layout: { padding: { right: 130 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
