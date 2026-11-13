@@ -243,6 +243,8 @@
         [data-mc-modal] .mc-modal-close { color: var(--panel-text); background: none; border: 0; transition: opacity 150ms ease; }
         /* Títulos y subtítulos en negro (blanco en el tema oscuro), no en azul */
         [data-mc-modal] .panel-accent { color: var(--panel-text); }
+        /* Los títulos del formulario (el principal y los de cada sección) van en azul, como los títulos de los apartados */
+        [data-mc-modal] :is(h3, h4).panel-accent { color: var(--panel-accent); }
         [data-mc-modal] .mc-modal-close:hover { opacity: .7; }
         /* Calendario del formulario: flota por encima de todo y mantiene su tamaño completo (nunca se encoge ni lleva scroll) */
         [data-productivity].prod-calendar[data-mc-calendar] { z-index: 200500; max-height: none; overflow: visible; }
