@@ -241,7 +241,7 @@
         [data-mc-modal] .mc-modal-outline:hover { background-color: color-mix(in srgb, var(--mc-green) 8%, var(--panel-surface)); }
         /* La X va sola: sin caja ni borde */
         [data-mc-modal] .mc-modal-close { color: var(--panel-text); background: none; border: 0; transition: opacity 150ms ease; }
-        /* Títulos y subtítulos en negro (blanco en el tema oscuro), no en azul */
+        /* Iconos y textos con acento en negro (blanco en el tema oscuro); solo los títulos van en azul (regla de abajo) */
         [data-mc-modal] .panel-accent { color: var(--panel-text); }
         /* Los títulos del formulario (el principal y los de cada sección) van en azul, como los títulos de los apartados */
         [data-mc-modal] :is(h3, h4).panel-accent { color: var(--panel-accent); }
