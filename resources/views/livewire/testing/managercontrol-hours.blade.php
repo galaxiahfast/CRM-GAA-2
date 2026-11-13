@@ -397,7 +397,7 @@
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['customer'] }}">{{ $row['customer'] }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['activity'] }}">{{ $row['activity'] }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none" title="{{ $row['description'] }}">{{ $row['description'] !== '' ? $row['description'] : '—' }}</span></span>
-                                            <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($fmt($row['seconds'])) }}</span></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal((int) $row['seconds'])) }}</span></span>
                                             <span class="prod-dcell panel-border" style="justify-content:center;gap:10px">
                                                 @if ($canWrite)
                                                     <button type="button" wire:click="openEdit({{ $row['id'] }})" class="mc-action prod-link focus:outline-none focus:ring-0" title="Editar actividad" aria-label="Editar actividad"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m16.9 4.6 2.5 2.5M4 20l4.2-1 10.9-10.9a1.8 1.8 0 0 0-2.5-2.5L5.7 16.5 4 20Z"/></svg></button>

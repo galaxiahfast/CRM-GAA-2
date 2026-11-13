@@ -8,7 +8,7 @@
         $m = intdiv($s % 3600, 60);
         $sec = $s % 60;
 
-        return sprintf('%02d:%02d:%02d', $h, $m, $sec);
+        return sprintf('%03dh %02dm %02ds', $h, $m, $sec);
     };
 
     $secondsFor = function ($entry) {
@@ -174,7 +174,7 @@
         [data-time-clock] .clock-table :is(th, td):nth-child(1), [data-time-clock] .clock-table :is(th, td):nth-child(n+4) { text-align: center; }
         [data-time-clock] .clock-table :is(th, td):nth-child(2), [data-time-clock] .clock-table :is(th, td):nth-child(3) { width: auto; overflow: hidden; text-overflow: ellipsis; }
         [data-time-clock] .clock-table :is(th, td):nth-child(1) { width: 70px; min-width: 70px; max-width: 70px; }
-        [data-time-clock] .clock-table :is(th, td):nth-child(4) { width: 110px; min-width: 110px; max-width: 110px; }
+        [data-time-clock] .clock-table :is(th, td):nth-child(4) { width: 160px; min-width: 160px; max-width: 160px; }
         [data-time-clock] .clock-table :is(th, td):nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
         [data-time-clock] .clock-table :is(th, td):nth-child(6) { width: 110px; min-width: 110px; max-width: 110px; }
         [data-time-clock] .clock-table .clock-actions { justify-content: center; }
@@ -182,7 +182,7 @@
         /* Celular y tablet pequeña (< 760): la tabla conserva su forma y se desplaza en horizontal con el scroll delgado */
         @container clock (max-width: 759px) {
             [data-time-clock] .clock-main { overflow: auto; max-height: min(600px, 75dvh); }
-            [data-time-clock] .clock-main .clock-table { min-width: 880px; }
+            [data-time-clock] .clock-main .clock-table { min-width: 930px; }
             [data-time-clock] .clock-main .clock-table-head { position: sticky; top: 0; z-index: 2; }
             [data-time-clock] .clock-body { max-height: none; overflow: visible; }
         }
@@ -280,7 +280,7 @@
         class="clock-card panel-surface panel-border overflow-hidden rounded-xl border"
         aria-label="Registro de actividades"
         x-data="{
-            totalDisplay: '00:00:00',
+            totalDisplay: '000h 00m 00s',
             totalTimerId: null,
             formatSeconds(seconds) {
                 seconds = Math.max(0, parseInt(seconds || 0, 10));
@@ -288,7 +288,7 @@
                 let m = Math.floor((seconds % 3600) / 60);
                 let s = seconds % 60;
 
-                return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                return String(h).padStart(3, '0') + 'h ' + String(m).padStart(2, '0') + 'm ' + String(s).padStart(2, '0') + 's';
             },
             currentEpochSecond() {
                 return Math.floor(Date.now() / 1000);
@@ -521,7 +521,7 @@
                                 <td data-label="Actividad" class="p-[20px] align-middle">
                                     <div class="truncate leading-none">Actividad de ejemplo</div>
                                 </td>
-                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums">00:00:00</td>
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums">000h 00m 00s</td>
                                 <td data-label="Estado" class="whitespace-nowrap p-[20px] align-middle">
                                     <span class="clock-pill panel-tone-gray">Ejemplo</span>
                                 </td>
@@ -546,7 +546,7 @@
                                 @if ($loop->first) id="clock-tour-row" @endif
                                 class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 {{ $entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS ? 'is-running' : '' }}"
                                 x-data="{
-                                    display: '00:00:00',
+                                    display: '000h 00m 00s',
                                     timerId: null,
                                     formatSeconds(seconds) {
                                         seconds = Math.max(0, parseInt(seconds || 0, 10));
@@ -554,7 +554,7 @@
                                         let m = Math.floor((seconds % 3600) / 60);
                                         let s = seconds % 60;
 
-                                        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                                        return String(h).padStart(3, '0') + 'h ' + String(m).padStart(2, '0') + 'm ' + String(s).padStart(2, '0') + 's';
                                     },
                                     currentEpochSecond() {
                                         return Math.floor(Date.now() / 1000);

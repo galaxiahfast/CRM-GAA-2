@@ -323,7 +323,7 @@
                                                 </span></span>
                                                 <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
-                                                <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits((string) ($row[$idxTiempo] ?? '00:00:00')) }}</span></span>
+                                                <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal(preg_replace_callback('/^(\d+):(\d{2}):(\d{2})$/', fn ($m) => ((int) $m[1]).'h '.$m[2].'m '.$m[3].'s', (string) ($row[$idxTiempo] ?? '0:00:00')))) }}</span></span>
                                             </article>
                                         @endforeach
                                     </section>
@@ -351,7 +351,7 @@
                                                 </span></span>
                                             <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
-                                            <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('00:00:00') }}</span></span>
+                                            <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
                                         </article>
                                     </section>
                                 @endforelse
