@@ -253,6 +253,7 @@ const externalTooltip = (context, comp, config) => {
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('generalChart', (config) => ({
         chart: null,
+        drawing: false,
         tooltipEl: null,
         sizeObserver: null,
         themeObserver: null,
@@ -263,6 +264,13 @@ document.addEventListener('alpine:init', () => {
                 if (!this.chart && this.$el.clientWidth > 0 && this.$el.clientHeight > 0) this.draw();
             });
             this.sizeObserver.observe(this.$el);
+            // El primer aviso del ResizeObserver a veces no llega (p. ej. si la pestaña ya estaba visible al
+            // observar): sin esto el lienzo se queda con su tamaño por defecto (300×150) y luego se ve
+            // estirado y desalineado. Se insiste unas cuantas veces hasta que el dibujo quede hecho.
+            this.draw();
+            [50, 150, 400, 900].forEach((delay) => {
+                setTimeout(() => { if (!this.chart) this.draw(); }, delay);
+            });
             // Cambio de tema claro/oscuro: se redibuja con los colores nuevos
             this.themeObserver = new MutationObserver(() => {
                 if (!this.chart) return;
@@ -298,8 +306,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         async draw() {
+            // Varios disparadores (el ResizeObserver y los reintentos de init()) pueden llamar a draw() casi a la
+            // vez; sin este candado, dos podían quedar esperando Chart.js a la vez y crear el gráfico dos veces
+            // sobre el mismo lienzo (uno de los dos queda con un tamaño insignificante y se ve estirado).
+            if (this.drawing || this.chart) return;
+            this.drawing = true;
             const Chart = await waitForChart();
-            if (!Chart || this.chart || !this.$refs.canvas || this.$el.clientWidth === 0) return;
+            if (!Chart || this.chart || !this.$refs.canvas || this.$el.clientWidth === 0) { this.drawing = false; return; }
 
             const c = this.colors();
             const font = { family: c.font, size: 15, weight: '400' };
@@ -355,6 +368,7 @@ document.addEventListener('alpine:init', () => {
                 this.chart.$tabularAxes = { x: true, y: true };
                 this.chart.$tabularFont = c.font;
                 this.chart.$tabularColor = c.text;
+                this.drawing = false;
 
                 return;
             }
@@ -377,6 +391,7 @@ document.addEventListener('alpine:init', () => {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 250 },
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
                         tooltip,
@@ -391,6 +406,7 @@ document.addEventListener('alpine:init', () => {
             this.chart.$tabularAxes = { x: true };
             this.chart.$tabularFont = c.font;
             this.chart.$tabularColor = c.text;
+            this.drawing = false;
         },
     }));
 });
