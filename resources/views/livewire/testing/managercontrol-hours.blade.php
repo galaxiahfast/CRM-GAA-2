@@ -210,9 +210,8 @@
         [data-mc-modal] :is(strong, b, th) { font-weight: 400; }
         [data-mc-modal] :is(button, label) { cursor: pointer; }
         [data-mc-modal] button:disabled { cursor: not-allowed; opacity: .4; }
-        /* Sin líneas divisorias dentro del formulario (encabezado, secciones y pie); los campos conservan su contorno */
+        /* Sin línea entre las secciones de campos; las del encabezado y del pie se conservan */
         [data-mc-modal] .mc-modal-section + .mc-modal-section { padding-top: 20px; }
-        [data-mc-modal] :is(header, footer) { border-top-width: 0; border-bottom-width: 0; }
         /* TODA la distancia del formulario es de 20px: relleno, márgenes, entre etiqueta y caja, entre líneas y dentro de las cajas.
            Los textos (título, subtítulo, etiquetas, párrafos) tienen su caja exacta: de la altura de la mayúscula a la línea base,
            sin el aire que la fuente agrega arriba y abajo. Así los 20px se miden desde el texto real. Requiere text-box (Chrome 133+). */
