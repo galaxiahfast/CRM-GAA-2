@@ -560,76 +560,6 @@
                 </li>
 
                 <!-- ========================================================== -->
-                <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
-                <!-- ========================================================== -->
-                <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
-                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
-                </li>
-
-                <!-- ========================================================== -->
-                <!-- BOTÓN: Organigrama (apartado propio, antes dentro de Administración) -->
-                <!-- ========================================================== -->
-                @if ($canOrganizationChart)
-                <li class="pt-[20px] px-[15px] pb-0 m-0">
-                    <a href="{{ route('organigrama.index') }}"
-                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('organigrama.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('organigrama.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Organigrama</span>
-                    </a>
-                </li>
-                @endif
-
-                <!-- ========================================================== -->
-                <!-- BOTÓN: Administración (siempre visible)                    -->
-                <!-- ========================================================== -->
-                @if ($canAdministrationSection)
-                <li class="pt-[20px] px-[15px] pb-0 m-0">
-                    <a href="{{ $administrationRoute }}"
-                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                        <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
-                    </a>
-                </li>
-                @endif
-
-                <li x-data="{ openBankReconciliation: window.sidebarOpenGet('bank'), init() { this.$watch('openBankReconciliation', (value) => window.sidebarOpenSet('bank', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
-                    <button type="button" @click="openBankReconciliation = !openBankReconciliation"
-                        :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
-                        class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                        <span class="flex items-center">
-                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M6 10h12M5 14h5m4 0h5M5 18h5m4 0h5M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-                            </svg>
-                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
-                        </span>
-                        <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openBankReconciliation ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
-                        </svg>
-                    </button>
-
-                    <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
-                        <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
-                        <ul class="w-full">
-                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
-                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
-                                </a>
-                            </li>
-                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
-                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-
-
-                <!-- ========================================================== -->
                 <!-- SECCIÓN: MONITOREO (oculta en modo compacto)               -->
                 <!-- ========================================================== -->
                 <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
@@ -759,6 +689,76 @@
                         </a>
                     </li>
                 @endcan
+
+                <!-- ========================================================== -->
+                <!-- SECCIÓN: INFORMACIÓN (oculta en modo compacto)             -->
+                <!-- ========================================================== -->
+                <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
+                    <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
+                </li>
+
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Organigrama (apartado propio, antes dentro de Administración) -->
+                <!-- ========================================================== -->
+                @if ($canOrganizationChart)
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ route('organigrama.index') }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('organigrama.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('organigrama.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Organigrama</span>
+                    </a>
+                </li>
+                @endif
+
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Administración (siempre visible)                    -->
+                <!-- ========================================================== -->
+                @if ($canAdministrationSection)
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ $administrationRoute }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('administracion.index') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <x-hugeicons-user-add-01 class="w-5 h-5 transition-colors {{ request()->routeIs('administracion.index') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" />
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Administración</span>
+                    </a>
+                </li>
+                @endif
+
+                <li x-data="{ openBankReconciliation: window.sidebarOpenGet('bank'), init() { this.$watch('openBankReconciliation', (value) => window.sidebarOpenSet('bank', value)); } }" class="relative pt-[20px] px-[15px] pb-0 m-0">
+                    <button type="button" @click="openBankReconciliation = !openBankReconciliation"
+                        :class="collapsed ? 'justify-start px-[15px] py-[15px]' : 'justify-between p-[15px]'"
+                        class="group flex w-full items-center rounded-xl text-[15px] font-medium text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                        <span class="flex items-center">
+                            <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M6 10h12M5 14h5m4 0h5M5 18h5m4 0h5M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+                            </svg>
+                            <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
+                        </span>
+                        <svg class="ml-[15px] h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200" :class="openBankReconciliation ? 'rotate-180' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="openBankReconciliation" x-transition :class="collapsed ? 'pl-[15px]' : 'block'" class="relative" style="display: none;">
+                        <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
+                        <ul class="w-full">
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <a href="{{ route('bank-reconciliation.show', 'ocr') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'ocr' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" /></svg>
+                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación OCR</span>
+                                </a>
+                            </li>
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <a href="{{ route('bank-reconciliation.show', 'bancaria') }}" class="group flex w-full items-center rounded-xl p-[15px] text-[15px] text-black transition-all duration-200 {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <svg class="h-5 w-5 shrink-0 transition-colors {{ request()->routeIs('bank-reconciliation.*') && request()->route('tool') === 'bancaria' ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M6 10h12M6 14h5m3 0h4M6 18h5m3 0h4" /></svg>
+                                    <span class="ms-[15px] flex h-[15px] items-center leading-none" :class="collapsed ? 'hidden' : 'inline'">Conciliación Bancaria</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
 
                     <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
                         <span class="flex h-[15px] items-center text-[15px] font-medium leading-none text-black">Documentos</span>
