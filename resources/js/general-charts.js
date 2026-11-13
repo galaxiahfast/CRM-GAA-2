@@ -104,6 +104,12 @@ const buildTooltipEl = () => {
     const el = document.createElement('div');
     el.setAttribute('role', 'tooltip');
     el.setAttribute('data-gc-tooltip', '');
+    // El globo va pegado al <body> (fuera del panel), así que necesita declararse su propio [data-panel]: si no,
+    // --panel-surface/--panel-border/--panel-text no existen ahí y el fondo sale transparente (deja ver la gráfica
+    // detrás) en vez de blanco u oscuro según el tema. El «Comparación con el reloj checador» de Manager Control
+    // hace lo mismo.
+    el.setAttribute('data-panel', '');
+    el.setAttribute('data-productivity', '');
     // Mismas clases que el globo «Comparación con el reloj checador» de Manager Control: ya están compiladas en el CSS.
     el.className = 'app-zoom-overlay panel-surface panel-border panel-text pointer-events-none fixed z-[200001] block w-[440px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)] hidden';
     el.innerHTML = `
@@ -273,11 +279,9 @@ document.addEventListener('alpine:init', () => {
             });
             // Cambio de tema claro/oscuro: se redibuja con los colores nuevos
             this.themeObserver = new MutationObserver(() => {
-                if (!this.chart) return;
-                this.chart.destroy();
-                this.chart = null;
-                requestAnimationFrame(() => this.draw());
-                setTimeout(() => { if (!this.chart) this.draw(); }, 60);
+                // Se cambian los colores sobre el mismo gráfico (sin destruirlo y volver a crearlo): hacerlo
+                // de la otra forma, justo cuando aún se estaba creando por primera vez, podía dejarlo roto.
+                if (this.chart) this.applyColors(this.colors());
             });
             this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         },
@@ -297,12 +301,39 @@ document.addEventListener('alpine:init', () => {
 
             return {
                 accent: read('--panel-accent', '#1A3A6B'),
+                // Las barras van siempre en este azul fuerte, también en el tema oscuro (no el azul claro de
+                // --panel-accent ahí, que se ve débil para una barra de color sólido).
+                bar: '#1A3A6B',
                 text: read('--panel-text', '#000000'),
                 border: read('--panel-border', '#d4d4d8'),
                 surface: read('--panel-surface', '#ffffff'),
                 green: read('--prod-green', '#15803d'),
                 font: style.fontFamily || 'Poppins, sans-serif',
             };
+        },
+
+        // Repinta un gráfico ya creado con los colores del tema actual (claro/oscuro), sin destruirlo.
+        applyColors(c) {
+            const chart = this.chart;
+            if (!chart) return;
+
+            chart.data.datasets[0].backgroundColor = c.bar;
+            if (chart.data.datasets[1]) chart.data.datasets[1].borderColor = c.green;
+
+            const axes = chart.$tabularAxes || {};
+            ['x', 'y'].forEach((key) => {
+                const scale = chart.options.scales[key];
+                if (!scale) return;
+                if (scale.grid) scale.grid.color = c.border;
+                if (scale.border) scale.border.color = c.border;
+                // Los ejes con cifras de ancho fijo quedan transparentes a propósito (los dibuja tabularAxesPlugin);
+                // los demás (p. ej. los nombres de cliente/actividad) sí llevan el color del tema normal.
+                if (scale.ticks && !axes[key]) scale.ticks.color = c.text;
+            });
+
+            chart.$tabularColor = c.text;
+            chart.$tabularFont = c.font;
+            chart.update();
         },
 
         async draw() {
@@ -332,7 +363,7 @@ document.addEventListener('alpine:init', () => {
                                 type: 'bar',
                                 label: 'Tiempo',
                                 data: config.values.map((s) => s / 3600),
-                                backgroundColor: c.accent,
+                                backgroundColor: c.bar,
                                 borderRadius: 6,
                                 maxBarThickness: 48,
                                 order: 2,
@@ -381,7 +412,7 @@ document.addEventListener('alpine:init', () => {
                     datasets: [{
                         label: 'Tiempo',
                         data: config.values.map((s) => s / 3600),
-                        backgroundColor: c.accent,
+                        backgroundColor: c.bar,
                         borderRadius: 6,
                         maxBarThickness: 32,
                     }],
