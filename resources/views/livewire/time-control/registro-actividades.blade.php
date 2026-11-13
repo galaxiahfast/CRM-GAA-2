@@ -2,6 +2,9 @@
     $moduleTimezone = (string) config('app.timezone', 'America/Mexico_City');
     $moduleTimezone = $moduleTimezone === 'UTC' ? 'America/Mexico_City' : $moduleTimezone;
 
+    // Cada cifra ocupa el mismo ancho (la letra Poppins no es tabular), igual que en Productividad y Control Gerencial
+    $digitBoxes = fn (string $text) => new \Illuminate\Support\HtmlString(preg_replace('/\d/', '<span class="prod-dg">$0</span>', e($text)));
+
     $fmt = function (int $s) {
         $s = max(0, $s);
         $h = intdiv($s, 3600);
@@ -68,6 +71,7 @@
         [data-time-clock] .clock-primary:hover { background-color: color-mix(in srgb, var(--clock-green) 20%, var(--panel-surface)); }
         [data-time-clock] .clock-primary:disabled { cursor: not-allowed; opacity: .6; }
         [data-time-clock] .clock-pill { white-space: nowrap; }
+        [data-time-clock] .prod-dg { display: inline-block; width: 0.64em; text-align: center; }
         [data-time-clock] .clock-button {
             display: inline-flex;
             width: 120px;
@@ -281,6 +285,7 @@
         aria-label="Registro de actividades"
         x-data="{
             totalDisplay: '000h 00m 00s',
+            digits(value) { return String(value).replace(/\d/g, '&lt;span class=prod-dg&gt;$&amp;&lt;/span&gt;'); },
             totalTimerId: null,
             formatSeconds(seconds) {
                 seconds = Math.max(0, parseInt(seconds || 0, 10));
@@ -319,7 +324,7 @@
         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
             <div class="min-w-0">
                 <h2 class="panel-accent leading-none">Registro de actividades</h2>
-                <p class="clock-lines mt-[5px]">Tienes {{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} con un tiempo total de <span class="tabular-nums" x-text="totalDisplay">{{ $fmt($todayTotalSeconds) }}</span>.</p>
+                <p class="clock-lines mt-[5px]">Tienes {{ $todayEntries->count() }} {{ $todayEntries->count() === 1 ? 'actividad' : 'actividades' }} con un tiempo total de <span class="tabular-nums" x-html="digits(totalDisplay)">{{ $digitBoxes($fmt($todayTotalSeconds)) }}</span>.</p>
             </div>
             <div
                 class="min-w-0 text-right leading-none"
@@ -521,7 +526,7 @@
                                 <td data-label="Actividad" class="p-[20px] align-middle">
                                     <div class="truncate leading-none">Actividad de ejemplo</div>
                                 </td>
-                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums">000h 00m 00s</td>
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle tabular-nums">{{ $digitBoxes('000h 00m 00s') }}</td>
                                 <td data-label="Estado" class="whitespace-nowrap p-[20px] align-middle">
                                     <span class="clock-pill panel-tone-gray">Ejemplo</span>
                                 </td>
@@ -547,6 +552,7 @@
                                 class="clock-row panel-border border-b transition-[opacity,background-color] duration-150 {{ $entry->status === \App\Models\TimeEntry::STATUS_IN_PROGRESS ? 'is-running' : '' }}"
                                 x-data="{
                                     display: '000h 00m 00s',
+                                    digits(value) { return String(value).replace(/\d/g, '&lt;span class=prod-dg&gt;$&amp;&lt;/span&gt;'); },
                                     timerId: null,
                                     formatSeconds(seconds) {
                                         seconds = Math.max(0, parseInt(seconds || 0, 10));
@@ -591,8 +597,8 @@
                                     <div class="truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
                                 </td>
 
-                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle font-mono tabular-nums" x-text="display">
-                                    {{ $fmt($entry->calculateEffectiveSeconds()) }}
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle tabular-nums" x-html="digits(display)">
+                                    {{ $digitBoxes($fmt($entry->calculateEffectiveSeconds())) }}
                                 </td>
 
                                 <td data-label="Estado" class="whitespace-nowrap p-[20px] align-middle">

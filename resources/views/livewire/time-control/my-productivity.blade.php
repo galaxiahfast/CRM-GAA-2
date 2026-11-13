@@ -22,12 +22,12 @@
         ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada día se resume en su fila azul (de qué hora a qué hora trabajaste, número de actividades, fecha y tiempo total). Haz clic en un día para desplegar sus actividades; solo uno se mantiene abierto a la vez. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
     ];
     $tourSteps = [
-        ['target' => 'prod-tour-period', 'title' => '1. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
-        ['target' => 'prod-tour-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado, las distribuciones y el detalle con las fechas elegidas.'],
-        ['target' => 'prod-tour-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
-        ['target' => 'prod-tour-clients', 'title' => '4. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
-        ['target' => 'prod-tour-activities', 'title' => '5. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
-        ['target' => 'prod-tour-detail', 'title' => '6. Detalle por día', 'description' => 'Cada día se resume en su fila azul y se despliega con un clic (solo uno a la vez); cada actividad muestra su horario, la actividad, el cliente y cuánto duró. Este bloque tiene su propio periodo, guía y reporte.'],
+        ['target' => 'prod-tour-detail', 'title' => '1. Detalle por día', 'description' => 'Cada día se resume en su fila azul y se despliega con un clic (solo uno a la vez); cada actividad muestra su horario, la actividad, el cliente y cuánto duró. Este bloque tiene su propio periodo, guía y reporte.'],
+        ['target' => 'prod-tour-period', 'title' => '2. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
+        ['target' => 'prod-tour-consult', 'title' => '3. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado, las distribuciones y el detalle con las fechas elegidas.'],
+        ['target' => 'prod-tour-export', 'title' => '4. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-tour-clients', 'title' => '5. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
+        ['target' => 'prod-tour-activities', 'title' => '6. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
     ];
 @endphp
 
@@ -205,77 +205,6 @@
         </section>
         @endunless
 
-        <div class="prod-wrap prod-summary-wrap">
-            <section class="prod-summary-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">
-                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
-                    <div class="min-w-0">
-                        <h2 class="panel-accent leading-none">Productividad del periodo</h2>
-                        <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
-                    </div>
-                    <div id="prod-tour-export" class="flex flex-wrap items-center gap-[15px]">
-                        <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" wire:target="export('pdf')" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">Descargar reporte PDF</button>
-                    </div>
-                </header>
-                <div class="prod-layout">
-                    <x-productivity-period-aside
-                        from-prop="from" to-prop="to" :values="['from' => $from, 'to' => $to]"
-                        consult-method="applyFilters" consult-id="prod-tour-consult" period-id="prod-tour-period"
-                        guide="productividad" guide-title="Descargar la guía de Mi productividad en PDF" />
-
-                    <div class="prod-main">
-                        <div class="prod-dist">
-                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients', 'example' => 'Cliente de ejemplo'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities', 'example' => 'Actividad de ejemplo']] as $distribution)
-                                <section id="{{ $distribution['tourId'] }}" class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
-                                    <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
-                                        <h3 class="prod-index panel-border leading-none">N°</h3>
-                                        <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
-                                    </div>
-                                    <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
-                                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step=".prod-item" data-activity-sortable data-sortable-local class="prod-list panel-scroll">
-                                        @forelse ($distribution['items'] as $name => $seconds)
-                                            <div class="prod-item prod-grid" data-activity-id="{{ $loop->index }}">
-                                                <span class="prod-index prod-counter panel-border leading-none"></span>
-                                                <div class="prod-cell prod-metrics">
-                                                    <span class="truncate leading-none" title="{{ $name }}">{{ $name }}</span>
-                                                    <span class="tabular-nums leading-none">{{ $fmt($seconds) }}</span>
-                                                    <div class="prod-track"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
-                                                    <span class="text-right tabular-nums leading-none">{{ $pct($seconds, $totalSeconds) }}%</span>
-                                                </div>
-                                            </div>
-                                        @empty
-                                            {{-- Fila de ejemplo en ceros: se muestra mientras no haya datos en el periodo --}}
-                                            <div class="prod-item prod-grid">
-                                                <span class="prod-index prod-counter panel-border leading-none"></span>
-                                                <div class="prod-cell prod-metrics">
-                                                    <span class="truncate leading-none">{{ $distribution['example'] }}</span>
-                                                    <span class="tabular-nums leading-none">00:00:00</span>
-                                                    <div class="prod-track"><div class="prod-fill" style="width: 0%"></div></div>
-                                                    <span class="text-right tabular-nums leading-none">0%</span>
-                                                </div>
-                                            </div>
-                                        @endforelse
-                                        @for ($slot = max(count($distribution['items']), 1); $slot < 7; $slot++)
-                                            <div class="prod-item prod-grid prod-blank" aria-hidden="true">
-                                                <span class="prod-index panel-border"></span>
-                                                <div class="prod-cell prod-metrics">
-                                                    <span></span>
-                                                    <span class="tabular-nums leading-none" style="visibility:hidden">00:00:00</span>
-                                                    <div class="prod-track" style="visibility:hidden"></div>
-                                                    <span class="text-right tabular-nums leading-none" style="visibility:hidden">0%</span>
-                                                </div>
-                                            </div>
-                                        @endfor
-                                    </div>
-                                    <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
-                                    </div>
-                                </section>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
         <div class="prod-wrap">
             <section id="prod-tour-detail" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Detalle de actividades por día" x-data="{ expandedRows: new Set(), toggleRow(id) { this.expandedRows.has(id) ? this.expandedRows.delete(id) : this.expandedRows.add(id) }, isExpanded(id) { return this.expandedRows.has(id) } }">
                 <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
@@ -355,7 +284,7 @@
                                                 <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($hms((string) ($row[$idxTiempo] ?? '0:00:00'))) }}</span></span>
-                                                <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('{{ $dayKey }}')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
+                                                <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('{{ $dayKey }}')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m7 11 5-5 5 5M7 18l5-5 5 5"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
                                             </article>
                                         @endforeach
                                         </div>
@@ -387,7 +316,7 @@
                                             <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
-                                            <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('ejemplo')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('ejemplo')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m7 11 5-5 5 5M7 18l5-5 5 5"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
                                         </article>
                                         </div>
                                     </section>
@@ -403,6 +332,77 @@
                 </div>
             </section>
         </div>
+        <div class="prod-wrap prod-summary-wrap">
+            <section class="prod-summary-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen de productividad">
+                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px] border-b p-[20px]">
+                    <div class="min-w-0">
+                        <h2 class="panel-accent leading-none">Productividad del periodo</h2>
+                        <p class="prod-lines mt-[5px]">Del {{ \Illuminate\Support\Carbon::parse($from)->locale('es')->translatedFormat('j \d\e F \d\e Y') }} al {{ \Illuminate\Support\Carbon::parse($to)->locale('es')->translatedFormat('j \d\e F \d\e Y') }}</p>
+                    </div>
+                    <div id="prod-tour-export" class="flex flex-wrap items-center gap-[15px]">
+                        <button type="button" wire:click="export('pdf')" wire:loading.attr="disabled" wire:target="export('pdf')" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60">Descargar reporte PDF</button>
+                    </div>
+                </header>
+                <div class="prod-layout">
+                    <x-productivity-period-aside
+                        from-prop="from" to-prop="to" :values="['from' => $from, 'to' => $to]"
+                        consult-method="applyFilters" consult-id="prod-tour-consult" period-id="prod-tour-period"
+                        guide="productividad" guide-title="Descargar la guía de Mi productividad en PDF" />
+
+                    <div class="prod-main">
+                        <div class="prod-dist">
+                            @foreach ([['title' => 'Distribución por cliente', 'items' => $byCustomer, 'nameWidth' => '10.3em', 'tourId' => 'prod-tour-clients', 'example' => 'Cliente de ejemplo'], ['title' => 'Distribución por actividad', 'items' => $byActivity, 'nameWidth' => '11.4em', 'tourId' => 'prod-tour-activities', 'example' => 'Actividad de ejemplo']] as $distribution)
+                                <section id="{{ $distribution['tourId'] }}" class="prod-col panel-border" style="--prod-name-w: {{ $distribution['nameWidth'] }}">
+                                    <div class="prod-grid panel-border box-border h-[87px] shrink-0 border-b">
+                                        <h3 class="prod-index panel-border leading-none">N°</h3>
+                                        <h3 class="prod-cell leading-none">{{ $distribution['title'] }}</h3>
+                                    </div>
+                                    <div data-scroll-on-hover x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="prod-list-wrap">
+                                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = $el.querySelectorAll('.prod-item'); if (! rows.length) return; const height = $el.scrollHeight / rows.length; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const target = Math.min(max, Math.max(0, Math.round($el.scrollTop / height) * height)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-row-step=".prod-item" data-activity-sortable data-sortable-local class="prod-list panel-scroll">
+                                        @forelse ($distribution['items'] as $name => $seconds)
+                                            <div class="prod-item prod-grid" data-activity-id="{{ $loop->index }}">
+                                                <span class="prod-index prod-counter panel-border leading-none"></span>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span class="truncate leading-none" title="{{ $name }}">{{ $name }}</span>
+                                                    <span class="tabular-nums leading-none">{{ $fmt($seconds) }}</span>
+                                                    <div class="prod-track"><div class="prod-fill" style="width: {{ $pct($seconds, $totalSeconds) }}%"></div></div>
+                                                    <span class="text-right tabular-nums leading-none">{{ $pct($seconds, $totalSeconds) }}%</span>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            {{-- Fila de ejemplo en ceros: se muestra mientras no haya datos en el periodo --}}
+                                            <div class="prod-item prod-grid">
+                                                <span class="prod-index prod-counter panel-border leading-none"></span>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span class="truncate leading-none">{{ $distribution['example'] }}</span>
+                                                    <span class="tabular-nums leading-none">00:00:00</span>
+                                                    <div class="prod-track"><div class="prod-fill" style="width: 0%"></div></div>
+                                                    <span class="text-right tabular-nums leading-none">0%</span>
+                                                </div>
+                                            </div>
+                                        @endforelse
+                                        @for ($slot = max(count($distribution['items']), 1); $slot < 7; $slot++)
+                                            <div class="prod-item prod-grid prod-blank" aria-hidden="true">
+                                                <span class="prod-index panel-border"></span>
+                                                <div class="prod-cell prod-metrics">
+                                                    <span></span>
+                                                    <span class="tabular-nums leading-none" style="visibility:hidden">00:00:00</span>
+                                                    <div class="prod-track" style="visibility:hidden"></div>
+                                                    <span class="text-right tabular-nums leading-none" style="visibility:hidden">0%</span>
+                                                </div>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                    <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                    </div>
+                                </section>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </main>
 
     <template x-teleport="body">
