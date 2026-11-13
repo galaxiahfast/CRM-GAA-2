@@ -80,11 +80,68 @@ const tabularAxesPlugin = {
     },
 };
 
-// ===== Qué barra/día está bajo el cursor =====
+// Mini etiqueta pegada a la barra tocada, con su valor (mismo formato que el eje): no es un globo flotante
+// aparte (nada de posición en pantalla ni zoom que calcular), se dibuja en el propio lienzo, junto a la barra.
+const hoverLabelPlugin = {
+    id: 'hoverLabel',
+    afterDraw(chart) {
+        const active = chart.getActiveElements()[0];
+        if (!active) return;
+
+        const meta = chart.getDatasetMeta(active.datasetIndex).data[active.index];
+        if (!meta) return;
+
+        const raw = chart.data.datasets[active.datasetIndex].data[active.index];
+        const text = `${Number(raw).toFixed(1)}h`;
+        const { ctx } = chart;
+        const fontSize = 14;
+        ctx.save();
+        ctx.font = `600 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
+        const padX = 8;
+        const padY = 6;
+        const gap = 8;
+        const boxW = ctx.measureText(text).width + padX * 2;
+        const boxH = fontSize + padY * 2;
+
+        let boxX;
+        let boxY;
+        if (meta.horizontal) {
+            boxX = meta.x + gap;
+            boxY = meta.y - boxH / 2;
+            if (boxX + boxW > chart.chartArea.right) boxX = meta.x - gap - boxW;
+        } else {
+            boxX = meta.x - boxW / 2;
+            boxY = meta.y - gap - boxH;
+            if (boxY < chart.chartArea.top) boxY = meta.y + gap;
+        }
+
+        ctx.fillStyle = chart.$hoverSurface || '#ffffff';
+        ctx.strokeStyle = chart.$hoverBorder || '#d4d4d8';
+        ctx.lineWidth = 1;
+        if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+        }
+
+        ctx.fillStyle = chart.$hoverText || '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, boxX + boxW / 2, boxY + boxH / 2);
+        ctx.restore();
+    },
+};
+
+// ===== Qué barra/día está bajo el dedo o el cursor =====
 // El zoom del apartado (--app-zoom) usa la propiedad CSS `zoom`, que estira el lienzo: su tamaño «de verdad»
-// (canvas.width) no es el mismo que ocupa en pantalla (getBoundingClientRect). El manejo de ratón que trae
+// (canvas.width) no es el mismo que ocupa en pantalla (getBoundingClientRect). El manejo de puntero que trae
 // Chart.js no tiene esto en cuenta y resaltaba una barra distinta de la que se tocaba. Por eso aquí se calcula
-// a mano, con el mismo reescalado, en qué índice cae el cursor, y se le dice directamente al gráfico cuál resaltar.
+// a mano, con el mismo reescalado, en qué índice cae el puntero, y se le dice directamente al gráfico cuál
+// resaltar. Se usan eventos «pointer» (no «mouse») para que también funcione al tocar con el dedo.
 const attachManualHover = (chart, categoryAxisKey) => {
     const canvas = chart.canvas;
     const activate = (index) => {
@@ -94,12 +151,12 @@ const attachManualHover = (chart, categoryAxisKey) => {
         chart.update('none');
     };
 
-    canvas.addEventListener('mousemove', (event) => {
+    const locate = (clientX, clientY) => {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-        const localX = (event.clientX - rect.left) * scaleX;
-        const localY = (event.clientY - rect.top) * scaleY;
+        const localX = (clientX - rect.left) * scaleX;
+        const localY = (clientY - rect.top) * scaleY;
         // Fuera del área de la gráfica no hay barra que resaltar.
         if (localX < chart.chartArea.left || localX > chart.chartArea.right || localY < chart.chartArea.top || localY > chart.chartArea.bottom) {
             activate(null);
@@ -111,8 +168,13 @@ const attachManualHover = (chart, categoryAxisKey) => {
         if (index === undefined || index === null) { activate(null); return; }
         index = Math.max(0, Math.min(scale.ticks.length - 1, Math.round(index)));
         activate(index);
-    });
-    canvas.addEventListener('mouseleave', () => activate(null));
+    };
+
+    // Con el dedo no hay «hover»: se muestra al tocar y se queda hasta que se suelta o se toca otra barra.
+    canvas.addEventListener('pointerdown', (event) => locate(event.clientX, event.clientY));
+    canvas.addEventListener('pointermove', (event) => locate(event.clientX, event.clientY));
+    canvas.addEventListener('pointercancel', () => activate(null));
+    canvas.addEventListener('pointerleave', () => activate(null));
 };
 
 document.addEventListener('alpine:init', () => {
@@ -163,6 +225,9 @@ document.addEventListener('alpine:init', () => {
 
             chart.$tabularColor = c.text;
             chart.$tabularFont = c.font;
+            chart.$hoverSurface = c.surface;
+            chart.$hoverBorder = c.border;
+            chart.$hoverText = c.text;
             chart.update();
         };
 
@@ -225,11 +290,14 @@ document.addEventListener('alpine:init', () => {
                             y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         },
                     },
-                    plugins: [tabularAxesPlugin],
+                    plugins: [tabularAxesPlugin, hoverLabelPlugin],
                 });
                 chart.$tabularAxes = { x: true, y: true };
                 chart.$tabularFont = c.font;
                 chart.$tabularColor = c.text;
+                chart.$hoverSurface = c.surface;
+                chart.$hoverBorder = c.border;
+                chart.$hoverText = c.text;
                 attachManualHover(chart, 'x');
                 drawing = false;
 
@@ -264,11 +332,14 @@ document.addEventListener('alpine:init', () => {
                         y: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, autoSkip: false, callback(value) { return shorten(this.getLabelForValue(value), 28); } } },
                     },
                 },
-                plugins: [tabularAxesPlugin],
+                plugins: [tabularAxesPlugin, hoverLabelPlugin],
             });
             chart.$tabularAxes = { x: true };
             chart.$tabularFont = c.font;
             chart.$tabularColor = c.text;
+            chart.$hoverSurface = c.surface;
+            chart.$hoverBorder = c.border;
+            chart.$hoverText = c.text;
             attachManualHover(chart, 'y');
             drawing = false;
         };
