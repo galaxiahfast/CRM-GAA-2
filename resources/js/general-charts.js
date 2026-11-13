@@ -170,7 +170,10 @@ const hoverLabelPlugin = {
 // Eventos «pointer» (no «mouse») para que también funcione al tocar con el dedo.
 const attachManualHover = (chart, categoryAxisKey) => {
     const canvas = chart.canvas;
+    let activeIndex = null;
     const activate = (index) => {
+        if (index === activeIndex) return;
+        activeIndex = index;
         chart.setActiveElements(index === null ? [] : [{ datasetIndex: 0, index }]);
         // update('none'): sin animación (si no, la barra tardaba los 250ms de la gráfica en resaltarse) y sin
         // rehacer el montaje completo (layout/leyenda), que es lo que rompía el gráfico con update() a secas.
@@ -192,7 +195,9 @@ const attachManualHover = (chart, categoryAxisKey) => {
         const scale = chart.scales[categoryAxisKey];
         let index = scale.getValueForPixel(categoryAxisKey === 'x' ? localX : localY);
         if (index === undefined || index === null) { activate(null); return; }
-        index = Math.max(0, Math.min(scale.ticks.length - 1, Math.round(index)));
+        // En periodos largos Chart.js omite etiquetas visibles (autoSkip), pero cada día conserva su barra.
+        // scale.ticks.length solo cuenta las etiquetas mostradas y cortaba el hover antes del final.
+        index = Math.max(0, Math.min(chart.getDatasetMeta(0).data.length - 1, Math.round(index)));
         activate(index);
     };
 
