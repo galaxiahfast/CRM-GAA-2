@@ -265,13 +265,17 @@
                 <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Manager Control</h1>
                 <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades de ManagerControl.' : 'Horas laboradas por colaborador.' }}</p>
             </div>
-            @unless ($ownMode)
+            @if ($ownMode)
+                <div class="panel-surface panel-border rounded-xl border px-[20px] py-[15px]">
+                    <a href="{{ route('soporte.ticket') }}" class="prod-link inline-flex items-center leading-none focus:outline-none focus:ring-0" data-testid="request-catalog-link">Solicitar agregar nuevo cliente o actividad</a>
+                </div>
+            @else
                 <div id="prod-tour-employee" class="flex flex-wrap items-center gap-[20px]">
                     <x-panel-select id="mc-employee" label="Colaborador" property="employeeId" searchable hover-scroll placeholder="Buscar colaborador…"
                         :options="collect($employees)->map(fn ($employee) => ['value' => (string) $employee['id'], 'label' => $employee['name']])->all()"
                         class="min-w-[280px]" />
                 </div>
-            @endunless
+            @endif
         </section>
 
         @if ($error)
@@ -289,20 +293,21 @@
                         <p class="prod-lines mt-[5px]">Del {{ $longDate($appliedDetailFrom) }} al {{ $longDate($appliedDetailTo) }}</p>
                         @if ($writeNotice)<p class="prod-lines mt-[5px]" role="status" data-testid="write-notice">{{ $writeNotice }}</p>@endif
                     </div>
-                    <div id="prod-d-export" class="panel-surface panel-border flex flex-wrap items-center gap-[20px] rounded-xl border px-[20px] py-[15px]">
-                        @if ($canWrite)
-                            <button type="button" wire:click="openCreate" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Agregar actividad</button>
-                        @else
-                            <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Solo lectura: agregar, editar y dar de baja se activará cuando se den los permisos de escritura en ManagerControl.">Agregar actividad</span>
-                        @endif
-                        @if ($detailLoaded)
-                            <a href="{{ route($pdfRoute, $pdfExtra + ['from' => $appliedDetailFrom, 'to' => $appliedDetailTo, 'formato' => 'managercontrol']) }}" class="prod-link leading-none">Descargar reporte PDF</a>
-                        @else
-                            <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Elige un colaborador para descargar el reporte">Descargar reporte PDF</span>
-                        @endif
-                        @if ($ownMode)
-                            <a href="{{ route('soporte.ticket') }}" class="prod-link inline-flex items-center leading-none focus:outline-none focus:ring-0" data-testid="request-catalog-link">Solicitar agregar nuevo cliente o actividad</a>
-                        @endif
+                    <div id="prod-d-export" class="flex flex-wrap items-center gap-[20px]">
+                        <div class="panel-surface panel-border rounded-xl border px-[20px] py-[15px]">
+                            @if ($canWrite)
+                                <button type="button" wire:click="openCreate" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Agregar actividad</button>
+                            @else
+                                <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Solo lectura: agregar, editar y dar de baja se activará cuando se den los permisos de escritura en ManagerControl.">Agregar actividad</span>
+                            @endif
+                        </div>
+                        <div class="panel-surface panel-border rounded-xl border px-[20px] py-[15px]">
+                            @if ($detailLoaded)
+                                <a href="{{ route($pdfRoute, $pdfExtra + ['from' => $appliedDetailFrom, 'to' => $appliedDetailTo, 'formato' => 'managercontrol']) }}" class="prod-link leading-none">Descargar reporte PDF</a>
+                            @else
+                                <span class="prod-link leading-none" style="opacity:.5;cursor:not-allowed" aria-disabled="true" title="Elige un colaborador para descargar el reporte">Descargar reporte PDF</span>
+                            @endif
+                        </div>
                     </div>
                 </header>
                 <div class="prod-layout">
