@@ -637,7 +637,7 @@
                         <form wire:submit="saveRecord" class="flex min-h-0 flex-1 flex-col">
                             <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                                 <div class="min-w-0">
-                                    <h3 id="mc-form-title" class="panel-accent text-xl font-normal tracking-tight">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h3>
+                                    <h3 id="mc-form-title" class="panel-accent text-[15px] font-normal leading-none">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h3>
                                     <p class="mt-[20px]">Se guarda en ManagerControl.</p>
                                 </div>
                                 <button type="button" wire:click="closeForm" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
@@ -757,7 +757,7 @@
                     <div data-panel class="app-zoom-overlay panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; @if (($dialog['kind'] ?? 'error') === 'confirm') height: min(620px, calc((100dvh - 40px) / var(--app-zoom, 1))); @else max-height: calc((100dvh - 40px) / var(--app-zoom, 1)); @endif overscroll-behavior: contain;">
                         <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                             <div class="min-w-0">
-                                <h3 id="mc-dialog-title" class="panel-accent text-xl font-normal tracking-tight">{{ $dialog['title'] }}</h3>
+                                <h3 id="mc-dialog-title" class="panel-accent text-[15px] font-normal leading-none">{{ $dialog['title'] }}</h3>
                                 <p class="mt-[20px]">{{ $dialog['subtitle'] ?? '' }}</p>
                             </div>
                             <button type="button" wire:click="closeDialog" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
