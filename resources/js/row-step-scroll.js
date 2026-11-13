@@ -14,6 +14,12 @@ const rowTops = (scroller) => [...scroller.querySelectorAll(scroller.dataset.row
 const nearestTop = (tops, value) => tops.reduce((best, top) => (Math.abs(top - value) < Math.abs(best - value) ? top : best), tops[0]);
 
 const step = (scroller) => {
+    // Sin destino válido (por ejemplo, se descartó con un clic) la animación se detiene: restar un valor vacío mandaba la lista al inicio.
+    if (! Number.isFinite(scroller._rsTarget)) {
+        scroller._rsFrame = null;
+        return;
+    }
+
     const diff = scroller._rsTarget - scroller.scrollTop;
 
     if (Math.abs(diff) < 0.5) {
@@ -55,19 +61,23 @@ document.addEventListener('wheel', (event) => {
     animate(scroller);
 
     // Al dejar de girar, el destino pasa a la fila más cercana y la misma animación continua termina de deslizar la lista.
+    // Si se vuelve a girar antes de que termine el ajuste anterior, ese ajuste se cancela: de lo contrario vaciaba el destino
+    // a mitad del giro y la lista regresaba al inicio (pasaba solo al girar muy rápido).
     clearTimeout(scroller._rsIdle);
+    clearTimeout(scroller._rsSettle);
     scroller._rsIdle = setTimeout(() => {
         const tops = rowTops(scroller);
         if (! tops.length) return;
 
-        scroller._rsTarget = Math.min(max, Math.max(0, nearestTop(tops, scroller._rsTarget)));
+        const base = Number.isFinite(scroller._rsTarget) ? scroller._rsTarget : scroller.scrollTop;
+        scroller._rsTarget = Math.min(max, Math.max(0, nearestTop(tops, base)));
         animate(scroller);
 
         clearTimeout(scroller._rsSettle);
         scroller._rsSettle = setTimeout(() => {
             cancelAnimationFrame(scroller._rsFrame);
             scroller._rsFrame = null;
-            scroller.scrollTop = scroller._rsTarget;
+            if (Number.isFinite(scroller._rsTarget)) scroller.scrollTop = scroller._rsTarget;
             scroller._rsTarget = undefined;
         }, SETTLE_MS);
     }, IDLE_MS);

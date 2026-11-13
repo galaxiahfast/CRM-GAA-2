@@ -1,5 +1,5 @@
 {{-- Cronómetro y productividad en una sola pantalla: el cronómetro primero y los bloques de productividad debajo.
-     Cada bloque conserva su lógica; aquí solo se unen y se iguala la separación entre ellos (20, 30 y 50px como Control Gerencial). --}}
+     Cada bloque conserva su lógica; aquí solo se unen y se iguala la separación entre ellos (20, 30 y 50px como Manager Control). --}}
 <div data-activity-hub class="flex w-full min-w-0 flex-col">
     <style>
         [data-activity-hub] > [data-time-clock][data-with-productivity] > main { padding-bottom: 0; }

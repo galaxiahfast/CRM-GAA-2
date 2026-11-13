@@ -2,7 +2,7 @@
     $moduleTimezone = (string) config('app.timezone', 'America/Mexico_City');
     $moduleTimezone = $moduleTimezone === 'UTC' ? 'America/Mexico_City' : $moduleTimezone;
 
-    // Cada cifra ocupa el mismo ancho (la letra Poppins no es tabular), igual que en Productividad y Control Gerencial
+    // Cada cifra ocupa el mismo ancho (la letra Poppins no es tabular), igual que en Productividad y Manager Control
     $digitBoxes = fn (string $text) => new \Illuminate\Support\HtmlString(preg_replace('/\d/', '<span class="prod-dg">$0</span>', e($text)));
 
     $fmt = function (int $s) {
@@ -214,7 +214,7 @@
 
         /* Escritorio (1240 o más): formulario a la izquierda y tabla a la derecha, ajustados al alto de la pantalla */
         @container clock (min-width: 1240px) {
-            /* Mismo alto que las tarjetas de productividad y Control Gerencial (en la página unida ya no hay un contenedor que la estire) */
+            /* Mismo alto que las tarjetas de productividad y Manager Control (en la página unida ya no hay un contenedor que la estire) */
             [data-time-clock] .clock-card { flex: 1; min-height: max(600px, calc(var(--app-dvh) - 348px)); }
             [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
             [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
@@ -223,7 +223,7 @@
             [data-time-clock] .clock-field, [data-time-clock] .clock-guide { display: contents; }
             [data-time-clock] .clock-field > label, [data-time-clock] .clock-field-action > div:first-child { margin-bottom: 0; }
             [data-time-clock] .clock-guide > button { flex: none; width: 100%; }
-            /* Mismas medidas que el formulario de Productividad y Control Gerencial: textos de 15px y campos y botones de 50px, para que las líneas queden con la misma distancia */
+            /* Mismas medidas que el formulario de Productividad y Manager Control: textos de 15px y campos y botones de 50px, para que las líneas queden con la misma distancia */
             [data-time-clock] .clock-form-label { min-height: 0; line-height: 15px; }
             [data-time-clock] .clock-aside input.panel-field { height: 50px; padding-top: 0; padding-bottom: 0; }
             [data-time-clock] .clock-primary, [data-time-clock] .clock-guide > button { min-height: 50px; padding-top: 0; padding-bottom: 0; line-height: 15px; }

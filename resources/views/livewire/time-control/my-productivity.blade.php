@@ -16,16 +16,16 @@
     // Cada cifra ocupa el mismo ancho para que los horarios queden alineados aunque un "1" mida menos que un "0".
     $digits = fn (string $text) => new \Illuminate\Support\HtmlString(preg_replace('/\d/', '<span class="prod-dg">$0</span>', e($text)));
     $detailTourSteps = [
-        ['target' => 'prod-d-period', 'title' => '1. Elige el periodo del detalle', 'description' => 'Este periodo es independiente del de arriba: solo afecta al Detalle de actividades por día.'],
+        ['target' => 'prod-d-period', 'title' => '1. Elige el periodo del detalle', 'description' => 'Este periodo es independiente del de Productividad del periodo (el bloque de abajo): solo afecta al Detalle de actividades por día.'],
         ['target' => 'prod-d-consult', 'title' => '2. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el detalle con las fechas elegidas.'],
-        ['target' => 'prod-d-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo del detalle. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
-        ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada día se resume en su fila azul (de qué hora a qué hora trabajaste, número de actividades, fecha y tiempo total). Haz clic en un día para desplegar sus actividades; solo uno se mantiene abierto a la vez. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
+        ['target' => 'prod-d-export', 'title' => '3. Descarga el reporte', 'description' => 'Descarga en PDF el periodo del detalle con el formato del reporte Total de Horas Laboradas (agrupado por día, con subtotal diario y total). El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-d-list', 'title' => '4. Revisa cada día', 'description' => 'Cada día se resume en su fila azul (de qué hora a qué hora trabajaste, número de actividades, fecha y tiempo total). Haz clic en un día (o en el icono de las flechas de su columna Acción) para desplegar o cerrar sus actividades; solo uno se mantiene abierto a la vez. Pasa el cursor sobre el horario para ver el tiempo que tomó y arrastra una fila para cambiar su orden dentro del día.'],
     ];
     $tourSteps = [
         ['target' => 'prod-tour-detail', 'title' => '1. Detalle por día', 'description' => 'Cada día se resume en su fila azul y se despliega con un clic (solo uno a la vez); cada actividad muestra su horario, la actividad, el cliente y cuánto duró. Este bloque tiene su propio periodo, guía y reporte.'],
-        ['target' => 'prod-tour-period', 'title' => '2. Elige el periodo', 'description' => 'Selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
-        ['target' => 'prod-tour-consult', 'title' => '3. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado, las distribuciones y el detalle con las fechas elegidas.'],
-        ['target' => 'prod-tour-export', 'title' => '4. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado. El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
+        ['target' => 'prod-tour-period', 'title' => '2. Elige el periodo', 'description' => 'En Productividad del periodo, selecciona la fecha Desde y la fecha Hasta del periodo que quieres revisar.'],
+        ['target' => 'prod-tour-consult', 'title' => '3. Consulta el periodo', 'description' => 'Presiona este botón para actualizar el encabezado y las distribuciones de Productividad del periodo con las fechas elegidas.'],
+        ['target' => 'prod-tour-export', 'title' => '4. Descarga el reporte', 'description' => 'Descarga en PDF el periodo consultado con el formato del reporte Total de Horas Laboradas (agrupado por día, con subtotal diario y total). El recorrido no descarga nada; solo te muestra dónde hacerlo.'],
         ['target' => 'prod-tour-clients', 'title' => '5. Distribución por cliente', 'description' => 'Muestra cuánto tiempo dedicaste a cada cliente, con su barra y su porcentaje. Gira la rueda del ratón para moverte una fila a la vez, o arrastra una fila para cambiar su orden.'],
         ['target' => 'prod-tour-activities', 'title' => '6. Distribución por actividad', 'description' => 'Igual que la anterior, pero agrupada por actividad. Siempre se ven siete filas exactas.'],
     ];
@@ -265,7 +265,7 @@
                                             <span class="prod-dcell prod-dindex panel-border"><span class="whitespace-nowrap leading-none">{{ $digits('0') }}</span></span>
                                             <span class="prod-dcell panel-border" data-label="Horario"><span class="whitespace-nowrap leading-none">{{ $digits($dayRange) }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none">{{ count($group['rows']) }} actividad{{ count($group['rows']) === 1 ? '' : 'es' }}</span></span>
-                                            {{-- Fecha larga como en Control Gerencial: solo el día de la semana va abreviado (3 letras, ancho fijo) para que todas queden alineadas --}}
+                                            {{-- Fecha larga como en Manager Control: solo el día de la semana va abreviado (3 letras, ancho fijo) para que todas queden alineadas --}}
                                             <span class="prod-dcell panel-border"><span class="truncate whitespace-nowrap leading-none" title="{{ ucfirst($dt->translatedFormat('l, j \d\e F \d\e Y')) }}" data-testid="day-date"><span class="inline-block" style="width:2.15em">{{ $weekday }},</span> {{ $digits($dt->format('d')) }} de {{ $dt->translatedFormat('F') }} de {{ $digits($dt->format('Y')) }}</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal((string) $group['total_effective'])) }}</span></span>
                                             <span class="prod-dcell panel-border" style="justify-content:center">{!! str_replace('KEY', $dayKey, $chevron) !!}</span>

@@ -49,11 +49,11 @@ Cada alta, edición o baja queda en la bitácora del CRM (`managercontrol_audits
 
 ### Quién puede
 - **Administrador**: cualquier colaborador (pantalla ManagerControl, eligiendo a la persona).
-- **Demás usuarios** (Control Gerencial): solo **sus** actividades (su asignación o la coincidencia de nombre).
+- **Demás usuarios** (Manager Control): solo **sus** actividades (su asignación o la coincidencia de nombre).
 
 ### Sincronización
 No hay copias: cada pantalla, tabla y PDF lee directo de ManagerControl, así que lo que se agrega, edita o da de baja aparece al momento
-en el administrador, en Control Gerencial, en ambos PDF y en la propia app de escritorio (y viceversa).
+en el administrador, en Manager Control, en ambos PDF y en la propia app de escritorio (y viceversa).
 Solo la lista de colaboradores y los catálogos se recuerdan 10 minutos (`php artisan cache:clear` para verlos al instante).
 
 ## 3. Para activarlo (cuando se den los permisos)

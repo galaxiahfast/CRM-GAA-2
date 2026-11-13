@@ -258,7 +258,7 @@
     <main class="relative z-10 flex w-full min-h-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="min-w-0 max-w-full">
-                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $ownMode ? 'Control Gerencial' : 'ManagerControl' }}</h1>
+                <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Manager Control</h1>
                 <p class="prod-lines mt-[5px]">{{ $ownMode ? 'Tus actividades de ManagerControl.' : 'Horas laboradas por colaborador.' }}</p>
             </div>
             @if ($ownMode)

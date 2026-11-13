@@ -34,9 +34,9 @@ class ActivityHubTest extends TestCase
 
         $html = Livewire::actingAs($user)->test(ActivityHub::class)->assertOk()->html();
 
-        $clock = strpos($html, 'Registro de actividades');
-        $productivity = strpos($html, 'Productividad del periodo');
-        $detail = strpos($html, 'Detalle de actividades por día');
+        $clock = strpos($html, '>Registro de actividades</h2>');
+        $productivity = strpos($html, '>Productividad del periodo</h2>');
+        $detail = strpos($html, '>Detalle de actividades por día</h2>');
         $this->assertNotFalse($clock);
         $this->assertNotFalse($productivity);
         $this->assertNotFalse($detail);

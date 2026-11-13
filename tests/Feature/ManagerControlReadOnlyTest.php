@@ -298,7 +298,7 @@ XML;
 
         Livewire::actingAs($user)->test(\App\Livewire\Testing\ManagerControlOwnHours::class)
             ->set('employeeId', '8')
-            ->assertSee('Control Gerencial')->assertDontSee('Colaborador: Prueba Becario Legacy')->assertSee('Cliente A');
+            ->assertSee('Manager Control')->assertDontSee('Colaborador: Prueba Becario Legacy')->assertSee('Cliente A');
 
         $hoursQueries = array_values(array_filter($db->queries, fn ($q) => str_contains($q[0], 'AS work_date')));
         $this->assertNotEmpty($hoursQueries);
@@ -430,9 +430,9 @@ XML;
 
         $this->assertTrue(\Illuminate\Support\Facades\Gate::forUser($intern)->allows('view-legacy-own-hours'));
 
-        $this->actingAs($intern)->get(route('profile.show'))->assertOk()->assertSee('>Control Gerencial<', false);
+        $this->actingAs($intern)->get(route('profile.show'))->assertOk()->assertSee('>Manager Control<', false);
         $this->flushSession();
-        $this->actingAs($admin)->get(route('profile.show'))->assertOk()->assertSee('>Control Gerencial<', false)
+        $this->actingAs($admin)->get(route('profile.show'))->assertOk()->assertSee('>Manager Control<', false)
             ->assertSee(route('testing.managercontrol.index'), false)->assertDontSee(route('testing.own-hours.index'), false);
         $this->flushSession();
     }
