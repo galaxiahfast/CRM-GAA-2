@@ -137,11 +137,12 @@ const hoverLabelPlugin = {
 };
 
 // ===== Qué barra/día está bajo el dedo o el cursor =====
-// El zoom del apartado (--app-zoom) usa la propiedad CSS `zoom`, que estira el lienzo: su tamaño «de verdad»
-// (canvas.width) no es el mismo que ocupa en pantalla (getBoundingClientRect). El manejo de puntero que trae
-// Chart.js no tiene esto en cuenta y resaltaba una barra distinta de la que se tocaba. Por eso aquí se calcula
-// a mano, con el mismo reescalado, en qué índice cae el puntero, y se le dice directamente al gráfico cuál
-// resaltar. Se usan eventos «pointer» (no «mouse») para que también funcione al tocar con el dedo.
+// El zoom del apartado (--app-zoom) usa la propiedad CSS `zoom`, así que el tamaño del gráfico (chart.width) no es
+// el que ocupa en pantalla (getBoundingClientRect). El manejo de puntero de Chart.js no lo tiene en cuenta, por eso
+// aquí se reescala a mano. Se usa chart.width (píxeles CSS, las unidades de chartArea y de las escalas) y no
+// canvas.width (píxeles del mapa de bits, que además van multiplicados por el escalado de Windows: con 125% el
+// puntero se iba corriendo hacia la derecha y al final del gráfico señalaba el día siguiente).
+// Eventos «pointer» (no «mouse») para que también funcione al tocar con el dedo.
 const attachManualHover = (chart, categoryAxisKey) => {
     const canvas = chart.canvas;
     const activate = (index) => {
@@ -153,8 +154,8 @@ const attachManualHover = (chart, categoryAxisKey) => {
 
     const locate = (clientX, clientY) => {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        const scaleX = chart.width / rect.width;
+        const scaleY = chart.height / rect.height;
         const localX = (clientX - rect.left) * scaleX;
         const localY = (clientY - rect.top) * scaleY;
         // Fuera del área de la gráfica no hay barra que resaltar.
