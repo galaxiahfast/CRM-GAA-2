@@ -215,7 +215,7 @@
            Los textos (título, subtítulo, etiquetas, párrafos) tienen su caja exacta: de la altura de la mayúscula a la línea base,
            sin el aire que la fuente agrega arriba y abajo. Así los 20px se miden desde el texto real. Requiere text-box (Chrome 133+). */
         @supports (text-box: trim-both cap alphabetic) {
-            [data-mc-modal] :is(h3, h4, p, label, span.block) { text-box: trim-both cap alphabetic; line-height: calc(20px + 1cap); }
+            [data-mc-modal] :is(h1, h3, h4, p, label, span.block) { text-box: trim-both cap alphabetic; line-height: calc(20px + 1cap); }
             /* Con recorte (truncate) las letras con cola (g, p, y) no deben cortarse */
             [data-mc-modal] [class*="truncate"] { overflow: clip; overflow-clip-margin: 6px; }
         }
@@ -244,7 +244,7 @@
         /* Iconos y textos con acento en negro (blanco en el tema oscuro); solo los títulos van en azul (regla de abajo) */
         [data-mc-modal] .panel-accent { color: var(--panel-text); }
         /* Los títulos del formulario (el principal y los de cada sección) van en azul, como los títulos de los apartados */
-        [data-mc-modal] :is(h3, h4).panel-accent { color: var(--panel-accent); }
+        [data-mc-modal] :is(h1, h3, h4).panel-accent { color: var(--panel-accent); }
         [data-mc-modal] .mc-modal-close:hover { opacity: .7; }
         /* Calendario del formulario: flota por encima de todo y mantiene su tamaño completo (nunca se encoge ni lleva scroll) */
         [data-productivity].prod-calendar[data-mc-calendar] { z-index: 200500; max-height: none; overflow: visible; }
@@ -639,7 +639,7 @@
                         <form wire:submit="saveRecord" class="flex min-h-0 flex-1 flex-col">
                             <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                                 <div class="min-w-0">
-                                    <h3 id="mc-form-title" class="panel-accent text-[15px] font-normal leading-none">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h3>
+                                    <h1 id="mc-form-title" class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h1>
                                     <p class="mt-[20px]">Se guarda en ManagerControl.</p>
                                 </div>
                                 <button type="button" wire:click="closeForm" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
@@ -759,7 +759,7 @@
                     <div data-panel class="app-zoom-overlay panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; @if (($dialog['kind'] ?? 'error') === 'confirm') height: min(620px, calc((100dvh - 40px) / var(--app-zoom, 1))); @else max-height: calc((100dvh - 40px) / var(--app-zoom, 1)); @endif overscroll-behavior: contain;">
                         <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                             <div class="min-w-0">
-                                <h3 id="mc-dialog-title" class="panel-accent text-[15px] font-normal leading-none">{{ $dialog['title'] }}</h3>
+                                <h1 id="mc-dialog-title" class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $dialog['title'] }}</h1>
                                 <p class="mt-[20px]">{{ $dialog['subtitle'] ?? '' }}</p>
                             </div>
                             <button type="button" wire:click="closeDialog" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
