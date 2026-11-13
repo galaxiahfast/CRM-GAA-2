@@ -193,7 +193,7 @@
         /* ===== Gráficos Generales ===== */
         /* Fila de pestañas: mide lo mismo que el encabezado «Periodo de consulta» (87px) para que las líneas queden a la misma altura */
         /* Misma altura (87px) que el encabezado «Periodo de consulta» del formulario, para que las líneas del panel queden alineadas */
-        [data-general-charts] .gc-tabs { display: flex; height: 87px; box-sizing: border-box; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 20px; padding: 20px; overflow-x: auto; }
+        [data-general-charts] .gc-tabs { display: flex; height: 87px; box-sizing: border-box; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 20px; overflow: hidden; }
         [data-general-charts] .gc-tablist { display: flex; flex-wrap: nowrap; gap: 20px; flex-shrink: 0; }
         /* Mismos 20px a los lados y 15px arriba/abajo que el resto de los botones del módulo (p. ej. .prod-primary) */
         [data-general-charts] .gc-tab { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--panel-border); border-radius: 12px; padding: 15px 20px; background-color: var(--panel-surface); color: var(--panel-text); line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease; }

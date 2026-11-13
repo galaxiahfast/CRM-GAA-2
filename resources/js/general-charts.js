@@ -28,6 +28,64 @@ const signedHms = (seconds) => {
 
 const shorten = (text, max) => (String(text).length > max ? `${String(text).slice(0, max - 1)}…` : String(text));
 
+// ===== Cifras de ancho fijo en los ejes, igual que en las tablas del resto de la app (cada dígito mide 0.64em; la
+// letra Poppins no es tabular, así que sin esto los números del eje no quedan alineados). Chart.js dibuja el texto
+// de los ejes en el lienzo (no con HTML), así que el truco de las cajas por dígito se replica a mano con fillText. =====
+const DIGIT_WIDTH_EM = 0.64;
+
+const tabularWidth = (ctx, text, digitWidth) => {
+    let width = 0;
+    for (const ch of text) width += /\d/.test(ch) ? digitWidth : ctx.measureText(ch).width;
+
+    return width;
+};
+
+const drawTabularText = (ctx, text, x, y, align, digitWidth) => {
+    const total = tabularWidth(ctx, text, digitWidth);
+    let cursor = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
+    for (const ch of text) {
+        const isDigit = /\d/.test(ch);
+        const width = isDigit ? digitWidth : ctx.measureText(ch).width;
+        ctx.textAlign = isDigit ? 'center' : 'left';
+        ctx.fillText(ch, isDigit ? cursor + width / 2 : cursor, y);
+        cursor += width;
+    }
+};
+
+// El texto nativo del eje se deja transparente (ocupa su espacio igual, para no mover el resto de la gráfica) y
+// este plugin dibuja encima la versión con cifras alineadas.
+const tabularAxesPlugin = {
+    id: 'tabularAxes',
+    afterDraw(chart) {
+        const axes = chart.$tabularAxes;
+        if (!axes) return;
+
+        const { ctx } = chart;
+        const fontSize = 15;
+        const digitWidth = fontSize * DIGIT_WIDTH_EM;
+        ctx.save();
+        ctx.font = `400 ${fontSize}px ${chart.$tabularFont}`;
+        ctx.fillStyle = chart.$tabularColor;
+        ctx.textBaseline = 'middle';
+
+        if (axes.x) {
+            // scale.bottom es el borde exterior del lienzo (no deja lugar para el texto): el hueco para la
+            // etiqueta empieza donde termina el área de dibujo, chartArea.bottom.
+            const scale = chart.scales.x;
+            const y = chart.chartArea.bottom + (scale.options.ticks.padding ?? 10) + fontSize / 2;
+            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), scale.getPixelForTick(i), y, 'center', digitWidth));
+        }
+        if (axes.y) {
+            // Igual en el otro eje: scale.left es el borde exterior; el hueco termina en chartArea.left.
+            const scale = chart.scales.y;
+            const x = chart.chartArea.left - (scale.options.ticks.padding ?? 10);
+            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), x, scale.getPixelForTick(i), 'right', digitWidth));
+        }
+
+        ctx.restore();
+    },
+};
+
 // Cada cifra en su propia caja (igual ancho), como en el resto del módulo: la letra Poppins no es tabular.
 const digitsHtml = (text) => String(text).replace(/\d/g, (d) => `<span class="prod-dg">${d}</span>`);
 
@@ -248,6 +306,9 @@ document.addEventListener('alpine:init', () => {
             const tooltip = { enabled: false, external: (context) => externalTooltip(context, this, config) };
             const grid = { color: c.border, drawTicks: false };
             const ticks = { color: c.text, font, padding: 10 };
+            // Mismo texto y tamaño, pero invisible: Chart.js sigue reservando el espacio del eje y tabularAxesPlugin
+            // dibuja encima la versión con cifras de ancho fijo (ver más arriba).
+            const tabularTicks = { ...ticks, color: 'transparent' };
 
             if (config.kind === 'day') {
                 this.chart = new Chart(this.$refs.canvas, {
@@ -285,11 +346,15 @@ document.addEventListener('alpine:init', () => {
                             tooltip,
                         },
                         scales: {
-                            x: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, maxRotation: 0, autoSkip: true } },
-                            y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...ticks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
+                            x: { grid: { display: false }, border: { color: c.border }, ticks: { ...tabularTicks, maxRotation: 0, autoSkip: true } },
+                            y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
                         },
                     },
+                    plugins: [tabularAxesPlugin],
                 });
+                this.chart.$tabularAxes = { x: true, y: true };
+                this.chart.$tabularFont = c.font;
+                this.chart.$tabularColor = c.text;
 
                 return;
             }
@@ -317,11 +382,15 @@ document.addEventListener('alpine:init', () => {
                         tooltip,
                     },
                     scales: {
-                        x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...ticks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
+                        x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
                         y: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, autoSkip: false, callback(value) { return shorten(this.getLabelForValue(value), 28); } } },
                     },
                 },
+                plugins: [tabularAxesPlugin],
             });
+            this.chart.$tabularAxes = { x: true };
+            this.chart.$tabularFont = c.font;
+            this.chart.$tabularColor = c.text;
         },
     }));
 });
