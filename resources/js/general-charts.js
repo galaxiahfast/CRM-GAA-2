@@ -80,8 +80,7 @@ const tabularAxesPlugin = {
     },
 };
 
-// Mini etiqueta pegada a la barra tocada, con su valor (mismo formato que el eje): no es un globo flotante
-// aparte (nada de posición en pantalla ni zoom que calcular), se dibuja en el propio lienzo, junto a la barra.
+// Globo del valor dentro del lienzo: arriba para barras verticales y a la derecha para horizontales.
 const hoverLabelPlugin = {
     id: 'hoverLabel',
     afterDraw(chart) {
@@ -97,36 +96,50 @@ const hoverLabelPlugin = {
         const fontSize = 14;
         ctx.save();
         ctx.font = `600 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
-        const padX = 8;
-        const padY = 6;
-        const gap = 8;
-        const boxW = ctx.measureText(text).width + padX * 2;
-        const boxH = fontSize + padY * 2;
+        const padding = 20;
+        const pointer = 8;
+        const gap = 4;
+        const boxW = ctx.measureText(text).width + padding * 2;
+        const boxH = fontSize + padding * 2;
 
         let boxX;
         let boxY;
         if (meta.horizontal) {
-            boxX = meta.x + gap;
+            boxX = meta.x + gap + pointer;
             boxY = meta.y - boxH / 2;
-            if (boxX + boxW > chart.chartArea.right) boxX = meta.x - gap - boxW;
         } else {
             boxX = meta.x - boxW / 2;
-            boxY = meta.y - gap - boxH;
-            if (boxY < chart.chartArea.top) boxY = meta.y + gap;
+            boxY = meta.y - gap - pointer - boxH;
         }
+
+        boxX = Math.max(1, Math.min(boxX, chart.width - boxW - 1));
+        boxY = Math.max(1, Math.min(boxY, chart.height - boxH - 1));
 
         ctx.fillStyle = chart.$hoverSurface || '#ffffff';
         ctx.strokeStyle = chart.$hoverBorder || '#d4d4d8';
         ctx.lineWidth = 1;
-        if (ctx.roundRect) {
-            ctx.beginPath();
-            ctx.roundRect(boxX, boxY, boxW, boxH, 6);
-            ctx.fill();
-            ctx.stroke();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+        else ctx.rect(boxX, boxY, boxW, boxH);
+        ctx.fill();
+        ctx.stroke();
+
+        // La punta nace del borde más cercano a la barra y conserva su orientación.
+        ctx.beginPath();
+        if (meta.horizontal) {
+            const tipY = Math.max(boxY + 12, Math.min(meta.y, boxY + boxH - 12));
+            ctx.moveTo(boxX, tipY - pointer);
+            ctx.lineTo(boxX - pointer, tipY);
+            ctx.lineTo(boxX, tipY + pointer);
         } else {
-            ctx.fillRect(boxX, boxY, boxW, boxH);
-            ctx.strokeRect(boxX, boxY, boxW, boxH);
+            const tipX = Math.max(boxX + 12, Math.min(meta.x, boxX + boxW - 12));
+            ctx.moveTo(tipX - pointer, boxY + boxH);
+            ctx.lineTo(tipX, boxY + boxH + pointer);
+            ctx.lineTo(tipX + pointer, boxY + boxH);
         }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
         ctx.fillStyle = chart.$hoverText || '#000000';
         ctx.textAlign = 'center';
@@ -282,6 +295,7 @@ document.addEventListener('alpine:init', () => {
                         // El manejo de ratón automático de Chart.js no tiene en cuenta el zoom del apartado y
                         // señalaba un día distinto del que se tocaba; se apaga y se calcula a mano (más abajo).
                         events: [],
+                        layout: { padding: { top: 70 } },
                         plugins: {
                             legend: { display: false },
                             tooltip: { enabled: false },
@@ -324,6 +338,7 @@ document.addEventListener('alpine:init', () => {
                     maintainAspectRatio: false,
                     animation: { duration: 250 },
                     events: [],
+                    layout: { padding: { right: 110 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
