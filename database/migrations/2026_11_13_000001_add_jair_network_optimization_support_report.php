@@ -16,13 +16,14 @@ return new class extends Migration
         $issuedAt = now('America/Mexico_City')->utc()->format('Y-m-d H:i:s');
         $reportId = max(29, ((int) DB::table('technical_support_reports')->max('id')) + 1);
         $supports = [
-            ['key' => 'network_startup_diagnosis', 'title' => 'Diagnóstico de lentitud de red al iniciar Windows', 'quantity' => 1, 'targets' => ['Jair Guadalupe Herrera Carrillo · PC-ALONDRA']],
-            ['key' => 'network_adapter_power_settings', 'title' => 'Ajuste de energía del adaptador Ethernet', 'quantity' => 1, 'targets' => []],
-            ['key' => 'windows_fast_startup_disable', 'title' => 'Desactivación del inicio rápido de Windows', 'quantity' => 1, 'targets' => []],
-            ['key' => 'network_stack_reset', 'title' => 'Restablecimiento de red y limpieza de caché DNS', 'quantity' => 1, 'targets' => []],
+            ['key' => 'network_startup_diagnosis', 'title' => 'Diagnóstico de lentitud de red al iniciar Windows', 'quantity' => 1, 'targets' => ['Jair Guadalupe Herrera Carrillo']],
+            ['key' => 'network_adapter_power_settings', 'title' => 'Ajuste de energía del adaptador Ethernet', 'quantity' => 1, 'targets' => ['Jair Guadalupe Herrera Carrillo']],
+            ['key' => 'windows_fast_startup_disable', 'title' => 'Desactivación del inicio rápido de Windows', 'quantity' => 1, 'targets' => ['Jair Guadalupe Herrera Carrillo']],
+            ['key' => 'network_stack_reset', 'title' => 'Restablecimiento de red y limpieza de caché DNS', 'quantity' => 1, 'targets' => ['Jair Guadalupe Herrera Carrillo']],
         ];
         $details = [
             'versions_applied' => [],
+            'omit_closing_paragraph' => true,
             'summary' => 'Se revisaron los eventos de rendimiento de arranque y las aplicaciones de inicio por la lentitud temporal de internet. Se desactivó el ahorro de energía del adaptador Realtek PCIe GbE y el inicio rápido de Windows. Se restablecieron la pila IP y Winsock y se limpió la caché DNS. Después de reiniciar el equipo, se comprobó que la conexión funciona correctamente.',
         ];
 
