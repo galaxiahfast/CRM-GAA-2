@@ -256,9 +256,10 @@ const attachManualHover = (chart, canvas, categoryAxisKey, tipHolder, config) =>
             return;
         }
 
-        const scale = chart.scales[categoryAxisKey];
-        const x = categoryAxisKey === 'x' ? scale.getPixelForTick(index) : chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
-        const y = categoryAxisKey === 'y' ? scale.getPixelForTick(index) : chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+        // El globo no sigue a la barra: se queda siempre en la misma esquina del gráfico (arriba a la
+        // derecha del área de dibujo), para que nunca tape ni se confunda con la barra de al lado.
+        const x = chart.chartArea.right;
+        const y = chart.chartArea.top;
         chart.setActiveElements([{ datasetIndex: 0, index }]);
         // update('none'): sin animación (si no, la barra tardaba los 250ms de la gráfica en resaltarse) y sin
         // rehacer el montaje completo (layout/leyenda), que es lo que rompía el gráfico con update() a secas.
@@ -404,7 +405,7 @@ document.addEventListener('alpine:init', () => {
                         },
                         scales: {
                             x: { grid: { display: false }, border: { color: c.border }, ticks: { ...tabularTicks, maxRotation: 0, autoSkip: true } },
-                            y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
+                            y: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         },
                     },
                     plugins: [tabularAxesPlugin],
@@ -442,7 +443,7 @@ document.addEventListener('alpine:init', () => {
                         tooltip: { enabled: false },
                     },
                     scales: {
-                        x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
+                        x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         y: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, autoSkip: false, callback(value) { return shorten(this.getLabelForValue(value), 28); } } },
                     },
                 },
