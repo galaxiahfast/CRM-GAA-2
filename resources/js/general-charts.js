@@ -1,7 +1,6 @@
 // Gráficas de «Gráficos Generales» (Chart.js). Cada gráfica toma sus colores de las variables del panel, así se ve bien en el
 // tema claro y en el oscuro, y se vuelve a dibujar sola al cambiar de tema. Se dibuja cuando su pestaña es visible (con tamaño).
-// Los globos al pasar el cursor usan el mismo diseño que el resto de la app (no el tooltip genérico de Chart.js): un bloque
-// blanco/oscuro con borde, título en azul y una flechita, igual que «Comparación con el reloj checador» en Manager Control.
+// Sin tooltip al pasar el cursor: solo se resalta la barra tocada (ver attachManualHover más abajo).
 const waitForChart = () => new Promise((resolve) => {
     if (window.Chart) return resolve(window.Chart);
     let tries = 0;
@@ -14,40 +13,35 @@ const waitForChart = () => new Promise((resolve) => {
     }, 50);
 });
 
-// 3725 s => «001h 02m 05s», igual que en el resto de Control de Actividades
-const hms = (seconds) => {
-    const s = Math.max(0, Math.round(Number(seconds) || 0));
-    return `${String(Math.floor(s / 3600)).padStart(3, '0')}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m ${String(s % 60).padStart(2, '0')}s`;
-};
-
-// Diferencia con signo: +001h 00m 00s / −001h 00m 00s / 000h 00m 00s, igual que en Manager Control
-const signedHms = (seconds) => {
-    const sign = seconds < 0 ? '−' : seconds > 0 ? '+' : '';
-    return sign + hms(Math.abs(seconds));
-};
-
 const shorten = (text, max) => (String(text).length > max ? `${String(text).slice(0, max - 1)}…` : String(text));
 
-// ===== Cifras de ancho fijo en los ejes, igual que en las tablas del resto de la app (cada dígito mide 0.64em; la
-// letra Poppins no es tabular, así que sin esto los números del eje no quedan alineados). Chart.js dibuja el texto
-// de los ejes en el lienzo (no con HTML), así que el truco de las cajas por dígito se replica a mano con fillText. =====
-const DIGIT_WIDTH_EM = 0.64;
+// ===== Cifras de ancho fijo en los ejes, igual que en las tablas del resto de la app (la letra Poppins no es
+// tabular, así que sin esto los números del eje no quedan alineados). Chart.js dibuja el texto de los ejes en el
+// lienzo (no con HTML), así que cada dígito se mide y se dibuja con una fuente monoespaciada (todas sus cifras
+// miden lo mismo de verdad, a diferencia de un ancho fijo calculado a ojo) mientras el resto del texto (el punto,
+// la «h») sigue con la fuente normal de la gráfica. =====
+const DIGIT_FONT_STACK = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-const tabularWidth = (ctx, text, digitWidth) => {
+const charWidth = (ctx, ch, font, digitFont) => {
+    ctx.font = /\d/.test(ch) ? digitFont : font;
+
+    return ctx.measureText(ch).width;
+};
+
+const tabularWidth = (ctx, text, font, digitFont) => {
     let width = 0;
-    for (const ch of text) width += /\d/.test(ch) ? digitWidth : ctx.measureText(ch).width;
+    for (const ch of text) width += charWidth(ctx, ch, font, digitFont);
 
     return width;
 };
 
-const drawTabularText = (ctx, text, x, y, align, digitWidth) => {
-    const total = tabularWidth(ctx, text, digitWidth);
+const drawTabularText = (ctx, text, x, y, align, font, digitFont) => {
+    const total = tabularWidth(ctx, text, font, digitFont);
     let cursor = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
+    ctx.textAlign = 'left';
     for (const ch of text) {
-        const isDigit = /\d/.test(ch);
-        const width = isDigit ? digitWidth : ctx.measureText(ch).width;
-        ctx.textAlign = isDigit ? 'center' : 'left';
-        ctx.fillText(ch, isDigit ? cursor + width / 2 : cursor, y);
+        const width = charWidth(ctx, ch, font, digitFont);
+        ctx.fillText(ch, cursor, y);
         cursor += width;
     }
 };
@@ -62,9 +56,9 @@ const tabularAxesPlugin = {
 
         const { ctx } = chart;
         const fontSize = 15;
-        const digitWidth = fontSize * DIGIT_WIDTH_EM;
+        const font = `400 ${fontSize}px ${chart.$tabularFont}`;
+        const digitFont = `400 ${fontSize}px ${DIGIT_FONT_STACK}`;
         ctx.save();
-        ctx.font = `400 ${fontSize}px ${chart.$tabularFont}`;
         ctx.fillStyle = chart.$tabularColor;
         ctx.textBaseline = 'middle';
 
@@ -73,206 +67,31 @@ const tabularAxesPlugin = {
             // etiqueta empieza donde termina el área de dibujo, chartArea.bottom.
             const scale = chart.scales.x;
             const y = chart.chartArea.bottom + (scale.options.ticks.padding ?? 10) + fontSize / 2;
-            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), scale.getPixelForTick(i), y, 'center', digitWidth));
+            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), scale.getPixelForTick(i), y, 'center', font, digitFont));
         }
         if (axes.y) {
             // Igual en el otro eje: scale.left es el borde exterior; el hueco termina en chartArea.left.
             const scale = chart.scales.y;
             const x = chart.chartArea.left - (scale.options.ticks.padding ?? 10);
-            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), x, scale.getPixelForTick(i), 'right', digitWidth));
+            scale.ticks.forEach((tick, i) => drawTabularText(ctx, String(tick.label ?? ''), x, scale.getPixelForTick(i), 'right', font, digitFont));
         }
 
         ctx.restore();
     },
 };
 
-// Cada cifra en su propia caja (igual ancho), como en el resto del módulo: la letra Poppins no es tabular.
-const digitsHtml = (text) => String(text).replace(/\d/g, (d) => `<span class="prod-dg">${d}</span>`);
-
-// Tolerancia de 6 minutos (ManagerControl guarda décimas de hora): una diferencia menor se considera redondeo, no un problema real.
-const TOLERANCE_SECONDS = 360;
-
-const CLOCK_STATE_MESSAGES = {
-    no_user: 'Este colaborador no tiene un usuario del CRM asignado, por eso no hay marcas del reloj checador que comparar.',
-    no_clock_id: 'El usuario del CRM de este colaborador no tiene ID de checador asignado.',
-    error: 'No se pudo leer el reloj checador. Inténtalo de nuevo.',
-};
-
-// ===== Globo (tooltip) con el mismo diseño que el resto de la app =====
-
-const buildTooltipEl = () => {
-    const el = document.createElement('div');
-    el.setAttribute('role', 'tooltip');
-    el.setAttribute('data-gc-tooltip', '');
-    // El globo va pegado al <body> (fuera del panel), así que necesita declararse su propio [data-panel]: si no,
-    // --panel-surface/--panel-border/--panel-text no existen ahí y el fondo sale transparente (deja ver la gráfica
-    // detrás) en vez de blanco u oscuro según el tema. El «Comparación con el reloj checador» de Manager Control
-    // hace lo mismo.
-    el.setAttribute('data-panel', '');
-    el.setAttribute('data-productivity', '');
-    // Mismas clases que el globo «Comparación con el reloj checador» de Manager Control: ya están compiladas en el CSS.
-    el.className = 'app-zoom-overlay panel-surface panel-border panel-text pointer-events-none fixed z-[200001] block w-[440px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)] hidden';
-    el.innerHTML = `
-        <span class="panel-accent block leading-[30px]" data-slot="title"></span>
-        <span class="mt-[15px] block leading-[30px]" data-slot="subtitle"></span>
-        <div data-slot="rows"></div>
-        <span class="mt-[15px] block text-justify leading-[30px]" data-slot="note" style="display:none"></span>
-        <span class="panel-surface panel-border absolute right-[20px] h-[11px] w-[11px] rotate-45" data-slot="arrow"></span>
-    `;
-    document.body.appendChild(el);
-
-    return el;
-};
-
-const setTooltipRows = (el, rows) => {
-    el.querySelector('[data-slot="rows"]').innerHTML = rows.map((row, i) => (
-        `<span class="${i === 0 ? 'mt-[15px] ' : ''}flex items-center justify-between gap-[20px] leading-[30px]"><span>${row.label}</span><span class="whitespace-nowrap tabular-nums">${row.valueHtml}</span></span>`
-    )).join('');
-};
-
-const setTooltipNote = (el, text, isWarning) => {
-    const note = el.querySelector('[data-slot="note"]');
-    if (!text) {
-        note.style.display = 'none';
-        return;
-    }
-    note.style.display = '';
-    note.style.color = isWarning ? 'var(--panel-danger)' : '';
-    note.textContent = text;
-};
-
-// Rellena el globo con la comparación del día frente al reloj checador: mismo texto y lógica que Manager Control.
-const fillDayTooltip = (el, config, index) => {
-    el.querySelector('[data-slot="title"]').textContent = 'Comparación con el reloj checador';
-    el.querySelector('[data-slot="subtitle"]').textContent = config.titles[index];
-
-    if (config.clockState !== 'ok') {
-        setTooltipRows(el, []);
-        setTooltipNote(el, CLOCK_STATE_MESSAGES[config.clockState] || CLOCK_STATE_MESSAGES.error, false);
-
-        return;
-    }
-
-    const sourceSeconds = config.values[index];
-    const clockDay = config.clockDays[config.isoDates[index]] ?? null;
-    const inSource = `En ${config.sourceLabel}`;
-    const clockValueHtml = clockDay !== null && clockDay.review ? 'Marcas incompletas' : digitsHtml(hms(clockDay?.seconds ?? 0));
-    const rows = [
-        { label: 'Reloj checador', valueHtml: clockValueHtml },
-        { label: config.sourceLabel, valueHtml: digitsHtml(hms(sourceSeconds)) },
-    ];
-
-    if (clockDay === null) {
-        rows.push({ label: 'Diferencia', valueHtml: digitsHtml(signedHms(sourceSeconds)) });
-        setTooltipRows(el, rows);
-        setTooltipNote(
-            el,
-            sourceSeconds > 0
-                ? `Advertencia: el reloj checador no tiene marcas ese día y ${inSource.toLowerCase()} hay tiempo capturado.`
-                : 'El reloj checador no tiene marcas ese día.',
-            sourceSeconds > 0,
-        );
-
-        return;
-    }
-
-    if (clockDay.review) {
-        setTooltipRows(el, rows);
-        setTooltipNote(el, `Advertencia: el reloj checador tiene un número impar de marcas ese día (${clockDay.marks}); hay que revisarlas para poder comparar.`, true);
-
-        return;
-    }
-
-    const diff = sourceSeconds - clockDay.seconds;
-    rows.push({ label: 'Diferencia', valueHtml: digitsHtml(signedHms(diff)) });
-    setTooltipRows(el, rows);
-
-    if (Math.abs(diff) > TOLERANCE_SECONDS) {
-        setTooltipNote(el, `Advertencia: el tiempo del día no coincide. ${inSource} hay ${diff < 0 ? 'menos' : 'más'} tiempo que en el reloj checador.`, true);
-    } else {
-        setTooltipNote(el, 'Los tiempos coinciden.', false);
-    }
-};
-
-// Globo simple de las gráficas por cliente/actividad: el tiempo y el porcentaje del total.
-const fillRankTooltip = (el, config, index) => {
-    el.querySelector('[data-slot="title"]').textContent = config.labels[index];
-    el.querySelector('[data-slot="subtitle"]').style.display = 'none';
-    const seconds = config.values[index];
-    const pct = config.total > 0 ? Math.round((seconds * 100) / config.total) : 0;
-    setTooltipRows(el, [
-        { label: 'Tiempo', valueHtml: digitsHtml(hms(seconds)) },
-        { label: 'Porcentaje', valueHtml: digitsHtml(`${pct}%`) },
-    ]);
-    setTooltipNote(el, null, false);
-};
-
-// Misma matemática de posición que el globo de Manager Control: pegado al punto, sin salirse de la pantalla y
-// reescalado por --app-zoom (el globo está teleportado al body, fuera del contenedor con el zoom del apartado).
-const positionTooltip = (el, point) => {
-    const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
-    const below = point.y < 360 * zoom;
-    const width = Math.min(440 * zoom, window.innerWidth - 40);
-    const right = Math.max(width + 20, Math.min(point.x, window.innerWidth - 20));
-    const x = right / zoom;
-    const y = point.y / zoom;
-    const arrowOffset = right === point.x ? 20 : Math.max(20, Math.min(width / zoom - 31, (right - point.x) / zoom - 5.5));
-
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    el.style.transform = `translate(-100%, ${below ? '20px' : 'calc(-100% - 20px)'})`;
-
-    const arrow = el.querySelector('[data-slot="arrow"]');
-    arrow.style.right = `${arrowOffset}px`;
-    arrow.classList.toggle('-top-[6px]', below);
-    arrow.classList.toggle('border-l', below);
-    arrow.classList.toggle('border-t', below);
-    arrow.classList.toggle('-bottom-[6px]', !below);
-    arrow.classList.toggle('border-b', !below);
-    arrow.classList.toggle('border-r', !below);
-};
-
 // ===== Qué barra/día está bajo el cursor =====
 // El zoom del apartado (--app-zoom) usa la propiedad CSS `zoom`, que estira el lienzo: su tamaño «de verdad»
 // (canvas.width) no es el mismo que ocupa en pantalla (getBoundingClientRect). El manejo de ratón que trae
-// Chart.js no tiene esto en cuenta y señalaba un día o una barra distinta de la que se tocaba (siempre la
-// misma cantidad de lugares de más). Por eso aquí se calcula a mano, con el mismo reescalado que usa el
-// globo, en qué índice cae el cursor, y se le dice directamente al gráfico cuál mostrar. El globo se rellena
-// y se posiciona aquí mismo (no por el plugin de tooltip de Chart.js, nunca se dispara con `events: []`).
-//
-// `tipHolder` es un objeto normal (no un dato reactivo de Alpine) donde se guarda el globo de este gráfico:
-// Chart.js y su `chart` tienen referencias circulares y getters internos que, envueltos en el proxy reactivo
-// de Alpine/Livewire, terminaban en un desbordamiento de pila al leerlos.
-const attachManualHover = (chart, canvas, categoryAxisKey, tipHolder, config) => {
+// Chart.js no tiene esto en cuenta y resaltaba una barra distinta de la que se tocaba. Por eso aquí se calcula
+// a mano, con el mismo reescalado, en qué índice cae el cursor, y se le dice directamente al gráfico cuál resaltar.
+const attachManualHover = (chart, categoryAxisKey) => {
+    const canvas = chart.canvas;
     const activate = (index) => {
-        if (!tipHolder.el) tipHolder.el = buildTooltipEl();
-        const el = tipHolder.el;
-
-        if (index === null) {
-            chart.setActiveElements([]);
-            chart.update('none');
-            el.classList.add('hidden');
-
-            return;
-        }
-
-        // El globo no sigue a la barra: se queda siempre en la misma esquina del gráfico (arriba a la
-        // derecha del área de dibujo), para que nunca tape ni se confunda con la barra de al lado.
-        const x = chart.chartArea.right;
-        const y = chart.chartArea.top;
-        chart.setActiveElements([{ datasetIndex: 0, index }]);
+        chart.setActiveElements(index === null ? [] : [{ datasetIndex: 0, index }]);
         // update('none'): sin animación (si no, la barra tardaba los 250ms de la gráfica en resaltarse) y sin
         // rehacer el montaje completo (layout/leyenda), que es lo que rompía el gráfico con update() a secas.
         chart.update('none');
-
-        if (config.kind === 'day') fillDayTooltip(el, config, index);
-        else fillRankTooltip(el, config, index);
-
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = rect.width / canvas.width;
-        const scaleY = rect.height / canvas.height;
-        positionTooltip(el, { x: rect.left + x * scaleX, y: rect.top + y * scaleY });
-        el.classList.remove('hidden');
     };
 
     canvas.addEventListener('mousemove', (event) => {
@@ -281,15 +100,14 @@ const attachManualHover = (chart, canvas, categoryAxisKey, tipHolder, config) =>
         const scaleY = canvas.height / rect.height;
         const localX = (event.clientX - rect.left) * scaleX;
         const localY = (event.clientY - rect.top) * scaleY;
-        const scale = chart.scales[categoryAxisKey];
-        const pixel = categoryAxisKey === 'x' ? localX : localY;
-        // Fuera del área de la gráfica no hay barra que señalar.
+        // Fuera del área de la gráfica no hay barra que resaltar.
         if (localX < chart.chartArea.left || localX > chart.chartArea.right || localY < chart.chartArea.top || localY > chart.chartArea.bottom) {
             activate(null);
 
             return;
         }
-        let index = scale.getValueForPixel(pixel);
+        const scale = chart.scales[categoryAxisKey];
+        let index = scale.getValueForPixel(categoryAxisKey === 'x' ? localX : localY);
         if (index === undefined || index === null) { activate(null); return; }
         index = Math.max(0, Math.min(scale.ticks.length - 1, Math.round(index)));
         activate(index);
@@ -305,7 +123,6 @@ document.addEventListener('alpine:init', () => {
         // más leerlos. Solo `empty` es reactivo porque la plantilla lo usa con x-show.
         let chart = null;
         let drawing = false;
-        const tipHolder = { el: null };
         let sizeObserver = null;
         let themeObserver = null;
 
@@ -413,7 +230,7 @@ document.addEventListener('alpine:init', () => {
                 chart.$tabularAxes = { x: true, y: true };
                 chart.$tabularFont = c.font;
                 chart.$tabularColor = c.text;
-                attachManualHover(chart, canvas, 'x', tipHolder, config);
+                attachManualHover(chart, 'x');
                 drawing = false;
 
                 return;
@@ -452,7 +269,7 @@ document.addEventListener('alpine:init', () => {
             chart.$tabularAxes = { x: true };
             chart.$tabularFont = c.font;
             chart.$tabularColor = c.text;
-            attachManualHover(chart, canvas, 'y', tipHolder, config);
+            attachManualHover(chart, 'y');
             drawing = false;
         };
 
@@ -484,8 +301,6 @@ document.addEventListener('alpine:init', () => {
                 themeObserver?.disconnect();
                 chart?.destroy();
                 chart = null;
-                tipHolder.el?.remove();
-                tipHolder.el = null;
             },
         };
     });
