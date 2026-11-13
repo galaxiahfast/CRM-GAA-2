@@ -7,6 +7,8 @@
     $idxTiempo = $colIndex['Tiempo efectivo'] ?? 4; $idxPuesto = $colIndex['Puesto profesional'] ?? 5;
     $idxArea = $colIndex['Área física'] ?? 6; $idxObservaciones = $colIndex['Observaciones'] ?? 7;
     $rowCounter = 0;
+    // Hora del día con h, m y s: 08:30:05 => 08h 30m 05s
+    $clockHms = fn (string $time): string => preg_replace('/^(\d{2}):(\d{2}):(\d{2})$/', '$1h $2m $3s', $time);
     // Tiempo de cada actividad con el mismo formato del encabezado del día (000h 00m 00s)
     $hms = fn (string $time): string => preg_replace_callback('/^(\d+):(\d{2}):(\d{2})$/', fn ($m) => sprintf('%03dh %sm %ss', (int) $m[1], $m[2], $m[3]), $time);
     // Total del día con horas de tres cifras (puede pasar de 100 horas): 000h 00m 00s
@@ -121,7 +123,7 @@
         [data-productivity] .prod-detail-wrap { position: relative; min-height: 0; }
         [data-productivity] .prod-detail-cols { display: grid; }
         /* Tabla del detalle: columnas separadas por líneas, 20px de espacio a cada lado y 15px entre las líneas de texto de una celda */
-        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 130px 205px minmax(0, 1fr) minmax(0, 1fr) 150px 70px; }
+        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 90px 250px minmax(0, 1fr) minmax(0, 1.25fr) 150px 80px; }
         [data-productivity] .prod-dcell { display: flex; min-width: 0; align-items: center; box-sizing: border-box; padding: 0 20px; border-right-width: 1px; }
         [data-productivity] .prod-dgrid > .prod-dcell:last-child { border-right-width: 0; }
         [data-productivity] .prod-dindex { justify-content: center; padding: 0; }
@@ -132,6 +134,7 @@
         [data-productivity] .prod-drow { counter-increment: prodd; min-height: 70px; box-sizing: border-box; cursor: grab; }
         [data-productivity] .prod-dcounter::before { content: counter(prodd); }
         [data-productivity] .prod-drow:nth-child(even) { background-color: var(--panel-header); }
+        [data-productivity] .prod-hide:hover { background-color: var(--panel-hover); }
         [data-productivity] .prod-blank-row:nth-child(n) { background-color: var(--panel-surface); }
         [data-productivity] .prod-blank-row.mc-stripe:nth-child(n) { background-color: var(--panel-header); }
         [data-productivity] .prod-drow:hover { background-color: var(--panel-hover); }
@@ -297,7 +300,7 @@
                             <span class="prod-dcell panel-border">Actividad</span>
                             <span class="prod-dcell panel-border">Cliente</span>
                             <span class="prod-dcell panel-border" style="justify-content:center">Duración</span>
-                            <span class="prod-dcell panel-border"></span>
+                            <span class="prod-dcell panel-border" style="justify-content:center">Acción</span>
                         </div>
                         @php
                             // Un día por clave; el ejemplo (sin actividades) también se puede contraer
@@ -326,7 +329,7 @@
                                         // Horario del día: la hora en que empezó la primera actividad y la hora en que terminó la última
                                         $starts = collect($group['rows'])->pluck($idxInicio)->filter(fn ($v) => preg_match('/^\d{2}:\d{2}:\d{2}$/', (string) $v))->sort()->values();
                                         $ends = collect($group['rows'])->pluck($idxFin)->filter(fn ($v) => preg_match('/^\d{2}:\d{2}:\d{2}$/', (string) $v))->sort()->values();
-                                        $dayRange = ($starts->first() ?? '-').' – '.($ends->last() ?? '-');
+                                        $dayRange = $clockHms((string) ($starts->first() ?? '-')).' – '.$clockHms((string) ($ends->last() ?? '-'));
                                     @endphp
                                     <section class="prod-day panel-border">
                                         <header data-snap role="button" tabindex="0" @click="toggleDay('{{ $dayKey }}')" @keydown.enter.prevent="toggleDay('{{ $dayKey }}')" @keydown.space.prevent="toggleDay('{{ $dayKey }}')" :aria-expanded="openDays['{{ $dayKey }}'] ? 'true' : 'false'" aria-label="Mostrar u ocultar las actividades del día" class="prod-day-head prod-dgrid panel-border cursor-pointer border-b focus:outline-none focus:ring-0">
@@ -344,7 +347,7 @@
                                             <article data-snap data-activity-id="{{ $rowId }}" class="prod-drow prod-dgrid panel-border border-b">
                                                 <span class="prod-dcell prod-dindex prod-dcounter panel-border" data-label="N°"></span>
                                                 <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
-                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits(($row[$idxInicio] ?? '-').' – '.($row[$idxFin] ?? '-')) }}</span>
+                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits($clockHms((string) ($row[$idxInicio] ?? '-')).' – '.$clockHms((string) ($row[$idxFin] ?? '-'))) }}</span>
                                                     <template x-teleport="body">
                                                         <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: {{ $hms((string) ($row[$idxTiempo] ?? '0:00:00')) }}<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
                                                     </template>
@@ -352,7 +355,7 @@
                                                 <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($hms((string) ($row[$idxTiempo] ?? '0:00:00'))) }}</span></span>
-                                                <span class="prod-dcell panel-border"></span>
+                                                <span class="prod-dcell panel-border" style="justify-content:center"><button type="button" @click="toggleDay('{{ $dayKey }}')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button></span>
                                             </article>
                                         @endforeach
                                         </div>
@@ -366,7 +369,7 @@
                                     <section class="prod-day panel-border">
                                         <header data-snap role="button" tabindex="0" @click="toggleDay('ejemplo')" @keydown.enter.prevent="toggleDay('ejemplo')" @keydown.space.prevent="toggleDay('ejemplo')" :aria-expanded="openDays['ejemplo'] ? 'true' : 'false'" aria-label="Mostrar u ocultar las actividades del día" class="prod-day-head prod-dgrid panel-border cursor-pointer border-b focus:outline-none focus:ring-0">
                                             <span class="prod-dcell prod-dindex panel-border"><span class="whitespace-nowrap leading-none">{{ $digits('0') }}</span></span>
-                                            <span class="prod-dcell panel-border" data-label="Horario"><span class="whitespace-nowrap leading-none">{{ $digits('00:00:00 – 00:00:00') }}</span></span>
+                                            <span class="prod-dcell panel-border" data-label="Horario"><span class="whitespace-nowrap leading-none">{{ $digits('00h 00m 00s – 00h 00m 00s') }}</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate leading-none">0 actividades</span></span>
                                             <span class="prod-dcell panel-border"><span class="truncate whitespace-nowrap leading-none"><span class="inline-block" style="width:2.15em">{{ $weekday }},</span> {{ $digits($dt->format('d')) }} de {{ $dt->translatedFormat('F') }} de {{ $digits($dt->format('Y')) }}</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
@@ -376,7 +379,7 @@
                                             <article data-snap class="prod-drow prod-dgrid panel-border border-b">
                                             <span class="prod-dcell prod-dindex prod-dcounter panel-border" data-label="N°"></span>
                                             <span class="prod-dcell panel-border" data-label="Horario"><span class="relative min-w-0" x-data="{ tip: false, x: 0, y: 0, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.x = r.left / z; this.y = r.top / z; this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false">
-                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits('00:00:00 – 00:00:00') }}</span>
+                                                    <span class="block whitespace-nowrap text-center leading-none">{{ $digits('00h 00m 00s – 00h 00m 00s') }}</span>
                                                     <template x-teleport="body">
                                                         <span role="tooltip" :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translateY(calc(-100% - 20px))`" class="app-zoom-overlay pointer-events-none fixed z-[200001] w-max max-w-[320px] whitespace-nowrap rounded-[10px] border border-[#d4d4d8] bg-white px-[20px] py-[12.5px] text-[14px] leading-[29px] text-[#18181b] shadow-[0_12px_30px_rgba(0,0,0,0.14)]" style="background: #ffffff !important; color: #18181b !important; border-color: #d4d4d8 !important;">Tiempo: 00:00:00<span class="absolute -bottom-[5px] left-[15.5px] h-[9px] w-[9px] rotate-45 border-b border-r border-[#d4d4d8] bg-white" style="background: #ffffff !important; border-color: #d4d4d8 !important;"></span></span>
                                                     </template>
@@ -384,7 +387,7 @@
                                             <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
-                                            <span class="prod-dcell panel-border"></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center"><button type="button" @click="toggleDay('ejemplo')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button></span>
                                         </article>
                                         </div>
                                     </section>
