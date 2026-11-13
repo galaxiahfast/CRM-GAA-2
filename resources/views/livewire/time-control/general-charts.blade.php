@@ -192,13 +192,15 @@
 
         /* ===== Gráficos Generales ===== */
         /* Fila de pestañas: mide lo mismo que el encabezado «Periodo de consulta» (87px) para que las líneas queden a la misma altura */
-        [data-general-charts] .gc-tabs { display: flex; min-height: 87px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; box-sizing: border-box; padding: 20px; }
-        [data-general-charts] .gc-tablist { display: flex; flex-wrap: wrap; gap: 20px; }
-        [data-general-charts] .gc-tab { display: inline-flex; height: 46px; align-items: center; border: 1px solid var(--panel-border); border-radius: 12px; padding: 0 20px; background-color: var(--panel-surface); color: var(--panel-text); line-height: 1; cursor: pointer; transition: background-color 150ms ease; }
+        /* Misma altura (87px) que el encabezado «Periodo de consulta» del formulario, para que las líneas del panel queden alineadas */
+        [data-general-charts] .gc-tabs { display: flex; height: 87px; box-sizing: border-box; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 20px; padding: 20px; overflow-x: auto; }
+        [data-general-charts] .gc-tablist { display: flex; flex-wrap: nowrap; gap: 20px; flex-shrink: 0; }
+        /* Mismos 20px a los lados y 15px arriba/abajo que el resto de los botones del módulo (p. ej. .prod-primary) */
+        [data-general-charts] .gc-tab { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--panel-border); border-radius: 12px; padding: 15px 20px; background-color: var(--panel-surface); color: var(--panel-text); line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease; }
         [data-general-charts] .gc-tab:hover { background-color: var(--panel-hover); }
         [data-general-charts] .gc-tab[aria-selected="true"] { border-color: var(--prod-green); background-color: color-mix(in srgb, var(--prod-green) 12%, var(--panel-surface)); color: var(--prod-green); }
-        [data-general-charts] .gc-filters { display: flex; flex-wrap: wrap; gap: 20px; }
-        [data-general-charts] .gc-filters > * { width: 240px; max-width: 100%; }
+        [data-general-charts] .gc-filters { display: flex; flex-wrap: nowrap; flex-shrink: 0; gap: 20px; }
+        [data-general-charts] .gc-filters > * { width: 240px; max-width: 100%; flex-shrink: 0; }
         [data-general-charts] .gc-chart-area { position: relative; display: flex; min-height: 420px; flex: 1; flex-direction: column; }
         [data-general-charts] .gc-pane { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 20px; }
         [data-general-charts] .gc-canvas-box { position: relative; min-height: 380px; flex: 1; }

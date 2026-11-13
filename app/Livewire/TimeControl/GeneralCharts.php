@@ -4,6 +4,7 @@ namespace App\Livewire\TimeControl;
 
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\ManagerControl\ClockComparison;
 use App\Services\ManagerControl\LegacyEmployeeResolver;
 use App\Services\ManagerControl\ManagerControlException;
 use App\Services\ManagerControl\ManagerControlRepository;
@@ -159,9 +160,27 @@ class GeneralCharts extends Component
     private function cronData(?User $user): array
     {
         $rows = $user ? $this->cronRows($user) : [];
+        $clock = $user ? $this->clockDays($user, $this->cronFrom, $this->cronTo) : ['state' => 'no_user', 'days' => []];
 
-        return $this->charts($rows, $this->cronFrom, $this->cronTo, $this->cronClient, $this->cronActivity)
+        return $this->charts($rows, $this->cronFrom, $this->cronTo, $this->cronClient, $this->cronActivity, $clock, 'Cronómetro')
             + ['state' => $user ? 'ok' : 'no_user'];
+    }
+
+    /**
+     * Lo que marca el reloj checador cada día (mismo cálculo que el módulo Reloj Checador), para comparar con el
+     * tiempo capturado en el Cronómetro o en ManagerControl. Solo lectura.
+     *
+     * @return array{state: string, days: array<string, array{seconds: int, review: bool, marks: int}>}
+     */
+    private function clockDays(?User $user, string $from, string $to): array
+    {
+        try {
+            return app(ClockComparison::class)->days($user, $from, $to);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ['state' => 'error', 'days' => []];
+        }
     }
 
     /** @return array{status: string, employee: ?array{id: int, name: string}} */
@@ -196,6 +215,7 @@ class GeneralCharts extends Component
         $employee = $match['employee'] ?? null;
         $state = $employee ? 'ok' : ($match['status'] === 'no_access' || $match['status'] === 'no_user' || $match['status'] === 'error' ? $match['status'] : 'no_employee');
         $rows = [];
+        $clock = ['state' => 'no_user', 'days' => []];
 
         if ($employee) {
             try {
@@ -209,13 +229,15 @@ class GeneralCharts extends Component
                     'activity' => $row['activity'],
                     'seconds' => (int) $row['seconds'],
                 ], $legacy);
+                $clockUser = app(ClockComparison::class)->userForLegacyEmployee((int) $employee['id']);
+                $clock = $this->clockDays($clockUser, $this->mcFrom, $this->mcTo);
             } catch (ManagerControlException $e) {
                 report($e);
                 $state = 'error';
             }
         }
 
-        return $this->charts($rows, $this->mcFrom, $this->mcTo, $this->mcClient, $this->mcActivity)
+        return $this->charts($rows, $this->mcFrom, $this->mcTo, $this->mcClient, $this->mcActivity, $clock, 'ManagerControl')
             + ['state' => $state, 'employee' => $employee['name'] ?? null];
     }
 
@@ -223,8 +245,9 @@ class GeneralCharts extends Component
      * Las tres gráficas de una tarjeta y las opciones de sus filtros.
      *
      * @param  list<array{date: string, client_key: string, client: string, activity_key: string, activity: string, seconds: int}>  $rows
+     * @param  array{state: string, days: array<string, array{seconds: int, review: bool, marks: int}>}  $clock
      */
-    private function charts(array $rows, string $from, string $to, string $client, string $activity): array
+    private function charts(array $rows, string $from, string $to, string $client, string $activity, array $clock, string $sourceLabel): array
     {
         $rows = collect($rows);
         $total = (int) $rows->sum('seconds');
@@ -244,9 +267,11 @@ class GeneralCharts extends Component
         $labels = [];
         $values = [];
         $dates = [];
+        $isoDates = [];
         for ($day = Carbon::parse($from); $day->lte(Carbon::parse($to)); $day->addDay()) {
             $labels[] = $day->format('d/m');
             $dates[] = ucfirst($day->copy()->locale('es')->translatedFormat('D d/m/y'));
+            $isoDates[] = $day->toDateString();
             $values[] = (int) ($byDate[$day->toDateString()] ?? 0);
         }
         $filteredTotal = array_sum($values);
@@ -257,9 +282,14 @@ class GeneralCharts extends Component
                 'kind' => 'day',
                 'labels' => $labels,
                 'titles' => $dates,
+                'isoDates' => $isoDates,
                 'values' => $values,
                 'average' => count($values) > 0 ? (int) round($filteredTotal / count($values)) : 0,
                 'total' => $filteredTotal,
+                // Comparación con el reloj checador, igual que en Manager Control (se calcula aquí una sola vez).
+                'clockState' => $clock['state'],
+                'clockDays' => $clock['days'],
+                'sourceLabel' => $sourceLabel,
             ],
             'clients' => $this->ranking($clients, $total),
             'activities' => $this->ranking($activities, $total),

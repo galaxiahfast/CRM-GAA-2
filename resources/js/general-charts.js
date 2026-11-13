@@ -1,5 +1,7 @@
 // Gráficas de «Gráficos Generales» (Chart.js). Cada gráfica toma sus colores de las variables del panel, así se ve bien en el
 // tema claro y en el oscuro, y se vuelve a dibujar sola al cambiar de tema. Se dibuja cuando su pestaña es visible (con tamaño).
+// Los globos al pasar el cursor usan el mismo diseño que el resto de la app (no el tooltip genérico de Chart.js): un bloque
+// blanco/oscuro con borde, título en azul y una flechita, igual que «Comparación con el reloj checador» en Manager Control.
 const waitForChart = () => new Promise((resolve) => {
     if (window.Chart) return resolve(window.Chart);
     let tries = 0;
@@ -18,11 +20,182 @@ const hms = (seconds) => {
     return `${String(Math.floor(s / 3600)).padStart(3, '0')}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m ${String(s % 60).padStart(2, '0')}s`;
 };
 
+// Diferencia con signo: +001h 00m 00s / −001h 00m 00s / 000h 00m 00s, igual que en Manager Control
+const signedHms = (seconds) => {
+    const sign = seconds < 0 ? '−' : seconds > 0 ? '+' : '';
+    return sign + hms(Math.abs(seconds));
+};
+
 const shorten = (text, max) => (String(text).length > max ? `${String(text).slice(0, max - 1)}…` : String(text));
+
+// Cada cifra en su propia caja (igual ancho), como en el resto del módulo: la letra Poppins no es tabular.
+const digitsHtml = (text) => String(text).replace(/\d/g, (d) => `<span class="prod-dg">${d}</span>`);
+
+// Tolerancia de 6 minutos (ManagerControl guarda décimas de hora): una diferencia menor se considera redondeo, no un problema real.
+const TOLERANCE_SECONDS = 360;
+
+const CLOCK_STATE_MESSAGES = {
+    no_user: 'Este colaborador no tiene un usuario del CRM asignado, por eso no hay marcas del reloj checador que comparar.',
+    no_clock_id: 'El usuario del CRM de este colaborador no tiene ID de checador asignado.',
+    error: 'No se pudo leer el reloj checador. Inténtalo de nuevo.',
+};
+
+// ===== Globo (tooltip) con el mismo diseño que el resto de la app =====
+
+const buildTooltipEl = () => {
+    const el = document.createElement('div');
+    el.setAttribute('role', 'tooltip');
+    el.setAttribute('data-gc-tooltip', '');
+    // Mismas clases que el globo «Comparación con el reloj checador» de Manager Control: ya están compiladas en el CSS.
+    el.className = 'app-zoom-overlay panel-surface panel-border panel-text pointer-events-none fixed z-[200001] block w-[440px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)] hidden';
+    el.innerHTML = `
+        <span class="panel-accent block leading-[30px]" data-slot="title"></span>
+        <span class="mt-[15px] block leading-[30px]" data-slot="subtitle"></span>
+        <div data-slot="rows"></div>
+        <span class="mt-[15px] block text-justify leading-[30px]" data-slot="note" style="display:none"></span>
+        <span class="panel-surface panel-border absolute right-[20px] h-[11px] w-[11px] rotate-45" data-slot="arrow"></span>
+    `;
+    document.body.appendChild(el);
+
+    return el;
+};
+
+const setTooltipRows = (el, rows) => {
+    el.querySelector('[data-slot="rows"]').innerHTML = rows.map((row, i) => (
+        `<span class="${i === 0 ? 'mt-[15px] ' : ''}flex items-center justify-between gap-[20px] leading-[30px]"><span>${row.label}</span><span class="whitespace-nowrap tabular-nums">${row.valueHtml}</span></span>`
+    )).join('');
+};
+
+const setTooltipNote = (el, text, isWarning) => {
+    const note = el.querySelector('[data-slot="note"]');
+    if (!text) {
+        note.style.display = 'none';
+        return;
+    }
+    note.style.display = '';
+    note.style.color = isWarning ? 'var(--panel-danger)' : '';
+    note.textContent = text;
+};
+
+// Rellena el globo con la comparación del día frente al reloj checador: mismo texto y lógica que Manager Control.
+const fillDayTooltip = (el, config, index) => {
+    el.querySelector('[data-slot="title"]').textContent = 'Comparación con el reloj checador';
+    el.querySelector('[data-slot="subtitle"]').textContent = config.titles[index];
+
+    if (config.clockState !== 'ok') {
+        setTooltipRows(el, []);
+        setTooltipNote(el, CLOCK_STATE_MESSAGES[config.clockState] || CLOCK_STATE_MESSAGES.error, false);
+
+        return;
+    }
+
+    const sourceSeconds = config.values[index];
+    const clockDay = config.clockDays[config.isoDates[index]] ?? null;
+    const inSource = `En ${config.sourceLabel}`;
+    const clockValueHtml = clockDay !== null && clockDay.review ? 'Marcas incompletas' : digitsHtml(hms(clockDay?.seconds ?? 0));
+    const rows = [
+        { label: 'Reloj checador', valueHtml: clockValueHtml },
+        { label: config.sourceLabel, valueHtml: digitsHtml(hms(sourceSeconds)) },
+    ];
+
+    if (clockDay === null) {
+        rows.push({ label: 'Diferencia', valueHtml: digitsHtml(signedHms(sourceSeconds)) });
+        setTooltipRows(el, rows);
+        setTooltipNote(
+            el,
+            sourceSeconds > 0
+                ? `Advertencia: el reloj checador no tiene marcas ese día y ${inSource.toLowerCase()} hay tiempo capturado.`
+                : 'El reloj checador no tiene marcas ese día.',
+            sourceSeconds > 0,
+        );
+
+        return;
+    }
+
+    if (clockDay.review) {
+        setTooltipRows(el, rows);
+        setTooltipNote(el, `Advertencia: el reloj checador tiene un número impar de marcas ese día (${clockDay.marks}); hay que revisarlas para poder comparar.`, true);
+
+        return;
+    }
+
+    const diff = sourceSeconds - clockDay.seconds;
+    rows.push({ label: 'Diferencia', valueHtml: digitsHtml(signedHms(diff)) });
+    setTooltipRows(el, rows);
+
+    if (Math.abs(diff) > TOLERANCE_SECONDS) {
+        setTooltipNote(el, `Advertencia: el tiempo del día no coincide. ${inSource} hay ${diff < 0 ? 'menos' : 'más'} tiempo que en el reloj checador.`, true);
+    } else {
+        setTooltipNote(el, 'Los tiempos coinciden.', false);
+    }
+};
+
+// Globo simple de las gráficas por cliente/actividad: el tiempo y el porcentaje del total.
+const fillRankTooltip = (el, config, index) => {
+    el.querySelector('[data-slot="title"]').textContent = config.labels[index];
+    el.querySelector('[data-slot="subtitle"]').style.display = 'none';
+    const seconds = config.values[index];
+    const pct = config.total > 0 ? Math.round((seconds * 100) / config.total) : 0;
+    setTooltipRows(el, [
+        { label: 'Tiempo', valueHtml: digitsHtml(hms(seconds)) },
+        { label: 'Porcentaje', valueHtml: digitsHtml(`${pct}%`) },
+    ]);
+    setTooltipNote(el, null, false);
+};
+
+// Misma matemática de posición que el globo de Manager Control: pegado al punto, sin salirse de la pantalla y
+// reescalado por --app-zoom (el globo está teleportado al body, fuera del contenedor con el zoom del apartado).
+const positionTooltip = (el, point) => {
+    const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+    const below = point.y < 360 * zoom;
+    const width = Math.min(440 * zoom, window.innerWidth - 40);
+    const right = Math.max(width + 20, Math.min(point.x, window.innerWidth - 20));
+    const x = right / zoom;
+    const y = point.y / zoom;
+    const arrowOffset = right === point.x ? 20 : Math.max(20, Math.min(width / zoom - 31, (right - point.x) / zoom - 5.5));
+
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.transform = `translate(-100%, ${below ? '20px' : 'calc(-100% - 20px)'})`;
+
+    const arrow = el.querySelector('[data-slot="arrow"]');
+    arrow.style.right = `${arrowOffset}px`;
+    arrow.classList.toggle('-top-[6px]', below);
+    arrow.classList.toggle('border-l', below);
+    arrow.classList.toggle('border-t', below);
+    arrow.classList.toggle('-bottom-[6px]', !below);
+    arrow.classList.toggle('border-b', !below);
+    arrow.classList.toggle('border-r', !below);
+};
+
+const externalTooltip = (context, comp, config) => {
+    const { chart, tooltip } = context;
+    if (!comp.tooltipEl) comp.tooltipEl = buildTooltipEl();
+    const el = comp.tooltipEl;
+
+    if (tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
+        el.classList.add('hidden');
+
+        return;
+    }
+
+    const index = tooltip.dataPoints[0].dataIndex;
+    if (config.kind === 'day') fillDayTooltip(el, config, index);
+    else fillRankTooltip(el, config, index);
+
+    // tooltip.caretX/Y vienen en el tamaño interno del lienzo; con el zoom del apartado (--app-zoom, vía CSS `zoom`)
+    // ese tamaño no coincide con el que ocupa en pantalla (getBoundingClientRect), así que hay que reescalarlo.
+    const rect = chart.canvas.getBoundingClientRect();
+    const scaleX = rect.width / chart.canvas.width;
+    const scaleY = rect.height / chart.canvas.height;
+    positionTooltip(el, { x: rect.left + tooltip.caretX * scaleX, y: rect.top + tooltip.caretY * scaleY });
+    el.classList.remove('hidden');
+};
 
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('generalChart', (config) => ({
         chart: null,
+        tooltipEl: null,
         sizeObserver: null,
         themeObserver: null,
         empty: !(config.values || []).some((value) => value > 0),
@@ -48,6 +221,8 @@ document.addEventListener('alpine:init', () => {
             this.themeObserver?.disconnect();
             this.chart?.destroy();
             this.chart = null;
+            this.tooltipEl?.remove();
+            this.tooltipEl = null;
         },
 
         colors() {
@@ -70,17 +245,7 @@ document.addEventListener('alpine:init', () => {
 
             const c = this.colors();
             const font = { family: c.font, size: 15, weight: '400' };
-            const tooltip = {
-                backgroundColor: c.surface,
-                titleColor: c.text,
-                bodyColor: c.text,
-                borderColor: c.border,
-                borderWidth: 1,
-                padding: 15,
-                titleFont: font,
-                bodyFont: font,
-                displayColors: false,
-            };
+            const tooltip = { enabled: false, external: (context) => externalTooltip(context, this, config) };
             const grid = { color: c.border, drawTicks: false };
             const ticks = { color: c.text, font, padding: 10 };
 
@@ -117,16 +282,7 @@ document.addEventListener('alpine:init', () => {
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
-                            tooltip: {
-                                ...tooltip,
-                                itemSort: (a, b) => a.datasetIndex - b.datasetIndex,
-                                callbacks: {
-                                    title: (items) => config.titles?.[items[0].dataIndex] ?? items[0].label,
-                                    label: (item) => item.datasetIndex === 0
-                                        ? `Tiempo: ${hms(config.values[item.dataIndex])}`
-                                        : `Promedio: ${hms(config.average)}`,
-                                },
-                            },
+                            tooltip,
                         },
                         scales: {
                             x: { grid: { display: false }, border: { color: c.border }, ticks: { ...ticks, maxRotation: 0, autoSkip: true } },
@@ -139,7 +295,6 @@ document.addEventListener('alpine:init', () => {
             }
 
             // Ranking por cliente o por actividad: barras horizontales con el tiempo y el porcentaje del total
-            const total = config.total || 0;
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'bar',
                 data: {
@@ -159,16 +314,7 @@ document.addEventListener('alpine:init', () => {
                     animation: { duration: 250 },
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            ...tooltip,
-                            callbacks: {
-                                label: (item) => {
-                                    const seconds = config.values[item.dataIndex];
-                                    const pct = total > 0 ? Math.round((seconds * 100) / total) : 0;
-                                    return `${hms(seconds)} · ${pct}%`;
-                                },
-                            },
-                        },
+                        tooltip,
                     },
                     scales: {
                         x: { beginAtZero: true, grid, border: { display: false }, ticks: { ...ticks, callback: (value) => `${Number(value).toFixed(Number.isInteger(value) ? 0 : 1)}h` } },
