@@ -1,0 +1,23 @@
+REPORTE DE RESPALDOS WEB
+
+1. Abra "abrir_reporte_web.bat" con doble clic.
+2. Cada perfil se lee por separado al abrir. La barra muestra los perfiles terminados.
+3. Pulse "Editar" y luego "Editar" en el perfil que quiera ajustar.
+4. Puede pegar la fecha y hora, cambiar empresas e incidencias, agregar o eliminar
+   perfiles y servidores. Vacío en empresas e incidencias significa todo realizado.
+5. Pulse "Guardar PDF" cuando termine de revisar. El archivo se descarga
+   directamente (normalmente en Descargas), sin abrir el cuadro de impresión.
+   Incluye Courier, fecha extendida, nombre del archivo y páginas numeradas.
+
+No hay límite automático de espera. "Detener" cancela la lectura pendiente y
+conserva los resultados disponibles. Los perfiles se consultan en paralelo y
+se busca la última ejecución desde el final, evitando cargar todo el historial
+cuando sea posible. Una demora del acceso de red puede mantener un perfil pendiente.
+
+Los perfiles no disponibles se omiten del detalle del PDF, salvo que los incluya
+manualmente. La gráfica distingue estos perfiles de los errores. Actualizar reemplaza
+los ajustes del reporte y pide confirmacion si ya se hicieron cambios.
+
+El lector sólo consulta archivos .log.html en carpetas compartidas. No ejecuta
+perfiles, no limpia logs y no escribe en los servidores. Cierre la ventana negra
+para detener el lector local.

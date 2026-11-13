@@ -1,0 +1,27 @@
+[
+  {"ip":"192.168.2.178","name":"IFACTURE","profiles":[
+    {"name":"Comprobantes33","date":"14/09/2026 05:01 p. m.","processed":"0/0","available":true,"errors":[],"issues":[],"failed":false},
+    {"name":"ComprobantesPagos","date":"14/09/2026 05:01 p. m.","processed":"0/0","available":true,"errors":[],"issues":[],"failed":false},
+    {"name":"Data","date":"14/09/2026 05:02 p. m.","processed":"162/176","available":true,"failed":true,"issues":[],"errors":["MANUEL_JESUS_OXTE_CABRERA","SOCIEDAD_COOPERATIVA_DE_PRODUCCION_PESQUERA_PESCADORES_DE_VIGIA_CHICO_SC_DE_RL"]}
+  ]},
+  {"ip":"192.168.2.203","name":"AUDICTAMEN","profiles":[
+    {"name":"Audictamen","date":"12/09/2026 04:00 p.m.","processed":"0/0","available":true,"errors":[],"issues":[],"failed":false},
+    {"name":"datafiscal","date":"12/09/2026 04:20 p.m.","processed":"310/318","available":true,"errors":[],"issues":["Se registraron errores en archivos internos del respaldo."],"failed":true},
+    {"name":"datahub","date":"12/09/2026 05:05 p.m.","processed":"324/336","available":true,"errors":["CENTRO_DE_CONCILIACION_LABORAL_DEL_ESTADO_DE_YUCATAN","IYEM_2023"],"issues":[],"failed":true},
+    {"name":"MSSQL","date":"12/09/2026 05:22 p.m.","processed":"310/318","available":true,"errors":[],"issues":["Se registraron errores en archivos internos del respaldo."],"failed":true}
+  ]},
+  {"ip":"192.168.1.2","name":"Compaqi (Tulum)","profiles":[
+    {"name":"Compac","available":false,"errors":[],"issues":[]},
+    {"name":"Data","available":false,"errors":[],"issues":[]}
+  ]},
+  {"ip":"192.168.2.210","name":"Compaqi (Mérida)","profiles":[
+    {"name":"base_contabilidad","date":"12/09/2026 04:00 p. m.","processed":"1582/2936","available":true,"errors":[],"issues":["Se registraron errores en archivos internos del respaldo."],"failed":true},
+    {"name":"base_nominas","date":"05/09/2026 12:02 p. m.","processed":"252/252","available":true,"errors":[],"issues":[],"failed":false},
+    {"name":"Carpeta_Contpaq","date":"12/09/2026 04:40 p. m.","processed":"46/46","available":true,"errors":[],"issues":[],"failed":false},
+    {"name":"Compac","date":"12/09/2026 05:00 p. m.","processed":"64/64","available":true,"errors":[],"issues":[],"failed":false}
+  ]},
+  {"ip":"192.168.2.252","name":"Compaqi (Auditoría)","profiles":[
+    {"name":"Compac","available":false,"errors":[],"issues":[]},
+    {"name":"Data","available":false,"errors":[],"issues":[]}
+  ]}
+]

@@ -1,0 +1,17 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const elements=new Map();
+const element=s=>{if(!elements.has(s))elements.set(s,{value:'',innerHTML:'',textContent:'',disabled:false,hidden:false,checked:false,setAttribute(){},showModal(){},close(){}});return elements.get(s)};
+const context={BackupPDF:require('../dist/pdf-builder.js'),document:{querySelector:element,body:{classList:{toggle(){return true}}}},window:{print(){}},confirm:()=>true,console,Date,setTimeout,fetch:()=>new Promise(()=>{})};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../dist/app.js'),'utf8'),context);
+vm.runInContext(`merge({servers:[{ip:'192.168.2.178',profiles:[{profile:'Data',done:true,available:true,date:'15/09/2026 08:00 a. m.',errors:['EMPRESA_UNO'],issues:[],failed:true,processed:'1/3'}]}],totalProfiles:15,doneProfiles:1});`,context);
+assert.match(element('#results').innerHTML,/EMPRESA UNO/);
+assert.match(element('#chart').innerHTML,/1 error/);
+vm.runInContext(`openProfile(0,2);`,context);
+element('#profileErrors').value='';element('#profileIssues').value='';
+element('#profileForm').onsubmit({preventDefault(){}});
+assert.doesNotMatch(element('#results').innerHTML,/EMPRESA UNO/);
+assert.match(element('#chart').innerHTML,/1 correctos/);
+vm.runInContext(`merge({servers:[{ip:'192.168.2.178',profiles:[{profile:'Data',done:true,available:true,errors:['OLD'],issues:[],failed:true}]}],totalProfiles:15,doneProfiles:1});`,context);
+assert.doesNotMatch(element('#results').innerHTML,/OLD/);
+console.log('PASS: partial results, graph, single editable state and preserved edits');
