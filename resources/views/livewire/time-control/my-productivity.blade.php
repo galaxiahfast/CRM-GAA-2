@@ -123,7 +123,7 @@
         [data-productivity] .prod-detail-wrap { position: relative; min-height: 0; }
         [data-productivity] .prod-detail-cols { display: grid; }
         /* Tabla del detalle: columnas separadas por líneas, 20px de espacio a cada lado y 15px entre las líneas de texto de una celda */
-        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 90px 250px minmax(0, 1fr) minmax(0, 1.25fr) 150px 80px; }
+        [data-productivity] .prod-dgrid { display: grid; grid-template-columns: 60px repeat(3, minmax(240px, 1fr)) repeat(2, 140px); }
         [data-productivity] .prod-dcell { display: flex; min-width: 0; align-items: center; box-sizing: border-box; padding: 0 20px; border-right-width: 1px; }
         [data-productivity] .prod-dgrid > .prod-dcell:last-child { border-right-width: 0; }
         [data-productivity] .prod-dindex { justify-content: center; padding: 0; }
@@ -168,7 +168,7 @@
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar { height: 4px; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-track { background: transparent; }
         [data-productivity] .prod-detail-card .prod-main::-webkit-scrollbar-thumb { background: var(--panel-accent); border-radius: 9999px; }
-        [data-productivity] .prod-detail-card .prod-main > *, [data-productivity] .prod-detail-card .prod-main > .contents > * { min-width: 760px; }
+        [data-productivity] .prod-detail-card .prod-main > *, [data-productivity] .prod-detail-card .prod-main > .contents > * { min-width: 1060px; }
         /* Escritorio: la tarjeta principal ocupa el alto disponible, como en Cronómetro. */
         @container prod (min-width: 1240px) {
             [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
@@ -355,7 +355,7 @@
                                                 <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none" title="{{ $row[$idxActividad] ?? '-' }}">{{ $row[$idxActividad] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none" title="{{ $row[$idxCliente] ?? '-' }}">{{ $row[$idxCliente] ?? '-' }}</span></span>
                                                 <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($hms((string) ($row[$idxTiempo] ?? '0:00:00'))) }}</span></span>
-                                                <span class="prod-dcell panel-border" style="justify-content:center"><button type="button" @click="toggleDay('{{ $dayKey }}')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button></span>
+                                                <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('{{ $dayKey }}')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
                                             </article>
                                         @endforeach
                                         </div>
@@ -387,7 +387,7 @@
                                             <span class="prod-dcell panel-border" data-label="Actividad"><span class="truncate leading-none">Actividad de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Cliente"><span class="truncate leading-none">Cliente de ejemplo</span></span>
                                             <span class="prod-dcell panel-border" data-label="Duración"><span class="whitespace-nowrap leading-none tabular-nums">{{ $digits('000h 00m 00s') }}</span></span>
-                                            <span class="prod-dcell panel-border" style="justify-content:center"><button type="button" @click="toggleDay('ejemplo')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button></span>
+                                            <span class="prod-dcell panel-border" style="justify-content:center;gap:10px"><button type="button" @click="toggleDay('ejemplo')" class="prod-hide prod-link inline-flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-lg focus:outline-none focus:ring-0" title="Ocultar las actividades del día" aria-label="Ocultar las actividades del día"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.5 7a11 11 0 0 1-2.6 3.8M6.2 6.2C4 7.7 2.5 10 2.5 12c1 2.8 4.5 7 9.5 7 1.5 0 2.9-.3 4.1-.9"/></svg></button><span class="prod-link inline-flex h-[28px] w-[28px] items-center justify-center" aria-hidden="true"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></span>
                                         </article>
                                         </div>
                                     </section>
