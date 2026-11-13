@@ -208,6 +208,8 @@
         [data-mc-modal] { --mc-green: #15803d; --panel-muted: var(--panel-text); }
         html.module-dark-theme [data-mc-modal] { --mc-green: #4ade80; }
         [data-mc-modal] :is(strong, b, th) { font-weight: 400; }
+        /* Todas las letras del formulario (título, etiquetas, campos, listas, calendario y botones) miden lo mismo: 15px */
+        :is([data-mc-modal], [data-mc-calendar]) :is(h1, h2, h3, h4, h5, p, span, div, label, button, a, input, select, textarea, li, small, td, th), [data-mc-calendar] { font-size: 15px !important; }
         [data-mc-modal] :is(button, label) { cursor: pointer; }
         [data-mc-modal] button:disabled { cursor: not-allowed; opacity: .4; }
         /* Sin línea ni relleno extra entre las secciones de campos: solo los 20px de separación del contenedor; las líneas del encabezado y del pie se conservan */
@@ -639,7 +641,7 @@
                         <form wire:submit="saveRecord" class="flex min-h-0 flex-1 flex-col">
                             <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                                 <div class="min-w-0">
-                                    <h3 id="mc-form-title" class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h3>
+                                    <h3 id="mc-form-title" class="panel-accent break-words text-[15px] font-normal leading-none">{{ $editingId ? 'Editar actividad' : 'Agregar actividad' }}</h3>
                                     <p class="mt-[20px]">Se guarda en ManagerControl.</p>
                                 </div>
                                 <button type="button" wire:click="closeForm" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
@@ -668,10 +670,10 @@
                                                                 <button type="button" @click="changeMonth(1)" aria-label="Mes siguiente" class="panel-border hover:bg-[color:var(--panel-hover)] h-9 w-9 rounded-lg border">›</button>
                                                             </div>
                                                         </div>
-                                                        <div class="mb-[5px] grid grid-cols-7 text-center text-xs panel-muted"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
+                                                        <div class="mb-[5px] grid grid-cols-7 text-center text-[15px] panel-muted"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
                                                         <div class="grid grid-cols-7 gap-[2px]">
                                                             <template x-for="day in days" :key="day.key">
-                                                                <button type="button" @click="selectDate(day.date)" class="prod-calendar-day text-sm" :class="{ 'is-outside': day.outside, 'is-today': isToday(day.date), 'is-marked': day.marked, 'is-selected': value === day.key }" :aria-label="day.date.toLocaleDateString('es-MX', { dateStyle: 'full' }) + (day.marked ? ', con actividades' : '')" x-text="day.date.getDate()"></button>
+                                                                <button type="button" @click="selectDate(day.date)" class="prod-calendar-day text-[15px]" :class="{ 'is-outside': day.outside, 'is-today': isToday(day.date), 'is-marked': day.marked, 'is-selected': value === day.key }" :aria-label="day.date.toLocaleDateString('es-MX', { dateStyle: 'full' }) + (day.marked ? ', con actividades' : '')" x-text="day.date.getDate()"></button>
                                                             </template>
                                                         </div>
                                                     </div>
@@ -759,7 +761,7 @@
                     <div data-panel class="app-zoom-overlay panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; @if (($dialog['kind'] ?? 'error') === 'confirm') height: min(620px, calc((100dvh - 40px) / var(--app-zoom, 1))); @else max-height: calc((100dvh - 40px) / var(--app-zoom, 1)); @endif overscroll-behavior: contain;">
                         <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                             <div class="min-w-0">
-                                <h3 id="mc-dialog-title" class="panel-accent break-words text-xl font-normal leading-none tracking-tight">{{ $dialog['title'] }}</h3>
+                                <h3 id="mc-dialog-title" class="panel-accent break-words text-[15px] font-normal leading-none">{{ $dialog['title'] }}</h3>
                                 <p class="mt-[20px]">{{ $dialog['subtitle'] ?? '' }}</p>
                             </div>
                             <button type="button" wire:click="closeDialog" class="mc-modal-close inline-flex h-10 w-10 shrink-0 items-center justify-center focus:outline-none focus:ring-0" aria-label="Cerrar">
