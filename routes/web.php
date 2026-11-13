@@ -228,7 +228,7 @@ Route::middleware([
         ->middleware('access.permission:activities.manage')
         ->name('time.index');
 
-    Route::get('/time/dashboard', [DashboardController::class, 'index'])
+    Route::get('/time/dashboard', \App\Livewire\TimeControl\GeneralCharts::class)
         ->middleware('access.permission:time-control.productivity.view')
         ->name('time.dashboard');
 

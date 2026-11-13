@@ -24,14 +24,16 @@ return [
         ],
     ],
     'panel_control_horas' => [
-        'label' => 'Gráficos Generales de Horas',
+        'label' => 'Gráficos Generales',
         'menu' => 'Monitoreo › Control de Actividades › Gráficos Generales',
-        'summary' => 'Consulta las horas y la productividad de un colaborador dentro de un periodo, con gráficas por día, cliente y actividad.',
+        'summary' => 'Muestra en gráficas el tiempo registrado en el Cronómetro y en ManagerControl. Hay dos tarjetas, una para cada fuente; cada una tiene su propio periodo y enseña una gráfica a la vez: por día, por cliente o por actividad.',
         'items' => [
-            ['question' => '¿Cómo consulto un periodo?', 'answer' => 'Elige las fechas y presiona Buscar. Si tienes acceso administrativo, selecciona primero al colaborador.', 'steps' => ['Abre Gráficos Generales en Control de Horas.', 'Si aparece el filtro Colaborador, busca por ID, nombre o correo y selecciona a la persona.', 'Define Fecha inicial y Fecha final.', 'Presiona Buscar para actualizar las cifras y las gráficas.']],
-            ['question' => '¿Qué muestra el resumen?', 'answer' => 'El resumen reúne horas, promedios y la distribución general del periodo consultado.', 'steps' => ['Realiza la búsqueda del periodo.', 'Selecciona Abrir informe en la tarjeta Resumen.', 'Revisa los totales y vuelve a las gráficas cuando termines.']],
-            ['question' => '¿Cómo reviso las gráficas?', 'answer' => 'Las gráficas muestran el tiempo por día y su distribución por cliente y actividad.', 'steps' => ['Después de Buscar, recorre las gráficas con los controles anterior y siguiente.', 'Consulta el título y las etiquetas de cada gráfica para identificar el desglose.', 'Si cambias el periodo o colaborador, presiona Buscar otra vez.']],
-            ['question' => '¿Cómo exporto o imprimo el resultado?', 'answer' => 'La barra superior tiene Descargar PDF e Imprimir para el resultado visible.', 'steps' => ['Selecciona el colaborador y periodo que necesitas.', 'Presiona Buscar y confirma que el resultado corresponda a la consulta.', 'Usa Descargar PDF para guardar una copia o Imprimir para enviarla a la impresora.']],
+            ['question' => '¿Cómo consulto un periodo?', 'answer' => 'Cada tarjeta tiene su propio Periodo de consulta: el de Cronómetro no cambia el de Manager Control.', 'steps' => ['En la tarjeta que quieres revisar, elige la fecha Desde y la fecha Hasta (por defecto son los últimos 15 días).', 'Presiona Consultar periodo.', 'El encabezado de la tarjeta muestra el rango y el total del periodo con el formato 000h 00m 00s.']],
+            ['question' => '¿Cómo cambio de gráfica?', 'answer' => 'Usa las pestañas Por día, Por cliente y Por actividad de cada tarjeta.', 'steps' => ['Por día: una barra por cada día del periodo y una línea punteada con el promedio diario.', 'Por cliente: los 10 clientes con más tiempo; el resto se suma en Otros.', 'Por actividad: las 10 actividades con más tiempo; el resto se suma en Otros.']],
+            ['question' => '¿Cómo filtro la gráfica por día?', 'answer' => 'En la pestaña Por día elige un cliente, una actividad o ambos.', 'steps' => ['Abre la lista Todos los clientes o Todas las actividades y elige uno.', 'La gráfica por día se actualiza sola y solo muestra ese tiempo.', 'Para quitar el filtro elige Todos los clientes o Todas las actividades. Al consultar otro periodo los filtros se limpian.']],
+            ['question' => '¿Cómo veo el tiempo exacto?', 'answer' => 'Pasa el cursor sobre una barra.', 'steps' => ['En Por día verás la fecha, el tiempo del día y el promedio.', 'En Por cliente y Por actividad verás el tiempo y el porcentaje que representa del total del periodo.']],
+            ['question' => '¿Por qué Manager Control no muestra gráficas?', 'answer' => 'Las gráficas de Manager Control necesitan que tu usuario del CRM tenga un colaborador de ManagerControl asignado.', 'steps' => ['Si aparece un aviso de que no tienes colaborador asignado, pide al administrador que te asigne en Manager Control › Asignar usuario del CRM.', 'Si aparece que no se pudo consultar ManagerControl, inténtalo de nuevo en unos minutos.']],
+            ['question' => '¿Qué ve el administrador?', 'answer' => 'El administrador elige al colaborador arriba a la derecha y las dos tarjetas muestran las gráficas de esa persona.', 'steps' => ['Abre la lista Colaborador y busca a la persona.', 'Las dos tarjetas se actualizan con su tiempo del Cronómetro y de ManagerControl.']],
         ],
     ],
     'supervision_horas' => [

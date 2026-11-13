@@ -136,7 +136,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[123px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.index', 'time.reports', 'testing.managercontrol.*', 'testing.own-hours.*', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'organigrama.*', 'soporte.ticket', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[123px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.index', 'time.reports', 'testing.managercontrol.*', 'testing.own-hours.*', 'time.dashboard', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'organigrama.*', 'soporte.ticket', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             <button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed" class="mobile-menu-button" aria-label="Menú de navegación" title="Menú de navegación">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -154,6 +154,14 @@
                     <span>Control de Actividades</span>
                     <span class="text-white">›</span>
                     <span class="text-white">Cronómetro</span>
+                </div>
+            @elseif (request()->routeIs('time.dashboard'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
+                    <span>Monitoreo</span>
+                    <span class="text-white">›</span>
+                    <span>Control de Actividades</span>
+                    <span class="text-white">›</span>
+                    <span class="text-white">Gráficos Generales</span>
                 </div>
             @elseif (request()->routeIs('time.reports'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">

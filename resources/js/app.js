@@ -6,6 +6,7 @@ import './activity-sortable';
 import './row-step-scroll';
 import './organization-sortable';
 import './clock-particle-network';
+import './general-charts';
 
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('productivityDatePicker', (model, marks = []) => ({

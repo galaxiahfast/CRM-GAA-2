@@ -9,50 +9,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): View
-    {
-        $viewer = $request->user();
-        $isAdmin = $viewer->isAdmin();
-        [$start, $end] = $this->dateRangeFromRequest($request);
-
-        $search = trim((string) $request->query('search', ''));
-
-        // ✅ Cambio 1: pasar false para NO limitar a 8 usuarios
-        $users = $isAdmin ? $this->searchUsers($search, false) : collect();
-        $selectedUser = $isAdmin
-            ? $this->selectedUser($request, $users)
-            : $viewer;
-        $chart = $selectedUser
-            ? $this->workedTimeByDay($selectedUser, $start, $end)
-            : $this->emptyChart($start, $end);
-
-        return view('time-dashboard.informe-productividad', [
-            'isAdmin' => $isAdmin,
-            'search' => $search,
-            'users' => $users,
-            'selectedUser' => $selectedUser,
-            'start' => $start,
-            'end' => $end,
-            'labels' => $chart['labels'],
-            'hours' => $chart['hours'],
-            'averageHours' => $chart['averageHours'],
-            'totalSeconds' => $chart['totalSeconds'],
-            'clientLabels' => $chart['clientLabels'],
-            'clientData' => $chart['clientData'],
-            'clientIds' => $chart['clientIds'],
-            'clientTotalSeconds' => $chart['clientTotalSeconds'],
-            'activityLabels' => $chart['activityLabels'],
-            'activityData' => $chart['activityData'],
-            'activityIds' => $chart['activityIds'],
-            'activityTotalSeconds' => $chart['activityTotalSeconds'],
-            'topClientActivity' => $chart['topClientActivity'],
-        ]);
-    }
-
+    // La página de Gráficos Generales es el componente App\Livewire\TimeControl\GeneralCharts; aquí quedan los datos en JSON.
     public function getDashboardData(Request $request): JsonResponse
     {
         $viewer = $request->user();
@@ -279,51 +239,6 @@ class DashboardController extends Controller
         }
     }
 
-    private function selectedUser(Request $request, $users): ?User
-    {
-        $id = $request->integer('user_id');
-
-        if ($id > 0) {
-            return User::with('role')->find($id);
-        }
-
-        $search = trim((string) $request->query('search', ''));
-
-        if ($search !== '' && ctype_digit($search)) {
-            return User::with('role')->find((int) $search);
-        }
-
-        if ($search !== '' && $users->count() === 1) {
-            return $users->first();
-        }
-
-        return null;
-    }
-
-    // ✅ Cambio 2: Método searchUsers modificado con parámetro $limit
-    private function searchUsers(string $search, $limit = true)
-    {
-        $query = User::with('role')
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($nested) use ($search) {
-                    $nested->where('id', $search)
-                        ->orWhere('employee_id', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('name');
-
-        // ✅ Si $limit es true, aplicar límite de 8 (para la búsqueda)
-        // ✅ Si $limit es false, traer todos los usuarios
-        if ($limit) {
-            $query->limit(8);
-        }
-
-        return $query->get();
-    }
-
     /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int, topClientActivity: ?array} */
     private function workedTimeByDay(User $user, Carbon $start, Carbon $end): array
     {
@@ -427,28 +342,6 @@ class DashboardController extends Controller
             'activityIds' => $activityIds,
             'activityTotalSeconds' => $secondsByActivity->sum('seconds'),
             'topClientActivity' => $topClientActivity,
-        ];
-    }
-
-    /** @return array{labels: array<int, string>, hours: array<int, float>, averageHours: array<int, float>, totalSeconds: int, clientLabels: array<int, string>, clientData: array<int, float>, clientIds: array<int, int>, clientTotalSeconds: int, activityLabels: array<int, string>, activityData: array<int, float>, activityTotalSeconds: int, topClientActivity: ?array} */
-    private function emptyChart(Carbon $start, Carbon $end): array
-    {
-        $days = $this->daysBetween($start, $end);
-
-        return [
-            'labels' => array_map(fn (Carbon $day) => $day->format('d/m/Y'), $days),
-            'hours' => array_fill(0, count($days), 0),
-            'averageHours' => array_fill(0, count($days), 0),
-            'totalSeconds' => 0,
-            'clientLabels' => [],
-            'clientData' => [],
-            'clientIds' => [],
-            'clientTotalSeconds' => 0,
-            'activityLabels' => [],
-            'activityData' => [],
-            'activityIds' => [],
-            'activityTotalSeconds' => 0,
-            'topClientActivity' => null,
         ];
     }
 
