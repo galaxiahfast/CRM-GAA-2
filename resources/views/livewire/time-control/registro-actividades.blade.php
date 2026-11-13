@@ -584,6 +584,7 @@
                                     }
                                 }"
                                 x-init="tick(); timerId = setInterval(() => tick(), 1000)"
+                                x-effect="(() => { const html = digits(display); $nextTick(() => { if ($refs.timeCell) $refs.timeCell.innerHTML = html; }); })()"
                                 data-accumulated="{{ $secondsFor($entry) }}"
                                 data-open-start="{{ $openStartFor($entry) }}"
                             >
@@ -597,7 +598,7 @@
                                     <div class="truncate leading-none" title="{{ $entry->subService->sub_service ?? '--' }}">{{ $entry->subService->sub_service ?? '--' }}</div>
                                 </td>
 
-                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle tabular-nums" x-html="digits(display)">
+                                <td data-label="Tiempo" class="whitespace-nowrap p-[20px] align-middle tabular-nums" x-ref="timeCell">
                                     {{ $digitBoxes($fmt($entry->calculateEffectiveSeconds())) }}
                                 </td>
 
