@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditoriaConfirmacionesController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\BackupUploadController;
@@ -306,6 +307,18 @@ Route::middleware([
             ->name('show');
         Route::get('/{tool}/contenido', [BankReconciliationToolController::class, 'content'])
             ->whereIn('tool', ['ocr', 'bancaria'])
+            ->name('content');
+    });
+
+    // ==========================================
+    // AUDITORIA - CONFIRMACIONES DE SALDOS (todos los usuarios autenticados)
+    // ==========================================
+    Route::prefix('confirmaciones')->name('confirmaciones.')->group(function () {
+        Route::get('/{tool}', [AuditoriaConfirmacionesController::class, 'show'])
+            ->whereIn('tool', ['confirmaciones'])
+            ->name('show');
+        Route::get('/{tool}/contenido', [AuditoriaConfirmacionesController::class, 'content'])
+            ->whereIn('tool', ['confirmaciones'])
             ->name('content');
     });
 
