@@ -43,7 +43,23 @@ Schedule::call(fn () => app(ContpaqiBackupCatalog::class)->refreshToday())
 
 // 2. REVISIÓN DE 30 DÍAS (Una vez al día)
 // Recupera marcas faltantes sin borrar ni sobrescribir correcciones locales.
-Schedule::command('biometric:sync --maintenance')->dailyAt('23:00')->withoutOverlapping();
+Schedule::command('biometric:sync --maintenance')
+    ->dailyAt('23:00')
+    ->timezone(config('time-control.timezone', 'America/Mexico_City'))
+    ->withoutOverlapping();
+
+// Pausa la actividad del Cronómetro de quien cerró la página o el navegador: mientras el CRM esté abierto (en
+// cualquier apartado) el navegador avisa cada 30 s; tras unos minutos sin aviso se pausa en la última vez que se le vio.
+Schedule::command('time:pause-abandoned')->everyMinute()->withoutOverlapping();
+
+// Envía las actividades del Cronómetro a ManagerControl (solo en ese sentido). Solo corre si está activado en el .env
+// (MANAGERCONTROL_TIMER_SYNC_ENABLED=true); las actividades en progreso se envían cuando se pausan o se cierran.
+if (config('managercontrol.timer_sync.enabled')) {
+    Schedule::command('managercontrol:sync-timer --apply')
+        ->everyThirtyMinutes()
+        ->name('managercontrol:sync-timer')
+        ->withoutOverlapping(25);
+}
 
 // Cierra los cronómetros que sigan activos al terminar la jornada. Se usa
 // una zona horaria explícita porque APP_TIMEZONE puede permanecer en UTC.

@@ -62,7 +62,8 @@ class ManagerControlWriter
      * @param  array{date: string, customer_id: int|string, activity_id: int|string, hours: float|string, description: ?string}  $data
      * @param  array{date: string, customer_id: int, activity_id: int, hours: float, description_raw: string}|null  $expected  cómo estaba el registro al abrir el formulario
      */
-    public function update(int $recordId, int $employeeId, array $data, ?User $actor = null, ?array $expected = null): void
+    /** @return int filas actualizadas (0 si el registro ya no estaba como se esperaba: editado o dado de baja en el escritorio) */
+    public function update(int $recordId, int $employeeId, array $data, ?User $actor = null, ?array $expected = null): int
     {
         $this->assertEnabled();
         $clean = $this->validate($data);
@@ -81,9 +82,11 @@ class ManagerControlWriter
             $sql .= " AND {$h['customer_id']} = ? AND {$h['activity_id']} = ? AND {$h['hours']} = ? AND {$h['date']} = CAST(? AS date) AND {$h['description']} = ?";
             array_push($bindings, (int) $expected['customer_id'], (int) $expected['activity_id'], number_format((float) $expected['hours'], 1, '.', ''), (string) $expected['date'], (string) $expected['description_raw']);
         }
-        $this->db->update($sql, $bindings);
+        $affected = $this->db->update($sql, $bindings);
 
         $this->audit('update', $recordId, $employeeId, $clean, $actor);
+
+        return $affected;
     }
 
     public function delete(int $recordId, int $employeeId, ?User $actor = null): void

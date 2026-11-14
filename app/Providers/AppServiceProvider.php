@@ -19,6 +19,7 @@ use App\Services\ReferenceDataCache;
 use App\Services\Security\RequestMemoizedHasher;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Console\Events\ScheduledTaskFailed;
 use Illuminate\Hashing\HashManager;
 use Illuminate\Queue\Events\JobFailed;
@@ -174,6 +175,17 @@ class AppServiceProvider extends ServiceProvider
                         $userAgent,
                     );
                 });
+            }
+        });
+
+        // Al cerrar sesión se pausa la actividad que el usuario tenga en progreso en el Cronómetro
+        Event::listen(Logout::class, function (Logout $event): void {
+            if ($event->user instanceof User) {
+                try {
+                    app(\App\Services\TimeControl\TimerService::class)->pauseRunningFor($event->user);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
             }
         });
 

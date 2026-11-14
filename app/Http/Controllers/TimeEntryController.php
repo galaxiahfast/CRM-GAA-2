@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Reports\ReportExportManager;
 use App\Services\TimeControl\AttendanceExportService;
 use App\Services\TimeControl\AttendanceService;
 use App\Services\TimeControl\AttendanceSettingsService;
@@ -91,7 +92,7 @@ class TimeEntryController extends Controller
     /**
      * Exporta el reporte del checador en TXT, CSV o PDF.
      */
-    public function exportarAsistencia(Request $request, string $format): StreamedResponse
+    public function exportarAsistencia(Request $request, string $format, ReportExportManager $reports): StreamedResponse
     {
         $data = $request->validate([
             'employee_id' => ['required', 'string'],
@@ -104,6 +105,11 @@ class TimeEntryController extends Controller
         $user = $this->resolveAttendanceUser($request, $employeeId, $data['user_id'] ?? null);
 
         $resultado = $this->buildPayrollResult($employeeId, $data['inicio'], $data['fin'], user: $user);
+
+        // El PDF usa el formato de los reportes del CRM, igual que Cronómetro y Manager Control
+        if (strtolower($format) === 'pdf') {
+            return $reports->download('pdf', $this->exportService->ownMarksReport($resultado, $user, $employeeId, $data['inicio'], $data['fin']));
+        }
 
         $meta = [
             'Colaborador' => $user ? trim($user->name.' '.$user->last_name) : 'ID '.$employeeId,

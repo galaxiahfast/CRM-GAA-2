@@ -4,6 +4,7 @@ namespace App\Livewire\Testing;
 
 use App\Models\ManagerControlEmployeeLink;
 use App\Models\User;
+use App\Services\ManagerControl\ClockBalancer;
 use App\Services\ManagerControl\ClockComparison;
 use App\Services\ManagerControl\HoursSummary;
 use App\Services\ManagerControl\ManagerControlException;
@@ -99,6 +100,10 @@ class ManagerControlHours extends Component
 
     #[Locked]
     public ?int $deleteId = null;
+
+    /** Metas (fecha => décimas de hora) del cuadre con el reloj checador que espera confirmación. */
+    #[Locked]
+    public ?array $balanceTargets = null;
 
     /** Cada error nuevo lleva su propio aviso (de 5 segundos), aunque el anterior siga a la vista. */
     #[Locked]
@@ -487,6 +492,140 @@ class ManagerControlHours extends Component
     {
         $this->dialog = null;
         $this->deleteId = null;
+        $this->balanceTargets = null;
+    }
+
+    /**
+     * Cuadrar un día con el reloj checador (botón del globo del tiempo del día): muestra cómo quedaría cada actividad
+     * antes de escribir nada.
+     */
+    public function askBalance(string $date): void
+    {
+        $employeeId = $this->guardWrite();
+        if ($employeeId === null) {
+            return;
+        }
+        $clockDay = $this->clockComparison($employeeId)['days'][$date] ?? null;
+        if ($clockDay === null || $clockDay['review']) {
+            $this->fail('No se puede cuadrar ese día', $clockDay === null
+                ? 'El reloj checador no tiene marcas ese día.'
+                : 'El reloj checador tiene un número impar de marcas ese día; primero hay que revisarlas.');
+
+            return;
+        }
+        $this->openBalanceDialog([$date => ClockBalancer::dayTarget($clockDay['seconds'])], $employeeId, [$date => $clockDay['seconds']]);
+    }
+
+    /**
+     * Cuadrar todo el periodo del detalle: cada día con marcas completas y actividades en ManagerControl. El redondeo se
+     * arrastra de un día a otro para que el total del periodo en horas decimales sea el mismo que el del reloj checador.
+     */
+    public function askBalancePeriod(): void
+    {
+        $employeeId = $this->guardWrite();
+        if ($employeeId === null) {
+            return;
+        }
+        $clock = $this->clockComparison($employeeId);
+        if ($clock['state'] !== 'ok') {
+            $this->fail('No se puede cuadrar el periodo', 'No hay marcas del reloj checador para comparar con este colaborador.');
+
+            return;
+        }
+        try {
+            $mcDays = collect($this->cachedHours($employeeId, $this->appliedDetailFrom, $this->appliedDetailTo))->groupBy('date');
+        } catch (ManagerControlException $e) {
+            $this->fail('No se pudo leer ManagerControl', $e->getMessage());
+
+            return;
+        }
+        $seconds = collect($clock['days'])
+            ->filter(fn (array $day, string $date): bool => ! $day['review'] && $mcDays->has($date))
+            ->map(fn (array $day): int => $day['seconds'])
+            ->all();
+        if ($seconds === []) {
+            $this->fail('No hay días para cuadrar', 'En el periodo no hay días con marcas completas en el reloj checador y actividades en ManagerControl.');
+
+            return;
+        }
+        $this->openBalanceDialog(ClockBalancer::periodTargets($seconds), $employeeId, $seconds);
+    }
+
+    /** @param array<string, int> $targets @param array<string, int> $clockSeconds */
+    private function openBalanceDialog(array $targets, int $employeeId, array $clockSeconds): void
+    {
+        $balancer = app(ClockBalancer::class);
+        $days = [];
+        $problems = [];
+        foreach ($targets as $date => $target) {
+            $long = ucfirst(Carbon::parse($date)->locale('es')->translatedFormat('l, j \d\e F \d\e Y'));
+            try {
+                $rows = $balancer->preview($employeeId, $date, $target);
+            } catch (ManagerControlException $e) {
+                $problems[] = $long.': '.$e->getMessage();
+                unset($targets[$date]);
+
+                continue;
+            }
+            $before = round(array_sum(array_column($rows, 'from')), 1);
+            $after = round(array_sum(array_column($rows, 'to')), 1);
+            if (abs($before - $after) < 0.05) {
+                unset($targets[$date]);
+
+                continue;
+            }
+            $days[] = ['date' => $long, 'clock' => round($clockSeconds[$date] / 3600, 2), 'before' => $before, 'after' => $after, 'rows' => $rows];
+        }
+
+        if ($targets === []) {
+            if ($problems !== []) {
+                $this->fail('No se puede cuadrar', implode(' ', $problems));
+            } else {
+                $this->writeNotice = count($clockSeconds) === 1 ? 'Ese día ya cuadra con el reloj checador.' : 'El periodo ya cuadra con el reloj checador.';
+            }
+
+            return;
+        }
+
+        $this->balanceTargets = $targets;
+        $this->dialog = [
+            'kind' => 'balance',
+            'title' => 'Cuadrar con el reloj checador',
+            'subtitle' => 'Así quedarán las actividades en ManagerControl. Nada se guarda hasta que confirmes.',
+            'days' => $days,
+            'problems' => $problems,
+            'totals' => [
+                'clock' => round(array_sum(array_intersect_key($clockSeconds, $targets)) / 3600, 2),
+                'before' => round(array_sum(array_column($days, 'before')), 1),
+                'after' => round(array_sum(array_column($days, 'after')), 1),
+            ],
+        ];
+    }
+
+    public function confirmBalance(): void
+    {
+        $targets = $this->balanceTargets ?? [];
+        $this->closeDialog();
+        $employeeId = $this->guardWrite();
+        if ($employeeId === null || $targets === []) {
+            return;
+        }
+        $balancer = app(ClockBalancer::class);
+        $done = 0;
+        try {
+            foreach ($targets as $date => $target) {
+                $balancer->apply($employeeId, (string) $date, (int) $target, auth()->user());
+                $done++;
+            }
+        } catch (ManagerControlException $e) {
+            $this->forgetCachedHours($employeeId);
+            $this->fail('No se pudo terminar de cuadrar', ($done > 0 ? "Se cuadraron {$done} de ".count($targets).' días. ' : '').$e->getMessage());
+            Log::warning('ManagerControl (cuadrar con el reloj checador): '.$e->getMessage());
+
+            return;
+        }
+        $this->forgetCachedHours($employeeId);
+        $this->writeNotice = $done === 1 ? 'El día quedó cuadrado con el reloj checador.' : "Se cuadraron {$done} días con el reloj checador.";
     }
 
     private function fail(string $title, string $message): void

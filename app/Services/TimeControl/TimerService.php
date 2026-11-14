@@ -87,18 +87,65 @@ class TimerService
     /** Pausa la actividad: cierra el intervalo abierto y recalcula. */
     public function pause(TimeEntry $entry): TimeEntry
     {
+        return $this->pauseAt($entry, $this->localNow());
+    }
+
+    /**
+     * Pausa la actividad cerrando su intervalo en un momento dado (por ejemplo, la última vez que el usuario tuvo
+     * la página abierta), para no contar el tiempo en que ya no estaba.
+     */
+    public function pauseAt(TimeEntry $entry, Carbon $at): TimeEntry
+    {
         if ($entry->status !== TimeEntry::STATUS_IN_PROGRESS) {
             return $entry;
         }
 
-        return DB::transaction(function () use ($entry) {
-            $this->closeOpenInterval($entry, $this->localNow());
+        return DB::transaction(function () use ($entry, $at) {
+            $this->closeOpenInterval($entry, $at->copy()->timezone($this->moduleTimezone()));
             $entry->status = TimeEntry::STATUS_PAUSED;
             $entry->total_duration_seconds = $entry->load('intervals')->calculateEffectiveSeconds();
             $entry->save();
 
             return $entry;
         });
+    }
+
+    /**
+     * Pausa las actividades en progreso de quien ya no tiene el CRM abierto. Mientras haya una página del CRM abierta
+     * (en cualquier apartado, aunque la pestaña esté en segundo plano) el navegador avisa cada 30 segundos y eso
+     * actualiza users.last_seen_at. Si pasan $graceMinutes sin aviso (cerró la página o el navegador, se apagó el
+     * equipo o perdió la red), la actividad se pausa en la última vez que se le vio.
+     */
+    public function pauseAbandoned(?int $graceMinutes = null, ?Carbon $now = null): int
+    {
+        $graceMinutes ??= (int) config('time-control.presence_grace_minutes', 3);
+        $now = $now ? $now->copy() : Carbon::now();
+        $limit = $now->copy()->subMinutes(max(1, $graceMinutes));
+        $count = 0;
+
+        TimeEntry::query()
+            ->where('status', TimeEntry::STATUS_IN_PROGRESS)
+            ->with('user:id,last_seen_at')
+            ->each(function (TimeEntry $entry) use ($limit, $now, $graceMinutes, &$count) {
+                $lastSeen = $entry->user?->last_seen_at;
+                if ($lastSeen !== null && $lastSeen->greaterThanOrEqualTo($limit)) {
+                    return;
+                }
+
+                // Sin registro de presencia se pausa al final del margen; nunca antes de que empezara el intervalo
+                $this->pauseAt($entry, $lastSeen ?? $now->copy()->subMinutes(max(1, $graceMinutes)));
+                $count++;
+            });
+
+        return $count;
+    }
+
+    /** Al cerrar sesión se pausa lo que el usuario tenga en progreso. */
+    public function pauseRunningFor(User $user): void
+    {
+        if ($running = $this->runningEntry($user)) {
+            $this->pause($running);
+        }
     }
 
     /** Reanuda la actividad creando un nuevo intervalo. */

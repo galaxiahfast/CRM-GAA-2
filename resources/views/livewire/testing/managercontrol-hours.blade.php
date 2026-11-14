@@ -167,7 +167,7 @@
         @container prod (min-width: 1240px) {
             [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
             [data-productivity] .prod-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-            [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; border-bottom-width: 0; border-right-width: 1px; }
+            [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; overscroll-behavior-y: auto; border-bottom-width: 0; border-right-width: 1px; }
             [data-productivity] .prod-form { display: flex; flex: 1; flex-direction: column; gap: 0; justify-content: space-between; }
             [data-productivity] .prod-dates, [data-productivity] .prod-date-field, [data-productivity] .prod-consult, [data-productivity] .prod-guide { display: contents; }
             [data-productivity] .prod-label, [data-productivity] .prod-guide-link { min-height: 0; margin-bottom: 0; line-height: 15px; }
@@ -292,6 +292,9 @@
                         @if ($writeNotice)<p class="prod-lines mt-[5px]" role="status" data-testid="write-notice">{{ $writeNotice }}</p>@endif
                     </div>
                     <div id="prod-d-export" class="flex flex-wrap items-center gap-[20px]">
+                        @if ($canWrite && $detailLoaded && $clock['state'] === 'ok' && $clock['days'] !== [])
+                            <button type="button" wire:click="askBalancePeriod" wire:loading.attr="disabled" wire:target="askBalancePeriod" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0" data-testid="clock-balance-period" title="Reparte la diferencia de cada día entre sus actividades para que las horas decimales del periodo sean las del reloj checador">Cuadrar periodo con el reloj checador</button>
+                        @endif
                         @if ($canWrite)
                             <button type="button" wire:click="openCreate" class="prod-link cursor-pointer leading-none focus:outline-none focus:ring-0">Agregar actividad</button>
                         @else
@@ -354,10 +357,10 @@
                                             $longDay = ucfirst(\Illuminate\Support\Carbon::parse($date)->locale('es')->translatedFormat('l, j \d\e F \d\e Y'));
                                         @endphp
                                         {{-- Al poner el puntero sobre el tiempo del día sale un globo con lo que marca el reloj checador y la diferencia con ManagerControl (solo informativo) --}}
-                                        <span class="prod-dcell panel-border" style="justify-content:center" data-testid="clock-balloon-host" x-data="{ tip: false, x: 0, y: 0, ax: 20, below: false, show(el) { const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.below = r.top < 360 * z; const w = Math.min(440 * z, window.innerWidth - 40); const right = Math.max(w + 20, Math.min(r.right, window.innerWidth - 20)); this.x = right / z; this.y = (this.below ? r.bottom : r.top) / z; this.ax = right === r.right ? 20 : Math.max(20, Math.min(w / z - 31, (right - (r.left + r.width / 2)) / z - 5.5)); this.tip = true } }" @mouseenter="show($el)" @mouseleave="tip = false"><span class="relative min-w-0">
+                                        <span class="prod-dcell panel-border" style="justify-content:center" data-testid="clock-balloon-host" x-data="{ tip: false, x: 0, y: 0, ax: 20, below: false, hideTimer: null, hideSoon() { clearTimeout(this.hideTimer); this.hideTimer = setTimeout(() => this.tip = false, 250) }, keep() { clearTimeout(this.hideTimer) }, show(el) { clearTimeout(this.hideTimer); const r = el.getBoundingClientRect(); const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1; this.below = r.top < 360 * z; const w = Math.min(440 * z, window.innerWidth - 40); const right = Math.max(w + 20, Math.min(r.right, window.innerWidth - 20)); this.x = right / z; this.y = (this.below ? r.bottom : r.top) / z; this.ax = right === r.right ? 20 : Math.max(20, Math.min(w / z - 31, (right - (r.left + r.width / 2)) / z - 5.5)); this.tip = true } }" @mouseenter="show($el)" @mouseleave="hideSoon()"><span class="relative min-w-0">
                                             <span class="whitespace-nowrap leading-none tabular-nums">{{ $digits($padTotal($mcSeconds)) }}</span>
                                             <template x-teleport="body">
-                                                <span role="tooltip" data-panel data-productivity :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translate(-100%, ${below ? '20px' : 'calc(-100% - 20px)'})`" class="app-zoom-overlay panel-surface panel-border panel-text pointer-events-none fixed z-[200001] block w-[440px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" data-testid="clock-balloon">
+                                                <span role="tooltip" data-panel data-productivity :class="tip ? '' : 'hidden'" :style="`left:${x}px;top:${y}px;transform:translate(-100%, ${below ? '20px' : 'calc(-100% - 20px)'})`" @mouseenter="keep()" @mouseleave="hideSoon()" class="app-zoom-overlay panel-surface panel-border panel-text fixed z-[200001] block w-[440px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" data-testid="clock-balloon">
                                                     {{-- Mismo diseño del recorrido (título en azul, fecha y texto justificado con las mismas distancias), sin botones --}}
                                                     <span class="panel-accent block leading-[30px]">Comparación con el reloj checador</span>
                                                     <span class="mt-[15px] block leading-[30px]">{{ $longDay }}</span>
@@ -385,6 +388,14 @@
                                                                 <span class="mt-[15px] block text-justify leading-[30px]" style="color: var(--panel-danger)" data-testid="clock-warning">Advertencia: el tiempo del día no coincide. {{ $diff < 0 ? 'En ManagerControl hay menos tiempo que en el reloj checador.' : 'En ManagerControl hay más tiempo que en el reloj checador.' }}</span>
                                                             @else
                                                                 <span class="mt-[15px] block text-justify leading-[30px]">Los tiempos coinciden.</span>
+                                                            @endif
+                                                            @php
+                                                                // ManagerControl guarda décimas de hora: se puede cuadrar si la meta en décimas es distinta de lo capturado
+                                                                $mcTenths = array_sum(array_map(fn (array $row): int => (int) round($row['hours'] * 10), $dayRows));
+                                                                $canBalance = $canWrite && $mcTenths !== \App\Services\ManagerControl\ClockBalancer::dayTarget($clockDay['seconds']);
+                                                            @endphp
+                                                            @if ($canBalance)
+                                                                <button type="button" wire:click="askBalance('{{ $date }}')" @click="tip = false" class="prod-primary mt-[20px] w-full focus:outline-none focus:ring-0" data-testid="clock-balance">Cuadrar con el reloj checador</button>
                                                             @endif
                                                         @endif
                                                     @endif
@@ -758,7 +769,7 @@
                     data-mc-modal
                     data-mc-dialog
                 >
-                    <div data-panel class="app-zoom-overlay panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; @if (($dialog['kind'] ?? 'error') === 'confirm') height: min(620px, calc((100dvh - 40px) / var(--app-zoom, 1))); @else max-height: calc((100dvh - 40px) / var(--app-zoom, 1)); @endif overscroll-behavior: contain;">
+                    <div data-panel class="app-zoom-overlay panel-surface panel-border relative flex w-full flex-col overflow-hidden rounded-xl border shadow-2xl" style="max-width: 620px; @if (in_array($dialog['kind'] ?? 'error', ['confirm', 'balance'], true)) height: min(620px, calc((100dvh - 40px) / var(--app-zoom, 1))); @else max-height: calc((100dvh - 40px) / var(--app-zoom, 1)); @endif overscroll-behavior: contain;">
                         <header class="panel-surface panel-border flex flex-shrink-0 items-center justify-between gap-[15px] border-b p-[20px]">
                             <div class="min-w-0">
                                 <h3 id="mc-dialog-title" class="panel-accent break-words text-[15px] font-normal leading-none">{{ $dialog['title'] }}</h3>
@@ -768,7 +779,7 @@
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18"/></svg>
                             </button>
                         </header>
-                        @if (($dialog['kind'] ?? 'error') === 'confirm')
+                        @if (in_array($dialog['kind'] ?? 'error', ['confirm', 'balance'], true))
                         <div data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
                             <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll absolute inset-0 overflow-y-auto">
                         @else
@@ -776,7 +787,44 @@
                             <div>
                         @endif
                             <div class="flex flex-col gap-[20px] p-[20px]">
-                                @if (! empty($dialog['fields']))
+                                @if (($dialog['kind'] ?? '') === 'balance')
+                                    @php $hoursText = fn (float $hours): string => number_format($hours, 1); @endphp
+                                    {{-- Mismas medidas que el formulario de la actividad: 20px entre títulos, renglones y líneas de texto --}}
+                                    <section class="mc-modal-section" data-testid="balance-summary">
+                                        <h4 class="panel-accent text-[15px] font-normal leading-none">Resumen</h4>
+                                        <div class="mt-[20px] flex flex-col gap-[20px]">
+                                            @foreach ([['Reloj checador', number_format($dialog['totals']['clock'], 2), false], ['ManagerControl ahora', $hoursText($dialog['totals']['before']), false], ['ManagerControl después de cuadrar', $hoursText($dialog['totals']['after']), true]] as [$label, $value, $accent])
+                                                <div class="flex items-start justify-between gap-[20px]">
+                                                    <span class="block min-w-0">{{ $label }}</span>
+                                                    <span class="block whitespace-nowrap {{ $accent ? 'panel-accent' : '' }}">{{ $digits($value) }} h</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <p class="mt-[20px] text-justify">ManagerControl guarda décimas de hora (6 minutos): la diferencia se reparte entre las actividades de cada día según el tiempo que ya tenía cada una.</p>
+                                    </section>
+                                    @foreach ($dialog['days'] as $balanceDay)
+                                        <section class="mc-modal-section" data-testid="balance-day">
+                                            <h4 class="panel-accent text-[15px] font-normal leading-none">{{ $balanceDay['date'] }}</h4>
+                                            <p class="mt-[20px]">Reloj checador {{ $digits(number_format($balanceDay['clock'], 2)) }} h · ManagerControl {{ $digits($hoursText($balanceDay['before'])) }} h → {{ $digits($hoursText($balanceDay['after'])) }} h</p>
+                                            <div class="mt-[20px] flex flex-col gap-[20px]">
+                                                @foreach ($balanceDay['rows'] as $balanceRow)
+                                                    <div class="flex items-start justify-between gap-[20px]">
+                                                        <span class="block min-w-0">{{ $balanceRow['customer'] }} · {{ $balanceRow['activity'] }}</span>
+                                                        <span class="block whitespace-nowrap {{ abs($balanceRow['from'] - $balanceRow['to']) >= 0.05 ? 'panel-accent' : '' }}">{{ $digits($hoursText($balanceRow['from'])) }} → {{ $digits($hoursText($balanceRow['to'])) }} h</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </section>
+                                    @endforeach
+                                    @if (! empty($dialog['problems']))
+                                        <section class="mc-modal-section">
+                                            <h4 class="text-[15px] font-normal leading-none" style="color: var(--panel-danger)">Días que no se van a cuadrar</h4>
+                                            @foreach ($dialog['problems'] as $problem)
+                                                <p class="mt-[20px] text-justify">{{ $problem }}</p>
+                                            @endforeach
+                                        </section>
+                                    @endif
+                                @elseif (! empty($dialog['fields']))
                                     @php $locked = $dialog['fields']; @endphp
                                     {{-- Mismo formulario que «Agregar / Editar actividad», pero bloqueado --}}
                                     <section class="mc-modal-section">
@@ -818,12 +866,15 @@
                                 @endif
                             </div>
                             </div>
-                            @if (($dialog['kind'] ?? 'error') === 'confirm')
+                            @if (in_array($dialog['kind'] ?? 'error', ['confirm', 'balance'], true))
                                 <span x-show="visible" x-cloak class="panel-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             @endif
                         </div>
                         <footer class="panel-border flex flex-shrink-0 flex-wrap items-center justify-end gap-[20px] border-t p-[20px]">
-                            @if (($dialog['kind'] ?? 'error') === 'confirm')
+                            @if (($dialog['kind'] ?? 'error') === 'balance')
+                                <button type="button" wire:click="closeDialog" class="mc-modal-outline inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Cancelar</button>
+                                <button type="button" wire:click="confirmBalance" wire:loading.attr="disabled" wire:target="confirmBalance" class="mc-modal-primary inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none" data-testid="balance-confirm">Cuadrar</button>
+                            @elseif (($dialog['kind'] ?? 'error') === 'confirm')
                                 <button type="button" wire:click="closeDialog" class="mc-modal-outline inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Cancelar</button>
                                 <button type="button" wire:click="confirmDelete" wire:loading.attr="disabled" wire:target="confirmDelete" class="mc-modal-primary inline-flex h-11 min-w-28 flex-1 items-center justify-center rounded-xl px-[20px] focus:outline-none focus:ring-0 sm:flex-none">Dar de baja</button>
                             @else

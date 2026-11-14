@@ -173,7 +173,7 @@
         @container prod (min-width: 1240px) {
             [data-productivity] .prod-summary-card { min-height: max(600px, calc(var(--app-dvh) - 348px)); }
             [data-productivity] .prod-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-            [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; border-bottom-width: 0; border-right-width: 1px; }
+            [data-productivity] .prod-aside { display: flex; min-height: 0; flex-direction: column; overflow-y: auto; overscroll-behavior-y: auto; border-bottom-width: 0; border-right-width: 1px; }
             [data-productivity] .prod-form { display: flex; flex: 1; flex-direction: column; gap: 0; justify-content: space-between; }
             [data-productivity] .prod-dates, [data-productivity] .prod-date-field, [data-productivity] .prod-consult, [data-productivity] .prod-guide { display: contents; }
             [data-productivity] .prod-label, [data-productivity] .prod-guide-link { min-height: 0; margin-bottom: 0; line-height: 15px; }

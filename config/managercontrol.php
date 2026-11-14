@@ -52,6 +52,18 @@ return [
         'max_past_days' => (int) env('MANAGERCONTROL_WRITE_MAX_PAST_DAYS', 400),
     ],
 
+    /*
+    | Envío del Cronómetro del CRM a ManagerControl (solo en ese sentido). APAGADO por defecto: escribe en la base real.
+    | Cada día, cliente y actividad del Cronómetro se captura como una actividad en ManagerControl; lo que después se
+    | edite o dé de baja en ManagerControl se respeta y el CRM ya no lo toca. Usa la misma cuenta de captura (write).
+    */
+    'timer_sync' => [
+        'enabled' => (bool) env('MANAGERCONTROL_TIMER_SYNC_ENABLED', false),
+        // Primer día que se envía (las actividades anteriores no se mandan)
+        'from' => env('MANAGERCONTROL_TIMER_SYNC_FROM', '2026-11-12'),
+        'description' => 'Registrado desde el Cronómetro del CRM',
+    ],
+
     // Cuenta independiente para importar catálogos. Nunca se usa para registrar horas.
     'catalog_write' => [
         'enabled' => (bool) env('MANAGERCONTROL_CATALOG_WRITE_ENABLED', false),

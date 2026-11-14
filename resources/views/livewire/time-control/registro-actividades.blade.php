@@ -217,7 +217,7 @@
             /* Mismo alto que las tarjetas de productividad y Manager Control (en la página unida ya no hay un contenedor que la estire) */
             [data-time-clock] .clock-card { flex: 1; min-height: max(600px, calc(var(--app-dvh) - 348px)); }
             [data-time-clock] .clock-layout { flex: 1; min-height: 0; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-            [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
+            [data-time-clock] .clock-aside { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; border-bottom: 0; border-right: 1px solid var(--panel-border); }
             [data-time-clock] .clock-form { display: flex; flex-direction: column; flex: 1; }
             [data-time-clock] .clock-form-grid { display: flex; flex-direction: column; flex: 1; gap: 0; justify-content: space-between; }
             [data-time-clock] .clock-field, [data-time-clock] .clock-guide { display: contents; }

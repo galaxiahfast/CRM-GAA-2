@@ -521,8 +521,8 @@ html.module-dark-theme #main-content [class*="shadow-"] {
     box-shadow: 0 8px 24px rgba(0, 0, 0, .28) !important;
 }
 
-html.module-dark-theme #main-content canvas,
-html.module-dark-theme #main-content :is(#grafica_tiempo_checador, #grafica_ganancias_checador) svg {
+/* Las gráficas del Reloj Checador ya toman sus colores del tema (claro y oscuro), por eso ya no se invierten aquí */
+html.module-dark-theme #main-content canvas {
     filter: invert(1) hue-rotate(180deg);
 }
 

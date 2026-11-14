@@ -89,6 +89,61 @@ class AttendanceExportService
         );
     }
 
+    /**
+     * Reporte PDF del Reloj Checador del propio usuario con el formato de los reportes del CRM (el mismo generador
+     * que Cronómetro y Productividad). Lleva las mismas columnas que la tabla «Marcas de tiempo» de la pantalla.
+     *
+     * @param  array<string, mixed>  $payrollResult  Resultado de AttendanceService::processPayroll
+     */
+    public function ownMarksReport(array $payrollResult, ?User $user, string $employeeId, string $from, string $to): ReportData
+    {
+        $rows = [];
+
+        foreach ($payrollResult['resumen'] ?? [] as $item) {
+            $rows[] = [
+                Carbon::parse((string) $item['fecha'])->format('d/m/y'),
+                (string) $item['detalles_marcas'],
+                (string) $item['neto'],
+                (string) $item['horas_decimal'],
+                (string) $item['pago_horas'],
+                (string) $item['total'],
+                ! empty($item['requiere_revision']) ? 'revisar' : '',
+            ];
+        }
+
+        $totales = $payrollResult['totales_pie'] ?? [];
+        $rows[] = [
+            'Total acumulado',
+            '',
+            $totales['tiempo'] ?? '00h 00m 00s',
+            $totales['decimal'] ?? '0.00',
+            $totales['pago_h'] ?? '$0.00',
+            $totales['general'] ?? '$0.00',
+        ];
+
+        $name = $user ? mb_strtoupper(trim($user->name.' '.$user->last_name)) : 'ID '.$employeeId;
+        $date = fn (string $value): string => Carbon::parse($value)->format('d/m/Y');
+
+        return new ReportData(
+            title: 'Marcas de tiempo del Reloj checador',
+            filenameBase: 'reloj-checador-marcas_'.$from.'_'.$to,
+            meta: [
+                'Colaborador' => $name,
+                'ID Checador' => $employeeId,
+                'Periodo' => $date($from).' al '.$date($to),
+                'Tiempo neto' => (string) ($totales['tiempo'] ?? '00h 00m 00s'),
+                'Total acumulado' => (string) ($totales['general'] ?? '$0.00'),
+            ],
+            sections: [
+                new ReportSection(
+                    title: 'Marcas de tiempo',
+                    columns: ['Fecha', 'Marcas / Chequeos', 'Tiempo neto', 'Hrs decimales', 'Pago base', 'Total del día'],
+                    rows: $rows,
+                ),
+            ],
+        );
+    }
+
     /** @param array<int, array<string, mixed>> $changes */
     public function downloadChangeHistory(array $changes, bool $isExample): StreamedResponse
     {

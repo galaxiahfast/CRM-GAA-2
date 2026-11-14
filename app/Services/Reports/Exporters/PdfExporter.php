@@ -50,6 +50,10 @@ class PdfExporter implements ReportExporter
 
     private function renderHtml(ReportData $data): string
     {
+        if ($this->isAttendanceMarksReport($data)) {
+            return $this->renderAttendanceMarksHtml($data);
+        }
+
         if ($this->isProductivityReport($data)) {
             return $this->renderProductivityHtml($data);
         }
@@ -200,6 +204,49 @@ class PdfExporter implements ReportExporter
     private function isProductivityReport(ReportData $data): bool
     {
         return str_starts_with($data->filenameBase, 'mi-productividad_');
+    }
+
+    // Marcas de tiempo del Reloj Checador del propio usuario (se revisa antes que el formato general del checador)
+    private function isAttendanceMarksReport(ReportData $data): bool
+    {
+        return str_starts_with($data->filenameBase, 'reloj-checador-marcas_');
+    }
+
+    private function renderAttendanceMarksHtml(ReportData $data): string
+    {
+        $section = $data->sections[0];
+        $rows = $section->rows;
+        // La última fila es el total acumulado; las demás llevan una séptima celda que indica si hay que revisarlas
+        $total = array_pop($rows);
+        $rows = array_map(static fn (array $row): array => [
+            'cells' => array_slice($row, 0, 6),
+            'review' => ($row[6] ?? '') === 'revisar',
+        ], $rows);
+
+        // Filas por página: la primera lleva el encabezado del informe, las demás solo la tabla
+        $chunks = [];
+        $perPage = 16;
+        while ($rows !== []) {
+            $chunks[] = array_splice($rows, 0, $perPage);
+            $perPage = 24;
+        }
+        $chunks = $chunks === [] ? [[]] : $chunks;
+
+        $pages = array_map(static fn (array $chunk, int $index): array => [
+            'intro' => $index === 0,
+            'rows' => $chunk,
+            'total' => null,
+        ], $chunks, array_keys($chunks));
+        $pages[array_key_last($pages)]['total'] = $total;
+
+        return view('pdf.attendance-marks-report', [
+            'report' => $data,
+            'section' => $section,
+            'pages' => $pages,
+            'headerDecorations' => $this->productivityImages(public_path('img/delivery-notes/datamid-header.png'), count($pages)),
+            'logos' => $this->productivityImages(public_path('img/delivery-notes/datamid-logo.png'), count($pages)),
+            'footerDecorations' => $this->productivityImages(public_path('img/delivery-notes/datamid-footer.png'), count($pages)),
+        ])->render();
     }
 
     private function renderProductivityHtml(ReportData $data): string

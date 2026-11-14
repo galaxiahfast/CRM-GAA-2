@@ -128,4 +128,25 @@ return [
             ['question' => '¿Cómo asigno rápido a varios usuarios?', 'answer' => 'En cada usuario sin colaborador aparece Sugerido con su coincidencia de nombre (70 % o más y sin empate): presiona Asignar para aceptarla. Para hacerlo con todos de una vez, usa Asignar sugeridos en Filtro de usuarios.', 'steps' => ['Revisa la sugerencia en gris de cada usuario sin colaborador.', 'Presiona Asignar en la celda para aceptarla, o abre la lista (la sugerencia va primera) y presiona Enter.', 'O presiona Asignar sugeridos (N) para asignar todas las sugerencias a la vez.', 'Puedes quitar o cambiar cualquier asignación con la × o eligiendo a otra persona.']],
         ],
     ],
+    'reloj_checador' => [
+        'label' => 'Marcas de tiempo',
+        'menu' => 'Monitoreo › Reloj Checador › Marcas de tiempo',
+        'summary' => 'Consulta, jornada por jornada, las marcas que registraste en el reloj checador biométrico con su tiempo neto, horas decimales e importes, y descarga el reporte. Es el primer bloque de la página Reloj Checador; su periodo es independiente del de Datos generales.',
+        'items' => [
+            ['question' => '¿Cómo consulto un periodo?', 'answer' => 'En Periodo de consulta elige las fechas Desde y Hasta y presiona Consultar periodo. Estas fechas solo afectan a la tabla de marcas.', 'steps' => ['Abre el calendario de Desde y elige la fecha inicial.', 'Abre el calendario de Hasta y elige la fecha final.', 'Presiona Consultar periodo.']],
+            ['question' => '¿Qué muestra cada fila?', 'answer' => 'Cada fila es una jornada: la fecha, las marcas del día, el tiempo neto, las horas decimales, el pago base y el total del día.', 'steps' => ['Revisa la columna Marcas / Chequeos para ver las horas registradas.', 'Al pie de la tabla está el total acumulado del periodo.']],
+            ['question' => '¿Qué significa una fila en rojo?', 'answer' => 'La jornada tiene un número impar de marcas y conviene revisarla.', 'steps' => ['La fila de esa jornada aparece con fondo rojo.', 'Revisa las marcas de ese día en Marcas / Chequeos.', 'Si falta una marca, repórtala a tu supervisor.']],
+            ['question' => '¿Cómo descargo el reporte?', 'answer' => 'En el encabezado de Marcas de tiempo usa Descargar reporte PDF.', 'steps' => ['Consulta primero un periodo con marcas.', 'Presiona Descargar reporte PDF.', 'El archivo usa el formato de los reportes del CRM e incluye las marcas del periodo consultado en esta tabla.']],
+        ],
+    ],
+    'reloj_checador_datos' => [
+        'label' => 'Datos generales del Reloj Checador',
+        'menu' => 'Monitoreo › Reloj Checador › Datos generales',
+        'summary' => 'Consulta los acumulados del periodo (tiempo neto, horas decimales, pago base, bono y total) y las gráficas de tiempo neto y ganancias por día. Es el segundo bloque de la página Reloj Checador; su periodo es independiente del de Marcas de tiempo.',
+        'items' => [
+            ['question' => '¿Cómo cambio el periodo?', 'answer' => 'Este bloque tiene sus propias fechas: no se modifican con las de Marcas de tiempo.', 'steps' => ['En Periodo de consulta elige Desde y Hasta.', 'Presiona Consultar periodo.', 'Los acumulados y las gráficas se actualizan con ese periodo.']],
+            ['question' => '¿Qué muestran los acumulados?', 'answer' => 'La suma de todas las jornadas del periodo.', 'steps' => ['Revisa la fila de tiempo neto, horas decimales, pago base, bono y total.', 'El tiempo neto del periodo también aparece a la derecha del encabezado.']],
+            ['question' => '¿Cómo cambio de gráfica?', 'answer' => 'Usa las pestañas Tiempo neto y Ganancias.', 'steps' => ['Tiempo neto muestra la duración de cada jornada, con su promedio diario y la jornada máxima.', 'Ganancias muestra el pago de cada día, con su promedio y el ingreso máximo.', 'Pasa el cursor sobre la gráfica para ver el valor exacto de un día.']],
+        ],
+    ],
 ];
