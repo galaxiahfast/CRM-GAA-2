@@ -23,8 +23,13 @@ class SupportChatMessage extends Model
         'attachment_original_name',
         'attachment_mime',
         'attachment_size',
+        'attachments',
         'sticker_key',
         'automatic_key',
+    ];
+
+    protected $casts = [
+        'attachments' => 'array',
     ];
 
     protected static function booted(): void
@@ -35,6 +40,11 @@ class SupportChatMessage extends Model
             }
             if ($message->attachment_path) {
                 Storage::disk('public')->delete($message->attachment_path);
+            }
+            foreach ((array) $message->attachments as $file) {
+                if (! empty($file['path'])) {
+                    Storage::disk('public')->delete($file['path']);
+                }
             }
         });
     }

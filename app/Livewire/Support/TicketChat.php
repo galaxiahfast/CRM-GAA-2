@@ -25,9 +25,22 @@ class TicketChat extends Component
 
     public string $message = '';
 
-    public $image = null;
+    /** Archivos listos para enviar (hasta MAX_FILES por mensaje). */
+    public array $files = [];
 
-    public $attachment = null;
+    /** Selección nueva del selector de archivos: se suma a $files. */
+    public $newFiles = [];
+
+    /** Cuántos mensajes se cargan (los más recientes); «Cargar anteriores» suma otros tantos. */
+    public int $messageLimit = 150;
+
+    public bool $hasOlderMessages = false;
+
+    private const MAX_FILES = 10;
+
+    private const FILE_MIMES = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip'];
+
+    private const IMAGE_MIMES = ['jpg', 'jpeg', 'png', 'webp'];
 
     private const STICKERS = [
         'fry-sospecha' => 'img/support/stickers/fry-sospecha.jpg',
@@ -53,24 +66,12 @@ class TicketChat extends Component
 
     public bool $canDeleteAllMessages = false;
 
+    /** Cambia con cada intento de envío para que el aviso emergente de error vuelva a mostrarse. */
+    public int $errorSeq = 0;
+
     public function mount(): void
     {
         abort_unless(auth()->check(), 403);
-
-        [$start] = $this->retentionBounds();
-        $expiredMessages = SupportChatMessage::withTrashed()->where('created_at', '<', $start);
-        $expiredImagePaths = (clone $expiredMessages)->whereNotNull('image_path')->pluck('image_path')->all();
-
-        if ($expiredImagePaths !== []) {
-            Storage::disk('public')->delete($expiredImagePaths);
-        }
-        $expiredAttachmentPaths = (clone $expiredMessages)->whereNotNull('attachment_path')->pluck('attachment_path')->all();
-
-        if ($expiredAttachmentPaths !== []) {
-            Storage::disk('public')->delete($expiredAttachmentPaths);
-        }
-
-        $expiredMessages->forceDelete();
 
         $now = Carbon::now($this->timezone());
         $this->todayLabel = $now->locale('es')->translatedFormat('d M Y');
@@ -137,20 +138,59 @@ class TicketChat extends Component
         $this->updatedMessage($this->message);
     }
 
-    public function removeImage(): void
+    /** Suma los archivos elegidos a los que ya estaban (máximo 10); los que no cumplan se descartan y se avisa. */
+    public function updatedNewFiles(): void
     {
-        $this->reset('image');
-        $this->resetValidation('image');
+        $this->errorSeq++;
+        $incoming = is_array($this->newFiles) ? $this->newFiles : [$this->newFiles];
+        $this->newFiles = [];
+        $this->resetValidation('newFiles');
+
+        foreach ($incoming as $file) {
+            if (! $file) {
+                continue;
+            }
+            if (count($this->files) >= self::MAX_FILES) {
+                $this->addError('newFiles', 'Puedes adjuntar hasta '.self::MAX_FILES.' archivos por mensaje.');
+                break;
+            }
+            $name = $file->getClientOriginalName();
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (! in_array($extension, self::FILE_MIMES, true)) {
+                $this->addError('newFiles', "«{$name}» no se puede adjuntar: usa imágenes JPG, PNG o WebP, o archivos PDF, Word, Excel, CSV, TXT o ZIP.");
+
+                continue;
+            }
+            if (in_array($extension, self::IMAGE_MIMES, true) && $file->getSize() > 5 * 1024 * 1024) {
+                $this->addError('newFiles', "La imagen «{$name}» supera los 5 MB.");
+
+                continue;
+            }
+            if ($file->getSize() > 10 * 1024 * 1024) {
+                $this->addError('newFiles', "El archivo «{$name}» supera los 10 MB.");
+
+                continue;
+            }
+            $this->files[] = $file;
+        }
     }
 
-    public function removeAttachment(): void
+    public function removeFile(int $index): void
     {
-        $this->reset('attachment');
-        $this->resetValidation('attachment');
+        unset($this->files[$index]);
+        $this->files = array_values($this->files);
+        $this->resetValidation('newFiles');
+    }
+
+    public function loadOlderMessages(): void
+    {
+        $this->messageLimit += 150;
+        $this->refreshMessages();
     }
 
     public function sendSticker(string $stickerKey): void
     {
+        $this->errorSeq++;
         $user = auth()->user();
         abort_unless($user, 403);
 
@@ -178,24 +218,18 @@ class TicketChat extends Component
 
     public function sendMessage(): void
     {
+        $this->errorSeq++;
         $user = auth()->user();
         abort_unless($user, 403);
 
         $validated = $this->validate([
             'message' => ['nullable', 'string', 'max:1000'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,csv,txt,zip', 'max:10240'],
         ], [
             'message.max' => 'El mensaje no puede superar los 1000 caracteres.',
-            'image.image' => 'El archivo adjunto debe ser una imagen válida.',
-            'image.mimes' => 'La imagen debe ser JPG, PNG o WebP.',
-            'image.max' => 'La imagen no puede superar los 5 MB.',
-            'attachment.mimes' => 'El archivo debe ser PDF, Word, Excel, CSV, TXT o ZIP.',
-            'attachment.max' => 'El archivo no puede superar los 10 MB.',
         ]);
 
-        if (trim((string) ($validated['message'] ?? '')) === '' && ! $this->image && ! $this->attachment) {
-            $this->addError('message', 'Escribe un mensaje o adjunta una imagen o archivo antes de enviar.');
+        if (trim((string) ($validated['message'] ?? '')) === '' && $this->files === []) {
+            $this->addError('message', 'Escribe un mensaje o adjunta un archivo antes de enviar.');
 
             return;
         }
@@ -209,26 +243,27 @@ class TicketChat extends Component
 
         RateLimiter::hit($rateKey, 60);
 
-        $imagePath = $this->image?->storePublicly('support-chat-images', 'public');
-        $attachmentPath = $this->attachment?->storePublicly('support-chat-files', 'public');
-
+        $stored = [];
         try {
+            foreach ($this->files as $file) {
+                $isImage = in_array(strtolower($file->getClientOriginalExtension()), self::IMAGE_MIMES, true);
+                $stored[] = [
+                    'path' => $file->storePublicly($isImage ? 'support-chat-images' : 'support-chat-files', 'public'),
+                    'name' => $file->getClientOriginalName(),
+                    'mime' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'kind' => $isImage ? 'image' : 'file',
+                ];
+            }
+
             $message = SupportChatMessage::create([
                 'user_id' => $user->getAuthIdentifier(),
                 'message' => trim((string) ($validated['message'] ?? '')),
-                'image_path' => $imagePath,
-                'image_original_name' => $this->image?->getClientOriginalName(),
-                'attachment_path' => $attachmentPath,
-                'attachment_original_name' => $this->attachment?->getClientOriginalName(),
-                'attachment_mime' => $this->attachment?->getMimeType(),
-                'attachment_size' => $this->attachment?->getSize(),
+                'attachments' => $stored === [] ? null : $stored,
             ]);
         } catch (Throwable $exception) {
-            if ($imagePath) {
-                Storage::disk('public')->delete($imagePath);
-            }
-            if ($attachmentPath) {
-                Storage::disk('public')->delete($attachmentPath);
+            foreach ($stored as $file) {
+                Storage::disk('public')->delete($file['path']);
             }
 
             throw $exception;
@@ -237,7 +272,7 @@ class TicketChat extends Component
         $this->notifyMentionedUsers($message, $user);
         $this->respondAsAutomatedUser($message, $user);
 
-        $this->reset(['message', 'image', 'attachment']);
+        $this->reset(['message', 'files', 'newFiles']);
         $this->mentionSuggestions = [];
         $this->refreshMessages();
         $this->dispatch('support-message-sent');
@@ -277,10 +312,7 @@ class TicketChat extends Component
     {
         abort_unless(in_array($reaction, ['like', 'heart', 'dislike'], true), 422);
 
-        [$start, $end] = $this->retentionBounds();
-        $message = SupportChatMessage::query()
-            ->whereBetween('created_at', [$start, $end])
-            ->findOrFail($messageId);
+        $message = SupportChatMessage::query()->findOrFail($messageId);
         $userId = (int) auth()->id();
         abort_unless($userId > 0, 403);
 
@@ -327,8 +359,10 @@ class TicketChat extends Component
     /** @return array<int, array<string, mixed>> */
     private function recentMessages(bool $includePdfPhotos = false): array
     {
-        [$start, $end] = $this->retentionBounds();
         $currentUserId = (int) auth()->id();
+
+        // Los mensajes se conservan: se cargan los más recientes y «Cargar anteriores» trae más
+        $this->hasOlderMessages = SupportChatMessage::query()->withTrashed()->count() > $this->messageLimit;
 
         return SupportChatMessage::query()
             ->withTrashed()
@@ -336,10 +370,12 @@ class TicketChat extends Component
                 'user:id,name,last_name,email,profile_photo_path',
                 'reactions:id,support_chat_message_id,user_id,reaction',
             ])
-            ->whereBetween('created_at', [$start, $end])
-            ->oldest('created_at')
-            ->oldest('id')
+            ->latest('created_at')
+            ->latest('id')
+            ->limit($this->messageLimit)
             ->get()
+            ->reverse()
+            ->values()
             ->map(function (SupportChatMessage $message) use ($currentUserId, $includePdfPhotos): array {
                 $createdAt = $message->created_at->timezone($this->timezone());
                 $isToday = $createdAt->isSameDay(Carbon::now($this->timezone()));
@@ -351,11 +387,7 @@ class TicketChat extends Component
                     'email' => $message->user?->email ?? 'Correo no disponible',
                     'message' => $message->trashed() ? '' : $message->message,
                     'message_html' => $message->trashed() ? '' : $this->highlightMentions($message->message),
-                    'image_url' => ! $message->trashed() && $message->image_path ? $this->supportImageUrl($message->image_path) : null,
-                    'image_name' => $message->image_original_name,
-                    'attachment_url' => ! $message->trashed() && $message->attachment_path ? $this->supportImageUrl($message->attachment_path) : null,
-                    'attachment_name' => $message->attachment_original_name,
-                    'attachment_size' => $message->attachment_size,
+                    'attachments' => $message->trashed() ? [] : $this->attachmentsOf($message),
                     'sticker_url' => ! $message->trashed() && isset(self::STICKERS[$message->sticker_key])
                         ? url('/'.self::STICKERS[$message->sticker_key])
                         : null,
@@ -500,6 +532,16 @@ class TicketChat extends Component
                 ->unique()
                 ->values();
 
+            $previewCount = app()->isLocal()
+                ? (int) config('support.online_preview_count', 0)
+                : 0;
+            if ($previewCount > 0) {
+                $onlineIds = $onlineIds
+                    ->merge(User::query()->orderBy('name')->orderBy('last_name')->limit($previewCount)->pluck('id'))
+                    ->unique()
+                    ->values();
+            }
+
             $this->onlineUsers = User::query()
                 ->select(['id', 'name', 'last_name', 'email', 'profile_photo_path'])
                 ->whereKey($onlineIds)
@@ -519,6 +561,8 @@ class TicketChat extends Component
                         'is_current' => (int) $user->id === $currentUserId,
                     ];
                 })
+                ->sortByDesc('is_current')
+                ->values()
                 ->all();
         } catch (Throwable) {
             $this->onlineUsers = User::query()
@@ -537,6 +581,8 @@ class TicketChat extends Component
                         'is_current' => (int) $user->id === $currentUserId,
                     ];
                 })
+                ->sortByDesc('is_current')
+                ->values()
                 ->all();
         }
     }
@@ -557,6 +603,32 @@ class TicketChat extends Component
             '<span class="font-semibold text-blue-600">$1</span>',
             $escapedMessage
         ) ?? $escapedMessage;
+    }
+
+    /**
+     * Archivos de un mensaje con el mismo formato, vengan de la lista nueva o de las columnas anteriores.
+     *
+     * @return list<array{url: string, name: string, size: int, is_image: bool}>
+     */
+    private function attachmentsOf(SupportChatMessage $message): array
+    {
+        $files = (array) $message->attachments;
+        if ($files === []) {
+            // Mensajes anteriores: una imagen y/o un archivo en sus propias columnas
+            if ($message->image_path) {
+                $files[] = ['path' => $message->image_path, 'name' => $message->image_original_name, 'size' => 0, 'kind' => 'image'];
+            }
+            if ($message->attachment_path) {
+                $files[] = ['path' => $message->attachment_path, 'name' => $message->attachment_original_name, 'size' => (int) $message->attachment_size, 'kind' => 'file'];
+            }
+        }
+
+        return collect($files)->map(fn (array $file): array => [
+            'url' => $this->supportImageUrl((string) $file['path']),
+            'name' => (string) ($file['name'] ?? basename((string) $file['path'])),
+            'size' => (int) ($file['size'] ?? 0),
+            'is_image' => ($file['kind'] ?? 'file') === 'image',
+        ])->all();
     }
 
     private function supportImageUrl(string $path): string
@@ -595,6 +667,11 @@ class TicketChat extends Component
         }
 
         if (config('filesystems.disks.public.driver') === 'local') {
+            // Si la foto ya no está en el disco se muestran las iniciales (no una imagen rota con su texto alternativo)
+            if (! \Illuminate\Support\Facades\Storage::disk('public')->exists(ltrim($user->profile_photo_path, '/'))) {
+                return null;
+            }
+
             return url('/storage/'.ltrim($user->profile_photo_path, '/'));
         }
 
@@ -879,17 +956,6 @@ class TicketChat extends Component
     public function render(): View
     {
         return view('livewire.support.ticket-chat')->layout('layouts.app');
-    }
-
-    /** @return array{0: Carbon, 1: Carbon} */
-    private function retentionBounds(): array
-    {
-        $now = Carbon::now($this->timezone());
-
-        return [
-            $now->copy()->startOfDay()->timezone($this->applicationTimezone()),
-            $now->copy()->endOfDay()->timezone($this->applicationTimezone()),
-        ];
     }
 
     private function applicationTimezone(): string

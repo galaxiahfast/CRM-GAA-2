@@ -1,11 +1,20 @@
 @php
-    $chatToday = ucfirst(now(config('support.timezone', 'America/Mexico_City'))->locale('es')->translatedFormat('l, d \d\e F \d\e Y'));
+    $chatTour = [
+        ['target' => 'chat-online', 'title' => '1. Quién está en línea', 'description' => 'Aquí ves a las personas conectadas al chat en este momento. Pulsa una foto para ampliarla o un nombre para abrir su perfil.'],
+        ['target' => 'chat-search', 'title' => '2. Busca en la conversación', 'description' => 'Escribe un nombre, un correo o parte de un mensaje y la conversación se filtra mientras escribes. Esc limpia la búsqueda.'],
+        ['target' => 'chat-messages', 'title' => '3. Lee la conversación', 'description' => 'Aquí están los mensajes de la conversación. Puedes reaccionar con Me gusta, Me encanta o No me gusta y eliminar los tuyos.'],
+        ['target' => 'chat-composer', 'title' => '4. Escribe tu mensaje', 'description' => 'Escribe aquí. Con los tres puntos de la derecha adjuntas hasta 10 archivos o imágenes y agregas emojis o stickers. Con @ mencionas a una persona o a todos; Enter envía.'],
+        ['target' => 'chat-send', 'title' => '5. Envía el mensaje', 'description' => 'Presiona Enviar o la tecla Enter. Si falta algo, un aviso arriba te dice qué es.'],
+    ];
 @endphp
+{{-- Chat general de soporte: mismo diseño que Reloj Checador, Cronómetro, Manager Control y Gráficos generales (variables de
+     panel, texto de 15px, separaciones de 20px, tarjetas con cabecera, sin sombras ni textos grises, botones y enlaces verdes y
+     los errores como aviso emergente). Solo cambia la presentación: el chat funciona igual. --}}
 <div
-    data-clock-particle-network
     data-panel
+    data-productivity
     data-support-chat
-    class="relative isolate flex min-h-[calc(var(--app-dvh)-123px)] w-full min-w-0 flex-col text-[15px]"
+    class="relative isolate flex h-[calc(var(--app-dvh)-123px)] min-h-0 w-full min-w-0 flex-col overflow-hidden text-[15px]"
     x-data="{
         profilePhotoOpen: false,
         profilePhotoUrl: '',
@@ -21,78 +30,36 @@
 >
     <x-panel-styles />
 
-    <canvas wire:ignore data-clock-network-canvas class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-[0.18]" aria-hidden="true"></canvas>
-
     <div class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 flex-col">
-    <main class="relative z-10 mx-auto flex w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
+    <main class="relative z-10 mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:p-[30px] xl:px-[50px] xl:py-[40px]">
         <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
-            <div class="flex min-w-0 items-center gap-[15px]">
-                <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
-                    <svg class="h-[30px] w-[30px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" />
-                    </svg>
-                </span>
-                <div class="min-w-0">
-                    <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
-                    <p class="chat-sub mt-[15px]">Espacio compartido para conversar con todos los colaboradores.</p>
-                </div>
+            <div class="min-w-0">
+                <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
+                <p class="mt-[5px] leading-[30px]">Espacio compartido para conversar con todos los colaboradores.</p>
             </div>
-
-            <div class="flex min-w-0 flex-col items-start gap-[15px] lg:items-end">
-                <span class="panel-muted inline-flex items-center gap-[10px] text-[15px] leading-none">
-                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                    Disponible para todos los usuarios
-                </span>
-                <span class="leading-none">{{ $chatToday }}</span>
-                <a href="{{ route('section.guide', 'chat-soporte') }}" title="Descargar la guía del Chat general de soporte en PDF" class="clock-link inline-flex items-center gap-[10px] leading-none">
-                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
-                    Guía PDF
-                </a>
-            </div>
+            <p class="panel-accent whitespace-nowrap leading-none">Sincronizado en tiempo real</p>
         </section>
-
-        <div data-support-chat-panel class="min-h-[620px] min-w-0 flex-1" style="display:grid;grid-template-columns:360px minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:50px;align-items:stretch;height:max(620px,calc(var(--app-dvh) - 330px));">
-            <aside class="panel-surface panel-border flex w-[360px] max-h-none min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]" style="grid-column:1;grid-row:1;">
-                <header class="panel-header panel-border shrink-0 border-b p-[20px]">
-                    <div class="online-summary space-y-[15px] text-left">
-                        <h2 class="panel-accent flex items-center gap-[5px]">
-                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-                                <circle cx="12" cy="8" r="3.25" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
-                            </svg>
-                            En línea ahora
-                        </h2>
-                        <p class="chat-sub whitespace-nowrap">Quién está conectado al chat.</p>
-                        <p>{{ count($onlineUsers) }} en línea</p>
-                    </div>
-                </header>
-                <div data-support-profile-header class="panel-surface panel-border flex items-center gap-[15px] border-b p-[20px]">
-                    @if (auth()->user()->profile_photo_path)
-                        <button type="button" @click="showProfilePhoto(@js(url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/'))), @js(auth()->user()->name))" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-normal text-white outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ auth()->user()->name }}">
-                            <img src="{{ url('/storage/'.ltrim(auth()->user()->profile_photo_path, '/')) }}" alt="Foto de {{ auth()->user()->name }}" class="h-full w-full object-cover">
-                        </button>
-                    @else
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black font-normal text-white">
-                            {{ mb_strtoupper(mb_substr(auth()->user()->name ?? '?', 0, 1)) }}
-                        </span>
-                    @endif
+        <div x-data="clockQuickTour(@js($chatTour))" class="contents">
+        <div data-support-chat-panel class="min-h-0 min-w-0 flex-1" style="display:grid;grid-template-columns:360px minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:50px;align-items:stretch;">
+            <aside class="panel-surface panel-border flex w-[360px] max-h-none min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border" style="grid-column:1;grid-row:1;">
+                <header class="panel-header panel-border flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                     <div class="min-w-0">
-                        <a href="{{ route('profile.show') }}" class="block truncate font-normal text-black hover:text-zinc-600">{{ trim((auth()->user()->name ?? '').' '.(auth()->user()->last_name ?? '')) }}</a>
-                        <p class="mt-[5px] truncate text-[15px] text-zinc-500">{{ auth()->user()->email }}</p>
+                        <h2 class="panel-accent leading-none">En línea ahora</h2>
+                        <p class="chat-sub mt-[5px]">Quién está conectado al chat.</p>
                     </div>
-                </div>
-
-                <div class="support-chat-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
-                        <div data-support-online-users class="support-chat-scrollbar max-h-[350px] space-y-[10px] overflow-y-auto pr-[5px]">
+                    <p class="whitespace-nowrap leading-none">{{ count($onlineUsers) }} en línea</p>
+                </header>
+                <div id="chat-online" data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative -mb-px min-h-0 flex-1 overflow-hidden">
+                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = [...$el.querySelectorAll('[data-online-row]')]; if (!rows.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const tops = rows.map(row => row.offsetTop); const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-support-online-users class="panel-scroll h-full snap-y snap-mandatory overflow-y-auto">
                             @forelse ($onlineUsers as $onlineUser)
-                                <div wire:key="online-user-{{ $onlineUser['id'] }}" class="flex items-center gap-[10px] rounded-xl px-[10px] py-[10px] transition hover:bg-white/60">
+                                <div wire:key="online-user-{{ $onlineUser['id'] }}" data-online-row class="panel-border flex snap-start items-center gap-[15px] border-b p-[20px] transition last:border-b-0 hover:bg-white/60" style="height:20%;min-height:80px;">
                                     @if ($onlineUser['photo_url'])
-                                        <button type="button" @click="showProfilePhoto(@js($onlineUser['photo_url']), @js($onlineUser['name']))" class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200 outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ $onlineUser['name'] }}">
+                                        <button type="button" @click="showProfilePhoto(@js($onlineUser['photo_url']), @js($onlineUser['name']))" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200 outline-none focus:outline-none focus:ring-0" aria-label="Ampliar foto de {{ $onlineUser['name'] }}">
                                             <img src="{{ $onlineUser['photo_url'] }}" alt="Foto de {{ $onlineUser['name'] }}" class="h-full w-full rounded-full object-cover">
                                             <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-100" aria-label="En línea"></span>
                                         </button>
                                     @else
-                                        <span class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200">
+                                        <span class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[15px] font-normal text-black ring-1 ring-zinc-200">
                                             {{ $onlineUser['initials'] }}
                                             <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-100" aria-label="En línea"></span>
                                         </span>
@@ -110,12 +77,21 @@
                             @empty
                                 <p class="rounded-xl border border-zinc-200 bg-white/70 p-[15px] text-center text-[15px] text-zinc-500">No hay personas activas ahora.</p>
                             @endforelse
-                        </div>
                     </div>
+                    <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                </div>
+
+                <div class="panel-border shrink-0 border-t p-[20px]">
+                    <div class="flex flex-col gap-[20px]">
+                        <a href="{{ route('section.guide', 'chat-soporte') }}" title="Descargar la guía del Chat general de soporte en PDF" class="clock-link w-fit leading-none">Descargar guía PDF</a>
+                        <div class="panel-border w-full border-t" aria-hidden="true"></div>
+                        <button type="button" @click="startQuickTour()" class="chat-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">Tutorial rápido</button>
+                    </div>
+                </div>
             </aside>
 
             <div
-                class="panel-surface panel-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(0,0,0,0.05)]"
+                class="panel-surface panel-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border"
                 style="grid-column:2;grid-row:1;min-width:0;"
                 wire:poll.3s.visible="refreshMessages"
                 x-data="{
@@ -123,17 +99,20 @@
                     searchQuery: '',
                     emojiOpen: false,
                     stickerOpen: false,
-                    currentDayLabel: '',
+                    currentDayLabel: @js(data_get(collect($messages)->last(), 'date_label', 'Hoy')),
+                    messageCount: {{ count($messages) }},
                     readingPositionKey: 'support-ticket-last-message-{{ auth()->id() }}',
-                    scrollToBottom() { this.$refs.messages.scrollTop = this.$refs.messages.scrollHeight },
+                    messageBox() { return document.getElementById('chat-messages') },
+                    scrollToBottom() { const box = this.messageBox(); if (box) box.scrollTop = box.scrollHeight },
                     restoreReadingPosition() {
+                        const box = this.messageBox();
+                        if (!box) return;
                         const savedId = localStorage.getItem(this.readingPositionKey);
                         const savedMessage = savedId
-                            ? this.$refs.messages.querySelector(`[data-chat-message-id=&quot;${savedId}&quot;]`)
+                            ? box.querySelector(`[data-chat-message-id=&quot;${savedId}&quot;]`)
                             : null;
 
                         if (savedMessage) {
-                            const box = this.$refs.messages;
                             box.scrollTop = Math.max(0, savedMessage.offsetTop - (box.clientHeight / 2) + (savedMessage.offsetHeight / 2));
                             this.stayAtBottom = false;
                         } else {
@@ -143,7 +122,8 @@
                         this.updateReadingPosition();
                     },
                     updateReadingPosition() {
-                        const box = this.$refs.messages;
+                        const box = this.messageBox();
+                        if (!box) return;
                         const boxRect = box.getBoundingClientRect();
                         const visibleMessages = [...box.querySelectorAll('[data-chat-message-id]')]
                             .filter(message => {
@@ -159,15 +139,22 @@
                         if (dayReference) {
                             this.currentDayLabel = dayReference.dataset.dayLabel || '';
                         }
+                        this.messageCount = box.querySelectorAll('[data-chat-message-id]').length;
+                    },
+                    conversationSummary() {
+                        const label = this.currentDayLabel || 'Hoy';
+                        return `${label} · ${this.messageCount} ${this.messageCount === 1 ? 'mensaje' : 'mensajes'}`;
                     },
                     normalizedSearch() { return this.searchQuery.trim().toLocaleLowerCase('es-MX') },
                     hasSearchResults() {
                         const query = this.normalizedSearch();
-                        return !query || [...this.$refs.messages.querySelectorAll('[data-chat-message]')]
+                        const box = this.messageBox();
+                        return !query || !box || [...box.querySelectorAll('[data-chat-message]')]
                             .some((message) => (message.dataset.search || '').includes(query));
                     },
                     trackPosition() {
-                        const box = this.$refs.messages;
+                        const box = this.messageBox();
+                        if (!box) return;
                         this.stayAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
                         this.updateReadingPosition();
                     }
@@ -177,50 +164,34 @@
                 @support-messages-refreshed.window="$nextTick(() => updateReadingPosition())"
             >
                 <header data-support-chat-header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
-                    <div>
-                        <h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m8-2a9 9 0 01-9 9 9.8 9.8 0 01-4-.84L3 21l.84-5A9 9 0 1121 12z" /></svg>Conversación general</h2>
-                        <p class="mt-[5px] text-[15px] text-zinc-500">
-                            <span x-text="currentDayLabel || 'Semana actual'">Semana actual</span>
-                            <span> · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</span>
-                        </p>
+                    <div class="min-w-0">
+                        <h2 class="panel-accent leading-none">Conversación general</h2>
+                        <p class="chat-sub mt-[5px]" x-text="conversationSummary()">{{ data_get(collect($messages)->last(), 'date_label', 'Hoy') }} · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</p>
                     </div>
                     <div class="flex min-w-0 items-center gap-[20px]">
-                        <div class="relative w-[min(360px,calc(100vw-80px))]">
+                        <div id="chat-search" class="relative w-[min(360px,calc(100vw-80px))]">
                             <svg class="pointer-events-none absolute left-[20px] top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                             <input x-ref="searchInput" x-model.debounce.150ms="searchQuery" @keydown.escape.stop="searchQuery = ''" type="text" placeholder="Buscar por nombre, correo o contenido…" class="panel-field w-full rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[50px] pr-[20px] text-[15px] text-zinc-700 outline-none transition">
                         </div>
                     </div>
                 </header>
 
-                <div data-support-daily-note class="flex items-center gap-[15px] border-b border-zinc-200 bg-white/70 p-[20px] text-[15px] text-zinc-500">
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white/75 text-zinc-500">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8h.01M11 12h1v4h1m8-4a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </span>
-                    <p class="text-justify leading-6">La conversación conserva únicamente los mensajes del día. Al comenzar un nuevo día, los mensajes anteriores se eliminan automáticamente.</p>
-                </div>
-
-
-                <div x-ref="messages" @scroll="trackPosition()" class="support-chat-scrollbar min-h-0 flex-1 space-y-[20px] overflow-y-auto bg-white/35 p-[20px]">
+                <div data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1">
+                <div id="chat-messages" x-ref="scroller" @scroll="update(); trackPosition()" @mouseenter="update()" class="panel-scroll absolute inset-0 space-y-[20px] overflow-y-auto bg-white/35 p-[20px]">
                     <div x-show="searchQuery && !hasSearchResults()" class="py-[40px] text-center" style="display: none;">
                         <svg class="mx-auto h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                         <p class="mt-[10px] text-[15px] font-normal text-gray-500">No se encontraron mensajes.</p>
                     </div>
-                    @php
-                        $visibleDateKey = null;
-                    @endphp
+                    @if ($hasOlderMessages)
+                        <div class="flex justify-center">
+                            <button type="button" wire:click="loadOlderMessages" wire:loading.attr="disabled" wire:target="loadOlderMessages" class="clock-link leading-none">Cargar mensajes anteriores</button>
+                        </div>
+                    @endif
                     @forelse ($messages as $chatMessage)
                         @php
                             $nameParts = array_values(array_filter(preg_split('/\s+/', trim($chatMessage['name']))));
                             $initials = collect($nameParts)->take(1)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
                         @endphp
-                        @if ($visibleDateKey !== $chatMessage['date_key'])
-                            @php($visibleDateKey = $chatMessage['date_key'])
-                            <div class="sticky top-0 z-10 !mt-0 flex items-center gap-[15px] bg-transparent" data-day-separator="{{ $chatMessage['date_key'] }}">
-                                <span class="w-full text-center text-[15px] font-normal capitalize text-black">{{ $chatMessage['date_label'] }}</span>
-                            </div>
-                        @endif
                         <article
                             wire:key="support-message-{{ $chatMessage['id'] }}"
                             data-chat-message
@@ -283,38 +254,35 @@
                                             </div>
                                         </div>
                                     @endif
-                                    @if ($chatMessage['image_url'])
-                                        <a href="{{ $chatMessage['image_url'] }}" target="_blank" rel="noopener noreferrer" class="mt-[15px] block overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50" title="Abrir imagen adjunta">
-                                            <img src="{{ $chatMessage['image_url'] }}" alt="{{ $chatMessage['image_name'] ?: 'Imagen adjunta' }}" class="max-h-[360px] w-full object-contain">
-                                        </a>
-                                    @endif
                                     @if ($chatMessage['message_html'] !== '')
                                         <p class="mt-[15px] whitespace-pre-wrap break-words leading-6 text-zinc-700">{!! $chatMessage['message_html'] !!}</p>
                                     @endif
-                                    @if ($chatMessage['attachment_url'])
-                                        <a href="{{ $chatMessage['attachment_url'] }}" target="_blank" rel="noopener noreferrer" download class="mt-[15px] flex items-center gap-[15px] rounded-xl border border-zinc-200 bg-white p-[15px] text-black transition-colors hover:bg-zinc-100">
-                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black text-white">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
-                                            </span>
-                                            <span class="min-w-0 flex-1">
-                                                <span class="block truncate text-[15px] font-normal">{{ $chatMessage['attachment_name'] }}</span>
-                                                <span class="mt-[5px] block text-[15px] text-zinc-500">{{ number_format(((int) $chatMessage['attachment_size']) / 1024, 1) }} KB</span>
-                                            </span>
-                                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
-                                        </a>
+                                    @if ($chatMessage['attachments'] !== [])
+                                        <div class="mt-[15px] flex flex-wrap gap-[10px]">
+                                            @foreach ($chatMessage['attachments'] as $file)
+                                                @if ($file['is_image'])
+                                                    <a href="{{ $file['url'] }}" target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-xl border border-zinc-200" title="{{ $file['name'] }}">
+                                                        <img src="{{ $file['url'] }}" alt="{{ $file['name'] }}" class="block h-[110px] w-[110px] object-cover">
+                                                    </a>
+                                                @else
+                                                    <a href="{{ $file['url'] }}" target="_blank" rel="noopener noreferrer" download class="flex h-[50px] w-[240px] items-center gap-[10px] rounded-xl border border-zinc-200 px-[10px] text-black transition-colors hover:bg-zinc-100" title="{{ $file['name'] }}">
+                                                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
+                                                        <span class="min-w-0 flex-1 truncate leading-none">{{ $file['name'] }}</span>
+                                                        @if ($file['size'] > 0)<span class="shrink-0 leading-none">{{ number_format($file['size'] / 1024, 0) }} KB</span>@endif
+                                                    </a>
+                                                @endif
+                                            @endforeach
+                                        </div>
                                     @endif
-                                    <div class="no-print mt-[15px] flex items-center gap-[10px] {{ $chatMessage['is_mine'] ? 'justify-end' : 'justify-start' }}">
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'like')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'like')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'like' ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-black hover:bg-zinc-100' }}" aria-label="Me gusta" title="Me gusta">
+                                    <div class="no-print mt-[15px] flex items-center gap-[15px] {{ $chatMessage['is_mine'] ? 'justify-end' : 'justify-start' }}">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'like')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'like')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'like' ? 'text-black' : 'text-zinc-400' }}" aria-label="Me gusta" title="Me gusta · {{ $chatMessage['reactions']['like'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'like' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 10v11H3V10h4Zm0 10h10.2a2 2 0 0 0 1.94-1.52l1.5-6A2 2 0 0 0 18.7 10H14l.7-4.2A2.4 2.4 0 0 0 12.33 3L7 10Z" /></svg>
-                                            <span>{{ $chatMessage['reactions']['like'] }}</span>
                                         </button>
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'heart')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'heart')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'heart' ? 'border-red-700 bg-red-700 text-white' : 'border-zinc-200 bg-white text-red-700 hover:bg-red-50' }}" aria-label="Me encanta" title="Me encanta">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'heart')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'heart')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 text-red-700 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50" aria-label="Me encanta" title="Me encanta · {{ $chatMessage['reactions']['heart'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'heart' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" /></svg>
-                                            <span>{{ $chatMessage['reactions']['heart'] }}</span>
                                         </button>
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" class="inline-flex items-center gap-[10px] rounded-full border px-[15px] py-[10px] outline-none transition-colors focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'dislike' ? 'border-zinc-700 bg-zinc-700 text-white' : 'border-zinc-200 bg-white text-black hover:bg-zinc-100' }}" aria-label="No me gusta" title="No me gusta">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'dislike' ? 'text-black' : 'text-zinc-400' }}" aria-label="No me gusta" title="No me gusta · {{ $chatMessage['reactions']['dislike'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'dislike' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 14V3H3v11h4Zm0-10h10.2a2 2 0 0 1 1.94 1.52l1.5 6A2 2 0 0 1 18.7 14H14l.7 4.2A2.4 2.4 0 0 1 12.33 21L7 14Z" /></svg>
-                                            <span>{{ $chatMessage['reactions']['dislike'] }}</span>
                                         </button>
                                     </div>
                                 @endif
@@ -330,36 +298,32 @@
                         </div>
                     @endforelse
                 </div>
+                <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                </div>
 
-                <form wire:submit="sendMessage" class="no-print border-t border-zinc-200 bg-white/70 p-[20px]">
+                <form id="chat-composer" wire:submit="sendMessage" class="no-print border-t border-zinc-200 bg-white/70 p-[20px]" x-data="{ menu: null }" @click.outside="menu = null" @keydown.escape.window="menu = null">
+                    @if ($files !== [])
+                        <div class="mb-[15px] flex flex-wrap items-center gap-[10px]">
+                            @foreach ($files as $index => $file)
+                                @php($isImage = in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp'], true))
+                                <div wire:key="chat-file-{{ $index }}-{{ $file->getFilename() }}" class="flex h-[50px] w-[220px] items-center gap-[10px] rounded-xl border border-zinc-200 bg-zinc-50 px-[10px]">
+                                    @if ($isImage)
+                                        <img src="{{ $file->temporaryUrl() }}" alt="" class="h-[30px] w-[30px] shrink-0 rounded-lg object-cover">
+                                    @else
+                                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
+                                    @endif
+                                    <span class="min-w-0 flex-1 truncate leading-none" title="{{ $file->getClientOriginalName() }}">{{ $file->getClientOriginalName() }}</span>
+                                    <button type="button" wire:click="removeFile({{ $index }})" class="inline-flex shrink-0 items-center justify-center rounded-lg p-[5px] text-red-700 transition-colors hover:bg-red-50" aria-label="Quitar archivo" title="Quitar archivo">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6 6 18"/></svg>
+                                    </button>
+                                </div>
+                            @endforeach
+                            <span class="leading-none">{{ count($files) }}/10</span>
+                            <span wire:loading wire:target="newFiles" class="leading-none">Preparando archivos...</span>
+                        </div>
+                    @endif
                     <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-[20px]">
                         <div class="relative min-w-0">
-                            @if ($image)
-                                <div class="mb-[15px] flex items-center gap-[15px] rounded-xl border border-zinc-200 bg-zinc-50 p-[15px]">
-                                    <img src="{{ $image->temporaryUrl() }}" alt="Vista previa de la imagen" class="h-16 w-16 shrink-0 rounded-lg object-cover">
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[15px] font-normal text-black">{{ $image->getClientOriginalName() }}</p>
-                                        <p class="mt-[5px] text-[15px] text-zinc-500">Imagen lista para enviar</p>
-                                    </div>
-                                    <button type="button" wire:click="removeImage" class="inline-flex shrink-0 items-center justify-center rounded-lg p-[10px] text-red-700 transition-colors hover:bg-red-50" aria-label="Quitar imagen" title="Quitar imagen">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6 6 18"/></svg>
-                                    </button>
-                                </div>
-                            @endif
-                            @if ($attachment)
-                                <div class="mb-[15px] flex items-center gap-[15px] rounded-xl border border-zinc-200 bg-zinc-50 p-[15px]">
-                                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black text-white">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5"/></svg>
-                                    </span>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[15px] font-normal text-black">{{ $attachment->getClientOriginalName() }}</p>
-                                        <p class="mt-[5px] text-[15px] text-zinc-500">Archivo listo para enviar</p>
-                                    </div>
-                                    <button type="button" wire:click="removeAttachment" class="inline-flex shrink-0 items-center justify-center rounded-lg p-[10px] text-red-700 transition-colors hover:bg-red-50" aria-label="Quitar archivo" title="Quitar archivo">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6 6 18"/></svg>
-                                    </button>
-                                </div>
-                            @endif
                             <textarea
                                 wire:model.live.debounce.180ms="message"
                                 @keydown.enter.prevent.stop="
@@ -371,54 +335,57 @@
                                 rows="1"
                                 maxlength="1000"
                                 placeholder="Escribe un mensaje…"
-                                class="support-message-input block max-h-32 w-full resize-none overflow-y-auto rounded-xl border border-zinc-200 bg-white/75 px-[20px] py-[15px] text-[15px] leading-6 text-zinc-700 outline-none transition focus:border-zinc-300 focus:outline-none focus:ring-0"
+                                class="support-message-input block max-h-32 w-full resize-none overflow-y-auto rounded-xl border border-zinc-200 bg-white/75 py-[15px] pl-[20px] pr-[60px] text-[15px] leading-6 text-zinc-700 outline-none transition focus:border-zinc-300 focus:outline-none focus:ring-0"
                             ></textarea>
 
-                            <div class="mt-[10px] flex items-center gap-[10px]">
-                                <label for="support-chat-image" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.48-8.48"/></svg>
-                                    Adjuntar imagen
-                                </label>
-                                <input id="support-chat-image" type="file" wire:model="image" accept="image/jpeg,image/png,image/webp" class="sr-only">
+                            <button type="button" @click="menu = menu ? null : 'main'" :aria-expanded="menu !== null" class="absolute right-[10px] top-[10px] inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-0" aria-label="Más opciones" title="Adjuntar, emojis y stickers">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+                            </button>
 
-                                <label for="support-chat-file" class="inline-flex cursor-pointer items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6"/></svg>
-                                    Adjuntar archivo
-                                </label>
-                                <input id="support-chat-file" type="file" wire:model="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip" class="sr-only">
-
-                                <div class="relative" @click.outside="emojiOpen = false">
-                                    <button type="button" @click="emojiOpen = !emojiOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100" :aria-expanded="emojiOpen">
-                                        <span class="text-[20px] leading-none">😊</span>
+                            <div x-show="menu" x-transition style="display: none;" class="absolute bottom-[calc(100%+10px)] right-0 z-40 w-[280px] rounded-xl border border-zinc-200 bg-white p-[10px] shadow-[0_18px_45px_rgba(0,0,0,0.12)]">
+                                <div x-show="menu === 'main'" class="flex flex-col">
+                                    <label for="support-chat-images" @click="menu = null" class="flex h-[50px] cursor-pointer items-center gap-[15px] rounded-xl px-[15px] transition-colors hover:bg-zinc-100">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.48-8.48"/></svg>
+                                        Adjuntar imagen
+                                    </label>
+                                    <label for="support-chat-docs" @click="menu = null" class="flex h-[50px] cursor-pointer items-center gap-[15px] rounded-xl px-[15px] transition-colors hover:bg-zinc-100">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6"/></svg>
+                                        Adjuntar archivo
+                                    </label>
+                                    <button type="button" @click="menu = 'emoji'" class="flex h-[50px] items-center gap-[15px] rounded-xl px-[15px] text-left transition-colors hover:bg-zinc-100">
+                                        <span class="w-4 shrink-0 text-center text-[15px] leading-none">😊</span>
                                         Emojis
                                     </button>
-                                    <div x-show="emojiOpen" x-transition class="absolute bottom-[calc(100%+10px)] left-0 z-40 grid w-[220px] grid-cols-4 gap-[5px] rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.12)]" style="display: none;">
+                                    <button type="button" @click="menu = 'sticker'" class="flex h-[50px] items-center gap-[15px] rounded-xl px-[15px] text-left transition-colors hover:bg-zinc-100">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 12a8 8 0 1 1-8-8h4a4 4 0 0 1 4 4v4Zm0 0a4 4 0 0 1-4 4h-4v4"/></svg>
+                                        Stickers
+                                    </button>
+                                </div>
+                                <div x-show="menu === 'emoji'" class="p-[5px]">
+                                    <button type="button" @click="menu = 'main'" class="clock-link mb-[10px] leading-none">← Volver</button>
+                                    <div class="grid grid-cols-4 gap-[5px]">
                                         @foreach (['😀', '😂', '😊', '😍', '👍', '👏', '🙏', '🎉', '❤️', '✅', '👀', '🤝'] as $emoji)
-                                            <button type="button" wire:click="appendEmoji('{{ $emoji }}')" @click="emojiOpen = false" class="flex h-10 w-10 items-center justify-center rounded-lg text-[20px] transition-colors hover:bg-zinc-100" aria-label="Agregar emoji {{ $emoji }}">{{ $emoji }}</button>
+                                            <button type="button" wire:click="appendEmoji('{{ $emoji }}')" @click="menu = null" class="flex h-10 w-10 items-center justify-center rounded-lg text-[20px] transition-colors hover:bg-zinc-100" aria-label="Agregar emoji {{ $emoji }}">{{ $emoji }}</button>
                                         @endforeach
                                     </div>
                                 </div>
-
-                                <div class="relative" @click.outside="stickerOpen = false">
-                                    <button type="button" @click="stickerOpen = !stickerOpen" class="inline-flex items-center gap-[10px] rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] text-[15px] font-normal text-black transition-colors hover:bg-zinc-100" :aria-expanded="stickerOpen">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 12a8 8 0 1 1-8-8h4a4 4 0 0 1 4 4v4Zm0 0a4 4 0 0 1-4 4h-4v4"/></svg>
-                                        Stickers
-                                    </button>
-                                    <div x-show="stickerOpen" x-transition class="absolute bottom-[calc(100%+10px)] right-0 z-40 grid w-[330px] grid-cols-3 gap-[10px] rounded-xl border border-zinc-200 bg-white p-[15px] shadow-[0_18px_45px_rgba(0,0,0,0.12)]" style="display: none;">
+                                <div x-show="menu === 'sticker'" class="p-[5px]">
+                                    <button type="button" @click="menu = 'main'" class="clock-link mb-[10px] leading-none">← Volver</button>
+                                    <div class="grid grid-cols-3 gap-[10px]">
                                         @foreach ([
                                             'fry-sospecha' => 'img/support/stickers/fry-sospecha.jpg',
                                             'avestruz-genial' => 'img/support/stickers/avestruz-genial.jpg',
                                             'ternura' => 'img/support/stickers/ternura.jpg',
                                         ] as $stickerKey => $stickerPath)
-                                            <button type="button" wire:click="sendSticker('{{ $stickerKey }}')" @click="stickerOpen = false" class="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-[5px] outline-none transition-colors hover:border-zinc-300 hover:bg-zinc-100 focus:border-zinc-300 focus:outline-none focus:ring-0" aria-label="Enviar sticker">
+                                            <button type="button" wire:click="sendSticker('{{ $stickerKey }}')" @click="menu = null" class="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-[5px] outline-none transition-colors hover:border-zinc-300 hover:bg-zinc-100 focus:outline-none focus:ring-0" aria-label="Enviar sticker">
                                                 <img src="{{ asset($stickerPath) }}" alt="Sticker" class="aspect-square w-full rounded-lg object-cover">
                                             </button>
                                         @endforeach
                                     </div>
                                 </div>
-
-                                <span wire:loading wire:target="image,attachment" class="text-[15px] text-zinc-500">Preparando archivo...</span>
                             </div>
+                            <input id="support-chat-images" type="file" multiple wire:model="newFiles" accept="image/jpeg,image/png,image/webp" class="sr-only">
+                            <input id="support-chat-docs" type="file" multiple wire:model="newFiles" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip" class="sr-only">
 
                             @if ($mentionSuggestions !== [])
                                 <div data-mention-suggestions class="absolute bottom-[calc(100%+10px)] left-0 z-30 w-full max-w-[440px] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_18px_45px_rgba(0,0,0,0.12)]">
@@ -458,12 +425,9 @@
                                 </div>
                             @endif
 
-                            @error('message') <p class="mt-[10px] text-[12px] text-red-600">{{ $message }}</p> @enderror
-                            @error('image') <p class="mt-[10px] text-[15px] text-red-600">{{ $message }}</p> @enderror
-                            @error('attachment') <p class="mt-[10px] text-[15px] text-red-600">{{ $message }}</p> @enderror
-                            <p class="mt-[10px] text-[12px] text-gray-400">Escribe @ para mencionar · Enter para enviar</p>
+                            <x-error-toast :wire:key="'chat-error-'.$errorSeq.'-'.md5((string) $errors->first())" title="No se pudo enviar" :message="$errors->first()" />
                         </div>
-                        <button type="submit" wire:loading.attr="disabled" wire:target="sendMessage"
+                        <button id="chat-send" type="submit" wire:loading.attr="disabled" wire:target="sendMessage"
                             class="chat-primary inline-flex shrink-0 items-center justify-center gap-[10px] self-start rounded-xl px-[20px] py-[15px] font-normal disabled:cursor-wait disabled:opacity-60">
                             <svg wire:loading.remove wire:target="sendMessage" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l14-7-4 14-3-6-7-1zm7 1l7-8" /></svg>
                             <svg wire:loading wire:target="sendMessage" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
@@ -472,6 +436,29 @@
                     </div>
                 </form>
             </div>
+        </div>
+
+        <template x-teleport="body">
+            <div data-panel data-productivity data-support-chat x-cloak x-show="quickTourStep > 0" x-transition.opacity class="pointer-events-none fixed inset-0 z-[299999]" style="background:transparent" @click.stop @wheel.prevent @touchmove.prevent>
+                <div :style="maskTopStyle" class="z-[300000]" aria-hidden="true"></div>
+                <div :style="maskLeftStyle" class="z-[300000]" aria-hidden="true"></div>
+                <div :style="maskRightStyle" class="z-[300000]" aria-hidden="true"></div>
+                <div :style="maskBottomStyle" class="z-[300000]" aria-hidden="true"></div>
+                <div :style="spotlightStyle" class="pointer-events-auto z-[300001]" aria-hidden="true"></div>
+                <section :style="popoverStyle" class="app-zoom-overlay-off panel-surface panel-border pointer-events-auto fixed left-1/2 top-1/2 z-[300002] w-[min(440px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]" role="dialog" aria-modal="true" aria-labelledby="clock-tour-title">
+                    <p class="panel-accent leading-[30px]" x-text="quickTourStep ? 'Paso ' + quickTourStep + ' de ' + quickTourSteps.length : ''"></p>
+                    <h2 id="clock-tour-title" class="mt-[15px] leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].title : ''"></h2>
+                    <p class="mt-[15px] text-justify leading-[30px]" x-text="quickTourStep ? quickTourSteps[quickTourStep - 1].description : ''"></p>
+                    <div class="mt-[20px] flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[20px]">
+                        <button type="button" @click="closeQuickTour()" class="clock-link whitespace-nowrap leading-none">Saltar recorrido</button>
+                        <div class="flex items-center gap-[20px] whitespace-nowrap">
+                            <button x-show="quickTourStep > 1" type="button" @click="previousQuickTourStep()" class="panel-button-secondary rounded-xl px-[20px] py-[15px] leading-none">Anterior</button>
+                            <button x-ref="quickTourNext" type="button" @click="nextQuickTourStep()" class="chat-primary rounded-xl px-[20px] py-[15px] leading-none" x-text="quickTourStep === quickTourSteps.length ? 'Terminar' : 'Siguiente'"></button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </template>
         </div>
     </main>
 
@@ -516,6 +503,7 @@
         }
         [data-support-chat] {
             --chat-green: #15803d;
+            --panel-muted: var(--panel-text);
         }
         html.module-dark-theme [data-support-chat] { --chat-green: #4ade80; }
         [data-support-chat] * { font-weight: 400; }
@@ -563,22 +551,38 @@
         }
         [data-support-chat] :is(input, textarea, select) { color-scheme: inherit; }
         [data-support-chat] p { line-height: 30px; }
-        [data-support-chat] p.chat-sub { line-height: 1; }
-        [data-support-chat] .online-summary :is(h2, p) { line-height: 15px; }
+        /* Texto que puede partirse en varias líneas: 20px de espacio entre una línea y la siguiente (igual que el Cronómetro) */
+        [data-support-chat] p.chat-sub { line-height: 35px; margin-bottom: -10px; }
+        /* El scroll solo aparece con el puntero encima (igual que en los demás módulos) */
         [data-support-chat] .support-chat-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: var(--panel-accent) var(--panel-surface);
+            scrollbar-color: transparent transparent;
+            scrollbar-gutter: auto;
+            overscroll-behavior: contain;
+        }
+        [data-support-chat] .support-chat-scrollbar:hover {
+            scrollbar-color: var(--panel-accent) transparent;
         }
         [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar-track {
-            background: var(--panel-surface);
+            background: transparent;
+        }
+        [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
         }
         [data-support-chat] .support-chat-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--panel-accent);
+            background: transparent;
             border-radius: 9999px;
+            border: 0;
+            background-clip: border-box;
+        }
+        [data-support-chat] .support-chat-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: var(--panel-accent);
         }
         .support-message-input {
             scrollbar-width: none;
@@ -603,12 +607,16 @@
             [data-support-chat] > div { min-width: 0 !important; zoom: 1 !important; }
         }
 
+        @media (min-width: 1280px) {
+            html:has([data-support-chat]) { overflow-y: hidden; }
+        }
         @media (max-width: 1279px) {
-            [data-support-chat-panel] { height: auto; }
+            [data-support-chat] { height: auto; min-height: calc(var(--app-dvh) - 123px); overflow: visible; }
+            [data-support-chat-panel] { min-height: 620px; height: auto; }
             [data-support-chat] main { min-height: 0; }
         }
         @media (max-width: 639px) {
-            [data-support-chat] [data-support-online-users] { max-height: 100px; }
+            [data-support-chat] [data-support-online-users] { max-height: 210px; }
         }
     </style>
 </div>

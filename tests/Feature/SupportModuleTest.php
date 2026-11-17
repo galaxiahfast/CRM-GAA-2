@@ -36,14 +36,13 @@ class SupportModuleTest extends TestCase
             ->assertSee('Chat general de soporte')
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
-            ->assertSeeText('Descargar PDF')
-            ->assertSeeText('Imprimir')
-            ->assertSeeText('Buscar mensajes')
-            ->assertSee('min-w-[1200px]', false)
-            ->assertSee('grid-cols-[360px_minmax(0,1fr)]', false)
-            ->assertSee('p-[50px]', false)
-            ->assertDontSee('lg:grid-cols-', false)
-            ->assertDontSee('overflow-x-auto', false)
+            ->assertSeeText('Sincronizado en tiempo real')
+            ->assertSeeText('Descargar guía PDF')
+            ->assertSee('Buscar por nombre, correo o contenido', false)
+            ->assertSee('data-support-chat-panel', false)
+            ->assertSee('grid-template-columns:360px minmax(0,1fr)', false)
+            ->assertSee('panel-scroll-thumb', false)
+            ->assertSee('xl:px-[50px]', false)
             ->assertSee('support-message-input', false);
 
         $this->actingAs($user)
@@ -132,7 +131,7 @@ class SupportModuleTest extends TestCase
             ->test(TicketChat::class)
             ->call('appendEmoji', '😊')
             ->assertSet('message', '😊')
-            ->set('image', $image)
+            ->set('newFiles', [$image])
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('captura.png');
@@ -142,10 +141,11 @@ class SupportModuleTest extends TestCase
             ->where('message', '😊')
             ->firstOrFail();
 
-        $this->assertNotNull($storedMessage->image_path);
-        $this->assertSame('captura.png', $storedMessage->image_original_name);
-        Storage::disk('public')->assertExists($storedMessage->image_path);
-        $component->assertSee('/storage/'.$storedMessage->image_path, false);
+        $stored = $storedMessage->attachments[0];
+        $this->assertSame('captura.png', $stored['name']);
+        $this->assertSame('image', $stored['kind']);
+        Storage::disk('public')->assertExists($stored['path']);
+        $component->assertSee('/storage/'.$stored['path'], false);
     }
 
     public function test_user_can_send_an_allowed_file_and_one_of_the_available_stickers(): void
@@ -157,7 +157,7 @@ class SupportModuleTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->set('attachment', $attachment)
+            ->set('newFiles', [$attachment])
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('informe.txt')
@@ -167,14 +167,35 @@ class SupportModuleTest extends TestCase
 
         $storedFile = SupportChatMessage::query()
             ->where('user_id', $user->id)
-            ->whereNotNull('attachment_path')
+            ->whereNotNull('attachments')
             ->firstOrFail();
 
-        Storage::disk('public')->assertExists($storedFile->attachment_path);
-        $this->assertSame('informe.txt', $storedFile->attachment_original_name);
+        Storage::disk('public')->assertExists($storedFile->attachments[0]['path']);
+        $this->assertSame('informe.txt', $storedFile->attachments[0]['name']);
         $this->assertSame(1, SupportChatMessage::query()->where('sticker_key', 'ternura')->count());
         $this->assertSame(0, SupportChatMessage::query()->where('sticker_key', 'sticker-no-permitido')->count());
-        $component->assertSee('/storage/'.$storedFile->attachment_path, false);
+        $component->assertSee('/storage/'.$storedFile->attachments[0]['path'], false);
+    }
+
+    public function test_a_message_accepts_up_to_ten_files_and_rejects_the_rest(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        RateLimiter::clear('support-chat:'.$user->id);
+
+        $files = array_map(fn (int $n) => UploadedFile::fake()->create("doc{$n}.txt", 5, 'text/plain'), range(1, 12));
+
+        $component = Livewire::actingAs($user)
+            ->test(TicketChat::class)
+            ->set('newFiles', $files)
+            ->assertHasErrors('newFiles');
+
+        $this->assertCount(10, $component->get('files'));
+
+        $component->call('removeFile', 0)->assertCount('files', 9);
+        $component->call('sendMessage')->assertHasNoErrors()->assertSet('files', []);
+
+        $this->assertCount(9, SupportChatMessage::query()->where('user_id', $user->id)->firstOrFail()->attachments);
     }
 
     public function test_users_can_react_to_messages_and_change_or_remove_their_reaction(): void
@@ -252,7 +273,7 @@ class SupportModuleTest extends TestCase
             ->assertSee('Sofia Soporte (bot)')
             ->assertSee('sofia.soporte@sistema.local')
             ->assertSee('img/support/sofia-avatar.svg', false)
-            ->assertSee('11 ago. 2026')
+            ->assertSee('Hoy')
             ->assertSee('Buenos días');
 
         $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'sofia.soporte@sistema.local'));
@@ -500,6 +521,11 @@ class SupportModuleTest extends TestCase
 
     public function test_profile_photos_are_rendered_in_ticket_chat(): void
     {
+        // Las fotos solo se muestran si el archivo existe (si no, el chat usa las iniciales)
+        \Illuminate\Support\Facades\Storage::fake('public');
+        \Illuminate\Support\Facades\Storage::disk('public')->put('profile-photos/dioni.png', 'x');
+        \Illuminate\Support\Facades\Storage::disk('public')->put('profile-photos/laura.png', 'x');
+
         $currentUser = User::factory()->create([
             'name' => 'Dioni',
             'email' => 'dioni-photo@example.test',
@@ -627,48 +653,31 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($currentUser)
             ->test(TicketChat::class)
-            ->assertSee('Personas en línea')
+            ->assertSee('En línea ahora')
             ->assertSee('actual@example.test')
             ->assertSee('online@example.test')
             ->assertDontSee('offline@example.test');
     }
 
-    public function test_chat_keeps_only_messages_from_the_current_day(): void
+    public function test_chat_keeps_previous_days_and_separates_them_by_date(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-08-10 12:00:00', config('support.timezone')));
 
         $user = User::factory()->create();
-        $recentMessage = SupportChatMessage::create([
-            'user_id' => $user->id,
-            'message' => 'Mensaje del día anterior.',
-        ]);
-        $recentMessage->forceFill([
-            'created_at' => Carbon::now(config('support.timezone'))->subDay()->utc(),
-            'updated_at' => Carbon::now(config('support.timezone'))->subDay()->utc(),
-        ])->save();
-
-        $olderMessage = SupportChatMessage::create([
-            'user_id' => $user->id,
-            'message' => 'Mensaje de hace ocho días.',
-        ]);
-        $olderMessage->forceFill([
+        $older = SupportChatMessage::create(['user_id' => $user->id, 'message' => 'Mensaje de hace ocho días.']);
+        $older->forceFill([
             'created_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
             'updated_at' => Carbon::now(config('support.timezone'))->subDays(8)->utc(),
         ])->save();
-
-        SupportChatMessage::create([
-            'user_id' => $user->id,
-            'message' => 'Mensaje de hoy.',
-        ]);
+        SupportChatMessage::create(['user_id' => $user->id, 'message' => 'Mensaje de hoy.']);
 
         Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->assertDontSee('Mensaje del día anterior.')
-            ->assertDontSee('Mensaje de hace ocho días.')
-            ->assertSee('Mensaje de hoy.');
+            ->assertSee('Mensaje de hace ocho días.')
+            ->assertSee('Mensaje de hoy.')
+            ->assertDontSee('Cargar mensajes anteriores');
 
-        $this->assertDatabaseMissing('support_chat_messages', ['id' => $recentMessage->id]);
-        $this->assertDatabaseMissing('support_chat_messages', ['id' => $olderMessage->id]);
+        $this->assertDatabaseHas('support_chat_messages', ['id' => $older->id]);
 
         Carbon::setTestNow();
     }
@@ -681,7 +690,7 @@ class SupportModuleTest extends TestCase
             ->test(QuestionsBot::class)
             ->call('ask', 'control_horas', 'reloj_checador')
             ->assertSet('selectedQuestion', '¿Cómo consulto mis marcas del reloj checador?')
-            ->assertSee('Revisar Horas')
+            ->assertSee('Consultar periodo')
             ->assertSee('últimos 15 días');
     }
 

@@ -12,6 +12,8 @@ return [
         'trim',
         explode(',', (string) env('SUPPORT_ALWAYS_ONLINE_EMAILS', 'administrador@datamid.com.mx'))
     ))),
+    // Ayuda visual para comprobar el scroll. El componente la limita al entorno local.
+    'online_preview_count' => max(0, (int) env('SUPPORT_ONLINE_PREVIEW_COUNT', 0)),
     'help_recipient_email' => env('SUPPORT_HELP_RECIPIENT_EMAIL', 'administrador@datamid.com.mx'),
 
     // Una categoría por cada apartado del menú lateral, en el mismo orden del menú.
@@ -323,11 +325,11 @@ return [
                 ],
                 'reloj_checador' => [
                     'question' => '¿Cómo consulto mis marcas del reloj checador?',
-                    'answer' => 'Elige Fecha Inicio y Fecha Fin y presiona “Revisar Horas”. Por defecto se consultan los últimos 15 días.',
+                    'answer' => 'Elige Desde y Hasta en Periodo de consulta y presiona “Consultar periodo”. Por defecto se consultan los últimos 15 días.',
                     'steps' => [
-                        'Entra a Monitoreo › Control de Horas › Reloj Checador.',
-                        'Selecciona Fecha Inicio y Fecha Fin.',
-                        'Presiona “Revisar Horas”.',
+                        'Entra a Monitoreo › Reloj Checador › Marcas de tiempo.',
+                        'Selecciona Desde y Hasta.',
+                        'Presiona “Consultar periodo”.',
                         'Consulta el tiempo neto, las horas decimales, el pago base, el bono y el total del periodo.',
                     ],
                 ],
@@ -551,7 +553,7 @@ return [
             'label' => 'Chat de Soporte',
             'icon' => 'chat',
             'menu' => 'Soporte › Centro de Ayuda › Chat de Soporte',
-            'summary' => 'El Chat de Soporte es un espacio compartido para conversar con todos los colaboradores y solicitar ayuda. Solo conserva los mensajes del día: al comenzar un nuevo día, los anteriores se eliminan automáticamente.',
+            'summary' => 'El Chat de Soporte es un espacio compartido para conversar con todos los colaboradores y solicitar ayuda. La conversación se conserva: los mensajes se separan por día y puedes cargar los anteriores.',
             'items' => [
                 'enviar' => [
                     'question' => '¿Cómo envío un mensaje?',
@@ -560,7 +562,7 @@ return [
                         'Entra a Soporte › Centro de Ayuda › Chat de Soporte.',
                         'Haz clic en “Escribe un mensaje…” y redacta tu mensaje.',
                         'Presiona Enter o el botón Enviar.',
-                        'Si quieres, presiona Emojis para agregar uno al mensaje o Stickers para enviar uno al instante.',
+                        'Si quieres, presiona los tres puntos del cuadro de texto y elige Emojis para agregar uno al mensaje o Stickers para enviar uno al instante.',
                     ],
                 ],
                 'mencionar' => [
@@ -573,12 +575,12 @@ return [
                     ],
                 ],
                 'adjuntar' => [
-                    'question' => '¿Cómo adjunto una imagen o un archivo?',
-                    'answer' => 'Usa “Adjuntar imagen” (JPG, PNG o WebP, hasta 5 MB) o “Adjuntar archivo” (PDF, Word, Excel, CSV, TXT o ZIP, hasta 10 MB) y revisa la vista previa antes de enviar.',
+                    'question' => '¿Cómo adjunto imágenes o archivos?',
+                    'answer' => 'Presiona los tres puntos del cuadro de texto y elige “Adjuntar imagen” (JPG, PNG o WebP, hasta 5 MB) o “Adjuntar archivo” (PDF, Word, Excel, CSV, TXT o ZIP, hasta 10 MB). Puedes adjuntar hasta 10 archivos por mensaje.',
                     'steps' => [
-                        'Presiona “Adjuntar imagen” o “Adjuntar archivo”.',
-                        'Selecciona el archivo; aparecerá como “listo para enviar”.',
-                        'Si te equivocaste, usa “Quitar imagen” o “Quitar archivo”.',
+                        'Presiona los tres puntos del lado derecho del cuadro de texto.',
+                        'Elige “Adjuntar imagen” o “Adjuntar archivo” y selecciona uno o varios archivos (máximo 10 en total).',
+                        'Revisa los archivos sobre el cuadro de texto; si te equivocaste, presiona la × de ese archivo.',
                         'Presiona Enviar.',
                     ],
                 ],
