@@ -136,7 +136,7 @@
 }">
 
     <!-- ===================== BARRA SUPERIOR ===================== -->
-    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[123px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.index', 'time.reports', 'testing.managercontrol.*', 'testing.own-hours.*', 'time.dashboard', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'organigrama.*', 'soporte.ticket', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
+    <nav id="main-nav" class="fixed right-0 top-0 z-[90] flex h-[123px] items-center bg-[#1a3a6b] {{ request()->routeIs('activity-backups.*', 'bank-reconciliation.*', 'confirmaciones.*', 'profile.show') ? 'px-[50px]' : (request()->routeIs('inicio', 'time.index', 'time.reports', 'testing.managercontrol.*', 'testing.own-hours.*', 'time.dashboard', 'time.admin.attendance', 'time.attendance', 'administracion.*', 'organigrama.*', 'soporte.ticket', 'soporte.reportes-tecnicos*', 'soporte.reportes-respaldos', 'soporte.preguntas', 'profiles.show', 'dashboard', 'customers.view') ? 'px-[20px] sm:px-[30px] xl:px-[50px]' : 'px-[20px]') }}">
         <div class="flex w-full items-center justify-between gap-[30px]">
             <button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed" class="mobile-menu-button" aria-label="Menú de navegación" title="Menú de navegación">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -202,6 +202,12 @@
                     <span>Información</span>
                     <span class="text-white">›</span>
                     <span class="text-white">{{ request()->route('tool') === 'ocr' ? 'Conciliación OCR' : 'Conciliación Bancaria' }}</span>
+                </div>
+            @elseif (request()->routeIs('confirmaciones.*'))
+                <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
+                    <span>Información</span>
+                    <span class="text-white">›</span>
+                    <span class="text-white">Confirmaciones de Saldos</span>
                 </div>
             @elseif (request()->routeIs('organigrama.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
@@ -759,6 +765,17 @@
                     </div>
                 </li>
 
+                <!-- ========================================================== -->
+                <!-- BOTÓN: Confirmaciones de Saldos (auditoría)                -->
+                <!-- ========================================================== -->
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ route('confirmaciones.show', 'confirmaciones') }}" data-sidebar-label="Confirmaciones de Saldos"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('confirmaciones.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <svg class="w-5 h-5 shrink-0 transition-colors {{ request()->routeIs('confirmaciones.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l4 4v14H4V3h4Zm7 0v5h5M9 13.5l2 2 4-4.5" /></svg>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Confirmaciones de Saldos</span>
+                    </a>
+                </li>
 
                     <li class="pt-[25px] px-[15px] pb-[15px] m-0" :class="collapsed ? 'hidden' : 'block'">
                         <span class="flex h-[15px] items-center text-[15px] font-medium leading-none text-black">Documentos</span>
