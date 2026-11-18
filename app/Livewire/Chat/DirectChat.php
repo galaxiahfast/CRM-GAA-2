@@ -241,8 +241,13 @@ class DirectChat extends Component
             }
         }
 
-        $onlineIds = DB::table($sessionsTable)->whereNotNull('user_id')->where('user_id', '!=', $me)
-            ->where('last_activity', '>=', $recentLimit)->distinct()->pluck('user_id')->map(fn ($id): int => (int) $id)->all();
+        // Mismo criterio que «En línea ahora» de Inicio: presencia reciente (users.last_seen_at), sesiones activas o cuentas siempre en línea
+        $onlineIds = collect(DB::table($sessionsTable)->whereNotNull('user_id')->where('user_id', '!=', $me)
+            ->where('last_activity', '>=', $recentLimit)->distinct()->pluck('user_id')->all())
+            ->merge(User::query()->whereKeyNot($me)->where(fn ($query) => $query
+                ->where('last_seen_at', '>=', now()->subMinutes(3))
+                ->orWhereIn('email', (array) config('support.always_online_emails', [])))->pluck('id')->all())
+            ->map(fn ($id): int => (int) $id)->unique()->values()->all();
         $threads = $this->threads($me);
 
         // Avisos del chat minimizado: mensajes nuevos (uno por persona) y quién está escribiendo

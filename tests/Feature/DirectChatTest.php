@@ -204,4 +204,18 @@ class DirectChatTest extends TestCase
             ->assertDispatched('direct-chat-opened')
             ->assertSet('expanded', true);
     }
+
+    public function test_online_status_matches_the_home_screen(): void
+    {
+        $me = User::factory()->create();
+        $recent = User::factory()->create(['name' => 'Reciente', 'last_seen_at' => now()->subMinute()]);
+        $away = User::factory()->create(['name' => 'Ausente', 'last_seen_at' => now()->subMinutes(30)]);
+        $always = User::factory()->create(['email' => 'siempre@example.test']);
+        config(['support.always_online_emails' => ['siempre@example.test']]);
+        $this->actingAs($me);
+
+        Livewire::test(DirectChat::class)->call('openConversation', $recent->id)->assertSet('activeUserId', $recent->id)->assertSee('En línea');
+        Livewire::test(DirectChat::class)->call('openConversation', $away->id)->assertSee('Desconectado');
+        Livewire::test(DirectChat::class)->call('openConversation', $always->id)->assertSee('En línea');
+    }
 }
