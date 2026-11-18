@@ -53,12 +53,12 @@ Schedule::command('biometric:sync --maintenance')
 Schedule::command('time:pause-abandoned')->everyMinute()->withoutOverlapping();
 
 // Envía las actividades del Cronómetro a ManagerControl (solo en ese sentido). Solo corre si está activado en el .env
-// (MANAGERCONTROL_TIMER_SYNC_ENABLED=true); las actividades en progreso se envían cuando se pausan o se cierran.
+// (MANAGERCONTROL_TIMER_SYNC_ENABLED=true); además de enviarse al instante cada cambio del Cronómetro, se repasa cada minuto (también lo que está en progreso).
 if (config('managercontrol.timer_sync.enabled')) {
     Schedule::command('managercontrol:sync-timer --apply')
-        ->everyThirtyMinutes()
+        ->everyMinute()
         ->name('managercontrol:sync-timer')
-        ->withoutOverlapping(25);
+        ->withoutOverlapping(5);
 }
 
 // Cierra los cronómetros que sigan activos al terminar la jornada. Se usa
@@ -93,11 +93,3 @@ Schedule::call(function (): void {
     ->name('sessions:prune-expired')
     ->withoutOverlapping();
 
-// El chat general de soporte conserva únicamente los mensajes del día actual.
-Schedule::call(function () {
-    $startOfToday = now(config('support.timezone', 'America/Mexico_City'))->startOfDay()->utc();
-    SupportChatMessage::query()->where('created_at', '<', $startOfToday)->delete();
-})->dailyAt('00:05')
-    ->timezone(config('support.timezone', 'America/Mexico_City'))
-    ->name('support-chat:clear-previous-days')
-    ->withoutOverlapping();

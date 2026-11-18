@@ -268,20 +268,21 @@ class TimerPresenceAndManagerControlSyncTest extends TestCase
         $this->entry($aux, $customer, $sub, '2026-11-12', '09:00:00', '11:30:00'); // 2.5 h
         $this->entry($aux, $customer, $sub, '2026-11-13', '09:00:00', '10:00:00');
         $this->entry($aux, $customer, $sub, '2026-11-13', '15:00:00', '15:15:00'); // mismo día, cliente y actividad: se suman (1.25 h)
-        $this->entry($aux, $customer, $sub, '2026-11-14', '09:00:00', '', TimeEntry::STATUS_IN_PROGRESS); // en progreso: espera
+        $this->entry($aux, $customer, $sub, '2026-11-14', '09:00:00', '', TimeEntry::STATUS_IN_PROGRESS); // en progreso: también se envía, con lo que lleva (11 h)
 
         // Sin --apply solo se revisa: no se escribe nada
         $this->artisan('managercontrol:sync-timer')->assertSuccessful();
         $this->assertSame([], $this->writes->calls);
 
         $result = app(TimerSync::class)->run(null, null, true);
-        $this->assertSame(2, $result['created']);
+        $this->assertSame(3, $result['created']);
         $inserts = array_values(array_filter($this->writes->calls, fn (array $call): bool => $call[0] === 'insert'));
-        $this->assertCount(2, $inserts);
+        $this->assertCount(3, $inserts);
         // colaborador 7, actividad 20, cliente 10, horas en décimas, fecha
         $this->assertSame([7, 20, 10, 2.5], [$inserts[0][2][3], $inserts[0][2][4], $inserts[0][2][5], $inserts[0][2][6]]);
         $this->assertSame('2026-11-12', $inserts[0][2][8]);
         $this->assertSame(1.3, $inserts[1][2][6]); // 1:15 → 1.25 h → 1.3 en décimas, como el escritorio
+        $this->assertSame(11.0, $inserts[2][2][6]);
         $this->assertDatabaseHas('managercontrol_timer_syncs', ['work_date' => '2026-11-13', 'legacy_record_id' => 9002, 'status' => 'synced']);
 
         // Otra vuelta sin cambios no duplica nada
@@ -289,12 +290,13 @@ class TimerPresenceAndManagerControlSyncTest extends TestCase
         $this->mcRows = [
             $this->mcRow(9001, '2026-11-12', 2.5, description: 'Registrado desde el Cronómetro del CRM'),
             $this->mcRow(9002, '2026-11-13', 1.3, description: 'Registrado desde el Cronómetro del CRM'),
+            $this->mcRow(9003, '2026-11-14', 11.0, description: 'Registrado desde el Cronómetro del CRM'),
         ];
-        $this->assertSame(2, app(TimerSync::class)->run(null, null, true)['unchanged']);
+        $this->assertSame(3, app(TimerSync::class)->run(null, null, true)['unchanged']);
         $this->assertSame([], $this->writes->calls);
     }
 
-    public function test_a_timer_change_updates_its_record_unless_it_was_edited_in_managercontrol(): void
+    public function test_a_timer_change_updates_its_record_even_if_it_was_edited_in_managercontrol(): void
     {
         [$aux, $customer, $sub] = $this->seedData();
         $this->linkAll($aux, $customer, $sub);
@@ -315,19 +317,45 @@ class TimerPresenceAndManagerControlSyncTest extends TestCase
 
         $result = app(TimerSync::class)->run(null, null, true);
 
-        $this->assertSame(1, $result['updated']);
-        $this->assertSame(1, $result['edited']);
-        $this->assertCount(1, $this->writes->calls);
+        // Manda el Cronómetro: el día 12 y también el 13, aunque lo editaron en ManagerControl
+        $this->assertSame(2, $result['updated']);
+        $this->assertSame(0, $result['edited']);
+        $this->assertCount(2, $this->writes->calls);
         [$kind, $sql, $bindings] = $this->writes->calls[0];
         $this->assertSame('update', $kind);
         $this->assertSame(2.5, $bindings[2]); // nuevas horas del día 12
         $this->assertContains(9001, $bindings);
-        $this->assertDatabaseHas('managercontrol_timer_syncs', ['work_date' => '2026-11-13', 'status' => 'edited']);
+        $this->assertSame(2.5, $this->writes->calls[1][2][2]); // el día 13 vuelve al tiempo del Cronómetro (se pierde el 3.0 editado)
+        $this->assertContains(9002, $this->writes->calls[1][2]);
 
-        // Lo editado en ManagerControl no se vuelve a tocar
+        // Sin cambios nuevos en el Cronómetro no se vuelve a escribir
         $this->writes->calls = [];
         app(TimerSync::class)->run(null, null, true);
         $this->assertSame([], $this->writes->calls);
+
+        // Lo que se edita en ManagerControl cuando el Cronómetro ya no cambia se deja como está
+        $this->mcRows = [
+            $this->mcRow(9001, '2026-11-12', 4.0, description: 'Registrado desde el Cronómetro del CRM'),
+            $this->mcRow(9002, '2026-11-13', 2.5, description: 'Registrado desde el Cronómetro del CRM'),
+        ];
+        app(TimerSync::class)->run(null, null, true);
+        $this->assertSame([], $this->writes->calls);
+    }
+
+    public function test_short_activities_still_count_and_the_day_keeps_its_real_total_in_tenths(): void
+    {
+        [$aux, $customer, $sub] = $this->seedData();
+        $this->linkAll($aux, $customer, $sub);
+        Carbon::setTestNow('2026-11-14 20:00:00');
+        $this->entry($aux, $customer, $sub, '2026-11-13', '09:00:00', '09:03:00'); // 3 min: cuenta (0.1 h), no se pierde
+        $this->entry($aux, $customer, $sub, '2026-11-13', '09:10:00', '09:10:30'); // 30 s: toque accidental, no cuenta
+
+        $result = app(TimerSync::class)->run(null, null, true);
+
+        $this->assertSame(1, $result['created']);
+        $inserts = array_values(array_filter($this->writes->calls, fn (array $call): bool => $call[0] === 'insert'));
+        $this->assertSame(0.1, $inserts[0][2][6]);
+        $this->assertLessThan(0.1, $inserts[0][2][10] / $inserts[0][2][9]); // el SubTotal sale del tiempo exacto (3 min), no de los 6 min de la décima
     }
 
     public function test_an_activity_deleted_from_the_timer_is_retired_in_managercontrol_only_if_untouched(): void

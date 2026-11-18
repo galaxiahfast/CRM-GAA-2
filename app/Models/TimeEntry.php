@@ -19,6 +19,13 @@ class TimeEntry extends Model
         self::STATUS_AUTO_CLOSED => 'Cerrada automáticamente',
     ];
 
+    protected static function booted(): void
+    {
+        // Cualquier cambio en el Cronómetro se manda enseguida a ManagerControl (ver TimerSync::requestFor)
+        static::saved(fn (TimeEntry $entry) => \App\Services\ManagerControl\TimerSync::requestFor($entry->user_id));
+        static::deleted(fn (TimeEntry $entry) => \App\Services\ManagerControl\TimerSync::requestFor($entry->user_id));
+    }
+
     protected $fillable = [
         'user_id',
         'customer_id',

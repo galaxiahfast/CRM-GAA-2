@@ -177,6 +177,10 @@ class ManagerControlWriter
         }
         $exact = self::parseHours((string) ($data['hours'] ?? ''));
         $hours = round($exact, 1);
+        // El Cronómetro manda las horas ya repartidas en décimas y, aparte, el tiempo exacto para calcular el SubTotal
+        if (isset($data['exact_hours']) && is_numeric($data['exact_hours']) && (float) $data['exact_hours'] > 0) {
+            $exact = round((float) $data['exact_hours'], 2);
+        }
         $max = (float) config('managercontrol.write.max_hours', 24);
         if ($hours < 0.1 || $exact > $max) {
             throw new ManagerControlException('Escribe el tiempo como 2:30 o 2.5 (mínimo 0:06, máximo '.rtrim(rtrim(number_format($max, 1), '0'), '.').' horas).');
