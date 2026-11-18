@@ -8,11 +8,8 @@
     $today = ucfirst($now->translatedFormat('l, d \d\e F \d\e Y'));
     $roleName = $user->role?->role;
 
-    $canAdministration = $permissions->allows($user, 'administration.organization.manage')
-        || $permissions->allows($user, 'administration.users.manage')
-        || $permissions->allows($user, 'administration.roles.manage')
-        || $permissions->allows($user, 'administration.permissions.manage')
-        || $permissions->allows($user, 'administration.assignments.manage');
+    // Solo quien tiene el panel de Administración completo (administradores) ve este acceso, igual que en el menú lateral
+    $canAdministration = $permissions->allows($user, 'administration.organization.manage');
     $administrationRoute = $permissions->allows($user, 'administration.organization.manage')
         ? route('administracion.index')
         : ($permissions->allows($user, 'administration.users.manage')
@@ -95,8 +92,8 @@
     $sections['Documentos'] = $documents;
 
     $sections['Soporte'] = [
-        ['Soporte técnico', 'Solicita ayuda mediante un ticket.', route('soporte.ticket'), 'ticket'],
         ['Preguntas', 'Consulta respuestas y orientación rápida.', route('soporte.preguntas'), 'help'],
+        ['Soporte técnico', 'Solicita ayuda mediante un ticket.', route('soporte.ticket'), 'ticket'],
         ['Mi cuenta', 'Tus datos, seguridad y preferencias.', route('profile.show'), 'account'],
     ];
 @endphp

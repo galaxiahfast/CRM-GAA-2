@@ -6,7 +6,8 @@
     $canManageRoles = $permissionAccess->allows($currentUser, 'administration.roles.manage');
     $canManagePermissions = $permissionAccess->allows($currentUser, 'administration.permissions.manage');
     $canManageAssignments = $permissionAccess->allows($currentUser, 'administration.assignments.manage');
-    $canAdministrationSection = $canAdministration || $canManageUsers || $canManageRoles || $canManagePermissions || $canManageAssignments;
+    // «Administración» es solo para quien tiene el panel completo (administradores): los demás perfiles no la ven
+    $canAdministrationSection = $canAdministration;
     $administrationRoute = $canAdministration
         ? route('administracion.index')
         : ($canManageUsers
@@ -55,7 +56,8 @@
     updateSidebarMatches() {
         const query = this.normalizeSidebarText(this.sidebarSearch);
 
-        const links = Array.from(document.querySelectorAll('#logo-sidebar a[href]'));
+        // El buscador solo muestra apartados del menú: los accesos del usuario (Mi cuenta, cerrar sesión…) del pie no aparecen
+        const links = Array.from(document.querySelectorAll('#logo-sidebar a[href]')).filter((link) => ! link.closest('footer, [data-profile-menu], [data-session-logout]'));
         const seen = new Set();
 
         this.sidebarMatches = links.map((link) => ({
@@ -273,8 +275,6 @@
             @elseif (request()->routeIs('profiles.show'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Información</span>
-                    <span class="text-white">›</span>
-                    <a href="{{ route('profiles.index') }}" class="transition-colors hover:text-white">Perfiles</a>
                     <span class="text-white">›</span>
                     <span class="text-white">Perfil de usuario</span>
                 </div>
@@ -869,17 +869,6 @@
                         <!-- Línea vertical siempre visible -->
                         <div class="absolute left-[29px] top-[10px] bottom-0 w-[2px] bg-gray-200"></div>
                         <ul class="space-y-0 w-full">
-                            <!-- Ticket -->
-                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
-                                <a href="{{ route('soporte.ticket') }}" 
-                                    :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                                    class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
-                                    <svg class="w-5 h-5 transition-colors {{ request()->routeIs('soporte.ticket') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                                    </svg>
-                                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Chat de Soporte</span>
-                                </a>
-                            </li>
                             <!-- Preguntas -->
                             <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
                                 <a href="{{ route('soporte.preguntas') }}" 
@@ -889,6 +878,17 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Preguntas</span>
+                                </a>
+                            </li>
+                            <!-- Ticket -->
+                            <li class="pt-[20px] pl-[27px] pr-0 pb-0 m-0 w-full" :class="collapsed ? 'pl-[15px]' : 'pl-[37px]'">
+                                <a href="{{ route('soporte.ticket') }}" 
+                                    :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                                    class="group flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('soporte.ticket') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} whitespace-nowrap">
+                                    <svg class="w-5 h-5 transition-colors {{ request()->routeIs('soporte.ticket') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                                    </svg>
+                                    <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Chat de Soporte</span>
                                 </a>
                             </li>
                         </ul>
