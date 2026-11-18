@@ -29,27 +29,35 @@
     style="right: calc(50px * var(--app-zoom, 1)); bottom: 0; min-height: 0; background: transparent"
     @if ($expanded) wire:poll.2s.visible @else wire:poll.5s.visible @endif
     x-data="{
-        open: $wire.entangle('expanded').live,
+        open: @js($expanded),
         focusInput() { this.$nextTick(() => this.$root.querySelector('form input')?.focus()); },
     }"
+    x-init="
+        // El estado abierto/minimizado lo lleva el navegador (al instante) y se avisa al servidor sin esperar para recordarlo al recargar
+        $watch('open', (value) => $wire.setExpanded(value));
+        // Al llegar desde una notificación (?chat=ID) se quita ese parámetro de la dirección: así, minimizar y recargar no lo vuelve a abrir
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('chat')) { url.searchParams.delete('chat'); window.history.replaceState(null, '', url); }
+    "
     x-effect="if (open) { $dispatch('direct-chat-sent'); focusInput(); }"
+    @direct-chat-opened.window="open = true"
     @click.outside="if (open) open = false"
     @keydown.escape.window="if (open) open = false"
     @visibilitychange.document="if (document.hidden && open) open = false"
 >
     <x-panel-styles />
 
-    <div class="app-zoom-overlay flex flex-col items-end">
+    <div class="app-zoom-overlay grid items-end justify-items-end">
 
     <x-error-toast :wire:key="'direct-chat-error-'.$errorSeq" title="No se pudo enviar" :message="$errors->first('message')" />
 
         {{-- Minimizado: avisos de mensajes nuevos y de quién está escribiendo, y la barra «Mensajes» --}}
-        <div x-show="! open" @if ($expanded) style="display: none;" @endif x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="flex flex-col items-end">
+        <div x-show="! open" style="grid-area: 1 / 1;@if ($expanded) display: none;@endif" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="flex flex-col items-end">
         @if ($previews->isNotEmpty())
             <div class="mb-[10px] flex flex-col items-end gap-[10px]">
                 @foreach ($previews as $preview)
                     @php($previewUser = $preview['user'])
-                    <button type="button" wire:key="direct-preview-{{ $previewUser->id }}" wire:click="openConversation({{ $previewUser->id }})" class="dc-preview panel-surface panel-border flex w-[320px] max-w-[calc(100vw-20px)] items-center gap-[15px] rounded-xl border p-[15px] text-left shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+                    <button type="button" wire:key="direct-preview-{{ $previewUser->id }}" wire:click="openConversation({{ $previewUser->id }})" class="dc-preview panel-surface panel-border flex w-[360px] max-w-[calc(100vw-20px)] items-center gap-[20px] rounded-xl border p-[20px] text-left shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
                         @if ($previewUser->hasProfilePhotoFile())
                             <img src="{{ $previewUser->profile_photo_url }}" alt="Foto de {{ $previewUser->name }}" class="panel-border h-10 w-10 shrink-0 rounded-full border object-cover">
                         @else
@@ -71,7 +79,7 @@
             </div>
         @endif
 
-        <button type="button" @click="open = true" class="panel-surface panel-border flex w-[300px] max-w-[calc(100vw-20px)] items-center justify-between gap-[20px] rounded-t-xl border border-b-0 px-[20px] py-[15px] text-left leading-none shadow-[0_8px_24px_rgba(0,0,0,0.18)]" aria-label="Abrir mensajes" title="Abrir mensajes">
+        <button type="button" @click="open = true" class="panel-surface panel-border flex w-[360px] max-w-[calc(100vw-20px)] items-center justify-between gap-[20px] rounded-t-xl border border-b-0 p-[20px] text-left leading-none shadow-[0_8px_24px_rgba(0,0,0,0.18)]" aria-label="Abrir mensajes" title="Abrir mensajes">
             <span class="panel-accent leading-none">Mensajes</span>
             @if ($unreadTotal > 0)
                 <span class="dc-badge">{{ $unreadTotal }}</span>
@@ -80,31 +88,32 @@
         </div>
 
         {{-- Expandido: sube desde abajo al abrir y baja al minimizar --}}
-        <section x-show="open" @if (! $expanded) style="display: none;" @endif x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-full" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-full" class="panel-surface panel-border flex h-[512px] max-h-[calc((100dvh-123px)/var(--app-zoom,1))] w-[360px] max-w-[calc(100vw-20px)] flex-col overflow-hidden rounded-t-xl border border-b-0 shadow-[0_18px_55px_rgba(0,0,0,0.30)]" aria-label="Mensajes">
-            <header class="panel-header panel-border flex h-[70px] shrink-0 items-center justify-between gap-[20px] border-b px-[20px]">
+        <section x-show="open" style="grid-area: 1 / 1;@if (! $expanded) display: none;@endif" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-full" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-full" class="panel-surface panel-border flex h-[572px] max-h-[calc((100dvh-123px)/var(--app-zoom,1))] w-[400px] max-w-[calc(100vw-20px)] flex-col overflow-hidden rounded-t-xl border border-b-0 shadow-[0_18px_55px_rgba(0,0,0,0.30)]" aria-label="Mensajes">
+            <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[20px] border-b p-[20px]">
                 @if ($activeUser)
-                    <div class="flex min-w-0 items-center gap-[15px]">
-                        <span class="relative shrink-0">
-                            @if ($activeUser->hasProfilePhotoFile())
-                                <img src="{{ $activeUser->profile_photo_url }}" alt="Foto de {{ $activeUser->name }}" class="panel-border h-10 w-10 rounded-full border object-cover">
-                            @else
-                                <span class="panel-subtle panel-border grid h-10 w-10 place-items-center rounded-full border">{{ $initials($activeUser) }}</span>
-                            @endif
-                            <span class="dc-status absolute bottom-0 right-0 h-[10px] w-[10px] rounded-full {{ $activeOnline ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
-                        </span>
+                    <div class="flex min-w-0 items-center gap-[20px]">
+                        @if ($activeUser->hasProfilePhotoFile())
+                            <img src="{{ $activeUser->profile_photo_url }}" alt="Foto de {{ $activeUser->name }}" class="panel-border h-10 w-10 shrink-0 rounded-full border object-cover">
+                        @else
+                            <span class="panel-subtle panel-border grid h-10 w-10 shrink-0 place-items-center rounded-full border">{{ $initials($activeUser) }}</span>
+                        @endif
                         <div class="min-w-0">
-                            <p class="panel-accent truncate leading-none">{{ $fullName($activeUser) }}</p>
-                            <p class="dc-sub mt-[5px] truncate">{{ $activeOnline ? 'En línea' : 'Desconectado' }}</p>
+                        <p class="dc-name panel-accent truncate" title="{{ $fullName($activeUser) }}">{{ $shortName($activeUser) }}</p>
+                        <p class="dc-sub mt-[15px] flex items-center gap-[10px] truncate leading-none"><span class="dc-status-dot h-[8px] w-[8px] shrink-0 rounded-full {{ $activeOnline ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>{{ $activeOnline ? 'En línea' : 'Desconectado' }}</p>
                         </div>
                     </div>
                 @else
                     <p class="panel-accent leading-none">Mensajes</p>
                 @endif
-                <div class="flex shrink-0 items-center gap-[20px]">
+                <div class="flex shrink-0 items-center gap-[10px]">
                     @if ($activeUser)
-                        <button type="button" wire:click="closeConversation" class="dc-link leading-none">Todas</button>
+                        <button type="button" wire:click="closeConversation" class="dc-icon-btn" aria-label="Todas las conversaciones" title="Todas las conversaciones">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                        </button>
                     @endif
-                    <button type="button" @click="open = false" class="dc-link leading-none">Minimizar</button>
+                    <button type="button" @click="open = false" class="dc-icon-btn" aria-label="Minimizar" title="Minimizar">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" /></svg>
+                    </button>
                 </div>
             </header>
 
@@ -125,14 +134,31 @@
                                 <p class="py-[10px] text-center leading-none">{{ $day }}</p>
                             @endif
                             <div wire:key="direct-message-{{ $item->id }}" class="flex {{ $mine ? 'justify-end' : 'justify-start' }}">
-                                <div class="dc-bubble {{ $mine ? 'dc-mine' : 'panel-subtle' }} panel-border max-w-[80%] rounded-xl border px-[15px] py-[10px]" title="{{ $item->created_at->timezone($tz)->format('d/m/Y H:i') }}">
+                                <div class="dc-bubble {{ $mine ? 'dc-mine' : 'panel-subtle' }} panel-border max-w-[80%] rounded-xl border p-[20px]" title="{{ $item->created_at->timezone($tz)->format('d/m/Y H:i') }}">
                                     <p class="whitespace-pre-wrap break-words leading-[30px]">{{ $item->body }}</p>
-                                    <p class="text-right leading-[20px]">{{ $item->created_at->timezone($tz)->format('H:i') }}{{ $mine && $item->read_at ? ' · Visto' : '' }}</p>
+                                    <p class="flex items-center justify-end gap-[5px] leading-[20px]">{{ $item->created_at->timezone($tz)->format('H:i') }}
+                                        @if ($mine)
+                                            @if ($item->read_at)
+                                                <svg class="h-[18px] w-[18px] text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Leído" role="img"><title>Leído</title><path d="M2 12.5l4.5 4.5L15 7.5M10 15.5l1.5 1.5L20 7.5" /></svg>
+                                            @elseif ($activeOnline)
+                                                <svg class="h-[18px] w-[18px] text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Recibido" role="img"><title>Recibido</title><path d="M2 12.5l4.5 4.5L15 7.5M10 15.5l1.5 1.5L20 7.5" /></svg>
+                                            @else
+                                                <svg class="h-[18px] w-[18px] text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Enviado" role="img"><title>Enviado</title><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                                            @endif
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                         @empty
-                            <p class="py-[40px] text-center leading-[30px]">Todavía no hay mensajes. Escribe el primero a {{ $shortName($activeUser) }}.</p>
+                            <p class="px-[20px] py-[40px] text-center leading-[30px]">Todavía no hay mensajes. Escribe el primero a {{ $shortName($activeUser) }}.</p>
                         @endforelse
+                        {{-- Mientras se envía: el mensaje aparece con un reloj hasta que el servidor lo guarda --}}
+                        <div wire:loading.flex wire:target="send" class="justify-end">
+                            <div class="dc-bubble dc-mine panel-border max-w-[80%] rounded-xl border p-[20px]">
+                                <p class="whitespace-pre-wrap break-words leading-[30px]" x-text="$wire.message"></p>
+                                <p class="flex items-center justify-end gap-[5px] leading-[20px]"><svg class="h-[18px] w-[18px] text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Enviando" role="img"><title>Enviando</title><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg></p>
+                            </div>
+                        </div>
                     </div>
                     <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
 
@@ -145,21 +171,21 @@
                     @endif
                 </div>
 
-                <form wire:submit="send" class="panel-border flex shrink-0 items-center gap-[15px] border-t p-[20px]">
+                <form wire:submit="send" class="panel-border flex shrink-0 items-center gap-[20px] border-t p-[20px]">
                     <input type="text" wire:model.live.debounce.500ms="message" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje…" class="dc-field min-w-0 flex-1">
                     <button type="submit" wire:loading.attr="disabled" wire:target="send" class="dc-primary shrink-0 rounded-xl px-[20px] py-[15px] leading-none disabled:cursor-wait disabled:opacity-60">Enviar</button>
                 </form>
             @else
-                {{-- Lista: búsqueda y personas (conversaciones recientes primero). Filas de 70px y alto de exactamente 5 filas: nunca se corta una --}}
+                {{-- Lista: búsqueda y personas (conversaciones recientes primero). Filas de 100px y alto de exactamente 4 filas: nunca se corta una --}}
                 <div class="panel-border shrink-0 border-b p-[20px]">
                     <input type="search" wire:model.live.debounce.300ms="search" placeholder="Buscar colaborador…" class="dc-field w-full">
                 </div>
 
-                <div data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="$wire.$get('search'); $nextTick(() => update())" class="relative h-[350px] shrink-0 overflow-hidden">
+                <div data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" x-effect="$wire.$get('search'); $nextTick(() => update())" class="relative h-[400px] shrink-0 overflow-hidden">
                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="panel-scroll h-full snap-y snap-mandatory overflow-y-auto">
                         @forelse ($people as $row)
                             @php($person = $row['user'])
-                            <button type="button" wire:key="direct-person-{{ $person->id }}" wire:click="openConversation({{ $person->id }})" class="dc-row panel-border flex h-[70px] w-full snap-start items-center gap-[15px] border-b px-[20px] text-left">
+                            <button type="button" wire:key="direct-person-{{ $person->id }}" wire:click="openConversation({{ $person->id }})" class="dc-row panel-border flex h-[100px] w-full snap-start items-center gap-[20px] border-b p-[20px] text-left">
                                 <span class="relative shrink-0">
                                     @if ($person->hasProfilePhotoFile())
                                         <img src="{{ $person->profile_photo_url }}" alt="Foto de {{ $person->name }}" class="panel-border h-10 w-10 rounded-full border object-cover">
@@ -199,10 +225,12 @@
         html.module-dark-theme [data-direct-chat] { --dc-green: #4ade80; }
         [data-direct-chat] * { font-weight: 400; }
         [data-direct-chat] p { line-height: 30px; }
-        [data-direct-chat] p.dc-sub { line-height: 35px; margin-bottom: -10px; }
+        [data-direct-chat] p.dc-sub, [data-direct-chat] p.dc-name { line-height: 1; margin-bottom: 0; }
         [data-direct-chat] .dc-link { color: var(--dc-green); transition: opacity 150ms ease; }
         [data-direct-chat] .dc-link:hover { opacity: .75; }
         [data-direct-chat] .dc-green-text { color: var(--dc-green); }
+        [data-direct-chat] .dc-icon-btn { display: grid; height: 40px; width: 40px; place-items: center; border-radius: 12px; color: var(--dc-green); transition: background-color 150ms ease; }
+        [data-direct-chat] .dc-icon-btn:hover { background-color: color-mix(in srgb, var(--dc-green) 12%, var(--panel-surface)); }
         [data-direct-chat] .dc-badge {
             display: inline-flex;
             min-width: 24px;

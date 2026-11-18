@@ -204,7 +204,7 @@ class TimeControlTest extends TestCase
         Livewire::actingAs($aux)
             ->test(\App\Livewire\TimeControl\RegistroActividades::class)
             ->assertDontSee('Guía de uso')
-            ->assertSee('Uso rápido')
+            ->assertSee('Tutorial rápido')
             ->assertSeeHtml('id="clock-tour-row"')
             ->assertSeeHtml('id="clock-tour-toggle"')
             ->assertSeeHtml('id="clock-tour-delete"');
@@ -216,7 +216,7 @@ class TimeControlTest extends TestCase
 
         Livewire::actingAs($aux)
             ->test(\App\Livewire\TimeControl\RegistroActividades::class)
-            ->assertSee('Guía PDF')
+            ->assertSee('Descargar guía PDF')
             ->assertSeeHtml(route('section.guide', 'cronometro'));
 
         $this->actingAs($aux)

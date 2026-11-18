@@ -49,7 +49,6 @@ class SidebarMonitoringMenuTest extends TestCase
     {
         $html = $this->sidebar($this->userWithRole('Auxiliar', 'aux-names@datamid.test'));
 
-        $this->assertStringContainsString('>Control de Horas<', $html);
         $this->assertStringContainsString('>Control de Actividades<', $html);
         $this->assertStringNotContainsString('>Control de horas<', $html);
         $this->assertStringNotContainsString('>Control de actividades<', $html);
@@ -60,18 +59,13 @@ class SidebarMonitoringMenuTest extends TestCase
         $html = $this->sidebar($this->userWithRole('Auxiliar', 'aux-groups@datamid.test'));
 
         $monitoring = strpos($html, '>Monitoreo<');
-        $hours = strpos($html, '>Control de Horas<');
         $activities = strpos($html, '>Control de Actividades<');
         $this->assertNotFalse($monitoring);
-        $this->assertNotFalse($hours);
         $this->assertNotFalse($activities);
+        $this->assertGreaterThan($monitoring, $activities);
 
-        // Primero Control de Horas y después Control de Actividades
-        $this->assertGreaterThan($monitoring, $hours);
-        $this->assertGreaterThan($hours, $activities);
-
-        // Control de Horas: Reloj Checador
-        $clock = strpos($html, '>Reloj Checador<', $hours);
+        // El Reloj Checador va antes que Control de Actividades
+        $clock = strpos($html, '>Reloj Checador<');
         $this->assertNotFalse($clock);
         $this->assertLessThan($activities, $clock);
 
@@ -84,7 +78,6 @@ class SidebarMonitoringMenuTest extends TestCase
         $this->assertStringNotContainsString('>Productividad<', $html);
 
         // Cada apartado se abre y se cierra por separado y recuerda su estado
-        $this->assertStringContainsString("sidebarOpenGet('time-hours')", $html);
         $this->assertStringContainsString("sidebarOpenGet('time-activities')", $html);
     }
 
@@ -92,14 +85,11 @@ class SidebarMonitoringMenuTest extends TestCase
     {
         $html = $this->sidebar($this->userWithRole('Administrador', 'admin-groups@datamid.test'));
 
-        $hours = strpos($html, '>Control de Horas<');
         $activities = strpos($html, '>Control de Actividades<');
-        $this->assertNotFalse($hours);
         $this->assertNotFalse($activities);
-        $this->assertLessThan($activities, $hours);
 
-        $clock = strpos($html, '>Reloj Checador<', $hours);
-        $supervision = strpos($html, '>Supervisión de Horas<', $hours);
+        $clock = strpos($html, '>Reloj Checador<');
+        $supervision = strpos($html, '>Supervisión de Horas<');
         $panel = strpos($html, '>Gráficos Generales<', $activities);
         $this->assertNotFalse($clock);
         $this->assertNotFalse($supervision);

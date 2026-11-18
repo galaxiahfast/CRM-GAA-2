@@ -202,6 +202,8 @@ document.addEventListener('alpine:init', () => {
                 this.$el.addEventListener('mouseleave', () => { this.hovering = false; this.update(); });
             }
             this.$nextTick(() => {
+                // Si el contenedor ya no existe (la vista cambió antes de pintarse), no hay nada que observar
+                if (!this.$refs.scroller) return;
                 this.update();
                 this.observer = new ResizeObserver(() => this.update());
                 this.observer.observe(this.$refs.scroller);

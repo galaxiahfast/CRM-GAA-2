@@ -154,6 +154,54 @@ class DirectChatTest extends TestCase
             ->set('search', 'Persona')
             ->assertSee('Persona Visible')
             ->assertDontSee('Resultados')
-            ->assertSeeHtml('h-[350px]');
+            ->assertSeeHtml('h-[400px]');
+    }
+
+    public function test_sending_a_message_notifies_once_per_conversation_and_the_notice_opens_the_chat(): void
+    {
+        $ana = User::factory()->create(['name' => 'Ana', 'last_name' => 'Pérez']);
+        $luis = User::factory()->create(['name' => 'Luis']);
+        $this->actingAs($ana);
+        RateLimiter::clear('direct-chat:'.$ana->id);
+
+        Livewire::test(DirectChat::class)->call('openConversation', $luis->id)
+            ->set('message', 'Primer mensaje')->call('send')
+            ->set('message', 'Segundo mensaje')->call('send');
+
+        // Una sola notificación mientras Luis no lea, con el nombre de quien escribe y un enlace que abre el chat
+        $notices = $luis->notifications()->get();
+        $this->assertCount(1, $notices);
+        $this->assertSame('Nuevo mensaje de Ana Pérez', $notices[0]->data['title']);
+        $this->assertSame('Primer mensaje', $notices[0]->data['message']);
+        $this->assertStringContainsString('chat='.$ana->id, $notices[0]->data['action_url']);
+
+        // Al abrir el enlace de la notificación, el chat queda abierto en esa conversación
+        session()->forget('direct_chat');
+        $this->actingAs($luis);
+        $this->get(route('inicio', ['chat' => $ana->id]))->assertOk()->assertSee('Ana Pérez');
+    }
+
+    public function test_minimizing_is_remembered_so_a_reload_does_not_bring_it_back_expanded(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(DirectChat::class)->call('setExpanded', true);
+        Livewire::test(DirectChat::class)->assertSet('expanded', true);
+
+        // El navegador minimiza al instante y avisa al servidor: al recargar sigue minimizado
+        Livewire::test(DirectChat::class)->call('setExpanded', false);
+        Livewire::test(DirectChat::class)->assertSet('expanded', false);
+    }
+
+    public function test_opening_a_conversation_tells_the_browser_to_expand_the_chat(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $target = User::factory()->create();
+
+        Livewire::test(DirectChat::class)
+            ->call('setExpanded', false)
+            ->call('openConversation', $target->id)
+            ->assertDispatched('direct-chat-opened')
+            ->assertSet('expanded', true);
     }
 }

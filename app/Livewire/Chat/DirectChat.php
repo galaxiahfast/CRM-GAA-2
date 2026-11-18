@@ -4,10 +4,12 @@ namespace App\Livewire\Chat;
 
 use App\Models\DirectMessage;
 use App\Models\User;
+use App\Services\Notifications\SystemNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -36,10 +38,56 @@ class DirectChat extends Component
 
     public function mount(): void
     {
+        // Desde una notificación de mensaje nuevo (/…?chat=ID) se abre directamente esa conversación
+        $fromNotification = (int) request()->query('chat', 0);
+        if ($fromNotification > 0 && $fromNotification !== (int) Auth::id() && User::query()->whereKey($fromNotification)->exists()) {
+            $this->activeUserId = $fromNotification;
+            $this->expanded = true;
+            $this->remember();
+
+            return;
+        }
+
         $state = (array) session('direct_chat', []);
         $this->expanded = (bool) ($state['expanded'] ?? false);
         $active = isset($state['active']) ? (int) $state['active'] : null;
         $this->activeUserId = $active && $active !== (int) Auth::id() && User::query()->whereKey($active)->exists() ? $active : null;
+
+        // Al cargar o recargar la página, lo que ya estaba pendiente no se vuelve a mostrar como aviso: solo lo nuevo
+        if (! $this->expanded) {
+            $this->dismissPreviews();
+        }
+    }
+
+    /** El navegador abre y minimiza al instante; aquí solo se recuerda para que al recargar quede igual. */
+    public function setExpanded(bool $expanded): void
+    {
+        $this->expanded = $expanded;
+        $this->remember();
+
+        if (! $expanded) {
+            $this->dismissPreviews();
+        }
+    }
+
+    /** Al minimizar, los avisos que ya se vieron se ocultan; solo vuelven a salir cuando llega algo nuevo. */
+    private function dismissPreviews(): void
+    {
+        $me = (int) Auth::id();
+        session(['direct_chat_dismissed' => $this->previewSignature($this->previewsFor($this->threads($me), $me))]);
+    }
+
+    private function previewsFor($threads, int $me)
+    {
+        return $threads
+            ->filter(fn (array $thread): bool => $thread['unread'] > 0 || Cache::has($this->typingKey($thread['user']->id, $me)))
+            ->take(3)->values()
+            ->map(fn (array $thread): array => $thread + ['typing' => Cache::has($this->typingKey($thread['user']->id, $me))]);
+    }
+
+    private function previewSignature($previews): string
+    {
+        return $previews->map(fn (array $p): string => $p['user']->id.':'.$p['unread'].':'.(int) $p['typing'].':'.($p['last'] ?? ''))->implode('|');
     }
 
     public function toggle(): void
@@ -52,6 +100,7 @@ class DirectChat extends Component
     {
         $this->expanded = false;
         $this->remember();
+        $this->dismissPreviews();
     }
 
     /** Abre la conversación con una persona (desde la lista, un aviso o el botón «Enviar mensaje» de su perfil). */
@@ -68,6 +117,7 @@ class DirectChat extends Component
         $this->search = '';
         $this->message = '';
         $this->remember();
+        $this->dispatch('direct-chat-opened');
         $this->dispatch('direct-chat-sent');
     }
 
@@ -123,7 +173,22 @@ class DirectChat extends Component
         }
         RateLimiter::hit($rateKey, 60);
 
+        // Una notificación por conversación mientras la otra persona no lea: así no se llena de avisos
+        $alreadyNotified = DirectMessage::query()->where('sender_id', $me)->where('recipient_id', $this->activeUserId)->whereNull('read_at')->exists();
+
         DirectMessage::create(['sender_id' => $me, 'recipient_id' => $this->activeUserId, 'body' => $body]);
+
+        if (! $alreadyNotified && ($recipient = User::query()->find($this->activeUserId))) {
+            $sender = Auth::user();
+            app(SystemNotificationService::class)->sendToUser($recipient, [
+                'category' => 'chat',
+                'severity' => 'info',
+                'title' => 'Nuevo mensaje de '.trim($sender->name.' '.$sender->last_name),
+                'message' => Str::limit($body, 120),
+                'action_url' => route('inicio', ['chat' => $me]),
+                'context' => ['sender_id' => $me],
+            ]);
+        }
 
         $this->forgetTyping();
         $this->resetErrorBag();
@@ -181,10 +246,10 @@ class DirectChat extends Component
         $threads = $this->threads($me);
 
         // Avisos del chat minimizado: mensajes nuevos (uno por persona) y quién está escribiendo
-        $previews = $threads
-            ->filter(fn (array $thread): bool => $thread['unread'] > 0 || Cache::has($this->typingKey($thread['user']->id, $me)))
-            ->take(3)->values()
-            ->map(fn (array $thread): array => $thread + ['typing' => Cache::has($this->typingKey($thread['user']->id, $me))]);
+        $previews = $this->previewsFor($threads, $me);
+        if ($previews->isNotEmpty() && $this->previewSignature($previews) === session('direct_chat_dismissed')) {
+            $previews = collect();
+        }
 
         if ($activeUser === null) {
             $term = trim($this->search);

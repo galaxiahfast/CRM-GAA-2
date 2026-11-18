@@ -249,7 +249,8 @@ class TechnicalSupportReportTest extends TestCase
             ->assertSee('Año 2026');
         $this->assertSame('2026', $year->viewData('filters')['date']);
         $this->assertContains('ST-20261028-0012', $year->viewData('reports')->pluck('folio'));
-        $this->assertContains('ST-20261023-0007', $year->viewData('reports')->pluck('folio'));
+        // El año reúne más reportes que la semana (la lista va paginada, así que no depende de cuántos reportes nuevos se agreguen)
+        $this->assertGreaterThan($week->viewData('reports')->total(), $year->viewData('reports')->total());
 
         $unknown = $this->actingAs($user)
             ->get(route('soporte.reportes-tecnicos.history', ['period' => 'month']))

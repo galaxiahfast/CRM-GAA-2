@@ -162,7 +162,7 @@ class GestionRelacionesJerarquicas extends Component
             'accountants' => $catalog['accountants'],
             'interns' => $catalog['interns'],
             'selectedCustomerModel' => $this->selectedCustomer ? $catalog['customers']->firstWhere('id', $this->selectedCustomer) : null,
-        ]);
+        ])->layout('layouts.app');
     }
 
     private function finish(string $message): void
