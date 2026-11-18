@@ -145,8 +145,90 @@ class ProfileInformationTest extends TestCase
             ->assertOk()
             ->assertSee('Perfil Compartido')
             ->assertSee('Seguir')
-            ->assertSee('Regresar a mi perfil')
+            ->assertSee('Volver a mi perfil')
+            ->assertSee('Enviar mensaje')
+            ->assertDontSee('Descargar perfil PDF')
+            ->assertDontSee('Regresar')
+            ->assertDontSee('Imprimir')
             ->assertDontSee('Editar perfil')
             ->assertDontSee('Sesiones y dispositivos');
+    }
+
+    public function test_the_own_profile_has_no_back_or_print_buttons_and_offers_the_pdf_download(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->assertSee('Editar perfil')
+            ->assertSee('Descargar perfil PDF')
+            ->assertDontSee('Regresar')
+            ->assertDontSee('Imprimir');
+    }
+
+    public function test_the_pdf_download_link_is_hidden_while_editing(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->assertSee('Descargar perfil PDF')
+            ->call('startEditing')
+            ->assertDontSee('Descargar perfil PDF')
+            ->call('cancelEditing')
+            ->assertSee('Descargar perfil PDF');
+    }
+
+    public function test_the_birth_year_can_be_saved_shown_with_the_age_and_cleared(): void
+    {
+        $this->actingAs($user = User::factory()->create());
+        $year = now()->year - 30;
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->call('startEditing')
+            ->set('state.birth_year', (string) $year)
+            ->call('updateProfileInformation')
+            ->assertHasNoErrors()
+            ->assertSee((string) $year)
+            ->assertSee('30 años');
+
+        $this->assertSame($year, (int) $user->fresh()->birth_year);
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->call('startEditing')
+            ->set('state.birth_year', '')
+            ->call('updateProfileInformation')
+            ->assertHasNoErrors();
+
+        $this->assertNull($user->fresh()->birth_year);
+    }
+
+    public function test_an_invalid_birth_year_is_rejected_with_an_explanation(): void
+    {
+        $this->actingAs($user = User::factory()->create());
+
+        foreach (['1850', (string) (now()->year + 1), (string) (now()->year - 5), 'abcd'] as $invalid) {
+            Livewire::test(UpdateProfileInformationForm::class)
+                ->call('startEditing')
+                ->set('state.birth_year', $invalid)
+                ->call('updateProfileInformation')
+                ->assertHasErrors(['birth_year'])
+                ->assertSet('editing', true);
+        }
+
+        $this->assertNull($user->fresh()->birth_year);
+    }
+
+    public function test_only_the_own_profile_sheet_pdf_can_be_downloaded(): void
+    {
+        $this->actingAs($user = User::factory()->create(['name' => 'Marina', 'last_name' => 'Manrique', 'birth_year' => 1998]));
+        $other = User::factory()->create(['name' => 'Perfil', 'last_name' => 'Ajeno']);
+
+        Livewire::test(UpdateProfileInformationForm::class)
+            ->call('downloadPdf')
+            ->assertFileDownloaded('PF-'.now(config('support.timezone'))->format('Ymd').'-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT).'-marina-manrique.pdf');
+
+        // La ficha de otra persona no se puede descargar
+        Livewire::test(UpdateProfileInformationForm::class, ['user' => $other])
+            ->call('downloadPdf')
+            ->assertForbidden();
     }
 }

@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Livewire\Profile\ProfileDirectory;
+use App\Livewire\Profile\PeopleSidebar;
+use App\Livewire\Profile\UpdateProfileInformationForm;
 use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,20 +14,20 @@ class ProfileSocialConnectionsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_follow_and_unfollow_another_profile(): void
+    public function test_user_can_follow_and_stop_following_another_profile(): void
     {
         $this->actingAs($user = User::factory()->create());
         $other = User::factory()->create();
 
-        Livewire::test(ProfileDirectory::class)
-            ->call('toggleFollow', $other->id);
+        Livewire::test(PeopleSidebar::class)->call('follow', $other->id);
 
         $this->assertTrue($user->following()->whereKey($other->id)->exists());
+        $this->assertSame(Friendship::PENDING, Friendship::firstOrFail()->status);
 
-        Livewire::test(ProfileDirectory::class)
-            ->call('toggleFollow', $other->id);
+        Livewire::test(UpdateProfileInformationForm::class, ['user' => $other])->call('removeFriendship');
 
         $this->assertFalse($user->following()->whereKey($other->id)->exists());
+        $this->assertSame(0, Friendship::count());
     }
 
     public function test_friend_request_can_be_sent_and_accepted(): void
@@ -35,14 +36,14 @@ class ProfileSocialConnectionsTest extends TestCase
         $addressee = User::factory()->create();
 
         $this->actingAs($requester);
-        Livewire::test(ProfileDirectory::class)->call('requestFriendship', $addressee->id);
+        Livewire::test(PeopleSidebar::class)->call('follow', $addressee->id);
 
         $friendship = Friendship::firstOrFail();
         $this->assertSame(Friendship::PENDING, $friendship->status);
         $this->assertSame('Nueva solicitud de seguimiento', $addressee->fresh()->notifications()->first()->data['title']);
 
         $this->actingAs($addressee);
-        Livewire::test(ProfileDirectory::class)->call('acceptFriendship', $friendship->id);
+        Livewire::test(PeopleSidebar::class)->call('accept', $friendship->id);
 
         $this->assertSame(Friendship::ACCEPTED, $friendship->fresh()->status);
         $this->assertTrue($addressee->friends()->whereKey($requester->id)->exists());
@@ -54,9 +55,16 @@ class ProfileSocialConnectionsTest extends TestCase
     {
         $this->actingAs($user = User::factory()->create());
 
-        Livewire::test(ProfileDirectory::class)
-            ->call('requestFriendship', $user->id)
+        Livewire::test(PeopleSidebar::class)
+            ->call('follow', $user->id)
             ->assertStatus(422);
+    }
+
+    public function test_the_people_directory_page_no_longer_exists(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get('/perfiles')->assertNotFound();
     }
 
     public function test_clickable_people_profiles_are_read_only(): void

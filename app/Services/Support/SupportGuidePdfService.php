@@ -89,7 +89,7 @@ class SupportGuidePdfService
      * Las imágenes de la guía se preparan una sola vez y se guardan en disco: componerlas y que DomPDF
      * procese PNG con transparencia en cada descarga tardaba entre 7 y 19 segundos.
      */
-    private function pageDecorationDataUri(): ?string
+    public function pageDecorationDataUri(): ?string
     {
         $paths = [
             public_path('img/delivery-notes/datamid-header.png'),

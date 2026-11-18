@@ -5,6 +5,7 @@ namespace App\Livewire\Profile;
 use App\Models\Friendship;
 use App\Models\User;
 use App\Services\Notifications\SystemNotificationService;
+use App\Services\Profile\ProfilePdfService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,7 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 use Laravel\Jetstream\Contracts\DeletesUsers;
 use Laravel\Jetstream\Http\Livewire\UpdateProfileInformationForm as JetstreamUpdateProfileInformationForm;
 use Livewire\Attributes\On;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
 {
@@ -42,6 +44,9 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
     public string $deletionName = '';
 
     public string $deletionPassword = '';
+
+    /** Cambia con cada intento de guardar o borrar para que el aviso emergente de error vuelva a mostrarse. */
+    public int $errorSeq = 0;
 
     public function mount(?User $user = null): void
     {
@@ -156,6 +161,7 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
 
     public function updateProfileInformation(UpdatesUserProfileInformation $updater): void
     {
+        $this->errorSeq++;
         $this->resetErrorBag();
         // Solo se cambia la contraseña si se escribió una nueva: el navegador suele autocompletar la actual.
         $changingPassword = collect([$this->newPassword, $this->newPasswordConfirmation])
@@ -226,6 +232,7 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
 
     public function deleteAccount(DeletesUsers $deleter)
     {
+        $this->errorSeq++;
         $user = Auth::user();
         $expectedName = trim($user->name.' '.$user->last_name);
 
@@ -246,6 +253,21 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
         request()->session()->regenerateToken();
 
         return $this->redirectRoute('login', navigate: true);
+    }
+
+    /** Ficha de perfil en PDF: solo la descarga la propia persona. */
+    public function downloadPdf(ProfilePdfService $pdf): StreamedResponse
+    {
+        // Solo la propia persona puede descargar su ficha de perfil
+        abort_unless($this->isOwnProfile, 403);
+
+        $file = $pdf->generate($this->getUserProperty(), Auth::user());
+
+        return response()->streamDownload(
+            static fn () => print $file['content'],
+            $file['filename'],
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     private function resetSecurityFields(): void

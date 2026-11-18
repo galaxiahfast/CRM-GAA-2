@@ -57,6 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'employee_id', // Permitir guardar el ID vinculado al checador Hikvision
         'profile_cover_path',
         'profile_description',
+        'birth_year',
         'instagram_url',
         'facebook_url',
     ];
@@ -87,6 +88,19 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return array<string, string>
      */
+    /** Si la foto de perfil existe de verdad en el disco (si el archivo falta, las pantallas muestran las iniciales en vez de una imagen rota). */
+    public function hasProfilePhotoFile(): bool
+    {
+        return filled($this->profile_photo_path)
+            && \Illuminate\Support\Facades\Storage::disk((string) config('jetstream.profile_photo_disk', 'public'))->exists($this->profile_photo_path);
+    }
+
+    /** Edad aproximada a partir del año de nacimiento (null si no lo capturó). */
+    public function approximateAge(): ?int
+    {
+        return $this->birth_year ? max(0, (int) now()->year - (int) $this->birth_year) : null;
+    }
+
     protected function casts(): array
     {
         return [
