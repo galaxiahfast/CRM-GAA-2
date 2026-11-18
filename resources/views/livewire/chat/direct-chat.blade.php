@@ -57,7 +57,7 @@
             <div class="mb-[10px] flex flex-col items-end gap-[10px]">
                 @foreach ($previews as $preview)
                     @php($previewUser = $preview['user'])
-                    <button type="button" wire:key="direct-preview-{{ $previewUser->id }}" wire:click="openConversation({{ $previewUser->id }})" class="dc-preview panel-surface panel-border flex w-[360px] max-w-[calc(100vw-20px)] items-center gap-[20px] rounded-xl border p-[20px] text-left shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+                    <button type="button" wire:key="direct-preview-{{ $previewUser->id }}" wire:click="openConversation({{ $previewUser->id }})" class="dc-preview panel-surface panel-border flex w-[400px] max-w-[calc(100vw-20px)] items-center gap-[20px] rounded-xl border p-[20px] text-left shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
                         @if ($previewUser->hasProfilePhotoFile())
                             <img src="{{ $previewUser->profile_photo_url }}" alt="Foto de {{ $previewUser->name }}" class="panel-border h-10 w-10 shrink-0 rounded-full border object-cover">
                         @else
@@ -79,7 +79,7 @@
             </div>
         @endif
 
-        <button type="button" @click="open = true" class="panel-surface panel-border flex w-[360px] max-w-[calc(100vw-20px)] items-center justify-between gap-[20px] rounded-t-xl border border-b-0 p-[20px] text-left leading-none shadow-[0_8px_24px_rgba(0,0,0,0.18)]" aria-label="Abrir mensajes" title="Abrir mensajes">
+        <button type="button" @click="open = true" class="panel-surface panel-border flex w-[400px] max-w-[calc(100vw-20px)] items-center justify-between gap-[20px] rounded-t-xl border border-b-0 p-[20px] text-left leading-none shadow-[0_8px_24px_rgba(0,0,0,0.18)]" aria-label="Abrir mensajes" title="Abrir mensajes">
             <span class="panel-accent leading-none">Mensajes</span>
             @if ($unreadTotal > 0)
                 <span class="dc-badge">{{ $unreadTotal }}</span>
@@ -89,25 +89,30 @@
 
         {{-- Expandido: sube desde abajo al abrir y baja al minimizar --}}
         <section x-show="open" style="grid-area: 1 / 1;@if (! $expanded) display: none;@endif" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-full" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-full" class="panel-surface panel-border flex h-[572px] max-h-[calc((100dvh-123px)/var(--app-zoom,1))] w-[400px] max-w-[calc(100vw-20px)] flex-col overflow-hidden rounded-t-xl border border-b-0 shadow-[0_18px_55px_rgba(0,0,0,0.30)]" aria-label="Mensajes">
-            <header class="panel-header panel-border flex shrink-0 items-center justify-between gap-[20px] border-b p-[20px]">
+            <header @if (! $activeUser) @click="open = false" title="Minimizar" @endif class="panel-header panel-border flex shrink-0 {{ $activeUser ? '' : 'cursor-pointer' }} items-center justify-between gap-[20px] border-b p-[20px]" x-data="{ zoom: false }">
                 @if ($activeUser)
                     <div class="flex min-w-0 items-center gap-[20px]">
                         @if ($activeUser->hasProfilePhotoFile())
-                            <img src="{{ $activeUser->profile_photo_url }}" alt="Foto de {{ $activeUser->name }}" class="panel-border h-10 w-10 shrink-0 rounded-full border object-cover">
+                            <button type="button" @click="zoom = true" class="shrink-0 cursor-zoom-in rounded-full" aria-label="Ver la foto más grande" title="Ver la foto más grande">
+                                <img src="{{ $activeUser->profile_photo_url }}" alt="Foto de {{ $activeUser->name }}" class="panel-border h-10 w-10 rounded-full border object-cover">
+                            </button>
+                            <div x-show="zoom" x-cloak x-transition.opacity @click.stop="zoom = false" @keydown.escape.window="zoom = false" class="fixed inset-0 z-[300] grid place-items-center bg-black/70 p-[20px]" style="display: none;">
+                                <img src="{{ $activeUser->profile_photo_url }}" alt="Foto ampliada de {{ $activeUser->name }}" class="max-h-[82vh] max-w-[82vw] rounded-full border-[6px] border-[#e7e7e7] object-contain shadow-2xl">
+                            </div>
                         @else
                             <span class="panel-subtle panel-border grid h-10 w-10 shrink-0 place-items-center rounded-full border">{{ $initials($activeUser) }}</span>
                         @endif
-                        <div class="min-w-0">
+                        <a href="{{ route('profiles.show', $activeUser) }}" class="min-w-0" title="Ver perfil de {{ $fullName($activeUser) }}">
                         <p class="dc-name panel-accent truncate" title="{{ $fullName($activeUser) }}">{{ $shortName($activeUser) }}</p>
                         <p class="dc-sub mt-[15px] flex items-center gap-[10px] truncate leading-none"><span class="dc-status-dot h-[8px] w-[8px] shrink-0 rounded-full {{ $activeOnline ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>{{ $activeOnline ? 'En línea' : 'Desconectado' }}</p>
-                        </div>
+                        </a>
                     </div>
                 @else
                     <p class="panel-accent leading-none">Mensajes</p>
                 @endif
                 <div class="flex shrink-0 items-center gap-[10px]">
                     @if ($activeUser)
-                        <button type="button" wire:click="closeConversation" class="dc-icon-btn" aria-label="Todas las conversaciones" title="Todas las conversaciones">
+                        <button type="button" wire:click="closeConversation" @click.stop class="dc-icon-btn" aria-label="Todas las conversaciones" title="Todas las conversaciones">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                         </button>
                     @endif
