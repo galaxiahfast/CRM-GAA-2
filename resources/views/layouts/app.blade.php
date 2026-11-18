@@ -78,6 +78,11 @@
 
     @stack('modals')
 
+    {{-- Chat flotante de mensajes directos: abajo a la derecha en todas las pantallas --}}
+    @auth
+        @livewire('chat.direct-chat')
+    @endauth
+
     @livewireScripts
 
     <!-- ⬇️⬇️⬇️ AÑADE ESTO ⬇️⬇️⬇️ -->
