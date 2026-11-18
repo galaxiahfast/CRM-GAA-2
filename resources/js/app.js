@@ -8,6 +8,18 @@ import './organization-sortable';
 import './clock-particle-network';
 import './general-charts';
 
+// Las listas con filas de línea inferior (Preguntas) marcan con data-edge la fila que toca el borde de abajo del recuadro:
+// esa línea la dibuja el pie, así nunca se ve doble. Se vuelve a marcar al desplazar, al cambiar de tamaño y al actualizarse.
+window.markEdgeRows = (box) => {
+    const mark = () => box.querySelectorAll('[data-edge-row]').forEach((row) => {
+        row.toggleAttribute('data-edge', Math.abs(row.offsetTop + row.offsetHeight - box.scrollTop - box.clientHeight) <= 2);
+    });
+    mark();
+    box.addEventListener('scroll', mark, { passive: true });
+    new ResizeObserver(mark).observe(box);
+    new MutationObserver(mark).observe(box, { childList: true, subtree: true });
+};
+
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('productivityDatePicker', (model, marks = []) => ({
         value: model,
@@ -391,20 +403,49 @@ document.addEventListener('alpine:init', () => {
             window.removeEventListener('scroll', this.quickTourViewportHandler, true);
             window.removeEventListener('keydown', this.quickTourKeyHandler);
         },
+        // Algunos elementos del recorrido son contenedores con «display: contents» (no tienen caja propia y su medida es 0):
+        // en ese caso el recuadro y el mensaje se calculan con la unión de las cajas de lo que contienen.
+        tourBox(target) {
+            const own = target.getBoundingClientRect();
+            if (own.width > 0 && own.height > 0) return own;
+
+            let left = Infinity;
+            let top = Infinity;
+            let right = -Infinity;
+            let bottom = -Infinity;
+            target.querySelectorAll('*').forEach((child) => {
+                const box = child.getBoundingClientRect();
+                if (box.width === 0 || box.height === 0) return;
+                left = Math.min(left, box.left);
+                top = Math.min(top, box.top);
+                right = Math.max(right, box.right);
+                bottom = Math.max(bottom, box.bottom);
+            });
+
+            return Number.isFinite(left)
+                ? { left, top, right, bottom, width: right - left, height: bottom - top }
+                : own;
+        },
+        // Elemento con caja propia al que se puede desplazar la página para dejar a la vista lo que se explica.
+        tourScrollTarget(target) {
+            if (target.getClientRects().length > 0) return target;
+
+            return [...target.querySelectorAll('*')].find((child) => child.getClientRects().length > 0) ?? target;
+        },
         // Si lo que se explica está fuera de la vista o debajo de la barra superior fija, la página se desplaza
         // hasta dejarlo visible; el resaltado y la ventana se recolocan mientras se desplaza.
         revealQuickTourTarget() {
             const target = document.getElementById(this.quickTourSteps[this.quickTourStep - 1]?.target);
             if (! target) return;
 
-            const rect = target.getBoundingClientRect();
+            const rect = this.tourBox(target);
             const navBottom = document.getElementById('main-nav')?.getBoundingClientRect().bottom ?? 0;
             const margin = 20;
             const hidden = rect.top < navBottom + margin || rect.bottom > window.innerHeight - margin;
             if (! hidden) return;
 
             const fitsBelowNav = rect.height <= window.innerHeight - navBottom - margin * 2;
-            target.scrollIntoView({ behavior: 'smooth', block: fitsBelowNav ? 'center' : 'start' });
+            this.tourScrollTarget(target).scrollIntoView({ behavior: 'smooth', block: fitsBelowNav ? 'center' : 'start' });
             // Respaldo: cuando termina el desplazamiento suave se vuelve a colocar todo.
             setTimeout(() => this.updateQuickTourPosition(), 450);
         },
@@ -415,7 +456,7 @@ document.addEventListener('alpine:init', () => {
             if (! target) return;
 
             // Sin borde: solo se deja un espacio de 10px entre el elemento y el fondo atenuado.
-            const raw = target.getBoundingClientRect();
+            const raw = this.tourBox(target);
             const pad = 10;
             const rect = {
                 left: raw.left - pad,

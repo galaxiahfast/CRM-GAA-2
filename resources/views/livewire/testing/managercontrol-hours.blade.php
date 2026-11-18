@@ -276,12 +276,7 @@
             @endif
         </section>
 
-        @if ($error)
-            <div class="mc-alert" role="alert" data-testid="managercontrol-error">
-                <h2 class="panel-accent leading-none">No se pudo consultar ManagerControl</h2>
-                <p class="prod-lines mt-[5px]">{{ $error }}</p>
-            </div>
-        @endif
+        <x-error-toast :wire:key="'mc-error-'.$errorSeq" title="No se pudo consultar ManagerControl" :message="$error" />
 
         <div class="prod-wrap">
             <section id="prod-tour-detail" class="prod-detail-card panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Registro de horas de ManagerControl">
@@ -742,7 +737,7 @@
         @teleport('body')
             @if (($dialog['kind'] ?? 'error') === 'error')
                 {{-- Error: aviso arriba al centro, compacto, del ancho del formulario y sin botones; se va solo a los 3 segundos --}}
-                <div wire:key="mc-toast-{{ $dialogSeq }}" data-panel data-productivity x-data x-init="setTimeout(() => $wire.closeDialog(), 3000)" x-transition.opacity.duration.200ms style="background: transparent" class="pointer-events-none fixed inset-x-0 top-[20px] z-[300100] flex justify-center px-[20px]" role="alert" aria-live="assertive" data-mc-toast>
+                <div wire:key="mc-toast-{{ $dialogSeq }}" data-panel data-productivity x-data x-init="setTimeout(() => $wire.closeDialog(), 3000)" x-transition.opacity.duration.200ms style="background: transparent" class="pointer-events-none fixed inset-x-0 top-[40px] z-[300100] flex justify-center px-[20px]" role="alert" aria-live="assertive" data-mc-toast>
                     <section class="app-zoom-overlay panel-surface relative w-full overflow-hidden rounded-xl border shadow-[0_18px_55px_rgba(0,0,0,0.30)]" style="max-width: 620px; border-color: var(--panel-danger); background-color: var(--panel-danger-soft)">
                         <div class="p-[20px]">
                             <div class="flex items-center gap-[20px]">

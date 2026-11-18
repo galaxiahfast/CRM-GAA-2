@@ -263,8 +263,8 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 -translate-y-3"
-                class="app-zoom-overlay panel-surface fixed left-1/2 top-[143px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-start gap-[15px] rounded-xl border px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]"
-                style="border-color: var(--panel-danger-line); color: var(--panel-danger)"
+                class="app-zoom-overlay panel-surface fixed left-1/2 top-[40px] z-[300100] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-start gap-[15px] rounded-xl border px-[20px] py-[15px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]"
+                style="border-color: var(--panel-danger); background-color: var(--panel-danger-soft); color: var(--panel-danger)"
                 role="alert"
             >
                 <svg class="mt-[5px] h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>

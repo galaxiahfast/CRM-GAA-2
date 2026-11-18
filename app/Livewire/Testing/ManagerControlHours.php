@@ -36,6 +36,9 @@ class ManagerControlHours extends Component
 
     public ?string $error = null;
 
+    /** Cambia con cada error nuevo para que el aviso emergente vuelva a mostrarse aunque el texto sea el mismo. */
+    public int $errorSeq = 0;
+
     // Periodo realmente consultado (el PDF y los encabezados usan este, no el que se está editando).
     public string $appliedFrom = '';
 
@@ -738,6 +741,7 @@ class ManagerControlHours extends Component
         if ($this->employeeForQuery() === null) {
             $this->detailLoaded = false;
             $this->error = $this->ownMode() ? null : 'Seleccione un colaborador antes de consultar.';
+            $this->errorSeq++;
 
             return;
         }
@@ -769,6 +773,7 @@ class ManagerControlHours extends Component
         if ($this->employeeForQuery() === null) {
             $this->loaded = false;
             $this->error = $this->ownMode() ? null : 'Seleccione un colaborador antes de consultar.';
+            $this->errorSeq++;
 
             return;
         }
@@ -922,6 +927,7 @@ class ManagerControlHours extends Component
     protected function reportFailure(ManagerControlException $e): void
     {
         $this->error = $e->getMessage();
+        $this->errorSeq++;
         Log::warning('ManagerControl (solo lectura): '.$e->getMessage());
     }
 

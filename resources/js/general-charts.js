@@ -90,17 +90,26 @@ const hoverLabelPlugin = {
         const meta = chart.getDatasetMeta(active.datasetIndex).data[active.index];
         if (!meta) return;
 
-        const raw = chart.data.datasets[active.datasetIndex].data[active.index];
-        const text = `${Number(raw).toFixed(1)}h`;
+        const seconds = Math.round(Number(chart.$config?.values?.[active.index] ?? chart.data.datasets[active.datasetIndex].data[active.index] * 3600));
+        const pad2 = (n) => String(n).padStart(2, '0');
+        let value = `${String(Math.floor(seconds / 3600)).padStart(3, '0')}h ${pad2(Math.floor(seconds % 3600 / 60))}m ${pad2(seconds % 60)}s`;
+        const total = Number(chart.$config?.total || 0);
+        if (chart.$config?.kind === 'rank' && total > 0) value += ` · ${(seconds / total * 100).toFixed(1)}%`;
+        const title = String(chart.$config?.labels?.[active.index] ?? '');
         const { ctx } = chart;
-        const fontSize = 14;
+        const fontSize = 15;
         ctx.save();
-        ctx.font = `600 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
+        ctx.font = `400 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
         const padding = 20;
         const pointer = 8;
         const gap = 20;
-        const boxW = ctx.measureText(text).width + padding * 2;
-        const boxH = fontSize + padding * 2;
+        const lineGap = 15;
+        const valueFont = `600 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
+        const titleW = ctx.measureText(title).width;
+        ctx.font = valueFont;
+        const valueW = ctx.measureText(value).width;
+        const boxW = Math.ceil(Math.max(titleW, valueW)) + padding * 2;
+        const boxH = fontSize * 2 + lineGap + padding * 2;
 
         let boxX;
         let boxY;
@@ -153,10 +162,33 @@ const hoverLabelPlugin = {
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = chart.$hoverText || '#000000';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, boxX + boxW / 2, boxY + boxH / 2);
+        ctx.fillStyle = chart.$hoverText || '#000000';
+        ctx.font = `400 ${fontSize}px ${chart.$tabularFont || 'sans-serif'}`;
+        ctx.fillText(title, boxX + padding, boxY + padding + fontSize / 2);
+        ctx.fillStyle = chart.$hoverAccent || '#1A3A6B';
+        ctx.font = valueFont;
+        ctx.fillText(value, boxX + padding, boxY + padding + fontSize + lineGap + fontSize / 2);
+        ctx.restore();
+    },
+};
+
+// Rotula la línea punteada: «Promedio», pegado al borde derecho del área de la gráfica y justo encima de la línea.
+const averageLabelPlugin = {
+    id: 'averageLabel',
+    afterDatasetsDraw(chart) {
+        const average = chart.$config?.average;
+        if (!average || chart.$config?.kind !== 'day') return;
+
+        const { ctx, chartArea, scales } = chart;
+        const y = scales.y.getPixelForValue(average / 3600);
+        ctx.save();
+        ctx.font = `400 15px ${chart.$tabularFont || 'sans-serif'}`;
+        ctx.fillStyle = chart.$averageColor || '#15803d';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('Promedio', chartArea.right, Math.max(chartArea.top + 12, y - 8));
         ctx.restore();
     },
 };
@@ -259,6 +291,8 @@ document.addEventListener('alpine:init', () => {
             chart.$hoverSurface = c.surface;
             chart.$hoverBorder = c.border;
             chart.$hoverText = c.text;
+            chart.$hoverAccent = c.accent;
+            chart.$averageColor = c.green;
             chart.update();
         };
 
@@ -274,7 +308,7 @@ document.addEventListener('alpine:init', () => {
             const c = colors(el);
             const font = { family: c.font, size: 15, weight: '400' };
             const grid = { color: c.border, drawTicks: false };
-            const ticks = { color: c.text, font, padding: 10 };
+            const ticks = { color: c.text, font, padding: 15 };
             // Mismo texto y tamaño, pero invisible: Chart.js sigue reservando el espacio del eje y tabularAxesPlugin
             // dibuja encima la versión con cifras de ancho fijo (ver más arriba).
             const tabularTicks = { ...ticks, color: 'transparent' };
@@ -321,7 +355,7 @@ document.addEventListener('alpine:init', () => {
                             y: { beginAtZero: true, grace: '30%', grid, border: { display: false }, ticks: { ...tabularTicks, callback: (value) => `${Number(value).toFixed(1)}h` } },
                         },
                     },
-                    plugins: [tabularAxesPlugin, hoverLabelPlugin],
+                    plugins: [tabularAxesPlugin, averageLabelPlugin, hoverLabelPlugin],
                 });
                 chart.$tabularAxes = { x: true, y: true };
                 chart.$tabularFont = c.font;
@@ -329,6 +363,9 @@ document.addEventListener('alpine:init', () => {
                 chart.$hoverSurface = c.surface;
                 chart.$hoverBorder = c.border;
                 chart.$hoverText = c.text;
+                chart.$hoverAccent = c.accent;
+                chart.$averageColor = c.green;
+                chart.$config = config;
                 attachManualHover(chart, 'x');
                 drawing = false;
 
@@ -371,6 +408,8 @@ document.addEventListener('alpine:init', () => {
             chart.$hoverSurface = c.surface;
             chart.$hoverBorder = c.border;
             chart.$hoverText = c.text;
+            chart.$hoverAccent = c.accent;
+            chart.$config = config;
             attachManualHover(chart, 'y');
             drawing = false;
         };

@@ -29,8 +29,9 @@
                             </div>
                             <div class="mb-[5px] grid grid-cols-7 text-center text-xs panel-muted"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span></div>
                             <div class="grid grid-cols-7 gap-[2px]">
+                                {{-- Solo los días del mes que se está viendo: los de otros meses quedan en blanco (ocupan su lugar pero no se ven ni se pueden elegir) y solo se resalta el día elegido --}}
                                 <template x-for="day in days" :key="day.key">
-                                    <button type="button" @click="selectDate(day.date)" class="prod-calendar-day text-sm" :class="{ 'is-outside': day.outside, 'is-today': isToday(day.date), 'is-selected': value === day.key }" :aria-label="day.date.toLocaleDateString('es-MX', { dateStyle: 'full' })" x-text="day.date.getDate()"></button>
+                                    <button type="button" @click="selectDate(day.date)" :disabled="day.outside" :tabindex="day.outside ? -1 : 0" class="prod-calendar-day text-sm" :class="{ 'invisible pointer-events-none': day.outside, 'is-selected': !day.outside && value === day.key }" :aria-hidden="day.outside ? 'true' : null" :aria-label="day.outside ? null : day.date.toLocaleDateString('es-MX', { dateStyle: 'full' })" x-text="day.outside ? '' : day.date.getDate()"></button>
                                 </template>
                             </div>
                         </div>

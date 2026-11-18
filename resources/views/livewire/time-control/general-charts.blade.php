@@ -202,7 +202,7 @@
         [data-general-charts] .gc-filters { display: flex; flex-wrap: nowrap; flex-shrink: 0; gap: 20px; }
         [data-general-charts] .gc-filters > * { width: 240px; max-width: 100%; flex-shrink: 0; }
         [data-general-charts] .gc-chart-area { position: relative; display: flex; min-height: 420px; flex: 1; flex-direction: column; }
-        [data-general-charts] .gc-pane { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 20px; }
+        [data-general-charts] .gc-pane { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 40px; }
         [data-general-charts] .gc-canvas-box { position: relative; min-height: 380px; flex: 1; }
         [data-general-charts] .gc-canvas-box canvas { position: absolute; inset: 0; }
         /* El tema oscuro general invierte los canvas; estas gráficas ya toman sus colores del tema, así que no se invierten */
@@ -276,9 +276,14 @@
                                     </div>
                                 @endforeach
                             @else
-                                <div class="gc-message" role="status" data-testid="gc-cron-message">
-                                    <p class="leading-[30px]">{{ $messages[$cron['state']] ?? $messages['error'] }}</p>
-                                </div>
+                                @if ($cron['state'] === 'error')
+                                    <x-error-toast wire:key="gc-cron-error-{{ $errorSeq }}" title="No se pudo consultar ManagerControl" :message="$messages['error']" />
+                                    <div class="gc-message" role="status" data-testid="gc-cron-message"></div>
+                                @else
+                                    <div class="gc-message" role="status" data-testid="gc-cron-message">
+                                        <p class="leading-[30px]">{{ $messages[$cron['state']] ?? $messages['error'] }}</p>
+                                    </div>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -330,9 +335,14 @@
                                     </div>
                                 @endforeach
                             @else
-                                <div class="gc-message" role="status" data-testid="gc-mc-message">
-                                    <p class="leading-[30px]">{{ $messages[$mc['state']] ?? $messages['error'] }}</p>
-                                </div>
+                                @if ($mc['state'] === 'error')
+                                    <x-error-toast wire:key="gc-mc-error-{{ $errorSeq }}" title="No se pudo consultar ManagerControl" :message="$messages['error']" />
+                                    <div class="gc-message" role="status" data-testid="gc-mc-message"></div>
+                                @else
+                                    <div class="gc-message" role="status" data-testid="gc-mc-message">
+                                        <p class="leading-[30px]">{{ $messages[$mc['state']] ?? $messages['error'] }}</p>
+                                    </div>
+                                @endif
                             @endif
                         </div>
                     </div>

@@ -56,6 +56,15 @@
         box-shadow: none;
     }
 
+    /* Ningún campo cambia de borde ni se ilumina al enfocarlo (sin el borde y el resplandor morados del foco global de la app) */
+    [data-panel] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus,
+    [data-panel] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus-visible {
+        border-color: var(--panel-border) !important;
+        box-shadow: none !important;
+        outline: none !important;
+        --tw-ring-color: transparent !important;
+    }
+
     [data-panel]:fullscreen {
         height: 100dvh;
         overflow-y: auto;

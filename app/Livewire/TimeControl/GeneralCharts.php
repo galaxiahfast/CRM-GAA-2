@@ -40,6 +40,9 @@ class GeneralCharts extends Component
 
     public string $mcActivity = '';
 
+    /** Cambia con cada consulta para que el aviso emergente de error vuelva a mostrarse. */
+    public int $errorSeq = 0;
+
     public function mount(): void
     {
         abort_unless(Gate::allows('view-time-productivity'), 403);
@@ -88,6 +91,7 @@ class GeneralCharts extends Component
             $this->userId = '';
         }
         $this->cronClient = $this->cronActivity = $this->mcClient = $this->mcActivity = '';
+        $this->errorSeq++;
     }
 
     public function applyCron(): void
@@ -96,6 +100,7 @@ class GeneralCharts extends Component
             [$this->cronFrom, $this->cronTo] = [$this->cronTo, $this->cronFrom];
         }
         $this->cronClient = $this->cronActivity = '';
+        $this->errorSeq++;
     }
 
     public function applyMc(): void
@@ -104,6 +109,7 @@ class GeneralCharts extends Component
             [$this->mcFrom, $this->mcTo] = [$this->mcTo, $this->mcFrom];
         }
         $this->mcClient = $this->mcActivity = '';
+        $this->errorSeq++;
         $employeeId = $this->mcEmployee()['employee']['id'] ?? null;
         if ($employeeId !== null) {
             Cache::forget($this->mcCacheKey((int) $employeeId, $this->mcFrom, $this->mcTo));

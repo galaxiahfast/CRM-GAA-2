@@ -99,7 +99,7 @@
         [data-attendance-clock] .ac-tab:hover { background-color: var(--panel-hover); }
         [data-attendance-clock] .ac-tab[aria-selected="true"] { border-color: var(--prod-green); background-color: color-mix(in srgb, var(--prod-green) 12%, var(--panel-surface)); color: var(--prod-green); }
         [data-attendance-clock] .ac-stats { display: flex; flex-wrap: wrap; gap: 10px 20px; line-height: 24px; }
-        [data-attendance-clock] .ac-chart-area { position: relative; display: flex; min-height: 380px; flex: 1; flex-direction: column; padding: 20px; }
+        [data-attendance-clock] .ac-chart-area { position: relative; display: flex; min-height: 380px; flex: 1; flex-direction: column; padding: 40px; }
         [data-attendance-clock] .ac-chart { position: relative; flex: 1; min-height: 340px; }
         [data-attendance-clock] .ac-chart-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         /* El JavaScript oculta el aviso con la clase hidden cuando hay datos; aquí debe ganarle al display: flex */
@@ -133,7 +133,7 @@
             /* Va con .ac-table-scroll delante para ganarle a las reglas de 70px que están más abajo */
             [data-attendance-clock] .ac-table-scroll .ac-table :is(tbody, tfoot) td { height: calc((100cqh - 87px) / 7); padding-top: 0; padding-bottom: 0; }
         }
-        [data-attendance-clock] .ac-table { width: 100%; min-width: 1000px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+        [data-attendance-clock] .ac-table { width: 100%; min-width: 1280px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
         [data-attendance-clock] .ac-table :is(th, td) { box-sizing: border-box; padding: 0 20px; border-right: 1px solid var(--panel-border); font-weight: 400; text-align: left; vertical-align: middle; line-height: 24px; }
         [data-attendance-clock] .ac-table :is(th, td):last-child { border-right-width: 0; }
         [data-attendance-clock] .ac-table thead th { position: sticky; top: 0; z-index: 2; height: 87px; background-color: var(--panel-surface); color: var(--panel-text); box-shadow: inset 0 -1px 0 var(--panel-border); }
@@ -147,7 +147,11 @@
         [data-attendance-clock] .ac-table tfoot td { position: sticky; bottom: 0; z-index: 2; height: 70px; background-color: var(--panel-header); box-shadow: inset 0 1px 0 var(--panel-border); }
         [data-attendance-clock] .ac-table :is(th, td):not(:nth-child(2)) { text-align: center; }
         [data-attendance-clock] .ac-table tfoot td:first-child { text-align: left; }
+        /* El total de tiempo neto (y los demás totales) van centrados como sus columnas: con el colspan del rótulo quedaban como la segunda celda y se alineaban a la izquierda */
+        [data-attendance-clock] .ac-table tfoot td:not(:first-child) { text-align: center; }
         [data-attendance-clock] .ac-fig { white-space: nowrap; }
+        [data-attendance-clock] .ac-marks { display: flex; align-items: center; justify-content: flex-start; gap: 15px; }
+        [data-attendance-clock] .ac-mark { white-space: nowrap; line-height: 15px; }
         /* La regla global de tablas en tema oscuro las pinta de gris: aquí la tabla usa los mismos colores que el resto */
         html.module-dark-theme #main-content [data-attendance-clock] .ac-table tbody,
         html.module-dark-theme #main-content [data-attendance-clock] .ac-table tr { background: var(--panel-surface) !important; }
@@ -173,6 +177,9 @@
         .attendance-chart-fill { fill: var(--panel-accent); }
         .attendance-chart-point { stroke: var(--panel-surface); }
         .attendance-chart-band { fill: transparent; }
+        [data-attendance-clock] .ac-chart :is(svg, svg *, [role="img"]):focus,
+        [data-attendance-clock] .ac-chart :is(svg, svg *, [role="img"]):focus-visible { outline: none; }
+        .attendance-chart-average { fill: var(--panel-accent); font-weight: 400; }
         .attendance-chart-band-active { fill: var(--panel-accent); fill-opacity: .1; }
         .attendance-chart-cursor { stroke: var(--panel-muted); stroke-dasharray: 4 4; pointer-events: none; }
         .attendance-clock-modern [role="img"] svg * { pointer-events: none; -webkit-tap-highlight-color: transparent; }
@@ -218,13 +225,14 @@
                     <div id="ac-marks-table" data-scroll-on-hover x-data="backupOverlayScroll()" class="ac-table-wrap">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="87" class="ac-table-scroll panel-scroll">
                             <table class="ac-table">
+                                {{-- Marcas / Chequeos mide 380px (4 marcas y los puntos suspensivos en una sola línea); Fecha, Tiempo neto, Hrs decimales, Pago base y Total del día se reparten el resto por igual (mínimo 180px cada una) --}}
                                 <colgroup>
-                                    <col style="width: 160px;">
                                     <col>
-                                    <col style="width: 160px;">
-                                    <col style="width: 160px;">
-                                    <col style="width: 160px;">
-                                    <col style="width: 160px;">
+                                    <col style="width: 380px;">
+                                    <col>
+                                    <col>
+                                    <col>
+                                    <col>
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -289,7 +297,8 @@
                             @endforeach
                         </div>
 
-                        <div id="ac-general-charts" class="ac-tabs">
+                        <div id="ac-general-charts" class="contents">
+                        <div class="ac-tabs">
                             <div class="ac-tablist" role="tablist" aria-label="Gráficas del checador">
                                 @foreach (['time' => 'Tiempo neto', 'money' => 'Ganancias'] as $tabKey => $tabLabel)
                                     <button type="button" role="tab" @click="tab = '{{ $tabKey }}'; $nextTick(() => window.redibujarGraficasChecador?.())" :aria-selected="tab === '{{ $tabKey }}' ? 'true' : 'false'" class="ac-tab focus:outline-none focus:ring-0">{{ $tabLabel }}</button>
@@ -313,6 +322,7 @@
                                 <div id="grafica_ganancias_checador" class="hidden h-full w-full" role="img" aria-label="Gráfica de ganancias por día"></div>
                                 <div id="grafica_ganancias_vacia" class="ac-chart-empty">Sin datos para mostrar en el periodo.</div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -352,6 +362,100 @@ function cifrasChecador(texto) {
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
     return escapado.replace(/\d/g, '<span class="prod-dg">$&</span>');
 }
+
+// Las marcas del día: se ven las primeras cuatro y, si hay más, "…"; con el puntero encima sale un globo con todas.
+// El globo es el mismo de la comparación con el reloj checador de ManagerControl: caja con flecha, 20px de relleno,
+// título en azul, fecha larga y líneas de 30px con la etiqueta a la izquierda y la hora a la derecha.
+function marcasChecador(detalle, fecha) {
+    const marcas = String(detalle ?? '').split(',').map((marca) => marca.trim()).filter(Boolean);
+    if (marcas.length === 0 || !/\d/.test(marcas[0])) return cifrasChecador(detalle);
+
+    const visibles = marcas.slice(0, 4).map((marca) => '<span class="ac-mark">' + cifrasChecador(marca) + '</span>').join('');
+    // Al final siempre va «…»: con el puntero encima se ven todas las marcas de la jornada en un globo.
+    const mas = '<span class="ac-mark ac-more" aria-hidden="true">…</span>';
+    const datos = ' data-marcas="' + marcas.join('|').replaceAll('"', '&quot;') + '" data-fecha="' + String(fecha ?? '').replaceAll('"', '&quot;') + '"';
+
+    return '<span class="ac-marks"' + datos + '>' + visibles + mas + '</span>';
+}
+
+(function () {
+    let globo = null;
+    let temporizador = null;
+
+    const zoomActual = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+
+    const fechaLarga = (iso) => {
+        const fecha = new Date(String(iso) + 'T00:00:00');
+        if (Number.isNaN(fecha.getTime())) return '';
+        const texto = fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    };
+
+    const ocultarPronto = () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(() => { if (globo) { globo.classList.add('hidden'); globo.classList.remove('block'); } }, 250);
+    };
+
+    const crearGlobo = () => {
+        globo = document.createElement('span');
+        globo.id = 'ac-marks-balloon';
+        globo.setAttribute('role', 'tooltip');
+        globo.setAttribute('data-panel', '');
+        globo.setAttribute('data-productivity', '');
+        globo.className = 'app-zoom-overlay panel-surface panel-border panel-text fixed z-[200001] hidden w-[320px] max-w-[calc(100vw-40px)] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]';
+        globo.addEventListener('mouseenter', () => clearTimeout(temporizador));
+        globo.addEventListener('mouseleave', ocultarPronto);
+        document.body.appendChild(globo);
+        return globo;
+    };
+
+    const mostrar = (anfitrion) => {
+        const marcas = String(anfitrion.dataset.marcas || '').split('|').filter(Boolean);
+        if (marcas.length === 0) return;
+        clearTimeout(temporizador);
+
+        const caja = globo || crearGlobo();
+        const largo = fechaLarga(anfitrion.dataset.fecha);
+        caja.innerHTML =
+            '<span class="block max-h-[calc((100dvh-120px)/var(--app-zoom,1))] overflow-y-auto">' +
+            '<span class="panel-accent block leading-[30px]">Marcas del reloj checador</span>' +
+            (largo ? '<span class="mt-[15px] block leading-[30px]">' + largo + '</span>' : '') +
+            '<span class="mt-[15px] block">' +
+            marcas.map((marca, i) => '<span class="flex items-center justify-between gap-[20px] leading-[30px]"><span>Marca ' + (i + 1) + '</span><span class="whitespace-nowrap tabular-nums">' + cifrasChecador(marca) + '</span></span>').join('') +
+            '</span>' +
+            '<span class="mt-[15px] block leading-[30px]">' + marcas.length + ' marcas en la jornada</span>' +
+            '</span>' +
+            '<span class="panel-surface panel-border absolute h-[11px] w-[11px] rotate-45" data-flecha></span>';
+
+        // Misma posición del globo de ManagerControl: el borde derecho del globo se alinea con el del anfitrión, a 20px por
+        // encima (o por debajo si no hay lugar) y la flecha apunta al centro de las marcas.
+        const z = zoomActual();
+        const r = anfitrion.getBoundingClientRect();
+        const abajo = r.top < 350 * z;
+        const ancho = Math.min(320 * z, window.innerWidth - 40);
+        const derecha = Math.max(ancho + 20, Math.min(r.right, window.innerWidth - 20));
+        const flecha = right_ => Math.max(20, Math.min(ancho / z - 31, (derecha - (r.left + r.width / 2)) / z - 5.5));
+        caja.style.left = (derecha / z) + 'px';
+        caja.style.top = ((abajo ? r.bottom : r.top) / z) + 'px';
+        caja.style.transform = 'translate(-100%, ' + (abajo ? '20px' : 'calc(-100% - 20px)') + ')';
+
+        const punta = caja.querySelector('[data-flecha]');
+        punta.style.right = flecha() + 'px';
+        punta.classList.add(...(abajo ? ['-top-[6px]', 'border-l', 'border-t'] : ['-bottom-[6px]', 'border-b', 'border-r']));
+
+        caja.classList.remove('hidden');
+        caja.classList.add('block');
+    };
+
+    document.addEventListener('mouseover', (e) => {
+        const anfitrion = e.target.closest?.('.ac-marks[data-marcas]');
+        if (anfitrion) mostrar(anfitrion);
+    });
+    document.addEventListener('mouseout', (e) => {
+        if (e.target.closest?.('.ac-marks[data-marcas]') && !e.relatedTarget?.closest?.('.ac-marks[data-marcas], #ac-marks-balloon')) ocultarPronto();
+    });
+    document.addEventListener('scroll', () => { clearTimeout(temporizador); if (globo) { globo.classList.add('hidden'); globo.classList.remove('block'); } }, true);
+})();
 
 // 2026-11-12 → 12/11/26 (el mismo formato de las fechas del periodo)
 function fechaCortaChecador(fecha) {
@@ -453,9 +557,7 @@ function partesFechaChecador(fecha) {
 }
 
 function activarMarcaGraficaChecador(elemento, opacidadActiva) {
-    elemento.style.cursor = 'pointer';
     elemento.style.transition = 'opacity 160ms ease';
-    elemento.setAttribute('tabindex', '0');
 
     ['mouseenter', 'focus'].forEach(evento => {
         elemento.addEventListener(evento, () => elemento.setAttribute('opacity', opacidadActiva));
@@ -473,11 +575,17 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
 
     const ancho = Math.max(320, Math.round(contenedor.clientWidth || 620));
     const alto = Math.max(220, Math.round(contenedor.clientHeight || 268));
-    // Ambas gráficas comparten exactamente la misma retícula y canales de ejes.
-    const margen = { superior: 10, derecho: 20, inferior: 40, izquierdo: ancho < 480 ? 92 : 100 };
-    const anchoGrafica = Math.max(1, ancho - margen.izquierdo - margen.derecho);
-    const altoGrafica = Math.max(1, alto - margen.superior - margen.inferior);
-    const baseY = margen.superior + altoGrafica;
+    // El contenido llega exactamente a los bordes del área (texto del eje Y pegado a la izquierda, línea de la retícula
+    // hasta la derecha, la cifra de arriba tocando el borde superior y las fechas el inferior), así el relleno de 20px
+    // del contenedor se ve igual en los cuatro lados. El ancho del eje Y se mide con el texto más largo.
+    const medidor = document.createElement('canvas').getContext('2d');
+    medidor.font = '400 15px ' + getComputedStyle(contenedor).fontFamily;
+    const medir = texto => Math.ceil(medidor.measureText(String(texto)).width);
+    // Cifras de ancho fijo (como en las tablas): la letra Poppins no es tabular, así que cada dígito ocupa el ancho del «0»
+    // y las cantidades del eje Y quedan alineadas a la derecha con los puntos decimales en la misma columna.
+    const anchoDigito = medidor.measureText('0').width;
+    const anchoCaracter = caracter => /\d/.test(caracter) ? anchoDigito : medidor.measureText(caracter).width;
+    const medirTabular = texto => Math.ceil([...String(texto)].reduce((total, caracter) => total + anchoCaracter(caracter), 0));
     const valoresNumericos = valores.map(valor => Math.max(0, Number(valor) || 0));
     const maximoDatos = Math.max(...valoresNumericos, 0);
     const valoresConDatos = valoresNumericos.filter(valor => valor > 0);
@@ -488,6 +596,13 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
     const factorPaso = pasoCrudo <= 1 ? 1 : (pasoCrudo <= 2 ? 2 : (pasoCrudo <= 5 ? 5 : 10));
     const pasoEje = factorPaso * magnitud;
     const maximoEje = maximoDatos > 0 ? Math.max(pasoEje, Math.ceil(maximoDatos / pasoEje) * pasoEje) : pasos;
+    const anchoEjeY = Math.max(...Array.from({ length: pasos + 1 }, (_v, paso) => medirTabular(configuracion.formatearEje(maximoEje - (maximoEje * paso / pasos)))));
+    const mitadFecha = Math.ceil(medir('00/00') / 2) + 1;
+    // superior 6: la cifra de arriba (línea base +5, unos 11px de alto) toca el borde; inferior 27: 15px entre el eje y las fechas
+    const margen = { superior: 6, derecho: 0, inferior: 27, izquierdo: anchoEjeY + 15 };
+    const anchoGrafica = Math.max(1, ancho - margen.izquierdo - margen.derecho);
+    const altoGrafica = Math.max(1, alto - margen.superior - margen.inferior);
+    const baseY = margen.superior + altoGrafica;
 
     const svg = crearElementoSvgChecador('svg', {
         viewBox: '0 0 ' + ancho + ' ' + alto,
@@ -512,17 +627,27 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
             'stroke-dasharray': paso === pasos ? '0' : '4 4',
         }));
 
-        agregarTextoSvgChecador(svg, configuracion.formatearEje(valorEje), {
-            x: margen.izquierdo - 15,
-            y: y + 5,
-            'text-anchor': 'end',
+        // Etiqueta del eje Y alineada a la derecha, carácter por carácter con cifras de ancho fijo
+        const textoEje = String(configuracion.formatearEje(valorEje));
+        const etiquetaEje = crearElementoSvgChecador('text', { class: 'attendance-chart-text', 'font-size': 15, y: y + 5 });
+        let cursorX = margen.izquierdo - 15 - medirTabular(textoEje);
+        [...textoEje].forEach(caracter => {
+            const ancho = anchoCaracter(caracter);
+            const trazo = crearElementoSvgChecador('tspan', {
+                x: /\d/.test(caracter) ? cursorX + (ancho - medidor.measureText(caracter).width) / 2 : cursorX,
+            });
+            trazo.textContent = caracter;
+            etiquetaEje.appendChild(trazo);
+            cursorX += ancho;
         });
+        svg.appendChild(etiquetaEje);
     }
 
     const cantidad = Math.max(1, valores.length);
-    const rellenoHorizontal = configuracion.tipo === 'barras'
+    // La primera y la última fecha caben completas dentro del área (la última toca el borde derecho)
+    const rellenoHorizontal = Math.max(mitadFecha, configuracion.tipo === 'barras'
         ? Math.min(22, anchoGrafica / Math.max(2, cantidad * 2))
-        : 4;
+        : 4);
     const anchoDatos = Math.max(1, anchoGrafica - (rellenoHorizontal * 2));
     const obtenerX = indice => cantidad === 1
         ? margen.izquierdo + (anchoGrafica / 2)
@@ -553,7 +678,7 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         const fecha = partesFechaChecador(etiqueta);
         const textoFecha = crearElementoSvgChecador('text', {
             x: obtenerX(indice),
-            y: alto - 12,
+            y: alto - 1,
             class: 'attendance-chart-text',
             'text-anchor': 'middle',
             'font-size': 15,
@@ -577,11 +702,19 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         'stroke-dasharray': '7 5',
         opacity: 0.5,
     }));
+    if (promedio > 0) {
+        agregarTextoSvgChecador(svg, 'Promedio', {
+            x: ancho - margen.derecho,
+            y: Math.max(margen.superior + 15, promedioY - 8),
+            'text-anchor': 'end',
+            class: 'attendance-chart-average',
+        });
+    }
 
     // Tooltip visible al pasar el cursor, enfocar o tocar una jornada
     contenedor.style.position = 'relative';
     const tooltip = document.createElement('div');
-    tooltip.className = 'panel-surface panel-border pointer-events-none absolute z-10 hidden whitespace-nowrap rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.18)]';
+    tooltip.className = 'panel-surface panel-border panel-text pointer-events-none absolute z-10 hidden whitespace-nowrap rounded-[6px] border p-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.18)]';
     const lineaGuia = crearElementoSvgChecador('line', {
         class: 'attendance-chart-cursor',
         y1: margen.superior,
@@ -605,18 +738,26 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
         const x = obtenerX(indice);
         const y = obtenerY(valores[indice]);
         const textoFecha = document.createElement('span');
-        textoFecha.className = 'panel-muted block leading-none';
+        textoFecha.className = 'block leading-none';
         textoFecha.textContent = partesFechaChecador(etiquetas[indice]).completa;
         const textoValor = document.createElement('strong');
-        textoValor.className = 'panel-accent mt-[10px] block leading-none';
+        textoValor.className = 'panel-accent mt-[15px] block font-semibold leading-none';
         textoValor.textContent = configuracion.formatearDetalle(valores[indice], indice);
-        tooltip.replaceChildren(textoFecha, textoValor);
+        const flecha = document.createElement('span');
+        flecha.className = 'panel-surface panel-border absolute h-[11px] w-[11px] rotate-45';
+        tooltip.replaceChildren(textoFecha, textoValor, flecha);
         tooltip.classList.remove('hidden');
-        const mitad = tooltip.offsetWidth / 2;
-        const arriba = y - tooltip.offsetHeight - 15;
-        tooltip.style.left = Math.min(Math.max(x, mitad + 5), ancho - mitad - 5) + 'px';
-        tooltip.style.top = (arriba >= 0 ? arriba : y + 15) + 'px';
-        tooltip.style.transform = 'translateX(-50%)';
+        // Arriba de la barra (20px de separación más la flecha); si no cabe, debajo. Centrado en la barra sin salirse del área.
+        const anchoGlobo = tooltip.offsetWidth;
+        const altoGlobo = tooltip.offsetHeight;
+        const izquierda = Math.min(Math.max(0, x - anchoGlobo / 2), ancho - anchoGlobo);
+        const arriba = y - altoGlobo - 26;
+        const debajo = arriba < -margen.superior;
+        tooltip.style.left = izquierda + 'px';
+        tooltip.style.top = (debajo ? y + 26 : arriba) + 'px';
+        tooltip.style.transform = 'none';
+        flecha.style.left = Math.min(Math.max(12, x - izquierda - 5.5), anchoGlobo - 23) + 'px';
+        flecha.classList.add(...(debajo ? ['-top-[6px]', 'border-l', 'border-t'] : ['-bottom-[6px]', 'border-b', 'border-r']));
         lineaGuia.setAttribute('x1', x);
         lineaGuia.setAttribute('x2', x);
         lineaGuia.setAttribute('visibility', 'visible');
@@ -674,9 +815,6 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
                 'stroke-width': 2,
                 'aria-label': etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice),
             });
-            const titulo = crearElementoSvgChecador('title');
-            titulo.textContent = etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice);
-            punto.appendChild(titulo);
             activarMarcaGraficaChecador(punto, '0.62');
             punto.style.pointerEvents = 'none';
             punto.addEventListener('focus', () => mostrarTooltip(indice));
@@ -699,9 +837,6 @@ function renderizarGraficaSvgChecador(contenedorId, etiquetas, valores, configur
                 opacity: 0.88,
                 'aria-label': etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice),
             });
-            const titulo = crearElementoSvgChecador('title');
-            titulo.textContent = etiquetas[indice] + ': ' + configuracion.formatearDetalle(valor, indice);
-            barra.appendChild(titulo);
             activarMarcaGraficaChecador(barra, '0.68');
             barra.style.pointerEvents = 'none';
             barra.addEventListener('focus', () => mostrarTooltip(indice));
@@ -901,7 +1036,7 @@ function pintarTablaChecador(data) {
         tr.className = item.requiere_revision ? 'attendance-row attendance-row-review' : 'attendance-row';
         tr.innerHTML = `
             <td data-label="Fecha"><span class="ac-fig">${cifrasChecador(fechaCortaChecador(item.fecha))}</span></td>
-            <td data-label="Marcas / Chequeos" class="whitespace-normal break-words" title="${cifrasChecador(item.detalles_marcas).replace(/<[^>]+>/g, '')}">${cifrasChecador(item.detalles_marcas)}</td>
+            <td data-label="Marcas / Chequeos">${marcasChecador(item.detalles_marcas, item.fecha)}</td>
             <td data-label="Tiempo neto"><span class="ac-fig">${cifrasChecador(item.neto)}</span></td>
             <td data-label="Hrs decimales"><span class="ac-fig">${cifrasChecador(item.horas_decimal)}</span></td>
             <td data-label="Pago base"><span class="ac-fig">${cifrasChecador(item.pago_horas)}</span></td>
@@ -915,6 +1050,32 @@ function pintarTablaChecador(data) {
     document.getElementById('checador_export_bar').classList.remove('is-disabled');
 }
 
+// Aviso de error emergente (arriba al centro, sobre la página, se va solo): mismo diseño que el de ManagerControl.
+// Los errores nunca ocupan lugar en la página ni abren los cuadros del navegador.
+function mostrarErrorChecador(mensaje, titulo = 'No se pudo consultar el reloj checador') {
+    document.getElementById('ac-error-toast')?.remove();
+    const aviso = document.createElement('div');
+    aviso.id = 'ac-error-toast';
+    aviso.setAttribute('data-panel', '');
+    aviso.setAttribute('data-productivity', '');
+    aviso.setAttribute('data-error-toast', '');
+    aviso.setAttribute('role', 'alert');
+    aviso.setAttribute('aria-live', 'assertive');
+    aviso.style.background = 'transparent';
+    aviso.style.transition = 'opacity 200ms ease';
+    aviso.className = 'pointer-events-none fixed inset-x-0 top-[40px] z-[300100] flex justify-center px-[20px]';
+    aviso.innerHTML =
+        '<section class="app-zoom-overlay panel-surface relative w-full overflow-hidden rounded-xl border shadow-[0_18px_55px_rgba(0,0,0,0.30)]" style="max-width: 620px; border-color: var(--panel-danger); background-color: var(--panel-danger-soft)">' +
+        '<div class="p-[20px]"><div class="flex items-center gap-[20px]">' +
+        '<svg class="h-5 w-5 shrink-0" style="color: var(--panel-danger)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v5m0 3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>' +
+        '<p class="leading-none" style="color: var(--panel-danger)" data-aviso-titulo></p></div>' +
+        '<p class="mt-[20px] leading-[25px]" data-aviso-mensaje></p></div></section>';
+    aviso.querySelector('[data-aviso-titulo]').textContent = titulo;
+    aviso.querySelector('[data-aviso-mensaje]').textContent = mensaje;
+    document.body.appendChild(aviso);
+    setTimeout(() => { aviso.style.opacity = '0'; setTimeout(() => aviso.remove(), 220); }, 5000);
+}
+
 // Botón Consultar periodo de Marcas de tiempo
 async function revisarMarcasChecador() {
     establecerCargaChecador('marks', true);
@@ -922,7 +1083,7 @@ async function revisarMarcasChecador() {
         pintarTablaChecador(await consultarChecador('marks'));
     } catch (err) {
         console.error(err);
-        alert(err.message || 'Hubo un error al intentar consultar las marcas del checador.');
+        mostrarErrorChecador(err.message || 'Hubo un error al intentar consultar las marcas del checador.');
     } finally {
         establecerCargaChecador('marks', false);
     }
@@ -937,7 +1098,7 @@ async function revisarDatosChecador() {
         actualizarGraficasChecador(data.resumen || [], periodoChecador('general'));
     } catch (err) {
         console.error(err);
-        alert(err.message || 'Hubo un error al intentar consultar las marcas del checador.');
+        mostrarErrorChecador(err.message || 'Hubo un error al intentar consultar las marcas del checador.');
     } finally {
         establecerCargaChecador('general', false);
     }
@@ -955,7 +1116,7 @@ function exportarChecador(format) {
     const { inicio, fin } = periodoChecador('marks');
 
     if (!employeeId || !inicio || !fin) {
-        alert('No hay datos suficientes para exportar.');
+        mostrarErrorChecador('Consulta primero un periodo con marcas para poder descargar el reporte.', 'No se pudo descargar el reporte');
         return;
     }
 
