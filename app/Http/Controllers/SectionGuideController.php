@@ -19,6 +19,7 @@ class SectionGuideController extends Controller
             'productividad' => 'productividad',
             'productividad-detalle' => 'productividad_detalle',
             'chat-soporte' => 'chat_soporte',
+            'preguntas' => 'preguntas',
             'managercontrol' => 'managercontrol',
             'managercontrol-detalle' => 'managercontrol_detalle',
             'managercontrol-asignar' => 'managercontrol_asignar',

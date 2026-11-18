@@ -10,6 +10,7 @@ use App\Services\Notifications\SystemNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -57,6 +58,9 @@ class TicketChat extends Component
     /** @var array<int, array{id: int, name: string, email: string, initials: string, photo_url: ?string, is_current: bool}> */
     public array $onlineUsers = [];
 
+    /** Personas que están escribiendo ahora (sin contarte a ti). @var array<int, array{id: int, name: string, initials: string, photo_url: ?string}> */
+    public array $typingUsers = [];
+
     public string $todayLabel = '';
 
     public ?int $automatedUserId = null;
@@ -87,6 +91,8 @@ class TicketChat extends Component
 
     public function updatedMessage(string $value): void
     {
+        $this->announceTyping($value);
+
         if (! preg_match('/(?:^|\s)@([\pL\pN._-]*)$/u', $value, $matches)) {
             $this->mentionSuggestions = [];
 
@@ -272,6 +278,7 @@ class TicketChat extends Component
         $this->notifyMentionedUsers($message, $user);
         $this->respondAsAutomatedUser($message, $user);
 
+        Cache::forget($this->typingKey((int) $user->getAuthIdentifier()));
         $this->reset(['message', 'files', 'newFiles']);
         $this->mentionSuggestions = [];
         $this->refreshMessages();
@@ -284,7 +291,39 @@ class TicketChat extends Component
         $this->messages = $this->recentMessages();
         $this->markChatSeen();
         $this->refreshOnlineUsers();
+        $this->typingUsers = $this->typingNow();
         $this->dispatch('support-messages-refreshed');
+    }
+
+    private function typingKey(int $userId): string
+    {
+        return 'support-chat-typing:'.$userId;
+    }
+
+    /** Avisa a los demás que estás escribiendo (dura unos segundos y se renueva con cada tecla). */
+    private function announceTyping(string $value): void
+    {
+        $key = $this->typingKey((int) auth()->id());
+
+        if (trim($value) === '') {
+            Cache::forget($key);
+
+            return;
+        }
+
+        Cache::put($key, true, now()->addSeconds(6));
+    }
+
+    /** @return array<int, array{id: int, name: string, initials: string, photo_url: ?string}> */
+    private function typingNow(): array
+    {
+        $me = (int) auth()->id();
+
+        return collect($this->onlineUsers)
+            ->filter(fn (array $user): bool => $user['id'] !== $me && $user['id'] !== (int) $this->automatedUserId && Cache::has($this->typingKey($user['id'])))
+            ->map(fn (array $user): array => ['id' => $user['id'], 'name' => $user['name'], 'initials' => $user['initials'], 'photo_url' => $user['photo_url']])
+            ->values()
+            ->all();
     }
 
     /** Marca el chat como leído para el globo de mensajes pendientes del menú superior. */
@@ -369,6 +408,7 @@ class TicketChat extends Component
             ->with([
                 'user:id,name,last_name,email,profile_photo_path',
                 'reactions:id,support_chat_message_id,user_id,reaction',
+                'reactions.user:id,name,last_name',
             ])
             ->latest('created_at')
             ->latest('id')
@@ -407,6 +447,14 @@ class TicketChat extends Component
                         'dislike' => $message->reactions->where('reaction', 'dislike')->count(),
                     ],
                     'my_reaction' => $message->reactions->firstWhere('user_id', $currentUserId)?->reaction,
+                    // Quiénes reaccionaron con cada una (para el globo al pasar el cursor)
+                    'reaction_users' => collect(['like', 'heart', 'dislike'])->mapWithKeys(fn (string $type): array => [
+                        $type => $message->reactions->where('reaction', $type)
+                            ->map(fn ($reaction): string => (int) $reaction->user_id === $currentUserId
+                                ? 'Tú'
+                                : trim(($reaction->user?->name ?? 'Usuario').' '.($reaction->user?->last_name ?? '')))
+                            ->values()->all(),
+                    ])->all(),
                 ];
             })
             ->all();

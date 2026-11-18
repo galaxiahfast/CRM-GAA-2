@@ -36,7 +36,6 @@ class SupportModuleTest extends TestCase
             ->assertSee('Chat general de soporte')
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
-            ->assertSeeText('Sincronizado en tiempo real')
             ->assertSeeText('Descargar guía PDF')
             ->assertSee('Buscar por nombre, correo o contenido', false)
             ->assertSee('data-support-chat-panel', false)
@@ -52,11 +51,13 @@ class SupportModuleTest extends TestCase
             ->assertSeeText('Soporte')
             ->assertSeeText('Centro de ayuda')
             ->assertSeeText('Preguntas')
-            ->assertSee('p-[50px]', false)
+            ->assertSee('xl:px-[50px]', false)
             ->assertSee('support-questions-card', false)
             ->assertSee('support-questions-grid', false)
-            ->assertSee('grid-template-columns: 240px 350px minmax(440px, 1fr)', false)
-            ->assertSee('support-questions-thumb', false);
+            ->assertSee('grid-template-columns: 260px 390px minmax(440px, 1fr)', false)
+            ->assertSee('panel-scroll-thumb', false)
+            ->assertSeeText('Descargar guía PDF')
+            ->assertSeeText('Tutorial rápido');
     }
 
     public function test_authenticated_user_can_download_the_daily_conversation_as_pdf(): void
@@ -175,6 +176,31 @@ class SupportModuleTest extends TestCase
         $this->assertSame(1, SupportChatMessage::query()->where('sticker_key', 'ternura')->count());
         $this->assertSame(0, SupportChatMessage::query()->where('sticker_key', 'sticker-no-permitido')->count());
         $component->assertSee('/storage/'.$storedFile->attachments[0]['path'], false);
+    }
+
+    public function test_the_chat_shows_who_is_typing_without_counting_yourself(): void
+    {
+        $writer = User::factory()->create(['name' => 'Aaron', 'last_name' => 'Yama']);
+        $reader = User::factory()->create(['name' => 'Marina', 'last_name' => 'Manrique']);
+        foreach ([$writer, $reader] as $person) {
+            \Illuminate\Support\Facades\DB::table('sessions')->insert([
+                'id' => 'typing-'.$person->id, 'user_id' => $person->id, 'ip_address' => '127.0.0.1', 'user_agent' => 't', 'payload' => '', 'last_activity' => now()->timestamp,
+            ]);
+        }
+
+        // Aaron escribe: en su propio chat no aparece, en el de Marina sí
+        $writerChat = Livewire::actingAs($writer)->test(TicketChat::class)->set('message', 'Hola, una duda');
+        $writerChat->call('refreshMessages')->assertSet('typingUsers', []);
+
+        Livewire::actingAs($reader)->test(TicketChat::class)
+            ->call('refreshMessages')
+            ->assertSee('Aaron está escribiendo')
+            ->assertSeeHtml('data-typing-indicator');
+
+        // Al borrar el texto o enviarlo, deja de aparecer
+        $this->actingAs($writer);
+        $writerChat->set('message', '');
+        Livewire::actingAs($reader)->test(TicketChat::class)->call('refreshMessages')->assertDontSee('está escribiendo');
     }
 
     public function test_a_message_accepts_up_to_ten_files_and_rejects_the_rest(): void
@@ -731,7 +757,7 @@ class SupportModuleTest extends TestCase
             [
                 'inicio', 'panel_general', 'conciliacion_ocr', 'conciliacion_bancaria', 'administracion', 'clientes',
                 'control_horas', 'gestion_respaldos', 'hoja_entrega', 'reportes_soporte', 'reporte_respaldos',
-                'chat_soporte', 'preguntas',
+                'preguntas', 'chat_soporte',
             ],
             array_keys($categories)
         );

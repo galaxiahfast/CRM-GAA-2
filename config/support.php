@@ -549,6 +549,53 @@ return [
                 ],
             ],
         ],
+        'preguntas' => [
+            'label' => 'Preguntas',
+            'icon' => 'preguntas',
+            'menu' => 'Soporte › Centro de Ayuda › Preguntas',
+            'summary' => 'Preguntas es el asistente de ayuda de DataMID. Cada apartado del menú lateral tiene su categoría con preguntas frecuentes, respuestas breves y una guía en PDF que puedes descargar.',
+            'items' => [
+                'usar' => [
+                    'question' => '¿Cómo uso el asistente de preguntas?',
+                    'answer' => 'Elige un apartado en la primera columna, selecciona una pregunta de la segunda y Sofia responderá en la conversación.',
+                    'steps' => [
+                        'Entra a Soporte › Centro de Ayuda › Preguntas.',
+                        'Selecciona el apartado sobre el que tienes dudas.',
+                        'Selecciona una pregunta de la lista.',
+                        'Lee la respuesta que Sofia escribe en la conversación.',
+                        'Si quieres un recorrido por la pantalla, presiona “Tutorial rápido” debajo de la lista de categorías.',
+                    ],
+                ],
+                'categorias' => [
+                    'question' => '¿Qué categorías encuentro?',
+                    'answer' => 'Una por cada apartado del menú lateral, en el mismo orden: desde Inicio hasta Preguntas y Chat de Soporte. Cada una incluye 4 preguntas.',
+                    'steps' => [
+                        'Recorre la lista de categorías de la primera columna.',
+                        'Cada categoría indica cuántas preguntas contiene.',
+                        'Monitoreo reúne en una sola categoría Control de Actividades (Cronómetro, Gráficos Generales y Productividad) y Control de Horas (Reloj Checador y Supervisión de Horas).',
+                        'Algunos apartados, como Administración u Hoja de Entrega, solo están disponibles según tu rol, aunque su guía aparece aquí.',
+                    ],
+                ],
+                'guia_pdf' => [
+                    'question' => '¿Cómo descargo la guía en PDF de un apartado?',
+                    'answer' => 'Selecciona el apartado en la primera columna y presiona “Descargar guía PDF”, arriba a la derecha. El documento reúne todas las preguntas del apartado con sus pasos. Para la guía de esta misma pantalla elige el apartado Preguntas.',
+                    'steps' => [
+                        'Selecciona el apartado en la primera columna.',
+                        'Presiona “Descargar guía PDF”, arriba a la derecha.',
+                        'Guarda el documento descargado.',
+                    ],
+                ],
+                'sin_respuesta' => [
+                    'question' => '¿Qué hago si no encuentro mi respuesta?',
+                    'answer' => 'Utiliza el Chat general de soporte para conversar con los demás colaboradores y pedir ayuda; también hay un enlace en el pie de esta pantalla.',
+                    'steps' => [
+                        'Entra a Soporte › Centro de Ayuda › Chat de Soporte.',
+                        'Escribe tu duda; usa @ para mencionar a quien pueda ayudarte.',
+                        'Si es necesario, adjunta hasta 10 imágenes o archivos con los tres puntos del cuadro de texto.',
+                    ],
+                ],
+            ],
+        ],
         'chat_soporte' => [
             'label' => 'Chat de Soporte',
             'icon' => 'chat',
@@ -591,52 +638,6 @@ return [
                         'Ubica el mensaje en la conversación.',
                         'Elige una reacción: Me gusta, Me encanta o No me gusta.',
                         'Para borrar uno propio, presiona “Eliminar mensaje”; quedará como “Mensaje eliminado”.',
-                    ],
-                ],
-            ],
-        ],
-        'preguntas' => [
-            'label' => 'Preguntas',
-            'icon' => 'preguntas',
-            'menu' => 'Soporte › Centro de Ayuda › Preguntas',
-            'summary' => 'Preguntas es el asistente de ayuda de DataMID. Cada apartado del menú lateral tiene su categoría con preguntas frecuentes, respuestas breves y una guía en PDF que puedes descargar.',
-            'items' => [
-                'usar' => [
-                    'question' => '¿Cómo uso el asistente de preguntas?',
-                    'answer' => 'Elige un apartado en la primera columna, selecciona una pregunta de la segunda y Sofia responderá en la conversación.',
-                    'steps' => [
-                        'Entra a Soporte › Centro de Ayuda › Preguntas.',
-                        'Selecciona el apartado sobre el que tienes dudas.',
-                        'Selecciona una pregunta de la lista.',
-                        'Lee la respuesta que Sofia escribe en la conversación.',
-                    ],
-                ],
-                'categorias' => [
-                    'question' => '¿Qué categorías encuentro?',
-                    'answer' => 'Una por cada apartado del menú lateral, en el mismo orden: desde Inicio hasta Preguntas. Cada una incluye 4 preguntas.',
-                    'steps' => [
-                        'Recorre la lista de categorías de la primera columna.',
-                        'Cada categoría indica cuántas preguntas contiene.',
-                        'Monitoreo reúne en una sola categoría Control de Actividades (Cronómetro, Gráficos Generales y Productividad) y Control de Horas (Reloj Checador y Supervisión de Horas).',
-                        'Algunos apartados, como Administración u Hoja de Entrega, solo están disponibles según tu rol, aunque su guía aparece aquí.',
-                    ],
-                ],
-                'guia_pdf' => [
-                    'question' => '¿Cómo descargo la guía en PDF de un apartado?',
-                    'answer' => 'Selecciona el apartado y presiona “Guía PDF” en el encabezado de la columna de preguntas. El documento reúne todas las preguntas del apartado con sus pasos.',
-                    'steps' => [
-                        'Selecciona el apartado en la primera columna.',
-                        'Presiona “Guía PDF” en el encabezado de la columna de preguntas.',
-                        'Guarda el documento descargado.',
-                    ],
-                ],
-                'sin_respuesta' => [
-                    'question' => '¿Qué hago si no encuentro mi respuesta?',
-                    'answer' => 'Utiliza el Chat de Soporte para conversar con los demás colaboradores y pedir ayuda.',
-                    'steps' => [
-                        'Entra a Soporte › Centro de Ayuda › Chat de Soporte.',
-                        'Escribe tu duda; usa @ para mencionar a quien pueda ayudarte.',
-                        'Si es necesario, adjunta una imagen o un archivo.',
                     ],
                 ],
             ],

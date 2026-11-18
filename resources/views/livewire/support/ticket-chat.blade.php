@@ -19,6 +19,22 @@
         profilePhotoOpen: false,
         profilePhotoUrl: '',
         profilePhotoName: '',
+        tip: { show: false, x: 0, y: 0, below: false, title: '', names: [], extra: 0 },
+        showTip(event, title, names) {
+            const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-zoom')) || 1;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const half = 150 * zoom;
+            const centre = Math.min(Math.max(rect.left + rect.width / 2, half + 20), window.innerWidth - half - 20);
+            this.tip.title = title + ' · ' + names.length;
+            this.tip.names = names.slice(0, 10);
+            this.tip.extra = Math.max(0, names.length - 10);
+            this.tip.below = rect.top < 260 * zoom;
+            this.tip.x = centre / zoom;
+            this.tip.y = (this.tip.below ? rect.bottom : rect.top) / zoom;
+            this.tip.arrow = (rect.left + rect.width / 2 - centre) / zoom;
+            this.tip.show = true;
+        },
+        hideTip() { this.tip.show = false; },
         showProfilePhoto(url, name) {
             if (!url) return;
             this.profilePhotoUrl = url;
@@ -31,26 +47,26 @@
     <x-panel-styles />
 
     <div class="relative z-10 flex min-h-0 w-full min-w-0 flex-1 flex-col">
-    <main class="relative z-10 mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:p-[30px] xl:px-[50px] xl:py-[40px]">
-        <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+    <main class="relative z-10 mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:px-[50px] xl:py-[50px]">
+        <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
             <div class="min-w-0">
                 <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Chat general de soporte</h1>
                 <p class="mt-[5px] leading-[30px]">Espacio compartido para conversar con todos los colaboradores.</p>
             </div>
-            <p class="panel-accent whitespace-nowrap leading-none">Sincronizado en tiempo real</p>
+            <a href="{{ route('section.guide', 'chat-soporte') }}" title="Descargar la guía del Chat general de soporte en PDF" class="clock-link whitespace-nowrap leading-none">Descargar guía PDF</a>
         </section>
         <div x-data="clockQuickTour(@js($chatTour))" class="contents">
         <div data-support-chat-panel class="min-h-0 min-w-0 flex-1" style="display:grid;grid-template-columns:360px minmax(0,1fr);grid-template-rows:minmax(0,1fr);column-gap:50px;align-items:stretch;">
             <aside class="panel-surface panel-border flex w-[360px] max-h-none min-h-0 shrink-0 flex-col overflow-hidden rounded-xl border" style="grid-column:1;grid-row:1;">
-                <header class="panel-header panel-border flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                <header class="panel-header panel-border flex min-h-[98px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">En línea ahora</h2>
-                        <p class="chat-sub mt-[5px]">Quién está conectado al chat.</p>
+                        <p class="chat-sub mt-[5px]">Ahora hay {{ count($onlineUsers) }} {{ count($onlineUsers) === 1 ? 'conectado' : 'conectados' }}</p>
                     </div>
-                    <p class="whitespace-nowrap leading-none">{{ count($onlineUsers) }} en línea</p>
                 </header>
-                <div id="chat-online" data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative -mb-px min-h-0 flex-1 overflow-hidden">
-                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = [...$el.querySelectorAll('[data-online-row]')]; if (!rows.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const tops = rows.map(row => row.offsetTop); const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-support-online-users class="panel-scroll h-full snap-y snap-mandatory overflow-y-auto">
+                <div id="chat-online" data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1 overflow-hidden">
+                    <div x-ref="scroller" @scroll="update()" @scroll.debounce.150ms="(() => { const rows = [...$el.querySelectorAll('[data-online-row]')]; if (!rows.length) return; const max = $el.scrollHeight - $el.clientHeight; if ($el.scrollTop <= 2 || max - $el.scrollTop <= 2) return; const tops = rows.map(row => row.offsetTop); const target = Math.min(max, tops.reduce((a, b) => Math.abs(b - $el.scrollTop) < Math.abs(a - $el.scrollTop) ? b : a)); if (Math.abs(target - $el.scrollTop) > 2) $el.scrollTo({ top: target, behavior: 'smooth' }); })()" @mouseenter="update()" data-support-online-users class="panel-scroll h-full snap-y snap-mandatory overflow-y-auto"
+                        x-init="(() => { const box = $el; const mark = () => { box.querySelectorAll('[data-online-row]').forEach((row) => { row.toggleAttribute('data-edge', Math.abs(row.offsetTop + row.offsetHeight - box.scrollTop - box.clientHeight) <= 2); }); }; mark(); box.addEventListener('scroll', mark, { passive: true }); new ResizeObserver(mark).observe(box); window.addEventListener('support-messages-refreshed', () => $nextTick(mark)); })()">
                             @forelse ($onlineUsers as $onlineUser)
                                 <div wire:key="online-user-{{ $onlineUser['id'] }}" data-online-row class="panel-border flex snap-start items-center gap-[15px] border-b p-[20px] transition last:border-b-0 hover:bg-white/60" style="height:20%;min-height:80px;">
                                     @if ($onlineUser['photo_url'])
@@ -83,8 +99,6 @@
 
                 <div class="panel-border shrink-0 border-t p-[20px]">
                     <div class="flex flex-col gap-[20px]">
-                        <a href="{{ route('section.guide', 'chat-soporte') }}" title="Descargar la guía del Chat general de soporte en PDF" class="clock-link w-fit leading-none">Descargar guía PDF</a>
-                        <div class="panel-border w-full border-t" aria-hidden="true"></div>
                         <button type="button" @click="startQuickTour()" class="chat-primary inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl px-[20px] py-[15px] focus:outline-none focus:ring-0">Tutorial rápido</button>
                     </div>
                 </div>
@@ -93,7 +107,7 @@
             <div
                 class="panel-surface panel-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border"
                 style="grid-column:2;grid-row:1;min-width:0;"
-                wire:poll.3s.visible="refreshMessages"
+                wire:poll.2s.visible="refreshMessages"
                 x-data="{
                     stayAtBottom: true,
                     searchQuery: '',
@@ -163,7 +177,7 @@
                 @support-message-sent.window="$nextTick(() => { stayAtBottom = true; scrollToBottom(); updateReadingPosition() })"
                 @support-messages-refreshed.window="$nextTick(() => updateReadingPosition())"
             >
-                <header data-support-chat-header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
+                <header data-support-chat-header class="panel-header panel-border flex min-h-[98px] flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
                     <div class="min-w-0">
                         <h2 class="panel-accent leading-none">Conversación general</h2>
                         <p class="chat-sub mt-[5px]" x-text="conversationSummary()">{{ data_get(collect($messages)->last(), 'date_label', 'Hoy') }} · {{ count($messages) }} {{ count($messages) === 1 ? 'mensaje' : 'mensajes' }}</p>
@@ -177,7 +191,7 @@
                 </header>
 
                 <div data-scroll-on-hover x-data="backupOverlayScroll()" x-init="$nextTick(() => update())" class="relative min-h-0 flex-1">
-                <div id="chat-messages" x-ref="scroller" @scroll="update(); trackPosition()" @mouseenter="update()" class="panel-scroll absolute inset-0 space-y-[20px] overflow-y-auto bg-white/35 p-[20px]">
+                <div id="chat-messages" x-ref="scroller" @scroll="update(); trackPosition()" @mouseenter="update()" class="panel-scroll absolute inset-0 space-y-[20px] overflow-y-auto bg-white/35 px-[20px] pb-[70px] pt-[20px]">
                     <div x-show="searchQuery && !hasSearchResults()" class="py-[40px] text-center" style="display: none;">
                         <svg class="mx-auto h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" /></svg>
                         <p class="mt-[10px] text-[15px] font-normal text-gray-500">No se encontraron mensajes.</p>
@@ -275,13 +289,13 @@
                                         </div>
                                     @endif
                                     <div class="no-print mt-[15px] flex items-center gap-[15px] {{ $chatMessage['is_mine'] ? 'justify-end' : 'justify-start' }}">
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'like')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'like')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'like' ? 'text-black' : 'text-zinc-400' }}" aria-label="Me gusta" title="Me gusta · {{ $chatMessage['reactions']['like'] }}">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'like')" @mouseenter="showTip($event, 'Me gusta', @js($chatMessage['reaction_users']['like']))" @mouseleave="hideTip()" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'like')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'like' ? 'text-black' : 'text-zinc-400' }}" aria-label="Me gusta" title="Me gusta · {{ $chatMessage['reactions']['like'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'like' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 10v11H3V10h4Zm0 10h10.2a2 2 0 0 0 1.94-1.52l1.5-6A2 2 0 0 0 18.7 10H14l.7-4.2A2.4 2.4 0 0 0 12.33 3L7 10Z" /></svg>
                                         </button>
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'heart')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'heart')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 text-red-700 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50" aria-label="Me encanta" title="Me encanta · {{ $chatMessage['reactions']['heart'] }}">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'heart')" @mouseenter="showTip($event, 'Me encanta', @js($chatMessage['reaction_users']['heart']))" @mouseleave="hideTip()" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'heart')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 text-red-700 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50" aria-label="Me encanta" title="Me encanta · {{ $chatMessage['reactions']['heart'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'heart' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" /></svg>
                                         </button>
-                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'dislike' ? 'text-black' : 'text-zinc-400' }}" aria-label="No me gusta" title="No me gusta · {{ $chatMessage['reactions']['dislike'] }}">
+                                        <button type="button" wire:click="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" @mouseenter="showTip($event, 'No me gusta', @js($chatMessage['reaction_users']['dislike']))" @mouseleave="hideTip()" wire:loading.attr="disabled" wire:target="toggleReaction({{ $chatMessage['id'] }}, 'dislike')" class="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 outline-none transition-opacity hover:opacity-60 focus:outline-none focus:ring-0 disabled:opacity-50 {{ $chatMessage['my_reaction'] === 'dislike' ? 'text-black' : 'text-zinc-400' }}" aria-label="No me gusta" title="No me gusta · {{ $chatMessage['reactions']['dislike'] }}">
                                             <svg class="h-4 w-4" fill="{{ $chatMessage['my_reaction'] === 'dislike' ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 14V3H3v11h4Zm0-10h10.2a2 2 0 0 1 1.94 1.52l1.5 6A2 2 0 0 1 18.7 14H14l.7 4.2A2.4 2.4 0 0 1 12.33 21L7 14Z" /></svg>
                                         </button>
                                     </div>
@@ -299,6 +313,32 @@
                     @endforelse
                 </div>
                 <span :class="visible ? '' : 'hidden'" class="panel-scroll-thumb" style="right: 5px;" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+
+                {{-- Quién está escribiendo: va encima del final de la lista (no empuja nada) y deja libre ese espacio con el relleno de abajo --}}
+                @if ($typingUsers !== [])
+                    @php
+                        $typist = $typingUsers[0];
+                        $typingNames = collect($typingUsers)->pluck('name')->map(fn ($name) => \Illuminate\Support\Str::before($name, ' '));
+                        $typingText = count($typingUsers) === 1
+                            ? $typingNames[0].' está escribiendo'
+                            : (count($typingUsers) === 2 ? $typingNames[0].' y '.$typingNames[1].' están escribiendo' : 'Varias personas están escribiendo');
+                    @endphp
+                    <div class="panel-surface pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex h-[50px] items-center gap-[20px] px-[20px]" role="status" aria-live="polite" data-typing-indicator>
+                        @if ($typist['photo_url'])
+                            <img src="{{ $typist['photo_url'] }}" alt="{{ $typist['name'] }}" class="h-9 w-9 shrink-0 rounded-full border border-zinc-200 object-cover">
+                        @else
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 text-black">{{ $typist['initials'] }}</span>
+                        @endif
+                        <span class="flex min-w-0 items-end gap-[10px]">
+                            <span class="truncate leading-[30px]">{{ $typingText }}</span>
+                            <span class="mb-[13px] flex items-center gap-[6px]" aria-hidden="true">
+                                <span class="chat-typing-dot"></span>
+                                <span class="chat-typing-dot"></span>
+                                <span class="chat-typing-dot"></span>
+                            </span>
+                        </span>
+                    </div>
+                @endif
                 </div>
 
                 <form id="chat-composer" wire:submit="sendMessage" class="no-print border-t border-zinc-200 bg-white/70 p-[20px]" x-data="{ menu: null }" @click.outside="menu = null" @keydown.escape.window="menu = null">
@@ -464,6 +504,19 @@
 
     </div>
 
+    {{-- Globo de quiénes reaccionaron: mismo diseño que los demás globos (caja con flecha, 20px de relleno y títulos en azul) --}}
+    <template x-teleport="body">
+        <div data-panel data-productivity data-support-chat x-cloak x-show="tip.show" role="tooltip" style="min-height:0"
+            class="app-zoom-overlay panel-surface panel-border panel-text pointer-events-none fixed z-[200001] w-max min-w-[180px] max-w-[380px] rounded-xl border p-[20px] shadow-[0_18px_55px_rgba(0,0,0,0.30)]"
+            :style="`min-height:0;left:${tip.x}px;top:${tip.y}px;transform:translate(-50%, ${tip.below ? '20px' : 'calc(-100% - 20px)'})`">
+            <span class="panel-accent block leading-[30px]" x-text="tip.title"></span>
+            <template x-for="(name, i) in tip.names" :key="i"><span class="block truncate leading-[30px]" x-text="name"></span></template>
+            <span x-show="tip.extra > 0" class="block leading-[30px]" x-text="'y ' + tip.extra + ' más'"></span>
+            <span x-show="tip.names.length === 0" class="block leading-[30px]">Nadie ha reaccionado todavía</span>
+            <span class="panel-surface panel-border absolute h-[11px] w-[11px] rotate-45" :class="tip.below ? '-top-[6px] border-l border-t' : '-bottom-[6px] border-b border-r'" :style="`left:calc(50% + ${tip.arrow || 0}px - 5.5px)`"></span>
+        </div>
+    </template>
+
     <template x-teleport="body">
         <div
             x-show="profilePhotoOpen"
@@ -514,6 +567,14 @@
             transition: background-color 150ms ease;
         }
         [data-support-chat] .chat-primary:hover { background-color: color-mix(in srgb, var(--chat-green) 20%, var(--panel-surface)); }
+        /* La fila que toca el borde de abajo no dibuja su línea: esa línea ya la dibuja el pie (así nunca se ve doble) */
+        [data-support-chat] [data-online-row][data-edge] { border-bottom-color: transparent !important; }
+        /* Puntitos de «escribiendo» (mismos que en Preguntas) */
+        .chat-typing-dot { width: 4px; height: 4px; border-radius: 9999px; background: currentColor; animation: chat-typing 1.2s infinite ease-in-out; }
+        .chat-typing-dot:nth-child(2) { animation-delay: 0.18s; }
+        .chat-typing-dot:nth-child(3) { animation-delay: 0.36s; }
+        @keyframes chat-typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.35; } 30% { transform: translateY(-5px); opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .chat-typing-dot { animation-duration: 2.4s; } }
         [data-support-chat] .clock-link { color: var(--chat-green); transition: opacity 150ms ease; }
         [data-support-chat] .clock-link:hover { opacity: .75; }
         [data-support-chat] [class~="text-black"],
