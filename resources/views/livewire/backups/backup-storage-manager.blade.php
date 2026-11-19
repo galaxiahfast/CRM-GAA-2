@@ -70,6 +70,43 @@
         html.module-dark-theme #main-content .backup-storage-monochrome table :is(tbody, tr) { background-color: transparent !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-gray > tr > td { background-color: var(--panel-subtle) !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-white > tr > td { background-color: var(--panel-surface) !important; }
+        /* La tarjeta del explorador mide exactamente lo que queda de pantalla (menos el margen de la página): al bajar se ve completa, sin pedazos de la tarjeta de arriba */
+        .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 40px); min-height: 640px; }
+        @media (min-width: 640px) { .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 60px); } }
+        @media (min-width: 1280px) { .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 100px); } }
+        /* Explorador de la memoria: como el Explorador de Windows (barra de dirección, Atrás/Subir y clic para entrar) */
+        .backup-explorer .explorer-tool { display: inline-grid; height: 50px; width: 50px; flex: none; place-items: center; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); color: var(--panel-text); transition: background-color 150ms ease; }
+        .backup-explorer .explorer-tool:hover:not(:disabled) { background: var(--panel-subtle); }
+        .backup-explorer .explorer-tool:disabled { opacity: .35; cursor: not-allowed; }
+        .backup-explorer .explorer-address { display: flex; min-width: 0; flex: 1 1 auto; height: 50px; align-items: center; gap: 10px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 0 20px; scrollbar-width: none; }
+        .backup-explorer .explorer-address::-webkit-scrollbar { display: none; }
+        .backup-explorer .explorer-crumb { flex: none; border-radius: 8px; padding: 6px 8px; line-height: 1; transition: background-color 150ms ease; }
+        .backup-explorer .explorer-crumb:hover { background: var(--panel-subtle); }
+        .backup-explorer .explorer-cols, .backup-explorer .explorer-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px 100px 180px; align-items: center; gap: 20px; padding: 0 20px; }
+        .backup-explorer .explorer-cols { min-height: 50px; color: var(--panel-accent); }
+        .backup-explorer .explorer-scroll { scroll-snap-type: y mandatory; }
+        .backup-explorer .explorer-scroll .explorer-row { scroll-snap-align: start; flex: none; }
+        .backup-explorer .explorer-list { display: flex; flex-direction: column; gap: 20px; }
+        .backup-explorer .explorer-row { width: 100%; height: 60px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); text-align: left; transition: background-color 150ms ease, border-color 150ms ease; }
+        .backup-explorer button.explorer-row { cursor: pointer; }
+        .backup-explorer button.explorer-row:hover { background: var(--panel-subtle); color: var(--panel-accent); }
+        .backup-explorer .explorer-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .backup-explorer-card .dg { display: inline-block; width: 0.62em; text-align: center; }
+        .backup-explorer .explorer-size { display: grid; grid-template-columns: minmax(0, 1fr) 26px; justify-content: end; column-gap: 6px; white-space: nowrap; }
+        .backup-explorer .explorer-size > span:first-child { text-align: right; }
+        .backup-explorer .explorer-date { display: grid; grid-template-columns: 20px 38px 38px 10px 44px; justify-content: end; align-items: center; column-gap: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .backup-explorer .explorer-date > span:nth-child(1), .backup-explorer .explorer-date > span:nth-child(3), .backup-explorer .explorer-date > span:nth-child(5) { text-align: right; }
+        .backup-explorer .explorer-date > span:nth-child(2) { text-align: left; padding-left: 4px; }
+        .backup-explorer .explorer-date-sep { text-align: center; }
+        .backup-explorer .explorer-ext { min-width: 50px; border: 1px solid var(--panel-border); border-radius: 8px; padding: 4px 8px; text-align: center; line-height: 1; color: var(--panel-accent); }
+        .backup-explorer .explorer-tag { border: 1px solid var(--panel-accent); border-radius: 9999px; padding: 3px 10px; color: var(--panel-accent); line-height: 1; }
+        .backup-memory-button { display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 0 20px; line-height: 1; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+        .backup-memory-button:hover { background: var(--panel-subtle); }
+        .backup-memory-button[aria-pressed="true"] { border-color: var(--backup-green); background: color-mix(in srgb, var(--backup-green) 12%, var(--panel-surface)); color: var(--backup-green); }
+        .backup-refresh-button { display: inline-flex; min-height: 50px; align-items: center; gap: 10px; border: 1px solid var(--backup-green); border-radius: 12px; background: color-mix(in srgb, var(--backup-green) 12%, var(--panel-surface)); color: var(--backup-green); padding: 0 20px; line-height: 1; transition: background-color 150ms ease; }
+        .backup-refresh-button:hover:not(:disabled) { background: color-mix(in srgb, var(--backup-green) 20%, var(--panel-surface)); }
+        .backup-refresh-button:disabled { opacity: .6; }
+        @media (max-width: 1023px) { .backup-explorer .explorer-cols, .backup-explorer .explorer-row { grid-template-columns: minmax(0, 1fr) 100px; } .backup-explorer .explorer-hide-md { display: none; } }
     </style>
 
     @if($exportError)
@@ -176,21 +213,10 @@
         @endteleport
     @endif
 
-    <div class="no-print fixed bottom-[30px] right-[30px] z-30 flex items-center gap-[10px] rounded-xl border panel-border panel-surface px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] backdrop-blur-sm">
-        <button type="button" @click="toggleFullscreen()" class="inline-flex p-[5px] outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16h5v5"/></svg>
-        </button>
-    </div>
 
     <main class="w-full space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
         <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
             <div class="flex min-w-0 items-center gap-[15px]">
-                <span class="grid h-14 w-14 shrink-0 place-items-center rounded-xl border panel-border panel-surface ">
-                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-                        <ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v7c0 1.66 3.13 3 7 3s7-1.34 7-3V5M5 12v7c0 1.66 3.13 3 7 3s7-1.34 7-3v-7"/>
-                    </svg>
-                </span>
                 <div class="min-w-0">
                     <h1 class="panel-accent text-xl leading-none tracking-tight">Gestión de Respaldos</h1>
                     <p class="mt-[15px] leading-none">Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.</p>
@@ -467,22 +493,115 @@
                 <footer class="flex flex-col gap-[15px] border-t panel-border panel-subtle px-[20px] py-[20px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
             </section>
             @if ($activeView === 'backups')
-                <section class="!mt-[20px] sm:!mt-[30px] xl:!mt-[50px] overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estado de respaldo de hoy">
-                    <div class="border-b panel-border panel-header p-[20px]"><h2 class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2m-2 4h2m-2 4h2"/></svg><span>Estado de respaldo de hoy</span></h2><p class="mt-[15px] leading-none">Una empresa se considera completa cuando existen su archivo BAK y su documento ZIP o RAR.</p></div>
-                    <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative h-[620px]">
-                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll backup-today-scroll h-full overflow-auto">
-                        <table class="w-full min-w-[780px] border-collapse text-left">
-                            <thead class="sticky top-0 z-10 panel-header"><tr><th class="h-[60px] px-[20px] py-0 text-left">Empresa</th><th class="h-[60px] px-[15px] py-0 text-left">Estado hoy</th><th class="h-[60px] px-[15px] py-0 text-center">Respaldos hoy</th><th class="h-[60px] px-[20px] py-0 text-left">Último respaldo localizado</th></tr></thead>
-                            <tbody class="divide-y divide-[color:var(--panel-border)]">
-                                @forelse($companies as $company)
-                                    <tr wire:key="company-{{ $company['key'] }}" class="h-[80px] hover:bg-[color:var(--panel-hover)]"><td class="px-[20px] py-[15px]"><p class="leading-none">{{ $company['name'] }}</p><p class="mt-[15px] leading-none">{{ $company['folder'] }}</p></td><td class="px-[15px] py-[15px]">@if($company['today_status'] === 'complete')<span class="panel-accent">Respaldada</span>@elseif($company['today_status'] === 'partial')<span class="text-[color:var(--panel-danger)]">Incompleta</span>@else<span>Pendiente</span>@endif</td><td class="px-[15px] py-[15px] text-center tabular-nums">{{ $company['today_records'] }}</td><td class="px-[20px] py-[15px] ">@if($company['last_backup']){{ \Carbon\CarbonImmutable::parse($company['last_backup']['occurred_at'])->translatedFormat('d M Y · H:i') }}@else<span class="">Sin respaldo localizado</span>@endif</td></tr>
-                                @empty<tr><td colspan="4" class="px-[20px] py-[70px] text-center ">No hay empresas que coincidan con la búsqueda.</td></tr>@endforelse
-                            </tbody>
-                        </table>
+                {{-- Explorador de la memoria (solo lectura): se recorre como el Explorador de Windows para comprobar que los
+                     respaldos realmente se crearon. Todo ocurre en el navegador (wire:ignore): cada carpeta se pide una sola vez. --}}
+                @php($defaultTree = collect($treeDestinations)->first(fn ($destination) => in_array($activeTreeKey, $destination['keys'] ?? [$destination['key']], true)) ?? ($treeDestinations[0] ?? null))
+                @if ($defaultTree)
+                <section wire:ignore
+                    x-data="memoryExplorer(@js($defaultTree['key']), @js(config('backup-storage.display_timezone', 'America/Mexico_City')), @js(now(config('backup-storage.display_timezone', 'America/Mexico_City'))->format('d-m-Y')))"
+                    class="backup-explorer-card !mt-[20px] sm:!mt-[30px] xl:!mt-[50px] flex flex-col overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estructura de la memoria">
+                    <header class="panel-header panel-border border-b p-[20px]">
+                        <p class="panel-accent leading-none">Estructura de la memoria</p>
+                        <p class="mt-[15px] leading-none">Recorre la memoria como en el Explorador de Windows: haz clic en una carpeta para entrar.</p>
+                    </header>
+
+                    {{-- Elegir memoria y actualizar --}}
+                    <div class="panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
+                        <div class="flex flex-wrap items-center gap-[20px]" role="group" aria-label="Memorias de respaldo">
+                            @foreach ($treeDestinations as $treeDestination)
+                                <button type="button" @click="select(@js($treeDestination['key']))" class="backup-memory-button" :aria-pressed="key === @js($treeDestination['key']) ? 'true' : 'false'" title="{{ $treeDestination['root'] }}">
+                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><ellipse cx="12" cy="5" rx="7" ry="3" /><path d="M5 5v7c0 1.66 3.13 3 7 3s7-1.34 7-3V5M5 12v7c0 1.66 3.13 3 7 3s7-1.34 7-3v-7" /></svg>
+                                    <span>{{ $treeDestination['label'] }}</span>
+                                </button>
+                            @endforeach
                         </div>
-                        <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                        <button type="button" @click="refresh()" :disabled="refreshing" class="backup-refresh-button">
+                            <svg :class="refreshing && 'animate-spin'" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" /></svg>
+                            <span x-text="refreshing ? 'Leyendo memoria…' : 'Actualizar estructura'">Actualizar estructura</span>
+                        </button>
                     </div>
+
+                    <div x-show="loading && ! folder" class="p-[20px]"><p class="leading-[30px]">Leyendo la memoria…</p></div>
+                    <div x-show="! loading && ! connected" x-cloak class="p-[20px]">
+                        <p class="text-[color:var(--panel-danger)] leading-none">No se pudo leer la memoria.</p>
+                        <p class="mt-[15px] leading-[30px]">Conecta la memoria, comprueba que esté disponible y pulsa «Actualizar estructura».</p>
+                    </div>
+                    <div x-show="failed" x-cloak class="px-[20px] pt-[20px]"><p class="text-[color:var(--panel-danger)] leading-none">No se pudo abrir la carpeta. Intenta de nuevo.</p></div>
+
+                    <template x-if="connected && info && folder">
+                        <div class="flex min-h-0 flex-1 flex-col">
+                            <div class="grid [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))] border-b panel-border">
+                                <div class="panel-border border-r p-[20px]"><p class="panel-accent leading-none">Memoria</p><p class="mt-[15px] truncate leading-none" x-text="info.label"></p></div>
+                                <div class="panel-border border-r p-[20px]"><p class="panel-accent leading-none">Espacio libre</p><p class="mt-[15px] truncate leading-none tabular-nums" x-html="digits(info.free_bytes !== null ? bytes(info.free_bytes) : '—')"></p></div>
+                                <div class="panel-border border-r p-[20px]"><p class="panel-accent leading-none">Carpetas de fecha</p><p class="mt-[15px] truncate leading-none tabular-nums" x-html="digits(number(info.stats.dates))"></p></div>
+                                <div class="panel-border border-r p-[20px]"><p class="panel-accent leading-none">Archivos</p><p class="mt-[15px] truncate leading-none tabular-nums" x-html="digits(number(info.stats.files))"></p></div>
+                                <div class="p-[20px]"><p class="panel-accent leading-none">Tamaño de los respaldos</p><p class="mt-[15px] truncate leading-none tabular-nums" x-html="digits(bytes(info.stats.bytes))"></p></div>
+                            </div>
+
+                            <div class="backup-explorer flex min-h-0 flex-1 flex-col gap-[20px] p-[20px]">
+                                {{-- Barra como la del Explorador: Atrás, Subir y la ruta (cada parte lleva a esa carpeta) --}}
+                                <div class="flex items-center gap-[20px]">
+                                    <button type="button" @click="back()" class="explorer-tool" :disabled="! history.length" title="Atrás" aria-label="Atrás">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m0 0 6-6m-6 6 6 6" /></svg>
+                                    </button>
+                                    <button type="button" @click="up()" class="explorer-tool" :disabled="path === ''" title="Subir un nivel" aria-label="Subir un nivel">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0-6 6m6-6 6 6" /></svg>
+                                    </button>
+                                    <nav class="explorer-address" aria-label="Ruta de la carpeta" :title="info.root + (path ? '\\' + path : '')">
+                                        <template x-for="(crumb, index) in crumbs" :key="crumb.path">
+                                            <span class="flex flex-none items-center gap-[10px]">
+                                                <span x-show="index > 0" class="opacity-60" aria-hidden="true">›</span>
+                                                <button type="button" @click="index < crumbs.length - 1 && open(crumb.path)" class="explorer-crumb" :class="index === crumbs.length - 1 && 'panel-accent'" x-text="crumb.name"></button>
+                                            </span>
+                                        </template>
+                                        <span x-show="loading" class="ml-auto flex-none opacity-60">Abriendo…</span>
+                                    </nav>
+                                </div>
+
+                                <div class="explorer-cols">
+                                    <span>Nombre</span>
+                                    <span class="explorer-num">Archivos</span>
+                                    <span class="explorer-num explorer-hide-md">Tamaño</span>
+                                    <span class="explorer-num explorer-hide-md">Modificado</span>
+                                </div>
+
+                                {{-- Ocupa el alto que queda en la pantalla, con su propio scroll pegado a la derecha --}}
+                                <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region explorer-scroll-region relative -mr-[20px] min-h-0 flex-1">
+                                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll explorer-scroll h-full max-h-full overflow-y-auto pr-[20px]">
+                                        <p x-show="! folder.subfolders.length && ! folder.files.length" class="px-[20px] leading-[30px]">Esta carpeta está vacía.</p>
+                                        <div class="explorer-list">
+                                            <template x-for="sub in folder.subfolders" :key="'d|' + sub.path">
+                                                <button type="button" @click="open(sub.path)" @mouseenter="prefetch(sub.path)" class="explorer-row" :title="'Abrir ' + sub.name">
+                                                    <span class="flex min-w-0 items-center gap-[10px]">
+                                                        <svg class="h-[18px] w-[18px] shrink-0" :class="isToday(sub.name) && 'panel-accent'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /></svg>
+                                                        <span class="truncate" :class="isHighlighted(sub.name) && 'panel-accent'" x-text="sub.name"></span>
+                                                        <span x-show="isToday(sub.name)" class="explorer-tag">Hoy</span>
+                                                    </span>
+                                                    <span class="explorer-num" x-html="digits(files(sub.files_total))"></span>
+                                                    <span class="explorer-size explorer-hide-md" x-data="{ get z() { return sizeParts(sub.bytes_total) } }"><span x-html="digits(z.num)"></span><span x-text="z.unit"></span></span>
+                                                    <span class="explorer-date explorer-hide-md" x-data="{ get d() { return dateParts(sub.modified) } }"><span x-html="digits(d.day)"></span><span x-text="d.month"></span><span x-html="digits(d.year)"></span><span class="explorer-date-sep" x-show="d.time">·</span><span x-html="digits(d.time)"></span></span>
+                                                </button>
+                                            </template>
+                                            <template x-for="file in folder.files" :key="'f|' + file.name">
+                                                <div class="explorer-row">
+                                                    <span class="flex min-w-0 items-center gap-[10px]">
+                                                        <span class="explorer-ext" x-text="(file.extension || 'archivo').toUpperCase()"></span>
+                                                        <span class="truncate" :title="file.name" x-text="file.name"></span>
+                                                    </span>
+                                                    <span class="explorer-num"></span>
+                                                    <span class="explorer-size explorer-hide-md" x-data="{ get z() { return sizeParts(file.size) } }"><span x-html="digits(z.num)"></span><span x-text="z.unit"></span></span>
+                                                    <span class="explorer-date explorer-hide-md" x-data="{ get d() { return dateParts(file.mtime) } }"><span x-html="digits(d.day)"></span><span x-text="d.month"></span><span x-html="digits(d.year)"></span><span class="explorer-date-sep" x-show="d.time">·</span><span x-html="digits(d.time)"></span></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </section>
+                @endif
             @endif
         @endif
     </main>

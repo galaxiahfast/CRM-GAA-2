@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class ContpaqiBackupExport
@@ -16,6 +17,10 @@ class ContpaqiBackupExport
 
     /** @var array<string, array> Lecturas ya hechas durante esta misma petición. */
     private array $inspectionMemo = [];
+
+    private const TREE_CACHE_SECONDS = 600;
+
+    private const TREE_LIST_TIMEOUT = 90;
 
     public function destinations(bool $fresh = false): array
     {
@@ -153,6 +158,307 @@ class ContpaqiBackupExport
         } catch (Throwable) {
             return [];
         }
+    }
+
+    /**
+     * Memorias de respaldo configuradas (una por ruta): la principal y la de cada sede/departamento habilitado.
+     *
+     * @return array<int, array{key: string, label: string, root: string}>
+     */
+    public function treeDestinations(): array
+    {
+        return collect($this->destinationDefinitions())
+            ->filter(fn (array $definition): bool => in_array($definition['type'] ?? null, ['configured', 'profile'], true) && trim((string) ($definition['root'] ?? '')) !== '')
+            // Varias configuraciones pueden apuntar a la misma memoria: se muestra una sola vez y se recuerdan todas sus claves
+            ->groupBy(fn (array $definition): string => strtolower(rtrim(str_replace('/', '\\', (string) $definition['root']), '\\')))
+            ->map(fn ($group): array => [
+                'key' => (string) $group->first()['key'],
+                'label' => (string) $group->first()['label'],
+                'root' => (string) $group->first()['root'],
+                'keys' => $group->pluck('key')->map(fn ($key): string => (string) $key)->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Contenido completo de la memoria (solo lectura), para recorrerla como en el Explorador de Windows y comprobar
+     * que los respaldos realmente se crearon. Por cada carpeta (ruta relativa en minúsculas; '' es la raíz) guarda sus
+     * subcarpetas y archivos, y los totales de todo lo que contiene. Se recuerda varios minutos para todos; cambia
+     * sola cuando una copia o un borrado invalidan las lecturas de la memoria, y $fresh fuerza una lectura nueva.
+     *
+     * @return array{connected: bool, root: ?string, label: ?string, free_bytes: ?int, root_folder?: array<string, mixed>, top?: array<string, array<string, mixed>>, stats: array<string, int>}
+     */
+    public function destinationExplorer(?string $destinationKey = null, bool $fresh = false): array
+    {
+        $destination = $this->destination($destinationKey, $fresh);
+        if (! ($destination['connected'] ?? false)) {
+            return ['connected' => false, 'root' => $destination['root'] ?? null, 'label' => $destination['label'] ?? null, 'free_bytes' => null, 'stats' => ['folders' => 0, 'files' => 0, 'bytes' => 0, 'dates' => 0]];
+        }
+
+        $base = $this->explorerCacheBase((string) $destination['root']);
+        if (! $fresh) {
+            $index = Cache::get($base.':index');
+            if (is_array($index)) {
+                return $index;
+            }
+        }
+
+        return (function () use ($destination, $base): array {
+            $root = (string) $destination['root'];
+            // En Windows la memoria se lista de un solo golpe con «robocopy /L» (solo lista, nunca copia): en una unidad
+            // de red es mucho más rápido que preguntar archivo por archivo. Si no está disponible, se recorre carpeta por carpeta.
+            $listing = $this->robocopyListing($root) ?? $this->filesystemListing($root);
+
+            $isDate = static fn (string $name): bool => (bool) preg_match('/^\d{2}-\d{2}-\d{4}$/', $name);
+            $dateKey = static fn (string $name): string => substr($name, 6, 4).substr($name, 3, 2).substr($name, 0, 2);
+            $folders = [];
+            $dates = 0;
+
+            // Totales de cada carpeta (todo lo que contiene, en cualquier nivel)
+            $build = function (string $key, string $path, string $name) use (&$build, &$folders, &$dates, $listing, $isDate, $dateKey): array {
+                $entries = $listing[$key] ?? ['dirs' => [], 'files' => []];
+                $dirs = collect($entries['dirs'])->sort(function (array $a, array $b) use ($isDate, $dateKey): int {
+                    $aDate = $isDate($a['name']);
+                    $bDate = $isDate($b['name']);
+                    if ($aDate && $bDate) {
+                        return strcmp($dateKey($b['name']), $dateKey($a['name']));
+                    }
+
+                    return $aDate === $bDate ? strnatcasecmp($a['name'], $b['name']) : ($aDate ? -1 : 1);
+                })->values();
+                $files = collect($entries['files'])->sort(fn (array $a, array $b): int => strnatcasecmp($a['name'], $b['name']))->values();
+
+                $totalFiles = $files->count();
+                $totalBytes = (int) $files->sum('size');
+                $totalFolders = $dirs->count();
+                $latest = (int) ($files->max('mtime') ?? 0);
+                $children = [];
+                foreach ($dirs as $dir) {
+                    $dates += $isDate($dir['name']) ? 1 : 0;
+                    $childKey = strtolower($dir['path']);
+                    $child = $build($childKey, $dir['path'], $dir['name']);
+                    $children[] = $childKey;
+                    $totalFiles += $child['files_total'];
+                    $totalBytes += $child['bytes_total'];
+                    $totalFolders += $child['folders_total'];
+                    $latest = max($latest, (int) ($child['modified'] ?? 0), (int) ($dir['mtime'] ?? 0));
+                }
+
+                return $folders[$key] = [
+                    'name' => $name,
+                    'path' => $path,
+                    'is_date' => $isDate($name),
+                    'dirs' => $children,
+                    'files' => $files->map(fn (array $file): array => $file + ['extension' => strtolower(pathinfo($file['name'], PATHINFO_EXTENSION))])->all(),
+                    'files_total' => $totalFiles,
+                    'bytes_total' => $totalBytes,
+                    'folders_total' => $totalFolders,
+                    'modified' => $latest ?: null,
+                ];
+            };
+            $rootFolder = $build('', '', (string) ($destination['label'] ?? 'Memoria'));
+
+            // Un trozo por carpeta de primer nivel: abrir una carpeta solo lee su trozo, no toda la memoria
+            $chunks = [];
+            foreach ($folders as $key => $folder) {
+                if ($key !== '') {
+                    $chunks[explode('\\', $key)[0]][$key] = $folder;
+                }
+            }
+            foreach ($chunks as $segment => $chunk) {
+                Cache::put($base.':chunk:'.md5((string) $segment), $chunk, self::TREE_CACHE_SECONDS);
+            }
+
+            $index = [
+                'connected' => true,
+                'root' => $root,
+                'label' => $destination['label'] ?? null,
+                'free_bytes' => $destination['free_bytes'] ?? null,
+                'root_folder' => $rootFolder,
+                'top' => collect($rootFolder['dirs'])->mapWithKeys(fn (string $key): array => [$key => $this->explorerSummary($folders[$key])])->all(),
+                'stats' => ['folders' => $rootFolder['folders_total'], 'files' => $rootFolder['files_total'], 'bytes' => $rootFolder['bytes_total'], 'dates' => $dates],
+            ];
+            Cache::put($base.':index', $index, self::TREE_CACHE_SECONDS);
+
+            return $index;
+        })();
+    }
+
+    /**
+     * Una carpeta de la memoria, lista para mostrarse: sus subcarpetas (con sus totales) y sus archivos.
+     * Devuelve null si la carpeta no existe.
+     */
+    public function explorerFolder(?string $destinationKey, string $path): ?array
+    {
+        $index = $this->destinationExplorer($destinationKey);
+        if (! ($index['connected'] ?? false)) {
+            return null;
+        }
+
+        $key = strtolower(trim(str_replace('/', '\\', $path), '\\'));
+        if ($key === '') {
+            $folder = $index['root_folder'];
+            $subfolders = collect($folder['dirs'])->map(fn (string $child): ?array => $index['top'][$child] ?? null);
+        } else {
+            $base = $this->explorerCacheBase((string) $index['root']);
+            $chunkKey = $base.':chunk:'.md5(explode('\\', $key)[0]);
+            $chunk = Cache::get($chunkKey);
+            if (! is_array($chunk)) {
+                // El índice sigue en caché pero su trozo ya no: se vuelve a leer la memoria
+                $this->destinationExplorer($destinationKey, true);
+                $chunk = Cache::get($chunkKey);
+            }
+            $folder = is_array($chunk) ? ($chunk[$key] ?? null) : null;
+            if ($folder === null) {
+                return null;
+            }
+            $subfolders = collect($folder['dirs'])->map(fn (string $child): ?array => isset($chunk[$child]) ? $this->explorerSummary($chunk[$child]) : null);
+        }
+
+        return [
+            'path' => (string) $folder['path'],
+            'subfolders' => $subfolders->filter()->values()->all(),
+            'files' => array_values($folder['files']),
+        ];
+    }
+
+    private function explorerSummary(array $folder): array
+    {
+        return [
+            'name' => $folder['name'],
+            'path' => $folder['path'],
+            'files_total' => $folder['files_total'],
+            'bytes_total' => $folder['bytes_total'],
+            'modified' => $folder['modified'],
+        ];
+    }
+
+    private function explorerCacheBase(string $root): string
+    {
+        return 'contpaqi-backup-export:explorer:'.$this->inspectionVersion().':'.md5($root);
+    }
+
+    /**
+     * Lista toda la memoria con una sola llamada a robocopy en modo /L (solo lista; no crea, copia ni borra nada).
+     * Devuelve, por carpeta (ruta relativa en minúsculas), sus subcarpetas y archivos; o null si no se pudo.
+     *
+     * @return array<string, array{dirs: array<int, array<string, mixed>>, files: array<int, array<string, mixed>>}>|null
+     */
+    private function robocopyListing(string $root): ?array
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return null;
+        }
+
+        $root = rtrim($root, '\\/');
+        try {
+            $process = new Process([
+                'robocopy', $root, sys_get_temp_dir().DIRECTORY_SEPARATOR.'robocopy-lista-'.Str::random(12),
+                '/L', '/E', '/NJH', '/NJS', '/BYTES', '/TS', '/FP', '/NC', '/NP', '/XJ', '/R:0', '/W:0',
+                '/XD', 'System Volume Information', '$RECYCLE.BIN',
+            ]);
+            $process->setTimeout(self::TREE_LIST_TIMEOUT);
+            $process->run();
+        } catch (Throwable) {
+            return null;
+        }
+
+        // robocopy: 0-7 son resultados normales; 8 o más, errores.
+        if ($process->getExitCode() === null || $process->getExitCode() >= 8) {
+            return null;
+        }
+
+        $output = $process->getOutput();
+        $output = mb_check_encoding($output, 'UTF-8') ? $output : mb_convert_encoding($output, 'UTF-8', 'CP850');
+        $prefix = strtolower($root.'\\');
+        $listing = ['' => ['dirs' => [], 'files' => []]];
+        $relative = static function (string $path) use ($prefix): ?string {
+            $lower = strtolower($path);
+            if (! str_starts_with($lower, $prefix) && $lower !== rtrim($prefix, '\\')) {
+                return null;
+            }
+
+            return trim(substr($path, strlen($prefix)), '\\');
+        };
+        $split = static function (string $rel): array {
+            $position = strrpos($rel, '\\');
+
+            return $position === false ? ['', $rel] : [strtolower(substr($rel, 0, $position)), substr($rel, $position + 1)];
+        };
+
+        foreach (preg_split('/\r?\n/', $output) as $line) {
+            $fields = array_values(array_filter(array_map('trim', explode("\t", $line)), fn (string $field): bool => $field !== ''));
+            if (count($fields) < 2) {
+                continue;
+            }
+            $path = end($fields);
+            $info = $fields[count($fields) - 2];
+
+            if (str_ends_with($path, '\\')) {
+                $rel = $relative(rtrim($path, '\\'));
+                if ($rel === null || $rel === '') {
+                    continue;
+                }
+                [$parent, $name] = $split($rel);
+                if (str_starts_with($name, '$')) {
+                    continue;
+                }
+                $listing[$parent] ??= ['dirs' => [], 'files' => []];
+                $listing[$parent]['dirs'][] = ['name' => $name, 'path' => $rel, 'mtime' => null];
+                $listing[strtolower($rel)] ??= ['dirs' => [], 'files' => []];
+
+                continue;
+            }
+
+            if (! preg_match('/^(\d+)\s+(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/', $info, $match)) {
+                continue;
+            }
+            $rel = $relative($path);
+            if ($rel === null || $rel === '') {
+                continue;
+            }
+            [$parent, $name] = $split($rel);
+            if (strcasecmp($name, 'Thumbs.db') === 0) {
+                continue;
+            }
+            // robocopy muestra la hora en UTC
+            $mtime = gmmktime((int) $match[5], (int) $match[6], (int) $match[7], (int) $match[3], (int) $match[4], (int) $match[2]);
+            $listing[$parent] ??= ['dirs' => [], 'files' => []];
+            $listing[$parent]['files'][] = ['name' => $name, 'size' => (int) $match[1], 'mtime' => $mtime ?: null];
+        }
+
+        return $listing;
+    }
+
+    /** Mismo resultado que robocopyListing, recorriendo la memoria carpeta por carpeta. */
+    private function filesystemListing(string $root): array
+    {
+        $listing = [];
+        $walk = function (string $path, string $rel) use (&$walk, &$listing): void {
+            $entries = ['dirs' => [], 'files' => []];
+            try {
+                foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $item) {
+                    $name = $item->getFilename();
+                    if ($item->isLink() || str_starts_with($name, '$') || strcasecmp($name, 'System Volume Information') === 0 || strcasecmp($name, 'Thumbs.db') === 0) {
+                        continue;
+                    }
+                    if ($item->isDir()) {
+                        $childRel = ltrim($rel.'\\'.$name, '\\');
+                        $entries['dirs'][] = ['name' => $name, 'path' => $childRel, 'mtime' => $item->getMTime() ?: null];
+                        $walk($item->getPathname(), $childRel);
+                    } elseif ($item->isFile()) {
+                        $entries['files'][] = ['name' => $name, 'size' => (int) (@$item->getSize() ?: 0), 'mtime' => $item->getMTime() ?: null];
+                    }
+                }
+            } catch (Throwable) {
+                // Carpeta sin permiso o que desapareció durante la lectura: se muestra vacía.
+            }
+            $listing[strtolower($rel)] = $entries;
+        };
+        $walk(rtrim($root, '\\/'), '');
+
+        return $listing;
     }
 
     public function destinationFolderExists(string $folder, ?string $destinationKey = null): bool

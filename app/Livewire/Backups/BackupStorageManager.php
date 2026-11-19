@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
+use Livewire\Attributes\Renderless;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use RuntimeException;
@@ -103,6 +104,34 @@ class BackupStorageManager extends Component
         $this->selectionNotice = null;
         $this->syncResult = null;
         $this->exportMessage = null;
+    }
+
+    /**
+     * Una carpeta de la memoria para el explorador (solo lectura). No vuelve a dibujar la pantalla: el navegador la
+     * recibe, la guarda y la muestra al instante; así navegar entre carpetas no recarga los respaldos del servidor.
+     */
+    #[Renderless]
+    public function explorerFolder(string $key, string $path = '', bool $fresh = false): array
+    {
+        Gate::authorize('access-system-backups');
+        $export = app(ContpaqiBackupExport::class);
+        abort_unless(collect($export->treeDestinations())->pluck('key')->contains($key), 404);
+
+        $index = $export->destinationExplorer($key, $fresh);
+        if (! ($index['connected'] ?? false)) {
+            return ['connected' => false];
+        }
+
+        $folder = $export->explorerFolder($key, $path) ?? $export->explorerFolder($key, '');
+
+        return [
+            'connected' => true,
+            'label' => $index['label'] ?: 'Memoria externa',
+            'root' => $index['root'],
+            'free_bytes' => $index['free_bytes'],
+            'stats' => $index['stats'],
+            'folder' => $folder,
+        ];
     }
 
     public function selectView(string $view): void
@@ -623,6 +652,8 @@ class BackupStorageManager extends Component
             'availableExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => in_array($state, ['available', 'outdated', 'destination_missing', 'folder_missing'], true))->count(),
             'backedUpExportCount' => count($completedDestinations),
             'outdatedExportCount' => collect($recordAvailability)->filter(fn (string $state): bool => $state === 'outdated')->count(),
+            'treeDestinations' => $isHistoryView ? [] : $export->treeDestinations(),
+            'activeTreeKey' => $this->destinationKey,
             'destinationFolders' => $isHistoryView || ! $this->destinationBrowserOpened ? [] : $export->destinationFolders($this->destinationKey, $this->destinationBrowsePath),
             'backupProfiles' => $profiles->profiles(true),
             'currentBackupProfile' => $profiles->profile($this->backupProfile),

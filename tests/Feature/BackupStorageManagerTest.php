@@ -283,6 +283,8 @@ class BackupStorageManagerTest extends TestCase
         config()->set('backup-storage.backup_profiles.tulum-contabilidad.enabled', true);
         config()->set('backup-storage.backup_profiles.tulum-contabilidad.source_root', $this->tulumCatalogRoot);
         config()->set('backup-storage.backup_profiles.tulum-contabilidad.destination_root', $this->exportRoot);
+        // La pestaña de la memoria lleva su propia etiqueta; aquí solo se comprueba que no se mezclen las empresas
+        config()->set('backup-storage.backup_profiles.tulum-contabilidad.destination_label', 'MEMORIA TULUM');
         $admin = $this->user('Administrador', 'admin-tulum-separation@datamid.test');
 
         Livewire::actingAs($admin)
@@ -975,5 +977,52 @@ class BackupStorageManagerTest extends TestCase
         @unlink($path);
 
         return $contents === false ? '' : $contents;
+    }
+
+    public function test_the_memory_structure_shows_the_real_folders_and_files_of_the_usb(): void
+    {
+        config()->set('backup-storage.export.destination_root', $this->exportRoot);
+        config()->set('backup-storage.backup_profiles.merida-contabilidad.destination_root', $this->exportRoot);
+        $today = now(config('backup-storage.display_timezone'))->format('d-m-Y');
+        $company = $this->exportRoot.'/'.$today.'/EMPRESA PRUEBA';
+        File::ensureDirectoryExists($company.'/BAK');
+        File::ensureDirectoryExists($company.'/INDEX');
+        File::put($company.'/BAK/empresa-prueba.bak', str_repeat('a', 2048));
+        File::put($company.'/INDEX/empresa-prueba.zip', 'zip');
+        File::ensureDirectoryExists($this->exportRoot.'/01-01-2020/OTRA');
+
+        $export = app(ContpaqiBackupExport::class);
+        $explorer = $export->destinationExplorer('principal', true);
+
+        $this->assertTrue($explorer['connected']);
+        $this->assertSame(2, $explorer['stats']['files']);
+        $this->assertSame(2, $explorer['stats']['dates']);
+
+        // Raíz: la carpeta de fecha más reciente va primero y cada carpeta trae sus totales
+        $root = $export->explorerFolder('principal', '');
+        $this->assertSame($today, $root['subfolders'][0]['name']);
+        $this->assertSame(2, $root['subfolders'][0]['files_total']);
+        $this->assertContains('ANGEL MOO', array_column($root['subfolders'], 'name'));
+
+        // Dentro de la empresa están BAK e INDEX, y dentro de BAK el archivo
+        $company = $export->explorerFolder('principal', $today.'\EMPRESA PRUEBA');
+        $this->assertSame(['BAK', 'INDEX'], array_column($company['subfolders'], 'name'));
+        $bak = $export->explorerFolder('principal', $today.'\EMPRESA PRUEBA\BAK');
+        $this->assertSame('empresa-prueba.bak', $bak['files'][0]['name']);
+        $this->assertSame(2048, $bak['files'][0]['size']);
+        $this->assertNull($export->explorerFolder('principal', 'NO EXISTE'));
+
+        // La pantalla ya no muestra el estado del día; el explorador pide cada carpeta sin redibujar
+        $admin = $this->user('Administrador', 'admin-tree@datamid.test');
+        $component = Livewire::actingAs($admin)
+            ->test(\App\Livewire\Backups\BackupStorageManager::class)
+            ->assertDontSee('Estado de respaldo de hoy')
+            ->assertSee('Estructura de la memoria')
+            ->assertSee('Actualizar estructura')
+            ->assertSeeHtml('memoryExplorer(');
+        $result = $component->instance()->explorerFolder('principal', $today.'\EMPRESA PRUEBA');
+        $this->assertTrue($result['connected']);
+        $this->assertSame(2, $result['stats']['files']);
+        $this->assertSame(['BAK', 'INDEX'], array_column($result['folder']['subfolders'], 'name'));
     }
 }

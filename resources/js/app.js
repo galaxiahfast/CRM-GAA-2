@@ -183,6 +183,134 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Explorador de la memoria de respaldos (Gestión de Respaldos). Navegar es inmediato: cada carpeta se pide al
+    // servidor una sola vez (sin redibujar la pantalla), se guarda aquí y se precarga al pasar el mouse por encima.
+    window.Alpine.data('memoryExplorer', (defaultKey, timeZone, todayFolder) => ({
+        key: defaultKey,
+        path: '',
+        history: [],
+        cache: {},
+        pending: {},
+        info: null,
+        folder: null,
+        loading: true,
+        connected: true,
+        failed: false,
+        refreshing: false,
+        dateFormat: null,
+        init() {
+            try {
+                this.dateFormat = new Intl.DateTimeFormat('es-MX', { timeZone, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+            } catch (error) {
+                this.dateFormat = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+            this.load('', false);
+            window.addEventListener('resize', () => this.fit(), { passive: true });
+        },
+        // La lista mide un número exacto de filas (60px cada una y 20px entre filas): ninguna queda cortada
+        fit() {
+            this.$nextTick(() => {
+                const region = this.$root.querySelector('.explorer-scroll-region');
+                const box = this.$root.querySelector('.explorer-scroll');
+                if (!region || !box) return;
+                const rows = Math.max(1, Math.floor((region.clientHeight + 20) / 80));
+                box.style.height = (rows * 80 - 20) + 'px';
+            });
+        },
+        cacheKey(path) { return this.key + '|' + String(path || '').toLowerCase(); },
+        fetchFolder(path, fresh = false) {
+            const id = this.cacheKey(path);
+            if (!fresh && this.cache[id]) return Promise.resolve(this.cache[id]);
+            if (!fresh && this.pending[id]) return this.pending[id];
+            const request = this.$wire.explorerFolder(this.key, path, fresh)
+                .then((result) => { if (result && result.connected !== false && result.folder) { this.cache[this.cacheKey(result.folder.path)] = result; this.cache[id] = result; } return result; })
+                .finally(() => { delete this.pending[id]; });
+            this.pending[id] = request;
+            return request;
+        },
+        async load(path, remember = true, fresh = false) {
+            const cached = !fresh && this.cache[this.cacheKey(path)];
+            if (!cached) this.loading = true;
+            try {
+                const result = await this.fetchFolder(path, fresh);
+                if (!result || result.connected === false) { this.connected = false; this.info = null; this.folder = null; return; }
+                if (remember && result.folder.path.toLowerCase() !== this.path.toLowerCase()) this.history.push(this.path);
+                this.connected = true;
+                this.failed = false;
+                this.info = result;
+                this.folder = result.folder;
+                this.path = result.folder.path;
+                this.$nextTick(() => { this.fit(); const box = this.$root.querySelector('.explorer-scroll'); if (box) { box.scrollTop = 0; box.dispatchEvent(new Event('scroll')); } });
+            } catch (error) {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+        },
+        open(path) { this.load(path); },
+        prefetch(path) { if (!this.cache[this.cacheKey(path)]) this.fetchFolder(path).catch(() => {}); },
+        back() { if (!this.history.length) return; this.load(this.history.pop(), false); },
+        up() {
+            if (this.path === '') return;
+            const position = this.path.lastIndexOf('\\');
+            this.load(position === -1 ? '' : this.path.slice(0, position));
+        },
+        select(key) {
+            if (key === this.key) return;
+            this.key = key;
+            this.path = '';
+            this.history = [];
+            this.folder = null;
+            this.load('', false);
+        },
+        async refresh() {
+            this.refreshing = true;
+            this.cache = {};
+            await this.load(this.path, false, true);
+            this.refreshing = false;
+        },
+        get crumbs() {
+            const crumbs = [{ name: this.info?.label || 'Memoria', path: '' }];
+            let walked = '';
+            (this.path ? this.path.split('\\') : []).forEach((segment) => {
+                walked = walked ? walked + '\\' + segment : segment;
+                crumbs.push({ name: segment, path: walked });
+            });
+            return crumbs;
+        },
+        // Cada dígito en una celda de ancho fijo: en Poppins el «1» es más angosto que el «0» y las columnas no quedarían alineadas
+        digits(value) {
+            return String(value ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/\d/g, (d) => '<span class="dg">' + d + '</span>');
+        },
+        isToday(name) { return name === todayFolder; },
+        isHighlighted(name) { return name === todayFolder || ['bak', 'index'].includes(String(name).toLowerCase()); },
+        bytes(value) {
+            const bytes = Number(value) || 0;
+            if (bytes <= 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const power = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+            return (power === 0 ? bytes : (bytes / Math.pow(1024, power)).toFixed(1)) + ' ' + units[power];
+        },
+        // Tamaño en número (siempre con un decimal) y unidad por separado, para alinearlos en columnas; lo menor a 1 KB se muestra en KB
+        sizeParts(value) {
+            const bytes = Number(value) || 0;
+            if (bytes <= 0) return { num: '—', unit: '' };
+            const units = ['KB', 'MB', 'GB', 'TB'];
+            let size = bytes / 1024;
+            let index = 0;
+            while (size >= 1024 && index < units.length - 1) { size /= 1024; index++; }
+            return { num: size.toFixed(1), unit: units[index] };
+        },
+        number(value) { return (Number(value) || 0).toLocaleString('en-US'); },
+        files(total) { return total > 0 ? this.number(total) + ' ' + (total === 1 ? 'archivo' : 'archivos') : 'Vacía'; },
+        // Fecha en partes (día, mes, año y hora) para mostrarla en columnas fijas, alineada fila por fila
+        dateParts(timestamp) {
+            if (!timestamp) return { day: '', month: '', year: '', time: '' };
+            const parts = Object.fromEntries(this.dateFormat.formatToParts(new Date(timestamp * 1000)).map((part) => [part.type, part.value]));
+            return { day: parts.day, month: String(parts.month || '').replace('.', '') + '.', year: parts.year, time: parts.hour + ':' + parts.minute };
+        },
+    }));
+
     window.Alpine.data('backupOverlayScroll', () => ({
         visible: false,
         height: 32,

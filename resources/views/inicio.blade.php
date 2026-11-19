@@ -42,6 +42,12 @@
     ];
 
     // Mismos grupos, nombres y reglas que el menú lateral
+    // Tarjetas con animación (vídeo en bucle) que acompañan a algunas cajas: [vídeo, título, texto, enlace]
+    $illustrations = [
+        'General' => ['panel-movil', 'Indicadores', 'Avance de archivos de tus clientes en un vistazo.', route('dashboard')],
+        'Información' => ['carpeta-codificacion', 'Conciliación OCR', 'Concilia a partir de documentos escaneados.', route('bank-reconciliation.show', 'ocr')],
+    ];
+
     $sections = [];
 
     $sections['General'] = [
@@ -146,6 +152,40 @@
             html.module-dark-theme [data-home] .home-row:hover,
             html.module-dark-theme [data-home] .home-card:hover { background-color: var(--panel-hover, var(--panel-subtle)); }
             @media (prefers-reduced-motion: reduce) { [data-home] .home-row, [data-home] .home-card { transition: none; } }
+            /* ---- Animaciones sutiles de Inicio ----
+               Al entrar: la cabecera y cada caja suben un poco y aparecen en orden; dentro de cada caja los accesos
+               aparecen uno tras otro. Las personas en línea se van desplegando hacia abajo, una por una. Al pasar el
+               mouse, el acceso se eleva apenas y su nombre se desliza unos píxeles. */
+            @keyframes home-rise { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes home-drop { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+            [data-home] .home-rise { animation: home-rise 520ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+            [data-home] .home-card { animation: home-rise 420ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--d, 0) * 1ms); position: relative; }
+            [data-home] .home-card .home-card-title { display: inline-block; transition: transform 200ms ease; }
+            [data-home] .home-card:hover .home-card-title { transform: translateX(4px); }
+            [data-home] .home-card::after { content: ''; position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--home-green); transform: scaleX(0); transform-origin: left; transition: transform 250ms ease; }
+            [data-home] .home-card:hover::after { transform: scaleX(1); }
+            [data-home] .home-online-row { animation: home-drop 420ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--i, 0) * 80ms + 150ms); }
+            [data-home] .home-online-row .home-row { transition: background-color 150ms ease, padding-left 200ms ease; }
+            [data-home] .home-online-row .home-row:hover { padding-left: 25px; }
+            [data-home] .home-online-dot { animation: home-pulse 2.4s ease-in-out infinite; }
+            @keyframes home-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .45); } 50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); } }
+            @media (prefers-reduced-motion: reduce) {
+                [data-home] .home-rise, [data-home] .home-card, [data-home] .home-online-row, [data-home] .home-online-dot { animation: none; }
+                [data-home] .home-card::after, [data-home] .home-card .home-card-title, [data-home] .home-online-row .home-row { transition: none; }
+            }
+            /* Tarjeta vertical con animación, como una pantalla de presentación: ilustración arriba, título y texto, y pie con puntos y acción */
+            [data-home] .home-illus { grid-column: auto / -1; }
+            [data-home] .home-tcard { display: flex; width: 230px; max-width: 100%; flex-direction: column; border-radius: 20px; background: var(--panel-surface); border: 1px solid var(--panel-border); box-shadow: 0 14px 30px -14px rgba(26, 58, 107, .28); overflow: hidden; transition: transform 220ms ease, box-shadow 220ms ease; }
+            [data-home] .home-tcard:hover { transform: translateY(-4px); box-shadow: 0 22px 38px -16px rgba(26, 58, 107, .34); }
+            html.module-dark-theme [data-home] .home-tcard { box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .9); }
+            [data-home] .home-tcard video { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; pointer-events: none; }
+            html.module-dark-theme [data-home] .home-tcard video { filter: invert(1); mix-blend-mode: screen; }
+            [data-home] .home-tcard-body { display: block; padding: 0 20px; }
+            [data-home] .home-tcard-foot { display: flex; align-items: center; justify-content: space-between; padding: 20px; }
+            [data-home] .home-tcard-dots { display: inline-flex; gap: 6px; }
+            [data-home] .home-tcard-dots i { height: 6px; width: 6px; border-radius: 9999px; background: var(--panel-border); }
+            [data-home] .home-tcard-dots i.on { background: var(--panel-accent); }
+            @media (prefers-reduced-motion: reduce) { [data-home] .home-tcard { transition: none; } }
         </style>
 
 
@@ -176,7 +216,7 @@
 
         <main class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
             <!-- Cabecera: título y subtítulo a la izquierda; rol y fecha a la derecha -->
-            <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+            <section style="--i: 0" class="home-rise mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                 <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                     <div class="min-w-0">
                         <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Hola, {{ $user->name }}</h1>
@@ -205,7 +245,7 @@
                 <div class="flex min-w-0 flex-col gap-[20px] sm:gap-[30px] xl:gap-[50px]">
                     @foreach ($sections as $title => $cards)
                         @php([$metaIcon, $metaNote] = $sectionMeta[$title] ?? ['dashboard', ''])
-                        <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="{{ $title }}">
+                        <section style="--i: {{ $loop->index + 1 }}" class="home-rise panel-surface panel-border overflow-hidden rounded-xl border" aria-label="{{ $title }}">
                             <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                                 <div class="min-w-0">
                                     <p class="panel-accent flex items-center gap-[10px] leading-none">
@@ -220,14 +260,32 @@
                             </header>
                             <div class="-mb-px -mr-px grid [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
                                 @foreach ($cards as [$cardTitle, $description, $url, $icon])
-                                    <a href="{{ $url }}" class="home-card panel-border block border-b border-r p-[20px]">
+                                    <a href="{{ $url }}" style="--d: {{ ($loop->parent->index + 1) * 90 + 200 + $loop->index * 60 }}" class="home-card panel-border block border-b border-r p-[20px]">
                                         <span class="home-link flex items-center gap-[10px] leading-none">
                                             
-                                            <span class="min-w-0">{{ $cardTitle }}</span>
+                                            <span class="home-card-title min-w-0">{{ $cardTitle }}</span>
                                         </span>
                                         <span class="mt-[7.5px] -mb-[7.5px] block leading-[30px]">{{ $description }}</span>
                                     </a>
                                 @endforeach
+                                {{-- Tarjeta vertical con animación (vídeo corto en bucle, como un GIF) en el espacio libre de la caja --}}
+                                @if (isset($illustrations[$title]))
+                                    @php([$illusVideo, $illusTitle, $illusText, $illusUrl] = $illustrations[$title])
+                                    <div class="home-illus panel-border flex items-center justify-center border-b border-r p-[20px]">
+                                        <a href="{{ $illusUrl }}" class="home-tcard">
+                                            <video src="{{ asset('img/home/'.$illusVideo.'.mp4') }}" autoplay loop muted playsinline preload="auto" tabindex="-1" aria-hidden="true"
+                                                x-data x-init="if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { $el.pause(); }"></video>
+                                            <span class="home-tcard-body">
+                                                <span class="panel-accent block leading-none">{{ $illusTitle }}</span>
+                                                <span class="mt-[15px] block leading-[25px]">{{ $illusText }}</span>
+                                            </span>
+                                            <span class="home-tcard-foot">
+                                                <span class="home-tcard-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span>
+                                                <span class="home-link leading-none">Abrir ▸</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                         </section>
                     @endforeach
