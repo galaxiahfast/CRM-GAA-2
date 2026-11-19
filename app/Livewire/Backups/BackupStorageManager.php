@@ -66,7 +66,7 @@ class BackupStorageManager extends Component
 
     public ?string $actionMessage = null;
 
-    public int $visibleDateLimit = 3;
+    public int $visibleDateLimit = 5;
 
     public function mount(ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void
     {
@@ -153,7 +153,7 @@ class BackupStorageManager extends Component
 
     public function loadMoreDates(): void
     {
-        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 3);
+        $this->visibleDateLimit = min(180, $this->visibleDateLimit + 5);
     }
 
     public function selectAllAvailable(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles): void

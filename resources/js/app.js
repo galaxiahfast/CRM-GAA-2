@@ -207,14 +207,24 @@ document.addEventListener('alpine:init', () => {
             this.load('', false);
             window.addEventListener('resize', () => this.fit(), { passive: true });
         },
-        // La lista mide un número exacto de filas (60px cada una y 20px entre filas): ninguna queda cortada
+        // La lista mide un número exacto de filas (alto real de una fila y 20px entre filas): ninguna queda cortada
         fit() {
             this.$nextTick(() => {
                 const region = this.$root.querySelector('.explorer-scroll-region');
                 const box = this.$root.querySelector('.explorer-scroll');
                 if (!region || !box) return;
-                const rows = Math.max(1, Math.floor((region.clientHeight + 20) / 80));
-                box.style.height = (rows * 80 - 20) + 'px';
+                if (!this.regionObserver || this.observedRegion !== region) {
+                    this.regionObserver?.disconnect();
+                    this.observedRegion = region;
+                    this.regionObserver = new ResizeObserver(() => this.fit());
+                    this.regionObserver.observe(region);
+                }
+                const row = box.querySelector('.explorer-row');
+                // Alto real de la fila en unidades de la página (puede tener decimales por el zoom)
+                const scale = box.offsetHeight ? box.getBoundingClientRect().height / box.offsetHeight : 1;
+                const step = (row ? row.getBoundingClientRect().height / (scale || 1) : 57) + 20;
+                const rows = Math.max(1, Math.floor((region.clientHeight + 20) / step));
+                box.style.height = (rows * step - 20) + 'px';
             });
         },
         cacheKey(path) { return this.key + '|' + String(path || '').toLowerCase(); },
@@ -308,6 +318,71 @@ document.addEventListener('alpine:init', () => {
             if (!timestamp) return { day: '', month: '', year: '', time: '' };
             const parts = Object.fromEntries(this.dateFormat.formatToParts(new Date(timestamp * 1000)).map((part) => [part.type, part.value]));
             return { day: parts.day, month: String(parts.month || '').replace('.', '') + '.', year: parts.year, time: parts.hour + ':' + parts.minute };
+        },
+    }));
+
+    // Gestión de Respaldos: la lista de fechas y la tabla de empresas tienen el mismo alto de fila y empiezan a la misma
+    // altura (el encabezado de fechas llega hasta donde termina el de la tabla). Ambas muestran un número exacto de filas.
+    window.Alpine.data('backupAlign', () => ({
+        frame: null,
+        init() {
+            const schedule = () => { clearTimeout(this.frame); this.frame = setTimeout(() => this.align(), 16); };
+            this.schedule = schedule;
+            window.addEventListener('resize', schedule, { passive: true });
+            this.resizeObserver = new ResizeObserver(schedule);
+            this.resizeObserver.observe(this.$el);
+            this.mutationObserver = new MutationObserver(schedule);
+            this.mutationObserver.observe(this.$el, { childList: true, subtree: true });
+            this.$nextTick(schedule);
+        },
+        destroy() {
+            this.resizeObserver?.disconnect();
+            this.mutationObserver?.disconnect();
+            window.removeEventListener('resize', this.schedule);
+        },
+        align() {
+            const card = this.$el;
+            const header = card.querySelector('[data-dates-header]');
+            const tools = card.querySelector('[data-dates-tools]');
+            const head = card.querySelector('[data-dates-head]');
+            const dates = card.querySelector('[data-dates-scroller]');
+            const records = card.querySelector('[data-records-scroller]');
+            const selectors = card.querySelector('.order-1');
+            const filters = card.querySelector('.order-2');
+            const thead = records?.querySelector('thead');
+            if (!header || !tools || !head || !dates || !records || !thead || !selectors || !filters) return;
+            const reset = () => {
+                [header, tools, head, dates, records].forEach((el) => { el.style.height = ''; });
+                records.style.scrollPaddingTop = '';
+                records.style.removeProperty('--backup-row-h');
+                dates.style.removeProperty('--backup-date-h');
+            };
+            reset();
+            // Solo en pantalla grande van lado a lado; en pantallas angostas se apilan y no hace falta alinear
+            if (getComputedStyle(card.querySelector('.grid')).gridTemplateColumns.split(' ').length < 2) return;
+            const scale = card.offsetHeight ? card.getBoundingClientRect().height / card.offsetHeight : 1;
+            const px = (el) => el.getBoundingClientRect().height / scale;
+            // Columna de fechas: título a la altura de los selectores, «más fechas» a la de los filtros y «Fecha» a la del encabezado de la tabla
+            const theadHeight = px(thead);
+            header.style.height = px(selectors) + 'px';
+            tools.style.height = px(filters) + 'px';
+            head.style.height = theadHeight + 'px';
+            // Filas: se calcula cuántas caben completas y se reparte el espacio sobrante entre ellas (sin hueco abajo)
+            const available = records.parentElement.clientHeight - theadHeight;
+            const recordRows = records.querySelectorAll('tbody.backup-record-group');
+            const sample = recordRows[1] || recordRows[0]; // la primera comparte su borde superior con el encabezado
+            const natural = sample ? px(sample) : (dates.querySelector('[data-date-row]') ? px(dates.querySelector('[data-date-row]')) : 0);
+            if (!natural || available <= 0) return;
+            const rows = Math.max(1, Math.floor((available + 0.5) / natural));
+            const target = available / rows;
+            if (sample) {
+                const extra = natural - px(sample.querySelector('tr'));
+                records.style.setProperty('--backup-row-h', (target - extra) + 'px');
+            }
+            dates.style.setProperty('--backup-date-h', target + 'px');
+            records.style.height = (theadHeight + rows * target) + 'px';
+            records.style.scrollPaddingTop = theadHeight + 'px';
+            dates.style.height = (rows * target) + 'px';
         },
     }));
 

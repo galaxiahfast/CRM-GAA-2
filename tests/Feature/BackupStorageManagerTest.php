@@ -216,7 +216,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertDontSee('Se guardará en')
             ->assertSeeHtml('backup-catalog-scroll-vertical-visible')
             ->assertSeeHtml('order-3 h-[700px]')
-            ->assertSeeHtml('class="h-[90px]"')
+            ->assertSeeHtml('<td class="p-[20px]"')
             ->assertDontSeeHtml('<tr @click="open = !open"');
     }
 
@@ -350,7 +350,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSet('selectedRecords', [$record['id']])
             ->assertSee('Empresa')
             ->assertSee('(1)')
-            ->assertSeeHtml('order-1 h-[70px]')
+            ->assertSeeHtml('order-1 shrink-0 border-b panel-border panel-header p-[20px]')
             ->assertSee('Respaldar 1 empresa')
             ->call('toggleAllAvailable')
             ->assertSet('selectedRecords', [])
@@ -366,25 +366,25 @@ class BackupStorageManagerTest extends TestCase
         $component->assertDontSee('Se deseleccionó 1 empresa');
     }
 
-    public function test_initial_view_loads_three_backup_days_and_reveals_older_dates_in_three_day_steps(): void
+    public function test_initial_view_loads_five_backup_days_and_reveals_older_dates_in_five_day_steps(): void
     {
-        foreach (range(0, 5) as $daysAgo) {
+        foreach (range(0, 9) as $daysAgo) {
             $date = now()->subDays($daysAgo)->format('Ymd');
             File::put($this->catalogRoot."/Empresas/ctEmpresa_Prueba/ctEmpresa_Prueba-{$date}-0900.bak", 'database');
             File::put($this->catalogRoot."/Index/respaldos/ctEmpresa_Prueba-{$date}-0900.zip", 'archive');
         }
 
         $admin = $this->user('Administrador', 'admin-progressive-dates@datamid.test');
-        $fourthDayLabel = ucfirst(now()->subDays(3)->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
+        $sixthDayLabel = ucfirst(now()->subDays(5)->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
 
         Livewire::actingAs($admin)
             ->test(\App\Livewire\Backups\BackupStorageManager::class)
-            ->assertSet('visibleDateLimit', 3)
-            ->assertDontSee($fourthDayLabel)
+            ->assertSet('visibleDateLimit', 5)
+            ->assertDontSee($sixthDayLabel)
             ->assertSee('Mostrar fechas anteriores')
             ->call('loadMoreDates')
-            ->assertSet('visibleDateLimit', 6)
-            ->assertSee($fourthDayLabel);
+            ->assertSet('visibleDateLimit', 10)
+            ->assertSee($sixthDayLabel);
     }
 
     public function test_clicking_a_backup_row_toggles_its_selection_and_memory_precedes_server_files(): void

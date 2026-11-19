@@ -70,24 +70,33 @@
         html.module-dark-theme #main-content .backup-storage-monochrome table :is(tbody, tr) { background-color: transparent !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-gray > tr > td { background-color: var(--panel-subtle) !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-white > tr > td { background-color: var(--panel-surface) !important; }
+        /* Al desplazar, las listas de fechas y de empresas se detienen en el inicio de una fila: nunca queda una cortada */
+        [data-dates-scroller] { scroll-snap-type: y mandatory; }
+        [data-dates-scroller] > [data-date-row] { scroll-snap-align: start; height: var(--backup-date-h, auto); }
+        [data-records-scroller] tbody.backup-record-group > tr:first-child { height: var(--backup-row-h, auto); }
+        [data-records-scroller] { scroll-snap-type: y mandatory; }
+        [data-records-scroller] tbody.backup-record-group { scroll-snap-align: start; }
+        /* Tarjeta de respaldos: en pantallas grandes mide exactamente lo que queda de pantalla debajo de la cabecera
+           (cabecera de 58px y separación igual al margen de la página), así no se sale de la pantalla */
+        @media (min-width: 1280px) { .backup-main-card { height: calc(var(--app-dvh) - 123px - 50px - 58px - 50px - 50px); min-height: 640px; } }
         /* La tarjeta del explorador mide exactamente lo que queda de pantalla (menos el margen de la página): al bajar se ve completa, sin pedazos de la tarjeta de arriba */
         .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 40px); min-height: 640px; }
         @media (min-width: 640px) { .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 60px); } }
         @media (min-width: 1280px) { .backup-explorer-card { height: calc(var(--app-dvh) - 123px - 100px); } }
         /* Explorador de la memoria: como el Explorador de Windows (barra de dirección, Atrás/Subir y clic para entrar) */
-        .backup-explorer .explorer-tool { display: inline-grid; height: 50px; width: 50px; flex: none; place-items: center; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); color: var(--panel-text); transition: background-color 150ms ease; }
+        .backup-explorer .explorer-tool { display: inline-grid; flex: none; place-items: center; padding: 20px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); color: var(--panel-text); transition: background-color 150ms ease; }
         .backup-explorer .explorer-tool:hover:not(:disabled) { background: var(--panel-subtle); }
         .backup-explorer .explorer-tool:disabled { opacity: .35; cursor: not-allowed; }
-        .backup-explorer .explorer-address { display: flex; min-width: 0; flex: 1 1 auto; height: 50px; align-items: center; gap: 10px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 0 20px; scrollbar-width: none; }
+        .backup-explorer .explorer-address { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; line-height: 1; gap: 10px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 20px; scrollbar-width: none; }
         .backup-explorer .explorer-address::-webkit-scrollbar { display: none; }
-        .backup-explorer .explorer-crumb { flex: none; border-radius: 8px; padding: 6px 8px; line-height: 1; transition: background-color 150ms ease; }
+        .backup-explorer .explorer-crumb { flex: none; border-radius: 8px; padding: 0; line-height: 1; transition: background-color 150ms ease; }
         .backup-explorer .explorer-crumb:hover { background: var(--panel-subtle); }
-        .backup-explorer .explorer-cols, .backup-explorer .explorer-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px 100px 180px; align-items: center; gap: 20px; padding: 0 20px; }
-        .backup-explorer .explorer-cols { min-height: 50px; color: var(--panel-accent); }
+        .backup-explorer .explorer-cols, .backup-explorer .explorer-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px 100px 180px; align-items: center; gap: 20px; padding: 20px; line-height: 1; border: 1px solid transparent; }
+        .backup-explorer .explorer-cols { color: var(--panel-accent); }
         .backup-explorer .explorer-scroll { scroll-snap-type: y mandatory; }
         .backup-explorer .explorer-scroll .explorer-row { scroll-snap-align: start; flex: none; }
         .backup-explorer .explorer-list { display: flex; flex-direction: column; gap: 20px; }
-        .backup-explorer .explorer-row { width: 100%; height: 60px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); text-align: left; transition: background-color 150ms ease, border-color 150ms ease; }
+        .backup-explorer .explorer-row { width: 100%; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); text-align: left; transition: background-color 150ms ease, border-color 150ms ease; }
         .backup-explorer button.explorer-row { cursor: pointer; }
         .backup-explorer button.explorer-row:hover { background: var(--panel-subtle); color: var(--panel-accent); }
         .backup-explorer .explorer-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -98,12 +107,16 @@
         .backup-explorer .explorer-date > span:nth-child(1), .backup-explorer .explorer-date > span:nth-child(3), .backup-explorer .explorer-date > span:nth-child(5) { text-align: right; }
         .backup-explorer .explorer-date > span:nth-child(2) { text-align: left; padding-left: 4px; }
         .backup-explorer .explorer-date-sep { text-align: center; }
-        .backup-explorer .explorer-ext { min-width: 50px; border: 1px solid var(--panel-border); border-radius: 8px; padding: 4px 8px; text-align: center; line-height: 1; color: var(--panel-accent); }
-        .backup-explorer .explorer-tag { border: 1px solid var(--panel-accent); border-radius: 9999px; padding: 3px 10px; color: var(--panel-accent); line-height: 1; }
-        .backup-memory-button { display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 0 20px; line-height: 1; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+        .backup-explorer .explorer-ext { min-width: 50px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--panel-border); padding: 0 8px; text-align: center; line-height: 15px; color: var(--panel-accent); }
+        .backup-explorer .explorer-tag { border-radius: 9999px; box-shadow: inset 0 0 0 1px var(--panel-accent); padding: 0 10px; color: var(--panel-accent); line-height: 15px; }
+        .backup-explorer .explorer-row svg { width: 15px !important; height: 15px !important; }
+        .backup-explorer .explorer-row > *, .backup-explorer .explorer-cols > * { line-height: 15px; }
+        .backup-memory-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 20px; line-height: 1; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+        /* Todos los botones con 20px de relleno; sus iconos miden lo mismo que el texto (15px) para que todos tengan el mismo alto */
+        .backup-memory-button svg, .backup-refresh-button svg, .backup-explorer .explorer-tool svg, .backup-control svg { width: 15px !important; height: 15px !important; }
         .backup-memory-button:hover { background: var(--panel-subtle); }
         .backup-memory-button[aria-pressed="true"] { border-color: var(--backup-green); background: color-mix(in srgb, var(--backup-green) 12%, var(--panel-surface)); color: var(--backup-green); }
-        .backup-refresh-button { display: inline-flex; min-height: 50px; align-items: center; gap: 10px; border: 1px solid var(--backup-green); border-radius: 12px; background: color-mix(in srgb, var(--backup-green) 12%, var(--panel-surface)); color: var(--backup-green); padding: 0 20px; line-height: 1; transition: background-color 150ms ease; }
+        .backup-refresh-button { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--backup-green); border-radius: 12px; background: color-mix(in srgb, var(--backup-green) 12%, var(--panel-surface)); color: var(--backup-green); padding: 20px; line-height: 1; transition: background-color 150ms ease; }
         .backup-refresh-button:hover:not(:disabled) { background: color-mix(in srgb, var(--backup-green) 20%, var(--panel-surface)); }
         .backup-refresh-button:disabled { opacity: .6; }
         @media (max-width: 1023px) { .backup-explorer .explorer-cols, .backup-explorer .explorer-row { grid-template-columns: minmax(0, 1fr) 100px; } .backup-explorer .explorer-hide-md { display: none; } }
@@ -111,7 +124,7 @@
 
     @if($exportError)
         @teleport('body')
-            <div wire:key="backup-export-error-{{ $exportErrorVersion }}-{{ md5((string) $exportError.($exportStatus['completed_at'] ?? '')) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="app-zoom-overlay fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-[color:var(--panel-danger-line)] panel-surface px-[20px] py-[15px] text-[color:var(--panel-danger)] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="alert">
+            <div wire:key="backup-export-error-{{ $exportErrorVersion }}-{{ md5((string) $exportError.($exportStatus['completed_at'] ?? '')) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="app-zoom-overlay fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border border-[color:var(--panel-danger-line)] panel-surface p-[20px] text-[color:var(--panel-danger)] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="alert">
                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg panel-danger-box"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.3 3.6 2.6 17a2 2 0 0 0 1.74 3h15.32a2 2 0 0 0 1.74-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg></span>
                 <span class="min-w-0 flex-1">{{ $exportError }}</span>
                 <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition hover:bg-[color:var(--panel-hover)]"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
@@ -121,7 +134,7 @@
 
     @if($syncResult)
         @teleport('body')
-            <div wire:key="backup-sync-result-{{ md5(json_encode($syncResult)) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 6000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="app-zoom-overlay backup-sync-toast fixed left-1/2 top-[20px] z-[199998] w-[calc(100%-40px)] max-w-3xl -translate-x-1/2 rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-[color:var(--panel-danger-line)]' : 'panel-border' }} panel-surface px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+            <div wire:key="backup-sync-result-{{ md5(json_encode($syncResult)) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 6000)" x-show="visible" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-3" data-panel class="app-zoom-overlay backup-sync-toast fixed left-1/2 top-[20px] z-[199998] w-[calc(100%-40px)] max-w-3xl -translate-x-1/2 rounded-xl border {{ ($syncResult['error'] ?? null) ? 'border-[color:var(--panel-danger-line)]' : 'panel-border' }} panel-surface p-[20px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
                 <div class="flex items-start gap-[12px]">
                     <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ ($syncResult['error'] ?? null) ? 'panel-danger-box text-[color:var(--panel-danger)]' : 'panel-header panel-accent' }}">
                         @if($syncResult['error'] ?? null)
@@ -155,7 +168,7 @@
 
     @if($actionMessage)
         @teleport('body')
-            <div wire:key="backup-action-result-{{ md5($actionMessage) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition data-panel class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border panel-border panel-surface px-[20px] py-[15px] panel-accent shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status">
+            <div wire:key="backup-action-result-{{ md5($actionMessage) }}" x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible" x-transition data-panel class="fixed left-1/2 top-[20px] z-[200000] flex w-[calc(100%-40px)] max-w-xl -translate-x-1/2 items-center gap-[10px] rounded-xl border panel-border panel-surface p-[20px] panel-accent shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg>
                 <span class="min-w-0 flex-1">{{ $actionMessage }}</span>
                 <button type="button" @click="visible = false" aria-label="Cerrar aviso" class="inline-flex h-8 w-8 items-center justify-center "><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg></button>
@@ -172,18 +185,18 @@
                     <div class="mt-[20px] space-y-[15px]">
                         <div>
                             <label for="delete-backup-password" class="mb-[10px] block leading-none">Contraseña</label>
-                            <input id="delete-backup-password" type="password" wire:model="deletePassword" autocomplete="current-password" class="panel-field h-[44px] w-full rounded-xl border px-[15px] ">
+                            <input id="delete-backup-password" type="password" wire:model="deletePassword" autocomplete="current-password" class="panel-field h-[50px] w-full rounded-xl border px-[15px] ">
                             @error('deletePassword')<p class="mt-[5px] text-[color:var(--panel-danger)]">{{ $message }}</p>@enderror
                         </div>
                         <div>
                             <label for="delete-backup-code" class="mb-[10px] block leading-none">Código del autenticador</label>
-                            <input id="delete-backup-code" type="text" inputmode="numeric" maxlength="6" wire:model="deleteTwoFactorCode" autocomplete="one-time-code" class="panel-field h-[44px] w-full rounded-xl border px-[15px] tracking-[0.2em]">
+                            <input id="delete-backup-code" type="text" inputmode="numeric" maxlength="6" wire:model="deleteTwoFactorCode" autocomplete="one-time-code" class="panel-field h-[50px] w-full rounded-xl border px-[15px] tracking-[0.2em]">
                             @error('deleteTwoFactorCode')<p class="mt-[5px] text-[color:var(--panel-danger)]">{{ $message }}</p>@enderror
                         </div>
                     </div>
                     <div class="mt-[20px] grid grid-cols-2 gap-[10px]">
-                        <button type="button" wire:click="closeDeleteConfirmation" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="panel-button-secondary h-[44px] w-full rounded-xl px-[15px] leading-none">Cancelar</button>
-                        <button type="button" wire:click="deleteDestinationBackups" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[44px] w-full rounded-xl bg-red-700 px-[15px] text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60"><span wire:loading.remove wire:target="deleteDestinationBackups">Eliminar definitivamente</span><span wire:loading wire:target="deleteDestinationBackups">Verificando…</span></button>
+                        <button type="button" wire:click="closeDeleteConfirmation" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="panel-button-secondary h-[50px] w-full rounded-xl px-[15px] leading-none">Cancelar</button>
+                        <button type="button" wire:click="deleteDestinationBackups" wire:loading.attr="disabled" wire:target="deleteDestinationBackups" class="h-[50px] w-full rounded-xl bg-red-700 px-[15px] text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60"><span wire:loading.remove wire:target="deleteDestinationBackups">Eliminar definitivamente</span><span wire:loading wire:target="deleteDestinationBackups">Verificando…</span></button>
                     </div>
                 </div>
             </div>
@@ -192,7 +205,7 @@
 
     @if($exportIsActive)
         @teleport('body')
-            <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" data-panel class="app-zoom-overlay fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border panel-border panel-surface px-[20px] py-[15px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
+            <div wire:key="shared-backup-progress-{{ $exportStatus['id'] ?? 'active' }}" data-panel class="app-zoom-overlay fixed left-1/2 top-[20px] z-[199999] w-[calc(100%-40px)] max-w-2xl -translate-x-1/2 rounded-xl border panel-border panel-surface p-[20px] shadow-[0_14px_40px_rgba(0,0,0,0.20)]" role="status" aria-live="polite">
                 <div class="flex items-center justify-between gap-[15px]">
                     <div class="min-w-0">
                         <p class="truncate ">
@@ -214,38 +227,25 @@
     @endif
 
 
-    <main class="w-full space-y-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
-        <section class="flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
-            <div class="flex min-w-0 items-center gap-[15px]">
-                <div class="min-w-0">
-                    <h1 class="panel-accent text-xl leading-none tracking-tight">Gestión de Respaldos</h1>
-                    <p class="mt-[15px] leading-none">Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.</p>
-                </div>
+    <main class="flex w-full flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
+        <section class="backup-page-header flex flex-col justify-between gap-[20px] lg:flex-row lg:items-center">
+            <div class="min-w-0">
+                <h1 class="panel-accent text-xl leading-none tracking-tight">Gestión de Respaldos</h1>
+                <p class="mt-[5px] leading-[30px]">Selecciona una carpeta para comprobar cuáles ya están respaldadas y definir el destino.</p>
             </div>
 
-            <div class="flex flex-col items-end gap-[5px]">
-                <div class="flex items-center gap-[20px]">
-                <a href="{{ route('activity-backups.infrastructure-guide') }}" class="backup-green inline-flex items-center gap-[10px] leading-none transition hover:opacity-70" title="Descargar guía técnica de configuración">
-                    <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 2h8l4 4v16H6zM14 2v5h5M12 10v7m0 0 3-3m-3 3-3-3"/></svg>
-                    <span>Guía PDF</span>
-                </a>
-                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="backup-green inline-flex items-center gap-[10px] leading-none bg-transparent p-0 transition hover:opacity-70 disabled:opacity-50">
-                    <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5m-5 4a8 8 0 0 0 15.5 2M20 20v-5h-5"/></svg>
+            <div class="flex flex-wrap items-center gap-[20px] lg:justify-end">
+                <a href="{{ route('activity-backups.infrastructure-guide') }}" class="backup-green leading-none transition hover:opacity-70" title="Descargar guía técnica de configuración">Guía PDF</a>
+                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="backup-green bg-transparent p-0 leading-none transition hover:opacity-70 disabled:opacity-50">
                     <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
                     <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
                 </button>
+                <div class="flex items-center gap-[20px]" role="group" aria-label="Secciones de respaldos">
+                    <button type="button" wire:click="selectView('backups')" class="backup-memory-button" aria-pressed="{{ $activeView === 'backups' ? 'true' : 'false' }}">Respaldos</button>
+                    <button type="button" wire:click="selectView('history')" class="backup-memory-button" aria-pressed="{{ $activeView === 'history' ? 'true' : 'false' }}">Historial</button>
                 </div>
-                @if($activeView === 'backups')<span class="inline-flex items-center gap-[10px] leading-none {{ $bothLocationsOnline ? 'panel-accent' : 'text-[color:var(--panel-danger)]' }}" title="Origen: {{ ($catalog['connected'] ?? false) ? 'en línea' : 'fuera de línea' }} · Memoria: {{ ($exportDestination['connected'] ?? false) ? 'en línea' : 'fuera de línea' }}"><span class="h-1.5 w-1.5 rounded-full {{ $bothLocationsOnline ? 'bg-emerald-500' : 'bg-red-500' }}"></span>{{ $bothLocationsOnline ? 'En línea' : 'Fuera de línea' }}</span>@endif
             </div>
         </section>
-
-        <nav class="flex items-center gap-[20px]" aria-label="Secciones de respaldos">
-            <button type="button" wire:click="selectView('backups')" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none" aria-selected="{{ $activeView === 'backups' ? 'true' : 'false' }}">Respaldos</button>
-            <button type="button" wire:click="selectView('history')" class="panel-tab inline-flex min-h-[44px] items-center gap-[10px] leading-none" aria-selected="{{ $activeView === 'history' ? 'true' : 'false' }}">
-                <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg>
-                <span>Historial</span>
-            </button>
-        </nav>
 
         @if ($error && $activeView !== 'history')
             <section class="panel-danger-box rounded-xl border p-[20px]">
@@ -255,33 +255,39 @@
                 </div>
             </section>
         @else
-            <section class="overflow-hidden rounded-xl border panel-border panel-surface shadow-none">
+            <section @if ($activeView === 'backups') x-data="backupAlign()" @endif class="{{ $activeView === 'backups' ? 'backup-main-card' : '' }} flex flex-col overflow-hidden rounded-xl border panel-border panel-surface shadow-none">
                 @if ($activeView === 'backups')
-                    <div class="grid min-h-[520px] xl:grid-cols-[340px_minmax(0,1fr)]">
+                    <div class="grid min-h-[520px] xl:min-h-0 xl:flex-1 xl:grid-cols-[340px_minmax(0,1fr)]">
                         <aside class="h-[520px] min-h-0 overflow-hidden border-b panel-border panel-surface xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
                             <div class="flex h-full min-h-0 flex-col xl:absolute xl:inset-0">
-                                <div class="flex h-[70px] shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] text-center "><span class="panel-accent flex min-w-0 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg><span class="truncate">Fecha de respaldos</span></span></div>
+                                <div data-dates-header wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] text-center "><span class="panel-accent flex min-w-0 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg><span class="truncate">Fecha de respaldos</span></span></div>
+                                {{-- A la altura de los filtros: más fechas --}}
+                                <div data-dates-tools wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border px-[20px] text-center">
+                                    @if($hasMoreBackupDates)
+                                        <button type="button" wire:click="loadMoreDates" wire:loading.attr="disabled" wire:target="loadMoreDates" class="backup-green leading-none transition hover:opacity-70 disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="loadMoreDates">Mostrar fechas anteriores</span>
+                                            <span wire:loading wire:target="loadMoreDates">Cargando…</span>
+                                        </button>
+                                    @else
+                                        <span class="leading-none">{{ count($visibleBackupDates) }} {{ count($visibleBackupDates) === 1 ? 'fecha' : 'fechas' }}</span>
+                                    @endif
+                                </div>
+                                {{-- A la altura del encabezado de la tabla --}}
+                                <div data-dates-head wire:ignore.self class="flex shrink-0 items-center border-b panel-border panel-header px-[20px] leading-none">Fecha</div>
                                 <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
-                                    <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
+                                    <div x-ref="scroller" data-dates-scroller wire:ignore.self @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($visibleBackupDates as $day)
                                     @php
                                         $dayDate = \Carbon\CarbonImmutable::parse($day['date']);
                                         $fullDayLabel = ucfirst($dayDate->locale('es')->translatedFormat('l, d \\d\\e F \\d\\e Y'));
                                     @endphp
-                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" class="flex w-full min-w-0 flex-col justify-center border-b panel-border px-[20px] py-[20px] text-left transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'panel-header panel-accent' : ($loop->odd ? 'panel-subtle' : 'panel-surface') }} hover:bg-[color:var(--panel-hover)]">
+                                    <button type="button" wire:key="backup-day-{{ $day['date'] }}" wire:click="selectDate('{{ $day['date'] }}')" wire:loading.attr="disabled" wire:target="selectDate" data-date-row class="flex w-full min-w-0 flex-col justify-center border-b panel-border p-[20px] text-left transition disabled:cursor-wait {{ $selectedDate === $day['date'] ? 'panel-header panel-accent' : ($loop->odd ? 'panel-subtle' : 'panel-surface') }} hover:bg-[color:var(--panel-hover)]">
                                         <span class="block w-full truncate leading-none" title="{{ $fullDayLabel }}">{{ $fullDayLabel }}</span>
-                                        <span class="mt-[15px] flex w-full min-w-0 items-center leading-none" title="{{ $day['complete'] }} completos"><span class="w-[36px] shrink-0 text-right tabular-nums ">{{ $day['complete'] }}</span><span class="ml-[10px] truncate">completos</span></span>
-                                        <span class="mt-[15px] flex w-full min-w-0 items-center leading-none" title="{{ $day['partial'] }} parciales"><span class="w-[36px] shrink-0 text-right tabular-nums ">{{ $day['partial'] }}</span><span class="ml-[10px] truncate">parciales</span></span>
+                                        <span class="mt-[15px] block w-full truncate leading-none" title="{{ $day['complete'] }} completos · {{ $day['partial'] }} parciales">{{ $day['complete'] }} completos · {{ $day['partial'] }} parciales</span>
                                     </button>
                                 @empty
                                     <p class="truncate p-[20px] leading-none" title="No se encontraron respaldos con fecha válida.">No se encontraron respaldos con fecha válida.</p>
                                 @endforelse
-                                @if($hasMoreBackupDates)
-                                    <button type="button" wire:click="loadMoreDates" wire:loading.attr="disabled" wire:target="loadMoreDates" class="backup-green flex min-h-[60px] w-full items-center justify-center border-b panel-border panel-surface px-[20px] py-[15px] leading-none panel-accent transition hover:bg-[color:var(--panel-hover)] disabled:opacity-50">
-                                        <span wire:loading.remove wire:target="loadMoreDates">Mostrar fechas anteriores</span>
-                                        <span wire:loading wire:target="loadMoreDates">Cargando…</span>
-                                    </button>
-                                @endif
                                     </div>
                                     <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                 </div>
@@ -289,25 +295,25 @@
                         </aside>
 
                         <div class="relative flex min-h-0 min-w-0 flex-col">
-                            <div class="order-2 flex flex-col gap-[12px] border-b panel-border px-[20px] py-[15px]">
-                                <div class="flex w-full items-center justify-evenly gap-[16px] overflow-x-auto whitespace-nowrap" aria-label="Filtrar respaldos por estado">
-                                    <button type="button" wire:click="$set('status', 'all')" class="panel-tab flex min-h-[44px] items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'all' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg><span>Todos</span></button>
-                                    <button type="button" wire:click="$set('status', 'complete')" class="panel-tab flex min-h-[44px] items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'complete' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span>Completos</span></button>
-                                    <button type="button" wire:click="$set('status', 'available')" class="panel-tab flex min-h-[44px] items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'available' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg><span>Por respaldar</span></button>
-                                    <button type="button" wire:click="$set('status', 'backed_up')" class="panel-tab flex min-h-[44px] items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'backed_up' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 7h14v12H5zM8 4h8v3"/><path stroke-linecap="round" stroke-linejoin="round" d="m9 13 2 2 4-5"/></svg><span>Ya respaldadas</span></button>
-                                    <button type="button" wire:click="$set('status', 'partial')" class="panel-tab flex min-h-[44px] items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'partial' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v6m0 4h.01"/></svg><span>Incompletos</span></button>
+                            <div class="order-2 flex flex-col gap-[12px] border-b panel-border p-[20px]">
+                                <div class="flex w-full items-center justify-evenly gap-[16px] overflow-x-auto overflow-y-hidden whitespace-nowrap" aria-label="Filtrar respaldos por estado">
+                                    <button type="button" wire:click="$set('status', 'all')" class="panel-tab flex items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'all' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg><span>Todos</span></button>
+                                    <button type="button" wire:click="$set('status', 'complete')" class="panel-tab flex items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'complete' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 2.5 2.5L16 9"/></svg><span>Completos</span></button>
+                                    <button type="button" wire:click="$set('status', 'available')" class="panel-tab flex items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'available' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg><span>Por respaldar</span></button>
+                                    <button type="button" wire:click="$set('status', 'backed_up')" class="panel-tab flex items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'backed_up' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 7h14v12H5zM8 4h8v3"/><path stroke-linecap="round" stroke-linejoin="round" d="m9 13 2 2 4-5"/></svg><span>Ya respaldadas</span></button>
+                                    <button type="button" wire:click="$set('status', 'partial')" class="panel-tab flex items-center justify-center gap-[10px] px-[10px] leading-none" aria-selected="{{ $status === 'partial' ? 'true' : 'false' }}"><svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v6m0 4h.01"/></svg><span>Incompletos</span></button>
                                 </div>
                             </div>
-                            <div class="order-1 h-[70px] shrink-0 border-b panel-border panel-header px-[20px] py-[13px]">
+                            <div class="order-1 shrink-0 border-b panel-border panel-header p-[20px]">
                                         <div class="grid gap-[15px] md:grid-cols-3">
                                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                                    <button type="button" @click="if (!{{ $exportIsActive ? 'true' : 'false' }}) open = !open" class="flex h-[44px] w-full items-center justify-between rounded-xl border panel-border panel-surface px-[15px] text-left ">
+                                                    <button type="button" @click="if (!{{ $exportIsActive ? 'true' : 'false' }}) open = !open" class="backup-control flex w-full items-center justify-between rounded-xl border panel-border panel-surface p-[20px] text-left leading-none ">
                                                         <span class="truncate">{{ $currentBackupProfile['label'] }}</span>
                                                         <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
                                                     <div x-show="open" x-cloak class="absolute top-full z-40 mt-[8px] w-full overflow-hidden rounded-xl border panel-border panel-surface py-[4px] shadow-lg">
                                                         @foreach($backupProfiles as $profile)
-                                                            <button type="button" @click="$wire.set('backupProfile', @js($profile['key'])); open = false" @disabled(!($profile['enabled'] ?? false)) class="flex min-h-[44px] w-full items-center justify-between gap-[12px] px-[15px] text-left hover:bg-[color:var(--panel-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[color:var(--panel-hover)]">
+                                                            <button type="button" @click="$wire.set('backupProfile', @js($profile['key'])); open = false" @disabled(!($profile['enabled'] ?? false)) class="flex min-h-[50px] w-full items-center justify-between gap-[12px] px-[15px] text-left hover:bg-[color:var(--panel-hover)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[color:var(--panel-hover)]">
                                                                 <span class="truncate">{{ $profile['label'] }}@if(!($profile['enabled'] ?? false)) · Próximamente @endif</span>
                                                                 @if($backupProfile === $profile['key'])<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>@endif
                                                             </button>
@@ -315,12 +321,12 @@
                                                     </div>
                                                 </div>
                                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                                    <button type="button" @click="if ({{ $exportDestination['connected'] && ! $exportIsActive ? 'true' : 'false' }}) { open = !open; if (open) $wire.openDestinationBrowser() }" @disabled(!$exportDestination['connected'] || $exportIsActive) class="flex h-[44px] w-full items-center justify-between rounded-xl border panel-border panel-surface px-[15px] text-left disabled:cursor-not-allowed disabled:opacity-50">
+                                                    <button type="button" @click="if ({{ $exportDestination['connected'] && ! $exportIsActive ? 'true' : 'false' }}) { open = !open; if (open) $wire.openDestinationBrowser() }" @disabled(!$exportDestination['connected'] || $exportIsActive) class="backup-control flex w-full items-center justify-between rounded-xl border panel-border panel-surface p-[20px] text-left leading-none disabled:cursor-not-allowed disabled:opacity-50">
                                                         <span class="truncate" title="{{ str_replace('/', '\\', $destinationFolder) }}">{{ $destinationFolder !== '' ? str_replace('/', '\\', $destinationFolder) : 'Selecciona una carpeta…' }}</span>
                                                         <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
                                                     <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border panel-border panel-surface shadow-lg">
-                                                        <div class="flex items-center gap-[15px] border-b panel-border px-[20px] py-[15px]">
+                                                        <div class="flex items-center gap-[15px] border-b panel-border p-[20px]">
                                                             @if($destinationBrowsePath !== '')
                                                                 <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex shrink-0 items-center gap-[10px] panel-accent transition hover:opacity-70" title="Volver a la carpeta anterior">
                                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
@@ -333,11 +339,11 @@
                                                         <div x-data="backupOverlayScroll()" x-effect="if (open) $nextTick(() => update())" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative">
                                                             <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[240px] divide-y divide-[color:var(--panel-border)] overflow-y-auto overscroll-contain">
                                                             @if(! $destinationBrowserOpened)
-                                                                <div class="px-[20px] py-[15px]">Cargando carpetas…</div>
+                                                                <div class="p-[20px]">Cargando carpetas…</div>
                                                             @else
                                                             @forelse($visibleDestinationFolders as $folder)
                                                                 <div class="flex items-stretch panel-surface transition hover:bg-[color:var(--panel-hover)]">
-                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] px-[20px] py-[15px] text-left disabled:cursor-not-allowed disabled:opacity-50" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
+                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] p-[20px] text-left disabled:cursor-not-allowed disabled:opacity-50" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
                                                                         <svg class="h-[18px] w-[18px] shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
                                                                         <span class="truncate">{{ $folder['name'] }}</span>
                                                                         @if($destinationFolder === $folder['path'])
@@ -345,14 +351,14 @@
                                                                         @endif
                                                                     </button>
                                                                     @if($folder['has_children'])
-                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="inline-flex shrink-0 items-center justify-center gap-[10px] border-l panel-border px-[20px] py-[15px] transition hover:bg-[color:var(--panel-hover)] hover:opacity-70" aria-label="Abrir {{ $folder['name'] }}" title="Ver subcarpetas">
+                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="inline-flex shrink-0 items-center justify-center gap-[10px] border-l panel-border p-[20px] transition hover:bg-[color:var(--panel-hover)] hover:opacity-70" aria-label="Abrir {{ $folder['name'] }}" title="Ver subcarpetas">
                                                                             <span>Abrir</span>
                                                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
                                                                         </button>
                                                                     @endif
                                                                 </div>
                                                             @empty
-                                                                <div class="flex items-center gap-[10px] px-[20px] py-[15px] ">
+                                                                <div class="flex items-center gap-[10px] p-[20px] ">
                                                                     <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
                                                                     <span>Esta carpeta no contiene subcarpetas.</span>
                                                                 </div>
@@ -364,13 +370,13 @@
                                                     </div>
                                                 </div>
                                                 <div class="grid w-full {{ $selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups') ? 'grid-cols-2' : 'grid-cols-1' }} gap-[10px]">
-                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="backup-action-button inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl px-[12px] leading-none transition disabled:cursor-not-allowed disabled:opacity-50">
+                                                    <button type="button" wire:click="startExport" wire:loading.attr="disabled" wire:target="startExport" @disabled(!$exportDestination['connected'] || $destinationFolder === '' || $selectedExportCount === 0 || $exportIsActive) class="backup-control backup-action-button inline-flex w-full items-center justify-center gap-[10px] rounded-xl p-[20px] leading-none transition disabled:cursor-not-allowed disabled:opacity-50">
                                                         <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h6l2 2h8v10H4V7Zm8-4v10m0 0 3-3m-3 3-3-3"/></svg>
                                                         <span wire:loading.remove wire:target="startExport" class="truncate">@if($selectedExportCount === 0) Selecciona empresas @elseif($selectedDeletableCount === $selectedExportCount) Reemplazar {{ $selectedExportCount === 1 ? 'respaldo' : $selectedExportCount.' respaldos' }} @elseif($selectedExportCount === 1) Respaldar 1 empresa @else Respaldar {{ $selectedExportCount }} empresas @endif</span>
                                                         <span wire:loading wire:target="startExport">Validando…</span>
                                                     </button>
                                                     @if($selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups'))
-                                                        <button type="button" wire:click="openDeleteConfirmation" wire:loading.attr="disabled" wire:target="openDeleteConfirmation" @disabled($exportIsActive) class="inline-flex h-[44px] w-full items-center justify-center gap-[10px] rounded-xl border border-red-200 panel-surface px-[12px] text-[color:var(--panel-danger)] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                                        <button type="button" wire:click="openDeleteConfirmation" wire:loading.attr="disabled" wire:target="openDeleteConfirmation" @disabled($exportIsActive) class="backup-control inline-flex w-full items-center justify-center gap-[10px] rounded-xl border border-red-200 panel-surface p-[20px] leading-none text-[color:var(--panel-danger)] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
                                                             <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg>
                                                             <span class="truncate">Eliminar {{ $selectedDeletableCount }}</span>
                                                         </button>
@@ -378,26 +384,26 @@
                                                 </div>
                                         </div>
                             </div>
-                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative order-3 h-[700px] min-h-0 flex-none">
+                            <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible backup-catalog-scroll-horizontal-visible relative order-3 h-[700px] min-h-0 flex-none xl:h-auto xl:flex-1">
                                 <div wire:loading.flex wire:target="selectDate" class="absolute inset-0 z-30 hidden flex-col items-center justify-center panel-surface ">
                                     <svg class="h-9 w-9 animate-spin panel-accent" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-20" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"/><path class="opacity-90" fill="currentColor" d="M21 12a9 9 0 0 0-9-9v3a6 6 0 0 1 6 6h3Z"/></svg>
                                     <span class="mt-[12px] ">Cargando respaldos…</span>
                                 </div>
-                                <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
+                                <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-records-scroller wire:ignore.self data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
                                 <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
                                     <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[290px]"><col class="w-[260px]"></colgroup>
-                                    <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px] whitespace-nowrap text-center"><th class="border-r panel-border px-[20px] "><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($headerSelectableCount === 0 || $exportIsActive || $status === 'partial') aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border panel-border panel-surface panel-accent focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed  "><span class="inline-flex items-baseline gap-[6px]">Empresa <span class="" title="{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }}">({{ $selectedExportCount }})</span></span></span></th><th class="border-r panel-border px-[15px] ">Hora</th><th class="border-r panel-border px-[15px] ">Respaldo en memoria</th><th class="px-[15px] ">Archivos del servidor</th></tr></thead>
+                                    <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="whitespace-nowrap text-center"><th class="border-r panel-border p-[20px] "><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($headerSelectableCount === 0 || $exportIsActive || $status === 'partial') aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border panel-border panel-surface panel-accent focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed  "><span class="inline-flex items-baseline gap-[6px]">Empresa <span class="" title="{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }}">({{ $selectedExportCount }})</span></span></span></th><th class="border-r panel-border p-[20px] ">Hora</th><th class="border-r panel-border p-[20px] ">Respaldo en memoria</th><th class="p-[20px] ">Archivos del servidor</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
                                             $recordState = $recordAvailability[$record['id']] ?? 'incomplete';
                                             $recordDestinations = $completedDestinations[$record['id']] ?? [];
                                             $latestDestination = $recordDestinations[0] ?? null;
                                         @endphp
-                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group {{ $loop->odd ? 'backup-record-gray' : 'backup-record-white' }} border-b panel-border last:border-b-0">
-                                            <tr class="h-[90px]" @click="$refs.rowCheckbox.click()" style="cursor: {{ in_array($recordState, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true) && ! $exportIsActive ? 'pointer' : 'default' }};">
-                                                <td class="min-w-0 border-r panel-border px-[20px] py-[15px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input x-ref="rowCheckbox" type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border panel-border panel-surface panel-accent focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed   disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate leading-none" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[15px] block truncate " title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
-                                                <td class="border-r panel-border px-[15px] py-[15px] text-center tabular-nums ">{{ $record['time'] }}</td>
-                                                <td class="min-w-0 border-r panel-border px-[15px] py-[15px] text-center">
+                                        <tbody wire:key="record-{{ $record['id'] }}" x-data="{ open: false }" class="backup-record-group {{ $loop->odd ? 'backup-record-gray' : 'backup-record-white' }} border-b panel-border">
+                                            <tr @click="$refs.rowCheckbox.click()" style="cursor: {{ in_array($recordState, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true) && ! $exportIsActive ? 'pointer' : 'default' }};">
+                                                <td class="min-w-0 border-r panel-border p-[20px]"><div class="flex min-w-0 items-center gap-[15px]"><span class="shrink-0" @click.stop><input x-ref="rowCheckbox" type="checkbox" wire:model.live="selectedRecords" value="{{ $record['id'] }}" @disabled(!in_array($recordState, ['available', 'outdated', 'backed_up', 'destination_missing', 'folder_missing'], true) || $exportIsActive) aria-label="Seleccionar {{ $record['company'] }}" class="h-4 w-4 rounded border panel-border panel-surface panel-accent focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed   disabled:opacity-100"></span><span class="min-w-0"><span class="block truncate leading-none" title="{{ $record['company'] }}">{{ $record['company'] }}</span><span class="mt-[15px] block truncate " title="{{ $record['stem'] }}">{{ $record['company_folder'] ?? 'Carpeta no identificada' }}</span></span></div></td>
+                                                <td class="border-r panel-border p-[20px] text-center tabular-nums ">{{ $record['time'] }}</td>
+                                                <td class="min-w-0 border-r panel-border p-[20px] text-center">
                                                     @if($latestDestination)
                                                         <div class="mx-auto min-w-0" title="{{ $latestDestination['label'] }} · {{ $latestDestination['path'] }}"><p class="truncate leading-none">{{ $latestDestination['label'] }}@if(count($recordDestinations) > 1) · +{{ count($recordDestinations) - 1 }} {{ count($recordDestinations) === 2 ? 'destino' : 'destinos' }}@endif</p><p class="mt-[15px] truncate leading-none">{{ $latestDestination['path'] }}</p></div>
                                                     @elseif($recordState === 'available')<span class="panel-accent">Disponible</span>
@@ -409,20 +415,20 @@
                                                     @elseif($recordState === 'folder_missing')<span class="">Selecciona carpeta</span>
                                                     @else<span class="text-[color:var(--panel-danger)]">Incompleta</span>@endif
                                                 </td>
-                                                <td class="px-[15px] py-[15px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="panel-accent">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-[color:var(--panel-danger)]">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-[color:var(--panel-danger)]">Falta BAK</span>@else<span class="text-[color:var(--panel-danger)]">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl transition hover:bg-[color:var(--panel-hover)] hover:opacity-70" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
+                                                <td class="p-[20px]"><div class="flex items-center justify-between gap-[10px]"><span class="truncate">@if($record['database'] && $record['archive'])<span class="panel-accent">BAK e INDEX</span>@elseif(!$record['database'] && !$record['archive'])<span class="text-[color:var(--panel-danger)]">Faltan BAK e INDEX</span>@elseif(!$record['database'])<span class="text-[color:var(--panel-danger)]">Falta BAK</span>@else<span class="text-[color:var(--panel-danger)]">Falta INDEX</span>@endif</span><button type="button" @click.stop="open = !open" class="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl transition hover:bg-[color:var(--panel-hover)] hover:opacity-70" :aria-expanded="open"><svg class="h-5 w-5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></button></div></td>
                                             </tr>
                                             <tr x-show="open" x-cloak>
                                                 <td colspan="4" class="backup-record-detail bg-inherit p-0">
                                                     <div class="grid border-t panel-border md:grid-cols-2 md:divide-x md:divide-[color:var(--panel-border)]">
                                                         @if($record['database'])
-                                                            <a @click.stop href="{{ route('activity-backups.server.download', ['kind' => 'database', 'token' => $record['database']['token']]) }}" class="flex min-h-[78px] min-w-0 items-center justify-between gap-[15px] panel-surface px-[20px] py-[15px] transition hover:bg-[color:var(--panel-hover)]" title="Descargar {{ $record['database']['name'] }}"><span class="flex min-w-0 items-center gap-[12px]"><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface "><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM14 2v5h5"/></svg></span><span class="min-w-0"><span class="block leading-none">Base de datos · BAK</span><span class="mt-[15px] block truncate ">{{ $record['database']['name'] }} · {{ $formatBytes($record['database']['size']) }}</span></span></span><svg class="h-5 w-5 shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
+                                                            <a @click.stop href="{{ route('activity-backups.server.download', ['kind' => 'database', 'token' => $record['database']['token']]) }}" class="flex min-h-[78px] min-w-0 items-center justify-between gap-[15px] panel-surface p-[20px] transition hover:bg-[color:var(--panel-hover)]" title="Descargar {{ $record['database']['name'] }}"><span class="flex min-w-0 items-center gap-[12px]"><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface "><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM14 2v5h5"/></svg></span><span class="min-w-0"><span class="block leading-none">Base de datos · BAK</span><span class="mt-[15px] block truncate ">{{ $record['database']['name'] }} · {{ $formatBytes($record['database']['size']) }}</span></span></span><svg class="h-5 w-5 shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
                                                         @else
-                                                            <div class="flex min-h-[78px] items-center gap-[12px] panel-surface px-[20px] py-[15px] "><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM9 13h6"/></svg></span><span><span class="block leading-none">Base de datos · BAK</span><span>Archivo no encontrado</span></span></div>
+                                                            <div class="flex min-h-[78px] items-center gap-[12px] panel-surface p-[20px] "><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM9 13h6"/></svg></span><span><span class="block leading-none">Base de datos · BAK</span><span>Archivo no encontrado</span></span></div>
                                                         @endif
                                                         @if($record['archive'])
-                                                            <a @click.stop href="{{ route('activity-backups.server.download', ['kind' => 'archive', 'token' => $record['archive']['token']]) }}" class="flex min-h-[78px] min-w-0 items-center justify-between gap-[15px] panel-surface px-[20px] py-[15px] transition hover:bg-[color:var(--panel-hover)]" title="Descargar {{ $record['archive']['name'] }}"><span class="flex min-w-0 items-center gap-[12px]"><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface "><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM14 2v5h5M10 11h4m-4 4h4"/></svg></span><span class="min-w-0"><span class="block leading-none">Documento digital · {{ strtoupper($record['archive']['extension']) }}</span><span class="mt-[15px] block truncate ">{{ $record['archive']['name'] }} · {{ $formatBytes($record['archive']['size']) }}</span></span></span><svg class="h-5 w-5 shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
+                                                            <a @click.stop href="{{ route('activity-backups.server.download', ['kind' => 'archive', 'token' => $record['archive']['token']]) }}" class="flex min-h-[78px] min-w-0 items-center justify-between gap-[15px] panel-surface p-[20px] transition hover:bg-[color:var(--panel-hover)]" title="Descargar {{ $record['archive']['name'] }}"><span class="flex min-w-0 items-center gap-[12px]"><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface "><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM14 2v5h5M10 11h4m-4 4h4"/></svg></span><span class="min-w-0"><span class="block leading-none">Documento digital · {{ strtoupper($record['archive']['extension']) }}</span><span class="mt-[15px] block truncate ">{{ $record['archive']['name'] }} · {{ $formatBytes($record['archive']['size']) }}</span></span></span><svg class="h-5 w-5 shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg></a>
                                                         @else
-                                                            <div class="flex min-h-[78px] items-center gap-[12px] panel-surface px-[20px] py-[15px] "><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM9 13h6"/></svg></span><span><span class="block leading-none">Documento digital</span><span>ZIP o RAR no encontrado</span></span></div>
+                                                            <div class="flex min-h-[78px] items-center gap-[12px] panel-surface p-[20px] "><span class="grid h-10 w-10 shrink-0 place-items-center border panel-border panel-surface"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 2h8l4 4v16H6zM9 13h6"/></svg></span><span><span class="block leading-none">Documento digital</span><span>ZIP o RAR no encontrado</span></span></div>
                                                         @endif
                                                     </div>
                                                 </td>
@@ -447,7 +453,7 @@
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll backup-history-scroll h-full overflow-auto">
                             <table class="w-full min-w-[1050px] table-fixed border-collapse text-left">
                                 <colgroup><col class="w-[170px]"><col class="w-[190px]"><col class="w-[290px]"><col class="w-[230px]"><col class="w-[190px]"></colgroup>
-                                <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="h-[70px]"><th class="border-r panel-border px-[20px] ">Fecha y hora</th><th class="border-r panel-border px-[15px] text-center">Movimiento</th><th class="border-r panel-border px-[15px] ">Empresas</th><th class="border-r panel-border px-[15px] ">Destino</th><th class="px-[20px] ">Usuario</th></tr></thead>
+                                <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr><th class="border-r panel-border p-[20px] ">Fecha y hora</th><th class="border-r panel-border p-[20px] text-center">Movimiento</th><th class="border-r panel-border p-[20px] ">Empresas</th><th class="border-r panel-border p-[20px] ">Destino</th><th class="p-[20px] ">Usuario</th></tr></thead>
                                 <tbody class="divide-y divide-[color:var(--panel-border)]">
                                     @forelse($movementHistory as $movement)
                                         @php
@@ -474,11 +480,11 @@
                                         @endphp
                                         <tr wire:key="history-{{ $movement['id'] }}" class="h-[110px] {{ $loop->odd ? 'panel-subtle' : 'panel-surface' }}">
                                             @php($movementAt = \Carbon\CarbonImmutable::parse($movement['occurred_at'])->setTimezone(config('backup-storage.display_timezone'))->locale('es'))
-                                            <td class="border-r panel-border px-[20px] py-[15px]"><p class="leading-none">{{ $movementAt->translatedFormat('d M Y') }}</p><p class="mt-[15px] leading-none">{{ $movementAt->format('H:i:s') }}</p></td>
-                                            <td class="border-r panel-border px-[15px] py-[15px] text-center"><p class="{{ $movementColor }} leading-none">{{ $movementLabel }}</p><p class="mt-[15px] leading-none tabular-nums">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[15px] truncate text-[color:var(--panel-danger)] leading-none" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
-                                            <td class="border-r panel-border px-[15px] py-[15px]"><p class="truncate leading-none" title="{{ $companyNames }}">{{ $companyNames !== '' ? $companyNames : 'Sin empresas registradas' }}</p>@if($movement['backup_date'])<p class="mt-[15px] leading-none">Respaldo del {{ \Carbon\CarbonImmutable::parse($movement['backup_date'])->locale('es')->translatedFormat('d \d\e F \d\e Y') }}</p>@endif</td>
-                                            <td class="border-r panel-border px-[15px] py-[15px]"><p class="truncate leading-none" title="{{ $destinationText }}">{{ $movement['destination_label'] ?? 'Memoria externa' }}</p><p class="mt-[15px] truncate leading-none" title="{{ $movement['destination_folder'] }}">{{ str_replace('/', '\\', $movement['destination_folder'] ?? '') ?: 'Carpeta no registrada' }}</p></td>
-                                            <td class="px-[20px] py-[15px]"><p class="truncate leading-none" title="{{ $movement['user_name'] }}">{{ $movement['user_name'] }}</p></td>
+                                            <td class="border-r panel-border p-[20px]"><p class="leading-none">{{ $movementAt->translatedFormat('d M Y') }}</p><p class="mt-[15px] leading-none">{{ $movementAt->format('H:i:s') }}</p></td>
+                                            <td class="border-r panel-border p-[20px] text-center"><p class="{{ $movementColor }} leading-none">{{ $movementLabel }}</p><p class="mt-[15px] leading-none tabular-nums">{{ $movement['item_count'] }} {{ $movement['item_count'] === 1 ? 'empresa' : 'empresas' }}</p>@if($movement['error'])<p class="mt-[15px] truncate text-[color:var(--panel-danger)] leading-none" title="{{ $movement['error'] }}">{{ $movement['error'] }}</p>@endif</td>
+                                            <td class="border-r panel-border p-[20px]"><p class="truncate leading-none" title="{{ $companyNames }}">{{ $companyNames !== '' ? $companyNames : 'Sin empresas registradas' }}</p>@if($movement['backup_date'])<p class="mt-[15px] leading-none">Respaldo del {{ \Carbon\CarbonImmutable::parse($movement['backup_date'])->locale('es')->translatedFormat('d \d\e F \d\e Y') }}</p>@endif</td>
+                                            <td class="border-r panel-border p-[20px]"><p class="truncate leading-none" title="{{ $destinationText }}">{{ $movement['destination_label'] ?? 'Memoria externa' }}</p><p class="mt-[15px] truncate leading-none" title="{{ $movement['destination_folder'] }}">{{ str_replace('/', '\\', $movement['destination_folder'] ?? '') ?: 'Carpeta no registrada' }}</p></td>
+                                            <td class="p-[20px]"><p class="truncate leading-none" title="{{ $movement['user_name'] }}">{{ $movement['user_name'] }}</p></td>
                                         </tr>
                                     @empty
                                         <tr class="h-[550px]"><td colspan="5" class="px-[20px] text-center align-middle"><svg class="mx-auto h-10 w-10 panel-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><p class="mt-[12px] leading-none">Todavía no hay movimientos registrados</p><p class="mt-[15px] leading-none">Los próximos respaldos y eliminaciones aparecerán aquí.</p></td></tr>
@@ -490,7 +496,7 @@
                     </div>
                 @endif
 
-                <footer class="flex flex-col gap-[15px] border-t panel-border panel-subtle px-[20px] py-[20px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
+                <footer class="relative z-10 -mt-px flex flex-col gap-[15px] border-t panel-border panel-subtle p-[20px] md:flex-row md:items-center md:justify-between"><span>Origen de solo lectura: {{ $catalog['root'] }}</span>@if($catalog['scanned_at'])<span>Última lectura: {{ \Carbon\CarbonImmutable::parse($catalog['scanned_at'])->translatedFormat('d M Y · H:i:s') }}</span>@endif</footer>
             </section>
             @if ($activeView === 'backups')
                 {{-- Explorador de la memoria (solo lectura): se recorre como el Explorador de Windows para comprobar que los
@@ -499,7 +505,7 @@
                 @if ($defaultTree)
                 <section wire:ignore
                     x-data="memoryExplorer(@js($defaultTree['key']), @js(config('backup-storage.display_timezone', 'America/Mexico_City')), @js(now(config('backup-storage.display_timezone', 'America/Mexico_City'))->format('d-m-Y')))"
-                    class="backup-explorer-card !mt-[20px] sm:!mt-[30px] xl:!mt-[50px] flex flex-col overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estructura de la memoria">
+                    class="backup-explorer-card flex flex-col overflow-hidden rounded-xl border panel-border panel-surface" aria-label="Estructura de la memoria">
                     <header class="panel-header panel-border border-b p-[20px]">
                         <p class="panel-accent leading-none">Estructura de la memoria</p>
                         <p class="mt-[15px] leading-none">Recorre la memoria como en el Explorador de Windows: haz clic en una carpeta para entrar.</p>
