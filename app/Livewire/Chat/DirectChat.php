@@ -216,7 +216,7 @@ class DirectChat extends Component
     public function render()
     {
         $me = (int) Auth::id();
-        $unreadTotal = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')->count();
+        $unreadTotal = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')->count();
 
         $activeUser = null;
         $messages = collect();
@@ -233,9 +233,10 @@ class DirectChat extends Component
                 // Al tener abierta (expandida) la conversación, lo recibido se marca como leído
                 if ($this->expanded) {
                     DirectMessage::query()->where('sender_id', $activeUser->id)->where('recipient_id', $me)->whereNull('read_at')->update(['read_at' => now()]);
-                    $unreadTotal = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')->count();
+                    $unreadTotal = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')->count();
                 }
                 $messages = DirectMessage::query()
+                    ->retained()
                     ->where(fn ($query) => $query->between($me, $activeUser->id))
                     ->latest('id')->limit(self::VISIBLE_MESSAGES)->get()->reverse()->values();
             }
@@ -289,11 +290,11 @@ class DirectChat extends Component
     /** Conversaciones recientes: la persona, el último mensaje y cuántos mensajes tiene sin leer. */
     private function threads(int $me)
     {
-        $recent = DirectMessage::query()
+        $recent = DirectMessage::query()->retained()
             ->where(fn ($query) => $query->where('sender_id', $me)->orWhere('recipient_id', $me))
             ->latest('id')->limit(300)->get();
 
-        $unread = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')
+        $unread = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')
             ->select('sender_id', DB::raw('count(*) as total'))->groupBy('sender_id')->pluck('total', 'sender_id');
 
         $latest = $recent->groupBy(fn (DirectMessage $item): int => $item->sender_id === $me ? $item->recipient_id : $item->sender_id)

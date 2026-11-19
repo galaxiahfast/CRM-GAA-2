@@ -93,3 +93,9 @@ Schedule::call(function (): void {
     ->name('sessions:prune-expired')
     ->withoutOverlapping();
 
+
+// Los chats individuales se conservan una semana; después se borran los mensajes más antiguos.
+Schedule::command('model:prune', ['--model' => [\App\Models\DirectMessage::class]])
+    ->dailyAt('03:00')
+    ->name('direct-messages:prune')
+    ->withoutOverlapping();

@@ -255,14 +255,14 @@
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Inicio</span>
                     <span class="text-white">›</span>
-                    <span class="text-white">Panel general</span>
+                    <span class="text-white">Panel General</span>
                 </div>
             @elseif (request()->routeIs('customers.view'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
                     <span>Inicio</span>
                     <span class="text-white">›</span>
                     <a href="{{ route('dashboard') }}" class="transition-colors hover:text-white"
-                        onclick="try { const r = JSON.parse(sessionStorage.getItem('customer-detail-return') || 'null'); if (r && r.url) { event.preventDefault(); window.location.href = r.url; } } catch (e) {}">Panel general</a>
+                        onclick="try { const r = JSON.parse(sessionStorage.getItem('customer-detail-return') || 'null'); if (r && r.url) { event.preventDefault(); window.location.href = r.url; } } catch (e) {}">Panel General</a>
                     <span class="text-white">›</span>
                     <span class="text-white">Detalle del cliente</span>
                 </div>

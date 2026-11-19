@@ -41,70 +41,83 @@
         'account' => 'M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
     ];
 
+    // Mismos grupos, nombres y reglas que el menú lateral
     $sections = [];
 
-    $general = [
-        ['Dashboard', 'Consulta clientes, archivos e indicadores.', route('dashboard'), 'dashboard'],
+    $sections['General'] = [
+        ['Panel General', 'Consulta clientes, archivos e indicadores.', route('dashboard'), 'dashboard'],
     ];
-    $sections['General'] = $general;
+
+    $canActivities = $permissions->allows($user, 'activities.manage');
+    $canClock = $permissions->allows($user, 'time-control.clock.use');
+    $canProductivity = $permissions->allows($user, 'time-control.productivity.view');
+    $canSupervision = $permissions->allows($user, 'time-control.supervision.view');
+    $isTimeAdmin = ($canActivities || $canClock || $canProductivity || $canSupervision) && $canSupervision;
+
+    $monitoring = [];
+    if ($isTimeAdmin || $canClock) {
+        $monitoring[] = ['Reloj Checador', 'Registra tu entrada, salida y descansos.', $isTimeAdmin ? route('time.admin.attendance') : route('time.attendance'), 'clock'];
+    }
+    if ($isTimeAdmin) {
+        $monitoring[] = ['Supervisión de Horas', 'Consulta y corrige la asistencia del equipo.', route('time.admin.dashboard'), 'eye'];
+    }
+    if (! $isTimeAdmin && $canActivities) {
+        $monitoring[] = ['Cronómetro', 'Registra tus actividades y el tiempo de cada una.', route('time.index'), 'check'];
+    }
+    if (Gate::allows('view-legacy-own-hours')) {
+        $monitoring[] = ['Manager Control', 'Consulta tus horas registradas.', route('testing.own-hours.index'), 'report'];
+    }
+    if ($isTimeAdmin || $canProductivity) {
+        $monitoring[] = ['Gráficos Generales', 'Revisa el avance y las horas por persona y cliente.', route('time.dashboard'), 'chart'];
+    }
+    if (Gate::allows('access-system-backups')) {
+        $monitoring[] = ['Gestión de Respaldos', 'Sube, consulta y exporta respaldos.', route('activity-backups.index'), 'database'];
+    }
+    if (Gate::allows('view-legacy-managercontrol')) {
+        $monitoring[] = ['Manager Control', 'Administra las horas registradas del equipo.', route('testing.managercontrol.index'), 'report'];
+    }
+    if ($monitoring !== []) {
+        $sections['Monitoreo'] = $monitoring;
+    }
 
     $information = [];
     if ($permissions->allows($user, 'administration.organization.manage')) {
         $information[] = ['Organigrama', 'Estructura jerárquica y líneas de mando.', route('organigrama.index'), 'org'];
-    }
-    if ($canAdministration) {
         $information[] = ['Administración', 'Colaboradores, roles, permisos y organización.', $administrationRoute, 'users'];
     }
-    $information[] = ['Conciliación bancaria', 'Concilia tus movimientos bancarios.', route('bank-reconciliation.show', 'bancaria'), 'bank'];
+    $information[] = ['Conciliación Bancaria', 'Concilia tus movimientos bancarios.', route('bank-reconciliation.show', 'bancaria'), 'bank'];
     $information[] = ['Conciliación OCR', 'Concilia a partir de documentos escaneados.', route('bank-reconciliation.show', 'ocr'), 'ocr'];
+    $information[] = ['Confirmaciones de Saldos', 'Prepara y da seguimiento a las confirmaciones.', route('confirmaciones.show', 'confirmaciones'), 'check'];
     $sections['Información'] = $information;
-
-    $activities = [];
-    if ($permissions->allows($user, 'activities.manage')) {
-        $activities[] = ['Registro de actividades', 'Captura y consulta tus actividades.', route('time.index'), 'check'];
-    }
-    if ($permissions->allows($user, 'time-control.clock.use')) {
-        $activities[] = ['Reloj Checador', 'Registra tu entrada, salida y descansos.', route('time.attendance'), 'clock'];
-    }
-    if ($permissions->allows($user, 'time-control.productivity.view')) {
-        $activities[] = ['Mi productividad', 'Revisa tu avance y tus horas.', route('time.index').'#productividad', 'chart'];
-    }
-    if ($permissions->allows($user, 'time-control.supervision.view')) {
-        $activities[] = ['Supervisión de horas', 'Consulta y corrige la asistencia del equipo.', route('time.admin.attendance'), 'eye'];
-    }
-    if (Gate::allows('access-system-backups')) {
-        $activities[] = ['Gestión de respaldos', 'Sube, consulta y exporta respaldos.', route('activity-backups.index'), 'database'];
-    }
-    if ($activities !== []) {
-        $sections['Actividades'] = $activities;
-    }
 
     $documents = [];
     if (Gate::allows('manage-delivery-notes')) {
-        $documents[] = ['Hoja de entrega', 'Genera hojas de entrega de equipo.', route('soporte.hoja-entrega'), 'delivery'];
+        $documents[] = ['Hoja de Entrega', 'Genera hojas de entrega de equipo.', route('soporte.hoja-entrega'), 'delivery'];
     }
     if (Gate::allows('view-support-reports')) {
-        $documents[] = ['Reportes de soporte', 'Genera y consulta reportes de servicios técnicos.', route('soporte.reportes-tecnicos'), 'report'];
+        $documents[] = ['Reportes de Soporte', 'Genera y consulta reportes de servicios técnicos.', route('soporte.reportes-tecnicos'), 'report'];
     }
     if (Gate::allows('manage-backup-reports')) {
-        $documents[] = ['Reporte de respaldos', 'Revisa el estado de los respaldos por servidor.', route('soporte.reportes-respaldos'), 'server'];
+        $documents[] = ['Reporte de Respaldos', 'Revisa el estado de los respaldos por servidor.', route('soporte.reportes-respaldos'), 'server'];
     }
-    $sections['Documentos'] = $documents;
+    if ($documents !== []) {
+        $sections['Documentos'] = $documents;
+    }
 
     $sections['Soporte'] = [
         ['Preguntas', 'Consulta respuestas y orientación rápida.', route('soporte.preguntas'), 'help'],
-        ['Soporte técnico', 'Solicita ayuda mediante un ticket.', route('soporte.ticket'), 'ticket'],
-        ['Mi cuenta', 'Tus datos, seguridad y preferencias.', route('profile.show'), 'account'],
+        ['Chat de Soporte', 'Habla con el equipo de soporte y da seguimiento.', route('soporte.ticket'), 'ticket'],
+        ['Mi Cuenta', 'Tus datos, seguridad y preferencias.', route('profile.show'), 'account'],
     ];
 @endphp
 
 @php
     $sectionMeta = [
         'General' => ['dashboard', 'Tus herramientas principales de trabajo.'],
+        'Monitoreo' => ['clock', 'Asistencia, actividades, horas y respaldos.'],
         'Información' => ['users', 'Organigrama, administración y conciliaciones.'],
-        'Actividades' => ['check', 'Registro de actividades, asistencia y respaldos.'],
         'Documentos' => ['report', 'Hojas de entrega y reportes.'],
-        'Soporte' => ['ticket', 'Ayuda, preguntas y tu cuenta.'],
+        'Soporte' => ['ticket', 'Preguntas, chat de soporte y tu cuenta.'],
     ];
 @endphp
 <x-app-layout>
@@ -165,17 +178,14 @@
             <!-- Cabecera: título y subtítulo a la izquierda; rol y fecha a la derecha -->
             <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                 <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                    <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
-                        <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-                    </span>
                     <div class="min-w-0">
                         <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Hola, {{ $user->name }}</h1>
-                        <p class="mt-[15px] leading-none">Sesión iniciada correctamente · {{ $greeting }}</p>
+                        <p class="mt-[5px] leading-[30px]">Sesión iniciada correctamente · {{ $greeting }}</p>
                     </div>
                 </div>
                 <div class="flex w-full min-w-0 flex-wrap items-center gap-[20px] lg:w-auto">
                     <a href="{{ route('section.guide', 'inicio') }}" title="Descargar la guía de Inicio en PDF" class="home-link inline-flex shrink-0 items-center gap-[10px] leading-none hover:opacity-70">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
+                        
                         Guía PDF
                     </a>
                     <div class="min-w-0 lg:text-right">
@@ -199,7 +209,7 @@
                             <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                                 <div class="min-w-0">
                                     <p class="panel-accent flex items-center gap-[10px] leading-none">
-                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons[$metaIcon] }}" /></svg>
+                                        
                                         <span>{{ $title }}</span>
                                     </p>
                                     @if ($metaNote)
@@ -212,7 +222,7 @@
                                 @foreach ($cards as [$cardTitle, $description, $url, $icon])
                                     <a href="{{ $url }}" class="home-card panel-border block border-b border-r p-[20px]">
                                         <span class="home-link flex items-center gap-[10px] leading-none">
-                                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons[$icon] }}" /></svg>
+                                            
                                             <span class="min-w-0">{{ $cardTitle }}</span>
                                         </span>
                                         <span class="mt-[7.5px] -mb-[7.5px] block leading-[30px]">{{ $description }}</span>

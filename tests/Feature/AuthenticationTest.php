@@ -51,7 +51,7 @@ class AuthenticationTest extends TestCase
             ->assertSeeText('Sesión iniciada correctamente')
             ->assertSeeText($user->name)
             ->assertSeeText('Inicio')
-            ->assertSeeText('Dashboard')
+            ->assertSeeText('Panel General')
             ->assertSee('data-session-logout', false);
 
         $dashboardTables = ['customers', 'customer_files', 'services', 'sub_services'];

@@ -74,12 +74,9 @@
                 <!-- Cabecera: título y subtítulo a la izquierda; filtros a la derecha -->
                 <section class="mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                        <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
-                            <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
-                        </span>
                         <div class="min-w-0">
-                            <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Panel general</h1>
-                            <p class="-mb-[5px] mt-[10px] leading-[25px]">Consulta el avance de tus clientes y los archivos cargados.</p>
+                            <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Panel General</h1>
+                            <p class="mt-[5px] leading-[30px]">Consulta el avance de tus clientes y los archivos cargados.</p>
                         </div>
                     </div>
 
@@ -109,10 +106,10 @@
                         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                             <div class="min-w-0">
                                 <p class="panel-accent flex items-center gap-[10px] leading-none">
-                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                                    
                                     <span>Resumen de archivos</span>
                                 </p>
-                                <p class="-mb-[5px] mt-[10px] leading-[25px]">Documentos cargados por tus clientes</p>
+                                <p class="mt-[15px] leading-none">Documentos cargados por tus clientes</p>
                             </div>
                             @if ($periodLabel !== '')
                                 <span class="flex shrink-0 items-center gap-[10px] leading-none"><span class="h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span><span>Periodo: {{ $periodLabel }}</span></span>
@@ -123,10 +120,10 @@
                             @foreach ($stats as $stat)
                                 <div class="panel-border min-w-0 border-b p-[20px] last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
                                     <p class="panel-accent flex items-center gap-[10px] leading-none">
-                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $stat['icon'] }}" /></svg>
+                                        
                                         <span class="min-w-0">{{ $stat['label'] }}</span>
                                     </p>
-                                    <p class="mt-[15px] pl-[26px] leading-none tabular-nums">{{ number_format((int) $stat['value']) }}</p>
+                                    <p class="mt-[15px] leading-none tabular-nums">{{ number_format((int) $stat['value']) }}</p>
                                 </div>
                             @endforeach
                         </div>
@@ -149,10 +146,10 @@
                     <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
                         <div class="min-w-0">
                             <p class="panel-accent flex items-center gap-[10px] leading-none">
-                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+                                
                                 <span>Informe de clientes</span>
                             </p>
-                            <p class="-mb-[5px] mt-[10px] leading-[25px]">Avance de archivos por cliente y servicio</p>
+                            <p class="mt-[15px] leading-none">Avance de archivos por cliente y servicio</p>
                         </div>
                         @if ($this->customers->isNotEmpty())
                             <div class="flex w-full flex-wrap items-center gap-x-[20px] gap-y-[15px] sm:w-auto">
@@ -171,14 +168,14 @@
                                 <button type="button" role="tab" wire:click.prevent="customersPorcentageIncomplete"
                                     aria-selected="{{ $filterType === 'incomplete' ? 'true' : 'false' }}"
                                     class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
-                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    
                                     <span>Incompletos</span>
                                 </button>
 
                                 <button type="button" role="tab" wire:click.prevent="customersPorcentageComplete"
                                     aria-selected="{{ $filterType === 'complete' ? 'true' : 'false' }}"
                                     class="panel-tab inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
-                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    
                                     <span>Completos</span>
                                 </button>
                             </div>
@@ -188,10 +185,10 @@
                                 {{-- Guía en PDF: cómo usar el Panel general y cómo está configurado el programador de tareas --}}
                                 {{-- Si las rutas están en caché y aún no incluyen la guía, el botón se oculta en lugar de romper el panel. --}}
                                 @if (\Illuminate\Support\Facades\Route::has('dashboard.guide'))
-                                    <a href="{{ route('dashboard.guide') }}" title="Descargar la guía del Panel general en PDF"
+                                    <a href="{{ route('dashboard.guide') }}" title="Descargar la guía del Panel General en PDF"
                                         class="dash-link inline-flex items-center gap-[10px] py-[20px] leading-none focus:outline-none focus:ring-0">
-                                        <svg class="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3h7l4 4v14H7V3Zm7 0v5h4M10 12h5m-5 4h5" /></svg>
-                                        <span>Guía</span>
+                                        
+                                        <span>Guía PDF</span>
                                     </a>
                                 @endif
                             </div>

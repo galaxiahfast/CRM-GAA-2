@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conciliación Bancaria OCR - Estados Escaneados V7 - GONZÁLEZ ALONZO Y ASOCIADOS S.C.P.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     /* Conciliación bancaria: mismo diseño del panel (Administración, Reloj Checador, Reportes de soporte).
    Solo cambia la presentación; los identificadores y clases que usa la lógica se conservan. */
@@ -167,18 +170,14 @@
     }
 
     header p {
-      margin: 11px 0 0;
-      line-height: 1.25;
+      margin: 5px 0 0;
+      line-height: 30px;
       opacity: 1;
       color: var(--text);
     }
 
     .version-badge {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 15px;
+      color: var(--accent);
       line-height: 1;
       white-space: nowrap;
     }
@@ -230,7 +229,7 @@
     }
 
     .carga-item {
-      border: 1px dashed var(--border);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 20px;
       background: var(--subtle);
@@ -755,89 +754,129 @@
         line-height: 1.3;
       }
     }
+
+    /* ---- Formato de módulos (Reloj Checador, Control de Actividades, Chat de soporte) ----
+       Solo dos colores de texto: negro (blanco en tema oscuro) y azul; los botones y enlaces van en verde. */
+    :root { --muted: var(--text); --btn-green: #15803d; }
+    html.module-dark-theme { --btn-green: #4ade80; }
+    b, strong { color: inherit; }
+    .panel { margin-top: var(--pad); }
+    header + .container > .panel:first-child { margin-top: var(--pad); }
+    .acciones button {
+      height: 50px;
+      border: 1px solid var(--btn-green);
+      background: color-mix(in srgb, var(--btn-green) 12%, var(--surface));
+      color: var(--btn-green);
+    }
+    .acciones button:hover:not(:disabled) { background: color-mix(in srgb, var(--btn-green) 20%, var(--surface)); }
+    /* El nombre del archivo elegido se muestra debajo (en verde); el texto nativo se corta en columnas angostas */
+    input[type=file] { font-size: 0; }
+    input[type=file]::file-selector-button { height: 50px; font-size: 15px; }
+    input[type=text], input[type=number], input[type=date], select, textarea {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      padding: 15px 20px;
+      outline: none;
+      box-shadow: none;
+    }
+    input:focus, select:focus, textarea:focus, button:focus, button:focus-visible { outline: none; box-shadow: none; border-color: var(--border); }
+
+    /* ---- Ritmo del módulo: líneas de texto de 30px, títulos sin altura extra ---- */
+    body { line-height: 30px; }
+    h1, h2, h3 { line-height: 1; }
+    .carga-item label, .carga-item small, .archivo-ok, #estado, .reglas li, th, td, .formula, .vacio { line-height: 30px; }
+    .carga-item label { margin-bottom: 10px; }
+    .carga-item small { margin-top: 10px; }
+    .carga-grid { gap: 20px; }
+    .acciones { margin-bottom: 0; }
+    .panel { padding-bottom: 20px; }
+    .panel > p { margin-bottom: 0; }
+    .kpi .etiqueta, .pct-grande .texto { line-height: 30px; margin-top: 5px; }
+    .kpi .valor, .pct-grande .num { line-height: 1; }
+
+    /* Cabecera de la primera tarjeta con el botón a la derecha, y reglas en tarjetas que reparten el ancho */
+    .panel > h2.con-accion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+    .panel > h2.con-accion .acciones { margin: 0; }
+    .reglas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 20px; }
+    .regla { border: 1px solid var(--border); border-radius: 12px; background: var(--subtle); padding: 20px; }
+    .regla label { display: block; margin-bottom: 10px; color: var(--accent); line-height: 30px; }
+    .regla p { margin: 0; line-height: 30px; }
+    @media (min-width: 900px) { .reglas-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } header { flex-wrap: nowrap; align-items: flex-start; } .hdr-main { flex: 1; } .version-badge { flex: none; } }
+
+    /* ---- Formato de módulo: cabeceras con título y subtítulo; celdas separadas por líneas de 1px (como Inicio) ---- */
+    .panel > h2 .h-text { display: block; min-width: 0; }
+    .panel > h2 .h-title { display: block; color: var(--accent); line-height: 1; }
+    .panel > h2 .h-sub { display: block; margin-top: 15px; color: var(--text); line-height: 1; }
+    .panel:has(> .celdas) { padding-bottom: 0; }
+    .panel > .celdas { display: grid; margin: 0 -1px -1px 0 !important; gap: 0; }
+    .panel > .celdas > * { border: 0; border-radius: 0; background: transparent; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 20px; transition: background-color 150ms ease; }
+    .panel > .celdas > *:hover { background: var(--subtle); }
+    .panel > .celdas label { display: block; margin: 0; color: var(--accent); line-height: 1; }
+    .panel > .celdas small, .panel > .celdas p { display: block; margin: 7.5px 0 -7.5px; line-height: 30px; }
+    .panel > .celdas input[type=file] { margin-top: 15px; }
+    .panel > .celdas .archivo-ok { margin-top: 15px; line-height: 1; }
+    .panel > .celdas.carga-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+    .panel > .celdas.reglas-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+    @media (min-width: 900px) { .panel > .celdas.reglas-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    .panel:has(> .celdas) > #errorBox:not(:empty) { margin-top: 0; padding: 20px 0; }
   </style>
 </head>
 
 <body>
   <header>
     <div class="hdr-main">
-      <span class="hdr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-          aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M4 7V4h3m10 0h3v3M4 17v3h3m10 0h3v-3M7 12h10M8 9h8M8 15h8" />
-        </svg></span>
       <div class="hdr-text">
-        <h1>Conciliación Bancaria — OCR para Estados de Cuenta Escaneados</h1>
-        <p>Para clientes que entregan el estado de cuenta como imagen o PDF escaneado — Cruce Estado de Cuenta vs.
-          Auxiliar Contable</p>
+        <h1>Conciliación OCR</h1>
+        <p>Cruza el estado de cuenta escaneado (imagen o PDF) contra el auxiliar contable.</p>
       </div>
     </div>
-    <div class="version-badge">OCR · V7 (base V27)</div>
+    <div class="version-badge">— OCR · V7 (base V27)</div>
   </header>
 
   <div class="container">
 
     <div class="panel">
-      <h2>1. Cargar los 3 archivos</h2>
-      <div class="carga-grid">
+      <h2 class="con-accion"><span class="h-text"><span class="h-title">1. Cargar los 3 archivos</span><span class="h-sub">Estado de cuenta, auxiliar contable y conciliación del mes anterior.</span></span><div class="acciones">
+  <button id="btnProcesar">Procesar Conciliación</button>
+  <span id="estado"></span>
+</div></h2>
+      <div class="carga-grid celdas">
         <div class="carga-item">
           <label>Estado de Cuenta Bancario (Excel, CSV o PDF)</label>
           <input type="file" id="fileBanco" accept=".xlsx,.xls,.csv,.pdf">
-          <small>Excel/CSV: columnas Fecha, Descripción, Depósito(s) y Retiro(s)/Cargo(s) en cualquier orden, detectadas
-            por su encabezado. PDF: si trae texto se lee directo; si son imágenes (escaneado o reimpreso) se reconoce el
-            texto con OCR (tarda unos segundos por hoja, sin internet). En ambos casos el lector se adapta al formato de
-            cada banco y valida que el saldo y los totales cuadren antes de conciliar.</small>
+          <small>Excel/CSV con Fecha, Descripción, Depósitos y Retiros, o PDF (si es escaneado se reconoce con OCR). El saldo y los totales se validan antes de conciliar.</small>
           <div class="archivo-ok" id="okBanco"></div>
           <div class="archivo-ok" id="infoBanco" style="font-weight:normal;font-size:11.5px;"></div>
         </div>
         <div class="carga-item">
           <label>Auxiliar Contable de Bancos (.xlsx)</label>
           <input type="file" id="fileAux" accept=".xlsx,.xls">
-          <small>Columnas: A=Fecha, B=Tipo póliza, C=Núm. póliza, D=Descripción, E=Factura/Cheque, F=Depósitos(Cargos),
-            G=Retiros(Abonos), H=Saldo</small>
+          <small>Columnas: Fecha, Tipo póliza, Núm. póliza, Descripción, Factura/Cheque, Depósitos, Retiros y Saldo.</small>
           <div class="archivo-ok" id="okAux"></div>
         </div>
         <div class="carga-item">
           <label>Conciliación del Mes Anterior (.xls/.xlsx)</label>
           <input type="file" id="fileConc" accept=".xlsx,.xls">
-          <small>Se controlarán: Cargos y Abonos del banco no correspondidos por contabilidad, Cargos y Abonos de
-            contabilidad no correspondidos por el banco. Acepta tanto el formato de la plantilla ya autorizada (una sola
-            hoja) como el formato usado en meses anteriores.</small>
+          <small>Partidas pendientes del mes anterior, en la plantilla autorizada o en el formato de meses anteriores.</small>
           <div class="archivo-ok" id="okConc"></div>
         </div>
       </div>
 
-      <div class="reglas-box">
-        <strong>Reglas de cruce aplicadas en cascada (en este orden):</strong>
-        <div style="margin:4px 0 8px 0;">Las reglas 1, 2 y 3 (cruce uno a uno) aceptan hasta <b>$0.01</b> de diferencia
-          de valor, por redondeos de centavos entre el banco y la contabilidad.</div>
-        <ol>
-          <li><b>Cruce exacto</b> — misma fecha y mismo valor.</li>
-          <li><b>Fecha cercana</b> — mismo valor exacto, con hasta 3 días de diferencia (se toma la fecha más cercana).
-            Si no hay coincidencia dentro de esos 3 días, también se acepta un valor exacto registrado en contabilidad
-            en cualquier otra fecha dentro del mismo mes.</li>
-          <li><b>Cruce por nombre</b> — mismo valor exacto y descripciones que comparten una palabra en común; se acepta
-            que la última palabra de una sea el comienzo de la otra (el banco corta las descripciones).</li>
-          <li><b>Suma de comisiones/IVA</b> — el banco registra las comisiones e IVA en movimientos individuales; la
-            contabilidad los agrupa en una sola póliza global (de diario, con el nombre del banco). Se compara por folio
-            de terminal y también sumando todas las comisiones/IVA/transferencias bancarias del mes contra esa póliza
-            global.</li>
-          <li><b>Suma grupal (varios contra varios)</b> — pueden existir 2 o más movimientos del banco y 2 o más de la
-            contabilidad que individualmente no cruzan, pero cuyos totales coinciden exactamente; se buscan dentro de
-            una ventana de hasta 3 días.</li>
-        </ol>
-        <div style="margin-top:8px;">Además, las 4 categorías de la conciliación del mes anterior se validan cruzadas:
-          <b>Cargos/Abonos del banco no correspondidos por contabilidad</b> contra los Abonos/Cargos del <b>Auxiliar
-            Contable</b>, y <b>Cargos/Abonos de contabilidad no correspondidos por el banco</b> contra los
-          Depósitos/Cargos del <b>Estado de Cuenta Bancario</b>.
-        </div>
-      </div>
+<div id="errorBox"></div>
+    </div>
 
-      <div class="acciones">
-        <button id="btnProcesar">Procesar Conciliación</button>
-        <span id="estado"></span>
+    <div class="panel">
+      <h2><span class="h-text"><span class="h-title">Reglas de cruce</span><span class="h-sub">Se aplican en cascada, en este orden. Las reglas 1, 2 y 3 aceptan hasta $0.01 de diferencia por redondeo.</span></span></h2>
+      <div class="reglas-grid celdas">
+        <div class="regla"><label>1. Cruce exacto</label><p>Misma fecha y mismo valor.</p></div>
+        <div class="regla"><label>2. Fecha cercana</label><p>Mismo valor, hasta 3 días de diferencia o cualquier fecha del mismo mes.</p></div>
+        <div class="regla"><label>3. Cruce por nombre</label><p>Mismo valor y una palabra en común en la descripción.</p></div>
+        <div class="regla"><label>4. Suma de comisiones/IVA</label><p>Comisiones e IVA del banco contra la póliza global de contabilidad.</p></div>
+        <div class="regla"><label>5. Suma grupal</label><p>Varios movimientos del banco contra varios de contabilidad con el mismo total, hasta 3 días.</p></div>
       </div>
-      <div id="errorBox"></div>
     </div>
 
     <div id="resultados">

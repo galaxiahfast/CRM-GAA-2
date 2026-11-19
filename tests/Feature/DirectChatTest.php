@@ -218,4 +218,26 @@ class DirectChatTest extends TestCase
         Livewire::test(DirectChat::class)->call('openConversation', $away->id)->assertSee('Desconectado');
         Livewire::test(DirectChat::class)->call('openConversation', $always->id)->assertSee('En línea');
     }
+
+    public function test_conversations_are_kept_for_a_week_and_not_reset_each_day(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create(['name' => 'Luis']);
+        $make = function (string $body, $when) use ($me, $other): void {
+            $message = DirectMessage::create(['sender_id' => $other->id, 'recipient_id' => $me->id, 'body' => $body]);
+            $message->forceFill(['created_at' => $when, 'updated_at' => $when])->save();
+        };
+        $make('mensaje de hace seis dias', now()->subDays(6));
+        $make('mensaje de ayer', now()->subDay());
+        $make('mensaje de hace ocho dias', now()->subDays(8));
+        $this->actingAs($me);
+
+        Livewire::test(DirectChat::class)->call('openConversation', $other->id)
+            ->assertSee('mensaje de ayer')
+            ->assertSee('mensaje de hace seis dias')
+            ->assertDontSee('mensaje de hace ocho dias');
+
+        $this->artisan('model:prune', ['--model' => [DirectMessage::class]])->assertSuccessful();
+        $this->assertSame(2, DirectMessage::count());
+    }
 }
