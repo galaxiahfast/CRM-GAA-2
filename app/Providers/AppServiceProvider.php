@@ -186,6 +186,14 @@ class AppServiceProvider extends ServiceProvider
                 } catch (Throwable $exception) {
                     report($exception);
                 }
+
+                // Deja de aparecer «en línea» en cuanto cierra sesión (sin esperar los minutos de inactividad)
+                try {
+                    User::query()->whereKey($event->user->getKey())->update(['last_seen_at' => null]);
+                    \Illuminate\Support\Facades\Cache::forget('home:online-users');
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
             }
         });
 

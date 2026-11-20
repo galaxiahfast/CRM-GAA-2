@@ -57,10 +57,8 @@ class UpdateProfileInformationForm extends JetstreamUpdateProfileInformationForm
         $this->isOwnProfile = $this->viewedUser === null || $this->viewedUser->is(auth()->user());
         $this->state['last_name'] = auth()->user()->last_name ?? '';
         $profileUser = $this->viewedUser ?? auth()->user();
-        $this->isOnline = $this->isOwnProfile || DB::table((string) config('session.table', 'sessions'))
-            ->where('user_id', $profileUser->id)
-            ->where('last_activity', '>=', now()->subMinutes(2)->timestamp)
-            ->exists();
+        // Misma regla que en todo el sistema: los agentes siempre; los demás si tienen la web abierta
+        $this->isOnline = $this->isOwnProfile || $profileUser->isOnline();
         $this->activityCount = $profileUser->timeEntries()->count();
         $this->friendCount = $profileUser->friends()->count();
     }

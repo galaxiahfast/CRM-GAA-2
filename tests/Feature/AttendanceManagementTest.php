@@ -128,7 +128,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSee(now()->subDays(15)->format('d/m/Y').' — '.now()->format('d/m/Y'))
             ->assertSeeHtml('role="checkbox"')
             ->assertSeeHtml('toggleAreaUsers(')
-            ->assertSee('Jorge Armando Puc Dzib')
+            ->assertSee('JORGE ARMANDO PUC DZIB')
             ->assertSeeHtml('grid grid-cols-1 gap-[20px] p-[20px] sm:grid-cols-2 xl:grid-cols-3')
             ->call('showResultsSection')
             ->assertSet('selectionReportIsCurrent', true)
@@ -242,7 +242,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('reportSection', 'history')
             ->assertSet('changeHistoryLoaded', true)
             ->assertSet('changeHistoryIsExample', false)
-            ->assertSee('Aux Uno')
+            ->assertSee('AUX UNO')
             ->assertSee('Se agregó la salida omitida por el dispositivo.')
             ->assertSee('09:00:00 · 13:00:00 · 14:00:00 · 18:30:15');
 
@@ -385,7 +385,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('reportSection', 'results')
             ->assertSet('activeReportUserId', $ana->id)
             ->assertSet('employeeId', 'EMP-R01')
-            ->assertSet('selectedEmployeeName', 'Ana Uno')
+            ->assertSet('selectedEmployeeName', 'ANA UNO')
             ->assertSet('payrollRows.0.neto', '09h 00m 00s')
             ->assertSeeHtml('title="Hay 2 marcas adicionales">...</span>')
             ->assertSee('Reporte individual')
@@ -419,7 +419,7 @@ class AttendanceManagementTest extends TestCase
             ->call('selectReportUser', $beto->id)
             ->assertSet('activeReportUserId', $beto->id)
             ->assertSet('employeeId', 'EMP-R02')
-            ->assertSet('selectedEmployeeName', 'Beto Dos');
+            ->assertSet('selectedEmployeeName', 'BETO DOS');
 
         $groupReport = app(\App\Services\TimeControl\AttendanceExportService::class)->selectionReport(
             'group',
@@ -529,8 +529,8 @@ class AttendanceManagementTest extends TestCase
         $settings = json_decode(Storage::disk('local')->get('checador_settings/EMP-NEW.json'), true);
         $this->assertEquals(37.50, $settings['hourly_rate']);
         $this->assertEquals(62.25, $settings['bonus_amount']);
-        $this->assertSame('Clara', $aux->name);
-        $this->assertSame('Ríos', $aux->last_name);
+        $this->assertSame('CLARA', $aux->name);
+        $this->assertSame('RÍOS', $aux->last_name);
         $this->assertSame('clara-id@test.mx', $aux->email);
         $this->assertSame($auxRole->id, $aux->role_id);
         $this->assertSame('EMP-TAKEN', $other->fresh()->employee_id);

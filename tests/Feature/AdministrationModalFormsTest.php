@@ -44,10 +44,10 @@ class AdministrationModalFormsTest extends TestCase
         ]);
 
         Livewire::actingAs($owner)->test(GestionAuxiliares::class)
-            ->assertSee('Persona asignada')
+            ->assertSee('PERSONA ASIGNADA')
             ->assertDontSee('Persona externa')
             ->set('search', 'Persona')
-            ->assertSee('Persona asignada')
+            ->assertSee('PERSONA ASIGNADA')
             ->assertDontSee('Persona externa');
     }
 

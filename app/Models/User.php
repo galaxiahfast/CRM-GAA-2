@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -99,6 +100,50 @@ class User extends Authenticatable implements MustVerifyEmail
     public function approximateAge(): ?int
     {
         return $this->birth_year ? max(0, (int) now()->year - (int) $this->birth_year) : null;
+    }
+
+    /**
+     * Los nombres se muestran y se guardan siempre en MAYÚSCULAS (con acentos y ñ): «Dioni Colaborador» → «DIONI COLABORADOR».
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $value === null ? null : mb_strtoupper($value, 'UTF-8'),
+            set: fn (?string $value): ?string => $value === null ? null : mb_strtoupper(trim($value), 'UTF-8'),
+        );
+    }
+
+    protected function lastName(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $value === null ? null : mb_strtoupper($value, 'UTF-8'),
+            set: fn (?string $value): ?string => $value === null ? null : mb_strtoupper(trim($value), 'UTF-8'),
+        );
+    }
+
+    /** Minutos sin actividad tras los que alguien deja de estar en línea (la página avisa cada 30 s que sigue abierta). */
+    public const ONLINE_MINUTES = 3;
+
+    /** Cuentas que siempre están en línea: los agentes (bots). */
+    public static function alwaysOnlineEmails(): array
+    {
+        return array_values(array_filter((array) config('support.always_online_emails', [])));
+    }
+
+    /**
+     * En línea: los agentes (bots) siempre; los demás solo si tienen la web abierta (actividad en los últimos minutos,
+     * registrada por TrackUserPresence). Al cerrar sesión se quita la marca y dejan de aparecer al momento.
+     */
+    public function scopeOnline($query)
+    {
+        return $query->where(fn ($q) => $q->where('last_seen_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))
+            ->orWhereIn('email', self::alwaysOnlineEmails()));
+    }
+
+    public function isOnline(): bool
+    {
+        return in_array($this->email, self::alwaysOnlineEmails(), true)
+            || ($this->last_seen_at !== null && $this->last_seen_at->gte(now()->subMinutes(self::ONLINE_MINUTES)));
     }
 
     protected function casts(): array

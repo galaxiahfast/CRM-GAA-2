@@ -65,8 +65,8 @@ class GoogleLoginTest extends TestCase
         $user = User::query()->where('email', 'nueva.persona@datamid.com.mx')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertSame('Auxiliar', $user->role->role);
-        $this->assertSame('Nueva', $user->name);
-        $this->assertSame('Persona', $user->last_name);
+        $this->assertSame('NUEVA', $user->name);
+        $this->assertSame('PERSONA', $user->last_name);
         $this->assertSame('sub-1', $user->google_id);
         $this->assertTrue(Hash::check('cualquier-cosa', $user->password) === false);
 

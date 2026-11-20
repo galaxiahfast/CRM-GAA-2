@@ -311,25 +311,25 @@ class OrganizationChartTest extends TestCase
         $this->assertSame(0, UserHierarchyRelation::count());
     }
 
-    public function test_organigrama_opens_first_and_builds_the_tree_afterwards(): void
+    public function test_organigrama_arrives_with_the_tree_in_the_first_response(): void
     {
         ['adminRole' => $adminRole] = $this->seedRoles();
         $admin = $this->createUser($adminRole, 'admin-org@test.mx', 'Admin');
 
-        // La pantalla abre con el aviso de carga: el árbol no se arma en la primera respuesta.
+        // El árbol llega en la primera respuesta (sus datos están en caché): sin «Cargando…» ni una segunda petición
         $this->actingAs($admin)
             ->get(route('organigrama.index'))
             ->assertOk()
-            ->assertSee('Cargando organigrama')
-            ->assertSee('wire:init="loadOrgChartData"', false);
+            ->assertDontSee('Cargando organigrama')
+            ->assertDontSee('wire:init="loadOrgChartData"', false)
+            ->assertSee('ADMIN');
 
+        // Si por algo no se cargó al abrir, todavía se puede pedir después
         Livewire::actingAs($admin)
             ->test(PanelAdministracion::class)
             ->set('orgChartPage', true)
-            ->assertSet('orgChartLoaded', false)
             ->call('loadOrgChartData')
-            ->assertSet('orgChartLoaded', true)
-            ->assertSee('Admin');
+            ->assertSet('orgChartLoaded', true);
     }
 
     public function test_administracion_index_still_loads(): void

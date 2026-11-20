@@ -15,8 +15,6 @@ use Throwable;
  */
 class OnlineUsers extends Component
 {
-    private const ONLINE_MINUTES = 3;
-
     private const LIMIT = 60;
 
     /** Segundos que se reutiliza la lista: todas las personas ven lo mismo, así que se calcula una vez por tick. */
@@ -49,7 +47,7 @@ class OnlineUsers extends Component
             try {
                 return $this->rows();
             } catch (Throwable) {
-                return [$this->assistantRow()];
+                return [];
             }
         }
     }
@@ -57,12 +55,9 @@ class OnlineUsers extends Component
     /** @return array<int, array<string, mixed>> */
     private function rows(): array
     {
+        // Los agentes (bots) siempre; los demás solo si tienen la web abierta
         $users = User::query()
-            ->where(function ($query): void {
-                // El administrador (correos de support.always_online_emails) aparece siempre en línea.
-                $query->where('last_seen_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))
-                    ->orWhereIn('email', (array) config('support.always_online_emails', []));
-            })
+            ->online()
             ->orderBy('name')
             ->limit(self::LIMIT)
             ->get(['id', 'name', 'email', 'last_name', 'profile_photo_path', 'last_seen_at', 'last_seen_section']);
@@ -76,40 +71,39 @@ class OnlineUsers extends Component
                 ->get()
                 ->keyBy('user_id');
 
-        $rows = $users->map(function (User $user) use ($activities): array {
+        // Los agentes (bots) muestran lo que hacen y van primero; su fila de soporte abre el asistente
+        $bots = collect((array) config('support.bots', []))->keyBy('email');
+
+        $rows = $users->map(function (User $user) use ($activities, $bots): array {
             $entry = $activities->get($user->id);
+            $bot = $bots->get($user->email);
+
+            if ($bot) {
+                return [
+                    'id' => (int) $user->id,
+                    'name' => trim($user->name.' '.($user->last_name ?? '')),
+                    'photo' => $user->profile_photo_path ? $user->profile_photo_url : asset($bot['photo']),
+                    'activity' => $bot['activity'],
+                    'customer' => null,
+                    'section' => $bot['section'],
+                    'url' => $user->email === config('support.automated_user.email') ? route('soporte.preguntas') : route('profiles.show', $user->id),
+                    'bot' => true,
+                ];
+            }
 
             return [
                 'id' => (int) $user->id,
                 'name' => trim($user->name.' '.($user->last_name ?? '')) ?: 'Usuario',
-                'photo' => $user->profile_photo_path ? $user->profile_photo_url : null,
+                'photo' => $user->hasProfilePhotoFile() ? $user->profile_photo_url : null,
                 'activity' => $entry
                     ? ($entry->subService?->sub_service ?? 'Actividad en curso')
-                    : (in_array($user->email, (array) config('support.always_online_emails', []), true) ? 'Programando' : null),
+                    : null,
                 'customer' => $entry?->customer?->name,
                 'section' => $user->last_seen_section,
                 'url' => route('profiles.show', $user->id),
             ];
-        })->sortBy(fn (array $row): string => ($row['activity'] ? '0' : '1').mb_strtolower($row['name']))->values()->all();
-
-        array_unshift($rows, $this->assistantRow());
+        })->sortBy(fn (array $row): string => (! empty($row['bot']) ? '0' : ($row['activity'] ? '1' : '2')).mb_strtolower($row['name']))->values()->all();
 
         return $rows;
-    }
-
-    /** Sofía, la asistente virtual, está siempre disponible; su fila abre el asistente. */
-    private function assistantRow(): array
-    {
-        $bot = (array) config('support.automated_user');
-
-        return [
-            'id' => 'sofia',
-            'name' => trim(($bot['name'] ?? 'Sofia').' '.($bot['last_name'] ?? '')),
-            'photo' => asset(ltrim((string) ($bot['avatar'] ?? 'img/support/sofia-avatar.svg'), '/')),
-            'activity' => 'Asistente virtual',
-            'customer' => null,
-            'section' => 'Soporte',
-            'url' => route('soporte.preguntas'),
-        ];
     }
 }

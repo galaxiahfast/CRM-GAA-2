@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 /**
@@ -23,7 +24,8 @@ class DirectChat extends Component
 {
     private const MAX_LENGTH = 1000;
 
-    private const VISIBLE_MESSAGES = 60;
+    /** Mensajes que se cargan de una conversación; «Ver mensajes anteriores» suma otros tantos (el historial es indefinido). */
+    private const PAGE_SIZE = 60;
 
     public bool $expanded = false;
 
@@ -32,6 +34,9 @@ class DirectChat extends Component
     public string $message = '';
 
     public string $search = '';
+
+    /** Cuántos mensajes de la conversación activa se muestran (crece con «Ver mensajes anteriores»). */
+    public int $limit = self::PAGE_SIZE;
 
     /** Cambia con cada intento de envío para que el aviso emergente de error vuelva a mostrarse. */
     public int $errorSeq = 0;
@@ -116,6 +121,7 @@ class DirectChat extends Component
         $this->expanded = true;
         $this->search = '';
         $this->message = '';
+        $this->limit = self::PAGE_SIZE;
         $this->remember();
         $this->dispatch('direct-chat-opened');
         $this->dispatch('direct-chat-sent');
@@ -126,11 +132,22 @@ class DirectChat extends Component
         $this->forgetTyping();
         $this->activeUserId = null;
         $this->message = '';
+        $this->limit = self::PAGE_SIZE;
         $this->remember();
     }
 
-    /** Mientras se escribe, la otra persona ve «está escribiendo» (dura unos segundos y se renueva con cada tecla). */
-    public function updatedMessage(string $value): void
+    /** Carga los mensajes anteriores de la conversación (el navegador conserva el punto de lectura). */
+    public function loadOlder(): void
+    {
+        $this->limit += self::PAGE_SIZE;
+    }
+
+    /**
+     * Mientras se escribe, la otra persona ve «está escribiendo» (dura unos segundos y se renueva al seguir escribiendo).
+     * Solo guarda ese aviso: no vuelve a dibujar el chat, así no se frena nada al escribir.
+     */
+    #[Renderless]
+    public function typing(string $value = ''): void
     {
         if ($this->activeUserId === null) {
             return;
@@ -145,11 +162,15 @@ class DirectChat extends Component
         Cache::put($this->typingKey((int) Auth::id(), $this->activeUserId), true, now()->addSeconds(6));
     }
 
-    public function send(): void
+    /**
+     * El navegador manda el texto y vacía la caja al instante (el mensaje se ve enseguida con un reloj); aquí se guarda.
+     * Sin texto, se usa lo escrito en la caja.
+     */
+    public function send(?string $text = null): void
     {
         $this->errorSeq++;
         $me = (int) Auth::id();
-        $body = trim($this->message);
+        $body = trim($text ?? $this->message);
 
         if ($this->activeUserId === null || $this->activeUserId === $me) {
             return;
@@ -160,6 +181,7 @@ class DirectChat extends Component
             return;
         }
         if (mb_strlen($body) > self::MAX_LENGTH) {
+            $this->message = $body;
             $this->addError('message', 'El mensaje no puede superar los '.self::MAX_LENGTH.' caracteres.');
 
             return;
@@ -167,6 +189,7 @@ class DirectChat extends Component
 
         $rateKey = 'direct-chat:'.$me;
         if (RateLimiter::tooManyAttempts($rateKey, 30)) {
+            $this->message = $body;
             $this->addError('message', 'Espera unos segundos antes de enviar más mensajes.');
 
             return;
@@ -196,6 +219,14 @@ class DirectChat extends Component
         $this->dispatch('direct-chat-sent');
     }
 
+    /** Nombre y apellido unidos con un espacio, en la base de datos que se use (MySQL en el sistema, SQLite en las pruebas). */
+    private function fullNameSql(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "(name || ' ' || COALESCE(last_name, ''))"
+            : "CONCAT_WS(' ', name, last_name)";
+    }
+
     private function typingKey(int $from, int $to): string
     {
         return 'direct-chat-typing:'.$from.':'.$to;
@@ -216,14 +247,13 @@ class DirectChat extends Component
     public function render()
     {
         $me = (int) Auth::id();
-        $unreadTotal = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')->count();
+        $unreadTotal = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')->count();
 
         $activeUser = null;
+        $hasOlder = false;
         $messages = collect();
         $people = collect();
         $previews = collect();
-        $sessionsTable = (string) config('session.table', 'sessions');
-        $recentLimit = now()->subMinutes(2)->timestamp;
 
         if ($this->activeUserId !== null) {
             $activeUser = User::query()->find($this->activeUserId);
@@ -233,22 +263,18 @@ class DirectChat extends Component
                 // Al tener abierta (expandida) la conversación, lo recibido se marca como leído
                 if ($this->expanded) {
                     DirectMessage::query()->where('sender_id', $activeUser->id)->where('recipient_id', $me)->whereNull('read_at')->update(['read_at' => now()]);
-                    $unreadTotal = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')->count();
+                    $unreadTotal = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')->count();
                 }
                 $messages = DirectMessage::query()
-                    ->retained()
                     ->where(fn ($query) => $query->between($me, $activeUser->id))
-                    ->latest('id')->limit(self::VISIBLE_MESSAGES)->get()->reverse()->values();
+                    ->latest('id')->limit($this->limit + 1)->get();
+                $hasOlder = $messages->count() > $this->limit;
+                $messages = $messages->take($this->limit)->reverse()->values();
             }
         }
 
         // Mismo criterio que «En línea ahora» de Inicio: presencia reciente (users.last_seen_at), sesiones activas o cuentas siempre en línea
-        $onlineIds = collect(DB::table($sessionsTable)->whereNotNull('user_id')->where('user_id', '!=', $me)
-            ->where('last_activity', '>=', $recentLimit)->distinct()->pluck('user_id')->all())
-            ->merge(User::query()->whereKeyNot($me)->where(fn ($query) => $query
-                ->where('last_seen_at', '>=', now()->subMinutes(3))
-                ->orWhereIn('email', (array) config('support.always_online_emails', [])))->pluck('id')->all())
-            ->map(fn ($id): int => (int) $id)->unique()->values()->all();
+        $onlineIds = User::query()->whereKeyNot($me)->online()->pluck('id')->map(fn ($id): int => (int) $id)->all();
         $threads = $this->threads($me);
 
         // Avisos del chat minimizado: mensajes nuevos (uno por persona) y quién está escribiendo
@@ -261,9 +287,11 @@ class DirectChat extends Component
             $term = trim($this->search);
 
             if ($term !== '') {
-                $like = '%'.$term.'%';
+                // Busca por nombre, apellido, nombre completo («Dioni Colab») o correo
+                $like = '%'.addcslashes($term, '\\%_').'%';
                 $people = User::query()->whereKeyNot($me)
-                    ->where(fn ($query) => $query->where('name', 'like', $like)->orWhere('last_name', 'like', $like)->orWhere('email', 'like', $like))
+                    ->where(fn ($query) => $query->where('name', 'like', $like)->orWhere('last_name', 'like', $like)
+                        ->orWhereRaw($this->fullNameSql().' like ?', [$like])->orWhere('email', 'like', $like))
                     ->orderBy('name')->orderBy('last_name')->limit(25)->get()
                     ->map(fn (User $person): array => ['user' => $person, 'last' => (string) $person->email, 'at' => null, 'unread' => 0]);
             } else {
@@ -284,21 +312,24 @@ class DirectChat extends Component
         $activeOnline = $activeUser !== null && in_array($activeUser->id, $onlineIds, true);
         $activeTyping = $activeUser !== null && Cache::has($this->typingKey($activeUser->id, $me));
 
-        return view('livewire.chat.direct-chat', compact('unreadTotal', 'activeUser', 'messages', 'people', 'previews', 'activeOnline', 'activeTyping'));
+        return view('livewire.chat.direct-chat', compact('unreadTotal', 'activeUser', 'messages', 'hasOlder', 'people', 'previews', 'activeOnline', 'activeTyping'));
     }
 
-    /** Conversaciones recientes: la persona, el último mensaje y cuántos mensajes tiene sin leer. */
+    /** Conversaciones recientes (de todo el historial): la persona, el último mensaje y cuántos mensajes tiene sin leer. */
     private function threads(int $me)
     {
-        $recent = DirectMessage::query()->retained()
+        // Último mensaje con cada persona, en una sola consulta agrupada
+        $latestIds = DirectMessage::query()
             ->where(fn ($query) => $query->where('sender_id', $me)->orWhere('recipient_id', $me))
-            ->latest('id')->limit(300)->get();
+            ->selectRaw('MAX(id) as id')
+            ->groupByRaw('CASE WHEN sender_id = ? THEN recipient_id ELSE sender_id END', [$me])
+            ->orderByDesc('id')->limit(15)->pluck('id');
 
-        $unread = DirectMessage::query()->retained()->where('recipient_id', $me)->whereNull('read_at')
+        $latest = DirectMessage::query()->whereKey($latestIds)->orderByDesc('id')->get()
+            ->keyBy(fn (DirectMessage $item): int => $item->sender_id === $me ? $item->recipient_id : $item->sender_id);
+
+        $unread = DirectMessage::query()->where('recipient_id', $me)->whereNull('read_at')
             ->select('sender_id', DB::raw('count(*) as total'))->groupBy('sender_id')->pluck('total', 'sender_id');
-
-        $latest = $recent->groupBy(fn (DirectMessage $item): int => $item->sender_id === $me ? $item->recipient_id : $item->sender_id)
-            ->map(fn ($group) => $group->first())->take(15);
 
         $people = User::query()->whereKey($latest->keys())->get()->keyBy('id');
 

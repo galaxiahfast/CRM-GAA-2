@@ -48,7 +48,7 @@ class AuthenticationTest extends TestCase
         $this->actingAs($user)
             ->get('/inicio')
             ->assertOk()
-            ->assertSeeText('Sesión iniciada correctamente')
+            ->assertSeeText('Descargar guía PDF')
             ->assertSeeText($user->name)
             ->assertSeeText('Inicio')
             ->assertSeeText('Panel General')

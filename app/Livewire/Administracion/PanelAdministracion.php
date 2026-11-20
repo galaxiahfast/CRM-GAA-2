@@ -50,6 +50,9 @@ class PanelAdministracion extends Component
     /** El árbol se arma después de abrir la pantalla (wire:init), para que el apartado abra al instante aunque haya muchos usuarios. */
     public bool $orgChartLoaded = false;
 
+    /** Sello del organigrama que tiene la pantalla: si en la base cambia (otra persona movió a alguien), se vuelve a dibujar. */
+    public string $orgChartSignature = '';
+
     public ?array $selectedUserDetails = null;
 
     public ?int $selectedUserId = null;
@@ -293,8 +296,17 @@ class PanelAdministracion extends Component
 
         $this->orgChartPage = request()->routeIs('organigrama.index');
 
-        // El árbol solo se arma en el apartado Organigrama y no aquí: se pide con wire:init (loadOrgChartData) una vez
-        // dibujada la pantalla, así abrir el apartado nunca espera a esas consultas.
+        // En el Organigrama el árbol llega ya en la primera respuesta: sus datos se guardan en caché (unos 15 ms) y así no
+        // hace falta una segunda petición que vuelva a dibujar toda la pantalla ni se ve «Cargando…» con los números en 0.
+        if ($this->orgChartPage && $this->canManageOrganization()) {
+            try {
+                $this->loadOrgChart($chartService);
+            } catch (\Throwable $exception) {
+                // Si algo falla, se pide después con wire:init como antes
+                report($exception);
+                $this->orgChartLoaded = false;
+            }
+        }
     }
 
     public function loadOrgChartData(OrganizationChartService $chartService): void
@@ -690,11 +702,140 @@ class PanelAdministracion extends Component
     private function loadOrgChart(OrganizationChartService $chartService): void
     {
         $this->orgChartLoaded = true;
+        $this->orgChartSignature = $chartService->chartSignature();
         $data = $chartService->buildChartData($this->selectedPhysicalAreaId);
 
         $this->orgChartTree = $data['tree'];
         $this->unassignedUsers = $data['unassigned'];
         $this->orgChartStats = $data['stats'];
+    }
+
+    /**
+     * Sincronía entre pantallas (wire:poll): si el organigrama cambió en la base (otra persona movió, quitó o editó a
+     * alguien) se vuelve a dibujar; si no cambió, no se envía nada. Mientras hay un formulario abierto no se toca.
+     */
+    public function syncOrgChart(): void
+    {
+        $busy = $this->selectedUserDetails !== null
+            || $this->showUserManagementModal
+            || $this->showRoleManagementModal
+            || $this->showAssignmentModal
+            || $this->showPermissionsModal
+            || $this->showJobPositionModal
+            || $this->showPhysicalAreaModal;
+
+        if (! $this->orgChartPage || ! $this->orgChartLoaded || $busy || ! $this->canManageOrganization()) {
+            $this->skipRender();
+
+            return;
+        }
+
+        $chartService = app(OrganizationChartService::class);
+        if ($chartService->chartSignature() === $this->orgChartSignature) {
+            $this->skipRender();
+
+            return;
+        }
+
+        $this->loadOrgChart($chartService);
+        $this->dispatch('org-chart-synced');
+    }
+
+    /**
+     * Mover a una persona (con todo su equipo) bajo otro jefe arrastrándola en el organigrama, o asignar a alguien de
+     * «Sin asignar» arrastrándolo sobre su jefe. $expectedSuperiorId es el jefe que la pantalla mostraba.
+     */
+    public function moveUserInChart(int $userId, int $superiorId, $expectedSuperiorId = null): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $chartService = app(OrganizationChartService::class);
+        $expected = $expectedSuperiorId === null || $expectedSuperiorId === '' ? null : (int) $expectedSuperiorId;
+
+        try {
+            $changed = $chartService->moveUser($userId, $superiorId, $expected);
+        } catch (\App\Services\Administracion\OrganizationChartConflict) {
+            $this->refreshChartAfterChange($chartService);
+            $this->notify('El organigrama cambió mientras lo veías (alguien más lo modificó). Ya se actualizó: revísalo y vuelve a intentarlo.', 'error');
+
+            return;
+        } catch (ValidationException $exception) {
+            $this->refreshChartAfterChange($chartService);
+            $this->notify((string) collect($exception->errors())->flatten()->first(), 'error');
+
+            return;
+        }
+
+        $this->refreshChartAfterChange($chartService);
+
+        if (! $changed) {
+            return;
+        }
+
+        $this->dispatch('org-node-moved', id: $userId);
+        $names = User::query()->whereKey([$userId, $superiorId])->get(['id', 'name', 'last_name'])->keyBy('id');
+        $this->notify(trim(($names[$userId]->name ?? '').' '.($names[$userId]->last_name ?? '')).' ahora reporta a '.trim(($names[$superiorId]->name ?? '').' '.($names[$superiorId]->last_name ?? '')).'.');
+    }
+
+    /** Arrastrar a una persona del árbol al panel «Sin asignar»: sale del organigrama y su equipo pasa a su jefe. */
+    public function removeUserFromChart(int $userId, $expectedSuperiorId = null): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $expected = $expectedSuperiorId === null || $expectedSuperiorId === '' ? null : (int) $expectedSuperiorId;
+        $this->removeFromChartAndNotify($userId, $expected, true);
+    }
+
+    /** Botón «Solo quitar del organigrama» de la confirmación de la X de cada nodo (no borra a la persona). */
+    public function removeSelectedUserFromChart(): void
+    {
+        $this->ensureOrganizationAdministrator();
+        abort_unless($this->selectedUserDetails, 404);
+
+        $userId = (int) $this->selectedUserDetails['id'];
+        $this->closeUserDetails();
+        $this->removeFromChartAndNotify($userId, null, false);
+    }
+
+    private function removeFromChartAndNotify(int $userId, ?int $expectedSuperiorId, bool $checkExpected): void
+    {
+        $chartService = app(OrganizationChartService::class);
+
+        try {
+            $result = $chartService->removeFromChart($userId, $expectedSuperiorId, $checkExpected);
+        } catch (\App\Services\Administracion\OrganizationChartConflict) {
+            $this->refreshChartAfterChange($chartService);
+            $this->notify('El organigrama cambió mientras lo veías (alguien más lo modificó). Ya se actualizó: revísalo y vuelve a intentarlo.', 'error');
+
+            return;
+        }
+
+        $this->refreshChartAfterChange($chartService);
+        $user = User::query()->find($userId, ['id', 'name', 'last_name']);
+        $name = trim(($user->name ?? '').' '.($user->last_name ?? ''));
+        $this->notify($name.' salió del organigrama y quedó en «Sin asignar».'.$this->teamMovedMessage($result));
+    }
+
+    /** @param  array{superior_id: ?int, moved: int}  $result */
+    private function teamMovedMessage(array $result): string
+    {
+        if ($result['moved'] === 0) {
+            return '';
+        }
+
+        if ($result['superior_id'] === null) {
+            return ' Su equipo directo quedó como cabeza de su propia rama.';
+        }
+
+        $boss = User::query()->find($result['superior_id'], ['id', 'name', 'last_name']);
+
+        return ' Su equipo directo ahora reporta a '.trim(($boss->name ?? '').' '.($boss->last_name ?? '')).'.';
+    }
+
+    private function refreshChartAfterChange(OrganizationChartService $chartService): void
+    {
+        $this->loadOrgChart($chartService);
+        $references = app(ReferenceDataCache::class);
+        $references->forgetManageableUsers();
+        $references->forgetOrganizationDashboard();
     }
 
     public function goToSecction($section)
@@ -1075,22 +1216,42 @@ class PanelAdministracion extends Component
             }],
         ]);
 
-        abort_if($user->id === auth()->id(), 422, 'No puedes eliminar tu propio usuario.');
+        if ($user->id === auth()->id()) {
+            $this->addError('deleteConfirmationName', 'No puedes eliminar tu propio usuario.');
 
-        DB::transaction(function () use ($user, $chartService) {
-            // Al borrar las relaciones donde era jefe, sus subordinados quedan sin jefe
-            // y el servicio los presentará automáticamente como "sin asignar".
-            $chartService->detachAllRelationsForUser($user->id);
-            UserInterns::where('intern_id', $user->id)->delete();
-            $user->delete();
-        });
+            return;
+        }
+
+        // Los ajustes del reloj checador guardan quién los hizo y ese historial no se puede perder: la base de datos no deja
+        // borrar a esa persona. Se avisa con claridad (antes salía un error) y se ofrece quitarla solo del organigrama.
+        $auditCount = DB::table('time_entry_audits')->where('admin_id', $user->id)->count();
+        if ($auditCount > 0) {
+            $this->addError('deleteConfirmationName', "No se puede eliminar: hizo {$auditCount} ajuste(s) en el reloj checador como administrador y ese historial debe conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.");
+
+            return;
+        }
+
+        try {
+            $result = DB::transaction(function () use ($user, $chartService) {
+                // Su equipo directo pasa a reportar a su jefe (el organigrama se ajusta solo) y después se borra.
+                $result = $chartService->removeFromChart($user->id);
+                UserInterns::where('intern_id', $user->id)->delete();
+                DB::table('customer_interns')->where('intern_id', $user->id)->delete();
+                $user->delete();
+
+                return $result;
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->refreshChartAfterChange($chartService);
+            $this->addError('deleteConfirmationName', 'No se pudo eliminar al usuario porque tiene registros relacionados que deben conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.');
+
+            return;
+        }
 
         $this->closeUserDetails();
-        $this->loadOrgChart($chartService);
-        $references = app(ReferenceDataCache::class);
-        $references->forgetManageableUsers();
-        $references->forgetOrganizationDashboard();
-        $this->notify('Usuario eliminado. Sus subordinados directos quedaron sin jefe asignado.');
+        $this->refreshChartAfterChange($chartService);
+        $this->notify('Usuario eliminado.'.($this->teamMovedMessage($result) ?: ''));
     }
 
     private function canManageOrganization(): bool

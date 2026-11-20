@@ -401,9 +401,9 @@ XML;
         \App\Models\ManagerControlEmployeeLink::query()->create(['user_id' => $asignado->id, 'legacy_employee_id' => 7, 'legacy_employee_name' => 'Persona Uno']);
 
         Livewire::actingAs($admin)->test(ManagerControlHours::class)
-            ->call('setLinkFilter', 'assigned')->assertSee('Zeta Asignada')->assertDontSee('Omega Libre')
-            ->call('setLinkFilter', 'unassigned')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada')
-            ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('Omega Libre')->assertDontSee('Zeta Asignada');
+            ->call('setLinkFilter', 'assigned')->assertSee('ZETA ASIGNADA')->assertDontSee('OMEGA LIBRE')
+            ->call('setLinkFilter', 'unassigned')->assertSee('OMEGA LIBRE')->assertDontSee('ZETA ASIGNADA')
+            ->call('setLinkFilter', 'all')->set('linkSearch', 'omega')->assertSee('OMEGA LIBRE')->assertDontSee('ZETA ASIGNADA');
     }
 
     public function test_searching_assignments_reuses_hours_but_consulting_refreshes_them(): void

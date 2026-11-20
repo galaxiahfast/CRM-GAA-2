@@ -80,6 +80,7 @@
 
     {{-- Chat flotante de mensajes directos: abajo a la derecha en todas las pantallas --}}
     @auth
+        @include('livewire.chat.direct-chat-styles')
         @livewire('chat.direct-chat')
     @endauth
 

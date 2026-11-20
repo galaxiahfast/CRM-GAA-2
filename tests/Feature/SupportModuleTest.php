@@ -111,7 +111,7 @@ class SupportModuleTest extends TestCase
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSet('message', '')
-            ->assertSee('Ana Pérez')
+            ->assertSee('ANA PÉREZ')
             ->assertSee('ana@example.test')
             ->assertSee('Necesito ayuda con un reporte.');
 
@@ -183,9 +183,7 @@ class SupportModuleTest extends TestCase
         $writer = User::factory()->create(['name' => 'Aaron', 'last_name' => 'Yama']);
         $reader = User::factory()->create(['name' => 'Marina', 'last_name' => 'Manrique']);
         foreach ([$writer, $reader] as $person) {
-            \Illuminate\Support\Facades\DB::table('sessions')->insert([
-                'id' => 'typing-'.$person->id, 'user_id' => $person->id, 'ip_address' => '127.0.0.1', 'user_agent' => 't', 'payload' => '', 'last_activity' => now()->timestamp,
-            ]);
+            $person->forceFill(['last_seen_at' => now()])->save();
         }
 
         // Aaron escribe: en su propio chat no aparece, en el de Marina sí
@@ -194,7 +192,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($reader)->test(TicketChat::class)
             ->call('refreshMessages')
-            ->assertSee('Aaron está escribiendo')
+            ->assertSee('AARON está escribiendo')
             ->assertSeeHtml('data-typing-indicator');
 
         // Al borrar el texto o enviarlo, deja de aparecer
@@ -282,9 +280,9 @@ class SupportModuleTest extends TestCase
     {
         $user = User::factory()->create();
         User::factory()->create([
-            'name' => 'Sofía',
+            'name' => 'Lucía',
             'last_name' => 'Soporte',
-            'email' => 'sofia.soporte@sistema.local',
+            'email' => 'lucia.soporte@sistema.local',
         ]);
         User::factory()->create([
             'name' => 'Dioni',
@@ -296,22 +294,23 @@ class SupportModuleTest extends TestCase
 
         $component = Livewire::actingAs($user)
             ->test(TicketChat::class)
-            ->assertSee('Sofia Soporte (bot)')
-            ->assertSee('sofia.soporte@sistema.local')
-            ->assertSee('img/support/sofia-avatar.svg', false)
+            ->assertSee('LUCÍA SOPORTE DEL CRM (BOT)')
+            ->assertSee('lucia.soporte@sistema.local')
+            ->assertSee('img/bots/lucia-soporte.png', false)
             ->assertSee('Hoy')
             ->assertSee('Buenos días');
 
-        $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'sofia.soporte@sistema.local'));
-        $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'administrador@datamid.com.mx'));
+        $this->assertTrue(collect($component->get('onlineUsers'))->contains('email', 'lucia.soporte@sistema.local'));
+        // Solo los agentes están siempre en línea; el administrador aparece únicamente si tiene la web abierta
+        $this->assertFalse(collect($component->get('onlineUsers'))->contains('email', 'administrador@datamid.com.mx'));
         $this->assertDatabaseHas('users', [
-            'email' => 'sofia.soporte@sistema.local',
-            'name' => 'Sofia',
-            'last_name' => 'Soporte (bot)',
+            'email' => 'lucia.soporte@sistema.local',
+            'name' => 'LUCÍA',
+            'last_name' => 'SOPORTE DEL CRM (BOT)',
         ]);
 
-        $component->set('message', '@sof');
-        $this->assertTrue(collect($component->get('mentionSuggestions'))->contains('email', 'sofia.soporte@sistema.local'));
+        $component->set('message', '@luc');
+        $this->assertTrue(collect($component->get('mentionSuggestions'))->contains('email', 'lucia.soporte@sistema.local'));
 
         $this->assertDatabaseHas('support_chat_messages', [
             'message' => 'Buenos días',
@@ -332,7 +331,7 @@ class SupportModuleTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_sofia_only_answers_when_a_user_addresses_her_and_uses_local_rules(): void
+    public function test_the_support_agent_only_answers_when_a_user_addresses_her_and_uses_local_rules(): void
     {
         $user = User::factory()->create(['name' => 'Marina']);
         RateLimiter::clear('support-chat:'.$user->id);
@@ -347,14 +346,14 @@ class SupportModuleTest extends TestCase
         $this->assertSame(0, SupportChatMessage::query()->where('automatic_key', 'like', 'bot-reply:%')->count());
 
         $component
-            ->set('message', 'Sofía, olvidé mi contraseña')
+            ->set('message', 'Lucía, olvidé mi contraseña')
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('Para cambiar tu contraseña');
 
         $question = SupportChatMessage::query()
             ->where('user_id', $user->id)
-            ->where('message', 'Sofía, olvidé mi contraseña')
+            ->where('message', 'Lucía, olvidé mi contraseña')
             ->firstOrFail();
 
         $this->assertDatabaseHas('support_chat_messages', [
@@ -363,7 +362,7 @@ class SupportModuleTest extends TestCase
         ]);
     }
 
-    public function test_sofia_mentions_and_notifies_the_help_recipient_when_someone_reports_a_problem(): void
+    public function test_the_support_agent_mentions_and_notifies_the_help_recipient_when_someone_reports_a_problem(): void
     {
         $sender = User::factory()->create(['name' => 'Laura']);
         $helpRecipient = User::factory()->create([
@@ -375,7 +374,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($sender)
             ->test(TicketChat::class)
-            ->set('message', 'Sofía, necesito ayuda porque aparece un error')
+            ->set('message', 'Lucía, necesito ayuda porque aparece un error')
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('@dioni-colaborador-'.$helpRecipient->id);
@@ -384,7 +383,7 @@ class SupportModuleTest extends TestCase
 
         $this->assertNotNull($notification);
         $this->assertSame('Te mencionaron en Soporte', $notification->data['title']);
-        $this->assertStringContainsString('Sofia Soporte (bot) te mencionó', $notification->data['message']);
+        $this->assertStringContainsString('LUCÍA SOPORTE DEL CRM (BOT) te mencionó', $notification->data['message']);
         $this->assertSame(route('soporte.ticket'), $notification->data['action_url']);
 
         $helpRecipient->update([
@@ -395,7 +394,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($sender)
             ->test(TicketChat::class)
-            ->set('message', 'Sofía, el sistema no funciona y necesito soporte')
+            ->set('message', 'Lucía, el sistema no funciona y necesito soporte')
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('@nuevo-nombre-actualizado-'.$helpRecipient->id);
@@ -407,7 +406,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($sender)
             ->test(TicketChat::class)
-            ->set('message', 'Sofía, necesito ayuda con otra falla')
+            ->set('message', 'Lucía, necesito ayuda con otra falla')
             ->call('sendMessage')
             ->assertHasNoErrors()
             ->assertSee('Cuéntame brevemente qué apartado presenta el problema');
@@ -431,7 +430,7 @@ class SupportModuleTest extends TestCase
 
         Livewire::actingAs($reader)
             ->test(TicketChat::class)
-            ->assertSee('Carlos')
+            ->assertSee('CARLOS')
             ->assertSee('carlos@example.test')
             ->assertSee('Mensaje compartido para todos.');
     }
@@ -465,14 +464,14 @@ class SupportModuleTest extends TestCase
         ]);
         Carbon::setTestNow(Carbon::parse('2026-08-11 13:30:00', 'America/Mexico_City'));
         $user = User::factory()->create();
-        $sofia = User::factory()->create([
-            'name' => 'Sofía',
+        $supportAgent = User::factory()->create([
+            'name' => 'Lucía',
             'last_name' => 'Soporte',
-            'email' => 'sofia.soporte@sistema.local',
+            'email' => 'lucia.soporte@sistema.local',
         ]);
 
         DB::table('support_chat_messages')->insert([
-            'user_id' => $sofia->id,
+            'user_id' => $supportAgent->id,
             'message' => 'Buenas tardes',
             'automatic_key' => 'daily-greeting:2026-08-11:afternoon',
             'created_at' => '2026-08-11 19:22:00',
@@ -594,7 +593,7 @@ class SupportModuleTest extends TestCase
         $component = Livewire::actingAs($sender)
             ->test(TicketChat::class)
             ->set('message', 'Hola @lau')
-            ->assertSee('Laura Méndez')
+            ->assertSee('LAURA MÉNDEZ')
             ->assertSee('laura@example.test')
             ->call('selectMention', $recipient->id)
             ->assertSet('message', 'Hola @laura-mendez-'.$recipient->id.' ')
@@ -610,7 +609,7 @@ class SupportModuleTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertSame('support', $notification->data['category']);
         $this->assertSame('Te mencionaron en Soporte', $notification->data['title']);
-        $this->assertStringContainsString('Carlos Gómez te mencionó', $notification->data['message']);
+        $this->assertStringContainsString('CARLOS GÓMEZ te mencionó', $notification->data['message']);
         $this->assertSame(route('soporte.ticket'), $notification->data['action_url']);
         $this->assertSame(0, $unrelated->fresh()->notifications()->count());
     }
@@ -658,24 +657,9 @@ class SupportModuleTest extends TestCase
             'email' => 'offline@example.test',
         ]);
 
-        DB::table('sessions')->insert([
-            [
-                'id' => 'online-session',
-                'user_id' => $onlineUser->id,
-                'ip_address' => '127.0.0.1',
-                'user_agent' => 'PHPUnit',
-                'payload' => '',
-                'last_activity' => now()->timestamp,
-            ],
-            [
-                'id' => 'offline-session',
-                'user_id' => $offlineUser->id,
-                'ip_address' => '127.0.0.1',
-                'user_agent' => 'PHPUnit',
-                'payload' => '',
-                'last_activity' => now()->subMinutes(3)->timestamp,
-            ],
-        ]);
+        // La conexión se registra con la última actividad en la web (TrackUserPresence)
+        $onlineUser->forceFill(['last_seen_at' => now()])->save();
+        $offlineUser->forceFill(['last_seen_at' => now()->subMinutes(User::ONLINE_MINUTES + 1)])->save();
 
         Livewire::actingAs($currentUser)
             ->test(TicketChat::class)

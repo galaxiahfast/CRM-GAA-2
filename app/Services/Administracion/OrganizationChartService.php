@@ -65,7 +65,8 @@ class OrganizationChartService
             $missing = $this->resolveMissingAssignments($user, $superiorIds, $profile);
             // Actividad registrada en las sesiones o por el seguimiento de presencia (users.last_seen_at).
             $lastActivityTimestamp = max((int) ($lastActivityByUser[$user->id] ?? 0), (int) ($user->last_seen_at?->timestamp ?? 0));
-            $isOnline = $lastActivityTimestamp >= $onlineThreshold;
+            $isOnline = $lastActivityTimestamp >= $onlineThreshold
+                || in_array($user->email, (array) config('support.always_online_emails', []), true);
             $lastActivity = $lastActivityTimestamp > 0
                 ? Carbon::createFromTimestamp($lastActivityTimestamp)->locale('es')
                 : null;
@@ -76,7 +77,7 @@ class OrganizationChartService
                 'first_name' => trim((string) $user->name),
                 'last_name' => trim((string) $user->last_name),
                 'email' => $user->email,
-                'photo' => $user->profile_photo_path ? $user->profile_photo_url : null,
+                'photo' => $user->hasProfilePhotoFile() ? $user->profile_photo_url : null, // si falta el archivo se muestran las iniciales
                 'created_at' => $user->created_at?->toIso8601String(),
                 'role' => $user->role?->role,
                 'job_position' => $profile?->jobPosition?->name,
@@ -567,6 +568,140 @@ class OrganizationChartService
                 ->orWhere('superior_id', $userId)
                 ->delete();
         });
+    }
+
+    /**
+     * Sello del organigrama: cambia en cuanto cambia una relación, una persona (nombre, correo, rol, foto) o su puesto o
+     * área. Las pantallas abiertas lo comparan para actualizarse solas cuando alguien más modifica el organigrama.
+     * No usa updated_at de los usuarios porque la presencia en línea lo toca en cada petición.
+     */
+    public function chartSignature(): string
+    {
+        $relations = UserHierarchyRelation::query()
+            ->orderBy('subordinate_id')
+            ->orderBy('superior_id')
+            ->get(['subordinate_id', 'superior_id'])
+            ->map(fn (UserHierarchyRelation $relation): string => $relation->subordinate_id.'>'.$relation->superior_id)
+            ->implode(',');
+
+        $users = User::query()
+            ->orderBy('id')
+            ->get(['id', 'name', 'last_name', 'email', 'role_id', 'profile_photo_path'])
+            ->map(fn (User $user): string => implode('|', [$user->id, $user->name, $user->last_name, $user->email, $user->role_id, $user->profile_photo_path]))
+            ->implode(',');
+
+        $profiles = UserOrganizationalProfile::query()
+            ->where('is_active', true)
+            ->orderBy('user_id')
+            ->get(['user_id', 'job_position_id', 'physical_area_id'])
+            ->map(fn (UserOrganizationalProfile $profile): string => $profile->user_id.':'.$profile->job_position_id.':'.$profile->physical_area_id)
+            ->implode(',');
+
+        return md5($relations.'#'.$users.'#'.$profiles);
+    }
+
+    /**
+     * Pone a una persona bajo un nuevo jefe directo; su equipo (todo lo que cuelga de ella) se mueve con ella.
+     *
+     * $expectedSuperiorId es el jefe que tenía la persona en la pantalla de quien la movió. Si ya no coincide con el de la
+     * base de datos, otra persona cambió el organigrama mientras tanto y se lanza OrganizationChartConflict sin tocar nada.
+     * Todo ocurre en una transacción que bloquea las relaciones, así dos movimientos al mismo tiempo no se pisan.
+     *
+     * @return bool false si la persona ya estaba bajo ese jefe (no había nada que cambiar)
+     */
+    public function moveUser(int $userId, int $newSuperiorId, ?int $expectedSuperiorId, bool $checkExpected = true): bool
+    {
+        if ($userId === $newSuperiorId) {
+            throw ValidationException::withMessages(['move' => 'Una persona no puede ser su propio jefe.']);
+        }
+
+        return DB::transaction(function () use ($userId, $newSuperiorId, $expectedSuperiorId, $checkExpected): bool {
+            $relations = UserHierarchyRelation::query()->lockForUpdate()->get(['id', 'subordinate_id', 'superior_id']);
+            $currentSuperiorId = $this->currentSuperiorId($relations, $userId);
+
+            if ($checkExpected && $currentSuperiorId !== $expectedSuperiorId) {
+                throw new OrganizationChartConflict('El jefe de la persona cambió desde que se dibujó el organigrama.');
+            }
+
+            if (User::query()->whereKey([$userId, $newSuperiorId])->count() !== 2) {
+                throw ValidationException::withMessages(['move' => 'Una de las personas ya no existe; el organigrama se actualizó.']);
+            }
+
+            if ($currentSuperiorId === $newSuperiorId) {
+                return false;
+            }
+
+            // El nuevo jefe no puede estar dentro del equipo de la persona (se formaría un círculo)
+            $subordinatesMap = [];
+            foreach ($relations as $relation) {
+                $subordinatesMap[(int) $relation->superior_id][] = (int) $relation->subordinate_id;
+            }
+            if ($this->canReach($userId, $newSuperiorId, $subordinatesMap)) {
+                throw ValidationException::withMessages(['move' => 'No puedes poner a una persona debajo de alguien de su propio equipo.']);
+            }
+
+            UserHierarchyRelation::query()->where('subordinate_id', $userId)->delete();
+            UserHierarchyRelation::create([
+                'subordinate_id' => $userId,
+                'superior_id' => $newSuperiorId,
+                'job_position_id' => null,
+                'physical_area_id' => null,
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Saca a una persona del organigrama sin borrarla: su equipo directo pasa a reportar a su jefe (si no tenía jefe, cada
+     * subordinado queda como cabeza de su propia rama) y ella queda en «Sin asignar».
+     *
+     * @return array{superior_id: ?int, moved: int}
+     */
+    public function removeFromChart(int $userId, ?int $expectedSuperiorId = null, bool $checkExpected = false): array
+    {
+        return DB::transaction(function () use ($userId, $expectedSuperiorId, $checkExpected): array {
+            $relations = UserHierarchyRelation::query()->lockForUpdate()->get(['id', 'subordinate_id', 'superior_id']);
+            $superiorId = $this->currentSuperiorId($relations, $userId);
+
+            if ($checkExpected && $superiorId !== $expectedSuperiorId) {
+                throw new OrganizationChartConflict('El jefe de la persona cambió desde que se dibujó el organigrama.');
+            }
+
+            $subordinateIds = $relations
+                ->where('superior_id', $userId)
+                ->pluck('subordinate_id')
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            UserHierarchyRelation::query()
+                ->where('subordinate_id', $userId)
+                ->orWhere('superior_id', $userId)
+                ->delete();
+
+            if ($superiorId !== null) {
+                foreach ($subordinateIds as $subordinateId) {
+                    UserHierarchyRelation::create([
+                        'subordinate_id' => $subordinateId,
+                        'superior_id' => $superiorId,
+                        'job_position_id' => null,
+                        'physical_area_id' => null,
+                    ]);
+                }
+            }
+
+            return ['superior_id' => $superiorId, 'moved' => count($subordinateIds)];
+        });
+    }
+
+    /** @param  Collection<int, UserHierarchyRelation>  $relations */
+    private function currentSuperiorId(Collection $relations, int $userId): ?int
+    {
+        $superiorId = $relations->firstWhere('subordinate_id', $userId)?->superior_id;
+
+        return $superiorId === null ? null : (int) $superiorId;
     }
 }
 

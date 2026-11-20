@@ -567,11 +567,8 @@ class TicketChat extends Component
         $currentUserId = (int) auth()->id();
 
         try {
-            $onlineIds = DB::table((string) config('session.table', 'sessions'))
-                ->whereNotNull('user_id')
-                ->where('last_activity', '>=', now()->subMinutes(2)->timestamp)
-                ->distinct()
-                ->pluck('user_id')
+            // Misma regla que en todo el sistema: los agentes siempre; los demás si tienen la web abierta
+            $onlineIds = User::query()->online()->pluck('id')
                 ->map(fn ($id): int => (int) $id)
                 ->push($currentUserId)
                 ->push($this->automatedUserId)
@@ -706,8 +703,8 @@ class TicketChat extends Component
     {
         $automatedUser = (array) config('support.automated_user', []);
 
-        if ($user->email === ($automatedUser['email'] ?? 'sofia.soporte@sistema.local')) {
-            return url('/'.ltrim((string) ($automatedUser['avatar'] ?? 'img/support/sofia-avatar.svg'), '/'));
+        if ($user->email === ($automatedUser['email'] ?? 'lucia.soporte@sistema.local')) {
+            return url('/'.ltrim((string) ($automatedUser['avatar'] ?? 'img/bots/lucia-soporte.png'), '/'));
         }
 
         if (! $user->profile_photo_path) {
@@ -730,8 +727,8 @@ class TicketChat extends Component
     {
         $automatedUser = (array) config('support.automated_user', []);
 
-        if ($user->email === ($automatedUser['email'] ?? 'sofia.soporte@sistema.local')) {
-            $path = realpath(public_path(ltrim((string) ($automatedUser['avatar'] ?? 'img/support/sofia-avatar.svg'), '/')));
+        if ($user->email === ($automatedUser['email'] ?? 'lucia.soporte@sistema.local')) {
+            $path = realpath(public_path(ltrim((string) ($automatedUser['avatar'] ?? 'img/bots/lucia-soporte.png'), '/')));
         } elseif ($user->profile_photo_path && config('filesystems.disks.public.driver') === 'local') {
             $storageRoot = realpath(storage_path('app/public'));
             $path = realpath(storage_path('app/public/'.ltrim($user->profile_photo_path, '/')));
@@ -850,9 +847,12 @@ class TicketChat extends Component
             $message
         ) === 1;
 
+        // Se le habla por su nombre («Lucía, …» o «@lucia»), sin importar acentos ni mayúsculas
+        $botName = preg_quote(Str::lower(Str::ascii((string) config('support.automated_user.name', 'Lucía'))), '/');
+
         return $mentionsBotById
-            || preg_match('/(?:^|\s)@sofia\b/u', $normalized) === 1
-            || preg_match('/^sofia(?:\s|[,.:;!?])/u', $normalized) === 1;
+            || preg_match('/(?:^|\s)@'.$botName.'\b/u', $normalized) === 1
+            || preg_match('/^'.$botName.'(?:\s|[,.:;!?])/u', $normalized) === 1;
     }
 
     private function automatedReplyFor(string $message, User $sender): string
@@ -969,20 +969,20 @@ class TicketChat extends Component
 
     private function automatedUser(): User
     {
-        $role = Role::query()->firstOrCreate(
-            ['role' => 'Auxiliar'],
-            [
-                'description' => 'Rol operativo predeterminado',
-                'permission_profile' => Role::PROFILE_AUXILIARY,
-            ]
-        );
+        // El agente de soporte es una cuenta con rol de Administrador (igual que los demás agentes). Si todavía no existe
+        // ese rol, se usa el rol operativo de siempre (no se crean roles nuevos desde aquí).
+        $role = Role::query()->where('permission_profile', Role::PROFILE_ADMINISTRATOR)->orderBy('id')->first()
+            ?? Role::query()->firstOrCreate(
+                ['role' => 'Auxiliar'],
+                ['description' => 'Rol operativo predeterminado', 'permission_profile' => Role::PROFILE_AUXILIARY]
+            );
         $settings = (array) config('support.automated_user', []);
 
         $user = User::query()->firstOrCreate(
-            ['email' => $settings['email'] ?? 'sofia.soporte@sistema.local'],
+            ['email' => $settings['email'] ?? 'lucia.soporte@sistema.local'],
             [
-                'name' => $settings['name'] ?? 'Sofia',
-                'last_name' => $settings['last_name'] ?? 'Soporte (bot)',
+                'name' => $settings['name'] ?? 'Lucía',
+                'last_name' => $settings['last_name'] ?? 'Soporte del CRM (bot)',
                 'email_verified_at' => now(),
                 'password' => Str::random(64),
                 'role_id' => $role->id,
@@ -990,8 +990,8 @@ class TicketChat extends Component
         );
 
         $expectedIdentity = [
-            'name' => $settings['name'] ?? 'Sofia',
-            'last_name' => $settings['last_name'] ?? 'Soporte (bot)',
+            'name' => $settings['name'] ?? 'Lucía',
+            'last_name' => $settings['last_name'] ?? 'Soporte del CRM (bot)',
         ];
 
         if ($user->only(array_keys($expectedIdentity)) !== $expectedIdentity) {

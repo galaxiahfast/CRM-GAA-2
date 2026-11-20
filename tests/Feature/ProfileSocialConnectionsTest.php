@@ -75,7 +75,7 @@ class ProfileSocialConnectionsTest extends TestCase
         $this->actingAs($viewer)
             ->get(route('profiles.show', $profile))
             ->assertOk()
-            ->assertSeeText('Perfil Ajeno')
+            ->assertSeeText('PERFIL AJENO')
             ->assertDontSeeText('Editar perfil')
             ->assertDontSee('wire:submit="updateProfileInformation"', false);
     }

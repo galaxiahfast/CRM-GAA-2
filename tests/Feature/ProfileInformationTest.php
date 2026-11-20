@@ -44,11 +44,11 @@ class ProfileInformationTest extends TestCase
             ->assertSet('editing', false)
             ->assertSee('Editar perfil')
             ->assertDontSee('Guardar cambios')
-            ->assertSet('state.name', 'Test Name')
+            ->assertSet('state.name', 'TEST NAME')
             ->assertSet('state.profile_description', 'Descripción visible del perfil.');
 
-        $this->assertEquals('Test Name', $user->fresh()->name);
-        $this->assertEquals('Updated Last Name', $user->fresh()->last_name);
+        $this->assertEquals('TEST NAME', $user->fresh()->name);
+        $this->assertEquals('UPDATED LAST NAME', $user->fresh()->last_name);
         $this->assertEquals('test@example.com', $user->fresh()->email);
         $this->assertEquals('Descripción visible del perfil.', $user->fresh()->profile_description);
         $this->assertEquals('https://instagram.com/test', $user->fresh()->instagram_url);
@@ -101,7 +101,7 @@ class ProfileInformationTest extends TestCase
             ->assertHasNoErrors()
             ->assertSet('editing', false);
 
-        $this->assertSame('Nombre nuevo', $user->fresh()->name);
+        $this->assertSame('NOMBRE NUEVO', $user->fresh()->name);
         $this->assertTrue(Hash::check('actual-123', $user->fresh()->password));
     }
 
@@ -143,7 +143,7 @@ class ProfileInformationTest extends TestCase
 
         $this->get(route('profiles.show', $profile))
             ->assertOk()
-            ->assertSee('Perfil Compartido')
+            ->assertSee('PERFIL COMPARTIDO')
             ->assertSee('Seguir')
             ->assertSee('Volver a mi perfil')
             ->assertSee('Enviar mensaje')

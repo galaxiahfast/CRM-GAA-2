@@ -76,7 +76,7 @@ class UserFormsFlowTest extends TestCase
             ->assertDispatched('user-management-closed');
 
         $member->refresh();
-        $this->assertSame('Ana María', $member->name);
+        $this->assertSame('ANA MARÍA', $member->name);
         $this->assertNull($member->employee_id);
     }
 
@@ -97,7 +97,7 @@ class UserFormsFlowTest extends TestCase
             ->assertSet('isEditingUser', false);
 
         $member->refresh();
-        $this->assertSame('Ana María', $member->name);
+        $this->assertSame('ANA MARÍA', $member->name);
         $this->assertNull($member->employee_id);
     }
 
@@ -144,7 +144,7 @@ class UserFormsFlowTest extends TestCase
             ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success')
             ->assertSet('selectedUserId', null);
 
-        $this->assertSame('Dionicio Alberto', $unassigned->fresh()->name);
+        $this->assertSame('DIONICIO ALBERTO', $unassigned->fresh()->name);
     }
 
     public function test_a_failed_save_always_shows_an_error_notice_and_the_error_summary(): void
@@ -173,7 +173,7 @@ class UserFormsFlowTest extends TestCase
             ->assertHasNoErrors()
             ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success');
 
-        $this->assertSame('Dionicio Alberto', $unassigned->fresh()->name);
+        $this->assertSame('DIONICIO ALBERTO', $unassigned->fresh()->name);
     }
 
     public function test_the_password_can_be_changed_and_a_blank_one_keeps_the_current(): void
@@ -322,6 +322,6 @@ class UserFormsFlowTest extends TestCase
             ->assertSet('selectedUserId', $member->id)
             ->assertSet('isEditingUser', true);
 
-        $this->assertSame('Ana', $member->fresh()->name);
+        $this->assertSame('ANA', $member->fresh()->name);
     }
 }

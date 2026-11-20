@@ -498,7 +498,7 @@ class BackupStorageManagerTest extends TestCase
             ->assertSee('Historial de movimientos')
             ->assertSee('Respaldo eliminado')
             ->assertSee('Empresa Prueba')
-            ->assertSee('Administrador Prueba');
+            ->assertSee('ADMINISTRADOR PRUEBA');
     }
 
     public function test_backup_deletion_is_blocked_until_two_factor_is_configured(): void

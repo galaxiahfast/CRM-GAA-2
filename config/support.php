@@ -2,16 +2,57 @@
 
 return [
     'timezone' => env('SUPPORT_TIMEZONE', 'America/Mexico_City'),
-    'automated_user' => [
-        'name' => 'Sofia',
-        'last_name' => 'Soporte (bot)',
-        'email' => env('SUPPORT_AUTOMATED_USER_EMAIL', 'sofia.soporte@sistema.local'),
-        'avatar' => env('SUPPORT_AUTOMATED_USER_AVATAR', 'img/support/sofia-avatar.svg'),
+    // Agentes (bots): cuentas propias con rol de Administrador, siempre en línea y con «(bot)» al final del nombre.
+    // Cada uno tiene su foto (1:1, 1024px) y su descripción de perfil. La migración 2026_11_20_000001 crea o actualiza las cuentas.
+    'bots' => [
+        'soporte' => [
+            'name' => 'LUCÍA',
+            'last_name' => 'SOPORTE DEL CRM (BOT)',
+            'email' => 'lucia.soporte@sistema.local',
+            'photo' => 'img/bots/lucia-soporte.png',
+            'activity' => 'Resolviendo dudas',
+            'section' => 'Ayuda del CRM',
+            'description' => 'Agente de soporte del CRM. Respondo dudas sobre cada apartado, guío paso a paso y aviso al equipo de soporte cuando alguien reporta una falla.',
+        ],
+        'diseno' => [
+            'name' => 'MATEO',
+            'last_name' => 'DISEÑO DEL CRM (BOT)',
+            'email' => 'mateo.diseno@sistema.local',
+            'photo' => 'img/bots/mateo-diseno.png',
+            'activity' => 'Creando pantallas',
+            'section' => 'Diseño del CRM',
+            'description' => 'Agente de diseño. Cuido que cada pantalla del CRM sea clara, ordenada y fácil de usar: tipografía, espacios, colores e ilustraciones.',
+        ],
+        'programacion' => [
+            'name' => 'IAN',
+            'last_name' => 'DESARROLLO DEL CRM (BOT)',
+            'email' => 'ian.programacion@sistema.local',
+            // Correo anterior (cuando se llamaba Andrés): la migración actualiza esa misma cuenta
+            'previous_email' => 'andres.programacion@sistema.local',
+            'photo' => 'img/bots/ian-programacion.png',
+            'activity' => 'Escribiendo código',
+            'section' => 'Código del CRM',
+            'description' => 'Agente de programación. Construyo y mantengo las funciones del CRM, reviso que todo cargue rápido y corrijo errores.',
+        ],
     ],
-    'always_online_emails' => array_values(array_filter(array_map(
+
+    // Quien contesta en el Chat de soporte y en las Preguntas frecuentes: el agente de soporte (antes «Sofia Soporte (bot)»).
+    'automated_user' => [
+        'name' => 'LUCÍA',
+        'last_name' => 'SOPORTE DEL CRM (BOT)',
+        'email' => env('SUPPORT_AUTOMATED_USER_EMAIL', 'lucia.soporte@sistema.local'),
+        'avatar' => env('SUPPORT_AUTOMATED_USER_AVATAR', 'img/bots/lucia-soporte.png'),
+        // Correo de la cuenta anterior: la migración la convierte en Lucía para conservar su historial
+        'previous_email' => 'sofia.soporte@sistema.local',
+    ],
+    // Siempre en línea: solo los tres agentes (bots). Las demás personas aparecen en línea únicamente cuando tienen la web abierta.
+    'always_online_emails' => array_values(array_unique(array_filter(array_map(
         'trim',
-        explode(',', (string) env('SUPPORT_ALWAYS_ONLINE_EMAILS', 'administrador@datamid.com.mx'))
-    ))),
+        array_merge(
+            explode(',', (string) env('SUPPORT_ALWAYS_ONLINE_EMAILS', '')),
+            ['lucia.soporte@sistema.local', 'mateo.diseno@sistema.local', 'ian.programacion@sistema.local']
+        )
+    )))),
     // Ayuda visual para comprobar el scroll. El componente la limita al entorno local.
     'online_preview_count' => max(0, (int) env('SUPPORT_ONLINE_PREVIEW_COUNT', 0)),
     'help_recipient_email' => env('SUPPORT_HELP_RECIPIENT_EMAIL', 'administrador@datamid.com.mx'),
@@ -557,12 +598,12 @@ return [
             'items' => [
                 'usar' => [
                     'question' => '¿Cómo uso el asistente de preguntas?',
-                    'answer' => 'Elige un apartado en la primera columna, selecciona una pregunta de la segunda y Sofia responderá en la conversación.',
+                    'answer' => 'Elige un apartado en la primera columna, selecciona una pregunta de la segunda y Lucía responderá en la conversación.',
                     'steps' => [
                         'Entra a Soporte › Centro de Ayuda › Preguntas.',
                         'Selecciona el apartado sobre el que tienes dudas.',
                         'Selecciona una pregunta de la lista.',
-                        'Lee la respuesta que Sofia escribe en la conversación.',
+                        'Lee la respuesta que Lucía escribe en la conversación.',
                         'Si quieres un recorrido por la pantalla, presiona “Tutorial rápido” debajo de la lista de categorías.',
                     ],
                 ],

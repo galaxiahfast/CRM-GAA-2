@@ -14,23 +14,31 @@ use Symfony\Component\HttpFoundation\Response;
 class TrackUserPresence
 {
     /** Nombre de ruta (o prefijo terminado en punto) => apartado del menú. */
+    /** Mismos nombres que las tarjetas de Inicio. Lo más específico va primero. */
     private const SECTIONS = [
         'inicio' => 'Inicio',
-        'dashboard' => 'Panel general',
-        'bank-reconciliation.' => 'Conciliación bancaria',
         'organigrama.' => 'Organigrama',
-        'administracion.' => 'Administración',
-        'time.admin.' => 'Supervisión de horas',
+        'dashboard' => 'Panel General',
+        'dashboard.' => 'Panel General',
+        'customers.' => 'Clientes',
+        'time.admin.attendance' => 'Reloj Checador',
         'time.attendance' => 'Reloj Checador',
+        'time.admin.' => 'Supervisión de Horas',
+        'time.dashboard' => 'Gráficos Generales',
         'time.reports' => 'Mi productividad',
-        'time.' => 'Registro de actividades',
-        'activity-backups.' => 'Gestión de respaldos',
-        'soporte.hoja-entrega' => 'Hoja de entrega',
-        'soporte.reportes-tecnicos' => 'Reportes de soporte',
-        'soporte.reportes-respaldos' => 'Reporte de respaldos',
+        'time.' => 'Cronómetro',
+        'testing.own-hours.' => 'Manager Control',
+        'testing.managercontrol.' => 'Manager Control',
+        'activity-backups.' => 'Gestión de Respaldos',
+        'confirmaciones.' => 'Confirmaciones de Saldos',
+        'administracion.' => 'Administración',
+        'soporte.hoja-entrega' => 'Hoja de Entrega',
+        'soporte.reportes-tecnicos' => 'Reportes de Soporte',
+        'soporte.reportes-respaldos' => 'Reporte de Respaldos',
         'soporte.preguntas' => 'Preguntas',
-        'soporte.' => 'Soporte técnico',
-        'profile.' => 'Mi cuenta',
+        'soporte.ticket' => 'Chat de Soporte',
+        'soporte.' => 'Soporte',
+        'profile.' => 'Mi Cuenta',
         'profiles.' => 'Perfiles',
     ];
 
@@ -53,7 +61,7 @@ class TrackUserPresence
     {
         // Solo las visitas reales a una página cambian el apartado; las actualizaciones de Livewire no.
         $section = $request->isMethod('GET') && ! $request->expectsJson() && ! $request->headers->has('X-Livewire')
-            ? $this->sectionFor((string) $request->route()?->getName())
+            ? $this->sectionFor($request)
             : null;
 
         $stale = ! $user->last_seen_at || $user->last_seen_at->lt(now()->subMinute());
@@ -72,8 +80,15 @@ class TrackUserPresence
         $user->forceFill($values)->syncOriginal();
     }
 
-    private function sectionFor(string $routeName): ?string
+    private function sectionFor(Request $request): ?string
     {
+        $routeName = (string) $request->route()?->getName();
+
+        // Conciliación: la misma ruta sirve a la bancaria y a la de OCR
+        if (str_starts_with($routeName, 'bank-reconciliation.')) {
+            return $request->route('tool') === 'ocr' ? 'Conciliación OCR' : 'Conciliación Bancaria';
+        }
+
         foreach (self::SECTIONS as $prefix => $label) {
             if ($routeName === $prefix || (str_ends_with($prefix, '.') && str_starts_with($routeName, $prefix))) {
                 return $label;

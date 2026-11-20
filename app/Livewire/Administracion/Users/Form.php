@@ -338,11 +338,28 @@ class Form extends Component
 
         abort_if($user->id === auth()->id(), 422, 'No puedes eliminar tu propio usuario.');
 
-        DB::transaction(function () use ($user, $chartService): void {
-            $chartService->detachAllRelationsForUser($user->id);
-            UserInterns::where('intern_id', $user->id)->delete();
-            $user->delete();
-        });
+        // Los ajustes del reloj checador guardan quién los hizo: ese historial no se puede perder y la base no deja borrarlo.
+        $auditCount = DB::table('time_entry_audits')->where('admin_id', $user->id)->count();
+        if ($auditCount > 0) {
+            $this->addError('deleteConfirmationPhrase', "No se puede eliminar: hizo {$auditCount} ajuste(s) en el reloj checador como administrador y ese historial debe conservarse.");
+
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($user, $chartService): void {
+                // Su equipo directo pasa a reportar a su jefe (el organigrama se ajusta solo) y después se borra.
+                $chartService->removeFromChart($user->id);
+                UserInterns::where('intern_id', $user->id)->delete();
+                DB::table('customer_interns')->where('intern_id', $user->id)->delete();
+                $user->delete();
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->addError('deleteConfirmationPhrase', 'No se pudo eliminar al usuario porque tiene registros relacionados que deben conservarse.');
+
+            return;
+        }
 
         session()->flash('success', 'Usuario eliminado correctamente.');
         $references = app(ReferenceDataCache::class);

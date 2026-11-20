@@ -60,12 +60,12 @@ class DirectChatTest extends TestCase
         session()->forget('direct_chat');
         $this->actingAs($luis);
         Livewire::test(DirectChat::class)
-            ->assertSee('Ana Pérez')
+            ->assertSee('ANA PÉREZ')
             ->assertSee('Hola Luis, ¿tienes un minuto?')
             ->assertSeeHtml('dc-badge');
         Livewire::test(DirectChat::class)
             ->call('toggle')
-            ->assertSee('Ana Pérez')
+            ->assertSee('ANA PÉREZ')
             ->assertSee('Hola Luis, ¿tienes un minuto?')
             ->call('openConversation', $ana->id)
             ->assertSee('Hola Luis, ¿tienes un minuto?');
@@ -115,7 +115,7 @@ class DirectChatTest extends TestCase
         Livewire::test(DirectChat::class)
             ->call('toggle')
             ->set('search', 'Buscada')
-            ->assertSee('Buscada Persona')
+            ->assertSee('BUSCADA PERSONA')
             ->dispatch('open-direct-chat', userId: $target->id)
             ->assertSet('activeUserId', $target->id)
             ->assertSet('search', '');
@@ -129,17 +129,17 @@ class DirectChatTest extends TestCase
 
         // Ana escribe a Luis
         $this->actingAs($ana);
-        $anaChat = Livewire::test(DirectChat::class)->call('openConversation', $luis->id)->set('message', 'Estoy escribiendo...');
+        $anaChat = Livewire::test(DirectChat::class)->call('openConversation', $luis->id)->call('typing', 'Estoy escribiendo...');
 
         // Luis, con el chat minimizado, ve el aviso de que Ana escribe; ya abierto, lo ve en la conversación
         session()->forget('direct_chat');
         $this->actingAs($luis);
         Livewire::test(DirectChat::class)->assertSee('escribiendo');
-        Livewire::test(DirectChat::class)->call('openConversation', $ana->id)->assertSee('Ana Pérez está escribiendo');
+        Livewire::test(DirectChat::class)->call('openConversation', $ana->id)->assertSee('ANA PÉREZ está escribiendo');
 
         // Al borrar lo escrito deja de aparecer
         $this->actingAs($ana);
-        $anaChat->set('message', '');
+        $anaChat->call('typing', '');
         $this->actingAs($luis);
         Livewire::test(DirectChat::class)->call('openConversation', $ana->id)->assertDontSee('está escribiendo');
     }
@@ -152,9 +152,9 @@ class DirectChatTest extends TestCase
         Livewire::test(DirectChat::class)
             ->call('toggle')
             ->set('search', 'Persona')
-            ->assertSee('Persona Visible')
+            ->assertSee('PERSONA VISIBLE')
             ->assertDontSee('Resultados')
-            ->assertSeeHtml('h-[400px]');
+            ->assertSeeHtml('h-[364px]');
     }
 
     public function test_sending_a_message_notifies_once_per_conversation_and_the_notice_opens_the_chat(): void
@@ -171,14 +171,14 @@ class DirectChatTest extends TestCase
         // Una sola notificación mientras Luis no lea, con el nombre de quien escribe y un enlace que abre el chat
         $notices = $luis->notifications()->get();
         $this->assertCount(1, $notices);
-        $this->assertSame('Nuevo mensaje de Ana Pérez', $notices[0]->data['title']);
+        $this->assertSame('Nuevo mensaje de ANA PÉREZ', $notices[0]->data['title']);
         $this->assertSame('Primer mensaje', $notices[0]->data['message']);
         $this->assertStringContainsString('chat='.$ana->id, $notices[0]->data['action_url']);
 
         // Al abrir el enlace de la notificación, el chat queda abierto en esa conversación
         session()->forget('direct_chat');
         $this->actingAs($luis);
-        $this->get(route('inicio', ['chat' => $ana->id]))->assertOk()->assertSee('Ana Pérez');
+        $this->get(route('inicio', ['chat' => $ana->id]))->assertOk()->assertSee('ANA PÉREZ');
     }
 
     public function test_minimizing_is_remembered_so_a_reload_does_not_bring_it_back_expanded(): void
@@ -219,7 +219,7 @@ class DirectChatTest extends TestCase
         Livewire::test(DirectChat::class)->call('openConversation', $always->id)->assertSee('En línea');
     }
 
-    public function test_conversations_are_kept_for_a_week_and_not_reset_each_day(): void
+    public function test_conversations_are_kept_indefinitely_and_never_reset(): void
     {
         $me = User::factory()->create();
         $other = User::factory()->create(['name' => 'Luis']);
@@ -227,17 +227,52 @@ class DirectChatTest extends TestCase
             $message = DirectMessage::create(['sender_id' => $other->id, 'recipient_id' => $me->id, 'body' => $body]);
             $message->forceFill(['created_at' => $when, 'updated_at' => $when])->save();
         };
-        $make('mensaje de hace seis dias', now()->subDays(6));
-        $make('mensaje de ayer', now()->subDay());
+        $make('mensaje de hace un año', now()->subYear());
         $make('mensaje de hace ocho dias', now()->subDays(8));
+        $make('mensaje de ayer', now()->subDay());
         $this->actingAs($me);
 
         Livewire::test(DirectChat::class)->call('openConversation', $other->id)
             ->assertSee('mensaje de ayer')
-            ->assertSee('mensaje de hace seis dias')
-            ->assertDontSee('mensaje de hace ocho dias');
+            ->assertSee('mensaje de hace ocho dias')
+            ->assertSee('mensaje de hace un año');
 
-        $this->artisan('model:prune', ['--model' => [DirectMessage::class]])->assertSuccessful();
-        $this->assertSame(2, DirectMessage::count());
+        // La conversación antigua sigue en la lista y la limpieza de modelos no borra nada
+        Livewire::test(DirectChat::class)->assertSee('LUIS');
+        $this->artisan('model:prune', ['--model' => [DirectMessage::class]]);
+        $this->assertSame(3, DirectMessage::count());
+    }
+
+    public function test_older_messages_can_be_loaded_and_search_finds_the_full_name(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create(['name' => 'Dioni', 'last_name' => 'Colaborador']);
+        foreach (range(1, 65) as $n) {
+            DirectMessage::create(['sender_id' => $other->id, 'recipient_id' => $me->id, 'body' => 'mensaje numero '.str_pad((string) $n, 3, '0', STR_PAD_LEFT)]);
+        }
+        $this->actingAs($me);
+
+        Livewire::test(DirectChat::class)->call('openConversation', $other->id)
+            ->assertSee('mensaje numero 065')
+            ->assertDontSee('mensaje numero 001')
+            ->assertSee('Ver mensajes anteriores')
+            ->call('loadOlder')
+            ->assertSee('mensaje numero 001')
+            ->assertDontSee('Ver mensajes anteriores');
+
+        Livewire::test(DirectChat::class)->set('search', 'Dioni Colab')->assertSee('DIONI COLABORADOR');
+    }
+
+    public function test_the_browser_can_send_the_text_directly_without_waiting_for_the_box(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $this->actingAs($me);
+
+        Livewire::test(DirectChat::class)->call('openConversation', $other->id)
+            ->call('send', 'Hola directo')
+            ->assertHasNoErrors()
+            ->assertSee('Hola directo');
+        $this->assertDatabaseHas('direct_messages', ['sender_id' => $me->id, 'recipient_id' => $other->id, 'body' => 'Hola directo']);
     }
 }

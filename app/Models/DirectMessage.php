@@ -2,18 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DirectMessage extends Model
 {
-    use Prunable;
-
-    /** Los chats individuales se conservan una semana completa; no se reinician cada día. */
-    public const RETENTION_DAYS = 7;
-
+    /** Los mensajes directos se conservan de forma indefinida: no se borran ni se reinician por día o por semana. */
     protected $fillable = ['sender_id', 'recipient_id', 'body', 'read_at'];
 
     protected function casts(): array
@@ -29,18 +23,6 @@ class DirectMessage extends Model
     public function recipient(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recipient_id');
-    }
-
-    /** Mensajes dentro del periodo de conservación. */
-    public function scopeRetained($query)
-    {
-        return $query->where('created_at', '>=', now()->subDays(self::RETENTION_DAYS));
-    }
-
-    /** Lo que `model:prune` borra: mensajes con más de una semana. */
-    public function prunable(): Builder
-    {
-        return static::query()->where('created_at', '<', now()->subDays(self::RETENTION_DAYS));
     }
 
     /** Mensajes entre dos personas (en cualquier sentido). */

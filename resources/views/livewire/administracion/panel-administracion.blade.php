@@ -294,6 +294,190 @@
         @keyframes org-node-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(106, 169, 255, 0); } 30% { box-shadow: 0 0 0 6px rgba(106, 169, 255, 0.55); } }
         .org-node.org-node-flash { animation: org-node-flash 1.6s ease-out 1; border-color: #6aa9ff; }
 
+        /* ===== Organigrama tipo Blender =====
+           El árbol ocupa todo el espacio bajo la barra superior, sobre una cuadrícula de puntos que se mueve y se acerca
+           con él. Encima van paneles flotantes con el diseño de Inicio: bordes de 18px, texto de 15px, 20px entre todo y
+           la misma sombra pareja alrededor. */
+        [data-panel] { --org-canvas: #f4f4f5; --org-dot: #d4d4d8; --org-muted: color-mix(in srgb, var(--panel-text) 58%, transparent); }
+        html.module-dark-theme [data-panel] { --org-canvas: #0b0b0e; --org-dot: #27272a; }
+        #organigrama-principal { zoom: calc(1 / var(--app-zoom, 1)); }
+        .org-viewport {
+            height: calc((var(--app-dvh) - 123px) * var(--app-zoom, 1));
+            min-height: 560px;
+            background-color: var(--org-canvas);
+            background-image: radial-gradient(circle, var(--org-dot) 1.2px, transparent 1.3px);
+            background-size: 24px 24px;
+        }
+        .org-panel {
+            z-index: 30;
+            padding: 20px;
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            background: var(--panel-surface);
+            color: var(--panel-text);
+            box-shadow: 0 0 30px rgba(15, 23, 42, .12);
+        }
+        html.module-dark-theme .org-panel { box-shadow: 0 0 30px rgba(0, 0, 0, .6); }
+        .org-panel-title-box { width: 380px; max-width: calc(100% - 40px); }
+        /* Títulos como los de Inicio (19px, seminegrita); !important porque la regla monocroma del módulo fuerza 15px */
+        [data-panel] .org-panel :is(h1, h2).org-title, .org-title { margin-bottom: 0; font-size: 19px !important; font-weight: 600 !important; line-height: 1.3; letter-spacing: -.01em; color: var(--panel-text); }
+        .org-panel .org-gap { margin-top: 20px; }
+        .org-subtitle { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; color: var(--panel-text); }
+        .org-muted { color: var(--org-muted); }
+        .org-gap { margin-top: 20px; }
+        .org-panel :is(p, span, h1, h2) { margin-bottom: 0; }
+        .org-divider { border-color: var(--panel-border); }
+        .org-chip { display: inline-flex; align-items: center; border: 1px solid var(--panel-border); border-radius: 18px; padding: 15px 20px; background: var(--panel-surface); line-height: 1.3; white-space: nowrap; }
+        .org-swatch { display: inline-block; height: 12px; width: 12px; flex-shrink: 0; border-radius: 4px; margin: -1px 0; vertical-align: 0; }
+        /* Los textos de los paneles miden lo que sus letras: así los 20px entre ellos son exactos */
+        .org-panel :is(h1, h2, p) { text-box: trim-both cap alphabetic; }
+        .org-panel p { line-height: calc(.7em + 20px); }
+        .org-info { width: 320px; max-width: calc(100vw - 40px); }
+        /* Mismo diseño que las tarjetas de Inicio: título de 16px en seminegrita y texto gris de 15px; 20px entre todo y entre líneas */
+        [data-panel] .org-panel :is(h1, h2).org-card-title { margin: 0 0 0 0; font-size: 16px !important; font-weight: 600 !important; line-height: calc(.7em + 20px); color: var(--panel-text); }
+        [data-panel] .org-panel p.org-card-text { margin: 20px 0 0; font-size: 15px !important; line-height: calc(.7em + 20px); color: var(--org-muted); }
+        [data-panel] .org-panel :is(h1, h2).org-card-title.org-card-gap { margin-top: 20px; }
+        /* Barra de herramientas: campos y botones del mismo alto (50px) y redondeo que las etiquetas de Inicio */
+        .org-field { display: block; height: 50px; border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-surface); color: var(--panel-text); padding: 0 20px; line-height: 1; box-shadow: 0 0 30px rgba(15, 23, 42, .12); }
+        .org-field::placeholder { color: var(--org-muted); opacity: 1; }
+        .org-field:focus { outline: none !important; box-shadow: 0 0 30px rgba(15, 23, 42, .12) !important; border-color: color-mix(in srgb, var(--panel-text) 45%, var(--panel-border)) !important; }
+        .org-tool-btn { position: relative; display: grid; height: 50px; width: 50px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-surface); color: var(--panel-text); box-shadow: 0 0 30px rgba(15, 23, 42, .12); transition: background-color 150ms ease; }
+        .org-tool-btn:hover { background: var(--panel-hover, var(--panel-subtle)); }
+        .org-tool-badge { position: absolute; top: -8px; right: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 9999px; background: #15803d; color: #fff; font-size: 12px !important; line-height: 22px; text-align: center; }
+        html.module-dark-theme .org-tool-badge { background: #4ade80; color: #052e16; }
+        #fullscreen-toggle { width: 50px !important; height: 50px !important; border-radius: 18px !important; background: var(--panel-surface) !important; box-shadow: 0 0 30px rgba(15, 23, 42, .12) !important; }
+        /* Panel lateral de «Sin asignar» (como el panel lateral de Blender) */
+        .org-side { top: 90px; bottom: 100px; width: 380px; max-width: calc(100% - 40px); overflow: hidden; }
+        .org-side .home-row { border-radius: 18px; }
+        /* Tarjetas del árbol con el diseño de Inicio */
+        .org-node { border-width: 1px !important; border-radius: 18px !important; }
+        /* Lo que se corta con «…» no recorta las letras que bajan o suben de la línea (g, j, p, q, y, acentos); min-width: 0
+           para que en las filas flexibles el texto respete su ancho y no se encime sobre lo de al lado */
+        .org-node .truncate, .org-side .truncate { overflow: clip; overflow-clip-margin: 10px; min-width: 0; }
+
+        /* Listas (resultados de búsqueda, áreas y «Sin asignar") con el formato de «En línea ahora» de Inicio: renglones con
+           20px de relleno separados por una línea fina, foto de 50x50 con su borde pegado, nombre en seminegrita y datos en
+           gris con 20px entre ellos */
+        .org-row { display: flex; width: 100%; align-items: center; gap: 20px; padding: 20px; margin: 0; text-align: left; transition: background-color 150ms ease; }
+        :is(.org-list > li + li, #search-results > .org-row + .org-row) .org-row, #search-results > .org-row + .org-row { border-top: 1px solid var(--panel-border); }
+        button.org-row:hover, .org-list .org-row:hover { background: var(--panel-subtle); }
+        .org-avatar { display: grid; height: 50px; width: 50px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border); border-radius: 9999px; background: var(--panel-surface); color: var(--panel-text); font-size: 15px !important; object-fit: cover; }
+        .org-row-text { min-width: 0; flex: 1 1 auto; }
+        .org-row-name, .org-row-meta { display: block; height: 10.5px; line-height: 10.5px; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        .org-row-name { font-weight: 600 !important; color: var(--panel-text); }
+        .org-row-meta { margin-top: 20px; color: var(--org-muted); }
+        .org-option { display: block; width: 100%; padding: 20px; text-align: left; line-height: 1; text-box: trim-both cap alphabetic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 150ms ease; }
+        .org-option + .org-option, template + .org-option { border-top: 1px solid var(--panel-border); }
+        button.org-option:hover, .org-option[aria-selected="true"] { background: var(--panel-subtle); }
+        /* El indicador de scroll queda dentro de las esquinas redondeadas (5px del borde, 18px arriba y abajo) */
+        .org-thumb { right: 5px !important; }
+
+        /* Flujo de trabajo: un círculo sale de cada jefe y recorre la línea completa hasta cada persona de su equipo (baja,
+           cruza y vuelve a bajar), nivel por nivel como una ola que baja por el árbol. Se dibuja en una capa SVG debajo de
+           las tarjetas (ver drawFlows en el script), así se mueve y se acerca junto con el árbol sin costo extra. */
+        [data-panel] { --org-flow: #15803d; }
+        html.module-dark-theme [data-panel] { --org-flow: #4ade80; }
+        .org-flow-layer { position: absolute; left: 0; top: 0; z-index: 5; overflow: visible; pointer-events: none; }
+        .org-flow-layer .org-flow-dot { fill: var(--org-flow); }
+        .org-flow-layer .org-flow-halo { fill: var(--org-flow); opacity: .22; }
+
+        /* Mover personas: se arrastra la tarjeta (de su asa o dejándola presionada) o una fila de «Sin asignar». La rama que
+           se mueve se atenúa, el jefe donde caería se marca en verde y lo que no se puede (su propio equipo) en rojo. */
+        .org-drag-handle { position: absolute; left: 8px; top: 8px; z-index: 20; display: grid; height: 24px; width: 24px; place-items: center; border-radius: 8px; color: var(--org-muted); cursor: grab; transition: background-color 150ms ease, color 150ms ease; }
+        .org-drag-handle:hover { background: var(--panel-subtle); color: var(--panel-text); }
+        .org-is-dragging, .org-is-dragging * { cursor: grabbing !important; }
+        .org-is-dragging .org-node:hover { border-color: var(--panel-border) !important; transform: none !important; }
+        .visual-node-wrapper.org-dragging { opacity: .32; transition: opacity 160ms ease; }
+        .org-node.org-drop-ok { border-color: var(--org-flow) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--org-flow) 22%, transparent) !important; }
+        .org-node.org-drop-bad { border-color: #dc2626 !important; box-shadow: 0 0 0 4px rgba(220, 38, 38, .18) !important; }
+        .visual-node-wrapper.org-pending { opacity: .55; }
+        .org-side.org-drop-zone { border-color: var(--org-flow) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--org-flow) 22%, transparent), 0 0 30px rgba(15, 23, 42, .12) !important; }
+        .org-drag-ghost { position: fixed; left: 0; top: 0; z-index: 200005; display: flex; max-width: 360px; align-items: center; gap: 15px; padding: 15px 20px 15px 15px; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 18px; background: var(--panel-surface, #fff); color: var(--panel-text, #18181b); font-family: inherit; font-size: 15px; pointer-events: none; box-shadow: 0 18px 40px -16px rgba(15, 23, 42, .45); }
+        .org-drag-ghost .org-ghost-avatar { display: grid; height: 40px; width: 40px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 9999px; object-fit: cover; font-size: 14px; }
+        .org-drag-ghost .org-ghost-name { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .org-drag-ghost .org-ghost-hint { display: block; margin-top: 6px; font-size: 13px; color: color-mix(in srgb, var(--panel-text, #18181b) 58%, transparent); }
+        .org-drag-ghost[data-state="ok"] { border-color: var(--org-flow, #15803d); }
+        .org-drag-ghost[data-state="ok"] .org-ghost-hint { color: var(--org-flow, #15803d); }
+        .org-drag-ghost[data-state="bad"] { border-color: #dc2626; }
+        .org-drag-ghost[data-state="bad"] .org-ghost-hint { color: #dc2626; }
+        html.module-dark-theme .org-drag-ghost { --panel-surface: #09090b; --panel-border: #3f3f46; --panel-text: #ffffff; --org-flow: #4ade80; }
+        .org-list [data-unassigned-id] { cursor: grab; }
+        .org-row-grip { flex-shrink: 0; color: var(--org-muted); }
+
+        /* Tarjetas del árbol como las tarjetas de Inicio: nombre en seminegrita, datos en gris y, al pasar el puntero, se
+           elevan apenas con el borde más marcado */
+        .org-node { transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease !important; }
+        .org-node:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -14px rgba(15, 23, 42, .35); }
+        html.module-dark-theme .org-node:hover { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .9); }
+        .org-node .org-node-name { color: var(--panel-text) !important; font-weight: 600 !important; }
+        .org-node .org-node-meta { color: var(--org-muted); }
+
+        /* Tarjetas vivas: aparecen en cascada por nivel al entrar y se resaltan al pasar el puntero */
+        .org-node { transition: border-color 160ms ease !important; }
+        /* Como las tarjetas de Inicio: borde gris y, al pasar el puntero, el borde se pone negro (sin sombra) */
+        .org-node:hover { border-color: var(--panel-text) !important; }
+        @keyframes org-node-in { from { opacity: 0; } to { opacity: 1; } }
+        .org-ready .visual-node-wrapper > .relative { animation: org-node-in 380ms ease-out both; animation-delay: calc(120ms + var(--depth, 0) * 90ms); }
+
+        /* Botones de la barra: se resaltan al pasar el puntero y al presionarlos */
+        .org-tool-btn, #fullscreen-toggle { transition: background-color 150ms ease, border-color 150ms ease !important; }
+        .org-tool-btn:hover, #fullscreen-toggle:hover { border-color: var(--panel-text) !important; }
+        .org-tool-btn[aria-expanded="true"] { border-color: var(--org-flow) !important; color: var(--org-flow); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .org-ready .visual-node-wrapper > .relative { animation: none; }
+            .org-node, .org-node:hover { transition: none !important; transform: none; }
+        }
+
+        /* Panel «Sin asignar» con el diseño de Inicio: título de 19px en seminegrita, texto gris, etiqueta con el total y la
+           lista en filas separadas por una línea fina que se tiñen apenas al pasar el puntero */
+        .org-side .org-title { font-size: 19px !important; }
+        .org-side .org-list .org-row:hover { background: color-mix(in srgb, var(--panel-accent) 6%, var(--panel-surface)); }
+        .org-side .org-side-hint { padding: 20px; border-top: 1px solid var(--panel-border); color: var(--org-muted); line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; }
+
+        /* Formularios abiertos desde el Organigrama con el diseño de Inicio: bordes de 18px, título de 19px en seminegrita,
+           subtítulo gris, títulos de sección oscuros en seminegrita y botones redondeados como las etiquetas */
+        .org-user-modal,
+        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel { border-radius: 18px !important; border-color: var(--panel-border) !important; box-shadow: 0 24px 60px -20px rgba(15, 23, 42, .4) !important; }
+        .org-user-modal header h1,
+        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel header h1 { font-size: 19px !important; font-weight: 600 !important; line-height: 1.3 !important; color: var(--panel-text) !important; }
+        .org-user-modal header p,
+        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel header p { color: var(--org-muted) !important; }
+        .org-user-modal .admin-title-icon,
+        body:has(#organigrama-principal) [data-administration-modal] .admin-title-icon { display: none !important; }
+        .org-user-modal .admin-section-title,
+        body:has(#organigrama-principal) [data-administration-modal] .admin-section-title { color: var(--panel-text) !important; font-size: 16px !important; font-weight: 600 !important; }
+        .org-user-modal label, .org-user-modal [id$="-label"] { color: var(--org-muted) !important; }
+        .org-user-modal :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+        body:has(#organigrama-principal) [data-administration-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { border-radius: 12px !important; }
+        .org-user-modal .admin-btn, .org-user-modal button[class*="bg-red"],
+        body:has(#organigrama-principal) [data-administration-modal] .admin-btn { border-radius: 18px !important; }
+        .org-user-modal .org-choice { padding: 20px !important; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: color-mix(in srgb, var(--panel-accent) 5%, var(--panel-surface)) !important; }
+        .org-user-modal .org-choice + section { margin-top: 20px; }
+        .org-user-modal .org-choice p { color: var(--org-muted); line-height: calc(.7em + 20px); }
+
+        /* Entrada fluida: el árbol aparece ya centrado (si el script no corre, aparece igual a los 2 s) y los paneles suben
+           10px mientras aparecen, en cascada y rápido */
+        #org-tree-wrapper { opacity: 0; transition: opacity 260ms ease-out; animation: org-show-late 0s 2s forwards; }
+        .org-ready #org-tree-wrapper { opacity: 1; animation: none; }
+        @keyframes org-show-late { to { opacity: 1; } }
+        @keyframes org-rise { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+        .org-toolbar, .org-side { animation: org-rise 320ms cubic-bezier(.16, 1, .3, 1) both; }
+        .org-toolbar { animation-delay: 60ms; }
+        .org-side { animation-delay: 120ms; }
+        @media (prefers-reduced-motion: reduce) {
+            #org-tree-wrapper { transition: none; }
+            .org-toolbar, .org-side { animation: none; }
+        }
+        /* Pantallas angostas: la barra va abajo (en dos filas: campos arriba y botones abajo), los menús se abren hacia arriba
+           y el panel de «Sin asignar» queda encima del árbol sin tapar la barra */
+        @media (max-width: 1023px) {
+            .org-toolbar { top: auto !important; bottom: 20px; left: 20px; right: 20px !important; flex-wrap: wrap; justify-content: flex-end; }
+            .org-toolbar > div:not(.relative):first-child, .org-toolbar > div.w-\[200px\] { flex: 1 1 200px; }
+            .org-drop { top: auto !important; bottom: calc(100% + 20px) !important; }
+            .org-side { top: 20px; bottom: 160px; }
+        }
+
         /* Estilo para el contenedor en modo fullscreen */
         body.org-chart-fullscreen {
             overflow: hidden;
@@ -302,12 +486,13 @@
             position: fixed !important;
             inset: 0 !important;
             z-index: 9000 !important;
+            /* El Organigrama ya va sin el zoom de la app, así que ocupa la ventana completa con 100vw x 100vh */
             width: 100vw !important;
             max-height: none !important;
             height: 100vh !important;
-            border-radius: 10px !important;
+            border-radius: 0 !important;
             border: none !important;
-            padding: 20px !important;
+            padding: 0 !important;
         }
 
         /* Botón fullscreen: cuadrado y sin contorno azul en hover/focus */
@@ -445,9 +630,9 @@
     @endpush
 
     <div class="w-full">
-    <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]">
-    <!-- Cabecera: mismo patrón que el inicio (cuadro con ícono, título azul, subtítulo y datos a la derecha) -->
-    <section class="flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+    <main x-ref="scaledMain" class="flex w-full min-w-0 flex-col {{ $orgChartPage ? 'gap-0 p-0' : 'gap-[20px] p-[20px] sm:gap-[30px] sm:p-[30px] xl:gap-[50px] xl:p-[50px]' }}">
+    <!-- Cabecera: mismo patrón que el inicio (en el organigrama no se muestra: el título va en un panel flotante) -->
+    <section data-page-header @class(['flex min-h-[75px] shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]', '!hidden' => $orgChartPage])>
         <div class="flex min-w-0 max-w-full items-center gap-[15px]">
             <span class="panel-surface panel-border panel-text grid h-[50px] w-[50px] shrink-0 place-items-center rounded-xl border">
                 <svg class="h-[30px] w-[30px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
@@ -664,99 +849,53 @@
     @endunless
 
     @if ($orgChartPage)
-    <!-- Organigrama con padding de 80px en todos los lados -->
-    <div id="organigrama-principal" class="flex flex-col gap-[20px] sm:gap-[30px] xl:gap-[50px]" wire:init="loadOrgChartData">
-        <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Resumen del organigrama">
-            <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
-                <div class="min-w-0">
-                    <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span>Resumen</span></p>
-                    <p class="mt-[15px] leading-none">Estado actual de la estructura jerárquica de la organización.</p>
-                </div>
-                <span class="leading-none">{{ $orgChartStats['in_tree'] ?? 0 }} de {{ $totalUsers ?? 0 }} en el árbol</span>
-            </header>
-            <div class="-mb-px -mr-px grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg><span class="min-w-0">Usuarios totales</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $totalUsers ?? 0 }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Registrados</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span class="min-w-0">En el árbol</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $orgChartStats['in_tree'] ?? 0 }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Con jefe o equipo</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8 3 12l4 4m10-8 4 4-4 4M4 12h16" /></svg><span class="min-w-0">Relaciones</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $orgChartStats['relations'] ?? 0 }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Líneas de mando</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg><span class="min-w-0">Roles</span></span>
-                    <span class="mt-[15px] block truncate leading-none">{{ $totalRoles ?? 0 }}</span>
-                    <span class="mt-[15px] block truncate leading-none">Perfiles configurados</span>
-                </div>
-                <div class="panel-border block border-b border-r p-[20px]">
-                    <span class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg><span class="min-w-0">Permisos</span></span>
-                    <span class="mt-[15px] block truncate leading-none">30</span>
-                    <span class="mt-[15px] block truncate leading-none">Reglas de acceso</span>
-                </div>
-            </div>
-        </section>
+    {{-- Organigrama a pantalla completa, como el visor de Blender: el árbol ocupa todo el espacio (se mueve y se acerca) y
+         la información va en paneles flotantes encima, con el diseño de Inicio (bordes de 18px, texto de 15px, 20px entre todo). --}}
+    {{-- wire:poll: cada 20 s se compara el sello del organigrama; si otra persona lo cambió se vuelve a dibujar solo (si no, no se envía nada) --}}
+    <div id="organigrama-principal" @unless ($orgChartLoaded) wire:init="loadOrgChartData" @endunless wire:poll.20s.visible="syncOrgChart">
+        <div id="org-tree-container" class="org-viewport relative overflow-hidden" style="touch-action: none;" data-area="{{ $selectedPhysicalAreaId }}">
 
-        
-        <!-- Grid con ancho mínimo para evitar deformación -->
-        <div class="grid min-w-0 grid-cols-1 gap-[50px] p-0 xl:grid-cols-3" style="padding: 0;">
-
-            <!-- Árbol jerárquico -->
-            <section class="panel-surface panel-border overflow-hidden rounded-xl border xl:col-span-2" aria-label="Estructura jerárquica">
-            <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
-                <div class="min-w-0">
-                    <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg><span>Estructura jerárquica</span></p>
-                    <p class="mt-[15px] leading-none">Arrastra para mover, usa la rueda para acercar y haz doble clic para restablecer.</p>
-                </div>
-                
-            </header>
-            <div>
-                @if (($orgChartStats['cycles_detected'] ?? 0) > 0)
-                    <div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[15px] text-red-700">
-                        Se detectaron {{ $orgChartStats['cycles_detected'] }} ciclo(s) en las relaciones jerárquicas.
-                        El árbol se renderiza de forma segura omitiendo ramas circulares.
-                    </div>
-                @endif
-
-                <!-- Contenedor con pan y zoom (siempre visible) -->
-                <div id="org-tree-container" class="relative overflow-hidden" style="height: 663px; background: var(--panel-surface); touch-action: none;">
-
-                    <!-- LEYENDA (siempre visible) -->
-                    <div class="panel-surface panel-border absolute top-0 left-0 rounded-br-xl border-b border-r p-5" style="z-index: 30;">
-                        <div class="text-[15px] flex flex-col items-start gap-[10px]">
-                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #1e3a8a;"></span> Rol</div>
-                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #059669;"></span> Puesto</div>
-                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #7c3aed;"></span> Área</div>
-                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #d97706;"></span> Múltiples jefes</div>
-                            <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 rounded-sm" style="background-color: #64748b;"></span> Fuera del área (jefatura)</div>
+                    <!-- CONTENIDO PRINCIPAL: árbol o mensaje sin datos (profesional) -->
+                    @if (! $orgChartLoaded)
+                        <div class="org-tree-empty">
+                            <span>Cargando organigrama…</span>
                         </div>
-                    </div>
+                    @elseif (count($orgChartTree) > 0)
+                        <div id="org-tree-wrapper" class="relative origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
+                            {{-- Capa del flujo (círculos que van de cada jefe a su equipo): la dibuja el script, Livewire no la toca --}}
+                            <svg class="org-flow-layer" wire:ignore aria-hidden="true" focusable="false"></svg>
+                            <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
+                                @foreach ($orgChartTree as $rootNode)
+                                    <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="org-tree-empty">
+                            <span>No se encontraron nodos para el filtro seleccionado.</span>
+                        </div>
+                    @endif
 
-                    <!-- BUSCADOR + SELECT + BOTÓN FULLSCREEN (siempre visibles) -->
-                    <div class="absolute top-0 right-0 p-5 flex items-center gap-5" style="z-index: 30;">
-                        <!-- Buscador -->
+
+            {{-- Barra de herramientas (arriba a la derecha): buscar, filtrar por área, información, pantalla completa y sin asignar --}}
+            <div data-org-panel class="org-toolbar absolute right-[20px] top-[20px] flex items-start gap-[20px]" style="z-index: 40;">
+                <!-- Buscador -->
                         <div style="position: relative; flex: 1;">
                             <input 
                                 id="node-search-input"
                                 type="text" 
                                 placeholder="Buscar colaborador..."
-                                class="panel-field rounded-xl border px-[20px] py-[15px] leading-none"
-                                style="min-width: 220px; width: 100%; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
+                                class="org-field"
+                                style="min-width: 240px; width: 100%; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
                                 autocomplete="off"
                             >
-                            <div x-data="backupOverlayScroll()" style="position: absolute; top: calc(100% + 10px); right: 0; width: 400px; max-width: calc(100vw - 80px); z-index: 100;">
+                            <div x-data="backupOverlayScroll()" class="org-drop" style="position: absolute; top: calc(100% + 20px); right: 0; width: 400px; max-width: calc(100vw - 80px); z-index: 100;">
                                 <div
-                                    id="search-results" x-ref="scroller" @scroll="update()" @mouseenter="update()"
-                                    class="administration-form-scrollbar panel-surface panel-border rounded-xl border"
+                                    id="search-results" x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18"
+                                    class="administration-form-scrollbar org-panel !p-0"
                                     style="max-height: 300px; overflow-y: auto; overflow-x: hidden; display: none;"
                                 ></div>
-                                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                <span x-show="visible" x-cloak class="administration-form-thumb org-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
                         </div>
 
@@ -769,23 +908,41 @@
                             }" @click.away="open = false; query = ''" @keydown.escape.window="open = false; query = ''">
                             <input id="physical-area-filter" x-ref="areaInput" type="text" x-model="query" @focus="open = true" @input="open = true"
                                 :placeholder="selected && !open ? (areas.find(area => area.id === selected)?.name || 'Todas las áreas') : 'Todas las áreas'"
-                                class="panel-field w-full rounded-xl border py-[15px] pl-[20px] pr-[48px] leading-none focus:outline-none focus:ring-0"
+                                class="org-field w-full pr-[48px]"
                                 autocomplete="off" aria-label="Buscar o filtrar por área">
                             <button type="button" @click="open = !open; if (open) $nextTick(() => $refs.areaInput.focus())"
                                 class="absolute inset-y-0 right-0 flex w-10 items-center justify-center focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
                                 <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                             </button>
-                            <div x-cloak x-show="open" class="panel-surface panel-border absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden rounded-xl border" style="z-index: 100;"
+                            <div x-cloak x-show="open" class="org-panel org-drop absolute left-0 right-0 top-[calc(100%+20px)] overflow-hidden !p-0" style="z-index: 100;"
                                 x-data="backupOverlayScroll()" x-effect="open; $nextTick(() => update())">
-                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" id="physical-area-results" class="administration-form-scrollbar max-h-[300px] overflow-y-auto overflow-x-hidden">
-                                <button type="button" @mousedown.prevent="choose('')" class="panel-option block w-full truncate p-[20px] text-left leading-none">Todas las áreas</button>
-                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" :aria-selected="selected === area.id" x-text="area.name" class="panel-option block w-full truncate p-[20px] text-left leading-none"></button></template>
-                                <div x-show="filteredAreas.length === 0" class="p-[20px] text-center leading-none">No se encontraron áreas</div>
+                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" id="physical-area-results" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="administration-form-scrollbar max-h-[300px] overflow-y-auto overflow-x-hidden">
+                                <button type="button" @mousedown.prevent="choose('')" :aria-selected="selected === ''" class="org-option">Todas las áreas</button>
+                                <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" :aria-selected="selected === area.id" x-text="area.name" class="org-option"></button></template>
+                                <div x-show="filteredAreas.length === 0" class="org-option org-muted">No se encontraron áreas</div>
                                 </div>
-                                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                <span x-show="visible" x-cloak class="administration-form-thumb org-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                             </div>
                         </div>
 
+                {{-- Información: al presionarlo se despliegan la ayuda para moverse y la leyenda de colores --}}
+                <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                    <button type="button" class="org-tool-btn" @click="open = ! open" :aria-expanded="open" title="Información" aria-label="Información del organigrama">
+                        <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                    </button>
+                    <div x-cloak x-show="open" class="org-panel org-info org-drop absolute right-0 top-[calc(100%+20px)]" style="z-index: 100;">
+                        <h1 class="org-card-title">Organigrama</h1>
+                        <p class="org-card-text">Estructura jerárquica: líneas de mando y niveles de supervisión.</p>
+                        <p class="org-card-text">{{ $totalUsers ?? 0 }} usuarios · {{ $orgChartStats['in_tree'] ?? 0 }} en el árbol · {{ $orgChartStats['relations'] ?? 0 }} relaciones · {{ $totalRoles ?? 0 }} roles</p>
+                        @if (($orgChartStats['cycles_detected'] ?? 0) > 0)
+                            <p class="org-card-text !text-red-600">Se detectaron {{ $orgChartStats['cycles_detected'] }} ciclo(s) en las relaciones; se omiten las ramas circulares.</p>
+                        @endif
+                        <h2 class="org-card-title org-card-gap">Cómo moverte</h2>
+                        <p class="org-card-text">Arrastra para mover el organigrama.</p>
+                        <p class="org-card-text">Usa la rueda del ratón para acercar o alejar.</p>
+                        <p class="org-card-text">Haz doble clic para volver a centrarlo.</p>
+                    </div>
+                </div>
                         <!-- BOTÓN DE PANTALLA COMPLETA (cuadrado, sin borde azul) -->
                         <button id="fullscreen-toggle" type="button"
                             aria-label="Alternar pantalla completa">
@@ -798,53 +955,34 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5" />
                             </svg>
                         </button>
-                    </div>
-
-                    <!-- INSTRUCCIONES (siempre visibles) -->
-                    <div class="panel-surface panel-border absolute bottom-0 right-0 rounded-tl-xl border-l border-t p-5" style="z-index: 30;">
-                        <div class="text-[15px]">
-                            Arrastra para mover · Rueda para zoom · Doble clic para reset
-                        </div>
-                    </div>
-
-                    <!-- CONTENIDO PRINCIPAL: árbol o mensaje sin datos (profesional) -->
-                    @if (! $orgChartLoaded)
-                        <div class="org-tree-empty">
-                            <span>Cargando organigrama…</span>
-                        </div>
-                    @elseif (count($orgChartTree) > 0)
-                        <div id="org-tree-wrapper" class="origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
-                            <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
-                                @foreach ($orgChartTree as $rootNode)
-                                    <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
-                                @endforeach
-                            </div>
-                        </div>
-                    @else
-                        <div class="org-tree-empty">
-                            <span>No se encontraron nodos para el filtro seleccionado.</span>
-                        </div>
-                    @endif
-                </div>
+                <button type="button" class="org-tool-btn" @click="$dispatch('org-toggle-unassigned')" title="Usuarios sin asignar" aria-label="Mostrar u ocultar usuarios sin asignar">
+                    <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+                    <span class="org-tool-badge">{{ count($unassignedUsers) }}</span>
+                </button>
             </div>
-            </section>
 
-            <!-- Usuarios sin asignar -->
-            <section class="panel-surface panel-border overflow-hidden rounded-xl border" aria-label="Usuarios sin asignar">
-                <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+            {{-- Panel lateral (a la derecha, plegable): usuarios sin asignar --}}
+            {{-- Al arrastrar a alguien del árbol el panel se abre solo (si estaba cerrado) para poder soltarlo aquí --}}
+            <aside data-org-panel class="org-panel org-side absolute right-[20px] flex flex-col !p-0" aria-label="Usuarios sin asignar"
+                x-data="{ open: (() => { try { const saved = localStorage.getItem('organigrama-side'); return saved === null ? window.innerWidth >= 1024 : saved !== '0'; } catch (e) { return window.innerWidth >= 1024; } })(), openedForDrag: false }"
+                x-show="open"
+                @org-toggle-unassigned.window="open = ! open; openedForDrag = false; try { localStorage.setItem('organigrama-side', open ? '1' : '0'); } catch (e) {}"
+                @org-drag-start.window="if ($event.detail?.source === 'tree' && ! open) { open = true; openedForDrag = true; }"
+                @org-drag-end.window="if (openedForDrag) { open = false; openedForDrag = false; }">
+                <header class="org-divider flex shrink-0 items-start justify-between gap-[20px] border-b p-[20px]">
                     <div class="min-w-0">
-                        <p class="panel-accent flex items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg><span>Usuarios sin asignar</span></p>
-                        <p class="mt-[15px] leading-none">Sin jefe, puesto o área asignada.</p>
+                        <h2 class="org-title">Sin asignar</h2>
+                        <p class="org-muted org-gap">Sin jefe, puesto o área.</p>
                     </div>
-                    <span class="leading-none">{{ count($unassignedUsers) }}</span>
+                    <span class="org-chip">{{ count($unassignedUsers) }} {{ count($unassignedUsers) === 1 ? 'persona' : 'personas' }}</span>
                 </header>
-                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative" style="height: 663px;">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="unassigned-users-scrollbar administration-form-scrollbar h-full overflow-y-auto" style="padding: 15px 20px;">
-                <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="unassigned-users-scrollbar administration-form-scrollbar h-full overflow-y-auto">
+                <div>
                     @if (! $orgChartLoaded)
-                        <p class="text-[15px]" style="line-height: 1.3; margin: 0; padding: 0;">Cargando usuarios…</p>
+                        <p class="org-row org-muted">Cargando usuarios…</p>
                     @elseif (count($unassignedUsers) > 0)
-                        <ul style="display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none;"
+                        <ul class="org-list" style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;"
                             x-data="{
                                 hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
                                 isHidden(id) { return this.hidden.includes(id); },
@@ -863,15 +1001,16 @@
                                     $createdAt = ! empty($user['created_at']) ? \Carbon\Carbon::parse($user['created_at'])->locale('es') : null;
                                 @endphp
                                 <li style="list-style: none;" :style="isHidden({{ (int) $user['id'] }}) ? 'order: 1; opacity: 0.5' : 'order: 0'">
-                                    <div wire:key="unassigned-user-{{ $user['id'] }}" class="home-row panel-border panel-surface flex w-full items-stretch gap-[20px] rounded-xl border p-[20px]">
-                                        <span class="flex self-center h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3A6B] text-xs font-semibold text-white">{{ $initials !== '' ? $initials : '?' }}</span>
-                                        <span class="min-w-0 flex-1">
-                                            <span class="home-link block h-[15px] truncate leading-none" title="{{ $user['name'] }}">{{ $user['name'] }}</span>
-                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg><span class="truncate" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span></span>
-                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg><span class="truncate">{{ $createdAt ? 'Creado el '.$createdAt->translatedFormat('d \\d\\e F \\d\\e Y') : 'Fecha de creación no disponible' }}</span></span>
-                                            <span class="mt-[15px] flex h-[15px] items-center gap-[10px] leading-none"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg><span class="truncate">{{ $createdAt ? 'Hace '.$createdAt->diffForHumans(now(), true).' en el sistema' : 'Antigüedad no disponible' }}</span></span>
+                                    <div wire:key="unassigned-user-{{ $user['id'] }}" class="org-row" data-unassigned-id="{{ (int) $user['id'] }}" data-name="{{ $user['name'] }}" data-initials="{{ $initials !== '' ? $initials : '?' }}" title="Arrastra a {{ $user['name'] }} sobre su jefe en el organigrama para asignarlo">
+                                        <svg class="org-row-grip h-[15px] w-[15px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
+                                        <span class="org-avatar">{{ $initials !== '' ? $initials : '?' }}</span>
+                                        <span class="org-row-text">
+                                            <span class="org-row-name" title="{{ $user['name'] }}">{{ $user['name'] }}</span>
+                                            <span class="org-row-meta" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span>
+                                            <span class="org-row-meta">{{ $createdAt ? 'Creado el '.$createdAt->translatedFormat('d \\d\\e F \\d\\e Y') : 'Fecha de creación no disponible' }}</span>
+                                            <span class="org-row-meta">{{ $createdAt ? 'Hace '.$createdAt->diffForHumans(now(), true).' en el sistema' : 'Antigüedad no disponible' }}</span>
                                         </span>
-                                        <span class="panel-border flex shrink-0 flex-col items-center justify-between self-stretch border-l pl-[20px]">
+                                        <span class="flex shrink-0 flex-col items-center gap-[20px]">
                                             <button type="button" wire:click="openUserManagement('editar', {{ (int) $user['id'] }})" class="home-link flex h-4 w-4 items-center justify-center focus:outline-none focus:ring-0" aria-label="Editar {{ $user['name'] }}" title="Editar {{ $user['name'] }}">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
                                             </button>
@@ -888,15 +1027,14 @@
                             @endforeach
                         </ul>
                     @else
-                        <p class="text-[15px]" style="line-height: 1.3; margin: 0; padding: 0;">
-                            Todos los usuarios tienen jefe, puesto y área asignados.
-                        </p>
+                        <p class="org-row org-muted">Todos los usuarios tienen jefe, puesto y área asignados.</p>
                     @endif
                 </div>
                 </div>
-                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                <span x-show="visible" x-cloak class="administration-form-thumb org-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
-            </section>
+                <p class="org-side-hint shrink-0">Arrastra a una persona sobre su jefe para asignarla, o suelta aquí a alguien del árbol para sacarlo.</p>
+            </aside>
 
         </div>
     </div>
@@ -1711,9 +1849,15 @@
                                     @endif
                                 </div>
                             @elseif ($activeTab === 'eliminar')
+                                {{-- Lo más común es solo sacarlo del árbol: no se borra nada y su equipo pasa a su jefe --}}
+                                <div class="org-choice">
+                                    <h2 class="admin-section-title mb-[20px]">Solo quitar del organigrama</h2>
+                                    <p class="-mt-[7.5px] -mb-[7.5px] text-[15px]">{{ $detailName }} sale del árbol y queda en «Sin asignar»; su equipo directo pasa a reportar a su jefe. No se borra ningún dato y después puedes volver a acomodarlo arrastrándolo.</p>
+                                    <button type="button" wire:click="removeSelectedUserFromChart" wire:loading.attr="disabled" wire:target="removeSelectedUserFromChart" class="{{ $detailPrimaryButton }} mt-[20px] w-full">Solo quitar del organigrama</button>
+                                </div>
                                 <section style="--admin-form-gap: 20px;">
                                     <h2 class="admin-section-title mb-[20px]">¿Estás seguro de eliminar este usuario?</h2>
-                                    <p class="-mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema.</p>
+                                    <p class="-mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema. Su equipo directo pasará a reportar a su jefe.</p>
                                     <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Para confirmar, escribe el nombre completo del usuario: <span class="text-red-700">{{ $detailName }}</span></p>
                                     <label for="delete-user-confirmation" class="mt-[20px] {{ $detailLabel }}">Nombre completo</label>
                                     <input id="delete-user-confirmation" type="text" autocomplete="off" wire:model="deleteConfirmationName" class="{{ $detailInput }}" placeholder="Nombre completo del usuario">
@@ -1789,7 +1933,9 @@
         if (document.readyState !== 'loading') window.bindOrgEqualizer();
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Se arranca en cuanto el árbol está en la página (este script va al final), sin esperar a que terminen de cargar todos
+    // los demás scripts: así el organigrama aparece centrado al instante.
+    const orgChartBoot = function() {
         const container = document.getElementById('org-tree-container');
         // El contenido del árbol lo vuelve a dibujar Livewire (al filtrar por área, por ejemplo) y el elemento cambia:
         // siempre se consulta el vigente para que mover y acercar sigan funcionando después de filtrar.
@@ -1807,8 +1953,14 @@
         let scale = 1;
         let translateX = 0, translateY = 0;
 
+        // Píxeles de pantalla por píxel interno (la app aplica un zoom a todo el contenido)
+        const unit = () => (container.offsetWidth ? container.getBoundingClientRect().width / container.offsetWidth : 1);
+
         function updateTransform() {
             wrapper.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            const grid = 24 * scale;
+            container.style.backgroundSize = `${grid}px ${grid}px`;
+            container.style.backgroundPosition = `${translateX * scale}px ${translateY * scale}px`;
         }
 
         // Vista inicial: el nodo principal (el primero del árbol) queda centrado en horizontal y justo debajo de los controles.
@@ -1824,32 +1976,58 @@
                 const nodeRect = root.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
 
-                translateX = (containerRect.width / 2) - ((nodeRect.left + nodeRect.width / 2) - wrapperRect.left);
-                translateY = 110 - (nodeRect.top - wrapperRect.top);
+                const u = unit();
+                translateX = (containerRect.width / 2 - ((nodeRect.left + nodeRect.width / 2) - wrapperRect.left)) / u;
+                // La primera tarjeta queda 40px debajo de la barra de herramientas
+                const bar = container.querySelector('.org-toolbar');
+                const barBottom = bar ? (bar.getBoundingClientRect().bottom - containerRect.top) / u : 70;
+                const top = barBottom < (containerRect.height / u) / 2 ? barBottom + 40 : 60;
+                translateY = top - (nodeRect.top - wrapperRect.top) / u;
                 updateTransform();
             }
         }
 
-        // Tras cada actualización de Livewire: si cambiaron las personas que se muestran (filtro por área) se parte de la vista
-        // inicial; si no, se conserva el movimiento y el zoom. En ambos casos se suelta cualquier arrastre que haya quedado a medias.
-        const treeSignature = () => [...document.querySelectorAll('.org-node')].map((el) => el.dataset.id).join(',');
-        let lastTreeSignature = treeSignature();
+        // Tras cada actualización de Livewire: si cambió el filtro de área (o el árbol acaba de llegar) se parte de la vista
+        // inicial; si no (alguien movió a una persona, o el organigrama se sincronizó), se conserva el movimiento y el zoom y
+        // las tarjetas se deslizan a su nuevo lugar. En todos los casos se suelta cualquier arrastre que haya quedado a medias.
+        let lastArea = container.dataset.area || '';
+        let hadTree = Boolean(document.querySelector('#org-tree-wrapper .org-node'));
         const afterLivewireUpdate = () => {
             isPanning = false;
             didDrag = false;
             panStartedOnNode = false;
+            cancelNodeDrag();
             // Primero se igualan las alturas de las tarjetas y después se centra, para medir el nodo ya con su tamaño final.
             if (window.equalizeNodeHeights) window.equalizeNodeHeights();
-            const signature = treeSignature();
-            if (signature !== lastTreeSignature) {
-                lastTreeSignature = signature;
+            const area = container.dataset.area || '';
+            const hasTree = Boolean(document.querySelector('#org-tree-wrapper .org-node'));
+            if (area !== lastArea || (hasTree && !hadTree)) {
+                lastArea = area;
                 resetView();
+                flipBefore = null;
             } else {
                 updateTransform();
+                playFlip();
             }
+            hadTree = hasTree;
             allNodes = [];
+            scheduleFlows();
         };
-        const hookLivewire = () => window.Livewire?.hook('morphed', () => afterLivewireUpdate());
+        // Al entrar: se igualan las alturas, se centra el árbol y entonces aparece con un fundido (nunca se ve el salto)
+        const reveal = () => container.classList.add('org-ready');
+        requestAnimationFrame(() => {
+            if (window.equalizeNodeHeights) window.equalizeNodeHeights();
+            resetView();
+            requestAnimationFrame(reveal);
+            scheduleFlows();
+        });
+        // Solo las actualizaciones de este componente (el chat y otros que se actualizan solos no deben soltar un arrastre)
+        const rootId = container.closest('[wire\\:id]')?.getAttribute('wire:id');
+        const hookLivewire = () => window.Livewire?.hook('morphed', ({ component } = {}) => {
+            if (rootId && component && component.id !== rootId) return;
+            afterLivewireUpdate();
+            reveal();
+        });
         if (window.Livewire) hookLivewire(); else document.addEventListener('livewire:init', hookLivewire);
         window.addEventListener('blur', () => { isPanning = false; });
 
@@ -1860,12 +2038,13 @@
                 const wrapperRect = wrapper.getBoundingClientRect();
                 const nodeRect = nodeElement.getBoundingClientRect();
                 
-                const nodeCenterX = (nodeRect.left + nodeRect.width / 2) - wrapperRect.left;
-                const nodeCenterY = (nodeRect.top + nodeRect.height / 2) - wrapperRect.top;
-                
+                const u = unit();
+                const nodeCenterX = ((nodeRect.left + nodeRect.width / 2) - wrapperRect.left) / u;
+                const nodeCenterY = ((nodeRect.top + nodeRect.height / 2) - wrapperRect.top) / u;
+
                 const containerRect = container.getBoundingClientRect();
-                const targetX = (containerRect.width / 2) - (nodeCenterX * scale);
-                const targetY = (containerRect.height / 2) - (nodeCenterY * scale);
+                const targetX = (containerRect.width / u / 2) - (nodeCenterX * scale);
+                const targetY = (containerRect.height / u / 2) - (nodeCenterY * scale);
                 
                 translateX = targetX;
                 translateY = targetY;
@@ -1874,26 +2053,25 @@
         }
 
         container.addEventListener('wheel', function(e) {
-            if (e.target.closest('#search-results') || e.target.closest('.search-result-item') || e.target.closest('#physical-area-results')) {
+            if (e.target.closest('#search-results') || e.target.closest('.search-result-item') || e.target.closest('#physical-area-results') || e.target.closest('[data-org-panel]')) {
                 return;
             }
             
             e.preventDefault();
             const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const u = unit();
+            const mouseX = (e.clientX - rect.left) / u;
+            const mouseY = (e.clientY - rect.top) / u;
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             const newScale = Math.min(Math.max(scale * delta, 0.3), 3);
-            const dx = (mouseX - translateX) * (1 - newScale / scale);
-            const dy = (mouseY - translateY) * (1 - newScale / scale);
+            translateX += mouseX / newScale - mouseX / scale;
+            translateY += mouseY / newScale - mouseY / scale;
             scale = newScale;
-            translateX += dx;
-            translateY += dy;
             updateTransform();
         }, { passive: false });
 
         container.addEventListener('mousedown', function(e) {
-            if (e.button !== 0 || e.target.closest('#node-search-input, #search-results, .search-result-item, #physical-area-filter, #physical-area-results, #fullscreen-toggle')) {
+            if (e.button !== 0 || nodeDrag || e.target.closest('#node-search-input, #search-results, .search-result-item, #physical-area-filter, #physical-area-results, #fullscreen-toggle, [data-org-panel], .org-drag-handle, .org-node-delete')) {
                 return;
             }
 
@@ -1913,13 +2091,14 @@
         });
 
         window.addEventListener('mousemove', function(e) {
-            if (!isPanning) return;
+            if (!isPanning || nodeDrag) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
             if (!didDrag && Math.hypot(dx, dy) < 5) return;
             didDrag = true;
-            translateX = startTranslateX + dx;
-            translateY = startTranslateY + dy;
+            const k = unit() * scale;
+            translateX = startTranslateX + dx / k;
+            translateY = startTranslateY + dy / k;
             updateTransform();
         });
 
@@ -1944,6 +2123,7 @@
         });
 
         container.addEventListener('dblclick', function(e) {
+            if (e.target.closest('[data-org-panel]')) return;
             e.preventDefault();
             resetView();
         });
@@ -2003,22 +2183,22 @@
             if (!searchResults) return;
 
             if (results.length === 0) {
-                searchResults.innerHTML = '<div class="p-[20px] text-center leading-none">No se encontraron resultados</div>';
+                searchResults.innerHTML = '<div class="org-row org-muted">No se encontraron resultados</div>';
                 searchResults.style.display = 'block';
                 return;
             }
 
             searchResults.innerHTML = results.map((node) => {
                 const avatar = node.photo
-                    ? `<img src="${escapeHtml(node.photo)}" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover">`
-                    : `<span class="panel-header panel-border panel-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-full border !text-[13px]">${escapeHtml(node.initials)}</span>`;
+                    ? `<img src="${escapeHtml(node.photo)}" alt="" class="org-avatar">`
+                    : `<span class="org-avatar">${escapeHtml(node.initials)}</span>`;
                 const details = [node.role, node.position, node.area].filter(Boolean).join(' · ');
-                return `<button type="button" class="search-result-item panel-option flex w-full items-center gap-[15px] p-[20px] text-left" data-id="${node.id}">
+                return `<button type="button" class="search-result-item org-row" data-id="${node.id}">
                     ${avatar}
-                    <span class="min-w-0 flex-1">
-                        <span class="home-link block h-[15px] truncate leading-none">${escapeHtml(node.name)}</span>
-                        <span class="mt-[15px] block h-[15px] truncate leading-none" title="${escapeHtml(node.email)}">${escapeHtml(node.email)}</span>
-                        ${details ? `<span class="mt-[15px] block h-[15px] truncate leading-none" title="${escapeHtml(details)}">${escapeHtml(details)}</span>` : ''}
+                    <span class="org-row-text">
+                        <span class="org-row-name">${escapeHtml(node.name)}</span>
+                        <span class="org-row-meta" title="${escapeHtml(node.email)}">${escapeHtml(node.email)}</span>
+                        ${details ? `<span class="org-row-meta" title="${escapeHtml(details)}">${escapeHtml(details)}</span>` : ''}
                     </span>
                 </button>`;
             }).join('');
@@ -2120,6 +2300,382 @@
         setTimeout(() => { allNodes = []; loadAllNodes(); }, 500);
 
         // ============================================================
+        // FLUJO: un círculo sale de cada jefe y recorre la línea completa hasta cada persona de su equipo
+        // ============================================================
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const FLOW_STEP = 1.2;   // segundos que tarda el círculo en ir de un jefe a su equipo
+        const FLOW_PAUSE = 0.8;  // pausa al final de cada ola, antes de volver a salir de la cabeza del árbol
+        let flowTimer = null;
+
+        // Posición de un elemento dentro del árbol, en píxeles del propio árbol (sin el zoom ni el movimiento aplicados)
+        function treeBox(treeEl) {
+            const box = treeEl.getBoundingClientRect();
+            const k = treeEl.offsetWidth ? box.width / treeEl.offsetWidth : 1;
+            return (el) => {
+                const r = el.getBoundingClientRect();
+                return { x: (r.left - box.left) / k, y: (r.top - box.top) / k, w: r.width / k, h: r.height / k };
+            };
+        }
+
+        function drawFlows() {
+            const treeEl = document.getElementById('org-tree-wrapper');
+            const layer = treeEl ? treeEl.querySelector(':scope > .org-flow-layer') : null;
+            if (!treeEl || !layer) return;
+            layer.replaceChildren();
+            if (reduceMotion || !treeEl.offsetWidth) return;
+
+            const pos = treeBox(treeEl);
+            layer.setAttribute('width', treeEl.offsetWidth);
+            layer.setAttribute('height', treeEl.offsetHeight);
+
+            // Cada línea: baja del jefe, cruza por la barra y baja a la persona (con la misma curva de 12px de las esquinas)
+            const edges = [];
+            let levels = 0;
+            const walk = (wrapper, depth) => {
+                const card = wrapper.querySelector(':scope > .relative > .org-node');
+                const children = wrapper.querySelectorAll(':scope > .org-children > .org-child');
+                if (!card || children.length === 0) return;
+                const parent = pos(card);
+                const px = parent.x + parent.w / 2;
+                const py = parent.y + parent.h;
+                children.forEach((child, index) => {
+                    const childWrapper = child.querySelector(':scope > .visual-node-wrapper');
+                    const childCard = childWrapper ? childWrapper.querySelector(':scope > .relative > .org-node') : null;
+                    if (!childCard) return;
+                    const target = pos(childCard);
+                    const cx = target.x + target.w / 2;
+                    const cy = target.y;
+                    const barY = pos(child).y + 1;
+                    let d;
+                    if (Math.abs(cx - px) < 1) {
+                        d = `M${px} ${py}V${cy}`;
+                    } else {
+                        const dir = Math.sign(cx - px);
+                        const rounded = children.length > 1 && (index === 0 || index === children.length - 1);
+                        const r = rounded ? Math.min(12, Math.abs(cx - px)) : 0;
+                        d = `M${px} ${py}V${barY}H${cx - dir * r}` + (r ? `Q${cx} ${barY} ${cx} ${barY + r}` : '') + `V${cy}`;
+                    }
+                    edges.push({ d, depth });
+                    levels = Math.max(levels, depth + 1);
+                    walk(childWrapper, depth + 1);
+                });
+            };
+            treeEl.querySelectorAll(':scope > div > .visual-node-wrapper').forEach((root) => walk(root, 0));
+            if (edges.length === 0) return;
+
+            // Todas las líneas comparten el mismo ciclo: primero salen los círculos de la cabeza, al llegar salen los del
+            // siguiente nivel, y así hasta abajo (como una ola que baja por el organigrama)
+            const cycle = FLOW_STEP * levels + FLOW_PAUSE;
+            const fragment = document.createDocumentFragment();
+            edges.forEach(({ d, depth }) => {
+                const start = (depth * FLOW_STEP) / cycle;
+                const end = ((depth + 1) * FLOW_STEP) / cycle;
+                const fade = Math.min(0.15 * FLOW_STEP / cycle, (end - start) / 3);
+                const group = document.createElementNS(SVG_NS, 'g');
+                group.setAttribute('opacity', '0');
+                const halo = document.createElementNS(SVG_NS, 'circle');
+                halo.setAttribute('r', '8');
+                halo.setAttribute('class', 'org-flow-halo');
+                const dot = document.createElementNS(SVG_NS, 'circle');
+                dot.setAttribute('r', '4.5');
+                dot.setAttribute('class', 'org-flow-dot');
+                const motion = document.createElementNS(SVG_NS, 'animateMotion');
+                motion.setAttribute('path', d);
+                motion.setAttribute('dur', `${cycle}s`);
+                motion.setAttribute('repeatCount', 'indefinite');
+                motion.setAttribute('calcMode', 'linear');
+                motion.setAttribute('keyPoints', '0;0;1;1');
+                motion.setAttribute('keyTimes', `0;${start.toFixed(4)};${end.toFixed(4)};1`);
+                const opacity = document.createElementNS(SVG_NS, 'animate');
+                opacity.setAttribute('attributeName', 'opacity');
+                opacity.setAttribute('dur', `${cycle}s`);
+                opacity.setAttribute('repeatCount', 'indefinite');
+                opacity.setAttribute('values', '0;0;1;1;0;0');
+                opacity.setAttribute('keyTimes', `0;${start.toFixed(4)};${(start + fade).toFixed(4)};${(end - fade).toFixed(4)};${end.toFixed(4)};1`);
+                group.append(halo, dot, motion, opacity);
+                fragment.append(group);
+            });
+            layer.append(fragment);
+            // Todas las animaciones arrancan juntas, así la ola queda sincronizada aunque el árbol se haya vuelto a dibujar
+            try { layer.setCurrentTime(0); } catch (error) {}
+        }
+
+        function scheduleFlows(delay = 60) {
+            clearTimeout(flowTimer);
+            flowTimer = setTimeout(drawFlows, delay);
+        }
+        window.addEventListener('resize', () => scheduleFlows(150));
+        // Si cambia el tamaño del árbol (alturas igualadas, fuentes que terminan de cargar) se vuelven a trazar las líneas
+        new ResizeObserver(() => scheduleFlows(120)).observe(container);
+        if (document.fonts?.ready) document.fonts.ready.then(() => scheduleFlows(0));
+
+        // ============================================================
+        // MOVER PERSONAS: arrastrar una tarjeta (de su asa, o dejándola presionada un momento) sobre su nuevo jefe, o al
+        // panel «Sin asignar» para sacarla del árbol; o arrastrar a alguien de «Sin asignar» sobre su jefe.
+        // ============================================================
+        let nodePress = null;   // presión del botón que todavía no se convierte en arrastre
+        let nodeDrag = null;    // arrastre en curso
+        let suppressNodeClick = false;
+        let flipBefore = null;  // posiciones de las tarjetas antes de mover a alguien (para que se deslicen a su lugar)
+        let edgeFrame = null;
+        let lastPointer = { x: 0, y: 0 };
+
+        const wireComponent = () => {
+            const root = container.closest('[wire\\:id]');
+            return root && window.Livewire ? window.Livewire.find(root.getAttribute('wire:id')) : null;
+        };
+        const cardOf = (wrapper) => (wrapper ? wrapper.querySelector(':scope > .relative > .org-node') : null);
+        // Jefe que la pantalla muestra para una tarjeta (null si es la cabeza de su rama)
+        const superiorIdOf = (card) => {
+            const wrapper = card.closest('.visual-node-wrapper');
+            const parentCard = cardOf(wrapper && wrapper.parentElement ? wrapper.parentElement.closest('.visual-node-wrapper') : null);
+            return parentCard ? parseInt(parentCard.dataset.id) : null;
+        };
+
+        function rememberPositions() {
+            if (reduceMotion) return;
+            flipBefore = new Map();
+            document.querySelectorAll('#org-tree-wrapper .org-node').forEach((card) => {
+                if (!flipBefore.has(card.dataset.id)) flipBefore.set(card.dataset.id, card.getBoundingClientRect());
+            });
+        }
+
+        // Cada tarjeta se desliza desde donde estaba hasta su nuevo lugar (el árbol se acomoda solo, sin saltos)
+        function playFlip() {
+            const before = flipBefore;
+            flipBefore = null;
+            if (!before) return;
+            const k = unit() * scale;
+            document.querySelectorAll('#org-tree-wrapper .org-node').forEach((card) => {
+                const was = before.get(card.dataset.id);
+                if (!was) return;
+                const now = card.getBoundingClientRect();
+                const dx = (was.left - now.left) / k;
+                const dy = (was.top - now.top) / k;
+                if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+                card.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], { duration: 480, easing: 'cubic-bezier(.22, .61, .36, 1)' });
+            });
+            scheduleFlows(520);
+        }
+
+        function flashNode(id) {
+            const card = document.querySelector(`#org-tree-wrapper .org-node[data-id="${id}"]`);
+            if (!card) return;
+            card.classList.remove('org-node-flash');
+            void card.offsetWidth;
+            card.classList.add('org-node-flash');
+            setTimeout(() => card.classList.remove('org-node-flash'), 1800);
+        }
+        window.addEventListener('org-node-moved', (event) => {
+            const id = event.detail?.id ?? (Array.isArray(event.detail) ? event.detail[0]?.id : null);
+            if (id) setTimeout(() => flashNode(id), 120);
+        });
+
+        function startPress(e, info) {
+            nodePress = { ...info, x: e.clientX, y: e.clientY, timer: null };
+            if (info.longPress) {
+                // Dejar presionada la tarjeta un momento sin moverla convierte el gesto en «mover persona» (si se mueve
+                // antes, es el gesto normal de mover el organigrama)
+                nodePress.timer = setTimeout(() => {
+                    if (nodePress && !nodeDrag) beginNodeDrag(nodePress, lastPointer);
+                }, 320);
+            }
+        }
+
+        container.addEventListener('mousedown', function(e) {
+            if (e.button !== 0 || nodeDrag) return;
+            lastPointer = { x: e.clientX, y: e.clientY };
+            const handle = e.target.closest('.org-drag-handle');
+            if (handle) {
+                const card = cardOf(handle.closest('.visual-node-wrapper'));
+                if (!card) return;
+                e.preventDefault();
+                startPress(e, { source: 'tree', card, id: parseInt(card.dataset.id), from: superiorIdOf(card), longPress: false });
+                return;
+            }
+            const row = e.target.closest('[data-unassigned-id]');
+            if (row && !e.target.closest('button, a, input')) {
+                e.preventDefault();
+                startPress(e, { source: 'unassigned', row, id: parseInt(row.dataset.unassignedId), from: null, longPress: false });
+                return;
+            }
+            const card = e.target.closest('#org-tree-wrapper .org-node');
+            if (card) {
+                startPress(e, { source: 'tree', card, id: parseInt(card.dataset.id), from: superiorIdOf(card), longPress: true });
+            }
+        }, true);
+
+        function beginNodeDrag(press, point) {
+            clearTimeout(press.timer);
+            isPanning = false;
+            const source = press.source;
+            const name = source === 'tree' ? press.card.dataset.name : press.row.dataset.name;
+            const initials = source === 'tree' ? press.card.dataset.initials : press.row.dataset.initials;
+            const photo = source === 'tree' ? press.card.dataset.photo : '';
+
+            const ghost = document.createElement('div');
+            ghost.className = 'org-drag-ghost';
+            const avatar = photo ? document.createElement('img') : document.createElement('span');
+            avatar.className = 'org-ghost-avatar';
+            if (photo) { avatar.src = photo; avatar.alt = ''; } else { avatar.textContent = initials || '?'; }
+            const text = document.createElement('span');
+            text.style.minWidth = '0';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'org-ghost-name';
+            nameEl.textContent = name || '';
+            const hint = document.createElement('span');
+            hint.className = 'org-ghost-hint';
+            text.append(nameEl, hint);
+            ghost.append(avatar, text);
+            document.body.append(ghost);
+
+            // Su propia rama (ella y su equipo) no puede recibirla
+            const branch = source === 'tree' ? press.card.closest('.visual-node-wrapper') : null;
+            const blocked = new Set([press.id]);
+            if (branch) {
+                branch.classList.add('org-dragging');
+                branch.querySelectorAll('.org-node').forEach((el) => blocked.add(parseInt(el.dataset.id)));
+            }
+
+            nodeDrag = { ...press, name, ghost, hint, branch, blocked, target: null, zone: false };
+            nodePress = null;
+            container.classList.add('org-is-dragging');
+            window.dispatchEvent(new CustomEvent('org-drag-start', { detail: { source } }));
+            moveNodeDrag(point);
+            edgeFrame = requestAnimationFrame(edgePan);
+        }
+
+        function clearDropMarks() {
+            document.querySelectorAll('.org-drop-ok, .org-drop-bad').forEach((el) => el.classList.remove('org-drop-ok', 'org-drop-bad'));
+            document.querySelectorAll('.org-side.org-drop-zone').forEach((el) => el.classList.remove('org-drop-zone'));
+        }
+
+        function moveNodeDrag(point) {
+            if (!nodeDrag) return;
+            nodeDrag.ghost.style.transform = `translate(${point.x + 16}px, ${point.y + 14}px)`;
+            const under = document.elementFromPoint(point.x, point.y);
+            const card = under ? under.closest('#org-tree-wrapper .org-node') : null;
+            const side = under ? under.closest('.org-side') : null;
+            clearDropMarks();
+            nodeDrag.target = null;
+            nodeDrag.zone = false;
+            let state = '';
+            let message = nodeDrag.source === 'tree' ? 'Suéltala sobre su nuevo jefe o en «Sin asignar»' : 'Suéltala sobre su jefe';
+
+            if (side && nodeDrag.source === 'tree') {
+                side.classList.add('org-drop-zone');
+                nodeDrag.zone = true;
+                state = 'ok';
+                message = 'Soltar: sale del organigrama y su equipo pasa a su jefe';
+            } else if (card) {
+                const id = parseInt(card.dataset.id);
+                if (id === nodeDrag.id) {
+                    // Sobre su propia tarjeta (al empezar a arrastrar): todavía no hay destino
+                } else if (nodeDrag.blocked.has(id)) {
+                    card.classList.add('org-drop-bad');
+                    state = 'bad';
+                    message = 'No puede quedar debajo de alguien de su propio equipo';
+                } else if (id === nodeDrag.from) {
+                    message = 'Ya reporta a esta persona';
+                } else {
+                    card.classList.add('org-drop-ok');
+                    nodeDrag.target = id;
+                    state = 'ok';
+                    message = `Soltar: ahora reportará a ${card.dataset.name}`;
+                }
+            }
+            nodeDrag.ghost.dataset.state = state;
+            nodeDrag.hint.textContent = message;
+        }
+
+        // Cerca de las orillas el organigrama se recorre solo, para llevar a la persona a una rama que no se ve
+        function edgePan() {
+            if (!nodeDrag) return;
+            const rect = container.getBoundingClientRect();
+            const margin = 60;
+            const speed = 12;
+            let vx = 0;
+            let vy = 0;
+            if (lastPointer.x < rect.left + margin) vx = speed;
+            else if (lastPointer.x > rect.right - margin) vx = -speed;
+            if (lastPointer.y < rect.top + margin) vy = speed;
+            else if (lastPointer.y > rect.bottom - margin) vy = -speed;
+            const overPanel = document.elementFromPoint(lastPointer.x, lastPointer.y)?.closest('[data-org-panel]');
+            if ((vx || vy) && !overPanel) {
+                const k = unit() * scale;
+                translateX += vx / k;
+                translateY += vy / k;
+                updateTransform();
+                moveNodeDrag(lastPointer);
+            }
+            edgeFrame = requestAnimationFrame(edgePan);
+        }
+
+        function endNodeDrag(drop) {
+            const drag = nodeDrag;
+            nodeDrag = null;
+            cancelAnimationFrame(edgeFrame);
+            clearDropMarks();
+            container.classList.remove('org-is-dragging');
+            if (!drag) return;
+            drag.ghost.remove();
+            suppressNodeClick = true;
+            setTimeout(() => { suppressNodeClick = false; }, 0);
+
+            const wire = wireComponent();
+            if (drop && wire && (drag.target || drag.zone)) {
+                rememberPositions();
+                if (drag.branch) {
+                    drag.branch.classList.remove('org-dragging');
+                    drag.branch.classList.add('org-pending');
+                }
+                drag.row?.closest('li')?.style.setProperty('opacity', '0.5');
+                const request = drag.target
+                    ? wire.call('moveUserInChart', drag.id, drag.target, drag.from)
+                    : wire.call('removeUserFromChart', drag.id, drag.from);
+                Promise.resolve(request).finally(() => {
+                    window.dispatchEvent(new CustomEvent('org-drag-end'));
+                    document.querySelectorAll('.org-pending').forEach((el) => el.classList.remove('org-pending'));
+                });
+                return;
+            }
+            drag.branch?.classList.remove('org-dragging');
+            window.dispatchEvent(new CustomEvent('org-drag-end'));
+        }
+
+        function cancelNodeDrag() {
+            if (nodePress) { clearTimeout(nodePress.timer); nodePress = null; }
+            if (nodeDrag) endNodeDrag(false);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            lastPointer = { x: e.clientX, y: e.clientY };
+            if (nodeDrag) {
+                moveNodeDrag(lastPointer);
+                return;
+            }
+            if (!nodePress) return;
+            const distance = Math.hypot(e.clientX - nodePress.x, e.clientY - nodePress.y);
+            if (nodePress.longPress) {
+                // Se movió antes de cumplir el tiempo: es el gesto de mover el organigrama
+                if (distance > 6) { clearTimeout(nodePress.timer); nodePress = null; }
+            } else if (distance > 4) {
+                beginNodeDrag(nodePress, lastPointer);
+            }
+        });
+        window.addEventListener('mouseup', () => {
+            if (nodePress) { clearTimeout(nodePress.timer); nodePress = null; }
+            if (nodeDrag) endNodeDrag(true);
+        });
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && nodeDrag) endNodeDrag(false); });
+        window.addEventListener('blur', () => cancelNodeDrag());
+        // Al soltar no se abre la ficha de la persona (el clic que dispara el navegador se descarta)
+        container.addEventListener('click', (e) => {
+            if (suppressNodeClick) { e.preventDefault(); e.stopImmediatePropagation(); suppressNodeClick = false; }
+        }, true);
+
+        // ============================================================
         // BOTÓN DE PANTALLA COMPLETA
         // ============================================================
         const fullscreenBtn = document.getElementById('fullscreen-toggle');
@@ -2145,6 +2701,7 @@
                 }
             });
         }
-    });
+    };
+    if (document.getElementById('org-tree-container')) orgChartBoot(); else document.addEventListener('DOMContentLoaded', orgChartBoot);
 </script>
 @endpush
