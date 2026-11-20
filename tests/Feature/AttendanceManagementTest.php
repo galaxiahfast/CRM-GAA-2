@@ -135,7 +135,7 @@ class AttendanceManagementTest extends TestCase
             ->assertSet('reportSection', 'results')
             ->assertSet('activeReportUserId', $collaborator->id)
             ->assertSee('Reporte individual')
-            ->assertSeeHtml('panel-field h-11 w-full rounded-xl border pl-[44px] pr-[15px]')
+            ->assertSeeHtml('panel-field w-full rounded-xl border py-[20px] pl-[50px] pr-[20px]')
             ->assertSeeHtml('panel-menu-item panel-border inline-flex w-full min-w-0 items-center justify-center gap-[15px]')
             ->assertSeeHtml('bg-transparent p-[20px]')
             ->call('showHistorySection')

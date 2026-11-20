@@ -25,6 +25,7 @@ class SectionGuideController extends Controller
             'managercontrol-asignar' => 'managercontrol_asignar',
             'reloj-checador' => 'reloj_checador',
             'reloj-checador-datos' => 'reloj_checador_datos',
+            'reloj-checador-admin' => 'reloj_checador_admin',
         ];
 
         abort_unless(isset($categories[$section]), 404);
@@ -37,7 +38,7 @@ class SectionGuideController extends Controller
             abort_unless(\Illuminate\Support\Facades\Gate::allows('view-legacy-managercontrol'), 403);
         } elseif (in_array($section, ['reloj-checador', 'reloj-checador-datos'], true)) {
             abort_unless(\Illuminate\Support\Facades\Gate::allows('operate-time-tracking'), 403);
-        } elseif ($section === 'supervision-horas') {
+        } elseif (in_array($section, ['supervision-horas', 'reloj-checador-admin'], true)) {
             abort_unless($permissions->allows(auth()->user(), 'time-control.supervision.view'), 403);
         }
 

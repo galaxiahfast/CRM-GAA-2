@@ -145,11 +145,13 @@ class ContpaqiBackupExport
                 ->map(function (\SplFileInfo $item) use ($parent): array {
                     $path = ltrim(($parent !== '' ? trim($parent, '\\/').'/' : '').$item->getFilename(), '/');
 
+                    // Solo el nombre: revisar permisos y subcarpetas de cada una pedía varias lecturas a la unidad de red
+                    // por carpeta y hacía lento abrir el menú. Si una carpeta no tiene subcarpetas, al abrirla se indica.
                     return [
                         'name' => $item->getFilename(),
                         'path' => $path,
-                        'writable' => is_writable($item->getPathname()),
-                        'has_children' => $this->hasChildDirectories($item->getPathname()),
+                        'writable' => true,
+                        'has_children' => true,
                     ];
                 })
                 ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
@@ -626,12 +628,39 @@ class ContpaqiBackupExport
             $state['status'] = 'failed';
             $state['error'] = $exception instanceof RuntimeException
                 ? $exception->getMessage()
-                : 'La copia se interrumpió inesperadamente.';
+                : $this->describeCopyFailure($exception, (string) ($state['current_company'] ?? ''));
             $state['current_company'] = null;
             $state['completed_at'] = now()->toIso8601String();
             $this->write($id, $state);
             throw $exception;
         }
+    }
+
+    /**
+     * Explica en palabras claras por qué falló la copia (antes solo decía «se interrumpió inesperadamente»), con la
+     * empresa que se estaba copiando y el detalle técnico al final para poder diagnosticarlo.
+     */
+    private function describeCopyFailure(Throwable $exception, string $company): string
+    {
+        $detail = trim(preg_replace('/\s+/', ' ', $exception->getMessage()) ?? '');
+        $lower = mb_strtolower($detail);
+        $reason = match (true) {
+            str_contains($lower, 'permission denied') || str_contains($lower, 'acceso denegado') || str_contains($lower, 'access is denied')
+                => 'Windows no permitió escribir en la carpeta elegida de la memoria (permiso denegado).',
+            str_contains($lower, 'no space') || str_contains($lower, 'disk full') || str_contains($lower, 'espacio en disco')
+                => 'La memoria se quedó sin espacio.',
+            str_contains($lower, 'mkdir')
+                => 'No se pudo crear la carpeta de la empresa dentro de la carpeta elegida.',
+            str_contains($lower, 'filename, directory name') || str_contains($lower, 'nombre de archivo') || str_contains($lower, 'invalid argument')
+                => 'El nombre de la carpeta o del archivo no es válido para Windows.',
+            str_contains($lower, 'no such file') || str_contains($lower, 'failed to open stream') || str_contains($lower, 'cannot find') || str_contains($lower, 'no se encuentra')
+                => 'No se encontró el archivo de origen o la carpeta de destino (pudo moverse o desconectarse durante la copia).',
+            str_contains($lower, 'network') || str_contains($lower, 'red ')
+                => 'Se perdió la conexión con el servidor o con la memoria durante la copia.',
+            default => 'La copia se interrumpió.',
+        };
+
+        return trim(($company !== '' ? 'Al copiar '.$company.': ' : '').$reason.($detail !== '' ? ' Detalle: '.Str::limit($detail, 220) : ''));
     }
 
     public function find(string $id): ?array

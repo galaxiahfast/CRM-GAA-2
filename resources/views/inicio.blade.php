@@ -43,16 +43,35 @@
 
     // Mismos grupos, nombres y reglas que el menú lateral
     // Tarjetas con animación (vídeo en bucle) que acompañan a algunas cajas: [vídeo, título, texto, enlace]
+    // Animación (vídeo corto en bucle, como un GIF) de los accesos que la tienen; los demás muestran su icono grande
     $illustrations = [
-        'General' => ['panel-movil', 'Indicadores', 'Avance de archivos de tus clientes en un vistazo.', route('dashboard')],
-        'Información' => ['carpeta-codificacion', 'Conciliación OCR', 'Concilia a partir de documentos escaneados.', route('bank-reconciliation.show', 'ocr')],
+        'Organigrama' => 'optimizacion-seo',
+        'Panel General' => 'panel-movil',
+        'Reloj Checador' => 'cronometro-movil',
+        'Cronómetro' => 'cronometro-movil',
+        'Supervisión de Horas' => 'ecualizador',
+        'Manager Control' => 'panel-movil',
+        'Gráficos Generales' => 'ecualizador',
+        'Gestión de Respaldos' => 'carpeta-codificacion',
+        'Administración' => 'aplicaciones-moviles',
+        'Conciliación Bancaria' => 'optimizacion-seo',
+        'Conciliación OCR' => 'carpeta-codificacion',
+        'Confirmaciones de Saldos' => 'panel-movil',
+        'Hoja de Entrega' => 'aplicaciones-moviles',
+        'Reportes de Soporte' => 'optimizacion-seo',
+        'Reporte de Respaldos' => 'carpeta-codificacion',
+        'Preguntas' => 'aplicaciones-moviles',
+        'Chat de Soporte' => 'ecualizador',
+        'Mi Cuenta' => 'contrasena-usuario',
     ];
 
     $sections = [];
 
-    $sections['General'] = [
-        ['Panel General', 'Consulta clientes, archivos e indicadores.', route('dashboard'), 'dashboard'],
-    ];
+    $sections['General'] = [];
+    if ($permissions->allows($user, 'administration.organization.manage')) {
+        $sections['General'][] = ['Organigrama', 'Estructura jerárquica y líneas de mando.', route('organigrama.index'), 'org'];
+    }
+    $sections['General'][] = ['Panel General', 'Consulta clientes, archivos e indicadores.', route('dashboard'), 'dashboard'];
 
     $canActivities = $permissions->allows($user, 'activities.manage');
     $canClock = $permissions->allows($user, 'time-control.clock.use');
@@ -88,7 +107,6 @@
 
     $information = [];
     if ($permissions->allows($user, 'administration.organization.manage')) {
-        $information[] = ['Organigrama', 'Estructura jerárquica y líneas de mando.', route('organigrama.index'), 'org'];
         $information[] = ['Administración', 'Colaboradores, roles, permisos y organización.', $administrationRoute, 'users'];
     }
     $information[] = ['Conciliación Bancaria', 'Concilia tus movimientos bancarios.', route('bank-reconciliation.show', 'bancaria'), 'bank'];
@@ -119,11 +137,11 @@
 
 @php
     $sectionMeta = [
-        'General' => ['dashboard', 'Tus herramientas principales de trabajo.'],
-        'Monitoreo' => ['clock', 'Asistencia, actividades, horas y respaldos.'],
-        'Información' => ['users', 'Organigrama, administración y conciliaciones.'],
-        'Documentos' => ['report', 'Hojas de entrega y reportes.'],
-        'Soporte' => ['ticket', 'Preguntas, chat de soporte y tu cuenta.'],
+        'General' => ['dashboard', 'Estructura de la organización y avance de los clientes.'],
+        'Monitoreo' => ['clock', 'Asistencia, actividades, horas y respaldos del equipo.'],
+        'Información' => ['users', 'Colaboradores, permisos y conciliaciones de los clientes.'],
+        'Documentos' => ['report', 'Hojas de entrega, reportes de soporte y respaldos.'],
+        'Soporte' => ['ticket', 'Preguntas frecuentes, chat de soporte y tu cuenta.'],
     ];
 @endphp
 <x-app-layout>
@@ -132,25 +150,26 @@
 
         <style>
             /* Tema oscuro del inicio: superficies más cerradas (casi negras) que las del resto de los paneles. */
-            html.module-dark-theme [data-home] {
+            html.module-dark-theme [data-panel][data-home] {
                 --panel-page: #09090b;
                 --panel-surface: #09090b;
                 --panel-header: #0f0f12;
                 --panel-subtle: #0c0c0f;
                 --panel-hover: #131316;
-                --panel-border: #27272a;
+                --panel-border: #52525b;
             }
             html.module-dark-theme [data-home] { background-color: var(--panel-page); }
             /* Solo dos colores de texto: blanco (negro en tema claro) y azul; los enlaces y botones van en verde. */
+            [data-panel][data-home] { --panel-border: #a1a1aa; }
             [data-home] { --home-green: #15803d; color: var(--panel-text); }
             html.module-dark-theme [data-home] { --home-green: #4ade80; --panel-text: #ffffff; }
             [data-home] .home-link { color: var(--home-green); }
             [data-home] .home-row,
             [data-home] .home-card { transition: background-color 150ms ease; }
             [data-home] .home-row:hover,
-            [data-home] .home-card:hover { background-color: var(--panel-subtle); }
+            [data-home] .home-card:not(.home-tcard):hover { background-color: var(--panel-subtle); }
             html.module-dark-theme [data-home] .home-row:hover,
-            html.module-dark-theme [data-home] .home-card:hover { background-color: var(--panel-hover, var(--panel-subtle)); }
+            html.module-dark-theme [data-home] .home-card:not(.home-tcard):hover { background-color: var(--panel-hover, var(--panel-subtle)); }
             @media (prefers-reduced-motion: reduce) { [data-home] .home-row, [data-home] .home-card { transition: none; } }
             /* ---- Animaciones sutiles de Inicio ----
                Al entrar: la cabecera y cada caja suben un poco y aparecen en orden; dentro de cada caja los accesos
@@ -161,9 +180,9 @@
             [data-home] .home-rise { animation: home-rise 520ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--i, 0) * 90ms); }
             [data-home] .home-card { animation: home-rise 420ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--d, 0) * 1ms); position: relative; }
             [data-home] .home-card .home-card-title { display: inline-block; transition: transform 200ms ease; }
-            [data-home] .home-card:hover .home-card-title { transform: translateX(4px); }
+            
             [data-home] .home-card::after { content: ''; position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--home-green); transform: scaleX(0); transform-origin: left; transition: transform 250ms ease; }
-            [data-home] .home-card:hover::after { transform: scaleX(1); }
+            
             [data-home] .home-online-row { animation: home-drop 420ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: calc(var(--i, 0) * 80ms + 150ms); }
             [data-home] .home-online-row .home-row { transition: background-color 150ms ease, padding-left 200ms ease; }
             [data-home] .home-online-row .home-row:hover { padding-left: 25px; }
@@ -175,20 +194,129 @@
             }
             /* Tarjeta vertical con animación, como una pantalla de presentación: ilustración arriba, título y texto, y pie con puntos y acción */
             [data-home] .home-illus { grid-column: auto / -1; }
-            [data-home] .home-tcard { display: flex; width: 230px; max-width: 100%; flex-direction: column; border-radius: 20px; background: var(--panel-surface); border: 1px solid var(--panel-border); box-shadow: 0 14px 30px -14px rgba(26, 58, 107, .28); overflow: hidden; transition: transform 220ms ease, box-shadow 220ms ease; }
-            [data-home] .home-tcard:hover { transform: translateY(-4px); box-shadow: 0 22px 38px -16px rgba(26, 58, 107, .34); }
-            html.module-dark-theme [data-home] .home-tcard { box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .9); }
-            [data-home] .home-tcard video { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; pointer-events: none; }
-            html.module-dark-theme [data-home] .home-tcard video { filter: invert(1); mix-blend-mode: screen; }
-            [data-home] .home-tcard-body { display: block; padding: 0 20px; }
+            [data-home] .home-tgrid { display: flex; flex-wrap: wrap; gap: 20px; }
+            [data-home] .home-tgrid > .home-tcard { flex: 0 0 280px; width: 280px; }
+            [data-home] .home-tcard { cursor: grab; }
+            [data-home] .home-tcard.is-dragging { opacity: .4; cursor: grabbing; }
+            [data-home] .home-tcard { display: flex; min-height: 400px; flex-direction: column; border-radius: 20px; background: var(--panel-surface); border: 1px solid var(--panel-border); overflow: hidden; }
+            [data-home] .home-tcard::after { display: none; }
+            [data-home] .home-tcard-visual { display: flex; flex: 1 1 auto; min-height: 0; padding: 20px 20px 0; align-items: center; justify-content: center; }
+            [data-home] .home-tcard-visual video { height: 150px; width: 150px; object-fit: contain; mix-blend-mode: multiply; pointer-events: none; }
+            [data-home] .home-tcard-icon { height: 100px; width: 100px; color: var(--panel-text); }
+                        html.module-dark-theme [data-home] .home-tcard-visual video { filter: invert(1); mix-blend-mode: screen; }
+            [data-home] .home-tcard-body { display: block; flex: none; padding: 20px 20px 0; }
+            /* Tarjetas: 20px exactos entre todo. Las líneas de 15px van a 35px (20px entre líneas) y se quita el medio
+               interlineado de arriba y abajo (10px) para que no deje espacios de más */
+            [data-home] .home-tcard-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: 10px; margin-bottom: -10px; font-size: 15px; line-height: 35px; }
+            [data-home] .home-tcard-body > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            /* Encabezado de cada sección: mismo diseño (título de 15px y descripción de 17px con 20px exactos entre líneas) */
+            [data-home] .home-sec-title { display: block; line-height: 15px; margin: 0; padding: 0; }
+            [data-home] .home-sec-text { margin: 10px 0 -10px; padding: 0; font-size: 15px; line-height: 35px; }
+            [data-home] .home-sec-count { line-height: 15px; }
+            [data-home] .home-tcard-foot > span { line-height: 1; }
             [data-home] .home-tcard-foot { display: flex; align-items: center; justify-content: space-between; padding: 20px; }
             [data-home] .home-tcard-dots { display: inline-flex; gap: 6px; }
             [data-home] .home-tcard-dots i { height: 6px; width: 6px; border-radius: 9999px; background: var(--panel-border); }
             [data-home] .home-tcard-dots i.on { background: var(--panel-accent); }
             @media (prefers-reduced-motion: reduce) { [data-home] .home-tcard { transition: none; } }
+            /* La caja de cada texto mide exactamente sus letras (sin el espacio de interlineado arriba y abajo): así los 20px
+               entre título, líneas y pie son exactos. Si el navegador no recorta la caja, se compensa con márgenes negativos. */
+            @supports (text-box: trim-both cap alphabetic) {
+                [data-home] .home-tcard-body > span, [data-home] .home-sec-title, [data-home] .home-sec-text, [data-home] .home-sec-count, [data-home] .home-tcard-foot > span { text-box: trim-both cap alphabetic; }
+                [data-home] .home-tcard-body > span:first-child { line-height: 15px; }
+                /* Con la caja recortada a la altura de las letras (10.5px), 30.5px de línea dejan 20px exactos entre líneas */
+                [data-home] .home-tcard-text { margin-top: 14px !important; margin-bottom: -6px !important; padding-block: 6px; line-height: 30.5px; }
+                /* 6px de holgura arriba y abajo (compensados con margen) para que no se corten la g, j, y ni los acentos */
+                [data-home] .home-tcard-body > span:first-child { padding-block: 6px; margin-block: -6px; }
+                [data-home] .home-sec-text { margin: 20px 0 0 !important; line-height: 30.5px; }
+            }
         </style>
 
 
+        <script>
+            // Tiempo sin abrir cualquier apartado de una sección (se guarda en este navegador al abrir un acceso)
+            window.homeSectionOpened = window.homeSectionOpened || function (section) {
+                const key = 'home-section-opened:' + section;
+                const orderKey = 'home-section-order:' + section;
+                return {
+                    label: 'Todavía no has abierto ningún apartado de esta sección',
+                    drag: null,
+                    init() {
+                        this.refresh();
+                        this.restore();
+                        this.timer = setInterval(() => this.refresh(), 60000);
+                    },
+                    destroy() { clearInterval(this.timer); },
+                    cards() { return [...this.$refs.grid.querySelectorAll(':scope > .home-tcard')]; },
+                    start(e) { this.drag = e.target.closest('.home-tcard'); if (this.drag) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', this.drag.dataset.url); setTimeout(() => this.drag?.classList.add('is-dragging'), 0); } },
+                    over(e) {
+                        if (!this.drag) return;
+                        const target = e.target.closest('.home-tcard');
+                        if (!target || target === this.drag) return;
+                        const box = target.getBoundingClientRect();
+                        const after = e.clientX > box.left + box.width / 2 && e.clientY > box.top;
+                        this.$refs.grid.insertBefore(this.drag, after ? target.nextSibling : target);
+                        this.dots();
+                    },
+                    end() { this.drag?.classList.remove('is-dragging'); this.drag = null; this.save(); },
+                    save() { this.dots(); try { localStorage.setItem(orderKey, JSON.stringify(this.cards().map((c) => c.dataset.url))); } catch (e) {} },
+                    dots() { this.cards().forEach((card, k) => card.querySelectorAll('.home-tcard-dots i').forEach((dot, j) => dot.classList.toggle('on', j === k))); },
+                    restore() {
+                        let order = [];
+                        try { order = JSON.parse(localStorage.getItem(orderKey)) || []; } catch (e) {}
+                        if (!order.length) return;
+                        const rank = (c) => { const i = order.indexOf(c.dataset.url); return i < 0 ? 1e6 : i; };
+                        this.cards().sort((a, b) => rank(a) - rank(b)).forEach((c) => this.$refs.grid.appendChild(c));
+                        this.dots();
+                    },
+                    touch() { try { localStorage.setItem(key, String(Date.now())); } catch (e) {} },
+                    refresh() {
+                        let at = 0;
+                        try { at = Number(localStorage.getItem(key)) || 0; } catch (e) {}
+                        if (!at) { this.label = 'Todavía no has abierto ningún apartado de esta sección'; return; }
+                        const min = Math.max(0, Math.floor((Date.now() - at) / 60000));
+                        if (min < 1) { this.label = 'Sin abrir hace menos de 1 min'; return; }
+                        if (min < 60) { this.label = 'Sin abrir hace ' + min + ' min'; return; }
+                        const h = Math.floor(min / 60);
+                        if (h < 24) { this.label = 'Sin abrir hace ' + h + (h === 1 ? ' hora' : ' horas'); return; }
+                        const d = Math.floor(h / 24);
+                        this.label = 'Sin abrir hace ' + d + (d === 1 ? ' día' : ' días');
+                    },
+                };
+            };
+        </script>
+        <script>
+            // Animaciones de las tarjetas con el menor consumo posible: el video se carga solo cuando la tarjeta se acerca a la
+            // pantalla, se reproduce solo mientras se ve y se pausa al salir de la vista o al cambiar de pestaña.
+            window.homeLazyVideo = window.homeLazyVideo || function () {
+                return {
+                    visible: false,
+                    init() {
+                        const video = this.$el;
+                        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                            video.src = video.dataset.src; video.preload = 'metadata';
+                            return;
+                        }
+                        const sync = () => {
+                            if (this.visible && !document.hidden) {
+                                if (!video.getAttribute('src')) { video.preload = 'auto'; video.src = video.dataset.src + '#t=0.1'; }
+                                video.play().catch(() => {});
+                            } else if (!video.paused) {
+                                video.pause();
+                            }
+                        };
+                        this.observer = new IntersectionObserver((entries) => { this.visible = entries[0].isIntersecting; sync(); }, { rootMargin: '100px' });
+                        this.observer.observe(video);
+                        this.onVisibility = sync;
+                        document.addEventListener('visibilitychange', sync);
+                    },
+                    destroy() {
+                        this.observer?.disconnect();
+                        document.removeEventListener('visibilitychange', this.onVisibility);
+                    },
+                };
+            };
+        </script>
         <script>
             window.homeClock = window.homeClock || function (timeZone) {
                 return {
@@ -216,76 +344,60 @@
 
         <main class="flex w-full flex-col gap-[20px] p-[20px] sm:p-[30px] xl:p-[50px]">
             <!-- Cabecera: título y subtítulo a la izquierda; rol y fecha a la derecha -->
-            <section style="--i: 0" class="home-rise mb-0 sm:mb-[10px] xl:mb-[30px] flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
+            <section style="--i: 0" class="home-rise mb-[30px] flex shrink-0 flex-wrap items-start justify-between gap-x-[20px] gap-y-[20px]">
                 <div class="flex min-w-0 max-w-full items-center gap-[15px]">
                     <div class="min-w-0">
-                        <h1 class="panel-accent break-words text-xl font-normal leading-none tracking-tight">Hola, {{ $user->name }}</h1>
-                        <p class="mt-[5px] leading-[30px]">Sesión iniciada correctamente · {{ $greeting }}</p>
+                        <h1 class="home-sec-title panel-accent break-words font-normal">{{ $greeting }}, {{ trim($user->name.' '.($user->last_name ?? '')) }}</h1>
+                        <p class="home-sec-text">Sesión iniciada correctamente · <a href="{{ route('section.guide', 'inicio') }}" title="Descargar la guía de Inicio en PDF" class="home-link hover:opacity-70">Descargar guía PDF para esta sección</a></p>
                     </div>
                 </div>
-                <div class="flex w-full min-w-0 flex-wrap items-center gap-[20px] lg:w-auto">
-                    <a href="{{ route('section.guide', 'inicio') }}" title="Descargar la guía de Inicio en PDF" class="home-link inline-flex shrink-0 items-center gap-[10px] leading-none hover:opacity-70">
-                        
-                        Guía PDF
-                    </a>
+                <div class="flex w-full min-w-0 flex-wrap items-start gap-[20px] lg:w-auto">
                     <div class="min-w-0 lg:text-right">
-                    <p class="panel-accent leading-none">{{ $roleName ?: 'Portal interno' }}</p>
-                    <p class="mt-[15px] leading-none">{{ $today }}</p>
-                    {{-- Cada dígito va en una celda de ancho fijo para que la hora no se mueva (el 1 es más angosto que el 0). --}}
-                    <p class="mt-[15px] leading-none" aria-label="Hora actual"
-                       x-data="homeClock(@js(config('support.timezone', 'America/Mexico_City')))"
-                       x-init="start()"
-                       x-html="html">{{ $now->format('h:i:s a') }}</p>
+                        <p class="home-sec-title panel-accent">{{ $roleName ?: 'Portal interno' }}</p>
+                        {{-- Cada dígito va en una celda de ancho fijo para que la hora no se mueva (el 1 es más angosto que el 0). --}}
+                        <p class="home-sec-text">{{ $today }} · <span aria-label="Hora actual"
+                            x-data="homeClock(@js(config('support.timezone', 'America/Mexico_City')))"
+                            x-init="start()"
+                            x-html="html">{{ $now->format('h:i:s a') }}</span></p>
                     </div>
                 </div>
             </section>
 
             <div class="grid items-start gap-y-[20px] xl:gap-x-[50px] xl:grid-cols-[minmax(0,1fr)_400px]">
-                {{-- Accesos: una caja por grupo, con cabecera gris y celdas separadas por líneas de 1px --}}
-                <div class="flex min-w-0 flex-col gap-[20px] sm:gap-[30px] xl:gap-[50px]">
+                {{-- Apartados: tarjetas agrupadas por sección (solo el título de la sección, sin cajas) --}}
+                <div class="home-rise flex min-w-0 flex-col gap-[50px]" style="--i: 1">
                     @foreach ($sections as $title => $cards)
                         @php([$metaIcon, $metaNote] = $sectionMeta[$title] ?? ['dashboard', ''])
-                        <section style="--i: {{ $loop->index + 1 }}" class="home-rise panel-surface panel-border overflow-hidden rounded-xl border" aria-label="{{ $title }}">
-                            <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px] border-b p-[20px]">
+                        <section class="min-w-0" aria-label="{{ $title }}" x-data="homeSectionOpened(@js($title))" @click="if ($event.target.closest('a.home-card')) touch()" @auxclick="if ($event.target.closest('a.home-card')) touch()">
+                            <div class="mb-[20px] flex flex-wrap items-start justify-between gap-x-[20px] gap-y-[15px]">
                                 <div class="min-w-0">
-                                    <p class="panel-accent flex items-center gap-[10px] leading-none">
-                                        
-                                        <span>{{ $title }}</span>
-                                    </p>
-                                    @if ($metaNote)
-                                        <p class="mt-[15px] leading-none">{{ $metaNote }}</p>
-                                    @endif
+                                    <h2 class="home-sec-title panel-accent">{{ $title }}</h2>
+                                    <p class="home-sec-text">{{ rtrim($metaNote, '.') }}</p>
+                                    <p class="home-sec-text">{{ count($cards) }} {{ count($cards) === 1 ? 'apartado' : 'apartados' }} · <span x-text="label">Todavía no has abierto ningún apartado de esta sección</span></p>
                                 </div>
-                                <span class="leading-none">{{ count($cards) }} {{ count($cards) === 1 ? 'acceso' : 'accesos' }}</span>
-                            </header>
-                            <div class="-mb-px -mr-px grid [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+                            </div>
+                            <div class="home-tgrid" x-ref="grid" @dragover.prevent="over($event)" @drop.prevent="save()">
                                 @foreach ($cards as [$cardTitle, $description, $url, $icon])
-                                    <a href="{{ $url }}" style="--d: {{ ($loop->parent->index + 1) * 90 + 200 + $loop->index * 60 }}" class="home-card panel-border block border-b border-r p-[20px]">
-                                        <span class="home-link flex items-center gap-[10px] leading-none">
-                                            
-                                            <span class="home-card-title min-w-0">{{ $cardTitle }}</span>
+                                    <a href="{{ $url }}" style="--d: {{ ($loop->parent->index + 1) * 90 + 200 + $loop->index * 60 }}" class="home-card home-tcard" data-url="{{ $url }}" draggable="true" @dragstart="start($event)" @dragend="end()">
+                                        <span class="home-tcard-visual">
+                                            @if (isset($illustrations[$cardTitle]))
+                                                <video data-src="{{ asset('img/home/'.$illustrations[$cardTitle].'.mp4') }}" loop muted playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true" x-data="homeLazyVideo()"></video>
+                                            @else
+                                                <svg class="home-tcard-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons[$icon] ?? $icons['dashboard'] }}" /></svg>
+                                            @endif
                                         </span>
-                                        <span class="mt-[7.5px] -mb-[7.5px] block leading-[30px]">{{ $description }}</span>
+                                        <span class="home-tcard-body">
+                                            <span class="panel-accent block leading-none">{{ $cardTitle }}</span>
+                                            <span class="home-tcard-text block">{{ $description }}</span>
+                                        </span>
+                                        <span class="home-tcard-foot">
+                                            <span class="home-tcard-dots" aria-hidden="true">
+                                                @foreach ($cards as $dot)<i class="{{ $loop->index === $loop->parent->index ? 'on' : '' }}"></i>@endforeach
+                                            </span>
+                                            <span class="home-link leading-none">Abrir ▸</span>
+                                        </span>
                                     </a>
                                 @endforeach
-                                {{-- Tarjeta vertical con animación (vídeo corto en bucle, como un GIF) en el espacio libre de la caja --}}
-                                @if (isset($illustrations[$title]))
-                                    @php([$illusVideo, $illusTitle, $illusText, $illusUrl] = $illustrations[$title])
-                                    <div class="home-illus panel-border flex items-center justify-center border-b border-r p-[20px]">
-                                        <a href="{{ $illusUrl }}" class="home-tcard">
-                                            <video src="{{ asset('img/home/'.$illusVideo.'.mp4') }}" autoplay loop muted playsinline preload="auto" tabindex="-1" aria-hidden="true"
-                                                x-data x-init="if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { $el.pause(); }"></video>
-                                            <span class="home-tcard-body">
-                                                <span class="panel-accent block leading-none">{{ $illusTitle }}</span>
-                                                <span class="mt-[15px] block leading-[25px]">{{ $illusText }}</span>
-                                            </span>
-                                            <span class="home-tcard-foot">
-                                                <span class="home-tcard-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span>
-                                                <span class="home-link leading-none">Abrir ▸</span>
-                                            </span>
-                                        </a>
-                                    </div>
-                                @endif
                             </div>
                         </section>
                     @endforeach

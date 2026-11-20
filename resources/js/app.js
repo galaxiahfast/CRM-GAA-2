@@ -204,12 +204,31 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 this.dateFormat = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
             }
-            this.load('', false);
+            // La memoria (una unidad de red) se lee solo cuando la tarjeta se ve en pantalla: así entrar a Gestión de
+            // Respaldos y salir de ella no deja lecturas pesadas ocupando al servidor.
+            const start = () => { if (this.started) return; this.started = true; this.load('', false); };
+            if ('IntersectionObserver' in window) {
+                this.visibilityObserver = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) { start(); this.visibilityObserver.disconnect(); } }, { rootMargin: '200px' });
+                this.visibilityObserver.observe(this.$root);
+            } else {
+                start();
+            }
             window.addEventListener('resize', () => this.fit(), { passive: true });
         },
         // La lista mide un número exacto de filas (alto real de una fila y 20px entre filas): ninguna queda cortada
         fit() {
             this.$nextTick(() => {
+                // La tarjeta mide lo que queda de pantalla entre el encabezado azul y el margen inferior de la página
+                // (medido en la pantalla real: el menú y el encabezado se escalan distinto que el contenido)
+                const card = this.$root;
+                const nav = document.getElementById('main-nav');
+                const main = card.closest('main');
+                if (nav && main) {
+                    const unit = card.offsetHeight ? card.getBoundingClientRect().height / card.offsetHeight : 1;
+                    const styles = getComputedStyle(main);
+                    const room = (window.innerHeight - nav.getBoundingClientRect().bottom - (parseFloat(styles.paddingTop) || 0) - (parseFloat(styles.paddingBottom) || 0)) / unit;
+                    card.style.height = Math.max(640, room) + 'px';
+                }
                 const region = this.$root.querySelector('.explorer-scroll-region');
                 const box = this.$root.querySelector('.explorer-scroll');
                 if (!region || !box) return;
@@ -219,12 +238,18 @@ document.addEventListener('alpine:init', () => {
                     this.regionObserver = new ResizeObserver(() => this.fit());
                     this.regionObserver.observe(region);
                 }
+                // Se mide la fila con su alto natural, se calcula cuántas caben completas y el espacio sobrante se reparte
+                // entre ellas: la lista llena exacto el espacio (sin hueco abajo) y ninguna fila queda cortada
+                box.style.removeProperty('--explorer-row-h');
+                box.style.height = '';
                 const row = box.querySelector('.explorer-row');
-                // Alto real de la fila en unidades de la página (puede tener decimales por el zoom)
                 const scale = box.offsetHeight ? box.getBoundingClientRect().height / box.offsetHeight : 1;
-                const step = (row ? row.getBoundingClientRect().height / (scale || 1) : 57) + 20;
-                const rows = Math.max(1, Math.floor((region.clientHeight + 20) / step));
-                box.style.height = (rows * step - 20) + 'px';
+                const natural = row ? row.getBoundingClientRect().height / (scale || 1) : 57;
+                const available = region.clientHeight;
+                const rows = Math.max(1, Math.floor((available + 20) / (natural + 20)));
+                const target = (available + 20) / rows - 20;
+                box.style.setProperty('--explorer-row-h', Math.max(natural, target) + 'px');
+                box.style.height = available + 'px';
             });
         },
         cacheKey(path) { return this.key + '|' + String(path || '').toLowerCase(); },
@@ -358,6 +383,17 @@ document.addEventListener('alpine:init', () => {
                 dates.style.removeProperty('--backup-date-h');
             };
             reset();
+            // La tarjeta mide exactamente lo que queda de pantalla debajo de su posición: el menú lateral y el encabezado azul
+            // se escalan distinto que el contenido, así que se mide en la pantalla real en lugar de suponerlo con calc()
+            card.style.height = '';
+            if (window.matchMedia('(min-width: 1280px)').matches) {
+                const main = card.closest('main');
+                const bottomPadding = main ? parseFloat(getComputedStyle(main).paddingBottom) || 0 : 0;
+                const unit = card.offsetHeight ? card.getBoundingClientRect().height / card.offsetHeight : 1;
+                const top = card.getBoundingClientRect().top + window.scrollY;
+                const room = (window.innerHeight - top - bottomPadding) / unit;
+                card.style.height = Math.max(640, room) + 'px';
+            }
             // Solo en pantalla grande van lado a lado; en pantallas angostas se apilan y no hace falta alinear
             if (getComputedStyle(card.querySelector('.grid')).gridTemplateColumns.split(' ').length < 2) return;
             const scale = card.offsetHeight ? card.getBoundingClientRect().height / card.offsetHeight : 1;
@@ -384,6 +420,32 @@ document.addEventListener('alpine:init', () => {
             records.style.scrollPaddingTop = theadHeight + 'px';
             dates.style.height = (rows * target) + 'px';
         },
+    }));
+
+    // Tarjeta que mide exactamente lo que queda de pantalla debajo de su posición (menos el margen inferior de la página).
+    // Se mide en la pantalla real porque el menú y el encabezado se escalan distinto que el contenido.
+    window.Alpine.data('fitScreen', (minHeight = 600, breakpoint = 1024) => ({
+        init() {
+            this.fit = () => {
+                const el = this.$el;
+                el.style.height = '';
+                if (!window.matchMedia('(min-width: ' + breakpoint + 'px)').matches) return;
+                // Margen inferior de la página: el del primer contenedor hacia arriba que tenga relleno inferior
+                let padding = 0;
+                for (let node = el.parentElement; node && node !== document.body; node = node.parentElement) {
+                    const value = parseFloat(getComputedStyle(node).paddingBottom) || 0;
+                    if (value > 0) { padding = value * (node.getBoundingClientRect().width / (node.offsetWidth || 1)); break; }
+                }
+                const unit = el.offsetHeight ? el.getBoundingClientRect().height / el.offsetHeight : 1;
+                const top = el.getBoundingClientRect().top + window.scrollY;
+                el.style.height = Math.max(minHeight, (window.innerHeight - top - padding) / (unit || 1)) + 'px';
+            };
+            this.onResize = () => this.fit();
+            window.addEventListener('resize', this.onResize, { passive: true });
+            this.$nextTick(() => this.fit());
+            setTimeout(() => this.fit(), 300);
+        },
+        destroy() { window.removeEventListener('resize', this.onResize); },
     }));
 
     window.Alpine.data('backupOverlayScroll', () => ({

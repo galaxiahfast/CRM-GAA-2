@@ -141,7 +141,7 @@ class BackupStorageManagerTest extends TestCase
 
         $this->actingAs($admin)->get(route('activity-backups.index'))
             ->assertOk()
-            ->assertSee('Guía PDF');
+            ->assertDontSee('Guía PDF');
 
         $response = $this->get(route('activity-backups.infrastructure-guide'));
         $response->assertOk()
@@ -1024,5 +1024,18 @@ class BackupStorageManagerTest extends TestCase
         $this->assertTrue($result['connected']);
         $this->assertSame(2, $result['stats']['files']);
         $this->assertSame(['BAK', 'INDEX'], array_column($result['folder']['subfolders'], 'name'));
+    }
+
+    public function test_an_unexpected_copy_failure_explains_the_real_reason(): void
+    {
+        $export = app(ContpaqiBackupExport::class);
+        $describe = new \ReflectionMethod($export, 'describeCopyFailure');
+
+        $denied = $describe->invoke($export, new \ErrorException('fopen(E:\LIZETH\x.bak.partial): Failed to open stream: Permission denied'), 'CORAH GESTION EMPRESARIAL');
+        $this->assertStringStartsWith('Al copiar CORAH GESTION EMPRESARIAL: Windows no permitió escribir', $denied);
+        $this->assertStringContainsString('Detalle: fopen(', $denied);
+
+        $other = $describe->invoke($export, new \ErrorException('algo raro'), '');
+        $this->assertSame('La copia se interrumpió. Detalle: algo raro', $other);
     }
 }

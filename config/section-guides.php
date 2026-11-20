@@ -139,6 +139,19 @@ return [
             ['question' => '4. ¿Cómo descargo el reporte?', 'answer' => 'En el encabezado de Marcas de tiempo usa Descargar reporte PDF.', 'steps' => ['Consulta primero un periodo con marcas.', 'Presiona Descargar reporte PDF.', 'El archivo usa el formato de los reportes del CRM e incluye las marcas del periodo consultado en esta tabla.']],
         ],
     ],
+    'reloj_checador_admin' => [
+        'label' => 'Reloj Checador (administración)',
+        'menu' => 'Monitoreo › Reloj Checador',
+        'summary' => 'Prepara el informe de asistencia de uno o varios colaboradores con las marcas del reloj checador biométrico, revisa sus jornadas, ajusta un día y descarga los reportes. Arriba a la derecha cambias entre Generar informe, Ver resultados e Historial de cambios.',
+        'items' => [
+            ['question' => '1. ¿Cómo elijo a los colaboradores?', 'answer' => 'En Generar informe, marca a cada colaborador en su tarjeta o usa la casilla del área para marcar a todos los de esa área.', 'steps' => ['Escribe en Buscar colaborador, ID o área para encontrar a alguien (también puedes dictar con el micrófono).', 'Marca la casilla de su tarjeta.', 'Usa Seleccionar todos o Deseleccionar todos para cambiar la selección completa.']],
+            ['question' => '2. ¿Cómo elijo el periodo?', 'answer' => 'En Periodo del informe elige las fechas Desde y Hasta.', 'steps' => ['Abre el calendario de Desde y elige la fecha inicial.', 'Abre el calendario de Hasta y elige la fecha final.']],
+            ['question' => '3. ¿Cómo genero el informe?', 'answer' => 'Presiona Generar informe: se consultan las marcas del checador de los colaboradores elegidos y se abre Ver resultados.', 'steps' => ['Presiona Generar informe.', 'Abajo verás la fecha y hora del último informe generado.']],
+            ['question' => '4. ¿Cómo reviso los resultados?', 'answer' => 'En Ver resultados elige un colaborador a la izquierda para ver sus jornadas: fecha, marcas, tiempo neto, horas decimales y pago.', 'steps' => ['Busca al colaborador por nombre o ID.', 'Una jornada en rojo tiene marcas impares: revísala.', 'Desde Acciones puedes ajustar las marcas de un día.']],
+            ['question' => '5. ¿Cómo descargo los reportes?', 'answer' => 'Al pie de Ver resultados elige Reporte individual, Reporte grupal o el informe general.', 'steps' => ['Genera primero el informe.', 'Presiona el reporte que necesites para descargarlo en PDF.']],
+            ['question' => '6. ¿Dónde veo los cambios hechos?', 'answer' => 'En Historial de cambios se registran los ajustes de marcas y de ID de checador, con quién los hizo y cuándo.', 'steps' => ['Presiona Historial de cambios.', 'Revisa cada ajuste con su fecha y responsable.']],
+        ],
+    ],
     'reloj_checador_datos' => [
         'label' => 'Datos generales del Reloj Checador',
         'menu' => 'Monitoreo › Reloj Checador › Datos generales',

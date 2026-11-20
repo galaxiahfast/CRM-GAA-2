@@ -148,8 +148,7 @@
 
         init() {
             try {
-                const saved = Number(null);
-                if (saved >= 70 && saved <= 100) this.viewScale = saved;
+                this.viewScale = 100;
             } catch (error) {}
             this.onFullscreen = () => { this.isFullscreen = document.fullscreenElement === this.$root; };
             document.addEventListener('fullscreenchange', this.onFullscreen);
@@ -335,6 +334,21 @@
             .attendance-pick .truncate,
             [data-attendance-admin] .panel-header .truncate { overflow: visible; text-overflow: clip; white-space: normal; }
         }
+        /* Mismo formato que Cronómetro, Chat de soporte y Gestión de Respaldos: botones con 20px de relleno, iconos de 15px
+           y verde para lo principal. */
+        [data-attendance-admin] { --attn-green: #15803d; }
+        html.module-dark-theme [data-attendance-admin] { --attn-green: #4ade80; }
+        [data-attendance-admin] .admin-attn-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); color: var(--panel-text); line-height: 1; white-space: nowrap; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+        [data-attendance-admin] .admin-attn-btn:hover { background: var(--panel-subtle); }
+        [data-attendance-admin] .admin-attn-btn[aria-selected="true"] { border-color: var(--attn-green); background: color-mix(in srgb, var(--attn-green) 12%, var(--panel-surface)); color: var(--attn-green); }
+        [data-attendance-admin] .admin-attn-btn-danger { color: var(--panel-danger); }
+        [data-attendance-admin] .admin-attn-btn:focus { outline: none; box-shadow: none; }
+        [data-attendance-admin] .panel-button:not(.admin-attn-btn) { border: 1px solid var(--attn-green); background: color-mix(in srgb, var(--attn-green) 12%, var(--panel-surface)); color: var(--attn-green); }
+        [data-attendance-admin] .panel-button:not(.admin-attn-btn):hover:not(:disabled) { background: color-mix(in srgb, var(--attn-green) 20%, var(--panel-surface)); }
+        /* La tarjeta «Preparar informe» mide lo que queda de pantalla (sin hueco abajo); el enlace de la guía en verde */
+        [data-attendance-admin] .attn-link { color: var(--attn-green); transition: opacity 150ms ease; }
+        [data-attendance-admin] .attn-link:hover { opacity: .75; }
+        @media (min-width: 1024px) { [data-attendance-admin] .attn-prepare-card { min-height: 600px; } }
     </style>
 
     <div class="w-full" :style="(!isCompact && scaledHeight) ? 'height:' + scaledHeight + 'px' : null">
@@ -383,32 +397,29 @@
                 <!-- Cabecera y secciones -->
                 <section class="flex shrink-0 flex-wrap items-center justify-between gap-x-[20px] gap-y-[15px]">
                     <div class="flex min-w-0 max-w-full items-center gap-[15px]">
-                        <span class="panel-surface panel-border panel-text grid h-14 w-14 shrink-0 place-items-center rounded-xl border">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </span>
                         <div class="min-w-0">
                             <h1 class="panel-accent text-xl font-normal leading-none tracking-tight">Reloj Checador</h1>
-                            <p class="mt-[10px] leading-tight">Administración de marcas biométricas, ajustes por día y exportación.</p>
+                            <p class="mt-[5px] leading-[30px]">Administración de marcas biométricas, ajustes por día y exportación.</p>
                         </div>
                     </div>
 
                     <nav class="flex flex-wrap items-center gap-[20px]" aria-label="Secciones del informe">
                         <button type="button" wire:click="showPreparationSection"
                                 aria-selected="{{ $reportSection === 'prepare' ? 'true' : 'false' }}" @if ($reportSection === 'prepare') aria-current="page" @endif
-                                class="panel-tab inline-flex items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
+                                class="admin-attn-btn">
+                            <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
                             Generar informe
                         </button>
                         <button type="button" @click="syncSelection(); $wire.showResultsSection()"
                                 aria-selected="{{ $reportSection === 'results' ? 'true' : 'false' }}" @if ($reportSection === 'results') aria-current="page" @endif
-                                class="panel-tab inline-flex items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
+                                class="admin-attn-btn">
+                            <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
                             Ver resultados
                         </button>
                         <button type="button" wire:click="showHistorySection"
                                 aria-selected="{{ $reportSection === 'history' ? 'true' : 'false' }}" @if ($reportSection === 'history') aria-current="page" @endif
-                                class="panel-tab inline-flex items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
+                                class="admin-attn-btn">
+                            <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"/></svg>
                             Historial de cambios
                         </button>
                     </nav>
@@ -416,61 +427,62 @@
 
                 {{-- Informes individual, grupal y general --}}
                 @if ($reportSection === 'prepare')
-                    <section class="panel-surface panel-border relative z-20 rounded-xl border">
+                    <section x-data="fitScreen()" class="attn-prepare-card panel-surface panel-border relative z-20 flex flex-col rounded-xl border">
                         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] rounded-t-xl border-b p-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Preparar informe</h2>
-                                <p class="mt-[10px] leading-tight">Configura y genera los resultados fácilmente.</p>
+                                <p class="mt-[15px] leading-none">Configura y genera los resultados fácilmente.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[10px]">
-                                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span></span>
+                                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><span x-text="selectedIds.length">{{ count($selectedReportUserIds) }}</span> seleccionados</span></span>
                                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
+                                    <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
                                     {{ \Carbon\Carbon::parse($from)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($to)->format('d/m/Y') }}
                                 </span>
-                                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M9 14h.01M9 18h.01M15 10h.01M15 14h.01M15 18h.01"/></svg>{{ $selectedAreaCount }} {{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span>
+                                <span class="inline-flex items-center gap-[10px] whitespace-nowrap"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M9 14h.01M9 18h.01M15 10h.01M15 14h.01M15 18h.01"/></svg>{{ $selectedAreaCount }} {{ $selectedAreaCount === 1 ? 'área participa' : 'áreas participan' }}</span>
                             </div>
                         </header>
 
                         <div class="panel-border flex flex-wrap items-center gap-[20px] border-b p-[20px]">
                             <div class="relative min-w-[260px] flex-1">
-                                <svg class="panel-muted pointer-events-none absolute left-[15px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                                <svg class="panel-muted pointer-events-none absolute left-[20px] top-1/2 h-[15px] w-[15px] -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
                                 <input type="search" x-model="reportSearch" autocomplete="off"
                                        @focus="if (!reportSearchOpened) { reportSearch = ''; reportSearchOpened = true }"
                                        placeholder="Buscar colaborador, ID o área..."
                                        aria-label="Buscar colaborador, ID o área"
-                                       class="panel-field h-11 w-full rounded-xl border pl-[44px] pr-[55px] focus:ring-0">
+                                       class="panel-field w-full rounded-xl border py-[20px] pl-[50px] pr-[60px] leading-none focus:ring-0">
                                 <button type="button" @click="startVoiceSearch()" :title="voiceListening ? 'Detener búsqueda por voz' : 'Buscar por voz'" aria-label="Buscar por voz"
                                         class="panel-icon-button absolute right-[5px] top-1/2 inline-flex h-[34px] w-[34px] -translate-y-1/2 items-center justify-center rounded-lg focus:outline-none focus:ring-0"
                                         :class="voiceListening ? 'panel-accent animate-pulse' : ''">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Zm-7 9v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8"/></svg>
+                                    <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Zm-7 9v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8"/></svg>
                                 </button>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[10px] whitespace-nowrap">
-                                <button type="button" @click="selectAllUsers()" class="panel-action inline-flex items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
-                                <button type="button" @click="clearAllUsers()" class="panel-action-danger inline-flex items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
+                                <button type="button" @click="selectAllUsers()" class="admin-attn-btn"><svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/></svg>Seleccionar todos</button>
+                                <button type="button" @click="clearAllUsers()" class="admin-attn-btn admin-attn-btn-danger"><svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>Deseleccionar todos</button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)]">
-                            <form @submit.prevent="syncSelection(); $wire.generateSelectionReport()" class="panel-border flex flex-col gap-[20px] border-b p-[20px] lg:border-b-0 lg:border-r">
-                                <div>
+                        <div class="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+                            <form @submit.prevent="syncSelection(); $wire.generateSelectionReport()" class="panel-border flex min-h-0 flex-col border-b lg:border-b-0 lg:border-r">
+                                <div class="panel-border shrink-0 border-b p-[20px]">
                                     <h3 class="panel-accent leading-none">Periodo del informe</h3>
-                                    <p class="mt-[10px] leading-tight">Define las fechas que deseas.</p>
+                                    <p class="mt-[5px] leading-[30px]">Define las fechas que deseas.</p>
                                 </div>
+                                <div class="flex min-h-0 flex-1 flex-col gap-[20px] p-[20px]">
                                 @foreach (['from' => 'Desde', 'to' => 'Hasta'] as $dateField => $dateLabel)
                                     <div class="relative grid gap-[10px]" x-data="datePicker($wire.entangle('{{ $dateField }}'))" @click.outside="open = false">
                                         <span>{{ $dateLabel }}</span>
-                                        <button type="button" @click="open = !open; if (open) setCursorFromValue()" class="panel-field flex h-11 w-full items-center justify-between gap-[10px] rounded-xl border px-[15px] outline-none focus:ring-0" :aria-expanded="open">
+                                        <button type="button" @click="open = !open; if (open) setCursorFromValue()" class="panel-field flex w-full items-center justify-between gap-[10px] rounded-xl border p-[20px] leading-none outline-none focus:ring-0" :aria-expanded="open">
                                             <span x-text="formattedValue"></span>
-                                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
+                                            <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
                                         </button>
                                         {{-- En pantallas grandes el calendario se abre al lado del formulario para que ninguna fila quede tapada --}}
                                         <div x-cloak x-show="open" x-transition class="panel-surface panel-border absolute left-0 top-full z-[80] mt-[10px] w-[300px] rounded-xl border p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)] lg:left-full lg:top-0 lg:ml-[20px] lg:mt-0">
                                             <div class="mb-[15px] flex items-center justify-between gap-[10px]">
-                                                <button type="button" @click="previousMonth()" aria-label="Mes anterior" class="panel-icon-button inline-flex h-9 w-9 items-center justify-center rounded-lg focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg></button>
+                                                <button type="button" @click="previousMonth()" aria-label="Mes anterior" class="panel-icon-button inline-flex h-9 w-9 items-center justify-center rounded-lg focus:outline-none focus:ring-0"><svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6"/></svg></button>
                                                 <strong x-text="monthLabel"></strong>
-                                                <button type="button" @click="nextMonth()" aria-label="Mes siguiente" class="panel-icon-button inline-flex h-9 w-9 items-center justify-center rounded-lg focus:outline-none focus:ring-0"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg></button>
+                                                <button type="button" @click="nextMonth()" aria-label="Mes siguiente" class="panel-icon-button inline-flex h-9 w-9 items-center justify-center rounded-lg focus:outline-none focus:ring-0"><svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg></button>
                                             </div>
                                             <div class="panel-muted mb-[5px] grid grid-cols-7 text-center">
                                                 @foreach (['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'] as $weekday)<span>{{ $weekday }}</span>@endforeach
@@ -480,22 +492,28 @@
                                                     <button type="button" @click="selectDate(day.date)" class="inline-flex aspect-square items-center justify-center rounded-lg border focus:outline-none focus:ring-0" :class="isSelected(day.date) ? 'panel-button border-transparent' : (isToday(day.date) ? 'panel-menu-item panel-accent panel-border' : (day.currentMonth ? 'panel-menu-item border-transparent' : 'panel-menu-item panel-muted border-transparent opacity-60'))" x-text="day.date.getDate()"></button>
                                                 </template>
                                             </div>
-                                            <button type="button" @click="selectDate(new Date())" class="panel-button-secondary mt-[15px] h-11 w-full rounded-xl px-[20px] focus:outline-none focus:ring-0">Seleccionar hoy</button>
+                                            <button type="button" @click="selectDate(new Date())" class="panel-button-secondary mt-[15px] w-full rounded-xl p-[20px] leading-none focus:outline-none focus:ring-0">Seleccionar hoy</button>
                                         </div>
                                     </div>
                                 @endforeach
-                                <button type="submit" wire:loading.attr="disabled" wire:target="generateSelectionReport" class="panel-button inline-flex h-11 w-full shrink-0 items-center justify-center gap-[10px] rounded-xl px-[20px] focus:outline-none focus:ring-0 disabled:opacity-50">
-                                    <svg wire:loading.remove wire:target="generateSelectionReport" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
-                                    <svg wire:loading wire:target="generateSelectionReport" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"/></svg>
+                                <button type="submit" wire:loading.attr="disabled" wire:target="generateSelectionReport" class="panel-button inline-flex w-full shrink-0 items-center justify-center gap-[10px] rounded-xl p-[20px] leading-none focus:outline-none focus:ring-0 disabled:opacity-50">
+                                    <svg wire:loading.remove wire:target="generateSelectionReport" class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
+                                    <svg wire:loading wire:target="generateSelectionReport" class="h-[15px] w-[15px] animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"/></svg>
                                     Generar informe
                                 </button>
                                 <p class="panel-muted inline-flex items-start gap-[10px] leading-tight">
                                     <svg class="mt-[1px] h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                                     <span>Último reporte realizado: {{ $lastReportGeneratedAt ?? 'Aún no generado' }}</span>
                                 </p>
+                                {{-- Guía abajo, como en el Reloj Checador del colaborador --}}
+                                    <div class="mt-auto flex flex-col gap-[20px]">
+                                        <div class="panel-border border-t" aria-hidden="true"></div>
+                                        <a href="{{ route('section.guide', 'reloj-checador-admin') }}" title="Descargar la guía del Reloj Checador de administración en PDF" class="attn-link leading-none">Descargar guía PDF</a>
+                                    </div>
+                                </div>
                             </form>
 
-                            <div class="flex h-[520px] min-h-0 min-w-0 flex-col">
+                            <div class="flex h-[520px] min-h-0 min-w-0 flex-col lg:h-auto">
                                 <div class="attendance-scrollbar min-h-0 flex-1 overflow-y-auto p-[20px]">
                                     @forelse ($reportUsers->groupBy(fn ($user) => $user->activeOrganizationalProfile?->physicalArea?->name ?? 'Sin área asignada') as $areaName => $areaUsers)
                                         <div class="panel-border mb-[20px] overflow-hidden rounded-xl border last:mb-0" x-show="reportSearch === '' || @js(strtolower($areaName.' '.$areaUsers->map(fn ($user) => trim($user->name.' '.$user->last_name).' '.$user->employee_id)->join(' '))).includes(reportSearch.toLowerCase())">
@@ -528,7 +546,7 @@
                                                             <span class="min-w-0 flex-1"><span class="block truncate">{{ trim($reportUser->name.' '.$reportUser->last_name) }}</span><span class="panel-muted mt-[5px] block truncate">ID Checador: {{ $reportUser->employee_id }}</span></span>
                                                         </label>
                                                         <button type="button" wire:click.stop="openEmployeeIdModal({{ $reportUser->id }})" title="Editar ID del checador" aria-label="Editar ID del checador de {{ trim($reportUser->name.' '.$reportUser->last_name) }}" class="panel-button-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg focus:outline-none focus:ring-0">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
+                                                            <svg class="h-[15px] w-[15px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.232 5.232 3.536 3.536M9 11l7.586-7.586a2 2 0 0 1 2.828 0l1.172 1.172a2 2 0 0 1 0 2.828L13 15l-4 1 1-4ZM5 19h14" /></svg>
                                                         </button>
                                                     </div>
                                                 @endforeach
@@ -555,7 +573,7 @@
                         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Informe de asistencia</h2>
-                                <p class="mt-[10px] leading-tight">Selecciona un colaborador para consultar sus jornadas.</p>
+                                <p class="mt-[15px] leading-none">Selecciona un colaborador para consultar sus jornadas.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[10px]">
                                 <span class="inline-flex items-center gap-[10px] whitespace-nowrap">
@@ -574,9 +592,9 @@
                                     <h3 class="panel-accent leading-none">Colaboradores</h3>
                                     <label class="relative block">
                                         <span class="sr-only">Buscar colaborador en el informe</span>
-                                        <svg class="panel-muted pointer-events-none absolute left-[15px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+                                        <svg class="panel-muted pointer-events-none absolute left-[20px] top-1/2 h-[18px] w-[18px] -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
                                         <input type="search" x-model="resultUserSearch" autocomplete="off" placeholder="Buscar por nombre o ID"
-                                               class="panel-field h-11 w-full rounded-xl border pl-[44px] pr-[15px] focus:ring-0">
+                                               class="panel-field w-full rounded-xl border py-[20px] pl-[50px] pr-[20px] leading-none focus:ring-0">
                                     </label>
                                 </div>
                                 <nav class="attendance-scrollbar h-[350px] overflow-y-auto lg:h-auto lg:min-h-0 lg:flex-1" aria-label="Cambiar colaborador">
@@ -734,7 +752,7 @@
                         <header class="panel-header panel-border flex flex-wrap items-center justify-between gap-[20px] border-b p-[20px]">
                             <div class="min-w-0">
                                 <h2 class="panel-accent leading-none">Historial de cambios</h2>
-                                <p class="mt-[10px] leading-tight">Consulta las correcciones realizadas en las jornadas.</p>
+                                <p class="mt-[15px] leading-none">Consulta las correcciones realizadas en las jornadas.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-[20px] gap-y-[10px]">
                                 <span class="inline-flex items-center gap-[10px]">
@@ -923,7 +941,7 @@
                                             <header class="panel-header panel-border flex items-start justify-between gap-[20px] border-b p-[20px]">
                                                 <div class="min-w-0">
                                                     <h4 class="panel-accent text-[15px] font-normal leading-none">Marcas / Chequeos</h4>
-                                                    <p class="mt-[10px] leading-tight">Agrega, ordena o elimina marcas.</p>
+                                                    <p class="mt-[15px] leading-none">Agrega, ordena o elimina marcas.</p>
                                                 </div>
                                                 <button type="button" wire:click="addAttendanceMark" class="panel-action inline-flex shrink-0 items-center gap-[10px] bg-transparent p-0 focus:outline-none focus:ring-0">
                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
@@ -986,7 +1004,7 @@
                                         <section class="panel-border shrink-0 overflow-hidden rounded-xl border">
                                             <header class="panel-header panel-border border-b p-[20px]">
                                                 <h4 class="panel-accent text-[15px] font-normal leading-none">Pago por hora y comida</h4>
-                                                <p class="mt-[10px] leading-tight">El pago se calcula con el tiempo neto.</p>
+                                                <p class="mt-[15px] leading-none">El pago se calcula con el tiempo neto.</p>
                                             </header>
                                             <div class="p-[20px]">
                                                 <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-3">
@@ -1047,10 +1065,4 @@
     </div>
 
     <!-- Control de pantalla completa (igual que en Panel general, Administración y Reportes de soporte) -->
-    <div class="panel-surface panel-border fixed bottom-[30px] right-[30px] z-30 hidden items-center gap-[10px] rounded-xl border px-[15px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] lg:flex">
-        <button type="button" @click="toggleFullscreen()" class="panel-icon-button inline-flex h-8 w-8 items-center justify-center rounded-lg outline-none focus:ring-0" :title="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" :aria-label="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'">
-            <svg x-show="!isFullscreen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg>
-            <svg x-show="isFullscreen" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3v5H3M16 3v5h5M21 16h-5v5M3 16v5h5" /></svg>
-        </button>
-    </div>
 </div>

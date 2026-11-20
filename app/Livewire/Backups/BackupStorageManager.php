@@ -468,6 +468,24 @@ class BackupStorageManager extends Component
         $this->exportStatus = $active;
     }
 
+    /** Comprobación automática (al abrir y cada 5 minutos): actualiza la información y solo muestra aviso si algo falla. */
+    public function autoVerify(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles, ContpaqiSqlCompanyCatalog $sqlCatalog): void
+    {
+        if ($this->activeView !== 'backups' || in_array($this->exportStatus['status'] ?? null, ['queued', 'copying', 'cancelling'], true)) {
+            return;
+        }
+
+        // Una sola comprobación cada 5 minutos por departamento aunque haya varias personas con la pantalla abierta
+        if (! \Illuminate\Support\Facades\Cache::add('backup-auto-verify:'.$this->backupProfile, now()->toIso8601String(), 300)) {
+            return;
+        }
+
+        $this->verifySynchronization($catalog, $export, $profiles, $sqlCatalog);
+        if (($this->syncResult['error'] ?? null) === null) {
+            $this->syncResult = null;
+        }
+    }
+
     public function verifySynchronization(ContpaqiBackupCatalog $catalog, ContpaqiBackupExport $export, ContpaqiBackupProfile $profiles, ContpaqiSqlCompanyCatalog $sqlCatalog): void
     {
         Gate::authorize('access-system-backups');

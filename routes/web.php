@@ -94,7 +94,7 @@ Route::middleware([
     // carga original para ejecutarse únicamente cuando el usuario lo solicita.
     Route::view('/inicio', 'inicio')->name('inicio');
     Route::get('/guias/{section}.pdf', SectionGuideController::class)
-        ->whereIn('section', ['inicio', 'detalle-cliente', 'panel-control', 'supervision-horas', 'cronometro', 'productividad', 'productividad-detalle', 'chat-soporte', 'preguntas', 'managercontrol', 'managercontrol-detalle', 'managercontrol-asignar', 'reloj-checador', 'reloj-checador-datos'])
+        ->whereIn('section', ['inicio', 'detalle-cliente', 'panel-control', 'supervision-horas', 'cronometro', 'productividad', 'productividad-detalle', 'chat-soporte', 'preguntas', 'managercontrol', 'managercontrol-detalle', 'managercontrol-asignar', 'reloj-checador', 'reloj-checador-datos', 'reloj-checador-admin'])
         ->name('section.guide');
 
     Route::get('/perfiles/{user}', UpdateProfileInformationForm::class)->name('profiles.show');

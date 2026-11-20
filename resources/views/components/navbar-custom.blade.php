@@ -213,7 +213,7 @@
                 </div>
             @elseif (request()->routeIs('organigrama.*'))
                 <div class="flex min-w-0 items-center gap-[15px] text-[15px] font-normal text-white">
-                    <span>Información</span>
+                    <span>General</span>
                     <span class="text-white">›</span>
                     <span class="text-white">Organigrama</span>
                 </div>
@@ -545,6 +545,20 @@
                 </li>
 
                 <!-- ========================================================== -->
+                <!-- BOTÓN: Organigrama (en General, junto a Inicio y Panel General) -->
+                <!-- ========================================================== -->
+                @if ($canOrganizationChart)
+                <li class="pt-[20px] px-[15px] pb-0 m-0">
+                    <a href="{{ route('organigrama.index') }}"
+                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
+                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('organigrama.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
+                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('organigrama.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
+                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Organigrama</span>
+                    </a>
+                </li>
+                @endif
+
+                <!-- ========================================================== -->
                 <!-- BOTÓN: Dashboard (vista completa anterior)                -->
                 <!-- ========================================================== -->
                 <li class="pt-[20px] px-[15px] pb-0 m-0">
@@ -703,19 +717,6 @@
                     <span class="block text-[15px] font-medium text-black h-[15px] leading-none flex items-center">Información</span>
                 </li>
 
-                <!-- ========================================================== -->
-                <!-- BOTÓN: Organigrama (apartado propio, antes dentro de Administración) -->
-                <!-- ========================================================== -->
-                @if ($canOrganizationChart)
-                <li class="pt-[20px] px-[15px] pb-0 m-0">
-                    <a href="{{ route('organigrama.index') }}"
-                        :class="collapsed ? 'justify-start pl-[15px] pr-[15px] py-[15px]' : 'justify-start p-[15px]'"
-                        class="flex items-center w-full text-[15px] text-black rounded-xl transition-all duration-200 {{ request()->routeIs('organigrama.*') ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100' }} group whitespace-nowrap">
-                        <svg class="w-5 h-5 transition-colors {{ request()->routeIs('organigrama.*') ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m-6 4h12M6 12v4m12-4v4M3 16h6v4H3zm12 0h6v4h-6zM9 8h6v4H9z" /></svg>
-                        <span class="ms-[15px] h-[15px] leading-none flex items-center" :class="collapsed ? 'hidden' : 'inline'">Organigrama</span>
-                    </a>
-                </li>
-                @endif
 
                 <!-- ========================================================== -->
                 <!-- BOTÓN: Administración (siempre visible)                    -->

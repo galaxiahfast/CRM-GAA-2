@@ -70,6 +70,17 @@
         html.module-dark-theme #main-content .backup-storage-monochrome table :is(tbody, tr) { background-color: transparent !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-gray > tr > td { background-color: var(--panel-subtle) !important; }
         html.module-dark-theme #main-content .backup-storage-monochrome .backup-record-white > tr > td { background-color: var(--panel-surface) !important; }
+        /* Menú de carpetas destino */
+        .backup-folder-menu { box-shadow: 0 18px 40px -14px rgba(0, 0, 0, .28); }
+        .backup-folder-row { transition: background-color 150ms ease; }
+        .backup-folder-row:hover { background: var(--panel-subtle); }
+        .backup-folder-row:hover > button:first-child, .backup-folder-row.is-selected > button:first-child { color: var(--panel-accent); }
+        .backup-folder-open { display: grid; place-items: center; padding: 0 20px; color: var(--panel-accent); border-left: 1px solid var(--panel-border); transition: background-color 150ms ease; }
+        .backup-folder-open:hover { background: var(--panel-hover); }
+        .backup-folder-back { display: grid; place-items: center; flex: none; height: 15px; width: 15px; color: var(--panel-accent); }
+        /* Tabla de empresas adaptable: columnas en porcentaje; en pantallas muy angostas se desplaza lateralmente, nunca se corta */
+        .backup-records-table { min-width: 760px; }
+        .backup-records-table td, .backup-records-table th { overflow-wrap: anywhere; }
         /* Al desplazar, las listas de fechas y de empresas se detienen en el inicio de una fila: nunca queda una cortada */
         [data-dates-scroller] { scroll-snap-type: y mandatory; }
         [data-dates-scroller] > [data-date-row] { scroll-snap-align: start; height: var(--backup-date-h, auto); }
@@ -86,7 +97,8 @@
         /* Explorador de la memoria: como el Explorador de Windows (barra de dirección, Atrás/Subir y clic para entrar) */
         .backup-explorer .explorer-tool { display: inline-grid; flex: none; place-items: center; padding: 20px; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); color: var(--panel-text); transition: background-color 150ms ease; }
         .backup-explorer .explorer-tool:hover:not(:disabled) { background: var(--panel-subtle); }
-        .backup-explorer .explorer-tool:disabled { opacity: .35; cursor: not-allowed; }
+        .backup-explorer .explorer-tool:disabled { opacity: .55; cursor: not-allowed; }
+        .backup-explorer .explorer-tool svg { stroke-width: 2.5; }
         .backup-explorer .explorer-address { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; line-height: 1; gap: 10px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); padding: 20px; scrollbar-width: none; }
         .backup-explorer .explorer-address::-webkit-scrollbar { display: none; }
         .backup-explorer .explorer-crumb { flex: none; border-radius: 8px; padding: 0; line-height: 1; transition: background-color 150ms ease; }
@@ -94,6 +106,7 @@
         .backup-explorer .explorer-cols, .backup-explorer .explorer-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px 100px 180px; align-items: center; gap: 20px; padding: 20px; line-height: 1; border: 1px solid transparent; }
         .backup-explorer .explorer-cols { color: var(--panel-accent); }
         .backup-explorer .explorer-scroll { scroll-snap-type: y mandatory; }
+        .backup-explorer .explorer-scroll .explorer-row { height: var(--explorer-row-h, auto); }
         .backup-explorer .explorer-scroll .explorer-row { scroll-snap-align: start; flex: none; }
         .backup-explorer .explorer-list { display: flex; flex-direction: column; gap: 20px; }
         .backup-explorer .explorer-row { width: 100%; border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel-surface); text-align: left; transition: background-color 150ms ease, border-color 150ms ease; }
@@ -235,14 +248,16 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-[20px] lg:justify-end">
-                <a href="{{ route('activity-backups.infrastructure-guide') }}" class="backup-green leading-none transition hover:opacity-70" title="Descargar guía técnica de configuración">Guía PDF</a>
-                <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="backup-green bg-transparent p-0 leading-none transition hover:opacity-70 disabled:opacity-50">
-                    <span wire:loading.remove wire:target="verifySynchronization">Actualizar y comprobar</span>
-                    <span wire:loading wire:target="verifySynchronization">Actualizando…</span>
-                </button>
+                {{-- La comprobación se hace sola cada 5 minutos mientras la pantalla está a la vista; no corre al entrar para no retrasar la carga --}}
+                <span wire:poll.300s.visible="autoVerify" class="hidden" aria-hidden="true"></span>
                 <div class="flex items-center gap-[20px]" role="group" aria-label="Secciones de respaldos">
-                    <button type="button" wire:click="selectView('backups')" class="backup-memory-button" aria-pressed="{{ $activeView === 'backups' ? 'true' : 'false' }}">Respaldos</button>
-                    <button type="button" wire:click="selectView('history')" class="backup-memory-button" aria-pressed="{{ $activeView === 'history' ? 'true' : 'false' }}">Historial</button>
+                    <button type="button" wire:click="selectView('backups')" class="backup-memory-button" aria-pressed="{{ $activeView === 'backups' ? 'true' : 'false' }}"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v7c0 1.66 3.13 3 7 3s7-1.34 7-3V5M5 12v7c0 1.66 3.13 3 7 3s7-1.34 7-3v-7"/></svg><span>Respaldos</span></button>
+                    <button type="button" wire:click="selectView('history')" class="backup-memory-button" aria-pressed="{{ $activeView === 'history' ? 'true' : 'false' }}"><svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2M4.9 4.9A10 10 0 1 1 2 12m0 0V6m0 6h6"/></svg><span>Historial</span></button>
+                    <button type="button" wire:click="verifySynchronization" wire:loading.attr="disabled" wire:target="verifySynchronization" class="backup-refresh-button">
+                        <svg wire:loading.class="animate-spin" wire:target="verifySynchronization" class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7"/></svg>
+                        <span wire:loading.remove wire:target="verifySynchronization">Actualizar</span>
+                        <span wire:loading wire:target="verifySynchronization" style="display: none;">Actualizando…</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -260,9 +275,9 @@
                     <div class="grid min-h-[520px] xl:min-h-0 xl:flex-1 xl:grid-cols-[340px_minmax(0,1fr)]">
                         <aside class="h-[520px] min-h-0 overflow-hidden border-b panel-border panel-surface xl:relative xl:h-auto xl:border-b-0 xl:border-r" aria-label="Tabla de días con respaldos">
                             <div class="flex h-full min-h-0 flex-col xl:absolute xl:inset-0">
-                                <div data-dates-header wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] text-center "><span class="panel-accent flex min-w-0 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg><span class="truncate">Fecha de respaldos</span></span></div>
+                                <div data-dates-header wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border panel-header px-[20px] py-[20px] text-center "><span class="panel-accent flex min-w-0 items-center gap-[10px] leading-none"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg><span class="truncate">Fecha de respaldos</span></span></div>
                                 {{-- A la altura de los filtros: más fechas --}}
-                                <div data-dates-tools wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border px-[20px] text-center">
+                                <div data-dates-tools wire:ignore.self class="flex shrink-0 items-center justify-center border-b panel-border px-[20px] py-[20px] text-center">
                                     @if($hasMoreBackupDates)
                                         <button type="button" wire:click="loadMoreDates" wire:loading.attr="disabled" wire:target="loadMoreDates" class="backup-green leading-none transition hover:opacity-70 disabled:opacity-50">
                                             <span wire:loading.remove wire:target="loadMoreDates">Mostrar fechas anteriores</span>
@@ -273,7 +288,7 @@
                                     @endif
                                 </div>
                                 {{-- A la altura del encabezado de la tabla --}}
-                                <div data-dates-head wire:ignore.self class="flex shrink-0 items-center border-b panel-border panel-header px-[20px] leading-none">Fecha</div>
+                                <div data-dates-head wire:ignore.self class="flex shrink-0 items-center border-b panel-border panel-header px-[20px] py-[20px] leading-none">Fecha</div>
                                 <div x-data="backupOverlayScroll()" class="backup-catalog-scroll-region relative min-h-0 flex-1">
                                     <div x-ref="scroller" data-dates-scroller wire:ignore.self @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-y-auto">
                                 @forelse ($visibleBackupDates as $day)
@@ -305,7 +320,7 @@
                                 </div>
                             </div>
                             <div class="order-1 shrink-0 border-b panel-border panel-header p-[20px]">
-                                        <div class="grid gap-[15px] md:grid-cols-3">
+                                        <div class="grid gap-[15px] lg:grid-cols-3">
                                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
                                                     <button type="button" @click="if (!{{ $exportIsActive ? 'true' : 'false' }}) open = !open" class="backup-control flex w-full items-center justify-between rounded-xl border panel-border panel-surface p-[20px] text-left leading-none ">
                                                         <span class="truncate">{{ $currentBackupProfile['label'] }}</span>
@@ -325,48 +340,58 @@
                                                         <span class="truncate" title="{{ str_replace('/', '\\', $destinationFolder) }}">{{ $destinationFolder !== '' ? str_replace('/', '\\', $destinationFolder) : 'Selecciona una carpeta…' }}</span>
                                                         <svg class="h-4 w-4 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                                                     </button>
-                                                    <div x-show="open" x-cloak class="absolute right-0 top-full z-40 mt-[8px] w-[min(430px,calc(100vw-40px))] overflow-hidden rounded-xl border panel-border panel-surface shadow-lg">
-                                                        <div class="flex items-center gap-[15px] border-b panel-border p-[20px]">
+                                                    <div x-show="open" x-cloak
+                                                        x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                                                        class="backup-folder-menu absolute left-0 right-0 top-full z-40 mt-[10px] min-w-[340px] overflow-hidden rounded-xl border panel-border panel-surface">
+                                                        {{-- Ruta: Memoria › carpeta › subcarpeta (cada parte vuelve a ese nivel) --}}
+                                                        <div class="panel-header flex items-center gap-[10px] border-b panel-border p-[20px] leading-none">
                                                             @if($destinationBrowsePath !== '')
-                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="inline-flex shrink-0 items-center gap-[10px] panel-accent transition hover:opacity-70" title="Volver a la carpeta anterior">
-                                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 18-6-6 6-6"/></svg>
-                                                                    <span>Volver</span>
+                                                                <button type="button" @click.stop="$wire.browseDestinationUp()" class="backup-folder-back" title="Volver a la carpeta anterior" aria-label="Volver a la carpeta anterior">
+                                                                    <svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m0 0 6-6m-6 6 6 6"/></svg>
                                                                 </button>
-                                                                <span class="h-5 w-px shrink-0 panel-line" aria-hidden="true"></span>
                                                             @endif
-                                                            <span class="min-w-0 truncate {{ $destinationBrowsePath !== '' ? '' : '' }}" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">{{ $destinationBrowsePath !== '' ? str_replace('/', '  ›  ', $destinationBrowsePath) : 'Inicio de la USB' }}</span>
+                                                            <span class="flex min-w-0 flex-1 items-center gap-[8px] overflow-hidden whitespace-nowrap" title="{{ $destinationBrowsePath !== '' ? str_replace('/', '\\', $destinationBrowsePath) : 'Inicio de la USB' }}">
+                                                                <span class="{{ $destinationBrowsePath === '' ? 'panel-accent' : '' }} shrink-0">Inicio de la USB</span>
+                                                                @foreach($destinationBrowsePath !== '' ? explode('/', $destinationBrowsePath) : [] as $segment)
+                                                                    <span class="shrink-0 opacity-60" aria-hidden="true">›</span>
+                                                                    <span class="truncate {{ $loop->last ? 'panel-accent' : '' }}">{{ $segment }}</span>
+                                                                @endforeach
+                                                            </span>
+                                                            <span wire:loading wire:target="browseDestinationFolder, browseDestinationUp, openDestinationBrowser" class="shrink-0 opacity-60" style="display: none;">Abriendo…</span>
                                                         </div>
                                                         <div x-data="backupOverlayScroll()" x-effect="if (open) $nextTick(() => update())" class="backup-catalog-scroll-region backup-catalog-scroll-vertical-visible relative">
-                                                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[240px] divide-y divide-[color:var(--panel-border)] overflow-y-auto overscroll-contain">
+                                                            <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll max-h-[280px] divide-y divide-[color:var(--panel-border)] overflow-y-auto overscroll-contain">
                                                             @if(! $destinationBrowserOpened)
-                                                                <div class="p-[20px]">Cargando carpetas…</div>
+                                                                <div class="p-[20px] leading-none">Cargando carpetas…</div>
                                                             @else
                                                             @forelse($visibleDestinationFolders as $folder)
-                                                                <div class="flex items-stretch panel-surface transition hover:bg-[color:var(--panel-hover)]">
-                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] p-[20px] text-left disabled:cursor-not-allowed disabled:opacity-50" title="{{ $folder['writable'] ? 'Seleccionar '.str_replace('/', '\\', $folder['path']) : 'Sin permiso de escritura' }}">
-                                                                        <svg class="h-[18px] w-[18px] shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
+                                                                <div wire:key="destination-folder-{{ md5($folder['path']) }}" class="backup-folder-row flex items-stretch {{ $destinationFolder === $folder['path'] ? 'is-selected' : '' }}">
+                                                                    <button type="button" @click="$wire.set('destinationFolder', @js($folder['path'])); open = false" @disabled(! $folder['writable']) class="flex min-w-0 flex-1 items-center gap-[10px] p-[20px] text-left leading-none disabled:cursor-not-allowed disabled:opacity-50" title="Elegir {{ $folder['name'] }}">
+                                                                        <svg class="h-[15px] w-[15px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
                                                                         <span class="truncate">{{ $folder['name'] }}</span>
                                                                         @if($destinationFolder === $folder['path'])
-                                                                            <svg class="ml-auto h-4 w-4 shrink-0 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6"/></svg>
+                                                                            <svg class="ml-auto h-[15px] w-[15px] shrink-0 backup-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/></svg>
                                                                         @endif
                                                                     </button>
                                                                     @if($folder['has_children'])
-                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="inline-flex shrink-0 items-center justify-center gap-[10px] border-l panel-border p-[20px] transition hover:bg-[color:var(--panel-hover)] hover:opacity-70" aria-label="Abrir {{ $folder['name'] }}" title="Ver subcarpetas">
-                                                                            <span>Abrir</span>
-                                                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6"/></svg>
+                                                                        <button type="button" @click.stop="$wire.browseDestinationFolder(@js($folder['path']))" class="backup-folder-open" aria-label="Abrir {{ $folder['name'] }}" title="Ver las carpetas de {{ $folder['name'] }}">
+                                                                            <svg class="h-[15px] w-[15px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg>
                                                                         </button>
                                                                     @endif
                                                                 </div>
                                                             @empty
-                                                                <div class="flex items-center gap-[10px] p-[20px] ">
-                                                                    <svg class="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7h7l2 2h9v10H3V7Z"/></svg>
-                                                                    <span>Esta carpeta no contiene subcarpetas.</span>
-                                                                </div>
+                                                                <div class="p-[20px] leading-none">Esta carpeta no contiene subcarpetas.</div>
                                                             @endforelse
                                                             @endif
                                                             </div>
                                                             <span x-show="visible" x-cloak class="backup-catalog-scroll-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                                                         </div>
+                                                        {{-- Dentro de una carpeta también se puede elegir la carpeta actual --}}
+                                                        @if($destinationBrowserOpened && $destinationBrowsePath !== '')
+                                                            <div class="border-t panel-border p-[20px]">
+                                                                <button type="button" @click="$wire.set('destinationFolder', @js($destinationBrowsePath)); open = false" class="backup-control backup-refresh-button w-full justify-center p-[20px]">Usar esta carpeta</button>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 <div class="grid w-full {{ $selectedDeletableCount > 0 && auth()->user()->can('manage-system-backups') ? 'grid-cols-2' : 'grid-cols-1' }} gap-[10px]">
@@ -390,8 +415,8 @@
                                     <span class="mt-[12px] ">Cargando respaldos…</span>
                                 </div>
                                 <div wire:loading.remove wire:target="selectDate" x-ref="scroller" data-records-scroller wire:ignore.self data-scroll-top-offset="70" data-scroll-bottom-offset="3" data-scroll-right-offset="3" @scroll="update()" @mouseenter="update()" class="backup-catalog-scroll h-full overflow-auto">
-                                <table class="w-full min-w-[1010px] table-fixed border-collapse text-left">
-                                    <colgroup><col class="w-[350px]"><col class="w-[110px]"><col class="w-[290px]"><col class="w-[260px]"></colgroup>
+                                <table class="backup-records-table w-full table-fixed border-collapse text-left">
+                                    <colgroup><col style="width: 35%"><col style="width: 11%"><col style="width: 29%"><col style="width: 25%"></colgroup>
                                     <thead class="sticky top-0 z-10 panel-header shadow-[inset_0_-1px_0_#d4d4d8]"><tr class="whitespace-nowrap text-center"><th class="border-r panel-border p-[20px] "><span class="flex items-center gap-[15px] text-left"><input type="checkbox" wire:click="toggleAllAvailable" wire:loading.attr="disabled" wire:target="toggleAllAvailable" @checked($allAvailableSelected) @disabled($headerSelectableCount === 0 || $exportIsActive || $status === 'partial') aria-label="Seleccionar todas las empresas disponibles" class="h-4 w-4 shrink-0 rounded border panel-border panel-surface panel-accent focus:ring-0 focus:ring-offset-0 disabled:cursor-not-allowed  "><span class="inline-flex items-baseline gap-[6px]">Empresa <span class="" title="{{ $selectedExportCount }} {{ $selectedExportCount === 1 ? 'empresa seleccionada' : 'empresas seleccionadas' }}">({{ $selectedExportCount }})</span></span></span></th><th class="border-r panel-border p-[20px] ">Hora</th><th class="border-r panel-border p-[20px] ">Respaldo en memoria</th><th class="p-[20px] ">Archivos del servidor</th></tr></thead>
                                     @forelse ($records as $record)
                                         @php
