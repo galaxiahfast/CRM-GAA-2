@@ -196,8 +196,8 @@
             [data-home] .home-illus { grid-column: auto / -1; }
             [data-home] .home-tgrid { display: flex; flex-wrap: wrap; gap: 20px; }
             [data-home] .home-tgrid > .home-tcard { flex: 0 0 280px; width: 280px; }
-            [data-home] .home-tcard { cursor: grab; }
-            [data-home] .home-tcard.is-dragging { opacity: .4; cursor: grabbing; }
+            [data-home] .home-tcard { cursor: grab; user-select: none; -webkit-user-select: none; }
+            [data-home] .home-tcard.is-dragging { z-index: 30; cursor: grabbing; }
             [data-home] .home-tcard { display: flex; min-height: 400px; flex-direction: column; border-radius: 20px; background: var(--panel-surface); border: 1px solid var(--panel-border); overflow: hidden; }
             [data-home] .home-tcard::after { display: none; }
             [data-home] .home-tcard-visual { display: flex; flex: 1 1 auto; min-height: 0; padding: 20px 20px 0; align-items: center; justify-content: center; }
@@ -212,6 +212,7 @@
             /* Encabezado de cada sección: mismo diseño (título de 15px y descripción de 17px con 20px exactos entre líneas) */
             [data-home] .home-sec-title { display: block; line-height: 15px; margin: 0; padding: 0; }
             [data-home] .home-sec-text { margin: 10px 0 -10px; padding: 0; font-size: 15px; line-height: 35px; }
+            [data-home] .home-sec-rule { height: 1px; flex: 1 1 auto; background: var(--panel-border); }
             [data-home] .home-sec-count { line-height: 15px; }
             [data-home] .home-tcard-foot > span { line-height: 1; }
             [data-home] .home-tcard-foot { display: flex; align-items: center; justify-content: space-between; padding: 20px; }
@@ -241,6 +242,8 @@
                 return {
                     label: 'Todavía no has abierto ningún apartado de esta sección',
                     drag: null,
+                    press: null,
+                    moved: false,
                     init() {
                         this.refresh();
                         this.restore();
@@ -248,17 +251,74 @@
                     },
                     destroy() { clearInterval(this.timer); },
                     cards() { return [...this.$refs.grid.querySelectorAll(':scope > .home-tcard')]; },
-                    start(e) { this.drag = e.target.closest('.home-tcard'); if (this.drag) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', this.drag.dataset.url); setTimeout(() => this.drag?.classList.add('is-dragging'), 0); } },
-                    over(e) {
-                        if (!this.drag) return;
-                        const target = e.target.closest('.home-tcard');
-                        if (!target || target === this.drag) return;
+                    // Arrastre con el puntero: la tarjeta sigue al cursor (sin la imagen fantasma del navegador) y las demás se deslizan a su lugar
+                    down(e) {
+                        if (e.button !== 0 || e.pointerType === 'touch') return;
+                        const card = e.currentTarget;
+                        this.press = { card, x: e.clientX, y: e.clientY, active: false, id: e.pointerId };
+                    },
+                    move(e) {
+                        const p = this.press;
+                        if (!p || p.card !== e.currentTarget) return;
+                        if (!p.active) {
+                            if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 6) return;
+                            p.active = true;
+                            const r = p.card.getBoundingClientRect();
+                            p.grabX = p.x - r.left; p.grabY = p.y - r.top;
+                            try { p.card.setPointerCapture?.(p.id); } catch (err) {}
+                            p.card.classList.add('is-dragging');
+                            this.drag = p.card;
+                            this.moved = true;
+                        }
+                        const target = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el !== p.card && el.classList?.contains('home-tcard') && el.parentElement === this.$refs.grid);
+                        if (target) this.swap(target, e);
+                        this.place(e);
+                    },
+                    swap(target, e) {
                         const box = target.getBoundingClientRect();
                         const after = e.clientX > box.left + box.width / 2 && e.clientY > box.top;
-                        this.$refs.grid.insertBefore(this.drag, after ? target.nextSibling : target);
+                        const ref = after ? target.nextSibling : target;
+                        if (ref === this.drag || this.drag.nextSibling === ref) return;
+                        const cards = this.cards();
+                        const first = new Map(cards.map((c) => [c, c.getBoundingClientRect()]));
+                        this.$refs.grid.insertBefore(this.drag, ref);
+                        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { this.dots(); return; }
+                        cards.forEach((c) => {
+                            if (c === this.drag) return;
+                            const was = first.get(c), now = c.getBoundingClientRect();
+                            const unit = c.offsetWidth ? now.width / c.offsetWidth : 1;
+                            const dx = (was.left - now.left) / unit, dy = (was.top - now.top) / unit;
+                            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+                            c.getAnimations().filter((x) => x.id === 'home-flip').forEach((x) => x.cancel());
+                            c.animate([{ transform: 'translate(' + dx + 'px, ' + dy + 'px)' }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.22, .61, .36, 1)' }).id = 'home-flip';
+                        });
                         this.dots();
                     },
-                    end() { this.drag?.classList.remove('is-dragging'); this.drag = null; this.save(); },
+                    place(e) {
+                        const p = this.press, c = p.card;
+                        c.style.transform = 'none';
+                        const r = c.getBoundingClientRect();
+                        const unit = c.offsetWidth ? r.width / c.offsetWidth : 1;
+                        p.dx = (e.clientX - p.grabX - r.left) / unit;
+                        p.dy = (e.clientY - p.grabY - r.top) / unit;
+                        c.style.transform = 'translate(' + p.dx + 'px, ' + p.dy + 'px) scale(1.03)';
+                    },
+                    up(e) {
+                        const p = this.press;
+                        this.press = null;
+                        if (!p || !p.active) return;
+                        const c = p.card;
+                        try { c.releasePointerCapture?.(p.id); } catch (err) {}
+                        c.style.transform = '';
+                        c.classList.remove('is-dragging');
+                        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                            c.animate([{ transform: 'translate(' + p.dx + 'px, ' + p.dy + 'px) scale(1.03)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.22, .61, .36, 1)' });
+                        }
+                        this.drag = null;
+                        this.save();
+                        setTimeout(() => { this.moved = false; }, 80);
+                    },
+                    blockClick(e) { if (this.moved) { e.preventDefault(); e.stopPropagation(); } },
                     save() { this.dots(); try { localStorage.setItem(orderKey, JSON.stringify(this.cards().map((c) => c.dataset.url))); } catch (e) {} },
                     dots() { this.cards().forEach((card, k) => card.querySelectorAll('.home-tcard-dots i').forEach((dot, j) => dot.classList.toggle('on', j === k))); },
                     restore() {
@@ -370,15 +430,18 @@
                         @php([$metaIcon, $metaNote] = $sectionMeta[$title] ?? ['dashboard', ''])
                         <section class="min-w-0" aria-label="{{ $title }}" x-data="homeSectionOpened(@js($title))" @click="if ($event.target.closest('a.home-card')) touch()" @auxclick="if ($event.target.closest('a.home-card')) touch()">
                             <div class="mb-[20px] flex flex-wrap items-start justify-between gap-x-[20px] gap-y-[15px]">
-                                <div class="min-w-0">
-                                    <h2 class="home-sec-title panel-accent">{{ $title }}</h2>
+                                <div class="min-w-0 w-full">
+                                    <div class="flex items-center gap-[20px]">
+                                        <h2 class="home-sec-title panel-accent shrink-0">{{ $title }}</h2>
+                                        <span class="home-sec-rule" aria-hidden="true"></span>
+                                    </div>
                                     <p class="home-sec-text">{{ rtrim($metaNote, '.') }}</p>
                                     <p class="home-sec-text">{{ count($cards) }} {{ count($cards) === 1 ? 'apartado' : 'apartados' }} · <span x-text="label">Todavía no has abierto ningún apartado de esta sección</span></p>
                                 </div>
                             </div>
-                            <div class="home-tgrid" x-ref="grid" @dragover.prevent="over($event)" @drop.prevent="save()">
+                            <div class="home-tgrid" x-ref="grid">
                                 @foreach ($cards as [$cardTitle, $description, $url, $icon])
-                                    <a href="{{ $url }}" style="--d: {{ ($loop->parent->index + 1) * 90 + 200 + $loop->index * 60 }}" class="home-card home-tcard" data-url="{{ $url }}" draggable="true" @dragstart="start($event)" @dragend="end()">
+                                    <a href="{{ $url }}" style="--d: {{ ($loop->parent->index + 1) * 90 + 200 + $loop->index * 60 }}" class="home-card home-tcard" data-url="{{ $url }}" @pointerdown="down($event)" @pointermove="move($event)" @pointerup="up($event)" @pointercancel="up($event)" @dragstart.prevent @click.capture="blockClick($event)">
                                         <span class="home-tcard-visual">
                                             @if (isset($illustrations[$cardTitle]))
                                                 <video data-src="{{ asset('img/home/'.$illustrations[$cardTitle].'.mp4') }}" loop muted playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true" x-data="homeLazyVideo()"></video>
