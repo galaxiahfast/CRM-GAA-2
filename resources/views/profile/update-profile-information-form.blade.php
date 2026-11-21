@@ -120,17 +120,13 @@
                                     @elseif ($profileUser->hasProfilePhotoFile())
                                         <img src="{{ $profileUser->profile_photo_url }}" alt="Foto actual" class="h-full w-full object-cover">
                                     @else
-                                        <span class="panel-subtle grid h-full w-full place-items-center text-[20px]">{{ $initials }}</span>
+                                        <img src="{{ $profileUser->avatarUrl() }}" alt="Ilustración de perfil" class="h-full w-full object-cover">
                                     @endif
                                     <span class="absolute inset-[5px] grid place-items-center rounded-full bg-black/60 px-[10px] text-white opacity-0 transition group-hover:opacity-100" :class="photoDragging ? 'opacity-100' : ''">Cambiar foto</span>
                                 </label>
                             @else
                                 <button type="button" @click="profilePhotoOpen = true" class="profile-avatar-ring block h-full w-full cursor-zoom-in overflow-hidden rounded-full" aria-label="Ampliar foto de perfil">
-                                    @if ($profileUser->hasProfilePhotoFile())
-                                        <img src="{{ $profileUser->profile_photo_url }}" alt="Foto de {{ $profileUser->name }}" class="h-full w-full object-cover">
-                                    @else
-                                        <span class="panel-subtle grid h-full w-full place-items-center text-[20px]">{{ $initials }}</span>
-                                    @endif
+                                    <img src="{{ $profileUser->avatarUrl() }}" alt="Foto de {{ $profileUser->name }}" class="h-full w-full object-cover">
                                 </button>
                             @endif
                             <span class="profile-status-dot absolute bottom-2 right-2 h-4 w-4 rounded-full {{ $isOnline ? 'bg-emerald-500' : 'bg-gray-400' }}" title="{{ $isOnline ? 'Activo' : 'Inactivo' }}"></span>
@@ -207,6 +203,21 @@
                                             <dd class="pf-dd">{{ $profileUser->birth_year ? $profileUser->birth_year.' · '.$age.' '.($age === 1 ? 'año' : 'años') : 'No registrado' }}</dd>
                                         @endif
                                     </div>
+                                    {{-- Género (opcional): elige la ilustración que se muestra mientras no haya foto --}}
+                                    <div class="min-w-0">
+                                        <dt class="pf-label">Género</dt>
+                                        @if ($this->isOwnProfile && $editing)
+                                            <dd class="pf-dd-edit">
+                                                <select id="profile-gender" wire:model="state.gender" class="pf-field">
+                                                    <option value="">Prefiero no indicarlo</option>
+                                                    <option value="hombre">Hombre</option>
+                                                    <option value="mujer">Mujer</option>
+                                                </select>
+                                            </dd>
+                                        @else
+                                            <dd class="pf-dd">{{ ['hombre' => 'Hombre', 'mujer' => 'Mujer'][$profileUser->gender] ?? 'No registrado' }}</dd>
+                                        @endif
+                                    </div>
                                     <div class="min-w-0">
                                         <dt class="pf-label">Ubicación</dt>
                                         <dd class="pf-dd">Mérida, Yucatán, México</dd>
@@ -255,11 +266,7 @@
                                 <div class="profile-chip-grid min-w-0 p-[20px]">
                                     @forelse ($friends as $friend)
                                         <a href="{{ route('profiles.show', $friend) }}" class="profile-chip panel-border flex min-w-0 items-center gap-[10px] rounded-xl border px-[20px] py-[10px]">
-                                            @if ($friend->hasProfilePhotoFile())
-                                                <img src="{{ $friend->profile_photo_url }}" alt="Foto de {{ $friend->name }}" class="panel-border h-9 w-9 shrink-0 rounded-full border object-cover">
-                                            @else
-                                                <span class="panel-subtle panel-border grid h-9 w-9 shrink-0 place-items-center rounded-full border">{{ mb_strtoupper(mb_substr($friend->name, 0, 1).mb_substr($friend->last_name ?? '', 0, 1)) }}</span>
-                                            @endif
+                                            <img src="{{ $friend->avatarUrl() }}" alt="Foto de {{ $friend->name }}" class="panel-border h-9 w-9 shrink-0 rounded-full border object-cover">
                                             <span class="min-w-0 truncate leading-none" title="{{ $friend->name }} {{ $friend->last_name }}">{{ $friend->name }}</span>
                                         </a>
                                     @empty
@@ -345,11 +352,7 @@
         <div x-show="profilePhotoOpen" x-cloak x-transition.opacity @click.self="profilePhotoOpen = false" class="fixed inset-0 z-[100] grid cursor-zoom-out place-items-center bg-gray-950/55 p-[20px] backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Foto de perfil ampliada">
             <button type="button" @click="profilePhotoOpen = false" aria-label="Cerrar foto ampliada" class="absolute right-[20px] top-[20px] rounded-xl bg-black/45 px-[20px] py-[15px] leading-none text-white hover:bg-black/65">Cerrar</button>
             <div class="cursor-default" @click.stop>
-                @if ($profileUser->hasProfilePhotoFile())
-                    <img src="{{ $profileUser->profile_photo_url }}" alt="Foto ampliada de {{ $profileUser->name }}" class="max-h-[82vh] max-w-[82vw] rounded-full border-[6px] border-[#e7e7e7] object-contain shadow-2xl">
-                @else
-                    <span class="grid h-[min(70vw,420px)] w-[min(70vw,420px)] place-items-center rounded-full border-[6px] border-zinc-200 bg-white text-8xl text-black shadow-2xl">{{ $initials }}</span>
-                @endif
+                <img src="{{ $profileUser->avatarUrl() }}" alt="Foto ampliada de {{ $profileUser->name }}" class="max-h-[82vh] max-w-[82vw] rounded-full border-[6px] border-[#e7e7e7] object-contain shadow-2xl">
             </div>
         </div>
     </template>
