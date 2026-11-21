@@ -288,7 +288,7 @@
 
             /* En línea: lista en una sola tarjeta, con separadores finos */
             [data-home] .home-online-list { border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-surface); }
-            [data-home] .home-online-row + .home-online-row { border-top: 1px solid var(--panel-border); }
+            /* Sin líneas entre las filas */
             [data-home] .home-online-row .home-row { padding: 20px !important; }
             [data-home] .home-online-row .home-row:hover { padding-left: 20px !important; background: var(--home-soft); }
             [data-home] span.home-online-name { display: block; font-size: 15px; font-weight: 600; line-height: calc(.7em + 20px); color: var(--panel-text); }
