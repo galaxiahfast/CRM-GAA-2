@@ -144,15 +144,17 @@ Route::middleware([
         ->middleware('access.permission:administration.users.manage')
         ->name('administracion.section');
 
-    // Crear usuario - Administrador, Coordinador y Contador
+    // Crear y editar usuario: ya no son páginas aparte. Abren la ficha de usuario (un solo formulario) en Administración.
     Route::get('/administracion/users/create', function () {
-        return view('livewire.administracion.users.create');
+        return redirect()->route('administracion.index', array_filter([
+            'usuario' => 'nuevo',
+            'rol' => request()->query('Intern') ? 'auxiliar' : null,
+        ]));
     })->middleware('access.permission:administration.users.manage')
         ->name('administracion.create.users');
 
-    // Editar usuario - Administrador, Coordinador y Contador
     Route::get('/administracion/users/{user}/edit', function (User $user) {
-        return view('livewire.administracion.users.edit', compact('user'));
+        return redirect()->route('administracion.index', ['usuario' => $user->id]);
     })->middleware('access.permission:administration.users.manage')
         ->name('administracion.edit.users');
 

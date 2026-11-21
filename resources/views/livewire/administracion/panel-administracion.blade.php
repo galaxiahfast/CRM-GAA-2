@@ -1194,14 +1194,7 @@
     </main>
     </div>
 
-    @if ($showUserManagementModal)
-        <livewire:administracion.users.form
-            :embedded="true"
-            :initial-tab="$userManagementInitialTab"
-            :initial-user-id="$userManagementInitialUserId"
-            :key="'organization-user-management-'.$userManagementInitialTab.'-'.($userManagementInitialUserId ?? 'list')"
-        />
-    @endif
+    {{-- Crear, editar y eliminar usuarios se hace en la ficha de usuario (un solo formulario). --}}
 
     @if ($showRoleManagementModal)
         @if ($roleManagementInitialTab === 'crear')
