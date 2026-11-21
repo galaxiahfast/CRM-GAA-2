@@ -469,11 +469,10 @@
            Encabezado como las secciones de Inicio (título de 19px, texto gris y etiqueta con el total), un buscador y la lista
            como «En línea ahora»: filas de 20px separadas por una línea fina, foto de 50px, nombre en seminegrita y datos en
            gris. Las acciones de cada fila aparecen al pasar el puntero. */
-        .org-side-head { display: block; padding: 20px; border-bottom: 1px solid var(--panel-border); }
+        .org-side-head { display: block; padding: 20px; border-bottom: 1px solid var(--panel-border) !important; }
         .org-side-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
         .org-side .org-side-search { width: 100%; margin-top: 20px; box-shadow: none !important; }
         .org-un-row { position: relative; display: flex; align-items: center; gap: 20px; padding: 20px; cursor: grab; transition: background-color 150ms ease, opacity 150ms ease; }
-        .org-list > li + li .org-un-row { border-top: 1px solid var(--panel-border); }
         .org-un-row:hover { background: var(--org-soft); }
         .org-un-row .org-avatar { background: var(--panel-header); }
         .org-un-text { display: block; min-width: 0; flex: 1 1 auto; }
@@ -481,10 +480,9 @@
         .org-un-text > .org-un-name { font-weight: 600; color: var(--panel-text); }
         .org-un-text > .org-un-meta { margin-top: 20px; color: var(--org-muted); }
         /* Las acciones flotan sobre el final de la fila (no le quitan espacio al nombre) y aparecen al pasar el puntero */
-        .org-un-actions { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; gap: 6px; padding: 0 20px 0 40px; background: linear-gradient(to right, transparent, var(--org-soft) 30px); opacity: 0; pointer-events: none; transition: opacity 150ms ease; }
-        .org-un-row:hover .org-un-actions, .org-un-row:focus-within .org-un-actions { pointer-events: auto; }
+                .org-un-actions { display: flex; flex-shrink: 0; flex-direction: column; align-items: center; gap: 20px; opacity: .55; transition: opacity 150ms ease; }
         .org-un-row:hover .org-un-actions, .org-un-row:focus-within .org-un-actions { opacity: 1; }
-        .org-un-actions > button { display: grid; height: 30px; width: 30px; place-items: center; border-radius: 10px; color: var(--org-muted); transition: background-color 150ms ease, color 150ms ease; }
+        .org-un-actions > button { display: grid; height: 16px; width: 16px; place-items: center; color: var(--org-muted); transition: background-color 150ms ease, color 150ms ease; }
         .org-un-actions > button:hover { background: var(--panel-surface); color: var(--panel-text); }
         .org-un-actions > button.is-danger:hover { color: #dc2626; }
         .org-un-row.is-hidden { opacity: .5; }
@@ -1028,7 +1026,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5" />
                             </svg>
                         </button>
-                <button type="button" class="org-tool-btn" @click="$dispatch('org-toggle-unassigned')" title="Usuarios sin asignar" aria-label="Mostrar u ocultar usuarios sin asignar">
+                <button type="button" data-unassigned-toggle class="org-tool-btn" @click="$dispatch('org-toggle-unassigned')" title="Usuarios sin asignar" aria-label="Mostrar u ocultar usuarios sin asignar">
                     <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
                     <span class="org-tool-badge">{{ count($unassignedUsers) }}</span>
                 </button>
@@ -1038,23 +1036,23 @@
             {{-- Al arrastrar a alguien del árbol el panel se abre solo (si estaba cerrado) para poder soltarlo aquí --}}
             <aside data-org-panel class="org-panel org-side absolute right-[20px] flex flex-col !p-0" aria-label="Usuarios sin asignar"
                 x-data="{
-                    open: (() => { try { const saved = localStorage.getItem('organigrama-side'); return saved === null ? window.innerWidth >= 1024 : saved !== '0'; } catch (e) { return window.innerWidth >= 1024; } })(),
+                    open: false,
                     openedForDrag: false,
                     q: '',
                     matches(haystack) { const term = this.q.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); return ! term || haystack.includes(term); },
                 }"
                 x-show="open"
-                @org-toggle-unassigned.window="open = ! open; openedForDrag = false; try { localStorage.setItem('organigrama-side', open ? '1' : '0'); } catch (e) {}"
+                @org-toggle-unassigned.window="open = ! open; openedForDrag = false;"
                 @org-drag-start.window="if ($event.detail?.source === 'tree' && ! open) { open = true; openedForDrag = true; }"
-                @org-drag-end.window="if (openedForDrag) { open = false; openedForDrag = false; }">
+                @org-drag-end.window="if (openedForDrag) { open = false; openedForDrag = false; }"
+                @click.outside="if (open && ! $event.target.closest('[data-unassigned-toggle], [data-administration-modal], .org-user-modal')) { open = false; openedForDrag = false; }">
                 {{-- Encabezado como las secciones de Inicio: título, texto gris y etiqueta con el total; debajo, el buscador --}}
                 <header class="org-side-head shrink-0">
                     <div class="org-side-head-top">
                         <div class="min-w-0">
-                            <h2 class="org-title">Sin asignar</h2>
-                            <p class="org-muted org-gap">Arrástralas al organigrama.</p>
+                            <h2 class="org-title">Personas sin asignar</h2>
+                            <p class="org-muted org-gap">Arrástralas hacia el organigrama.</p>
                         </div>
-                        <span class="org-chip">{{ count($unassignedUsers) }} {{ count($unassignedUsers) === 1 ? 'persona' : 'personas' }}</span>
                     </div>
                     @if ($orgChartLoaded && count($unassignedUsers) > 3)
                         <input type="search" x-model="q" class="org-field org-side-search" placeholder="Buscar por nombre o correo" aria-label="Buscar en sin asignar" autocomplete="off">
@@ -1062,8 +1060,8 @@
                 </header>
                 {{-- Lugar para soltar a alguien del árbol (solo se ve mientras se arrastra desde el árbol) --}}
                 <p class="org-side-drop shrink-0">Suelta aquí para sacarla del organigrama</p>
-                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="administration-form-scrollbar h-full overflow-y-auto">
+                <div x-data="backupOverlayScroll()" data-scroll-on-hover x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="0" data-scroll-bottom-offset="18" class="administration-form-scrollbar org-side-list overflow-y-auto" x-init="window.orgFitLists && window.orgFitLists()">
                 <div>
                     @if (! $orgChartLoaded)
                         <p class="org-side-empty">Cargando usuarios…</p>
@@ -1071,15 +1069,7 @@
                         @php
                             $unassignedHaystacks = array_map(static fn (array $person): string => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($person['name'].' '.mb_strtolower((string) $person['email']))), $unassignedUsers);
                         @endphp
-                        <ul class="org-list" style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;"
-                            x-data="{
-                                hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
-                                isHidden(id) { return this.hidden.includes(id); },
-                                toggle(id) {
-                                    this.hidden = this.isHidden(id) ? this.hidden.filter((item) => item !== id) : [...this.hidden, id];
-                                    try { localStorage.setItem('organigrama-unassigned-hidden', JSON.stringify(this.hidden)); } catch (error) {}
-                                },
-                            }">
+                        <ul class="org-list" style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;">
                             @foreach ($unassignedUsers as $user)
                                 @php
                                     $nameParts = array_values(array_filter(preg_split('/\s+/', trim((string) $user['name']))));
@@ -1101,10 +1091,14 @@
                                     $haystack = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($user['name'].' '.$email));
                                     $userId = (int) $user['id'];
                                 @endphp
-                                <li wire:key="unassigned-user-{{ $userId }}" style="list-style: none;" x-show="matches(@js($haystack))" :style="{ order: isHidden({{ $userId }}) ? 1 : 0 }">
-                                    <div class="org-un-row" :class="isHidden({{ $userId }}) && 'is-hidden'" data-unassigned-id="{{ $userId }}" data-name="{{ $user['name'] }}" data-initials="{{ $initials }}"
+                                <li wire:key="unassigned-user-{{ $userId }}" style="list-style: none;" x-show="matches(@js($haystack))">
+                                    <div class="org-un-row" data-unassigned-id="{{ $userId }}" data-photo="{{ $user['photo'] ?? '' }}" data-name="{{ $user['name'] }}" data-initials="{{ $initials }}"
                                         title="{{ $user['name'] }} · {{ $createdAt ? 'en el sistema desde hace '.$createdAt->diffForHumans(now(), true) : 'fecha de alta no disponible' }}">
-                                        <span class="org-avatar">{{ $initials }}</span>
+                                        @if (! empty($user['photo']))
+                                            <img src="{{ $user['photo'] }}" alt="" class="org-avatar" loading="lazy">
+                                        @else
+                                            <span class="org-avatar">{{ $initials }}</span>
+                                        @endif
                                         <span class="org-un-text">
                                             <span class="org-un-name">{{ $user['name'] }}</span>
                                             <span class="org-un-meta">{{ $email }}</span>
@@ -1113,10 +1107,6 @@
                                         <span class="org-un-actions">
                                             <button type="button" wire:click="openUserManagement('editar', {{ $userId }})" class="focus:outline-none focus:ring-0" aria-label="Editar {{ $user['name'] }}" title="Editar">
                                                 <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
-                                            </button>
-                                            <button type="button" @click="toggle({{ $userId }})" class="focus:outline-none focus:ring-0" :aria-label="isHidden({{ $userId }}) ? 'Mostrar {{ $user['name'] }}' : 'Ocultar {{ $user['name'] }}'" :title="isHidden({{ $userId }}) ? 'Mostrar' : 'Mandar al final de la lista'">
-                                                <svg x-show="!isHidden({{ $userId }})" class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
-                                                <svg x-show="isHidden({{ $userId }})" x-cloak class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                                             </button>
                                             <button type="button" wire:click="openUserManagement('eliminar', {{ $userId }})" class="is-danger focus:outline-none focus:ring-0" aria-label="Eliminar {{ $user['name'] }}" title="Eliminar">
                                                 <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
@@ -2938,7 +2928,7 @@
                 ...press,
                 name: el.dataset.name || '',
                 initials: el.dataset.initials || '?',
-                photo: source === 'tree' ? (press.card.dataset.photo || '') : '',
+                photo: (source === 'tree' ? press.card.dataset.photo : press.row.dataset.photo) || '',
                 origin: (source === 'tree' ? press.card.parentElement : press.row).getBoundingClientRect(),
                 cardHeight: (source === 'tree' ? press.card.offsetHeight : sample?.offsetHeight) || 200,
                 teamSize: blocked.size - 1,
