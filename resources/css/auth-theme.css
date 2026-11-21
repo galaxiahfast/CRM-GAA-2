@@ -733,18 +733,19 @@ html:has(.auth-shell) body { height: 100%; overflow: hidden; }
     .auth-shell .auth-legal-bottom { bottom: 40px; }
 }
 
-/* Detalle de temporada: sombrero mexicano ladeado sobre el logo. */
+/* Temporada de Navidad: gorro navideño ladeado sobre el logo. */
 .auth-shell .auth-brand { position: relative; }
-.auth-shell .auth-sombrero {
+.auth-shell .auth-xmas-hat {
+    /* 1 unidad del dibujo = 1 píxel de la imagen del logo (228 px de ancho mostrada a 66 px): así queda exacto sobre la g. */
+    --u: calc(66px / 228);
     position: absolute;
-    top: -39px;
-    left: calc(50% + 20px);
-    width: 126px;
-    height: 66px;
+    top: calc(-80 * var(--u));
+    left: calc(50% - 33px);
+    width: calc(300 * var(--u));
+    height: calc(160 * var(--u));
     z-index: 1;
     pointer-events: none;
-    transform: translateX(-50%) rotate(18deg);
-    transform-origin: 62% 68%;
+    overflow: visible;
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 

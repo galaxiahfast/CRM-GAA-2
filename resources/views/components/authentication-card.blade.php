@@ -58,17 +58,18 @@
                 <div class="auth-card">
                     <a href="/" class="auth-brand">
                         <img src="/img/static/logo-principal_.png" alt="González Alonzo y Asociados" class="auth-logo">
-                        {{-- Sombrero mexicano ladeado y colgado de la parte superior del logotipo. --}}
-                        <svg class="auth-sombrero" viewBox="0 0 160 84" fill="none" aria-hidden="true">
-                            <path d="M8 52C7 47 11 43 19 44L59 49C72 51 88 51 101 49L141 44C149 43 153 47 152 52C150 64 121 75 80 75C39 75 10 64 8 52Z" fill="#b5251c" stroke="#8e211b" stroke-width="2"/>
-                            <path d="M9 50C20 59 45 66 80 66C115 66 140 59 151 50L150 57C137 67 112 72 80 72C48 72 23 67 10 57Z" fill="#15803d"/>
-                            <path d="M10 46C18 43 44 49 59 51C73 53 87 53 101 51C116 49 142 43 150 46C151 55 121 64 80 64C39 64 9 55 10 46Z" fill="#d9b16d" stroke="#f4d7a0" stroke-width="2"/>
-                            <path d="M12 49C29 57 50 60 80 60C110 60 131 57 148 49" stroke="#b5251c" stroke-width="3" stroke-linecap="round"/>
-                            <path d="M59 52C64 38 68 18 75 9C78 5 82 5 85 9C92 18 96 38 101 52C89 55 71 55 59 52Z" fill="#d9b16d" stroke="#f4d7a0" stroke-width="2"/>
-                            <path d="M70 20C72 15 74 11 77 8C79 6 81 6 83 8C86 11 88 15 90 20C83 18 77 18 70 20Z" fill="#15803d"/>
-                            <path d="M62 44C72 47 88 47 98 44L102 53C89 57 71 57 58 53Z" fill="#b5251c"/>
-                            <path d="M67 31C75 33 85 33 93 31M65 36C74 39 86 39 95 36" stroke="#f4d7a0" stroke-width="1.5" stroke-linecap="round"/>
-                            <path d="M11 57C25 69 50 76 80 77C110 76 135 69 149 57" stroke="#e0a44a" stroke-width="2" stroke-linecap="round"/>
+                        {{-- Temporada de Navidad: gorro puesto sobre la «g». El dibujo usa las mismas coordenadas que la imagen del logo
+                             (228 × 350): el ala abraza la parte de arriba de la panza de la g, ladeado 13°, y la punta cae a la derecha. --}}
+                        <svg class="auth-xmas-hat" viewBox="0 -80 300 160" fill="none" aria-hidden="true">
+                            <g transform="translate(166 39) rotate(13)">
+                                <path d="M-54 -8C-56 -50 -34 -96 10 -104C48 -110 84 -86 98 -52C102 -42 103 -32 100 -24C92 -36 80 -44 68 -44C60 -32 56 -20 54 -8Z" fill="#c62828"/>
+                                <path d="M10 -104C48 -110 84 -86 98 -52C102 -42 103 -32 100 -24C92 -36 80 -44 68 -44C74 -66 54 -96 10 -104Z" fill="#a51d1d"/>
+                                <path d="M-40 -22C-37 -58 -16 -84 12 -92" stroke="#e85d5d" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+                                <path d="M-54 0Q0 12 54 0" stroke="#ffffff" stroke-width="28" stroke-linecap="round"/>
+                                <path d="M-46 4Q0 15 46 4" stroke="#e5e7eb" stroke-width="3" stroke-linecap="round"/>
+                                <circle cx="100" cy="-20" r="16" fill="#ffffff"/>
+                                <circle cx="95" cy="-25" r="5" fill="#f3f4f6"/>
+                            </g>
                         </svg>
                     </a>
 
