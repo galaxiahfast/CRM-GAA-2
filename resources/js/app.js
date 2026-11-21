@@ -20,6 +20,21 @@ window.markEdgeRows = (box) => {
     new MutationObserver(mark).observe(box, { childList: true, subtree: true });
 };
 
+// Regla única de los desplegables flotantes (listas y calendarios que se pintan encima de todo, fuera del formulario):
+// al desplazar la página o el recuadro que contiene el campo se cierran, igual que al hacer clic afuera, así nunca quedan
+// despegados del campo. No cuenta el desplazamiento dentro de la propia lista ni el de recuadros que no mueven el campo.
+// Si el desplazamiento llega justo después de un clic o de enfocar (el navegador acerca el campo a la vista), solo se recoloca.
+let lastFloatingInteraction = 0;
+['pointerdown', 'focusin'].forEach((type) => document.addEventListener(type, () => { lastFloatingInteraction = Date.now(); }, true));
+window.floatingScroll = (event, anchor, list, close, place = null) => {
+    const target = event.target;
+    if (list && target instanceof Node && list.contains(target)) return;
+    const page = target === document || target === document.documentElement || target === document.body;
+    if (! page && ! (target instanceof Element && anchor && target.contains(anchor))) return;
+    if (Date.now() - lastFloatingInteraction < 300) { if (place) place(); return; }
+    close();
+};
+
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('productivityDatePicker', (model, marks = []) => ({
         value: model,
@@ -32,12 +47,17 @@ document.addEventListener('alpine:init', () => {
         init() {
             this.resetCursor();
             this.reposition = () => { if (this.open) this.position(); };
+            this.onScroll = (event) => {
+                if (! this.open) return;
+                const list = event.target instanceof Element ? event.target.closest('[data-prod-calendar]') : null;
+                window.floatingScroll(event, this.$root, list, () => { this.open = false; }, () => this.position());
+            };
             window.addEventListener('resize', this.reposition);
-            document.addEventListener('scroll', this.reposition, true);
+            document.addEventListener('scroll', this.onScroll, true);
         },
         destroy() {
             window.removeEventListener('resize', this.reposition);
-            document.removeEventListener('scroll', this.reposition, true);
+            document.removeEventListener('scroll', this.onScroll, true);
         },
         resetCursor() {
             const parts = String(this.value || '').split('-').map(Number);
@@ -111,12 +131,15 @@ document.addEventListener('alpine:init', () => {
         width: 320,
         init() {
             this.reposition = () => { if (this.open) this.position(); };
+            this.onScroll = (event) => {
+                if (this.open) window.floatingScroll(event, this.$root, this.$refs.panel, () => { this.open = false; }, () => this.position());
+            };
             window.addEventListener('resize', this.reposition);
-            document.addEventListener('scroll', this.reposition, true);
+            document.addEventListener('scroll', this.onScroll, true);
         },
         destroy() {
             window.removeEventListener('resize', this.reposition);
-            document.removeEventListener('scroll', this.reposition, true);
+            document.removeEventListener('scroll', this.onScroll, true);
         },
         idHtml(value) { return 'ID ' + String(value).padStart(5, '0').replace(/[0-9]/g, (digit) => `<span style='display:inline-block;width:0.64em;text-align:center'>${digit}</span>`); },
         initials(text) {
