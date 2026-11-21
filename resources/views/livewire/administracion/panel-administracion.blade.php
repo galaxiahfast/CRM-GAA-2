@@ -1766,68 +1766,78 @@
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
                                                 <label for="edit-employee-id" class="{{ $detailLabel }}">ID del reloj checador · opcional</label>
+                                                {{-- Lista flotante (igual que los demás selectores): se dibuja encima de todo y nunca la corta el formulario.
+                                                     El campo acepta también un ID que no esté en la lista. --}}
                                                 <div
                                                     class="relative mt-[20px]"
-                                                    x-data="{ open: false, search: @js((string) ($userForm['employee_id'] ?? '')) }"
-                                                    @click.outside="open = false"
+                                                    x-data="{
+                                                        open: false,
+                                                        search: @js((string) ($userForm['employee_id'] ?? '')),
+                                                        style: '',
+                                                        place() {
+                                                            const rect = this.$refs.input.getBoundingClientRect();
+                                                            const rowHeight = this.$refs.list?.querySelector('[role=option]')?.offsetHeight || 55;
+                                                            const visible = [...(this.$refs.list?.querySelectorAll('[role=option]') || [])].filter((row) => row.style.display !== 'none').length;
+                                                            const wanted = Math.max(1, Math.min(visible || 1, 5)) * rowHeight;
+                                                            const below = window.innerHeight - rect.bottom - 18, above = rect.top - 18;
+                                                            const up = below < Math.min(wanted, rowHeight * 3) && above > below;
+                                                            const height = Math.min(wanted, Math.max(1, Math.floor((up ? above : below) / rowHeight)) * rowHeight);
+                                                            const top = up ? rect.top - 10 - height - 2 : rect.bottom + 10;
+                                                            this.style = `position: fixed; left: ${rect.left}px; top: ${top}px; width: ${rect.width}px; --picker-max: ${height + 2}px; z-index: 200100;`;
+                                                        },
+                                                        show() { this.open = true; this.$nextTick(() => this.place()); },
+                                                        pick(id) { this.search = id; $wire.set('userForm.employee_id', id); this.open = false; },
+                                                    }"
+                                                    @click.outside="if (! ($refs.list && $refs.list.contains($event.target))) open = false"
+                                                    @keydown.escape.window="open = false"
+                                                    @scroll.window.capture="open && floatingScroll($event, $root, $refs.list, () => open = false, () => place())"
+                                                    @resize.window="if (open) place()"
                                                 >
                                                     <input
                                                         id="edit-employee-id"
+                                                        x-ref="input"
                                                         type="text"
                                                         autocomplete="off"
                                                         maxlength="50"
                                                         class="{{ $detailInput }} !mt-0 pr-12"
                                                         wire:model="userForm.employee_id"
                                                         x-model="search"
-                                                        @input="open = true"
-                                                        @focus="open = true"
-                                                        @click="open = true"
-                                                        @keydown.escape="open = false"
+                                                        @input="show()"
+                                                        @focus="show()"
+                                                        @click="show()"
                                                         aria-autocomplete="list"
                                                         aria-controls="employee-id-suggestions"
                                                         x-bind:aria-expanded="open"
                                                     >
-                                                    <button
-                                                        type="button"
-                                                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0"
-                                                        @click="open = !open"
-                                                        aria-label="Mostrar sugerencias del reloj checador"
-                                                    >
-                                                        <svg class="h-4 w-4 transition-transform" x-bind:class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                        </svg>
+                                                    <button type="button" class="admin-picker-chevron absolute inset-y-0 right-0 flex w-[48px] items-center justify-center focus:outline-none focus:ring-0" @click="open ? open = false : show()" aria-label="Mostrar sugerencias del reloj checador">
+                                                        <svg class="h-4 w-4" x-bind:class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                                                     </button>
 
-                                                    <div
-                                                        id="employee-id-suggestions"
-                                                        x-cloak
-                                                        x-show="open"
-                                                        x-transition:enter="transition ease-out duration-150"
-                                                        x-transition:enter-start="opacity-0 -translate-y-1"
-                                                        x-transition:enter-end="opacity-100 translate-y-0"
-                                                        x-transition:leave="transition ease-in duration-100"
-                                                        x-transition:leave-start="opacity-100 translate-y-0"
-                                                        x-transition:leave-end="opacity-0 -translate-y-1"
-                                                        class="administration-modal-scrollbar absolute z-[60] max-h-60 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white shadow-lg"
-                                                        role="listbox"
-                                                    >
-                                                        @foreach ($employeeIdSuggestions as $employeeIdSuggestion)
-                                                            <button
-                                                                type="button"
-                                                                data-employee-id="{{ $employeeIdSuggestion->employeeID }}"
-                                                                data-person-name="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}"
-                                                                x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())"
-                                                                @click="search = $el.dataset.employeeId; $wire.set('userForm.employee_id', $el.dataset.employeeId); open = false"
-                                                                class="flex w-full min-w-0 items-center gap-[15px] px-[20px] py-[15px] text-left transition hover:bg-zinc-100 focus:bg-zinc-100 focus:outline-none focus:ring-0"
-                                                                role="option"
-                                                            >
-                                                                <span class="w-20 shrink-0 truncate text-[15px] text-black" title="{{ $employeeIdSuggestion->employeeID }}">{{ $employeeIdSuggestion->employeeID }}</span>
-                                                                <span class="min-w-0 flex-1 truncate text-[15px] text-black" title="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}">{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}</span>
-                                                            </button>
-                                                        @endforeach
-                                                    </div>
+                                                    <template x-teleport="body">
+                                                        <div id="employee-id-suggestions" x-ref="list" x-cloak x-show="open" :style="style" data-panel class="panel-border overflow-hidden rounded-xl border" role="listbox">
+                                                            <div x-data="backupOverlayScroll()" x-effect="open; search; $nextTick(() => update())" class="relative">
+                                                                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar overflow-y-auto overscroll-contain" style="max-height: var(--picker-max, 16rem);">
+                                                                    @foreach ($employeeIdSuggestions as $employeeIdSuggestion)
+                                                                        <button
+                                                                            type="button"
+                                                                            data-employee-id="{{ $employeeIdSuggestion->employeeID }}"
+                                                                            data-person-name="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}"
+                                                                            x-show="!search || $el.dataset.employeeId.toLowerCase().includes(String(search).toLowerCase()) || $el.dataset.personName.toLowerCase().includes(String(search).toLowerCase())"
+                                                                            @click="pick($el.dataset.employeeId)"
+                                                                            class="panel-option flex w-full min-w-0 items-center justify-between gap-[20px] p-[20px] text-left leading-none focus:outline-none"
+                                                                            role="option"
+                                                                        >
+                                                                            <span class="min-w-0 flex-1 truncate leading-none" title="{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}">{{ $employeeIdSuggestion->personName ?: 'Nombre no disponible' }}</span>
+                                                                            <span class="shrink-0 text-right leading-none">{{ $employeeIdSuggestion->employeeID }}</span>
+                                                                        </button>
+                                                                    @endforeach
+                                                                </div>
+                                                                <span x-show="visible" x-cloak class="administration-form-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
                                                 </div>
-                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Selecciona un ID registrado; la sugerencia muestra el nombre detectado por el checador.</p>
+                                                <p class="org-help">Selecciona un ID registrado; la sugerencia muestra el nombre detectado por el checador.</p>
                                                 <x-input-error for="userForm.employee_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
 
