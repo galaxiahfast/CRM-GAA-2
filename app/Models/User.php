@@ -98,6 +98,54 @@ class User extends Authenticatable implements MustVerifyEmail
             && \Illuminate\Support\Facades\Storage::disk((string) config('jetstream.profile_photo_disk', 'public'))->exists($this->profile_photo_path);
     }
 
+    /** Ilustraciones que se usan cuando la persona no tiene foto (public/img/avatars), por género. */
+    public const DEFAULT_AVATARS = [
+        'hombre' => ['hombre-1', 'hombre-2'],
+        'mujer' => ['mujer-1', 'mujer-2', 'mujer-3', 'mujer-4'],
+    ];
+
+    /** Nombres de mujer que no terminan en «a» y de hombre que sí (para deducir el género cuando no lo capturó). */
+    private const FEMALE_NAMES = ['ABIGAIL', 'ARACELI', 'BEATRIZ', 'BELEN', 'CARMEN', 'CONSUELO', 'DOLORES', 'ELIZABETH', 'ESTHER', 'GUADALUPE', 'INES', 'ISABEL', 'IVONNE', 'JAZMIN', 'KAREN', 'LIZBETH', 'LIZET', 'LUZ', 'MABEL', 'MARIBEL', 'MARISOL', 'MERCEDES', 'MIRIAM', 'NOEMI', 'PILAR', 'RAQUEL', 'ROCIO', 'RUTH', 'SOLEDAD', 'SUSAN', 'YARETZI', 'ZOE', 'NAYELI', 'MAYDELI', 'SHARLY', 'ITZEL', 'ARELI', 'DENISSE', 'IRIS', 'MONSERRAT', 'ANAHI'];
+    private const MALE_NAMES = ['JOSUE', 'BAUTISTA', 'ELIAS', 'MATIAS', 'NICOLAS', 'TOMAS', 'LUCAS', 'ANDRES', 'JONAS', 'ISAIAS', 'JEREMIAS', 'ZACARIAS', 'GARCIA', 'BORJA', 'SANTANA'];
+
+    /** Género capturado o, si no lo puso, el que se deduce de su primer nombre (María José → mujer, José María → hombre). */
+    public function avatarGender(): string
+    {
+        if (in_array($this->gender, ['hombre', 'mujer'], true)) {
+            return $this->gender;
+        }
+
+        $first = (string) \Illuminate\Support\Str::of((string) $this->name)->ascii()->upper()->trim()->explode(' ')->first();
+        if (in_array($first, self::FEMALE_NAMES, true)) {
+            return 'mujer';
+        }
+        if (in_array($first, self::MALE_NAMES, true)) {
+            return 'hombre';
+        }
+
+        return str_ends_with($first, 'A') ? 'mujer' : 'hombre';
+    }
+
+    /** Ilustración por defecto: siempre la misma para cada persona, según su género. */
+    public function defaultAvatarUrl(): string
+    {
+        $options = self::DEFAULT_AVATARS[$this->avatarGender()];
+
+        return asset('img/avatars/'.$options[((int) $this->id) % count($options)].'.png');
+    }
+
+    /** Foto que se muestra: la que subió (si el archivo existe) o la ilustración por defecto según su género. */
+    public function avatarUrl(): string
+    {
+        return $this->hasProfilePhotoFile() ? $this->profile_photo_url : $this->defaultAvatarUrl();
+    }
+
+    /** Jetstream usa esto cuando no hay foto: en vez de las letras, la ilustración según el género. */
+    protected function defaultProfilePhotoUrl(): string
+    {
+        return $this->defaultAvatarUrl();
+    }
+
     /** Edad aproximada a partir del año de nacimiento (null si no lo capturó). */
     public function approximateAge(): ?int
     {
