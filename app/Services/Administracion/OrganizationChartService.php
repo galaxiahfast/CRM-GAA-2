@@ -700,10 +700,8 @@ class OrganizationChartService
                 throw ValidationException::withMessages(['move' => 'No puedes moverla dentro de su propio equipo.']);
             }
 
+            // Soltarla sobre su propio jefe la pasa al final de su equipo (si ya era la última, no cambia nada)
             $unchanged = ['changed' => false, 'superior_id' => $userSuperiorId, 'previous_superior_id' => $userSuperiorId];
-            if ($placement === 'child' && $userSuperiorId === $targetId) {
-                return $unchanged;
-            }
 
             if (in_array($placement, ['before', 'after'], true) && $targetSuperiorId === null) {
                 throw ValidationException::withMessages(['move' => 'Quien encabeza el organigrama no tiene jefe: suéltala arriba de esa persona para ponerla a su cargo.']);
@@ -717,6 +715,7 @@ class OrganizationChartService
                 $team = array_values(array_diff($this->orderedChildren($relations, $newSuperiorId), [$userId]));
                 $index = array_search($targetId, $team, true);
                 if ($placement === 'child' || $index === false) {
+                    // (también cuando ya era de su equipo: se va al final)
                     $team[] = $userId;
                 } elseif ($placement === 'above') {
                     $team[$index] = $userId;

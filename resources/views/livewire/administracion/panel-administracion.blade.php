@@ -3029,21 +3029,22 @@
                 // Lo que no cambiaría nada no muestra hueco
                 const ownChild = drag.branch && drag.branch.parentElement.classList.contains('org-child') ? drag.branch.parentElement : null;
                 const targetChild = card.closest('.visual-node-wrapper').parentElement;
-                const unchanged = (placement === 'child' && id === drag.from)
+                // Sobre su propio jefe: pasa al final de su equipo (si ya es la última, no cambia nada)
+                const unchanged = (placement === 'child' && id === drag.from && ownChild && ! neighbourChild(ownChild, 'nextElementSibling'))
                     || (placement === 'before' && ownChild && neighbourChild(targetChild, 'previousElementSibling') === ownChild)
                     || (placement === 'after' && ownChild && neighbourChild(targetChild, 'nextElementSibling') === ownChild);
                 if (unchanged) {
                     clearPreview();
                     drag.drop = null;
                     mark(null);
-                    showHint('', placement === 'child' ? `Ya reporta a ${card.dataset.name}` : 'Ya está en ese lugar');
+                    showHint('', 'Ya está en ese lugar');
                     return;
                 }
 
                 mark(card, 'org-drop-target');
                 drag.drop = { targetId: id, placement, targetSuperior };
                 setPreview(card, placement);
-                showHint('ok', HINTS[placement](card.dataset.name));
+                showHint('ok', placement === 'child' && id === drag.from ? `Quedará al final del equipo de ${card.dataset.name}` : HINTS[placement](card.dataset.name));
                 return;
             }
 

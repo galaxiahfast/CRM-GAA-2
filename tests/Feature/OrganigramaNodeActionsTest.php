@@ -268,6 +268,18 @@ class OrganigramaNodeActionsTest extends TestCase
         $this->assertSame([], $this->teamOf($ana));
     }
 
+    public function test_dropping_a_person_on_her_own_boss_keeps_her_in_the_team_at_the_end(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis] = $this->biggerChart();
+
+        $this->place($boss, $ana, $boss, 'child', $boss, null)->assertDispatched('notify');
+        $this->assertSame([$luis->id, $ana->id], $this->teamOf($boss));
+
+        // Ya es la última: no cambia nada
+        $this->place($boss, $ana, $boss, 'child', $boss, null)->assertNotDispatched('org-node-moved');
+        $this->assertSame([$luis->id, $ana->id], $this->teamOf($boss));
+    }
+
     public function test_a_person_can_be_put_in_charge_of_her_own_boss(): void
     {
         ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
