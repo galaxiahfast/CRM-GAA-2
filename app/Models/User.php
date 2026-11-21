@@ -59,6 +59,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_cover_path',
         'profile_description',
         'birth_year',
+        'birth_date',
+        'gender',
         'instagram_url',
         'facebook_url',
     ];
@@ -151,6 +153,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'birth_date' => 'date',
             'password' => 'hashed',
             'is_support_help_recipient' => 'boolean',
         ];
