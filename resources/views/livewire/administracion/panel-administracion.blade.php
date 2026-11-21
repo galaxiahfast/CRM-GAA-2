@@ -1657,7 +1657,7 @@
     @php($detailPrimaryButton = 'admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
     <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
         {{-- Mismo marco que el modal de Usuarios: blanco, bordes grises, 20px de relleno. --}}
-        <div @click.outside="visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
+        <div @click.outside="if ($event.target.closest('.app-date-panel, [role=listbox]')) return; visible = false; $wire.closeUserDetails()" class="org-user-modal administration-form-panel relative flex w-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl" style="max-width: 620px; height: min(620px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px); font-size: 15px; overscroll-behavior: contain;">
 
             {{-- ===== ENCABEZADO (fijo) ===== --}}
             <header class="flex flex-shrink-0 items-center justify-between gap-[15px] border-b border-zinc-200 bg-white p-[20px]">
@@ -1726,6 +1726,16 @@
                                                 <label for="edit-email" class="{{ $detailLabel }}">Email</label>
                                                 <input id="edit-email" type="email" class="{{ $detailInput }}" wire:model="userForm.email">
                                                 <x-input-error for="userForm.email" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
+                                            </div>
+                                            <div class="min-w-0">
+                                                <label for="edit-birth-date" class="{{ $detailLabel }}">Fecha de nacimiento · opcional</label>
+                                                <x-date-picker input-id="edit-birth-date" model="userForm.birth_date" placeholder="Elige la fecha" class="{{ $detailInput }}" />
+                                                <x-input-error for="userForm.birth_date" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
+                                            </div>
+                                            <div class="min-w-0">
+                                                <label for="edit-gender" class="{{ $detailLabel }}">Sexo · opcional</label>
+                                                <x-administration-search-picker style="margin-top: 20px;" input-id="edit-gender" model="userForm.gender" :selected="$userForm['gender'] ?? ''" :items="[['id' => '', 'label' => 'Sin especificar'], ['id' => 'hombre', 'label' => 'Hombre'], ['id' => 'mujer', 'label' => 'Mujer']]" placeholder="Sin especificar" />
+                                                <x-input-error for="userForm.gender" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                         </div>
                                     </section>
@@ -1955,7 +1965,15 @@
                                                 <div class="{{ $detailValue }}">{{ isset($selectedUserDetails['email']) ? mb_strtolower((string) $selectedUserDetails['email']) : 'N/A' }}</div>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="{{ $detailLabel }}">Rol</span>
+                                                <span class="{{ $detailLabel }}">Fecha de nacimiento</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['birth_date'] ?? 'No registrada' }}</div>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <span class="{{ $detailLabel }}">Sexo</span>
+                                                <div class="{{ $detailValue }}">{{ $selectedUserDetails['gender'] ?? 'Sin especificar' }}</div>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <span class="{{ $detailLabel }}">Rol en el sistema</span>
                                                 <div class="{{ $detailValue }}">{{ $selectedUserDetails['role'] ?: 'Sin rol' }}</div>
                                             </div>
                                             <div class="min-w-0">
