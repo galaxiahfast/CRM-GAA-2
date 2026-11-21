@@ -2146,7 +2146,9 @@
         const replayEntry = () => {
             container.classList.remove('org-settled');
             clearTimeout(settleTimer);
-            settleTimer = setTimeout(() => container.classList.add('org-settled'), 1400);
+            settleTimer = setTimeout(() => { container.classList.add('org-settled'); drawLines(); }, 1400);
+            // Las tarjetas suben 8px mientras aparecen: las líneas las siguen cuadro por cuadro para quedar pegadas a ellas
+            if (typeof animateLines === 'function') animateLines(1450);
         };
         const afterLivewireUpdate = () => {
             isPanning = false;
