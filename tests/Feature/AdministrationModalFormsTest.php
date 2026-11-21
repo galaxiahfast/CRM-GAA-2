@@ -8,7 +8,6 @@ use App\Livewire\Administracion\Permissions\CatalogManager as PermissionCatalogM
 use App\Livewire\Administracion\Relationship\GestionRelacionesJerarquicas;
 use App\Livewire\Administracion\Roles\Form as RoleForm;
 use App\Livewire\Administracion\Roles\GestionRoles;
-use App\Livewire\Administracion\Users\Form as UserForm;
 use App\Livewire\Customer\CatalogManager as CustomerCatalogManager;
 use App\Models\AccessPermission;
 use App\Models\Customer;
@@ -86,28 +85,28 @@ class AdministrationModalFormsTest extends TestCase
         ]);
 
         Livewire::actingAs($administrator)
-            ->test(UserForm::class)
-            ->assertSeeHtml('data-administration-modal="user-form"')
-            ->assertSeeHtml('@pointerdown="pressedOnBackdrop = ($event.target === $el)"')
+            ->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
             ->assertViewHas('employeeIdSuggestions', fn ($suggestions) => $suggestions->count() === 2)
-            ->assertSeeHtml('id="create-employee-id-suggestions"')
+            ->assertSeeHtml('id="employee-id-suggestions"')
             ->assertSeeHtml('data-employee-id="BIO-900"')
             ->assertSee('María Fernanda Usuario Nuevo')
             ->assertSeeHtml('role="listbox"')
-            ->set('name', 'Usuario')
-            ->set('last_name', 'Nuevo')
-            ->set('email', 'usuario.nuevo@test.mx')
-            ->set('password', 'password-seguro')
-            ->set('password_confirmation', 'password-seguro')
-            ->set('role_id', $auxiliarRole->id)
-            ->set('job_position_id', $position->id)
-            ->set('physical_area_id', $area->id)
-            ->set('employee_id', 'BIO-900')
-            ->set('hourly_rate', 125.50)
-            ->set('food_allowance', 75)
-            ->call('save')
+            ->set('userForm.name', 'Usuario')
+            ->set('userForm.last_name', 'Nuevo')
+            ->set('userForm.email', 'usuario.nuevo@test.mx')
+            ->set('userForm.password', 'password-seguro')
+            ->set('userForm.password_confirmation', 'password-seguro')
+            ->set('userForm.role_id', $auxiliarRole->id)
+            ->set('userForm.job_position_id', $position->id)
+            ->assertSet('userForm.is_hourly_position', true)
+            ->set('userForm.physical_area_id', $area->id)
+            ->set('userForm.employee_id', 'BIO-900')
+            ->set('userForm.hourly_rate', 125.50)
+            ->set('userForm.food_allowance', 75)
+            ->call('saveSelectedUser')
             ->assertHasNoErrors()
-            ->assertRedirect('/administracion/users');
+            ->assertDispatched('notify', message: 'Usuario agregado.', type: 'success');
 
         $createdUser = User::where('email', 'usuario.nuevo@test.mx')->firstOrFail();
 
@@ -129,16 +128,17 @@ class AdministrationModalFormsTest extends TestCase
         $suggestedPassword = 'Ortiz'.now()->year.'.';
 
         Livewire::actingAs($administrator)
-            ->test(UserForm::class)
-            ->assertSeeHtml("new Event('input', { bubbles: true })")
-            ->set('last_name', 'Ortiz Rivero')
-            ->call('restoreDefaultPassword')
-            ->assertSet('password', $suggestedPassword)
-            ->assertSet('password_confirmation', $suggestedPassword)
-            ->set('last_name', '')
-            ->call('restoreDefaultPassword')
-            ->assertSet('password', '')
-            ->assertSet('password_confirmation', '');
+            ->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->assertSee('Usar contraseña sugerida')
+            ->set('userForm.last_name', 'Ortiz Rivero')
+            ->call('suggestUserPassword')
+            ->assertSet('userForm.password', $suggestedPassword)
+            ->assertSet('userForm.password_confirmation', $suggestedPassword)
+            ->set('userForm.last_name', '')
+            ->call('suggestUserPassword')
+            ->assertSet('userForm.password', '')
+            ->assertSet('userForm.password_confirmation', '');
     }
 
     public function test_administrator_can_create_job_positions_and_physical_areas_from_independent_modals(): void
@@ -206,9 +206,14 @@ class AdministrationModalFormsTest extends TestCase
         Livewire::actingAs($administrator)
             ->test(PanelAdministracion::class)
             ->call('openUserManagement', 'editar', $collaborator->id)
-            ->assertSet('userManagementInitialTab', 'editar')
-            ->assertSet('userManagementInitialUserId', $collaborator->id)
-            ->call('closeUserManagement')
+            ->assertSet('selectedUserId', $collaborator->id)
+            ->assertSet('isEditingUser', true)
+            ->assertSet('userForm.name', $collaborator->name)
+            ->call('closeUserDetails')
+            ->call('openUserManagement', 'eliminar', $collaborator->id)
+            ->assertSet('selectedUserId', $collaborator->id)
+            ->assertSet('activeTab', 'eliminar')
+            ->call('closeUserDetails')
             ->call('openRoleManagement', 'editar', $editableRole->id)
             ->assertSet('roleManagementInitialRoleId', $editableRole->id)
             ->call('closeRoleManagement')
@@ -218,28 +223,6 @@ class AdministrationModalFormsTest extends TestCase
             ->call('closeJobPositionModal')
             ->call('openPhysicalAreaModal', 'eliminar', $area->id)
             ->assertSet('selectedPhysicalAreaManagementId', $area->id);
-
-        Livewire::actingAs($administrator)
-            ->test(UserForm::class, [
-                'embedded' => true,
-                'initialTab' => 'editar',
-                'initialUserId' => $collaborator->id,
-            ])
-            ->assertSet('managementUserId', $collaborator->id)
-            ->assertSet('lockedUserId', $collaborator->id)
-            ->assertSet('name', $collaborator->name)
-            ->set('managementUserId', $administrator->id)
-            ->assertSet('managementUserId', $collaborator->id)
-            ->call('setManagementTab', 'eliminar')
-            ->assertSet('managementUserId', $collaborator->id)
-            ->call('setManagementTab', 'editar')
-            ->assertSet('managementUserId', $collaborator->id)
-            ->assertSet('name', $collaborator->name);
-
-        Livewire::actingAs($administrator)
-            ->test(UserForm::class, ['user' => $collaborator])
-            ->assertSet('managementUserId', $collaborator->id)
-            ->assertSet('lockedUserId', $collaborator->id);
 
         Livewire::actingAs($administrator)
             ->test(PermissionCatalogManager::class, ['cardActions' => true])
@@ -274,18 +257,19 @@ class AdministrationModalFormsTest extends TestCase
         $area = PhysicalArea::create(['name' => 'Consultoría']);
 
         Livewire::actingAs($administrator)
-            ->test(UserForm::class)
-            ->set('name', 'Consultor')
-            ->set('email', 'consultor-hourly@test.mx')
-            ->set('password', 'password-seguro')
-            ->set('password_confirmation', 'password-seguro')
-            ->set('role_id', $accountantRole->id)
-            ->set('job_position_id', $position->id)
-            ->assertSet('isHourlyPosition', true)
-            ->set('physical_area_id', $area->id)
-            ->set('hourly_rate', 200)
-            ->set('food_allowance', 90)
-            ->call('save')
+            ->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->set('userForm.name', 'Consultor')
+            ->set('userForm.email', 'consultor-hourly@test.mx')
+            ->set('userForm.password', 'password-seguro')
+            ->set('userForm.password_confirmation', 'password-seguro')
+            ->set('userForm.role_id', $accountantRole->id)
+            ->set('userForm.job_position_id', $position->id)
+            ->assertSet('userForm.is_hourly_position', true)
+            ->set('userForm.physical_area_id', $area->id)
+            ->set('userForm.hourly_rate', 200)
+            ->set('userForm.food_allowance', 90)
+            ->call('saveSelectedUser')
             ->assertHasNoErrors();
 
         $user = User::where('email', 'consultor-hourly@test.mx')->firstOrFail();
@@ -436,15 +420,17 @@ class AdministrationModalFormsTest extends TestCase
         $administrator = $this->createUser($administratorRole, 'admin-user-tabs@test.mx');
         $collaborator = $this->createUser($administratorRole, 'collaborator-user-tabs@test.mx');
 
+        // Crear, editar y eliminar pasan todos por la ficha de usuario (un solo formulario)
         Livewire::actingAs($administrator)
-            ->test(UserForm::class)
-            ->assertSee('Crear')
-            ->assertSee('Editar')
-            ->assertSee('Eliminar')
-            ->call('setManagementTab', 'editar')
-            ->set('managementUserId', $collaborator->id)
-            ->call('editManagedUser')
-            ->assertRedirect(route('administracion.edit.users', $collaborator));
+            ->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->assertSee('Crear usuario')
+            ->call('closeUserDetails')
+            ->call('openUserManagement', 'editar')
+            ->assertSee('collaborator-user-tabs@test.mx')
+            ->call('pickUserForAction', $collaborator->id)
+            ->assertSet('selectedUserId', $collaborator->id)
+            ->assertSee('Guardar cambios');
     }
 
     public function test_role_modal_preserves_create_and_edit_actions(): void

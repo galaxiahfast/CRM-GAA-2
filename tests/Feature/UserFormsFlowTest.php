@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Livewire\Administracion\PanelAdministracion;
-use App\Livewire\Administracion\Users\Form as UserForm;
 use App\Models\JobPosition;
 use App\Models\PhysicalArea;
 use App\Models\Role;
@@ -43,37 +42,47 @@ class UserFormsFlowTest extends TestCase
     {
         ['admin' => $admin, 'position' => $position, 'area' => $area, 'roles' => $roles] = $this->setUpData();
 
-        Livewire::actingAs($admin)->test(UserForm::class, ['embedded' => true])
-            ->set('name', 'Nueva')
-            ->set('last_name', 'Persona')
-            ->set('email', 'nueva@datamid.test')
-            ->set('password', 'password-seguro')
-            ->set('password_confirmation', 'password-seguro')
-            ->set('role_id', $roles['Contador']->id)
-            ->set('job_position_id', $position->id)
-            ->set('physical_area_id', $area->id)
-            ->set('employee_id', '')
-            ->call('save')
+        // Crear usa la misma ficha que editar
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->assertSet('isCreatingUser', true)
+            ->assertSet('isEditingUser', true)
+            ->set('userForm.name', 'Nueva')
+            ->set('userForm.last_name', 'Persona')
+            ->set('userForm.email', 'nueva@datamid.test')
+            ->set('userForm.password', 'password-seguro')
+            ->set('userForm.password_confirmation', 'password-seguro')
+            ->set('userForm.role_id', $roles['Contador']->id)
+            ->set('userForm.job_position_id', $position->id)
+            ->set('userForm.physical_area_id', $area->id)
+            ->set('userForm.employee_id', '')
+            ->call('saveSelectedUser')
             ->assertHasNoErrors()
             ->assertDispatched('notify', message: 'Usuario agregado.', type: 'success')
-            ->assertDispatched('user-management-closed');
+            ->assertSet('selectedUserDetails', null)
+            ->assertSet('isCreatingUser', false);
 
         $created = User::where('email', 'nueva@datamid.test')->firstOrFail();
         $this->assertNull($created->employee_id);
+        $this->assertSame($position->id, $created->activeOrganizationalProfile->job_position_id);
     }
 
     public function test_editing_a_user_without_clock_id_says_updated_and_leaves_the_form(): void
     {
         ['admin' => $admin, 'member' => $member] = $this->setUpData();
 
-        Livewire::actingAs($admin)->test(UserForm::class, ['embedded' => true, 'initialTab' => 'editar', 'initialUserId' => $member->id])
-            ->assertSet('employee_id', 'BIO-1')
-            ->set('employee_id', '')
-            ->set('name', 'Ana María')
-            ->call('save')
+        // «Editar» desde Administración abre la ficha de esa persona ya en modo edición
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar', $member->id)
+            ->assertSet('selectedUserId', $member->id)
+            ->assertSet('isEditingUser', true)
+            ->assertSet('userForm.employee_id', 'BIO-1')
+            ->set('userForm.employee_id', '')
+            ->set('userForm.name', 'Ana María')
+            ->call('saveSelectedUser')
             ->assertHasNoErrors()
             ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success')
-            ->assertDispatched('user-management-closed');
+            ->assertSet('selectedUserDetails', null);
 
         $member->refresh();
         $this->assertSame('ANA MARÍA', $member->name);
@@ -105,17 +114,18 @@ class UserFormsFlowTest extends TestCase
     {
         ['admin' => $admin, 'member' => $member, 'position' => $position, 'area' => $area, 'roles' => $roles] = $this->setUpData();
 
-        Livewire::actingAs($admin)->test(UserForm::class, ['embedded' => true])
-            ->set('name', 'Otra')
-            ->set('last_name', 'Persona')
-            ->set('email', 'otra@datamid.test')
-            ->set('password', 'password-seguro')
-            ->set('password_confirmation', 'password-seguro')
-            ->set('role_id', $roles['Contador']->id)
-            ->set('job_position_id', $position->id)
-            ->set('physical_area_id', $area->id)
-            ->set('employee_id', 'BIO-1')
-            ->call('save')
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->set('userForm.name', 'Otra')
+            ->set('userForm.last_name', 'Persona')
+            ->set('userForm.email', 'otra@datamid.test')
+            ->set('userForm.password', 'password-seguro')
+            ->set('userForm.password_confirmation', 'password-seguro')
+            ->set('userForm.role_id', $roles['Contador']->id)
+            ->set('userForm.job_position_id', $position->id)
+            ->set('userForm.physical_area_id', $area->id)
+            ->set('userForm.employee_id', 'BIO-1')
+            ->call('saveSelectedUser')
             ->assertHasNoErrors();
 
         $this->assertSame(2, User::where('employee_id', 'BIO-1')->count());
@@ -167,13 +177,97 @@ class UserFormsFlowTest extends TestCase
         ['admin' => $admin, 'roles' => $roles] = $this->setUpData();
         $unassigned = User::create(['name' => 'Dionicio', 'last_name' => 'Farfán', 'email' => 'dionicio@datamid.test', 'password' => Hash::make('x'), 'role_id' => $roles['Contador']->id]);
 
-        Livewire::actingAs($admin)->test(UserForm::class, ['embedded' => true, 'initialTab' => 'editar', 'initialUserId' => $unassigned->id])
-            ->set('name', 'Dionicio Alberto')
-            ->call('save')
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar', $unassigned->id)
+            ->set('userForm.name', 'Dionicio Alberto')
+            ->call('saveSelectedUser')
             ->assertHasNoErrors()
             ->assertDispatched('notify', message: 'Usuario actualizado.', type: 'success');
 
         $this->assertSame('DIONICIO ALBERTO', $unassigned->fresh()->name);
+    }
+
+    public function test_birth_date_and_sex_are_saved_shown_and_validated(): void
+    {
+        ['admin' => $admin, 'member' => $member] = $this->setUpData();
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar', $member->id)
+            ->set('userForm.birth_date', '1995-03-14')
+            ->set('userForm.gender', 'mujer')
+            ->call('saveSelectedUser')
+            ->assertHasNoErrors();
+
+        $member->refresh();
+        $this->assertSame('1995-03-14', $member->birth_date->format('Y-m-d'));
+        $this->assertSame(1995, (int) $member->birth_year);
+        $this->assertSame('mujer', $member->gender);
+
+        // La ficha (modo ver) muestra la fecha con la edad y el sexo
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('selectUser', $member->id)
+            ->assertSee('14 de marzo de 1995')
+            ->assertSee('Mujer');
+
+        // Una fecha futura o un sexo que no existe no se guardan
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar', $member->id)
+            ->set('userForm.birth_date', now()->addYear()->format('Y-m-d'))
+            ->call('saveSelectedUser')
+            ->assertHasErrors('userForm.birth_date');
+    }
+
+    public function test_edit_and_delete_without_a_person_first_ask_who_in_the_same_form(): void
+    {
+        ['admin' => $admin, 'member' => $member] = $this->setUpData();
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'editar')
+            ->assertSet('userPickerAction', 'editar')
+            ->assertSee('Elige a la persona que quieres editar.')
+            ->assertSee('ana@datamid.test')
+            ->call('pickUserForAction', $member->id)
+            ->assertSet('selectedUserId', $member->id)
+            ->assertSet('isEditingUser', true)
+            ->assertSet('userPickerAction', null);
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'eliminar')
+            ->call('pickUserForAction', $member->id)
+            ->assertSet('selectedUserId', $member->id)
+            ->assertSet('activeTab', 'eliminar');
+    }
+
+    public function test_the_old_create_and_edit_pages_open_the_single_user_form(): void
+    {
+        ['admin' => $admin, 'member' => $member] = $this->setUpData();
+
+        $this->actingAs($admin)->get(route('administracion.create.users'))
+            ->assertRedirect(route('administracion.index', ['usuario' => 'nuevo']));
+        $this->actingAs($admin)->get(route('administracion.edit.users', $member))
+            ->assertRedirect(route('administracion.index', ['usuario' => $member->id]));
+
+        $this->actingAs($admin)->get(route('administracion.index', ['usuario' => $member->id]))
+            ->assertOk()
+            ->assertSee('Actualiza los datos de acceso y el perfil organizacional.');
+        $this->actingAs($admin)->get(route('administracion.index', ['usuario' => 'nuevo']))
+            ->assertOk()
+            ->assertSee('Captura los datos de la nueva persona.');
+    }
+
+    public function test_the_suggested_password_uses_the_first_surname_and_the_year(): void
+    {
+        ['admin' => $admin] = $this->setUpData();
+
+        Livewire::actingAs($admin)->test(PanelAdministracion::class)
+            ->call('openUserManagement', 'crear')
+            ->set('userForm.last_name', 'Ortiz Rivero')
+            ->call('suggestUserPassword')
+            ->assertSet('userForm.password', 'Ortiz'.now()->year.'.')
+            ->assertSet('userForm.password_confirmation', 'Ortiz'.now()->year.'.')
+            ->set('userForm.last_name', '')
+            ->call('suggestUserPassword')
+            ->assertSet('userForm.password', '');
     }
 
     public function test_the_password_can_be_changed_and_a_blank_one_keeps_the_current(): void
