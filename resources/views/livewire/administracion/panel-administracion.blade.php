@@ -1713,17 +1713,17 @@
                                         <h2 class="admin-section-title mb-[20px]">Datos personales</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
-                                                <label for="edit-name" class="{{ $detailLabel }}">Nombre</label>
+                                                <label for="edit-name" class="{{ $detailLabel }}">Nombre(s)</label>
                                                 <input id="edit-name" type="text" class="{{ $detailInput }}" wire:model="userForm.name">
                                                 <x-input-error for="userForm.name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
-                                                <label for="edit-last-name" class="{{ $detailLabel }}">Apellido</label>
+                                                <label for="edit-last-name" class="{{ $detailLabel }}">Apellidos</label>
                                                 <input id="edit-last-name" type="text" class="{{ $detailInput }}" wire:model="userForm.last_name">
                                                 <x-input-error for="userForm.last_name" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
-                                                <label for="edit-email" class="{{ $detailLabel }}">Email</label>
+                                                <label for="edit-email" class="{{ $detailLabel }}">Correo electrónico</label>
                                                 <input id="edit-email" type="email" class="{{ $detailInput }}" wire:model="userForm.email">
                                                 <x-input-error for="userForm.email" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
@@ -1744,12 +1744,12 @@
                                         <h2 class="admin-section-title mb-[20px]">Perfil organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0 sm:col-span-2">
-                                                <label for="edit-role" class="{{ $detailLabel }}">Rol</label>
+                                                <label for="edit-role" class="{{ $detailLabel }}">Rol en el sistema</label>
                                                 <x-administration-search-picker style="margin-top: 20px;" input-id="edit-role" model="userForm.role_id" :selected="$userForm['role_id'] ?? null" :items="$roles->map(fn ($availableRole) => ['id' => $availableRole->id, 'label' => $availableRole->role])" placeholder="Buscar rol..." empty-message="No se encontraron roles." />
                                                 <x-input-error for="userForm.role_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
                                             <div class="min-w-0">
-                                                <label for="edit-position" class="{{ $detailLabel }}">Puesto</label>
+                                                <label for="edit-position" class="{{ $detailLabel }}">Puesto de trabajo</label>
                                                 <x-administration-search-picker style="margin-top: 20px;" input-id="edit-position" model="userForm.job_position_id" :selected="$userForm['job_position_id'] ?? null" :items="$jobPositions->map(fn ($position) => ['id' => $position->id, 'label' => $position->name, 'meta' => $position->payment_type === 'hourly' ? 'Pago por hora' : 'Tiempo completo'])" placeholder="Buscar puesto..." empty-message="No se encontraron puestos." />
                                                 <x-input-error for="userForm.job_position_id" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
@@ -1990,7 +1990,7 @@
                                             </div>
                                             <div class="min-w-0 sm:col-span-2">
                                                 <span class="{{ $detailLabel }}">Contraseña</span>
-                                                <div class="{{ $detailValue }}">•••••••• (protegida)</div>
+                                                <div class="{{ $detailValue }}">••••••••</div>
                                             </div>
                                         </div>
                                     </section>
@@ -1999,7 +1999,7 @@
                                         <h2 class="admin-section-title mb-[20px]">Organizacional</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
-                                                <span class="{{ $detailLabel }}">Puesto</span>
+                                                <span class="{{ $detailLabel }}">Puesto de trabajo</span>
                                                 <div class="{{ $detailValue }}">{{ $selectedUserDetails['job_position'] ?: 'Sin asignar' }}</div>
                                             </div>
                                             <div class="min-w-0">
