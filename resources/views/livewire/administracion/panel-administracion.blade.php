@@ -69,19 +69,29 @@
         <x-administration-modal-styles />
     @endpush
 
-    {{-- Aviso flotante (Usuario actualizado., Usuario eliminado., etc.): llega con el evento «notify» y se oculta solo. --}}
+    {{-- Aviso flotante (Usuario actualizado., errores de los formularios, etc.) con el diseño de Inicio: tarjeta blanca con borde
+         gris de 1px y esquinas de 18px, a 50px del borde de arriba de la pantalla y centrada; baja suave y se va sola a los 3 s. --}}
     <div
         x-data="{ show: false, text: '', kind: 'success', timer: null }"
-        @notify.window="text = $event.detail.message; kind = $event.detail.type || 'success'; show = true; clearTimeout(timer); timer = setTimeout(() => show = false, kind === 'error' ? 7000 : 3500)"
+        @notify.window="text = $event.detail.message; kind = $event.detail.type || 'success'; show = true; clearTimeout(timer); timer = setTimeout(() => show = false, 3000)"
         x-show="show"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
         x-cloak
         role="status"
         aria-live="polite"
-        class="app-zoom-overlay panel-surface panel-border fixed left-1/2 top-[143px] z-[200002] flex max-w-[calc(100vw-40px)] -translate-x-1/2 items-center gap-[10px] rounded-xl border px-[20px] py-[15px] leading-none shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+        class="org-toast"
         style="display: none;"
     >
-        <svg class="h-4 w-4 shrink-0" :class="kind === 'success' ? 'text-[#1A3A6B]' : 'text-[color:var(--panel-danger)]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5l2.7 2.7L16 9.5" /><circle cx="12" cy="12" r="9.5" /></svg>
-        <span x-text="text"></span>
+        <span class="org-toast-icon" :class="kind === 'error' ? 'is-error' : 'is-ok'" aria-hidden="true">
+            <svg x-show="kind !== 'error'" class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            <svg x-show="kind === 'error'" class="h-[14px] w-[14px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 7v6M12 17h.01" /></svg>
+        </span>
+        <span class="org-toast-text" x-text="text"></span>
     </div>
 
     @push('styles')
@@ -1989,16 +1999,12 @@
                                     <p class="-mt-[7.5px] -mb-[7.5px] text-[15px]">{{ $detailName }} sale del árbol y queda en «Sin asignar»; su equipo directo pasa a reportar a su jefe. No se borra ningún dato y después puedes volver a acomodarlo arrastrándolo.</p>
                                     <button type="button" wire:click="removeSelectedUserFromChart" wire:loading.attr="disabled" wire:target="removeSelectedUserFromChart" class="{{ $detailPrimaryButton }} mt-[20px] w-full">Solo quitar del organigrama</button>
                                 </div>
-                                <section style="--admin-form-gap: 20px;">
+                                <section class="mt-[20px]" style="--admin-form-gap: 20px;">
                                     <h2 class="admin-section-title mb-[20px]">¿Estás seguro de eliminar este usuario?</h2>
                                     <p class="-mt-[7.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Esta acción es irreversible y eliminará permanentemente al usuario del sistema. Su equipo directo pasará a reportar a su jefe.</p>
                                     <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px] text-black">Para confirmar, escribe el nombre completo del usuario: <span class="text-red-700">{{ $detailName }}</span></p>
                                     <label for="delete-user-confirmation" class="mt-[20px] {{ $detailLabel }}">Nombre completo</label>
                                     <input id="delete-user-confirmation" type="text" autocomplete="off" wire:model="deleteConfirmationName" class="{{ $detailInput }}" placeholder="Nombre completo del usuario">
-                                    @error('deleteConfirmationName')
-                                        <p class="mt-2 text-[15px] text-red-600" style="margin-bottom: 0;">{{ $message }}</p>
-                                    @enderror
-                                    <button type="button" wire:click="deleteSelectedUser" class="mt-[20px] inline-flex w-full items-center justify-center rounded-xl bg-red-600 px-[20px] py-[15px] text-[15px] leading-none text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-0">Eliminar usuario permanentemente</button>
                                 </section>
                             @endif
                         </div>
@@ -2009,6 +2015,9 @@
                 {{-- ===== PIE CON BOTONES (fijo) ===== --}}
                 <footer class="flex flex-shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
                     <button type="button" wire:click="closeUserDetails" class="{{ $detailSecondaryButton }}">Cerrar</button>
+                    @if ($activeTab === 'eliminar')
+                        <button type="button" wire:click="deleteSelectedUser" wire:loading.attr="disabled" wire:target="deleteSelectedUser" class="org-delete-btn bg-red-600 inline-flex items-center justify-center text-[15px] focus:outline-none focus:ring-0">Eliminar usuario</button>
+                    @endif
                     @if ($activeTab === 'datos')
                         <button type="button" wire:click="beginEditingUser" class="{{ $detailPrimaryButton }}">
                             <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>

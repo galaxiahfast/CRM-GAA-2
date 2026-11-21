@@ -84,6 +84,23 @@ class OrganigramaNodeActionsTest extends TestCase
             ->assertDontSee('¿Estás seguro de eliminar este usuario?');
     }
 
+    public function test_form_errors_in_the_chart_show_up_as_a_popup(): void
+    {
+        ['boss' => $boss, 'member' => $member] = $this->chart();
+
+        Livewire::actingAs($boss)->test(PanelAdministracion::class)
+            ->set('orgChartPage', true)
+            ->call('requestDeleteUser', $member->id)
+            ->call('deleteSelectedUser')
+            ->assertDispatched('notify', type: 'error')
+            ->call('selectUser', $member->id)
+            ->call('beginEditingUser')
+            ->set('userForm.email', 'no-es-correo')
+            ->call('saveSelectedUser')
+            ->assertHasErrors('userForm.email')
+            ->assertDispatched('notify', type: 'error');
+    }
+
     public function test_deleting_from_the_node_still_requires_the_full_name(): void
     {
         ['boss' => $boss, 'member' => $member] = $this->chart();

@@ -993,6 +993,32 @@ class PanelAdministracion extends Component
     }
 
     /** Deja el mensaje en la sesión y además lo muestra como aviso flotante (el panel no pintaba los mensajes de sesión). */
+    /**
+     * Errores de validación de los formularios del Organigrama: además de marcar el campo, se avisan en la ventana emergente
+     * de arriba al centro (como en Inicio); dentro del formulario ya no se escribe el texto del error.
+     */
+    public function validate($rules = null, $messages = [], $attributes = [])
+    {
+        try {
+            return parent::validate($rules, $messages, $attributes);
+        } catch (ValidationException $exception) {
+            $message = (string) collect($exception->errors())->flatten()->first();
+            if ($this->orgChartPage && $message !== '') {
+                $this->notify($message, 'error');
+            }
+
+            throw $exception;
+        }
+    }
+
+    /** No se pudo eliminar: se marca el campo (para las pruebas) y se avisa en la ventana emergente de arriba al centro. */
+    private function rejectDelete(string $message): void
+    {
+        $this->resetErrorBag('deleteConfirmationName');
+        $this->addError('deleteConfirmationName', $message);
+        $this->notify($message, 'error');
+    }
+
     private function notify(string $message, string $type = 'success'): void
     {
         session()->flash($type, $message);
@@ -1251,16 +1277,21 @@ class PanelAdministracion extends Component
         $user = User::findOrFail($this->selectedUserDetails['id']);
         $fullName = trim("{$user->name} {$user->last_name}");
 
-        $this->validate([
-            'deleteConfirmationName' => ['required', function ($attribute, $value, $fail) use ($fullName) {
-                if (mb_strtolower(trim(preg_replace('/\\s+/', ' ', $value))) !== mb_strtolower($fullName)) {
-                    $fail('Debes escribir el nombre completo exacto del usuario para eliminarlo.');
-                }
-            }],
-        ]);
+        // Los errores salen como aviso emergente arriba al centro (no dentro del formulario)
+        $typed = trim((string) preg_replace('/\\s+/', ' ', (string) $this->deleteConfirmationName));
+        if ($typed === '') {
+            $this->rejectDelete('Escribe el nombre completo del usuario para eliminarlo.');
+
+            return;
+        }
+        if (mb_strtolower($typed) !== mb_strtolower($fullName)) {
+            $this->rejectDelete('Debes escribir el nombre completo exacto del usuario para eliminarlo.');
+
+            return;
+        }
 
         if ($user->id === auth()->id()) {
-            $this->addError('deleteConfirmationName', 'No puedes eliminar tu propio usuario.');
+            $this->rejectDelete('No puedes eliminar tu propio usuario.');
 
             return;
         }
@@ -1269,7 +1300,7 @@ class PanelAdministracion extends Component
         // borrar a esa persona. Se avisa con claridad (antes salía un error) y se ofrece quitarla solo del organigrama.
         $auditCount = DB::table('time_entry_audits')->where('admin_id', $user->id)->count();
         if ($auditCount > 0) {
-            $this->addError('deleteConfirmationName', "No se puede eliminar: hizo {$auditCount} ajuste(s) en el reloj checador como administrador y ese historial debe conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.");
+            $this->rejectDelete("No se puede eliminar: hizo {$auditCount} ajuste(s) en el reloj checador como administrador y ese historial debe conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.");
 
             return;
         }
@@ -1287,7 +1318,7 @@ class PanelAdministracion extends Component
         } catch (Throwable $exception) {
             report($exception);
             $this->refreshChartAfterChange($chartService);
-            $this->addError('deleteConfirmationName', 'No se pudo eliminar al usuario porque tiene registros relacionados que deben conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.');
+            $this->rejectDelete('No se pudo eliminar al usuario porque tiene registros relacionados que deben conservarse. Usa «Solo quitar del organigrama» si quieres sacarlo del árbol.');
 
             return;
         }
