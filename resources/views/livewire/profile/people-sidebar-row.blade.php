@@ -15,11 +15,7 @@
 @endphp
 <div class="panel-border flex min-w-0 items-center gap-[10px] {{ $wide ? 'rounded-xl border p-[20px]' : 'shrink-0' }}">
     <a href="{{ route('profiles.show', $person) }}" class="shrink-0">
-        @if ($person->hasProfilePhotoFile())
-            <img src="{{ $person->profile_photo_url }}" alt="Foto de {{ $person->name }}" class="panel-border block h-10 w-10 rounded-full border object-cover">
-        @else
-            <span class="panel-subtle panel-border grid h-10 w-10 place-items-center rounded-full border">{{ mb_strtoupper(mb_substr($person->name, 0, 1).mb_substr($person->last_name ?? '', 0, 1)) }}</span>
-        @endif
+        <img src="{{ $person->avatarUrl() }}" alt="Foto de {{ $person->name }}" class="panel-border block h-10 w-10 rounded-full border object-cover">
     </a>
     <a href="{{ route('profiles.show', $person) }}" class="flex min-w-0 flex-1 flex-col">
         <span class="truncate leading-[30px]" title="{{ $fullName }}">{{ $shortName }}</span>

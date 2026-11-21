@@ -72,11 +72,7 @@
                 @foreach ($previews as $preview)
                     @php($previewUser = $preview['user'])
                     <button type="button" wire:key="direct-preview-{{ $previewUser->id }}" wire:click="openConversation({{ $previewUser->id }})" class="dc-card dc-preview flex w-[400px] max-w-[calc(100vw-20px)] items-center gap-[20px] p-[20px] text-left">
-                        @if ($previewUser->hasProfilePhotoFile())
-                            <img src="{{ $previewUser->profile_photo_url }}" alt="Foto de {{ $previewUser->name }}" class="dc-avatar">
-                        @else
-                            <span class="dc-avatar dc-initials">{{ $initials($previewUser) }}</span>
-                        @endif
+                        <img src="{{ $previewUser->avatarUrl() }}" alt="Foto de {{ $previewUser->name }}" class="dc-avatar">
                         <span class="min-w-0 flex-1">
                             <span class="dc-name block truncate">{{ $fullName($previewUser) }}</span>
                             @if ($preview['typing'])
@@ -114,7 +110,7 @@
                                 <img src="{{ $activeUser->profile_photo_url }}" alt="Foto ampliada de {{ $activeUser->name }}" class="max-h-[82vh] max-w-[82vw] rounded-full border-[6px] border-[#e7e7e7] object-contain shadow-2xl">
                             </div>
                         @else
-                            <span class="dc-avatar dc-initials">{{ $initials($activeUser) }}</span>
+                            <img src="{{ $activeUser->avatarUrl() }}" alt="Foto de {{ $activeUser->name }}" class="dc-avatar">
                         @endif
                         <a href="{{ route('profiles.show', $activeUser) }}" class="min-w-0" title="Ver perfil de {{ $fullName($activeUser) }}">
                             <p class="dc-name truncate" title="{{ $fullName($activeUser) }}">{{ $shortName($activeUser) }}</p>
@@ -216,11 +212,7 @@
                             @php($person = $row['user'])
                             <button type="button" wire:key="direct-person-{{ $person->id }}" wire:click="openConversation({{ $person->id }})" class="dc-row dc-divider flex h-[91px] w-full snap-start items-center gap-[20px] border-b p-[20px] text-left">
                                 <span class="relative shrink-0">
-                                    @if ($person->hasProfilePhotoFile())
-                                        <img src="{{ $person->profile_photo_url }}" alt="Foto de {{ $person->name }}" class="dc-avatar">
-                                    @else
-                                        <span class="dc-avatar dc-initials">{{ $initials($person) }}</span>
-                                    @endif
+                                    <img src="{{ $person->avatarUrl() }}" alt="Foto de {{ $person->name }}" class="dc-avatar">
                                     @if ($row['online'])
                                         <span class="dc-status absolute bottom-[2px] right-[2px] h-[10px] w-[10px] rounded-full bg-emerald-500"></span>
                                     @endif

@@ -94,7 +94,7 @@ class OnlineUsers extends Component
             return [
                 'id' => (int) $user->id,
                 'name' => trim($user->name.' '.($user->last_name ?? '')) ?: 'Usuario',
-                'photo' => $user->hasProfilePhotoFile() ? $user->profile_photo_url : null,
+                'photo' => $user->avatarUrl(),
                 'activity' => $entry
                     ? ($entry->subService?->sub_service ?? 'Actividad en curso')
                     : null,
