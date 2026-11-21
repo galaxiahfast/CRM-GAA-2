@@ -21,6 +21,28 @@
         })(document.currentScript.parentElement);
     </script>
 
+    {{-- Temporada de Navidad: copos de nieve que caen despacio (solo CSS; se detienen con «reducir movimiento»). --}}
+    <div class="auth-snow pointer-events-none" aria-hidden="true">
+            <i style="--x: 4%; --s: 4px; --d: 0s; --t: 14s; --o: 0.7;"></i>
+            <i style="--x: 11%; --s: 6px; --d: 3s; --t: 18s; --o: 0.55;"></i>
+            <i style="--x: 18%; --s: 3px; --d: 7s; --t: 12s; --o: 0.8;"></i>
+            <i style="--x: 26%; --s: 5px; --d: 1.5s; --t: 16s; --o: 0.6;"></i>
+            <i style="--x: 33%; --s: 4px; --d: 9s; --t: 15s; --o: 0.7;"></i>
+            <i style="--x: 41%; --s: 6px; --d: 4s; --t: 19s; --o: 0.5;"></i>
+            <i style="--x: 48%; --s: 3px; --d: 11s; --t: 13s; --o: 0.8;"></i>
+            <i style="--x: 56%; --s: 5px; --d: 2.5s; --t: 17s; --o: 0.6;"></i>
+            <i style="--x: 63%; --s: 4px; --d: 6s; --t: 14s; --o: 0.7;"></i>
+            <i style="--x: 70%; --s: 6px; --d: 8.5s; --t: 20s; --o: 0.5;"></i>
+            <i style="--x: 77%; --s: 3px; --d: 0.5s; --t: 12s; --o: 0.8;"></i>
+            <i style="--x: 84%; --s: 5px; --d: 5.5s; --t: 16s; --o: 0.6;"></i>
+            <i style="--x: 91%; --s: 4px; --d: 10s; --t: 15s; --o: 0.7;"></i>
+            <i style="--x: 97%; --s: 6px; --d: 12.5s; --t: 18s; --o: 0.5;"></i>
+            <i style="--x: 7%; --s: 3px; --d: 13s; --t: 13s; --o: 0.75;"></i>
+            <i style="--x: 37%; --s: 3px; --d: 14.5s; --t: 14s; --o: 0.75;"></i>
+            <i style="--x: 59%; --s: 3px; --d: 15.5s; --t: 13s; --o: 0.75;"></i>
+            <i style="--x: 88%; --s: 3px; --d: 16.5s; --t: 14s; --o: 0.75;"></i>
+    </div>
+
     {{-- Fondo: red de partículas tenue que reacciona al puntero. --}}
     <canvas class="auth-canvas pointer-events-none absolute inset-0 -z-10 h-full w-full" data-auth-network-canvas aria-hidden="true"></canvas>
 
@@ -59,16 +81,21 @@
             </div>
         </div>
 
-        {{-- Detalle de temporada: dos cactus estáticos plantados en sus montículos. --}}
+        {{-- Detalle de temporada (Navidad): dos pinos adornados sobre montículos de nieve y copos que caen. --}}
         <div class="auth-oasis auth-oasis-left" aria-hidden="true">
             <i class="auth-shadow"></i>
-            <div class="auth-cactus">
-                <svg viewBox="0 0 60 96" fill="none">
-                    <path d="M24 94V22a6 6 0 0 1 12 0V94Z" fill="#16a34a"/>
-                    <path d="M24 62H15a5 5 0 0 1-5-5V40a4.5 4.5 0 0 1 9 0V52h5Z" fill="#16a34a"/>
-                    <path d="M36 52h5V32a4.5 4.5 0 0 1 9 0V47a5 5 0 0 1-5 5h-9Z" fill="#16a34a"/>
-                    <path d="M30 14V90M19 44V56M45.5 36V46" stroke="#14532d" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
-                    <circle cx="30" cy="9" r="3" fill="#dc2626"/>
+            <div class="auth-tree">
+                <svg viewBox="0 0 70 100" fill="none">
+                    <rect x="31" y="84" width="8" height="12" rx="2" fill="#7c4a1e"/>
+                    <path d="M35 8 60 44H48L64 66H50L66 86H4L20 66H6L22 44H10Z" fill="#15803d"/>
+                    <path d="M35 8 60 44H48L64 66H50L66 86H35Z" fill="#166534"/>
+                    <path d="M14 44C24 48 38 47 56 40M10 66C24 71 42 70 60 62M6 86C22 89 44 89 64 84" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                    <circle cx="26" cy="54" r="3.2" fill="#dc2626"/>
+                    <circle cx="45" cy="58" r="3.2" fill="#facc15"/>
+                    <circle cx="33" cy="74" r="3.2" fill="#3b82f6"/>
+                    <circle cx="52" cy="78" r="3.2" fill="#dc2626"/>
+                    <circle cx="18" cy="78" r="3.2" fill="#facc15"/>
+                    <path d="M35 0l2.6 5.4 5.9.9-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.9Z" fill="#facc15"/>
                 </svg>
             </div>
             <span class="auth-mound">
@@ -79,13 +106,18 @@
         </div>
         <div class="auth-oasis auth-oasis-right" aria-hidden="true">
             <i class="auth-shadow"></i>
-            <div class="auth-cactus">
-                <svg viewBox="0 0 60 96" fill="none">
-                    <path d="M24 94V22a6 6 0 0 1 12 0V94Z" fill="#16a34a"/>
-                    <path d="M24 62H15a5 5 0 0 1-5-5V40a4.5 4.5 0 0 1 9 0V52h5Z" fill="#16a34a"/>
-                    <path d="M36 52h5V32a4.5 4.5 0 0 1 9 0V47a5 5 0 0 1-5 5h-9Z" fill="#16a34a"/>
-                    <path d="M30 14V90M19 44V56M45.5 36V46" stroke="#14532d" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
-                    <circle cx="30" cy="9" r="3" fill="#dc2626"/>
+            <div class="auth-tree">
+                <svg viewBox="0 0 70 100" fill="none">
+                    <rect x="31" y="84" width="8" height="12" rx="2" fill="#7c4a1e"/>
+                    <path d="M35 8 60 44H48L64 66H50L66 86H4L20 66H6L22 44H10Z" fill="#15803d"/>
+                    <path d="M35 8 60 44H48L64 66H50L66 86H35Z" fill="#166534"/>
+                    <path d="M14 44C24 48 38 47 56 40M10 66C24 71 42 70 60 62M6 86C22 89 44 89 64 84" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                    <circle cx="26" cy="54" r="3.2" fill="#dc2626"/>
+                    <circle cx="45" cy="58" r="3.2" fill="#facc15"/>
+                    <circle cx="33" cy="74" r="3.2" fill="#3b82f6"/>
+                    <circle cx="52" cy="78" r="3.2" fill="#dc2626"/>
+                    <circle cx="18" cy="78" r="3.2" fill="#facc15"/>
+                    <path d="M35 0l2.6 5.4 5.9.9-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.9Z" fill="#facc15"/>
                 </svg>
             </div>
             <span class="auth-mound">
