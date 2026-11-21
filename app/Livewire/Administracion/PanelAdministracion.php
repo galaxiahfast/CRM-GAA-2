@@ -1012,6 +1012,8 @@ class PanelAdministracion extends Component
             'name' => $user->name,
             'last_name' => $user->last_name,
             'email' => mb_strtolower((string) $user->email),
+            'birth_date' => $user->birth_date?->format('Y-m-d'),
+            'gender' => in_array($user->gender, ['hombre', 'mujer'], true) ? $user->gender : null,
             'role_id' => $user->role_id,
             'employee_id' => $user->employee_id,
             'job_position_id' => $profile?->job_position_id,
@@ -1031,6 +1033,11 @@ class PanelAdministracion extends Component
             'id' => $user->id,
             'name' => trim("{$user->name} {$user->last_name}"),
             'email' => mb_strtolower((string) $user->email),
+            // Fecha completa si se capturó; si solo hay año (datos anteriores), se muestra el año
+            'birth_date' => $user->birth_date
+                ? $user->birth_date->locale('es')->translatedFormat('d \\d\\e F \\d\\e Y').' · '.$user->birth_date->age.' años'
+                : ($user->birth_year ? $user->birth_year.' · '.$user->approximateAge().' años aprox.' : null),
+            'gender' => match ($user->gender) { 'hombre' => 'Hombre', 'mujer' => 'Mujer', default => null },
             'role' => $role,
             'employee_id' => $user->employee_id,
             'created_at' => optional($user->created_at)->format('d/m/Y H:i'),
@@ -1062,6 +1069,9 @@ class PanelAdministracion extends Component
             'distinct' => 'El campo :attribute tiene valores repetidos.',
             'different' => 'El campo :attribute no puede ser la misma persona.',
             'in' => 'El :attribute elegido no está disponible.',
+            'date' => 'La :attribute no es una fecha válida.',
+            'before' => 'La :attribute debe ser anterior a hoy.',
+            'after' => 'La :attribute no es válida.',
             'not_in' => 'El :attribute elegido no está disponible.',
         ];
     }
@@ -1073,6 +1083,8 @@ class PanelAdministracion extends Component
             'userForm.name' => 'nombre',
             'userForm.last_name' => 'apellido',
             'userForm.email' => 'correo electrónico',
+            'userForm.birth_date' => 'fecha de nacimiento',
+            'userForm.gender' => 'sexo',
             'userForm.role_id' => 'rol',
             'userForm.employee_id' => 'ID del reloj checador',
             'userForm.job_position_id' => 'puesto',
@@ -1233,10 +1245,18 @@ class PanelAdministracion extends Component
         AttendanceSettingsService $settingsService,
     ): void {
         $this->ensureOrganizationAdministrator();
-        abort_unless($this->selectedUserId, 404);
+        abort_unless($this->selectedUserId || $this->isCreatingUser, 404);
 
-        $user = User::findOrFail($this->selectedUserId);
+        $creating = $this->isCreatingUser;
+        $user = $creating ? null : User::findOrFail($this->selectedUserId);
+        $userId = $user?->id ?? 0;
         $this->userForm['email'] = mb_strtolower(trim((string) ($this->userForm['email'] ?? '')));
+        if (! filled($this->userForm['birth_date'] ?? null)) {
+            $this->userForm['birth_date'] = null;
+        }
+        if (! in_array($this->userForm['gender'] ?? null, ['hombre', 'mujer'], true)) {
+            $this->userForm['gender'] = null;
+        }
         $isHourlyPosition = JobPosition::query()
             ->whereKey((int) ($this->userForm['job_position_id'] ?? 0))
             ->where('payment_type', JobPosition::PAYMENT_HOURLY)
@@ -1247,7 +1267,9 @@ class PanelAdministracion extends Component
         $rules = [
             'userForm.name' => ['required', 'string', 'max:255'],
             'userForm.last_name' => ['nullable', 'string', 'max:255'],
-            'userForm.email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'userForm.email' => ['required', 'email', 'max:255', 'unique:users,email'.($user ? ','.$user->id : '')],
+            'userForm.birth_date' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
+            'userForm.gender' => ['nullable', Rule::in(['hombre', 'mujer'])],
             'userForm.role_id' => ['required', 'exists:roles,id'],
             'userForm.employee_id' => ['nullable', 'string', 'max:50'],
             // Un usuario sin asignar (sin puesto ni área) también debe poder guardarse.
@@ -1257,13 +1279,14 @@ class PanelAdministracion extends Component
             'userForm.food_allowance' => ['nullable', 'numeric', 'min:0'],
             'userForm.is_auxiliar' => ['boolean'],
             'userForm.is_hourly_position' => ['boolean'],
-            'userForm.password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            // Al crear, la contraseña es obligatoria; al editar, solo si se quiere cambiar
+            'userForm.password' => [$creating ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
             'userForm.superior_ids' => ['nullable', 'array', 'max:1'],
             'userForm.superior_ids.*' => [
                 'integer',
                 'exists:users,id',
                 'distinct',
-                'different:'.$user->id,
+                'not_in:'.$userId,
                 Rule::in($this->hierarchyCandidateIds()),
             ],
             'userForm.subordinate_ids' => ['nullable', 'array'],
@@ -1271,12 +1294,12 @@ class PanelAdministracion extends Component
                 'integer',
                 'exists:users,id',
                 'distinct',
-                'different:'.$user->id,
+                'not_in:'.$userId,
                 Rule::notIn($excludedSubordinateIds),
-                function ($attribute, $value, $fail) use ($user): void {
+                function ($attribute, $value, $fail) use ($userId): void {
                     if (UserHierarchyRelation::query()
                         ->where('subordinate_id', (int) $value)
-                        ->where('superior_id', '<>', $user->id)
+                        ->where('superior_id', '<>', $userId)
                         ->exists()) {
                         $fail('El subordinado ya tiene un jefe directo asignado.');
                     }
@@ -1299,15 +1322,29 @@ class PanelAdministracion extends Component
         }
 
         try {
-            DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService) {
-                $user->update(array_filter([
+            $user = DB::transaction(function () use ($user, $data, $isHourlyPosition, $chartService, $creating) {
+                $attributes = array_filter([
                     'name' => $data['name'],
                     'last_name' => $data['last_name'] ?? null,
                     'email' => $data['email'],
+                    'birth_date' => $data['birth_date'] ?? null,
+                    // El año se mantiene para lo que ya lo usa (edad aproximada)
+                    'birth_year' => filled($data['birth_date'] ?? null) ? (int) substr((string) $data['birth_date'], 0, 4) : ($user?->birth_year),
+                    'gender' => $data['gender'] ?? null,
                     'role_id' => $data['role_id'],
                     'employee_id' => filled($data['employee_id'] ?? null) ? trim((string) $data['employee_id']) : null,
                     'password' => filled($data['password'] ?? null) ? $data['password'] : null,
-                ], fn ($value, $key) => $key !== 'password' || $value !== null, ARRAY_FILTER_USE_BOTH));
+                ], fn ($value, $key) => $key !== 'password' || $value !== null, ARRAY_FILTER_USE_BOTH);
+
+                if ($creating) {
+                    $user = User::query()->forceCreate($attributes + ['email_verified_at' => now()]);
+                    // Los auxiliares quedan en la lista de interns, como al crearlos antes desde el formulario aparte
+                    if (Role::query()->whereKey($data['role_id'])->where('role', 'Auxiliar')->exists()) {
+                        UserInterns::create(['intern_id' => $user->id, 'created_by' => auth()->id()]);
+                    }
+                } else {
+                    $user->update($attributes);
+                }
 
                 $user->activeOrganizationalProfile()->updateOrCreate(
                     ['user_id' => $user->id, 'is_active' => true],
@@ -1328,6 +1365,8 @@ class PanelAdministracion extends Component
                     $data['subordinate_ids'] ?? [],
                     $chartService
                 );
+
+                return $user;
             });
         } catch (ValidationException $exception) {
             // Por ejemplo, una relación jerárquica que formaría un ciclo: se avisa arriba y no se guarda nada.
@@ -1357,7 +1396,7 @@ class PanelAdministracion extends Component
         $references = app(ReferenceDataCache::class);
         $references->forgetManageableUsers();
         $references->forgetOrganizationDashboard();
-        $this->notify('Usuario actualizado.');
+        $this->notify($creating ? 'Usuario agregado.' : 'Usuario actualizado.');
     }
 
     public function closeUserDetails(): void
