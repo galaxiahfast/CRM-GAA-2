@@ -799,3 +799,20 @@ html.module-dark-theme .administration-monochrome [data-administration-modal] he
 html.module-dark-theme .administration-monochrome [data-administration-modal] .administration-form-panel svg {
     color: #ffffff;
 }
+
+/* Ningún campo muestra los íconos que el navegador pone por su cuenta: la «×» de los campos de búsqueda (se encimaba con la
+   flecha de los selectores) y las flechitas de los números. */
+/* Una regla por selector: si uno no existe en el navegador, los demás siguen aplicando */
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+input[type="search"]::-webkit-search-results-button { -webkit-appearance: none; appearance: none; display: none; }
+input[type="search"]::-webkit-search-results-decoration { -webkit-appearance: none; appearance: none; display: none; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
