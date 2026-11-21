@@ -85,7 +85,7 @@
     }"
     @click.outside="closeList()"
     @keydown.escape.window="closeList()"
-    @scroll.window.capture="if (open && ! ($refs.results && $refs.results.contains($event.target))) closeList()"
+    @scroll.window.capture="open && floatingScroll($event, $root, $refs.results, () => closeList(), () => positionList())"
     @resize.window="if (open) positionList()"
 >
     <input

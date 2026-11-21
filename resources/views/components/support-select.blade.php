@@ -41,7 +41,7 @@
     }"
     @click.outside="open = false"
     @keydown.escape.window="open = false"
-    @scroll.window.capture="if (open && ! ($refs.list && $refs.list.contains($event.target))) open = false"
+    @scroll.window.capture="open && floatingScroll($event, $root, $refs.list, () => open = false)"
     {{ $attributes->class(['relative min-w-0']) }}
 >
     <input type="hidden" name="{{ $name }}" :value="value">

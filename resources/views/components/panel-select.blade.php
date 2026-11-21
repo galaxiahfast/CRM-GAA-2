@@ -50,13 +50,18 @@
         init() {
             if (! {{ $floating ? 'true' : 'false' }}) return;
             this.reposition = () => { if (this.open) this.position(); };
+            this.onScroll = (event) => {
+                if (! this.open) return;
+                const list = document.querySelector('[data-panel-select-list=\'' + this.uid + '\']');
+                window.floatingScroll(event, this.$root, list, () => { this.open = false; }, () => this.position());
+            };
             window.addEventListener('resize', this.reposition);
-            document.addEventListener('scroll', this.reposition, true);
+            document.addEventListener('scroll', this.onScroll, true);
         },
         destroy() {
             if (! this.reposition) return;
             window.removeEventListener('resize', this.reposition);
-            document.removeEventListener('scroll', this.reposition, true);
+            document.removeEventListener('scroll', this.onScroll, true);
         },
         // Lista flotante: mismo zoom que la página (se mide en píxeles visibles y se divide entre el zoom); 10px bajo la caja o, si no cabe, encima.
         position() {

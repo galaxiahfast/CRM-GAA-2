@@ -55,7 +55,7 @@
     }"
     @click.outside="open = false"
     @keydown.escape.window="open = false"
-    @scroll.window.capture="if (open && ! ($refs.list && $refs.list.contains($event.target))) open = false"
+    @scroll.window.capture="open && floatingScroll($event, $root, $refs.list, () => open = false, () => position())"
     @resize.window="if (open) position()"
     {{ $attributes->class(['relative min-w-0']) }}
 >

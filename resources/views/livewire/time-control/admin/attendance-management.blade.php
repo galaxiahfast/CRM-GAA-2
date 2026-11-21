@@ -958,12 +958,12 @@
                                                                 <span class="panel-muted not-italic">({{ $index % 2 === 0 ? 'Entrada' : 'Salida' }})</span>
                                                             </div>
                                                             <div class="flex gap-[10px]">
-                                                                <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live, 'attendance-mark-{{ $index }}')" @attendance-time-picker-open.window="if ($event.detail !== pickerId) open = false">
+                                                                <div class="relative min-w-0 flex-1" x-data="timePicker($wire.entangle('modalMarks.{{ $index }}').live, 'attendance-mark-{{ $index }}')" @attendance-time-picker-open.window="if ($event.detail !== pickerId) open = false" @scroll.window.capture="open && floatingScroll($event, $root, $refs.popover, () => open = false)">
                                                                     <button id="attendance-mark-{{ $index }}" type="button" @click.stop="$dispatch('attendance-time-picker-open', pickerId); toggle($el)" class="panel-field flex h-11 w-full items-center rounded-xl border px-[15px] text-left focus:ring-0" :aria-expanded="open">
                                                                         <span class="whitespace-nowrap tabular-nums" x-text="displayValue"></span>
                                                                     </button>
                                                                     <template x-teleport="body">
-                                                                        <div data-panel x-cloak x-show="open" x-transition @click.outside="open = false" :style="popoverStyle" class="attendance-time-popover panel-surface panel-border fixed z-[100100] rounded-xl border p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
+                                                                        <div x-ref="popover" data-panel x-cloak x-show="open" x-transition @click.outside="open = false" :style="popoverStyle" class="attendance-time-popover panel-surface panel-border fixed z-[100100] rounded-xl border p-[20px] shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
                                                                             <div class="grid grid-cols-3 gap-[20px]">
                                                                                 @foreach (['hour' => 'Hora', 'minute' => 'Min.', 'second' => 'Seg.'] as $timePart => $timeLabel)
                                                                                     <label class="panel-muted grid gap-[10px]">
