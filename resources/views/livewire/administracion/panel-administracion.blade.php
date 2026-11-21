@@ -479,8 +479,6 @@
 
         /* Botones de la barra: se resaltan al pasar el puntero y al presionarlos */
         .org-tool-btn, #fullscreen-toggle { transition: background-color 150ms ease, border-color 150ms ease !important; }
-        .org-tool-btn:hover, #fullscreen-toggle:hover { border-color: var(--panel-text) !important; }
-        .org-tool-btn[aria-expanded="true"] { border-color: var(--org-flow) !important; color: var(--org-flow); }
 
         @media (prefers-reduced-motion: reduce) {
             .org-ready .visual-node-wrapper > .relative { animation: none; }
@@ -526,8 +524,8 @@
            y el panel de «Sin asignar» queda encima del árbol sin tapar la barra */
         @media (max-width: 1023px) {
             .org-toolbar { top: auto !important; bottom: 20px; left: 20px; right: 20px !important; flex-wrap: wrap; justify-content: flex-end; }
-            .org-toolbar > div:not(.relative):first-child, .org-toolbar > div.w-\[200px\] { flex: 1 1 200px; }
-            .org-drop { top: auto !important; bottom: calc(100% + 20px) !important; }
+            .org-toolbar > div:not(.relative):first-child, .org-toolbar > div.w-\[240px\] { flex: 1 1 200px; }
+            .org-drop { top: auto !important; bottom: calc(100% + 10px) !important; }
             .org-side { top: 20px; bottom: 160px; }
         }
 
@@ -935,16 +933,16 @@
             {{-- Barra de herramientas (arriba a la derecha): buscar, filtrar por área, información, pantalla completa y sin asignar --}}
             <div data-org-panel class="org-toolbar absolute right-[20px] top-[20px] flex items-start gap-[20px]" style="z-index: 40;">
                 <!-- Buscador -->
-                        <div style="position: relative; flex: 1;">
+                        <div style="position: relative; width: 400px; max-width: 100%; flex: 0 1 400px;">
                             <input 
                                 id="node-search-input"
                                 type="text" 
                                 placeholder="Buscar colaborador..."
                                 class="org-field"
-                                style="min-width: 240px; width: 100%; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
+                                style="width: 100%; outline: 0 !important; box-shadow: none !important; transition: none; position: relative; z-index: 30;"
                                 autocomplete="off"
                             >
-                            <div x-data="backupOverlayScroll()" class="org-drop" style="position: absolute; top: calc(100% + 20px); right: 0; width: 400px; max-width: calc(100vw - 80px); z-index: 100;">
+                            <div x-data="backupOverlayScroll()" data-scroll-on-hover class="org-drop" style="position: absolute; top: calc(100% + 10px); left: 0; right: 0; z-index: 100;">
                                 <div
                                     id="search-results" x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18"
                                     class="administration-form-scrollbar org-panel !p-0"
@@ -955,7 +953,7 @@
                         </div>
 
                         <!-- Filtro por área con búsqueda -->
-                        <div class="relative w-[200px]" x-data="{
+                        <div class="relative w-[240px]" x-data="{
                                 open: false, query: '', selected: @js((string) ($selectedPhysicalAreaId ?? '')),
                                 areas: @js($physicalAreas->map(fn ($area) => ['id' => (string) $area->id, 'name' => $area->name])->values()),
                                 get filteredAreas() { const term = this.query.toLocaleLowerCase().trim(); return term ? this.areas.filter(area => area.name.toLocaleLowerCase().includes(term)) : this.areas; },
@@ -969,8 +967,8 @@
                                 class="absolute inset-y-0 right-0 flex w-10 items-center justify-center focus:outline-none" tabindex="-1" aria-label="Mostrar áreas">
                                 <svg class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" /></svg>
                             </button>
-                            <div x-cloak x-show="open" class="org-panel org-drop absolute left-0 right-0 top-[calc(100%+20px)] overflow-hidden !p-0" style="z-index: 100;"
-                                x-data="backupOverlayScroll()" x-effect="open; $nextTick(() => update())">
+                            <div x-cloak x-show="open" class="org-panel org-drop absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden !p-0" style="z-index: 100;"
+                                x-data="backupOverlayScroll()" data-scroll-on-hover x-effect="open; $nextTick(() => update())">
                                 <div x-ref="scroller" @scroll="update()" @mouseenter="update()" id="physical-area-results" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="administration-form-scrollbar max-h-[300px] overflow-y-auto overflow-x-hidden">
                                 <button type="button" @mousedown.prevent="choose('')" :aria-selected="selected === ''" class="org-option">Todas las áreas</button>
                                 <template x-for="area in filteredAreas" :key="area.id"><button type="button" @mousedown.prevent="choose(area.id)" :aria-selected="selected === area.id" x-text="area.name" class="org-option"></button></template>
@@ -985,7 +983,7 @@
                     <button type="button" class="org-tool-btn" @click="open = ! open" :aria-expanded="open" title="Información" aria-label="Información del organigrama">
                         <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
                     </button>
-                    <div x-cloak x-show="open" class="org-panel org-info org-drop absolute right-0 top-[calc(100%+20px)]" style="z-index: 100;">
+                    <div x-cloak x-show="open" class="org-panel org-info org-drop absolute right-0 top-[calc(100%+10px)]" style="z-index: 100;">
                         <h1 class="org-card-title">Organigrama</h1>
                         <p class="org-card-text">Estructura jerárquica: líneas de mando y niveles de supervisión.</p>
                         <p class="org-card-text">{{ $totalUsers ?? 0 }} usuarios · {{ $orgChartStats['in_tree'] ?? 0 }} en el árbol · {{ $orgChartStats['relations'] ?? 0 }} relaciones · {{ $totalRoles ?? 0 }} roles</p>
