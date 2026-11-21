@@ -12,6 +12,11 @@ class UserHierarchyRelation extends Model
         'superior_id',
         'job_position_id',
         'physical_area_id',
+        'position',
+    ];
+
+    protected $casts = [
+        'position' => 'integer',
     ];
 
     public function subordinate(): BelongsTo

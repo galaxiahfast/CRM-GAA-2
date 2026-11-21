@@ -17,8 +17,13 @@ class OrganizationChartService
      */
     public function buildChartData(?int $physicalAreaId = null): array
     {
-        // Obtener todas las relaciones (sin filtrar por área todavía)
-        $relations = UserHierarchyRelation::all(['subordinate_id', 'superior_id']);
+        // Obtener todas las relaciones (sin filtrar por área todavía). Cada equipo se dibuja en el orden guardado (posición) y
+        // quien no tiene posición va al final, en el orden en que se asignó.
+        $relations = UserHierarchyRelation::query()
+            ->orderByRaw('CASE WHEN position IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get(['subordinate_id', 'superior_id']);
 
         $superiorIdsByUser = [];
         $subordinateIdsByUser = [];
@@ -580,8 +585,8 @@ class OrganizationChartService
         $relations = UserHierarchyRelation::query()
             ->orderBy('subordinate_id')
             ->orderBy('superior_id')
-            ->get(['subordinate_id', 'superior_id'])
-            ->map(fn (UserHierarchyRelation $relation): string => $relation->subordinate_id.'>'.$relation->superior_id)
+            ->get(['subordinate_id', 'superior_id', 'position'])
+            ->map(fn (UserHierarchyRelation $relation): string => $relation->subordinate_id.'>'.$relation->superior_id.'@'.$relation->position)
             ->implode(',');
 
         $users = User::query()
@@ -653,28 +658,116 @@ class OrganizationChartService
     }
 
     /**
-     * Saca a una persona del organigrama sin borrarla: su equipo directo pasa a reportar a su jefe (si no tenía jefe, cada
-     * subordinado queda como cabeza de su propia rama) y ella queda en «Sin asignar».
+     * Coloca a una persona (con todo su equipo) respecto de otra del organigrama, como al arrastrarla y soltarla:
+     *  - 'child': en el equipo de la otra persona, al final.
+     *  - 'before' / 'after': junto a la otra persona, con su mismo jefe, a su izquierda o a su derecha.
+     *  - 'above': en el lugar de la otra persona, a cargo de ella (la otra pasa a su equipo con toda su rama).
+     *
+     * Las dos personas deben seguir con el jefe que la pantalla mostraba ($expectedSuperiorId y
+     * $expectedTargetSuperiorId); si alguien más cambió el organigrama se lanza OrganizationChartConflict sin tocar nada.
+     *
+     * @return array{changed: bool, superior_id: ?int, previous_superior_id: ?int}
+     */
+    public function placeUser(int $userId, int $targetId, string $placement, ?int $expectedSuperiorId, ?int $expectedTargetSuperiorId): array
+    {
+        if (! in_array($placement, ['child', 'before', 'after', 'above'], true)) {
+            throw ValidationException::withMessages(['move' => 'Ese movimiento no es válido.']);
+        }
+
+        if ($userId === $targetId) {
+            throw ValidationException::withMessages(['move' => 'Suelta a la persona sobre otra del organigrama.']);
+        }
+
+        return DB::transaction(function () use ($userId, $targetId, $placement, $expectedSuperiorId, $expectedTargetSuperiorId): array {
+            $relations = UserHierarchyRelation::query()->lockForUpdate()->get(['id', 'subordinate_id', 'superior_id', 'position']);
+            $userSuperiorId = $this->currentSuperiorId($relations, $userId);
+            $targetSuperiorId = $this->currentSuperiorId($relations, $targetId);
+
+            if ($userSuperiorId !== $expectedSuperiorId || $targetSuperiorId !== $expectedTargetSuperiorId) {
+                throw new OrganizationChartConflict('El organigrama cambió desde que se dibujó.');
+            }
+
+            if (User::query()->whereKey([$userId, $targetId])->count() !== 2) {
+                throw ValidationException::withMessages(['move' => 'Una de las personas ya no existe; el organigrama se actualizó.']);
+            }
+
+            $subordinatesMap = [];
+            foreach ($relations as $relation) {
+                $subordinatesMap[(int) $relation->superior_id][] = (int) $relation->subordinate_id;
+            }
+            // Ni debajo, ni junto, ni a cargo de alguien de su propio equipo (se formaría un círculo)
+            if ($this->canReach($userId, $targetId, $subordinatesMap)) {
+                throw ValidationException::withMessages(['move' => 'No puedes moverla dentro de su propio equipo.']);
+            }
+
+            $unchanged = ['changed' => false, 'superior_id' => $userSuperiorId, 'previous_superior_id' => $userSuperiorId];
+            if ($placement === 'child' && $userSuperiorId === $targetId) {
+                return $unchanged;
+            }
+
+            if (in_array($placement, ['before', 'after'], true) && $targetSuperiorId === null) {
+                throw ValidationException::withMessages(['move' => 'Quien encabeza el organigrama no tiene jefe: suéltala arriba de esa persona para ponerla a su cargo.']);
+            }
+
+            $newSuperiorId = $placement === 'child' ? $targetId : $targetSuperiorId;
+
+            // Nuevo orden de cada equipo que cambia
+            $order = [];
+            if ($newSuperiorId !== null) {
+                $team = array_values(array_diff($this->orderedChildren($relations, $newSuperiorId), [$userId]));
+                $index = array_search($targetId, $team, true);
+                if ($placement === 'child' || $index === false) {
+                    $team[] = $userId;
+                } elseif ($placement === 'above') {
+                    $team[$index] = $userId;
+                } else {
+                    array_splice($team, $placement === 'after' ? $index + 1 : $index, 0, [$userId]);
+                }
+                $order[$newSuperiorId] = $team;
+
+                if ($placement !== 'above' && $userSuperiorId === $newSuperiorId && $team === $this->orderedChildren($relations, $newSuperiorId)) {
+                    return $unchanged;
+                }
+            }
+            if ($placement === 'above') {
+                $order[$userId] = [...array_values(array_diff($this->orderedChildren($relations, $userId), [$targetId])), $targetId];
+            }
+
+            if ($userSuperiorId !== $newSuperiorId) {
+                UserHierarchyRelation::query()->where('subordinate_id', $userId)->delete();
+                if ($newSuperiorId !== null) {
+                    UserHierarchyRelation::create(['subordinate_id' => $userId, 'superior_id' => $newSuperiorId, 'job_position_id' => null, 'physical_area_id' => null]);
+                }
+            }
+            if ($placement === 'above') {
+                UserHierarchyRelation::query()->where('subordinate_id', $targetId)->delete();
+                UserHierarchyRelation::create(['subordinate_id' => $targetId, 'superior_id' => $userId, 'job_position_id' => null, 'physical_area_id' => null]);
+            }
+            foreach ($order as $superiorId => $childIds) {
+                $this->writeOrder((int) $superiorId, $childIds);
+            }
+
+            return ['changed' => true, 'superior_id' => $newSuperiorId, 'previous_superior_id' => $userSuperiorId];
+        });
+    }
+
+    /**
+     * Saca a una persona del organigrama sin borrarla: su equipo directo pasa a reportar a su jefe, en el mismo lugar que
+     * ocupaba ella (si no tenía jefe, cada subordinado queda como cabeza de su propia rama) y ella queda en «Sin asignar».
      *
      * @return array{superior_id: ?int, moved: int}
      */
     public function removeFromChart(int $userId, ?int $expectedSuperiorId = null, bool $checkExpected = false): array
     {
         return DB::transaction(function () use ($userId, $expectedSuperiorId, $checkExpected): array {
-            $relations = UserHierarchyRelation::query()->lockForUpdate()->get(['id', 'subordinate_id', 'superior_id']);
+            $relations = UserHierarchyRelation::query()->lockForUpdate()->get(['id', 'subordinate_id', 'superior_id', 'position']);
             $superiorId = $this->currentSuperiorId($relations, $userId);
 
             if ($checkExpected && $superiorId !== $expectedSuperiorId) {
                 throw new OrganizationChartConflict('El jefe de la persona cambió desde que se dibujó el organigrama.');
             }
 
-            $subordinateIds = $relations
-                ->where('superior_id', $userId)
-                ->pluck('subordinate_id')
-                ->map(fn ($id): int => (int) $id)
-                ->unique()
-                ->values()
-                ->all();
+            $subordinateIds = $this->orderedChildren($relations, $userId);
 
             UserHierarchyRelation::query()
                 ->where('subordinate_id', $userId)
@@ -690,10 +783,42 @@ class OrganizationChartService
                         'physical_area_id' => null,
                     ]);
                 }
+
+                // Su equipo ocupa su lugar entre los compañeros (no se va al final)
+                $team = [];
+                foreach ($this->orderedChildren($relations, $superiorId) as $childId) {
+                    array_push($team, ...($childId === $userId ? $subordinateIds : [$childId]));
+                }
+                $this->writeOrder($superiorId, array_values(array_unique($team)));
             }
 
             return ['superior_id' => $superiorId, 'moved' => count($subordinateIds)];
         });
+    }
+
+    /**
+     * Equipo directo de un jefe en el orden en que se dibuja (posición guardada; sin posición, al final por antigüedad).
+     *
+     * @param  Collection<int, UserHierarchyRelation>  $relations
+     * @return array<int, int>
+     */
+    private function orderedChildren(Collection $relations, int $superiorId): array
+    {
+        $children = $relations->filter(fn (UserHierarchyRelation $relation): bool => (int) $relation->superior_id === $superiorId)->all();
+        usort($children, static fn (UserHierarchyRelation $a, UserHierarchyRelation $b): int => [$a->position ?? PHP_INT_MAX, (int) $a->id] <=> [$b->position ?? PHP_INT_MAX, (int) $b->id]);
+
+        return array_values(array_unique(array_map(static fn (UserHierarchyRelation $relation): int => (int) $relation->subordinate_id, $children)));
+    }
+
+    /** @param  array<int, int>  $childIds */
+    private function writeOrder(int $superiorId, array $childIds): void
+    {
+        foreach (array_values($childIds) as $position => $childId) {
+            UserHierarchyRelation::query()
+                ->where('superior_id', $superiorId)
+                ->where('subordinate_id', $childId)
+                ->update(['position' => $position]);
+        }
     }
 
     /** @param  Collection<int, UserHierarchyRelation>  $relations */

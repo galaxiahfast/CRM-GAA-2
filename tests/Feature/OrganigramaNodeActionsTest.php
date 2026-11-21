@@ -215,6 +215,102 @@ class OrganigramaNodeActionsTest extends TestCase
         $this->assertSame($boss->id, $this->superiorOf($eva), 'su equipo pasa a su jefe');
     }
 
+    /** Ids del equipo directo de una persona, en el orden en que se dibuja (de izquierda a derecha). */
+    private function teamOf(User $user): array
+    {
+        $find = function (array $nodes) use (&$find, $user): ?array {
+            foreach ($nodes as $node) {
+                if ($node['id'] === $user->id) {
+                    return array_column($node['children'], 'id');
+                }
+                if (($found = $find($node['children'])) !== null) {
+                    return $found;
+                }
+            }
+
+            return null;
+        };
+
+        return $find(app(OrganizationChartService::class)->buildChartData(null)['tree']) ?? [];
+    }
+
+    private function place(User $actor, User $user, User $target, string $placement, ?User $from, ?User $targetFrom)
+    {
+        return Livewire::actingAs($actor)->test(PanelAdministracion::class)
+            ->set('orgChartPage', true)
+            ->call('placeUserInChart', $user->id, $target->id, $placement, $from?->id, $targetFrom?->id);
+    }
+
+    public function test_dropping_someone_on_top_of_a_person_puts_him_in_charge_of_her_in_her_place(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'nuevo' => $nuevo] = $this->biggerChart();
+
+        $this->place($boss, $nuevo, $luis, 'above', null, $boss)
+            ->assertDispatched('org-node-moved', id: $nuevo->id)
+            ->assertDispatched('notify');
+
+        $this->assertSame($boss->id, $this->superiorOf($nuevo));
+        $this->assertSame($nuevo->id, $this->superiorOf($luis));
+        $this->assertSame([$ana->id, $nuevo->id], $this->teamOf($boss), 'queda en el lugar de Luis');
+        $this->assertSame([$luis->id], $this->teamOf($nuevo));
+    }
+
+    public function test_dropping_beside_a_person_leaves_her_exactly_in_that_place(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
+        $this->assertSame([$ana->id, $luis->id], $this->teamOf($boss));
+
+        $this->place($boss, $luis, $ana, 'before', $boss, $boss)->assertDispatched('notify');
+        $this->assertSame([$luis->id, $ana->id], $this->teamOf($boss), 'reacomodo dentro del mismo equipo');
+
+        $this->place($boss, $eva, $luis, 'after', $ana, $boss);
+        $this->assertSame([$luis->id, $eva->id, $ana->id], $this->teamOf($boss), 'Eva sube al equipo del jefe, junto a Luis');
+        $this->assertSame([], $this->teamOf($ana));
+    }
+
+    public function test_a_person_can_be_put_in_charge_of_her_own_boss(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
+
+        $this->place($boss, $eva, $ana, 'above', $ana, $boss);
+
+        $this->assertSame($boss->id, $this->superiorOf($eva));
+        $this->assertSame($eva->id, $this->superiorOf($ana));
+        $this->assertSame([$eva->id, $luis->id], $this->teamOf($boss));
+    }
+
+    public function test_a_person_cannot_be_placed_inside_her_own_team_or_beside_the_head(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
+
+        $this->place($boss, $ana, $eva, 'above', $boss, $ana)->assertDispatched('notify', type: 'error');
+        $this->place($boss, $luis, $boss, 'before', $boss, null)->assertDispatched('notify', type: 'error');
+
+        $this->assertSame($boss->id, $this->superiorOf($ana));
+        $this->assertSame($ana->id, $this->superiorOf($eva));
+        $this->assertSame([$ana->id, $luis->id], $this->teamOf($boss));
+    }
+
+    public function test_a_placement_made_on_an_outdated_screen_is_not_applied(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
+
+        // La pantalla cree que Eva está bajo Luis, pero en realidad está bajo Ana (otra persona la movió)
+        $this->place($boss, $luis, $eva, 'child', $boss, $luis)->assertDispatched('notify', type: 'error');
+
+        $this->assertSame($boss->id, $this->superiorOf($luis));
+        $this->assertSame([$eva->id], $this->teamOf($ana));
+    }
+
+    public function test_taking_someone_out_leaves_her_team_in_her_place(): void
+    {
+        ['boss' => $boss, 'ana' => $ana, 'luis' => $luis, 'eva' => $eva] = $this->biggerChart();
+
+        app(OrganizationChartService::class)->removeFromChart($ana->id);
+
+        $this->assertSame([$eva->id, $luis->id], $this->teamOf($boss));
+    }
+
     public function test_the_chart_only_redraws_when_someone_else_changed_it(): void
     {
         ['boss' => $boss, 'luis' => $luis, 'nuevo' => $nuevo] = $this->biggerChart();

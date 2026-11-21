@@ -287,12 +287,20 @@
         .org-child:first-child:not(:only-child)::after { border-top-left-radius: 12px; }
         .org-child:last-child:not(:only-child)::after { display: none; }
         .org-child:last-child:not(:only-child)::before { border-right: 2px solid var(--org-line); border-top-right-radius: 12px; }
-
+        /* Con el script, las líneas se dibujan en la capa SVG (siguen a las tarjetas mientras se deslizan) y estas quedan
+           solo como espacio entre niveles */
+        .org-svg-lines .org-stem { background: transparent; }
+        .org-svg-lines .org-child::before, .org-svg-lines .org-child::after { display: none; }
+        .org-lines { position: absolute; left: 0; top: 0; z-index: 5; overflow: visible; pointer-events: none; }
+        .org-lines path { fill: none; stroke: var(--org-line); stroke-width: 2; stroke-linejoin: round; }
+        .org-lines path.is-dim { opacity: .35; }
+        .org-lines path.is-preview { stroke: var(--org-flow); stroke-dasharray: 6 6; }
 
         /* Jefaturas de otra área (al filtrar por área): borde punteado y tono distinto para ubicar la rama. */
         .org-node.org-node-outside { border-style: dashed; border-color: #64748b; background-color: var(--panel-subtle); }
-        @keyframes org-node-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(106, 169, 255, 0); } 30% { box-shadow: 0 0 0 6px rgba(106, 169, 255, 0.55); } }
-        .org-node.org-node-flash { animation: org-node-flash 1.6s ease-out 1; border-color: #6aa9ff; }
+        /* Al buscar a alguien o al terminar de moverlo, su tarjeta se marca un momento con un anillo verde que se desvanece */
+        @keyframes org-node-flash { 0% { border-color: var(--org-flow); box-shadow: 0 0 0 6px color-mix(in srgb, var(--org-flow) 28%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+        .org-node.org-node-flash { animation: org-node-flash 1.4s ease-out 1; }
 
         /* ===== Organigrama tipo Blender =====
            El árbol ocupa todo el espacio bajo la barra superior, sobre una cuadrícula de puntos que se mueve y se acerca
@@ -347,13 +355,10 @@
         html.module-dark-theme .org-tool-badge { background: #4ade80; color: #052e16; }
         #fullscreen-toggle { width: 50px !important; height: 50px !important; border-radius: 18px !important; background: var(--panel-surface) !important; box-shadow: 0 0 30px rgba(15, 23, 42, .12) !important; }
         /* Panel lateral de «Sin asignar» (como el panel lateral de Blender) */
-        .org-side { top: 90px; bottom: 100px; width: 380px; max-width: calc(100% - 40px); overflow: hidden; }
-        .org-side .home-row { border-radius: 18px; }
-        /* Tarjetas del árbol con el diseño de Inicio */
-        .org-node { border-width: 1px !important; border-radius: 18px !important; }
+        .org-side { top: 90px; bottom: 100px; width: 400px; max-width: calc(100% - 40px); overflow: hidden; }
         /* Lo que se corta con «…» no recorta las letras que bajan o suben de la línea (g, j, p, q, y, acentos); min-width: 0
            para que en las filas flexibles el texto respete su ancho y no se encime sobre lo de al lado */
-        .org-node .truncate, .org-side .truncate { overflow: clip; overflow-clip-margin: 10px; min-width: 0; }
+        .org-side .truncate { overflow: clip; overflow-clip-margin: 10px; min-width: 0; }
 
         /* Listas (resultados de búsqueda, áreas y «Sin asignar") con el formato de «En línea ahora» de Inicio: renglones con
            20px de relleno separados por una línea fina, foto de 50x50 con su borde pegado, nombre en seminegrita y datos en
@@ -372,52 +377,101 @@
         /* El indicador de scroll queda dentro de las esquinas redondeadas (5px del borde, 18px arriba y abajo) */
         .org-thumb { right: 5px !important; }
 
-        /* Flujo de trabajo: un círculo sale de cada jefe y recorre la línea completa hasta cada persona de su equipo (baja,
-           cruza y vuelve a bajar), nivel por nivel como una ola que baja por el árbol. Se dibuja en una capa SVG debajo de
-           las tarjetas (ver drawFlows en el script), así se mueve y se acerca junto con el árbol sin costo extra. */
-        [data-panel] { --org-flow: #15803d; }
-        html.module-dark-theme [data-panel] { --org-flow: #4ade80; }
-        .org-flow-layer { position: absolute; left: 0; top: 0; z-index: 5; overflow: visible; pointer-events: none; }
-        .org-flow-layer .org-flow-dot { fill: var(--org-flow); }
-        .org-flow-layer .org-flow-halo { fill: var(--org-flow); opacity: .22; }
+        /* Verde de Inicio para lo que se puede soltar y para la vista previa; anillo y fondo suaves de las tarjetas de Inicio */
+        [data-panel] { --org-flow: #15803d; --org-ring: color-mix(in srgb, var(--panel-accent) 35%, var(--panel-border)); --org-soft: color-mix(in srgb, var(--panel-accent) 6%, var(--panel-surface)); }
+        html.module-dark-theme [data-panel] { --org-flow: #4ade80; --org-soft: #111116; }
 
-        /* Mover personas: se arrastra la tarjeta (de su asa o dejándola presionada) o una fila de «Sin asignar». La rama que
-           se mueve se atenúa, el jefe donde caería se marca en verde y lo que no se puede (su propio equipo) en rojo. */
-        .org-drag-handle { position: absolute; left: 8px; top: 8px; z-index: 20; display: grid; height: 24px; width: 24px; place-items: center; border-radius: 8px; color: var(--org-muted); cursor: grab; transition: background-color 150ms ease, color 150ms ease; }
-        .org-drag-handle:hover { background: var(--panel-subtle); color: var(--panel-text); }
+        /* ===== Tarjetas del árbol con el diseño de Inicio =====
+           Foto de 50px con el nombre a un lado (como «En línea ahora»), puesto y área en gris y un pie con la conexión y las
+           acciones. 20px de relleno y 20px entre cada texto: cada texto mide lo que sus letras, así la distancia es exacta. */
+        .org-node { position: relative; display: flex; width: 280px; flex-shrink: 0; flex-direction: column; padding: 0; border: 1px solid var(--panel-border); border-radius: 18px; background: var(--panel-surface); color: var(--panel-text); text-align: left; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
+        .org-node:hover { border-color: var(--org-ring); box-shadow: 0 0 20px rgba(15, 23, 42, .12); }
+        html.module-dark-theme .org-node:hover { box-shadow: 0 0 20px rgba(0, 0, 0, .6); }
+        .org-node-head { display: flex; min-width: 0; align-items: center; gap: 20px; padding: 20px 20px 0; }
+        .org-node-avatar { position: relative; flex-shrink: 0; }
+        .org-node-avatar > img, .org-node-avatar > .org-node-initials { display: grid; height: 50px; width: 50px; place-items: center; border: 1px solid var(--panel-border); border-radius: 9999px; background: var(--panel-header); color: var(--panel-text); object-fit: cover; }
+        .org-node-online { position: absolute; right: 2px; bottom: 2px; height: 10px; width: 10px; border: 2px solid var(--panel-surface); border-radius: 9999px; background: #10b981; }
+        .org-node-names { display: block; min-width: 0; flex: 1 1 auto; }
+        .org-node :is(.org-node-name, .org-node-line, .org-node-presence) { display: block; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        .org-node .org-node-name { font-weight: 600; color: var(--panel-text); }
+        .org-node .org-node-name + .org-node-name { margin-top: 20px; }
+        .org-node-body { display: block; min-width: 0; padding: 20px; }
+        .org-node .org-node-line { color: var(--org-muted); }
+        .org-node .org-node-line + .org-node-line { margin-top: 20px; }
+        .org-node .org-node-line.is-warn { color: #b45309; }
+        html.module-dark-theme .org-node .org-node-line.is-warn { color: #fbbf24; }
+        .org-node-foot { display: block; margin-top: auto; padding: 20px 90px 20px 20px; border-top: 1px solid var(--panel-border); }
+        .org-node .org-node-presence { color: var(--org-muted); }
+        .org-node .org-node-presence.is-online { color: var(--org-flow); }
+        .org-node-actions { position: absolute; right: 12px; bottom: 12px; z-index: 20; display: flex; gap: 6px; }
+        .org-node-actions > * { display: grid; height: 26px; width: 26px; place-items: center; border-radius: 9px; color: var(--org-muted); transition: background-color 150ms ease, color 150ms ease; }
+        .org-node-actions > :hover { background: var(--org-soft); color: var(--panel-text); }
+        .org-node-actions > .org-node-delete:hover { color: #dc2626; }
+        .org-drag-handle { cursor: grab; }
+        /* Entrada: las tarjetas aparecen por nivel solo al abrir el organigrama; después ya no, para que al mover a alguien o
+           al sincronizar nada parpadee */
+        @keyframes org-node-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+        .org-ready:not(.org-settled) .visual-node-wrapper > .relative { animation: org-node-in 380ms cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(80ms + var(--depth, 0) * 70ms); }
+
+        /* ===== Mover personas =====
+           Se arrastra la tarjeta (de su asa o dejándola presionada) o una fila de «Sin asignar». Mientras se arrastra aparece en
+           el árbol un hueco punteado justo donde quedaría: arriba de una tarjeta queda a cargo de esa persona, abajo entra a su
+           equipo y a los lados queda junto a ella. Su rama original se atenúa y lo demás se acomoda deslizándose. */
         .org-is-dragging, .org-is-dragging * { cursor: grabbing !important; }
-        .org-is-dragging .org-node:hover { border-color: var(--panel-border) !important; transform: none !important; }
-        .visual-node-wrapper.org-dragging { opacity: .32; transition: opacity 160ms ease; }
-        .org-node.org-drop-ok { border-color: var(--org-flow) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--org-flow) 22%, transparent) !important; }
-        .org-node.org-drop-bad { border-color: #dc2626 !important; box-shadow: 0 0 0 4px rgba(220, 38, 38, .18) !important; }
-        .visual-node-wrapper.org-pending { opacity: .55; }
-        .org-side.org-drop-zone { border-color: var(--org-flow) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--org-flow) 22%, transparent), 0 0 30px rgba(15, 23, 42, .12) !important; }
-        .org-drag-ghost { position: fixed; left: 0; top: 0; z-index: 200005; display: flex; max-width: 360px; align-items: center; gap: 15px; padding: 15px 20px 15px 15px; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 18px; background: var(--panel-surface, #fff); color: var(--panel-text, #18181b); font-family: inherit; font-size: 15px; pointer-events: none; box-shadow: 0 18px 40px -16px rgba(15, 23, 42, .45); }
-        .org-drag-ghost .org-ghost-avatar { display: grid; height: 40px; width: 40px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 9999px; object-fit: cover; font-size: 14px; }
-        .org-drag-ghost .org-ghost-name { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .org-drag-ghost .org-ghost-hint { display: block; margin-top: 6px; font-size: 13px; color: color-mix(in srgb, var(--panel-text, #18181b) 58%, transparent); }
+        .org-is-dragging .org-node:hover { border-color: var(--panel-border); box-shadow: none; }
+        .visual-node-wrapper.org-dragging .relative { opacity: .35; transition: opacity 200ms ease; }
+        .org-node.org-drop-target { border-color: var(--org-flow) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--org-flow) 18%, transparent) !important; }
+        .org-node.org-drop-bad { border-color: #dc2626 !important; box-shadow: 0 0 0 4px rgba(220, 38, 38, .16) !important; }
+        /* El hueco: mismo tamaño que una tarjeta, borde punteado verde, fondo verde muy suave y quién quedará ahí */
+        .org-node.org-ph-card { border: 2px dashed var(--org-flow); background: color-mix(in srgb, var(--org-flow) 7%, var(--panel-surface)); cursor: grabbing; box-shadow: none !important; }
+        .org-ph-card .org-ph-text { display: block; padding: 20px; color: var(--org-flow); font-weight: 500; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        @keyframes org-ph-saving { 50% { background-color: color-mix(in srgb, var(--org-flow) 15%, var(--panel-surface)); } }
+        .org-node.org-ph-card.is-saving { animation: org-ph-saving 1.1s ease-in-out infinite; }
+        /* Tarjeta que sigue al cursor (va fuera del organigrama: el script le copia los colores del tema) */
+        .org-un-row.is-dragging-row { opacity: .4; }
+        .org-drag-ghost { transform-origin: 0 0; }
+        .org-drag-ghost { position: fixed; left: 0; top: 0; z-index: 200005; display: flex; width: 320px; align-items: center; gap: 20px; padding: 20px; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 18px; background: var(--panel-surface, #fff); color: var(--panel-text, #18181b); font-family: inherit; font-size: 15px; pointer-events: none; box-shadow: 0 22px 48px -20px rgba(15, 23, 42, .5); will-change: transform; transition: border-color 150ms ease; }
+        .org-drag-ghost .org-ghost-avatar { display: grid; height: 50px; width: 50px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border, #d4d4d8); border-radius: 9999px; background: var(--panel-header, #f4f4f5); object-fit: cover; }
+        .org-drag-ghost .org-ghost-text { display: block; min-width: 0; flex: 1 1 auto; }
+        .org-drag-ghost :is(.org-ghost-name, .org-ghost-hint) { display: block; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; }
+        .org-drag-ghost .org-ghost-name { font-weight: 600; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        .org-drag-ghost .org-ghost-hint { margin-top: 20px; color: var(--org-muted, #71717a); transition: color 150ms ease; }
         .org-drag-ghost[data-state="ok"] { border-color: var(--org-flow, #15803d); }
         .org-drag-ghost[data-state="ok"] .org-ghost-hint { color: var(--org-flow, #15803d); }
         .org-drag-ghost[data-state="bad"] { border-color: #dc2626; }
         .org-drag-ghost[data-state="bad"] .org-ghost-hint { color: #dc2626; }
-        html.module-dark-theme .org-drag-ghost { --panel-surface: #09090b; --panel-border: #3f3f46; --panel-text: #ffffff; --org-flow: #4ade80; }
-        .org-list [data-unassigned-id] { cursor: grab; }
-        .org-row-grip { flex-shrink: 0; color: var(--org-muted); }
 
-        /* Tarjetas del árbol como las tarjetas de Inicio: nombre en seminegrita, datos en gris y, al pasar el puntero, se
-           elevan apenas con el borde más marcado */
-        .org-node { transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease !important; }
-        .org-node:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -14px rgba(15, 23, 42, .35); }
-        html.module-dark-theme .org-node:hover { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .9); }
-        .org-node .org-node-name { color: var(--panel-text) !important; font-weight: 600 !important; }
-        .org-node .org-node-meta { color: var(--org-muted); }
-
-        /* Tarjetas vivas: aparecen en cascada por nivel al entrar y se resaltan al pasar el puntero */
-        .org-node { transition: border-color 160ms ease !important; }
-        /* Como las tarjetas de Inicio: borde gris y, al pasar el puntero, el borde se pone negro (sin sombra) */
-        .org-node:hover { border-color: var(--panel-text) !important; }
-        @keyframes org-node-in { from { opacity: 0; } to { opacity: 1; } }
-        .org-ready .visual-node-wrapper > .relative { animation: org-node-in 380ms ease-out both; animation-delay: calc(120ms + var(--depth, 0) * 90ms); }
+        /* ===== Panel «Sin asignar» con el diseño de Inicio =====
+           Encabezado como las secciones de Inicio (título de 19px, texto gris y etiqueta con el total), un buscador y la lista
+           como «En línea ahora»: filas de 20px separadas por una línea fina, foto de 50px, nombre en seminegrita y datos en
+           gris. Las acciones de cada fila aparecen al pasar el puntero. */
+        .org-side-head { display: block; padding: 20px; border-bottom: 1px solid var(--panel-border); }
+        .org-side-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+        .org-side .org-side-search { width: 100%; margin-top: 20px; box-shadow: none !important; }
+        .org-un-row { position: relative; display: flex; align-items: center; gap: 20px; padding: 20px; cursor: grab; transition: background-color 150ms ease, opacity 150ms ease; }
+        .org-list > li + li .org-un-row { border-top: 1px solid var(--panel-border); }
+        .org-un-row:hover { background: var(--org-soft); }
+        .org-un-row .org-avatar { background: var(--panel-header); }
+        .org-un-text { display: block; min-width: 0; flex: 1 1 auto; }
+        .org-un-text > span { display: block; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        .org-un-text > .org-un-name { font-weight: 600; color: var(--panel-text); }
+        .org-un-text > .org-un-meta { margin-top: 20px; color: var(--org-muted); }
+        /* Las acciones flotan sobre el final de la fila (no le quitan espacio al nombre) y aparecen al pasar el puntero */
+        .org-un-actions { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; gap: 6px; padding: 0 20px 0 40px; background: linear-gradient(to right, transparent, var(--org-soft) 30px); opacity: 0; pointer-events: none; transition: opacity 150ms ease; }
+        .org-un-row:hover .org-un-actions, .org-un-row:focus-within .org-un-actions { pointer-events: auto; }
+        .org-un-row:hover .org-un-actions, .org-un-row:focus-within .org-un-actions { opacity: 1; }
+        .org-un-actions > button { display: grid; height: 30px; width: 30px; place-items: center; border-radius: 10px; color: var(--org-muted); transition: background-color 150ms ease, color 150ms ease; }
+        .org-un-actions > button:hover { background: var(--panel-surface); color: var(--panel-text); }
+        .org-un-actions > button.is-danger:hover { color: #dc2626; }
+        .org-un-row.is-hidden { opacity: .5; }
+        .org-side-empty { display: block; padding: 20px; color: var(--org-muted); line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; }
+        /* Al arrastrar a alguien del árbol aparece arriba de la lista el lugar para soltarlo y sacarlo del organigrama */
+        .org-side-drop { display: none; margin: 20px 20px 0; padding: 20px; border: 2px dashed var(--panel-border); border-radius: 18px; color: var(--org-muted); text-align: center; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease; }
+        .org-drag-from-tree .org-side-drop { display: block; }
+        .org-side.org-drop-zone { border-color: var(--org-flow) !important; }
+        .org-side.org-drop-zone .org-side-drop { border-color: var(--org-flow); background: color-mix(in srgb, var(--org-flow) 7%, var(--panel-surface)); color: var(--org-flow); }
+        @keyframes org-row-in { from { opacity: 0; translate: 0 -8px; } to { opacity: 1; translate: 0 0; } }
+        .org-list > li.org-row-new { animation: org-row-in 380ms cubic-bezier(.16, 1, .3, 1) both; }
 
         /* Botones de la barra: se resaltan al pasar el puntero y al presionarlos */
         .org-tool-btn, #fullscreen-toggle { transition: background-color 150ms ease, border-color 150ms ease !important; }
@@ -426,14 +480,9 @@
 
         @media (prefers-reduced-motion: reduce) {
             .org-ready .visual-node-wrapper > .relative { animation: none; }
-            .org-node, .org-node:hover { transition: none !important; transform: none; }
+            .org-node, .org-un-row, .org-un-actions, .org-drag-ghost { transition: none !important; }
+            .org-node.org-ph-card.is-saving, .org-list > li.org-row-new { animation: none; }
         }
-
-        /* Panel «Sin asignar» con el diseño de Inicio: título de 19px en seminegrita, texto gris, etiqueta con el total y la
-           lista en filas separadas por una línea fina que se tiñen apenas al pasar el puntero */
-        .org-side .org-title { font-size: 19px !important; }
-        .org-side .org-list .org-row:hover { background: color-mix(in srgb, var(--panel-accent) 6%, var(--panel-surface)); }
-        .org-side .org-side-hint { padding: 20px; border-top: 1px solid var(--panel-border); color: var(--org-muted); line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; }
 
         /* Formularios abiertos desde el Organigrama con el diseño de Inicio: bordes de 18px, título de 19px en seminegrita,
            subtítulo gris, títulos de sección oscuros en seminegrita y botones redondeados como las etiquetas */
@@ -852,8 +901,10 @@
     {{-- Organigrama a pantalla completa, como el visor de Blender: el árbol ocupa todo el espacio (se mueve y se acerca) y
          la información va en paneles flotantes encima, con el diseño de Inicio (bordes de 18px, texto de 15px, 20px entre todo). --}}
     {{-- wire:poll: cada 20 s se compara el sello del organigrama; si otra persona lo cambió se vuelve a dibujar solo (si no, no se envía nada) --}}
-    <div id="organigrama-principal" @unless ($orgChartLoaded) wire:init="loadOrgChartData" @endunless wire:poll.20s.visible="syncOrgChart">
-        <div id="org-tree-container" class="org-viewport relative overflow-hidden" style="touch-action: none;" data-area="{{ $selectedPhysicalAreaId }}">
+    {{-- wire:ignore.self en el contenedor y en el árbol: sus clases y su posición las maneja el script (acercar, mover, animar)
+         y Livewire no debe reiniciarlas al volver a dibujar; lo de adentro sí se actualiza. --}}
+    <div id="organigrama-principal" data-area="{{ $selectedPhysicalAreaId }}" @unless ($orgChartLoaded) wire:init="loadOrgChartData" @endunless wire:poll.20s.visible="syncOrgChart">
+        <div id="org-tree-container" wire:ignore.self class="org-viewport relative overflow-hidden" style="touch-action: none;">
 
                     <!-- CONTENIDO PRINCIPAL: árbol o mensaje sin datos (profesional) -->
                     @if (! $orgChartLoaded)
@@ -861,9 +912,9 @@
                             <span>Cargando organigrama…</span>
                         </div>
                     @elseif (count($orgChartTree) > 0)
-                        <div id="org-tree-wrapper" class="relative origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
-                            {{-- Capa del flujo (círculos que van de cada jefe a su equipo): la dibuja el script, Livewire no la toca --}}
-                            <svg class="org-flow-layer" wire:ignore aria-hidden="true" focusable="false"></svg>
+                        <div id="org-tree-wrapper" wire:ignore.self class="relative origin-top-left" style="transform: scale(1) translate(0px, 0px); cursor: grab; width: max-content; min-width: 1000px; padding: 20px;">
+                            {{-- Líneas entre jefes y equipos: las dibuja el script según dónde está cada tarjeta, Livewire no las toca --}}
+                            <svg class="org-lines" wire:ignore aria-hidden="true" focusable="false"></svg>
                             <div class="flex flex-col items-center gap-6" style="min-width: max-content;">
                                 @foreach ($orgChartTree as $rootNode)
                                     <x-administracion.organigrama-node :node="$rootNode" :depth="0" />
@@ -964,24 +1015,40 @@
             {{-- Panel lateral (a la derecha, plegable): usuarios sin asignar --}}
             {{-- Al arrastrar a alguien del árbol el panel se abre solo (si estaba cerrado) para poder soltarlo aquí --}}
             <aside data-org-panel class="org-panel org-side absolute right-[20px] flex flex-col !p-0" aria-label="Usuarios sin asignar"
-                x-data="{ open: (() => { try { const saved = localStorage.getItem('organigrama-side'); return saved === null ? window.innerWidth >= 1024 : saved !== '0'; } catch (e) { return window.innerWidth >= 1024; } })(), openedForDrag: false }"
+                x-data="{
+                    open: (() => { try { const saved = localStorage.getItem('organigrama-side'); return saved === null ? window.innerWidth >= 1024 : saved !== '0'; } catch (e) { return window.innerWidth >= 1024; } })(),
+                    openedForDrag: false,
+                    q: '',
+                    matches(haystack) { const term = this.q.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); return ! term || haystack.includes(term); },
+                }"
                 x-show="open"
                 @org-toggle-unassigned.window="open = ! open; openedForDrag = false; try { localStorage.setItem('organigrama-side', open ? '1' : '0'); } catch (e) {}"
                 @org-drag-start.window="if ($event.detail?.source === 'tree' && ! open) { open = true; openedForDrag = true; }"
                 @org-drag-end.window="if (openedForDrag) { open = false; openedForDrag = false; }">
-                <header class="org-divider flex shrink-0 items-start justify-between gap-[20px] border-b p-[20px]">
-                    <div class="min-w-0">
-                        <h2 class="org-title">Sin asignar</h2>
-                        <p class="org-muted org-gap">Sin jefe, puesto o área.</p>
+                {{-- Encabezado como las secciones de Inicio: título, texto gris y etiqueta con el total; debajo, el buscador --}}
+                <header class="org-side-head shrink-0">
+                    <div class="org-side-head-top">
+                        <div class="min-w-0">
+                            <h2 class="org-title">Sin asignar</h2>
+                            <p class="org-muted org-gap">Arrástralas al organigrama.</p>
+                        </div>
+                        <span class="org-chip">{{ count($unassignedUsers) }} {{ count($unassignedUsers) === 1 ? 'persona' : 'personas' }}</span>
                     </div>
-                    <span class="org-chip">{{ count($unassignedUsers) }} {{ count($unassignedUsers) === 1 ? 'persona' : 'personas' }}</span>
+                    @if ($orgChartLoaded && count($unassignedUsers) > 3)
+                        <input type="search" x-model="q" class="org-field org-side-search" placeholder="Buscar por nombre o correo" aria-label="Buscar en sin asignar" autocomplete="off">
+                    @endif
                 </header>
+                {{-- Lugar para soltar a alguien del árbol (solo se ve mientras se arrastra desde el árbol) --}}
+                <p class="org-side-drop shrink-0">Suelta aquí para sacarla del organigrama</p>
                 <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1">
-                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="unassigned-users-scrollbar administration-form-scrollbar h-full overflow-y-auto">
+                <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="administration-form-scrollbar h-full overflow-y-auto">
                 <div>
                     @if (! $orgChartLoaded)
-                        <p class="org-row org-muted">Cargando usuarios…</p>
+                        <p class="org-side-empty">Cargando usuarios…</p>
                     @elseif (count($unassignedUsers) > 0)
+                        @php
+                            $unassignedHaystacks = array_map(static fn (array $person): string => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($person['name'].' '.mb_strtolower((string) $person['email']))), $unassignedUsers);
+                        @endphp
                         <ul class="org-list" style="display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;"
                             x-data="{
                                 hidden: (() => { try { return JSON.parse(localStorage.getItem('organigrama-unassigned-hidden') || '[]'); } catch (error) { return []; } })(),
@@ -998,42 +1065,53 @@
                                         static fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)),
                                         array_slice($nameParts, 0, 2)
                                     ));
+                                    $initials = $initials !== '' ? $initials : '?';
+                                    $email = mb_strtolower((string) $user['email']);
                                     $createdAt = ! empty($user['created_at']) ? \Carbon\Carbon::parse($user['created_at'])->locale('es') : null;
+                                    // Lo que le falta para quedar en el organigrama, en una frase corta
+                                    $missingLabels = array_values(array_filter(array_map(
+                                        static fn (string $key): ?string => ['superior' => 'jefe', 'job_position' => 'puesto', 'physical_area' => 'área'][$key] ?? null,
+                                        (array) ($user['missing'] ?? ['superior'])
+                                    )));
+                                    $missingText = count($missingLabels) > 1
+                                        ? 'Falta '.implode(', ', array_slice($missingLabels, 0, -1)).' y '.end($missingLabels)
+                                        : 'Falta '.($missingLabels[0] ?? 'jefe');
+                                    $haystack = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($user['name'].' '.$email));
+                                    $userId = (int) $user['id'];
                                 @endphp
-                                <li style="list-style: none;" :style="isHidden({{ (int) $user['id'] }}) ? 'order: 1; opacity: 0.5' : 'order: 0'">
-                                    <div wire:key="unassigned-user-{{ $user['id'] }}" class="org-row" data-unassigned-id="{{ (int) $user['id'] }}" data-name="{{ $user['name'] }}" data-initials="{{ $initials !== '' ? $initials : '?' }}" title="Arrastra a {{ $user['name'] }} sobre su jefe en el organigrama para asignarlo">
-                                        <svg class="org-row-grip h-[15px] w-[15px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
-                                        <span class="org-avatar">{{ $initials !== '' ? $initials : '?' }}</span>
-                                        <span class="org-row-text">
-                                            <span class="org-row-name" title="{{ $user['name'] }}">{{ $user['name'] }}</span>
-                                            <span class="org-row-meta" title="{{ mb_strtolower((string) $user['email']) }}">{{ mb_strtolower((string) $user['email']) }}</span>
-                                            <span class="org-row-meta">{{ $createdAt ? 'Creado el '.$createdAt->translatedFormat('d \\d\\e F \\d\\e Y') : 'Fecha de creación no disponible' }}</span>
-                                            <span class="org-row-meta">{{ $createdAt ? 'Hace '.$createdAt->diffForHumans(now(), true).' en el sistema' : 'Antigüedad no disponible' }}</span>
+                                <li wire:key="unassigned-user-{{ $userId }}" style="list-style: none;" x-show="matches(@js($haystack))" :style="{ order: isHidden({{ $userId }}) ? 1 : 0 }">
+                                    <div class="org-un-row" :class="isHidden({{ $userId }}) && 'is-hidden'" data-unassigned-id="{{ $userId }}" data-name="{{ $user['name'] }}" data-initials="{{ $initials }}"
+                                        title="{{ $user['name'] }} · {{ $createdAt ? 'en el sistema desde hace '.$createdAt->diffForHumans(now(), true) : 'fecha de alta no disponible' }}">
+                                        <span class="org-avatar">{{ $initials }}</span>
+                                        <span class="org-un-text">
+                                            <span class="org-un-name">{{ $user['name'] }}</span>
+                                            <span class="org-un-meta">{{ $email }}</span>
+                                            <span class="org-un-meta">{{ $missingText }}</span>
                                         </span>
-                                        <span class="flex shrink-0 flex-col items-center gap-[20px]">
-                                            <button type="button" wire:click="openUserManagement('editar', {{ (int) $user['id'] }})" class="home-link flex h-4 w-4 items-center justify-center focus:outline-none focus:ring-0" aria-label="Editar {{ $user['name'] }}" title="Editar {{ $user['name'] }}">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
+                                        <span class="org-un-actions">
+                                            <button type="button" wire:click="openUserManagement('editar', {{ $userId }})" class="focus:outline-none focus:ring-0" aria-label="Editar {{ $user['name'] }}" title="Editar">
+                                                <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m15 5 4 4L8 20H4v-4L15 5z" /></svg>
                                             </button>
-                                            <button type="button" @click="toggle({{ (int) $user['id'] }})" class="home-link flex h-4 w-4 items-center justify-center focus:outline-none focus:ring-0" :aria-label="isHidden({{ (int) $user['id'] }}) ? 'Mostrar {{ $user['name'] }}' : 'Ocultar {{ $user['name'] }}'" :title="isHidden({{ (int) $user['id'] }}) ? 'Mostrar' : 'Ocultar al final de la lista'">
-                                                <svg x-show="!isHidden({{ (int) $user['id'] }})" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
-                                                <svg x-show="isHidden({{ (int) $user['id'] }})" x-cloak class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                            <button type="button" @click="toggle({{ $userId }})" class="focus:outline-none focus:ring-0" :aria-label="isHidden({{ $userId }}) ? 'Mostrar {{ $user['name'] }}' : 'Ocultar {{ $user['name'] }}'" :title="isHidden({{ $userId }}) ? 'Mostrar' : 'Mandar al final de la lista'">
+                                                <svg x-show="!isHidden({{ $userId }})" class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                                                <svg x-show="isHidden({{ $userId }})" x-cloak class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                                             </button>
-                                            <button type="button" wire:click="openUserManagement('eliminar', {{ (int) $user['id'] }})" class="flex h-4 w-4 items-center justify-center text-red-600 focus:outline-none focus:ring-0" aria-label="Eliminar {{ $user['name'] }}" title="Eliminar {{ $user['name'] }}">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
+                                            <button type="button" wire:click="openUserManagement('eliminar', {{ $userId }})" class="is-danger focus:outline-none focus:ring-0" aria-label="Eliminar {{ $user['name'] }}" title="Eliminar">
+                                                <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" /></svg>
                                             </button>
                                         </span>
                                     </div>
                                 </li>
                             @endforeach
                         </ul>
+                        <p class="org-side-empty" x-cloak x-show="q && ! @js($unassignedHaystacks).some((haystack) => matches(haystack))">No hay nadie con ese nombre o correo.</p>
                     @else
-                        <p class="org-row org-muted">Todos los usuarios tienen jefe, puesto y área asignados.</p>
+                        <p class="org-side-empty">Todas las personas tienen jefe, puesto y área.</p>
                     @endif
                 </div>
                 </div>
                 <span x-show="visible" x-cloak class="administration-form-thumb org-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
                 </div>
-                <p class="org-side-hint shrink-0">Arrastra a una persona sobre su jefe para asignarla, o suelta aquí a alguien del árbol para sacarlo.</p>
             </aside>
 
         </div>
@@ -1908,6 +1986,8 @@
         if (maxHeight === 0) return;
 
         cards.forEach(card => { card.style.height = `${maxHeight}px`; });
+        // Las líneas del organigrama se vuelven a trazar con las alturas nuevas
+        window.dispatchEvent(new CustomEvent('org-cards-measured'));
     };
 
     window.bindOrgEqualizer = window.bindOrgEqualizer || function () {
@@ -1989,45 +2069,66 @@
 
         // Tras cada actualización de Livewire: si cambió el filtro de área (o el árbol acaba de llegar) se parte de la vista
         // inicial; si no (alguien movió a una persona, o el organigrama se sincronizó), se conserva el movimiento y el zoom y
-        // las tarjetas se deslizan a su nuevo lugar. En todos los casos se suelta cualquier arrastre que haya quedado a medias.
-        let lastArea = container.dataset.area || '';
+        // las tarjetas se deslizan a su nuevo lugar junto con sus líneas.
+        const currentArea = () => document.getElementById('organigrama-principal')?.dataset.area || '';
+        let lastArea = currentArea();
         let hadTree = Boolean(document.querySelector('#org-tree-wrapper .org-node'));
+        let settleTimer = null;
+        // Las tarjetas aparecen por nivel al abrir el organigrama (o al cambiar de área); después ya no
+        const replayEntry = () => {
+            container.classList.remove('org-settled');
+            clearTimeout(settleTimer);
+            settleTimer = setTimeout(() => container.classList.add('org-settled'), 1400);
+        };
         const afterLivewireUpdate = () => {
             isPanning = false;
             didDrag = false;
             panStartedOnNode = false;
-            cancelNodeDrag();
             // Primero se igualan las alturas de las tarjetas y después se centra, para medir el nodo ya con su tamaño final.
             if (window.equalizeNodeHeights) window.equalizeNodeHeights();
-            const area = container.dataset.area || '';
+            const area = currentArea();
             const hasTree = Boolean(document.querySelector('#org-tree-wrapper .org-node'));
             if (area !== lastArea || (hasTree && !hadTree)) {
                 lastArea = area;
-                resetView();
                 flipBefore = null;
+                landing = null;
+                resetView();
+                replayEntry();
+                drawLines();
             } else {
                 updateTransform();
                 playFlip();
             }
             hadTree = hasTree;
             allNodes = [];
-            scheduleFlows();
         };
         // Al entrar: se igualan las alturas, se centra el árbol y entonces aparece con un fundido (nunca se ve el salto)
-        const reveal = () => container.classList.add('org-ready');
+        const reveal = () => {
+            if (container.classList.contains('org-ready')) return;
+            container.classList.add('org-ready');
+            replayEntry();
+        };
         requestAnimationFrame(() => {
             if (window.equalizeNodeHeights) window.equalizeNodeHeights();
             resetView();
+            drawLines();
             requestAnimationFrame(reveal);
-            scheduleFlows();
         });
         // Solo las actualizaciones de este componente (el chat y otros que se actualizan solos no deben soltar un arrastre)
         const rootId = container.closest('[wire\\:id]')?.getAttribute('wire:id');
-        const hookLivewire = () => window.Livewire?.hook('morphed', ({ component } = {}) => {
-            if (rootId && component && component.id !== rootId) return;
-            afterLivewireUpdate();
-            reveal();
-        });
+        const ours = (component) => !rootId || !component || component.id === rootId;
+        const hookLivewire = () => {
+            window.Livewire?.hook('morph', ({ component } = {}) => { if (ours(component)) beforeMorph(); });
+            window.Livewire?.hook('morphed', ({ component } = {}) => {
+                if (!ours(component)) return;
+                afterLivewireUpdate();
+                reveal();
+            });
+            // Quien sale del árbol entra a «Sin asignar» deslizándose
+            window.Livewire?.hook('morph.added', ({ el } = {}) => {
+                if (el instanceof Element && el.matches('.org-list > li')) el.classList.add('org-row-new');
+            });
+        };
         if (window.Livewire) hookLivewire(); else document.addEventListener('livewire:init', hookLivewire);
         window.addEventListener('blur', () => { isPanning = false; });
 
@@ -2068,10 +2169,12 @@
             translateY += mouseY / newScale - mouseY / scale;
             scale = newScale;
             updateTransform();
+            // Si se acerca o aleja mientras se arrastra a alguien, se vuelve a ver qué hay bajo el puntero
+            if (nodeDrag && !hitFrame) hitFrame = requestAnimationFrame(evaluateDrop);
         }, { passive: false });
 
         container.addEventListener('mousedown', function(e) {
-            if (e.button !== 0 || nodeDrag || e.target.closest('#node-search-input, #search-results, .search-result-item, #physical-area-filter, #physical-area-results, #fullscreen-toggle, [data-org-panel], .org-drag-handle, .org-node-delete')) {
+            if (e.button !== 0 || nodeDrag || e.target.closest('#node-search-input, #search-results, .search-result-item, #physical-area-filter, #physical-area-results, #fullscreen-toggle, [data-org-panel], .org-node-actions')) {
                 return;
             }
 
@@ -2300,13 +2403,16 @@
         setTimeout(() => { allNodes = []; loadAllNodes(); }, 500);
 
         // ============================================================
-        // FLUJO: un círculo sale de cada jefe y recorre la línea completa hasta cada persona de su equipo
+        // LÍNEAS: se dibujan en una capa SVG según dónde está cada tarjeta, así siguen a las tarjetas mientras se deslizan
         // ============================================================
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const SVG_NS = 'http://www.w3.org/2000/svg';
-        const FLOW_STEP = 1.2;   // segundos que tarda el círculo en ir de un jefe a su equipo
-        const FLOW_PAUSE = 0.8;  // pausa al final de cada ola, antes de volver a salir de la cabeza del árbol
-        let flowTimer = null;
+        const EASE = 'cubic-bezier(.22, .61, .36, 1)';
+        const SLIDE_MS = 300;   // el árbol abre (o cierra) el hueco de la vista previa
+        const SETTLE_MS = 460;  // al terminar de mover a alguien, todo se desliza a su lugar
+        let linesFrame = null;
+        let linesUntil = 0;
+        let linesTimer = null;
 
         // Posición de un elemento dentro del árbol, en píxeles del propio árbol (sin el zoom ni el movimiento aplicados)
         function treeBox(treeEl) {
@@ -2318,145 +2424,183 @@
             };
         }
 
-        function drawFlows() {
-            const treeEl = document.getElementById('org-tree-wrapper');
-            const layer = treeEl ? treeEl.querySelector(':scope > .org-flow-layer') : null;
-            if (!treeEl || !layer) return;
-            layer.replaceChildren();
-            if (reduceMotion || !treeEl.offsetWidth) return;
+        const slotOf = (wrapperEl) => (wrapperEl ? wrapperEl.querySelector(':scope > .relative') : null);
+        const cardOf = (wrapperEl) => (wrapperEl ? wrapperEl.querySelector(':scope > .relative > .org-node') : null);
 
+        // Cada línea baja del jefe, cruza por la barra (con esquinas de 12px en los extremos) y baja a la persona
+        function drawLines() {
+            const treeEl = document.getElementById('org-tree-wrapper');
+            const layer = treeEl ? treeEl.querySelector(':scope > .org-lines') : null;
+            if (!treeEl || !layer || !treeEl.offsetWidth) return;
+            container.classList.add('org-svg-lines');
             const pos = treeBox(treeEl);
             layer.setAttribute('width', treeEl.offsetWidth);
             layer.setAttribute('height', treeEl.offsetHeight);
 
-            // Cada línea: baja del jefe, cruza por la barra y baja a la persona (con la misma curva de 12px de las esquinas)
-            const edges = [];
-            let levels = 0;
-            const walk = (wrapper, depth) => {
-                const card = wrapper.querySelector(':scope > .relative > .org-node');
-                const children = wrapper.querySelectorAll(':scope > .org-children > .org-child');
-                if (!card || children.length === 0) return;
-                const parent = pos(card);
-                const px = parent.x + parent.w / 2;
-                const py = parent.y + parent.h;
-                children.forEach((child, index) => {
-                    const childWrapper = child.querySelector(':scope > .visual-node-wrapper');
-                    const childCard = childWrapper ? childWrapper.querySelector(':scope > .relative > .org-node') : null;
-                    if (!childCard) return;
-                    const target = pos(childCard);
-                    const cx = target.x + target.w / 2;
-                    const cy = target.y;
-                    const barY = pos(child).y + 1;
-                    let d;
-                    if (Math.abs(cx - px) < 1) {
-                        d = `M${px} ${py}V${cy}`;
-                    } else {
-                        const dir = Math.sign(cx - px);
-                        const rounded = children.length > 1 && (index === 0 || index === children.length - 1);
-                        const r = rounded ? Math.min(12, Math.abs(cx - px)) : 0;
-                        d = `M${px} ${py}V${barY}H${cx - dir * r}` + (r ? `Q${cx} ${barY} ${cx} ${barY + r}` : '') + `V${cy}`;
+            const groups = { preview: [], dim: [], line: [] };
+            const walk = (wrapperEl) => {
+                const kids = [...wrapperEl.querySelectorAll(':scope > .org-children > .org-child > .visual-node-wrapper')];
+                const card = cardOf(wrapperEl);
+                if (card && kids.length) {
+                    const p = pos(card);
+                    const px = p.x + p.w / 2;
+                    const pb = p.y + p.h;
+                    const fromPreview = wrapperEl.classList.contains('org-ph-wrapper');
+                    const items = kids.map((kid) => {
+                        const kidCard = cardOf(kid);
+                        if (!kidCard) return null;
+                        const r = pos(kidCard);
+                        const kind = fromPreview || kid.classList.contains('org-ph-wrapper') ? 'preview' : (kid.closest('.org-dragging') ? 'dim' : 'line');
+                        return { cx: r.x + r.w / 2, top: r.y, kind };
+                    }).filter(Boolean);
+                    if (items.length) {
+                        const barY = pb + (Math.min(...items.map((item) => item.top)) - pb) / 2;
+                        const minX = Math.min(...items.map((item) => item.cx));
+                        const maxX = Math.max(...items.map((item) => item.cx));
+                        items.forEach((item) => {
+                            let d;
+                            if (Math.abs(item.cx - px) < 1) {
+                                d = `M${px} ${pb}V${item.top}`;
+                            } else {
+                                const dir = Math.sign(item.cx - px);
+                                const outer = dir < 0 ? item.cx <= minX + 0.5 : item.cx >= maxX - 0.5;
+                                const r = outer ? Math.max(0, Math.min(12, Math.abs(item.cx - px), item.top - barY)) : 0;
+                                d = `M${px} ${pb}V${barY}H${item.cx - dir * r}` + (r ? `Q${item.cx} ${barY} ${item.cx} ${barY + r}` : '') + `V${item.top}`;
+                            }
+                            groups[item.kind].push(d);
+                        });
                     }
-                    edges.push({ d, depth });
-                    levels = Math.max(levels, depth + 1);
-                    walk(childWrapper, depth + 1);
-                });
+                }
+                kids.forEach(walk);
             };
-            treeEl.querySelectorAll(':scope > div > .visual-node-wrapper').forEach((root) => walk(root, 0));
-            if (edges.length === 0) return;
+            treeEl.querySelectorAll(':scope > div > .visual-node-wrapper').forEach(walk);
 
-            // Todas las líneas comparten el mismo ciclo: primero salen los círculos de la cabeza, al llegar salen los del
-            // siguiente nivel, y así hasta abajo (como una ola que baja por el organigrama)
-            const cycle = FLOW_STEP * levels + FLOW_PAUSE;
-            const fragment = document.createDocumentFragment();
-            edges.forEach(({ d, depth }) => {
-                const start = (depth * FLOW_STEP) / cycle;
-                const end = ((depth + 1) * FLOW_STEP) / cycle;
-                const fade = Math.min(0.15 * FLOW_STEP / cycle, (end - start) / 3);
-                const group = document.createElementNS(SVG_NS, 'g');
-                group.setAttribute('opacity', '0');
-                const halo = document.createElementNS(SVG_NS, 'circle');
-                halo.setAttribute('r', '8');
-                halo.setAttribute('class', 'org-flow-halo');
-                const dot = document.createElementNS(SVG_NS, 'circle');
-                dot.setAttribute('r', '4.5');
-                dot.setAttribute('class', 'org-flow-dot');
-                const motion = document.createElementNS(SVG_NS, 'animateMotion');
-                motion.setAttribute('path', d);
-                motion.setAttribute('dur', `${cycle}s`);
-                motion.setAttribute('repeatCount', 'indefinite');
-                motion.setAttribute('calcMode', 'linear');
-                motion.setAttribute('keyPoints', '0;0;1;1');
-                motion.setAttribute('keyTimes', `0;${start.toFixed(4)};${end.toFixed(4)};1`);
-                const opacity = document.createElementNS(SVG_NS, 'animate');
-                opacity.setAttribute('attributeName', 'opacity');
-                opacity.setAttribute('dur', `${cycle}s`);
-                opacity.setAttribute('repeatCount', 'indefinite');
-                opacity.setAttribute('values', '0;0;1;1;0;0');
-                opacity.setAttribute('keyTimes', `0;${start.toFixed(4)};${(start + fade).toFixed(4)};${(end - fade).toFixed(4)};${end.toFixed(4)};1`);
-                group.append(halo, dot, motion, opacity);
-                fragment.append(group);
+            // Primero la vista previa y lo atenuado; encima las líneas normales (donde se enciman se ve la normal)
+            const ordered = [...groups.preview.map((d) => [d, 'is-preview']), ...groups.dim.map((d) => [d, 'is-dim']), ...groups.line.map((d) => [d, ''])];
+            while (layer.childElementCount > ordered.length) layer.lastElementChild.remove();
+            ordered.forEach(([d, cls], index) => {
+                let path = layer.children[index];
+                if (!path) {
+                    path = document.createElementNS(SVG_NS, 'path');
+                    layer.append(path);
+                }
+                if (path.getAttribute('d') !== d) path.setAttribute('d', d);
+                if ((path.getAttribute('class') || '') !== cls) path.setAttribute('class', cls);
             });
-            layer.append(fragment);
-            // Todas las animaciones arrancan juntas, así la ola queda sincronizada aunque el árbol se haya vuelto a dibujar
-            try { layer.setCurrentTime(0); } catch (error) {}
         }
 
-        function scheduleFlows(delay = 60) {
-            clearTimeout(flowTimer);
-            flowTimer = setTimeout(drawFlows, delay);
+        // Mientras las tarjetas se deslizan, las líneas se vuelven a trazar en cada cuadro
+        function animateLines(ms) {
+            linesUntil = Math.max(linesUntil, performance.now() + ms);
+            if (linesFrame) return;
+            const tick = () => {
+                drawLines();
+                linesFrame = performance.now() < linesUntil ? requestAnimationFrame(tick) : null;
+            };
+            linesFrame = requestAnimationFrame(tick);
         }
-        window.addEventListener('resize', () => scheduleFlows(150));
-        // Si cambia el tamaño del árbol (alturas igualadas, fuentes que terminan de cargar) se vuelven a trazar las líneas
-        new ResizeObserver(() => scheduleFlows(120)).observe(container);
-        if (document.fonts?.ready) document.fonts.ready.then(() => scheduleFlows(0));
+        function scheduleLines(delay = 60) {
+            clearTimeout(linesTimer);
+            linesTimer = setTimeout(drawLines, delay);
+        }
+        window.addEventListener('resize', () => scheduleLines(150));
+        window.addEventListener('org-cards-measured', () => scheduleLines(0));
+        if (document.fonts?.ready) document.fonts.ready.then(() => { if (window.equalizeNodeHeights) window.equalizeNodeHeights(); scheduleLines(0); });
 
         // ============================================================
-        // MOVER PERSONAS: arrastrar una tarjeta (de su asa, o dejándola presionada un momento) sobre su nuevo jefe, o al
-        // panel «Sin asignar» para sacarla del árbol; o arrastrar a alguien de «Sin asignar» sobre su jefe.
+        // DESLIZAR: cada tarjeta va de donde estaba a su nuevo lugar (el árbol se acomoda solo, sin saltos)
         // ============================================================
-        let nodePress = null;   // presión del botón que todavía no se convierte en arrastre
-        let nodeDrag = null;    // arrastre en curso
-        let suppressNodeClick = false;
-        let flipBefore = null;  // posiciones de las tarjetas antes de mover a alguien (para que se deslicen a su lugar)
-        let edgeFrame = null;
-        let lastPointer = { x: 0, y: 0 };
+        let flipBefore = null;  // dónde estaba cada tarjeta antes de volver a dibujar el árbol
+        let landing = null;     // persona que se acaba de mover: dónde quedó su hueco y qué se esperaba
 
-        const wireComponent = () => {
-            const root = container.closest('[wire\\:id]');
-            return root && window.Livewire ? window.Livewire.find(root.getAttribute('wire:id')) : null;
+        const slots = () => [...document.querySelectorAll('#org-tree-wrapper .visual-node-wrapper > .relative')];
+        const slotKey = (slot) => {
+            const card = slot.querySelector(':scope > .org-node');
+            if (!card) return null;
+            return card.classList.contains('org-ph-card') ? 'ph' : card.dataset.id;
         };
-        const cardOf = (wrapper) => (wrapper ? wrapper.querySelector(':scope > .relative > .org-node') : null);
-        // Jefe que la pantalla muestra para una tarjeta (null si es la cabeza de su rama)
-        const superiorIdOf = (card) => {
-            const wrapper = card.closest('.visual-node-wrapper');
-            const parentCard = cardOf(wrapper && wrapper.parentElement ? wrapper.parentElement.closest('.visual-node-wrapper') : null);
-            return parentCard ? parseInt(parentCard.dataset.id) : null;
-        };
-
+        function measureSlots() {
+            const map = new Map();
+            slots().forEach((slot) => {
+                const key = slotKey(slot);
+                if (key && !map.has(key)) map.set(key, slot.getBoundingClientRect());
+            });
+            return map;
+        }
         function rememberPositions() {
-            if (reduceMotion) return;
-            flipBefore = new Map();
-            document.querySelectorAll('#org-tree-wrapper .org-node').forEach((card) => {
-                if (!flipBefore.has(card.dataset.id)) flipBefore.set(card.dataset.id, card.getBoundingClientRect());
-            });
+            // También sin animaciones: sirve para que la vista no brinque al volver a dibujar
+            flipBefore = measureSlots();
         }
+        const stopSlides = () => slots().forEach((slot) => slot.getAnimations().forEach((animation) => {
+            if (animation.id === 'org-slide' || animation.id === 'org-ph-in') animation.cancel();
+        }));
 
-        // Cada tarjeta se desliza desde donde estaba hasta su nuevo lugar (el árbol se acomoda solo, sin saltos)
-        function playFlip() {
-            const before = flipBefore;
-            flipBefore = null;
-            if (!before) return;
+        function slideFrom(first, ms) {
+            stopSlides();
+            if (!first || reduceMotion) {
+                drawLines();
+                return;
+            }
             const k = unit() * scale;
-            document.querySelectorAll('#org-tree-wrapper .org-node').forEach((card) => {
-                const was = before.get(card.dataset.id);
+            slots().forEach((slot) => {
+                const key = slotKey(slot);
+                const was = key ? first.get(key) : null;
                 if (!was) return;
-                const now = card.getBoundingClientRect();
+                const now = slot.getBoundingClientRect();
                 const dx = (was.left - now.left) / k;
                 const dy = (was.top - now.top) / k;
-                if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-                card.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], { duration: 480, easing: 'cubic-bezier(.22, .61, .36, 1)' });
+                if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+                slot.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], { duration: ms, easing: EASE }).id = 'org-slide';
             });
-            scheduleFlows(520);
+            animateLines(ms + 40);
+        }
+
+        // Deja una tarjeta en el mismo punto de la pantalla después de reacomodar el árbol (se mueve el lienzo, no ella):
+        // así lo que está bajo el puntero no se escapa mientras se arrastra
+        function anchorTo(slot, rect) {
+            if (!slot || !rect) return;
+            const now = slot.getBoundingClientRect();
+            const k = unit() * scale;
+            translateX += (rect.left - now.left) / k;
+            translateY += (rect.top - now.top) / k;
+            updateTransform();
+        }
+
+        function playFlip() {
+            const first = flipBefore;
+            const land = landing;
+            flipBefore = null;
+            landing = null;
+            if (land) {
+                const card = document.querySelector(`#org-tree-wrapper .org-node[data-id="${land.id}"]`);
+                let ok = false;
+                if (land.placement === 'remove') {
+                    ok = !card;
+                } else if (card) {
+                    ok = superiorIdOf(card) === land.expectSuperior;
+                    if (ok && land.placement === 'above') {
+                        const target = document.querySelector(`#org-tree-wrapper .org-node[data-id="${land.targetId}"]`);
+                        ok = Boolean(target) && superiorIdOf(target) === land.id;
+                    }
+                }
+                // Si quedó donde se soltó, su tarjeta se queda justo en el hueco y el resto se acomoda a su alrededor; si no se
+                // pudo (alguien más cambió el organigrama), regresa deslizándose a su lugar
+                if (ok && card && land.rect) anchorTo(card.parentElement, land.rect);
+                else if (land.anchorId && first) anchorTo(slotOfId(land.anchorId), first.get(String(land.anchorId)));
+            } else if (first) {
+                // Cambio que llegó de otra pantalla (o de un formulario): la tarjeta más cercana al centro de la vista se queda
+                // en su lugar y lo demás se acomoda a su alrededor, así la vista no brinca
+                const box = container.getBoundingClientRect();
+                const centerX = box.left + box.width / 2;
+                const centerY = box.top + box.height / 2;
+                const nearest = [...first.entries()]
+                    .filter(([key]) => key !== 'ph')
+                    .map(([key, rect]) => [key, rect, Math.hypot(rect.left + rect.width / 2 - centerX, rect.top + rect.height / 2 - centerY)])
+                    .sort((a, b) => a[2] - b[2])
+                    .find(([key]) => slotOfId(key));
+                if (nearest) anchorTo(slotOfId(nearest[0]), nearest[1]);
+            }
+            slideFrom(first, SETTLE_MS);
         }
 
         function flashNode(id) {
@@ -2465,12 +2609,59 @@
             card.classList.remove('org-node-flash');
             void card.offsetWidth;
             card.classList.add('org-node-flash');
-            setTimeout(() => card.classList.remove('org-node-flash'), 1800);
+            setTimeout(() => card.classList.remove('org-node-flash'), 1500);
         }
         window.addEventListener('org-node-moved', (event) => {
             const id = event.detail?.id ?? (Array.isArray(event.detail) ? event.detail[0]?.id : null);
-            if (id) setTimeout(() => flashNode(id), 120);
+            if (id) setTimeout(() => flashNode(id), 260);
         });
+
+        // ============================================================
+        // MOVER PERSONAS: se arrastra una tarjeta (de su asa, o dejándola presionada un momento) o una fila de «Sin
+        // asignar». En el árbol aparece un hueco punteado donde quedaría: arriba de una tarjeta queda a cargo de esa
+        // persona, abajo entra a su equipo y a los lados queda junto a ella. Al soltar en «Sin asignar» sale del árbol.
+        // ============================================================
+        let nodePress = null;   // presión del botón que todavía no se convierte en arrastre
+        let nodeDrag = null;    // arrastre en curso
+        let preview = null;     // hueco de la vista previa: { targetId, placement, wrapper, restore }
+        let pending = null;     // movimiento enviado que espera la respuesta
+        let suppressNodeClick = false;
+        let edgeFrame = null;
+        let hitFrame = null;
+        let marked = null;
+        let lastPointer = { x: 0, y: 0 };
+
+        const wireComponent = () => {
+            const root = container.closest('[wire\\:id]');
+            return root && window.Livewire ? window.Livewire.find(root.getAttribute('wire:id')) : null;
+        };
+        // Tarjeta «de verdad» más cercana hacia arriba (los huecos de la vista previa no cuentan)
+        const realWrapperFrom = (el) => {
+            let wrapperEl = el ? el.closest('.visual-node-wrapper') : null;
+            while (wrapperEl && wrapperEl.classList.contains('org-ph-wrapper')) wrapperEl = wrapperEl.parentElement ? wrapperEl.parentElement.closest('.visual-node-wrapper') : null;
+            return wrapperEl;
+        };
+        // Jefe que la pantalla muestra para una tarjeta (null si es la cabeza de su rama)
+        const superiorIdOf = (card) => {
+            const own = card.closest('.visual-node-wrapper');
+            const parentCard = cardOf(realWrapperFrom(own ? own.parentElement : null));
+            return parentCard && parentCard.dataset.id ? parseInt(parentCard.dataset.id) : null;
+        };
+        const slotOfId = (id) => document.querySelector(`#org-tree-wrapper .org-node[data-id="${id}"]`)?.parentElement || null;
+        // Compañera de al lado dentro del mismo equipo (sin contar el hueco de la vista previa)
+        const neighbourChild = (childEl, direction) => {
+            let el = childEl ? childEl[direction] : null;
+            while (el && el.classList.contains('org-ph-child')) el = el[direction];
+            return el;
+        };
+
+        const HINTS = {
+            above: (name) => `Quedará a cargo de ${name}`,
+            child: (name) => `Quedará en el equipo de ${name}`,
+            before: (name) => `Quedará junto a ${name}`,
+            after: (name) => `Quedará junto a ${name}`,
+        };
+        const DEFAULT_HINT = 'Suéltala arriba, abajo o a un lado de otra persona';
 
         function startPress(e, info) {
             nodePress = { ...info, x: e.clientX, y: e.clientY, timer: null };
@@ -2484,7 +2675,7 @@
         }
 
         container.addEventListener('mousedown', function(e) {
-            if (e.button !== 0 || nodeDrag) return;
+            if (e.button !== 0 || nodeDrag || pending) return;
             lastPointer = { x: e.clientX, y: e.clientY };
             const handle = e.target.closest('.org-drag-handle');
             if (handle) {
@@ -2501,92 +2692,294 @@
                 return;
             }
             const card = e.target.closest('#org-tree-wrapper .org-node');
-            if (card) {
+            if (card && card.dataset.id) {
                 startPress(e, { source: 'tree', card, id: parseInt(card.dataset.id), from: superiorIdOf(card), longPress: true });
             }
         }, true);
+
+        function avatarElement(photo, initials, className) {
+            const avatar = photo ? document.createElement('img') : document.createElement('span');
+            avatar.className = className;
+            if (photo) {
+                avatar.src = photo;
+                avatar.alt = '';
+            } else {
+                avatar.textContent = initials || '?';
+            }
+            return avatar;
+        }
+
+        // Tarjeta que sigue al cursor: va en el body (fuera del organigrama), así que se le copian los colores del tema
+        function buildGhost(drag) {
+            const ghost = document.createElement('div');
+            ghost.className = 'org-drag-ghost';
+            const styles = getComputedStyle(container);
+            ['--panel-surface', '--panel-border', '--panel-text', '--panel-header', '--org-flow', '--org-muted'].forEach((name) => {
+                const value = styles.getPropertyValue(name);
+                if (value) ghost.style.setProperty(name, value);
+            });
+            const text = document.createElement('span');
+            text.className = 'org-ghost-text';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'org-ghost-name';
+            nameEl.textContent = drag.name;
+            const hint = document.createElement('span');
+            hint.className = 'org-ghost-hint';
+            text.append(nameEl, hint);
+            ghost.append(avatarElement(drag.photo, drag.initials, 'org-ghost-avatar'), text);
+            return { ghost, hint };
+        }
+
+        // Hueco de la vista previa: del mismo tamaño que una tarjeta, con la foto y el nombre de quien quedará ahí
+        function buildPlaceholder(drag) {
+            const wrapperEl = document.createElement('div');
+            wrapperEl.className = 'visual-node-wrapper org-ph-wrapper flex flex-col items-center';
+            const slot = document.createElement('div');
+            slot.className = 'relative z-10';
+            const card = document.createElement('div');
+            card.className = 'org-node org-ph-card';
+            card.style.height = `${drag.cardHeight}px`;
+            const head = document.createElement('span');
+            head.className = 'org-node-head';
+            const avatarWrap = document.createElement('span');
+            avatarWrap.className = 'org-node-avatar';
+            avatarWrap.append(avatarElement(drag.photo, drag.initials, drag.photo ? '' : 'org-node-initials'));
+            const names = document.createElement('span');
+            names.className = 'org-node-names';
+            const nameEl = document.createElement('span');
+            nameEl.className = 'org-node-name';
+            nameEl.textContent = drag.name;
+            names.append(nameEl);
+            head.append(avatarWrap, names);
+            const text = document.createElement('span');
+            text.className = 'org-ph-text';
+            text.textContent = drag.teamSize > 0 ? 'Aquí quedará con su equipo' : 'Aquí quedará';
+            card.append(head, text);
+            slot.append(card);
+            wrapperEl.append(slot);
+            return wrapperEl;
+        }
+
+        // Pone el hueco en el árbol (con los mismos contenedores que una tarjeta real) y devuelve cómo quitarlo
+        function applyPreview(drag, targetCard, placement) {
+            const targetWrapper = targetCard.closest('.visual-node-wrapper');
+            const ph = buildPlaceholder(drag);
+            const make = (className) => Object.assign(document.createElement('div'), { className });
+            const undo = [];
+            if (placement === 'child') {
+                let kids = targetWrapper.querySelector(':scope > .org-children');
+                if (!kids) {
+                    const stem = make('org-stem');
+                    kids = make('org-children');
+                    targetWrapper.append(stem, kids);
+                    const created = kids;
+                    undo.push(() => { stem.remove(); created.remove(); });
+                }
+                const child = make('org-child org-ph-child');
+                child.append(ph);
+                kids.append(child);
+                undo.push(() => child.remove());
+            } else if (placement === 'before' || placement === 'after') {
+                const own = targetWrapper.parentElement;
+                const child = make('org-child org-ph-child');
+                child.append(ph);
+                own.parentElement.insertBefore(child, placement === 'before' ? own : own.nextSibling);
+                undo.push(() => child.remove());
+            } else {
+                // Arriba: el hueco ocupa su lugar y la persona (con toda su rama) baja a su equipo
+                const parent = targetWrapper.parentElement;
+                const stem = make('org-stem');
+                const kids = make('org-children');
+                const child = make('org-child');
+                parent.insertBefore(ph, targetWrapper);
+                child.append(targetWrapper);
+                kids.append(child);
+                ph.append(stem, kids);
+                undo.push(() => { parent.insertBefore(targetWrapper, ph); ph.remove(); });
+            }
+            return { wrapper: ph, restore: () => undo.reverse().forEach((fn) => fn()) };
+        }
+
+        function setPreview(targetCard, placement) {
+            const targetId = parseInt(targetCard.dataset.id);
+            if (preview && preview.targetId === targetId && preview.placement === placement) return;
+            const first = reduceMotion ? null : measureSlots();
+            const anchorSlot = targetCard.parentElement;
+            const anchorRect = anchorSlot.getBoundingClientRect();
+            const travelling = Boolean(preview);
+            stopSlides();
+            if (preview) preview.restore();
+            preview = { targetId, placement, ...applyPreview(nodeDrag, targetCard, placement) };
+            anchorTo(anchorSlot, anchorRect);
+            slideFrom(first, SLIDE_MS);
+            // Si ya había un hueco, se desliza al nuevo lugar; si no, aparece suave
+            if (!travelling && !reduceMotion) {
+                slotOf(preview.wrapper).animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 220, easing: EASE }).id = 'org-ph-in';
+            }
+        }
+
+        function clearPreview(animate = true) {
+            if (!preview) return;
+            const first = animate && !reduceMotion ? measureSlots() : null;
+            const anchorSlot = slotOfId(preview.targetId);
+            const anchorRect = anchorSlot ? anchorSlot.getBoundingClientRect() : null;
+            stopSlides();
+            preview.restore();
+            preview = null;
+            if (animate) {
+                anchorTo(anchorSlot, anchorRect);
+                slideFrom(first, SLIDE_MS);
+            } else {
+                drawLines();
+            }
+        }
+
+        function mark(el, className) {
+            if (marked && (marked.el !== el || marked.className !== className)) marked.el.classList.remove(marked.className);
+            marked = el ? { el, className } : null;
+            if (el) el.classList.add(className);
+        }
 
         function beginNodeDrag(press, point) {
             clearTimeout(press.timer);
             isPanning = false;
             const source = press.source;
-            const name = source === 'tree' ? press.card.dataset.name : press.row.dataset.name;
-            const initials = source === 'tree' ? press.card.dataset.initials : press.row.dataset.initials;
-            const photo = source === 'tree' ? press.card.dataset.photo : '';
-
-            const ghost = document.createElement('div');
-            ghost.className = 'org-drag-ghost';
-            const avatar = photo ? document.createElement('img') : document.createElement('span');
-            avatar.className = 'org-ghost-avatar';
-            if (photo) { avatar.src = photo; avatar.alt = ''; } else { avatar.textContent = initials || '?'; }
-            const text = document.createElement('span');
-            text.style.minWidth = '0';
-            const nameEl = document.createElement('span');
-            nameEl.className = 'org-ghost-name';
-            nameEl.textContent = name || '';
-            const hint = document.createElement('span');
-            hint.className = 'org-ghost-hint';
-            text.append(nameEl, hint);
-            ghost.append(avatar, text);
-            document.body.append(ghost);
-
-            // Su propia rama (ella y su equipo) no puede recibirla
+            const el = source === 'tree' ? press.card : press.row;
             const branch = source === 'tree' ? press.card.closest('.visual-node-wrapper') : null;
+            // Su propia rama (ella y su equipo) no puede recibirla
             const blocked = new Set([press.id]);
-            if (branch) {
-                branch.classList.add('org-dragging');
-                branch.querySelectorAll('.org-node').forEach((el) => blocked.add(parseInt(el.dataset.id)));
-            }
+            if (branch) branch.querySelectorAll('.org-node[data-id]').forEach((card) => blocked.add(parseInt(card.dataset.id)));
+            const sample = document.querySelector('#org-tree-wrapper .js-org-card');
 
-            nodeDrag = { ...press, name, ghost, hint, branch, blocked, target: null, zone: false };
+            nodeDrag = {
+                ...press,
+                name: el.dataset.name || '',
+                initials: el.dataset.initials || '?',
+                photo: source === 'tree' ? (press.card.dataset.photo || '') : '',
+                origin: (source === 'tree' ? press.card.parentElement : press.row).getBoundingClientRect(),
+                cardHeight: (source === 'tree' ? press.card.offsetHeight : sample?.offsetHeight) || 200,
+                teamSize: blocked.size - 1,
+                branch,
+                blocked,
+                drop: null,
+                zone: false,
+            };
+            Object.assign(nodeDrag, buildGhost(nodeDrag));
             nodePress = null;
+            document.body.append(nodeDrag.ghost);
+            if (!reduceMotion) nodeDrag.ghost.animate([{ opacity: 0, scale: '.94' }, { opacity: 1, scale: '1' }], { duration: 160, easing: EASE });
+            branch?.classList.add('org-dragging');
+            press.row?.classList.add('is-dragging-row');
             container.classList.add('org-is-dragging');
+            if (source === 'tree') container.classList.add('org-drag-from-tree');
             window.dispatchEvent(new CustomEvent('org-drag-start', { detail: { source } }));
-            moveNodeDrag(point);
+            placeGhost(point);
+            showHint('', DEFAULT_HINT);
+            drawLines();
+            evaluateDrop();
             edgeFrame = requestAnimationFrame(edgePan);
         }
 
-        function clearDropMarks() {
-            document.querySelectorAll('.org-drop-ok, .org-drop-bad').forEach((el) => el.classList.remove('org-drop-ok', 'org-drop-bad'));
-            document.querySelectorAll('.org-side.org-drop-zone').forEach((el) => el.classList.remove('org-drop-zone'));
+        function placeGhost(point) {
+            if (nodeDrag) nodeDrag.ghost.style.transform = `translate(${point.x + 18}px, ${point.y + 18}px)`;
         }
 
-        function moveNodeDrag(point) {
+        function showHint(state, message) {
             if (!nodeDrag) return;
-            nodeDrag.ghost.style.transform = `translate(${point.x + 16}px, ${point.y + 14}px)`;
-            const under = document.elementFromPoint(point.x, point.y);
-            const card = under ? under.closest('#org-tree-wrapper .org-node') : null;
-            const side = under ? under.closest('.org-side') : null;
-            clearDropMarks();
-            nodeDrag.target = null;
-            nodeDrag.zone = false;
-            let state = '';
-            let message = nodeDrag.source === 'tree' ? 'Suéltala sobre su nuevo jefe o en «Sin asignar»' : 'Suéltala sobre su jefe';
-
-            if (side && nodeDrag.source === 'tree') {
-                side.classList.add('org-drop-zone');
-                nodeDrag.zone = true;
-                state = 'ok';
-                message = 'Soltar: sale del organigrama y su equipo pasa a su jefe';
-            } else if (card) {
-                const id = parseInt(card.dataset.id);
-                if (id === nodeDrag.id) {
-                    // Sobre su propia tarjeta (al empezar a arrastrar): todavía no hay destino
-                } else if (nodeDrag.blocked.has(id)) {
-                    card.classList.add('org-drop-bad');
-                    state = 'bad';
-                    message = 'No puede quedar debajo de alguien de su propio equipo';
-                } else if (id === nodeDrag.from) {
-                    message = 'Ya reporta a esta persona';
-                } else {
-                    card.classList.add('org-drop-ok');
-                    nodeDrag.target = id;
-                    state = 'ok';
-                    message = `Soltar: ahora reportará a ${card.dataset.name}`;
-                }
-            }
             nodeDrag.ghost.dataset.state = state;
-            nodeDrag.hint.textContent = message;
+            if (nodeDrag.hint.textContent !== message) nodeDrag.hint.textContent = message;
+        }
+
+        function nearPreview(point) {
+            if (!preview) return false;
+            return [slotOf(preview.wrapper), slotOfId(preview.targetId)].some((el) => {
+                if (!el) return false;
+                const r = el.getBoundingClientRect();
+                return point.x > r.left - 40 && point.x < r.right + 40 && point.y > r.top - 40 && point.y < r.bottom + 40;
+            });
+        }
+
+        // Qué pasaría al soltar aquí: se calcula una vez por cuadro con lo que está bajo el puntero
+        function evaluateDrop() {
+            hitFrame = null;
+            const drag = nodeDrag;
+            if (!drag) return;
+            const point = lastPointer;
+            const under = document.elementFromPoint(point.x, point.y);
+            const side = under ? under.closest('.org-side') : null;
+            container.querySelector('.org-side.org-drop-zone')?.classList.remove('org-drop-zone');
+            drag.zone = false;
+
+            if (side) {
+                clearPreview();
+                drag.drop = null;
+                mark(null);
+                if (drag.source === 'tree') {
+                    side.classList.add('org-drop-zone');
+                    drag.zone = true;
+                    showHint('ok', drag.teamSize > 0 ? 'Saldrá del organigrama y su equipo pasará a su jefe' : 'Saldrá del organigrama');
+                } else {
+                    showHint('', 'Suéltala sobre el organigrama');
+                }
+                return;
+            }
+
+            // Sobre su propio hueco: todo se queda como está
+            if (preview && under && under.closest('.org-ph-wrapper > .relative')) return;
+
+            const card = under ? under.closest('#org-tree-wrapper .org-node') : null;
+            if (card && card.dataset.id && !card.classList.contains('org-ph-card')) {
+                const id = parseInt(card.dataset.id);
+                if (id === drag.id) {
+                    clearPreview();
+                    drag.drop = null;
+                    mark(null);
+                    showHint('', DEFAULT_HINT);
+                    return;
+                }
+                if (drag.blocked.has(id)) {
+                    clearPreview();
+                    drag.drop = null;
+                    mark(card, 'org-drop-bad');
+                    showHint('bad', 'No puede quedar dentro de su propio equipo');
+                    return;
+                }
+                const r = card.getBoundingClientRect();
+                const rx = (point.x - r.left) / r.width;
+                const ry = (point.y - r.top) / r.height;
+                const targetSuperior = superiorIdOf(card);
+                let placement = 'child';
+                if (ry < 0.3) placement = 'above';
+                else if (targetSuperior !== null && rx < 0.2) placement = 'before';
+                else if (targetSuperior !== null && rx > 0.8) placement = 'after';
+
+                // Lo que no cambiaría nada no muestra hueco
+                const ownChild = drag.branch && drag.branch.parentElement.classList.contains('org-child') ? drag.branch.parentElement : null;
+                const targetChild = card.closest('.visual-node-wrapper').parentElement;
+                const unchanged = (placement === 'child' && id === drag.from)
+                    || (placement === 'before' && ownChild && neighbourChild(targetChild, 'previousElementSibling') === ownChild)
+                    || (placement === 'after' && ownChild && neighbourChild(targetChild, 'nextElementSibling') === ownChild);
+                if (unchanged) {
+                    clearPreview();
+                    drag.drop = null;
+                    mark(null);
+                    showHint('', placement === 'child' ? `Ya reporta a ${card.dataset.name}` : 'Ya está en ese lugar');
+                    return;
+                }
+
+                mark(card, 'org-drop-target');
+                drag.drop = { targetId: id, placement, targetSuperior };
+                setPreview(card, placement);
+                showHint('ok', HINTS[placement](card.dataset.name));
+                return;
+            }
+
+            // Fuera de las tarjetas: el hueco se queda mientras el puntero siga cerca de él o de su tarjeta
+            if (nearPreview(point)) return;
+            clearPreview();
+            drag.drop = null;
+            mark(null);
+            showHint('', DEFAULT_HINT);
         }
 
         // Cerca de las orillas el organigrama se recorre solo, para llevar a la persona a una rama que no se ve
@@ -2607,41 +3000,78 @@
                 translateX += vx / k;
                 translateY += vy / k;
                 updateTransform();
-                moveNodeDrag(lastPointer);
+                if (!hitFrame) hitFrame = requestAnimationFrame(evaluateDrop);
             }
             edgeFrame = requestAnimationFrame(edgePan);
         }
 
-        function endNodeDrag(drop) {
+        // La tarjeta que seguía al cursor vuela a donde va (su hueco, «Sin asignar» o de regreso a su lugar) y se desvanece
+        function flyGhost(ghost, rect, instant) {
+            if (instant || reduceMotion || !rect) {
+                ghost.remove();
+                return;
+            }
+            const from = ghost.getBoundingClientRect();
+            const shrink = Math.max(0.6, Math.min(1, rect.width / from.width));
+            const flight = ghost.animate([
+                { transform: `translate(${from.left}px, ${from.top}px)`, opacity: 1 },
+                { transform: `translate(${rect.left}px, ${rect.top}px) scale(${shrink})`, opacity: 0 },
+            ], { duration: 260, easing: EASE, fill: 'forwards' });
+            flight.onfinish = () => ghost.remove();
+            setTimeout(() => ghost.remove(), 500);
+        }
+
+        function endNodeDrag(drop, instant = false) {
             const drag = nodeDrag;
+            if (!drag) return;
             nodeDrag = null;
             cancelAnimationFrame(edgeFrame);
-            clearDropMarks();
-            container.classList.remove('org-is-dragging');
-            if (!drag) return;
-            drag.ghost.remove();
+            if (hitFrame) cancelAnimationFrame(hitFrame);
+            hitFrame = null;
+            mark(null);
+            container.querySelector('.org-side.org-drop-zone')?.classList.remove('org-drop-zone');
+            container.classList.remove('org-is-dragging', 'org-drag-from-tree');
             suppressNodeClick = true;
             setTimeout(() => { suppressNodeClick = false; }, 0);
 
             const wire = wireComponent();
-            if (drop && wire && (drag.target || drag.zone)) {
-                rememberPositions();
-                if (drag.branch) {
-                    drag.branch.classList.remove('org-dragging');
-                    drag.branch.classList.add('org-pending');
-                }
-                drag.row?.closest('li')?.style.setProperty('opacity', '0.5');
-                const request = drag.target
-                    ? wire.call('moveUserInChart', drag.id, drag.target, drag.from)
-                    : wire.call('removeUserFromChart', drag.id, drag.from);
-                Promise.resolve(request).finally(() => {
-                    window.dispatchEvent(new CustomEvent('org-drag-end'));
-                    document.querySelectorAll('.org-pending').forEach((el) => el.classList.remove('org-pending'));
-                });
+            const action = drop && wire ? (drag.zone ? 'remove' : (drag.drop && preview ? 'place' : null)) : null;
+            const release = () => {
+                drag.branch?.classList.remove('org-dragging');
+                drag.row?.classList.remove('is-dragging-row');
+                window.dispatchEvent(new CustomEvent('org-drag-end'));
+            };
+
+            if (!action) {
+                // Se cancela: la tarjeta regresa a su lugar y el hueco se cierra
+                flyGhost(drag.ghost, drag.origin, instant);
+                release();
+                clearPreview(!instant);
                 return;
             }
-            drag.branch?.classList.remove('org-dragging');
-            window.dispatchEvent(new CustomEvent('org-drag-end'));
+
+            let request;
+            if (action === 'place') {
+                const phSlot = slotOf(preview.wrapper);
+                phSlot.querySelector('.org-ph-card')?.classList.add('is-saving');
+                flyGhost(drag.ghost, phSlot.getBoundingClientRect(), false);
+                const { targetId, placement, targetSuperior } = drag.drop;
+                pending = { id: drag.id, placement, targetId, expectSuperior: placement === 'child' ? targetId : targetSuperior, anchorId: targetId };
+                request = wire.call('placeUserInChart', drag.id, targetId, placement, drag.from, targetSuperior);
+            } else {
+                flyGhost(drag.ghost, container.querySelector('.org-side-drop')?.getBoundingClientRect() || null, false);
+                pending = { id: drag.id, placement: 'remove', anchorId: drag.from };
+                request = wire.call('removeUserFromChart', drag.id, drag.from);
+            }
+            Promise.resolve(request).finally(() => {
+                // Si no llegó la respuesta (sin conexión), se deshace la vista previa
+                if (pending) {
+                    pending = null;
+                    clearPreview();
+                }
+                release();
+                drawLines();
+            });
         }
 
         function cancelNodeDrag() {
@@ -2649,10 +3079,30 @@
             if (nodeDrag) endNodeDrag(false);
         }
 
+        // Justo antes de que Livewire vuelva a dibujar: se guarda dónde está cada tarjeta (la persona movida, en su hueco) y
+        // se quita la vista previa, para que Livewire compare contra el árbol original
+        function beforeMorph() {
+            if (nodeDrag) endNodeDrag(false, true);
+            if (nodePress) { clearTimeout(nodePress.timer); nodePress = null; }
+            rememberPositions();
+            if (pending) {
+                const phSlot = preview ? slotOf(preview.wrapper) : null;
+                landing = { ...pending, rect: phSlot ? phSlot.getBoundingClientRect() : null };
+                if (flipBefore && landing.rect) flipBefore.set(String(pending.id), landing.rect);
+                pending = null;
+            }
+            stopSlides();
+            if (preview) {
+                preview.restore();
+                preview = null;
+            }
+        }
+
         window.addEventListener('mousemove', (e) => {
             lastPointer = { x: e.clientX, y: e.clientY };
             if (nodeDrag) {
-                moveNodeDrag(lastPointer);
+                placeGhost(lastPointer);
+                if (!hitFrame) hitFrame = requestAnimationFrame(evaluateDrop);
                 return;
             }
             if (!nodePress) return;

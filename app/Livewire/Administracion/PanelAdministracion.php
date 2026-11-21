@@ -776,6 +776,49 @@ class PanelAdministracion extends Component
         $this->notify(trim(($names[$userId]->name ?? '').' '.($names[$userId]->last_name ?? '')).' ahora reporta a '.trim(($names[$superiorId]->name ?? '').' '.($names[$superiorId]->last_name ?? '')).'.');
     }
 
+    /**
+     * Soltar a una persona (con su equipo) sobre otra del organigrama: arriba queda a su cargo ('above'), abajo entra a su
+     * equipo ('child') y a un lado queda junto a ella con el mismo jefe ('before' / 'after'). Los jefes esperados son los que
+     * la pantalla mostraba; si alguien más cambió el organigrama no se aplica y se vuelve a dibujar.
+     */
+    public function placeUserInChart(int $userId, int $targetId, string $placement, $expectedSuperiorId = null, $expectedTargetSuperiorId = null): void
+    {
+        $this->ensureOrganizationAdministrator();
+        $chartService = app(OrganizationChartService::class);
+        $id = static fn ($value): ?int => $value === null || $value === '' ? null : (int) $value;
+
+        try {
+            $result = $chartService->placeUser($userId, $targetId, $placement, $id($expectedSuperiorId), $id($expectedTargetSuperiorId));
+        } catch (\App\Services\Administracion\OrganizationChartConflict) {
+            $this->refreshChartAfterChange($chartService);
+            $this->notify('El organigrama cambió mientras lo veías (alguien más lo modificó). Ya se actualizó: revísalo y vuelve a intentarlo.', 'error');
+
+            return;
+        } catch (ValidationException $exception) {
+            $this->refreshChartAfterChange($chartService);
+            $this->notify((string) collect($exception->errors())->flatten()->first(), 'error');
+
+            return;
+        }
+
+        $this->refreshChartAfterChange($chartService);
+
+        if (! $result['changed']) {
+            return;
+        }
+
+        $this->dispatch('org-node-moved', id: $userId);
+        $people = User::query()->whereKey(array_filter([$userId, $targetId, $result['superior_id']]))->get(['id', 'name', 'last_name'])->keyBy('id');
+        $name = static fn (?int $personId): string => $personId && isset($people[$personId]) ? trim($people[$personId]->name.' '.$people[$personId]->last_name) : '';
+
+        $this->notify(match (true) {
+            $placement === 'child' => $name($userId).' ahora reporta a '.$name($targetId).'.',
+            $placement === 'above' => $name($userId).' ahora está a cargo de '.$name($targetId).($result['superior_id'] ? ' y reporta a '.$name($result['superior_id']).'.' : ' y encabeza su rama.'),
+            $result['previous_superior_id'] === $result['superior_id'] => 'Se reacomodó el equipo de '.$name($result['superior_id']).'.',
+            default => $name($userId).' ahora reporta a '.$name($result['superior_id']).', junto a '.$name($targetId).'.',
+        });
+    }
+
     /** Arrastrar a una persona del árbol al panel «Sin asignar»: sale del organigrama y su equipo pasa a su jefe. */
     public function removeUserFromChart(int $userId, $expectedSuperiorId = null): void
     {
