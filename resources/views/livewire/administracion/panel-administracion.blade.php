@@ -275,24 +275,28 @@
            hermanos se tocan sin huecos. */
         [data-panel] { --org-line: #a8b0bd; }
         html.module-dark-theme [data-panel] { --org-line: #3f3f46; }
-        .org-stem { width: 2px; height: 24px; background: var(--org-line); flex-shrink: 0; }
+        /* Mismas líneas que Inicio: 1px en gris #a1a1aa (#52525b en oscuro) para bordes de tarjetas, paneles, campos y para
+           las líneas que unen a cada jefe con su equipo */
+        #organigrama-principal { --panel-border: #a1a1aa; --org-line: #a1a1aa; }
+        html.module-dark-theme #organigrama-principal { --panel-border: #52525b; --org-line: #52525b; }
+        .org-stem { width: 1px; height: 24px; background: var(--org-line); flex-shrink: 0; }
         .org-children { display: flex; align-items: flex-start; justify-content: center; }
         .org-child { position: relative; display: flex; flex-direction: column; align-items: center; padding: 24px 14px 0; }
         .org-child::before, .org-child::after { content: ''; position: absolute; top: 0; height: 24px; box-sizing: border-box; }
-        .org-child::before { left: 0; right: calc(50% - 1px); border-top: 2px solid var(--org-line); }
-        .org-child::after { left: calc(50% - 1px); right: 0; border-top: 2px solid var(--org-line); border-left: 2px solid var(--org-line); }
+        .org-child::before { left: 0; right: calc(50% - 1px); border-top: 1px solid var(--org-line); }
+        .org-child::after { left: calc(50% - 1px); right: 0; border-top: 1px solid var(--org-line); border-left: 1px solid var(--org-line); }
         .org-child:only-child::before { display: none; }
         .org-child:only-child::after { border-top: 0; }
         .org-child:first-child:not(:only-child)::before { display: none; }
         .org-child:first-child:not(:only-child)::after { border-top-left-radius: 12px; }
         .org-child:last-child:not(:only-child)::after { display: none; }
-        .org-child:last-child:not(:only-child)::before { border-right: 2px solid var(--org-line); border-top-right-radius: 12px; }
+        .org-child:last-child:not(:only-child)::before { border-right: 1px solid var(--org-line); border-top-right-radius: 12px; }
         /* Con el script, las líneas se dibujan en la capa SVG (siguen a las tarjetas mientras se deslizan) y estas quedan
            solo como espacio entre niveles */
         .org-svg-lines .org-stem { background: transparent; }
         .org-svg-lines .org-child::before, .org-svg-lines .org-child::after { display: none; }
         .org-lines { position: absolute; left: 0; top: 0; z-index: 5; overflow: visible; pointer-events: none; }
-        .org-lines path { fill: none; stroke: var(--org-line); stroke-width: 2; stroke-linejoin: round; }
+        .org-lines path { fill: none; stroke: var(--org-line); stroke-width: 1; stroke-linejoin: round; }
         .org-lines path.is-dim { opacity: .35; }
         .org-lines path.is-preview { stroke: var(--org-flow); stroke-dasharray: 6 6; }
 
@@ -328,7 +332,7 @@
         html.module-dark-theme .org-panel { box-shadow: 0 0 30px rgba(0, 0, 0, .6); }
         .org-panel-title-box { width: 380px; max-width: calc(100% - 40px); }
         /* Títulos como los de Inicio (19px, seminegrita); !important porque la regla monocroma del módulo fuerza 15px */
-        [data-panel] .org-panel :is(h1, h2).org-title, .org-title { margin-bottom: 0; font-size: 19px !important; font-weight: 600 !important; line-height: 1.3; letter-spacing: -.01em; color: var(--panel-text); }
+        [data-panel] .org-panel :is(h1, h2).org-title, .org-title { margin-bottom: 0; font-size: 16px !important; font-weight: 600 !important; line-height: 1.3; letter-spacing: -.01em; color: var(--panel-text); }
         .org-panel .org-gap { margin-top: 20px; }
         .org-subtitle { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; color: var(--panel-text); }
         .org-muted { color: var(--org-muted); }
@@ -403,9 +407,9 @@
         .org-node-foot { display: block; margin-top: auto; padding: 20px 90px 20px 20px; border-top: 1px solid var(--panel-border); }
         .org-node .org-node-presence { color: var(--org-muted); }
         .org-node .org-node-presence.is-online { color: var(--org-flow); }
-        .org-node-actions { position: absolute; right: 12px; bottom: 12px; z-index: 20; display: flex; gap: 6px; }
-        .org-node-actions > * { display: grid; height: 26px; width: 26px; place-items: center; border-radius: 9px; color: var(--org-muted); transition: background-color 150ms ease, color 150ms ease; }
-        .org-node-actions > :hover { background: var(--org-soft); color: var(--panel-text); }
+        .org-node-actions { position: absolute; right: 20px; bottom: 17px; z-index: 20; display: flex; gap: 20px; }
+        .org-node-actions > * { display: grid; height: 16px; width: 16px; place-items: center; color: var(--org-muted); transition: color 150ms ease; }
+        .org-node-actions > :hover { color: var(--panel-text); }
         .org-node-actions > .org-node-delete:hover { color: #dc2626; }
         .org-drag-handle { cursor: grab; }
         /* Entrada: las tarjetas aparecen por nivel solo al abrir el organigrama; después ya no, para que al mover a alguien o
