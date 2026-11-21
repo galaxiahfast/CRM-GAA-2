@@ -59,6 +59,12 @@ class PanelAdministracion extends Component
 
     public bool $isEditingUser = false;
 
+    /** La ficha de usuario es el único formulario: también sirve para crear (vacía) y para elegir a quién editar o eliminar. */
+    public bool $isCreatingUser = false;
+
+    /** «editar» o «eliminar» mientras se elige a la persona en la ficha (botones sin una persona elegida). */
+    public ?string $userPickerAction = null;
+
     public array $userForm = [];
 
     public string $deleteConfirmationName = '';
@@ -159,9 +165,82 @@ class PanelAdministracion extends Component
             abort_unless($tab !== 'crear' && User::whereKey($userId)->exists(), 404);
         }
 
-        $this->userManagementInitialTab = $tab;
-        $this->userManagementInitialUserId = $userId;
-        $this->showUserManagementModal = true;
+        // Un solo formulario para todo: la ficha de usuario
+        if ($tab === 'crear') {
+            $this->startCreatingUser();
+
+            return;
+        }
+        if ($userId === null) {
+            $this->closeUserDetails();
+            $this->userPickerAction = $tab;
+            $this->selectedUserDetails = ['id' => null, 'name' => $tab === 'editar' ? 'Editar usuario' : 'Eliminar usuario'];
+
+            return;
+        }
+        $this->selectUser($userId);
+        if ($tab === 'editar') {
+            $this->beginEditingUser();
+        } else {
+            $this->activeTab = 'eliminar';
+        }
+    }
+
+    /**
+     * Contraseña sugerida para una persona nueva: primer apellido + año actual + punto (ej. «Ortiz2026.»). Sin apellido,
+     * vacía los dos campos.
+     */
+    public function suggestUserPassword(): void
+    {
+        $firstSurname = preg_split('/\s+/', trim((string) ($this->userForm['last_name'] ?? '')))[0] ?? '';
+        $firstSurname = preg_replace('/[^A-Za-z0-9]/', '', \Illuminate\Support\Str::ascii($firstSurname));
+        $suggested = $firstSurname === '' ? '' : \Illuminate\Support\Str::ucfirst(\Illuminate\Support\Str::lower($firstSurname)).now()->year.'.';
+
+        $this->userForm['password'] = $suggested;
+        $this->userForm['password_confirmation'] = $suggested;
+        $this->resetValidation(['userForm.password', 'userForm.password_confirmation']);
+    }
+
+    /** Desde «Elegir usuario» de la ficha: abre a esa persona para editarla o eliminarla. */
+    public function pickUserForAction(int $userId): void
+    {
+        $action = $this->userPickerAction ?? 'editar';
+        $this->userPickerAction = null;
+        $this->openUserManagement($action, $userId);
+    }
+
+    /** Ficha vacía para dar de alta a una persona (mismo formulario que editar). */
+    public function startCreatingUser(?string $presetRole = null): void
+    {
+        $this->ensureOrganizationAdministrator();
+        abort_unless(app(\App\Services\Authorization\PermissionAccessService::class)
+            ->allows(auth()->user(), 'administration.users.manage'), 403);
+
+        $roleId = $presetRole ? Role::query()->where('role', $presetRole)->value('id') : null;
+        $this->resetErrorBag();
+        $this->closeUserDetails();
+        $this->isCreatingUser = true;
+        $this->isEditingUser = true;
+        $this->selectedUserDetails = ['id' => null, 'name' => 'Nuevo usuario'];
+        $this->userForm = [
+            'name' => '',
+            'last_name' => '',
+            'email' => '',
+            'birth_date' => null,
+            'gender' => null,
+            'role_id' => $roleId,
+            'employee_id' => '',
+            'job_position_id' => null,
+            'physical_area_id' => null,
+            'hourly_rate' => 25,
+            'food_allowance' => 50,
+            'superior_ids' => [],
+            'subordinate_ids' => [],
+            'password' => '',
+            'password_confirmation' => '',
+            'is_auxiliar' => mb_strtolower((string) $presetRole) === 'auxiliar',
+            'is_hourly_position' => false,
+        ];
     }
 
     #[On('user-management-closed')]
@@ -295,6 +374,20 @@ class PanelAdministracion extends Component
         $this->showPermissionsModal = request()->routeIs('administracion.permissions');
 
         $this->orgChartPage = request()->routeIs('organigrama.index');
+
+        // Las páginas sueltas de crear y editar usuario ahora abren la ficha única (?usuario=nuevo o ?usuario=ID)
+        $requestedUser = request()->query('usuario');
+        if ($requestedUser !== null && $this->canManageOrganization()) {
+            try {
+                if ($requestedUser === 'nuevo') {
+                    $this->startCreatingUser(request()->query('rol') === 'auxiliar' ? 'Auxiliar' : null);
+                } elseif (ctype_digit((string) $requestedUser) && User::whereKey((int) $requestedUser)->exists()) {
+                    $this->openUserManagement(request()->query('modo') === 'eliminar' ? 'eliminar' : 'editar', (int) $requestedUser);
+                }
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
 
         // En el Organigrama el árbol llega ya en la primera respuesta: sus datos se guardan en caché (unos 15 ms) y así no
         // hace falta una segunda petición que vuelva a dibujar toda la pantalla ni se ve «Cargando…» con los números en 0.
@@ -932,6 +1025,8 @@ class PanelAdministracion extends Component
             'is_auxiliar' => mb_strtolower((string) $role) === 'auxiliar',
             'is_hourly_position' => $profile?->jobPosition?->isHourly() ?? false,
         ];
+        $this->isCreatingUser = false;
+        $this->userPickerAction = null;
         $this->selectedUserDetails = [
             'id' => $user->id,
             'name' => trim("{$user->name} {$user->last_name}"),
@@ -1047,6 +1142,12 @@ class PanelAdministracion extends Component
 
     public function cancelEditingUser(): void
     {
+        if ($this->isCreatingUser) {
+            $this->closeUserDetails();
+
+            return;
+        }
+
         $this->isEditingUser = false;
     }
 
@@ -1265,6 +1366,8 @@ class PanelAdministracion extends Component
         $this->selectedUserId = null;
         $this->userForm = [];
         $this->isEditingUser = false;
+        $this->isCreatingUser = false;
+        $this->userPickerAction = null;
         $this->deleteConfirmationName = '';
         $this->activeTab = 'datos';
     }
@@ -1476,6 +1579,8 @@ class PanelAdministracion extends Component
             // Se precarga con la página para que abrir el formulario no tenga
             // que esperar la agregación del reloj checador.
             'employeeIdSuggestions' => $references->employeeSuggestions(),
+            // Personas para «Elegir usuario» (editar o eliminar sin una persona elegida)
+            'pickerUsers' => $this->userPickerAction ? User::query()->orderBy('name')->orderBy('last_name')->get(['id', 'name', 'last_name', 'email', 'profile_photo_path', 'gender']) : collect(),
             // Un jefe debe pertenecer ya al organigrama (tener alguna relación).
             'superiorCandidates' => $superiorCandidates,
             // Un subordinado puede provenir de la lista general, excepto los

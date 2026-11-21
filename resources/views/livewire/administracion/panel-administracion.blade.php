@@ -377,6 +377,8 @@
         /* Listas (resultados de búsqueda, áreas y «Sin asignar") con el formato de «En línea ahora» de Inicio: renglones con
            20px de relleno separados por una línea fina, foto de 50x50 con su borde pegado, nombre en seminegrita y datos en
            gris con 20px entre ellos */
+        .org-picker-row + .org-picker-row { border-top: 1px solid var(--panel-border); }
+        .org-picker-row:hover { background: var(--panel-subtle); }
         .org-row { display: flex; width: 100%; align-items: center; gap: 20px; padding: 20px; margin: 0; text-align: left; transition: background-color 150ms ease; }
         :is(.org-list > li + li, #search-results > .org-row + .org-row) .org-row, #search-results > .org-row + .org-row { border-top: 1px solid var(--panel-border); }
         button.org-row:hover, .org-list .org-row:hover { background: var(--panel-subtle); }
@@ -1667,16 +1669,43 @@
                     </div>
                     <div class="flex min-w-0 flex-col gap-[15px]">
                         <h1 id="user-details-title" class="truncate pb-[3px] text-[15px] font-semibold leading-none text-black" title="{{ $detailName }}" style="margin: 0;">{{ $detailName }}</h1>
-                        <p class="truncate pb-[3px] text-[15px] leading-none text-zinc-500" style="margin: 0;">{{ $isEditingUser ? 'Actualiza los datos de acceso y el perfil organizacional.' : 'Detalles del usuario' }}</p>
+                        <p class="truncate pb-[3px] text-[15px] leading-none text-zinc-500" style="margin: 0;">{{ $userPickerAction ? 'Elige a la persona que quieres '.($userPickerAction === 'eliminar' ? 'eliminar' : 'editar').'.' : ($isCreatingUser ? 'Captura los datos de la nueva persona.' : ($isEditingUser ? 'Actualiza los datos de acceso y el perfil organizacional.' : 'Detalles del usuario')) }}</p>
                     </div>
                 </div>
                 <button type="button" wire:click="closeUserDetails" class="flex h-10 w-10 shrink-0 items-center justify-center text-xl leading-none text-zinc-500 transition hover:text-black focus:outline-none focus:ring-0" aria-label="Cerrar">&times;</button>
             </header>
 
-            @if ($isEditingUser)
-                {{-- ===== FORMULARIO DE EDICIÓN ===== --}}
+            @if ($userPickerAction)
+                {{-- ===== ELEGIR A LA PERSONA ===== --}}
+                <div class="flex min-h-0 flex-1 flex-col" x-data="{ q: '' }">
+                    <div class="shrink-0 border-b border-zinc-200 p-[20px]">
+                        <input type="search" x-model="q" placeholder="Buscar por nombre o correo..." aria-label="Buscar persona" class="{{ $detailInput }} !mt-0" autofocus>
+                    </div>
+                    <div x-data="backupOverlayScroll()" class="relative min-h-0 flex-1">
+                        <div x-ref="scroller" @scroll="update()" @mouseenter="update()" data-scroll-top-offset="18" data-scroll-bottom-offset="18" class="administration-form-scrollbar h-full overflow-y-auto" style="max-height: 60vh;">
+                            @foreach ($pickerUsers as $pickerUser)
+                                @php($pickerName = trim($pickerUser->name.' '.$pickerUser->last_name))
+                                <button type="button" wire:key="picker-user-{{ $pickerUser->id }}" wire:click="pickUserForAction({{ $pickerUser->id }})"
+                                    x-show="! q || @js(mb_strtolower($pickerName.' '.$pickerUser->email)).includes(q.toLowerCase().trim())"
+                                    class="org-row org-picker-row">
+                                    <img src="{{ $pickerUser->avatarUrl() }}" alt="" class="org-avatar">
+                                    <span class="org-row-text">
+                                        <span class="org-row-name">{{ $pickerName }}</span>
+                                        <span class="org-row-meta">{{ mb_strtolower((string) $pickerUser->email) }}</span>
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                        <span x-show="visible" x-cloak class="administration-form-thumb org-thumb" :style="`height:${height}px; transform:translateY(${top}px)`" aria-hidden="true"></span>
+                    </div>
+                    <footer class="flex flex-shrink-0 justify-end gap-[20px] border-t border-zinc-200 bg-white p-[20px]">
+                        <button type="button" wire:click="closeUserDetails" class="{{ $detailSecondaryButton }}">Cancelar</button>
+                    </footer>
+                </div>
+            @elseif ($isEditingUser)
+                {{-- ===== FORMULARIO (crear y editar) ===== --}}
                 <form wire:submit="saveSelectedUser" class="flex min-h-0 flex-1 flex-col">
-                    <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
+                    <div x-data="backupOverlayScroll()" data-scroll-on-hover x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
                         <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar absolute inset-0 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
                             <div class="p-[20px] text-[15px]">
                                 <div class="flex flex-col gap-[20px]">
@@ -1858,7 +1887,7 @@
                                         <h2 class="admin-section-title mb-[20px]">Contraseña</h2>
                                         <div class="grid grid-cols-1 gap-[20px] sm:grid-cols-2">
                                             <div class="min-w-0">
-                                                <label for="edit-password" class="{{ $detailLabel }}">Nueva contraseña (opcional)</label>
+                                                <label for="edit-password" class="{{ $detailLabel }}">{{ $isCreatingUser ? 'Contraseña' : 'Nueva contraseña (opcional)' }}</label>
                                                 <input id="edit-password" type="password" autocomplete="new-password" class="{{ $detailInput }}" wire:model="userForm.password">
                                                 <x-input-error for="userForm.password" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
@@ -1867,6 +1896,12 @@
                                                 <input id="edit-password-confirmation" type="password" autocomplete="new-password" class="{{ $detailInput }}" wire:model="userForm.password_confirmation">
                                                 <x-input-error for="userForm.password_confirmation" class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]" />
                                             </div>
+                                            @if ($isCreatingUser)
+                                                <div class="min-w-0 sm:col-span-2">
+                                                    <button type="button" wire:click="suggestUserPassword" class="{{ $detailSecondaryButton }}">Usar contraseña sugerida</button>
+                                                    <p class="org-help">Primer apellido + año + punto (por ejemplo, Ortiz{{ now()->year }}.). La persona puede cambiarla después en Mi cuenta.</p>
+                                                </div>
+                                            @endif
                                         </div>
                                     </section>
                                 </div>
@@ -1894,7 +1929,7 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                             </svg>
-                            <span wire:loading.remove wire:target="saveSelectedUser">Guardar cambios</span>
+                            <span wire:loading.remove wire:target="saveSelectedUser">{{ $isCreatingUser ? 'Crear usuario' : 'Guardar cambios' }}</span>
                             <span wire:loading wire:target="saveSelectedUser">Guardando...</span>
                         </button>
                     </footer>
