@@ -504,25 +504,75 @@
             .org-node.org-ph-card.is-saving, .org-list > li.org-row-new { animation: none; }
         }
 
-        /* Formularios abiertos desde el Organigrama con el diseño de Inicio: bordes de 18px, título de 19px en seminegrita,
-           subtítulo gris, títulos de sección oscuros en seminegrita y botones redondeados como las etiquetas */
-        .org-user-modal,
-        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel { border-radius: 18px !important; border-color: var(--panel-border) !important; box-shadow: 0 24px 60px -20px rgba(15, 23, 42, .4) !important; }
-        .org-user-modal header h1,
-        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel header h1 { font-size: 19px !important; font-weight: 600 !important; line-height: 1.3 !important; color: var(--panel-text) !important; }
-        .org-user-modal header p,
-        body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel header p { color: var(--org-muted) !important; }
-        .org-user-modal .admin-title-icon,
-        body:has(#organigrama-principal) [data-administration-modal] .admin-title-icon { display: none !important; }
-        .org-user-modal .admin-section-title,
-        body:has(#organigrama-principal) [data-administration-modal] .admin-section-title { color: var(--panel-text) !important; font-size: 16px !important; font-weight: 600 !important; }
-        .org-user-modal label, .org-user-modal [id$="-label"] { color: var(--org-muted) !important; }
-        .org-user-modal :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
-        body:has(#organigrama-principal) [data-administration-modal] :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { border-radius: 12px !important; }
-        .org-user-modal .admin-btn, .org-user-modal button[class*="bg-red"],
-        body:has(#organigrama-principal) [data-administration-modal] .admin-btn { border-radius: 18px !important; }
-        .org-user-modal .org-choice { padding: 20px !important; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: color-mix(in srgb, var(--panel-accent) 5%, var(--panel-surface)) !important; }
-        .org-user-modal .org-choice + section { margin-top: 20px; }
+        /* Formularios abiertos desde el Organigrama con el diseño de Inicio: borde de 1px gris #a1a1aa con esquinas de 18px,
+           título de 16px en seminegrita y subtítulo gris con 20px exactos entre ellos (cada texto mide lo que sus letras),
+           campos de 50px con esquinas de 18px y botones como las etiquetas de Inicio (el principal en negro). */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) { --panel-border: #a1a1aa; --org-muted: color-mix(in srgb, var(--panel-text) 58%, transparent); border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: var(--panel-surface) !important; box-shadow: 0 0 30px rgba(15, 23, 42, .12) !important; }
+        html.module-dark-theme :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) { --panel-border: #52525b; box-shadow: 0 0 30px rgba(0, 0, 0, .6) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(header, footer, .border-t, .border-b, hr) { border-color: var(--panel-border) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) > header, :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) > form > footer, :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) > footer { padding: 20px !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header :is(h1, p) { padding: 0 !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; overflow: clip !important; overflow-clip-margin: 10px; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header h1 { font-size: 16px !important; font-weight: 600 !important; color: var(--panel-text) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header p { font-size: 15px !important; color: var(--org-muted) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header .flex-col { gap: 20px !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-title-icon { display: none !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header button[aria-label="Cerrar"], :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header button[wire\:click="closeUserDetails"] { display: grid !important; height: auto !important; width: auto !important; padding: 20px !important; place-items: center; flex-shrink: 0; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: var(--panel-surface) !important; color: var(--panel-text) !important; font-size: 20px !important; line-height: 10px !important; min-width: 50px; min-height: 50px; transition: background-color 150ms ease; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header button[aria-label="Cerrar"]:hover, :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) header button[wire\:click="closeUserDetails"]:hover { background: var(--panel-hover, var(--panel-subtle)) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-section-title { margin-top: 0; font-size: 16px !important; font-weight: 600 !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; color: var(--panel-text) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(label, [id$="-label"]) { font-weight: 400 !important; color: var(--org-muted) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .org-detail-value, .app-date-trigger) { min-height: 50px; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; padding-left: 20px !important; padding-right: 20px !important; background: var(--panel-surface) !important; color: var(--panel-text) !important; box-shadow: none !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(input, select, textarea):disabled { color: var(--org-muted) !important; }
+        /* Valores: si el texto ocupa varias líneas, 20px entre ellas; con una sola línea el recuadro mide 50px */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-detail-value { display: block; margin-top: 20px; padding-top: 18.75px !important; padding-bottom: 18.75px !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; overflow-wrap: anywhere; cursor: default; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0 !important; padding: 15px 20px !important; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: var(--panel-surface) !important; color: var(--panel-text) !important; line-height: 1.3 !important; transition: border-color 150ms ease, opacity 150ms ease !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-btn:hover { opacity: 1 !important; border-color: var(--panel-text) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-btn-primary { border-color: var(--panel-text) !important; background: var(--panel-text) !important; color: var(--panel-surface) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .admin-btn-primary:hover { opacity: .85 !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) button[class*="bg-red"] { padding: 15px 20px !important; border-radius: 18px !important; line-height: 1.3 !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-choice { padding: 20px !important; border: 1px solid var(--panel-border) !important; border-radius: 18px !important; background: var(--panel-surface) !important; }
+        /* Textos de las secciones como en Inicio: miden lo que sus letras y quedan a 20px exactos de lo demás */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(section, .org-choice) > p { margin: 0 !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; color: var(--org-muted) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(section, .org-choice) > p + p { margin-top: 20px !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) :is(section, .org-choice) > p span.text-red-700 { color: #b91c1c; font-weight: 600; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-choice + .org-choice { margin-top: 20px !important; }
+        /* Todo a 20px exactos: relleno del cuerpo, entre secciones (sin líneas), entre etiqueta y campo y entre campos. Cada
+           texto mide lo que sus letras, así la distancia que se ve es exactamente la del margen. */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) section:not(:last-child) { border-bottom: 0 !important; padding-bottom: 0 !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) section + section { margin-top: 0 !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) [x-ref="scroller"] > div.p-\[20px\] { padding: 20px !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-label { display: block; margin-bottom: 0 !important; font-weight: 400 !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; color: var(--org-muted) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-label + :is(input, select, textarea, div, p) { margin-top: 20px !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-detail-value.org-detail-value, :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-detail-value * { color: var(--panel-text) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-help { margin: 20px 0 0 !important; line-height: calc(.7em + 20px) !important; text-box: trim-both cap alphabetic; color: var(--org-muted) !important; }
+        /* Listas para elegir jefe y subordinados: como «Personas sin asignar» (sin líneas, nombre en seminegrita y correo gris;
+           lo elegido en el azul del encabezado) */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-box { border: 1px solid var(--panel-border) !important; border-radius: 18px !important; }
+        /* Una sola distancia de 20px entre filas: cada fila lleva 10px arriba y abajo (10 + 10 = 20 entre una y otra) y la
+           lista una franja fija de 10px arriba y abajo (10 + 10 = 20 contra el borde). Se ven 3 filas completas (61px cada una). */
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-row { border: 0 !important; padding: 10px 20px !important; scroll-snap-align: start; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .hierarchy-selection-list > div { padding: 0 !important; margin: 0 !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .hierarchy-selection-list { max-height: calc(61px * 3 + 20px) !important; border-top: 10px solid var(--panel-surface); border-bottom: 10px solid var(--panel-surface); scroll-snap-type: y mandatory; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-row:hover { background: var(--panel-subtle) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-row input { accent-color: #1A3A6B; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-text { display: block; min-width: 0; flex: 1 1 auto; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-text > span { display: block; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-name { font-weight: 600 !important; color: var(--panel-text) !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-mail { margin-top: 20px; color: var(--org-muted); }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-row:has(input:checked) .org-pick-name { color: #1A3A6B !important; }
+        html.module-dark-theme :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) .org-pick-row:has(input:checked) .org-pick-name { color: #60a5fa !important; }
+        /* Los errores van en la ventana emergente de arriba al centro: dentro del formulario no se repiten */
+        .org-user-modal p.text-red-600, body:has(#organigrama-principal) [data-administration-modal] p.text-red-600 { display: none !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) footer button.org-delete-btn.org-delete-btn { border-color: #dc2626 !important; background: #dc2626 !important; color: #fff !important; }
+        :is(.org-user-modal, body:has(#organigrama-principal) [data-administration-modal] .administration-form-panel) footer button.org-delete-btn.org-delete-btn:hover { opacity: .85; }
+        /* Aviso flotante */
+        .org-toast { zoom: calc(1 / var(--app-zoom, 1)); position: fixed; left: 50%; top: 75px; z-index: 200010; display: flex; max-width: calc(100vw - 40px); align-items: center; gap: 15px; padding: 15px 20px 15px 15px; border: 1px solid #a1a1aa; border-radius: 18px; background: #ffffff; color: #18181b; font-size: 15px; line-height: 1.3; box-shadow: 0 0 30px rgba(15, 23, 42, .12); translate: -50% 0; }
+        html.module-dark-theme .org-toast { border-color: #52525b; background: #09090b; color: #ffffff; box-shadow: 0 0 30px rgba(0, 0, 0, .6); }
+        .org-toast-icon { display: grid; height: 26px; width: 26px; flex-shrink: 0; place-items: center; border-radius: 9999px; color: #ffffff; }
+        .org-toast-icon.is-ok { background: #15803d; }
+        .org-toast-icon.is-error { background: #dc2626; }
+        /* Botón de eliminar en el pie: como los demás botones, en rojo */
+        .org-user-modal .org-delete-btn { padding: 15px 20px; border: 1px solid #dc2626; border-radius: 18px; background: #dc2626; color: #fff; line-height: 1.3; transition: opacity 150ms ease; }
+        .org-user-modal .org-delete-btn:hover { opacity: .85; }
         .org-user-modal .org-choice p { color: var(--org-muted); line-height: calc(.7em + 20px); }
 
         /* Entrada fluida: el árbol aparece ya centrado (si el script no corre, aparece igual a los 2 s) y los paneles suben
@@ -1589,8 +1639,8 @@
     {{-- Variables de estilo del formulario (en línea, para no mezclarse con otros bloques de PHP del panel). --}}
     @php($detailName = $selectedUserDetails['name'] ?? 'Usuario')
     @php($detailInput = 'mt-[20px] block w-full rounded-xl border border-zinc-200 bg-white px-[20px] py-[15px] leading-none text-[15px] text-black shadow-none outline-none focus:border-zinc-200 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400')
-    @php($detailLabel = 'block text-[15px] font-medium text-gray-700')
-    @php($detailValue = 'mt-[20px] flex w-full cursor-default items-center break-words rounded-xl border border-zinc-200 bg-white px-[20px] py-[7.5px] text-[15px] leading-[30px] text-black')
+    @php($detailLabel = 'org-label block text-[15px]')
+    @php($detailValue = 'org-detail-value w-full text-[15px]')
     @php($detailSecondaryButton = 'admin-btn admin-btn-secondary inline-flex min-w-28 items-center justify-center rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0')
     @php($detailPrimaryButton = 'admin-btn admin-btn-primary inline-flex min-w-28 items-center justify-center gap-[10px] rounded-xl px-[20px] py-[15px] text-[15px] leading-none transition hover:opacity-90 focus:outline-none focus:ring-0 disabled:cursor-wait disabled:opacity-60')
     <div x-data="{ visible: true }" x-show="visible" @click.capture="const button = $event.target.closest('button'); if (button?.getAttribute('wire:click') === 'closeUserDetails') visible = false" @keydown.escape.window="visible = false; $wire.closeUserDetails()" class="fixed inset-0 z-[200001] flex items-center justify-center bg-black/45 p-[20px] backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="user-details-title" data-administration-modal="user-details">
@@ -1752,17 +1802,14 @@
                                         <div class="flex flex-col gap-[20px]">
                                             <div class="min-w-0">
                                                 <span id="edit-superiors-label" class="{{ $detailLabel }}">Jefe directo</span>
-                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Marca a una sola persona; vuelve a marcarla para quitarla. Debe estar asignada al organigrama.</p>
-                                                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
+                                                <p class="org-help">Marca a una sola persona; vuelve a marcarla para quitarla. Debe estar asignada al organigrama.</p>
+                                                <div x-data="backupOverlayScroll()" data-scroll-on-hover x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
                                                     <div id="edit-superiors" x-ref="scroller" @scroll="update()" @mouseenter="update()" class="hierarchy-selection-list administration-form-scrollbar block w-full text-[15px]" role="group" aria-labelledby="edit-superiors-label">
                                                         @forelse ($superiorCandidates as $superiorCandidate)
                                                             <div wire:key="superior-candidate-{{ $superiorCandidate->id }}">
-                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[15px] p-[20px] text-left">
+                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[20px] p-[20px] text-left">
                                                                     <input type="checkbox" value="{{ $superiorCandidate->id }}" wire:click="toggleSuperior({{ $superiorCandidate->id }})" @checked(in_array($superiorCandidate->id, $userForm['superior_ids'] ?? [])) class="h-4 w-4 shrink-0 focus:outline-none focus:ring-0">
-                                                                    <span class="flex min-w-0 flex-1 items-center gap-[20px]" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ mb_strtolower((string) $superiorCandidate->email) }}">
-                                                                        <span class="org-pick-name min-w-0 max-w-[55%] shrink-0 truncate leading-none">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span>
-                                                                        <span class="min-w-0 flex-1 truncate leading-none">{{ mb_strtolower((string) $superiorCandidate->email) }}</span>
-                                                                    </span>
+                                                                    <span class="org-pick-text" title="{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }} — {{ mb_strtolower((string) $superiorCandidate->email) }}"><span class="org-pick-name">{{ trim($superiorCandidate->name.' '.$superiorCandidate->last_name) }}</span><span class="org-pick-mail">{{ mb_strtolower((string) $superiorCandidate->email) }}</span></span>
                                                                 </label>
                                                             </div>
                                                         @empty
@@ -1776,17 +1823,14 @@
 
                                             <div class="min-w-0">
                                                 <span id="edit-subordinates-label" class="{{ $detailLabel }}">Subordinados directos</span>
-                                                <p class="mt-[12.5px] -mb-[7.5px] text-[15px] leading-[30px]">Solo aparecen personas sin jefe o que ya te reportan directamente.</p>
-                                                <div x-data="backupOverlayScroll()" x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
+                                                <p class="org-help">Solo aparecen personas sin jefe o que ya te reportan directamente.</p>
+                                                <div x-data="backupOverlayScroll()" data-scroll-on-hover x-effect="$nextTick(() => update())" class="org-pick-box relative mt-[20px] overflow-hidden">
                                                     <div id="edit-subordinates" x-ref="scroller" @scroll="update()" @mouseenter="update()" class="hierarchy-selection-list administration-form-scrollbar block w-full text-[15px]" role="group" aria-labelledby="edit-subordinates-label">
                                                         @forelse ($subordinateCandidates as $subordinateCandidate)
                                                             <div wire:key="subordinate-candidate-{{ $subordinateCandidate->id }}">
-                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[15px] p-[20px] text-left">
+                                                                <label class="org-pick-row flex cursor-pointer items-center gap-[20px] p-[20px] text-left">
                                                                     <input type="checkbox" value="{{ $subordinateCandidate->id }}" wire:model.live="userForm.subordinate_ids" class="h-4 w-4 shrink-0 focus:outline-none focus:ring-0">
-                                                                    <span class="flex min-w-0 flex-1 items-center gap-[20px]" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ mb_strtolower((string) $subordinateCandidate->email) }}">
-                                                                        <span class="org-pick-name min-w-0 max-w-[55%] shrink-0 truncate leading-none">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span>
-                                                                        <span class="min-w-0 flex-1 truncate leading-none">{{ mb_strtolower((string) $subordinateCandidate->email) }}</span>
-                                                                    </span>
+                                                                    <span class="org-pick-text" title="{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }} — {{ mb_strtolower((string) $subordinateCandidate->email) }}"><span class="org-pick-name">{{ trim($subordinateCandidate->name.' '.$subordinateCandidate->last_name) }}</span><span class="org-pick-mail">{{ mb_strtolower((string) $subordinateCandidate->email) }}</span></span>
                                                                 </label>
                                                             </div>
                                                         @empty
@@ -1849,7 +1893,7 @@
                 {{-- Sin menú de pestañas: los datos se ven aquí y la eliminación se pide con la X de cada nodo. --}}
 
                 {{-- ===== CONTENIDO CON SCROLL ===== --}}
-                <div x-data="backupOverlayScroll()" x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
+                <div x-data="backupOverlayScroll()" data-scroll-on-hover x-init="$nextTick(() => { const c = $refs.scroller.firstElementChild; if (c) new ResizeObserver(() => update()).observe(c); })" x-effect="$nextTick(() => update())" class="relative min-h-0 flex-1 bg-white">
                     <div x-ref="scroller" @scroll="update()" @mouseenter="update()" class="administration-form-scrollbar absolute inset-0 overflow-y-auto bg-white" style="overscroll-behavior: contain;">
                         <div class="p-[20px] text-[15px]">
                             @if ($activeTab === 'datos')
