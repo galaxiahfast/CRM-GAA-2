@@ -82,7 +82,7 @@ class OrganizationChartService
                 'first_name' => trim((string) $user->name),
                 'last_name' => trim((string) $user->last_name),
                 'email' => $user->email,
-                'photo' => $user->hasProfilePhotoFile() ? $user->profile_photo_url : null, // si falta el archivo se muestran las iniciales
+                'photo' => $user->avatarUrl(), // su foto o, si no tiene (o falta el archivo), la ilustración según su género
                 'created_at' => $user->created_at?->toIso8601String(),
                 'role' => $user->role?->role,
                 'job_position' => $profile?->jobPosition?->name,
@@ -591,8 +591,8 @@ class OrganizationChartService
 
         $users = User::query()
             ->orderBy('id')
-            ->get(['id', 'name', 'last_name', 'email', 'role_id', 'profile_photo_path'])
-            ->map(fn (User $user): string => implode('|', [$user->id, $user->name, $user->last_name, $user->email, $user->role_id, $user->profile_photo_path]))
+            ->get(['id', 'name', 'last_name', 'email', 'role_id', 'profile_photo_path', 'gender'])
+            ->map(fn (User $user): string => implode('|', [$user->id, $user->name, $user->last_name, $user->email, $user->role_id, $user->profile_photo_path, $user->gender]))
             ->implode(',');
 
         $profiles = UserOrganizationalProfile::query()
