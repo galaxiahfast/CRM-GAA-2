@@ -372,14 +372,34 @@
         button.org-row:hover, .org-list .org-row:hover { background: var(--panel-subtle); }
         .org-avatar { display: grid; height: 50px; width: 50px; flex-shrink: 0; place-items: center; border: 1px solid var(--panel-border); border-radius: 9999px; background: var(--panel-surface); color: var(--panel-text); font-size: 15px !important; object-fit: cover; }
         .org-row-text { min-width: 0; flex: 1 1 auto; }
-        .org-row-name, .org-row-meta { display: block; height: 10.5px; line-height: 10.5px; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
+        .org-row-name, .org-row-meta { display: block; line-height: calc(.7em + 20px); text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; }
         .org-row-name { font-weight: 600 !important; color: var(--panel-text); }
         .org-row-meta { margin-top: 20px; color: var(--org-muted); }
-        .org-option { display: block; width: 100%; padding: 20px; text-align: left; line-height: 1; text-box: trim-both cap alphabetic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 150ms ease; }
+        .org-option { display: block; width: 100%; padding: 20px; text-align: left; line-height: 1; text-box: trim-both cap alphabetic; white-space: nowrap; overflow: clip; overflow-clip-margin: 10px; text-overflow: ellipsis; transition: background-color 150ms ease; }
         .org-option + .org-option, template + .org-option { border-top: 1px solid var(--panel-border); }
-        button.org-option:hover, .org-option[aria-selected="true"] { background: var(--panel-subtle); }
+        button.org-option:hover { background: var(--panel-subtle); }
+        /* El elegido se señala en azul: en áreas la elegida (por defecto «Todas las áreas") y en el buscador la persona que
+           se está viendo (por defecto la que encabeza el árbol) */
+        .org-option[aria-selected="true"], #search-results > .org-row.is-selected .org-row-name { color: #1A3A6B !important; font-weight: 600 !important; }
+        html.module-dark-theme :is(.org-option[aria-selected="true"], #search-results > .org-row.is-selected .org-row-name) { color: #60a5fa !important; }
         /* El indicador de scroll queda dentro de las esquinas redondeadas (5px del borde, 18px arriba y abajo) */
-        .org-thumb { right: 5px !important; }
+        .org-thumb { right: 0 !important; }
+        /* Con la lista de búsqueda cerrada su indicador de scroll nunca se ve (no se queda flotando junto al campo) */
+        #search-results[style*="display: none"] ~ .org-thumb, #search-results:not([style*="display: block"]) ~ .org-thumb { display: none !important; }
+
+        /* Todas las filas miden lo mismo (lo largo termina en «…») y respetan sus 20px de relleno: el alto es el del contenido
+           (tres textos con 20px entre ellos) más el relleno. Cada lista muestra solo filas completas y el scroll se detiene en
+           cada una: el buscador 3 personas y las áreas 6; «Sin asignar» las que quepan en el panel (lo calcula el script). */
+        #search-results > .org-row, .org-un-row { box-sizing: content-box; height: calc(.7em * 3 + 40px); scroll-snap-align: start; }
+        /* Con content-box el ancho no incluye el relleno: la fila mide el ancho de la lista menos sus 20px de cada lado */
+        #search-results > .org-row { width: calc(100% - 40px); }
+        .org-option { box-sizing: content-box; height: .7em; scroll-snap-align: start; }
+        /* Los desplegables (buscador y áreas) van sin líneas entre filas */
+        #search-results > .org-row + .org-row, #physical-area-results .org-option + .org-option, #physical-area-results template + .org-option { border-top: 0 !important; }
+        #search-results { max-height: none !important; height: auto; scroll-snap-type: y mandatory; }
+        #physical-area-results { max-height: none !important; scroll-snap-type: y mandatory; }
+        .org-side-list { scroll-snap-type: y mandatory; }
+        .org-side { bottom: auto !important; }
 
         /* Verde de Inicio para lo que se puede soltar y para la vista previa; anillo y fondo suaves de las tarjetas de Inicio */
         [data-panel] { --org-flow: #15803d; --org-ring: color-mix(in srgb, var(--panel-accent) 35%, var(--panel-border)); --org-soft: color-mix(in srgb, var(--panel-accent) 6%, var(--panel-surface)); }
@@ -2015,6 +2035,52 @@
         if (document.readyState !== 'loading') window.bindOrgEqualizer();
     }
 
+    // Listas del organigrama que muestran solo filas completas: el buscador 3 personas, las áreas 6 y «Sin asignar» las
+    // que quepan entre su encabezado y 100px antes del borde inferior. El alto se suma fila por fila (con sus líneas).
+    window.orgFitLists = window.orgFitLists || function () {
+        const fit = (scroller, maxRows, maxHeight = Infinity) => {
+            if (!scroller) return;
+            const rows = [...scroller.querySelectorAll(':scope > .org-row, :scope > .org-option, .org-list > li')].filter((row) => row.offsetParent);
+            let value = '';
+            if (rows.length > 0) {
+                let height = 0;
+                for (let i = 0; i < rows.length && i < maxRows; i++) {
+                    if (height + rows[i].offsetHeight > maxHeight && i > 0) break;
+                    height += rows[i].offsetHeight;
+                }
+                const style = getComputedStyle(scroller);
+                value = `${height + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)}px`;
+            }
+            // Solo si cambia (si no, el observador de cambios volvería a llamar sin fin)
+            if (scroller.style.height !== value) {
+                scroller.style.height = value;
+                // Se abrió o se cerró: el indicador de scroll se vuelve a calcular (al cerrarse desaparece y ya no se
+                // queda flotando, y al volver a abrir solo aparece cuando el puntero está encima)
+                if (value === '') scroller.closest('[data-scroll-on-hover]')?.dispatchEvent(new Event('mouseleave'));
+                scroller.dispatchEvent(new Event('scroll'));
+            }
+        };
+        fit(document.getElementById('search-results'), 3);
+        fit(document.getElementById('physical-area-results'), 6);
+        const side = document.querySelector('.org-side');
+        const list = side ? side.querySelector('.org-side-list') : null;
+        const box = document.getElementById('org-tree-container');
+        if (side && list && box && side.offsetParent) {
+            const room = box.clientHeight - side.offsetTop - 100 - (side.offsetHeight - list.offsetHeight);
+            fit(list, Infinity, Math.max(room, 0));
+        }
+    };
+    if (!window.orgFitListsReady) {
+        window.orgFitListsReady = true;
+        let fitFrame = null;
+        const schedule = () => { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(() => window.orgFitLists()); };
+        window.addEventListener('resize', schedule);
+        document.addEventListener('input', schedule, true);
+        document.addEventListener('focusin', schedule, true);
+        document.addEventListener('click', () => setTimeout(schedule, 0), true);
+        new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    }
+
     // Se arranca en cuanto el árbol está en la página (este script va al final), sin esperar a que terminen de cargar todos
     // los demás scripts: así el organigrama aparece centrado al instante.
     const orgChartBoot = function() {
@@ -2298,7 +2364,8 @@
                     ? `<img src="${escapeHtml(node.photo)}" alt="" class="org-avatar">`
                     : `<span class="org-avatar">${escapeHtml(node.initials)}</span>`;
                 const details = [node.role, node.position, node.area].filter(Boolean).join(' · ');
-                return `<button type="button" class="search-result-item org-row" data-id="${node.id}">
+                const chosen = node.id === selectedSearchId();
+                return `<button type="button" class="search-result-item org-row${chosen ? ' is-selected' : ''}" aria-selected="${chosen}" data-id="${node.id}">
                     ${avatar}
                     <span class="org-row-text">
                         <span class="org-row-name">${escapeHtml(node.name)}</span>
@@ -2309,11 +2376,23 @@
             }).join('');
 
             searchResults.style.display = 'block';
+            // La persona señalada queda a la vista al abrir la lista
+            const chosenRow = searchResults.querySelector('.org-row.is-selected');
+            if (chosenRow) searchResults.scrollTop = chosenRow.offsetTop;
             searchResults.dispatchEvent(new Event('scroll'));
         }
 
         // Lleva la vista al nodo elegido y lo resalta un momento.
+        // Persona señalada en el buscador: la última que se buscó o, si no, la que encabeza el árbol
+        let searchedId = null;
+        function selectedSearchId() {
+            if (searchedId && document.querySelector(`#org-tree-wrapper .org-node[data-id="${searchedId}"]`)) return searchedId;
+            const head = document.querySelector('#org-tree-wrapper .org-node[data-id]');
+            return head ? parseInt(head.dataset.id) : null;
+        }
+
         function goToNode(nodeId) {
+            searchedId = nodeId;
             const nodeEl = document.querySelector(`.org-node[data-id="${nodeId}"]`);
             if (!nodeEl) return;
 
